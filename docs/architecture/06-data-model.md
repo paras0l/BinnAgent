@@ -12,13 +12,56 @@
 
 ## 2. 存储选型
 
-建议：
+### 2.1 PostgreSQL — 核心数据库
 
-- PostgreSQL：核心业务数据。
-- pgvector：材料、错题、表达和记忆相似检索。
-- Redis：短期缓存、限流、异步任务状态。
-- Object Storage：音频、作文附件、材料文件。
-- LangGraph Checkpointer：生产接 PostgreSQL。
+选择 PostgreSQL 作为主数据库的理由：
+
+| 需求 | PostgreSQL 优势 | 替代方案的问题 |
+|------|----------------|---------------|
+| 半结构化数据（词汇释义、错因证据、模考诊断） | 原生 JSONB，支持索引和查询 | MySQL JSON 性能差；拆表会增加维护成本 |
+| 向量检索（材料相似、错题匹配） | pgvector 扩展，一体化 | 单独引入 Qdrant/Milvus 增加运维复杂度 |
+| 事务一致性（session → task → vocabulary → review） | ACID 保证，单库事务 | MySQL + Redis + 向量库跨系统一致性难保证 |
+| Agent State 持久化 | LangGraph Checkpointer 原生支持 PostgreSQL | SQLite 不支持并发写入，不适合生产 |
+| 多租户数据隔离 | Row Level Security | 需要在应用层实现，容易出错 |
+| 复杂查询（复习调度、错题统计） | 索引能力强，支持 `(learner_id, next_review_at)` 排序过滤 | NoSQL 不擅长复杂聚合查询 |
+
+**一句话总结：一个 PostgreSQL 同时搞定 JSONB、向量检索、事务、Agent state，运维复杂度最低。**
+
+MVP 阶段可用 SQLite 开发（SQLAlchemy 兼容），生产环境切 PostgreSQL 只需改连接串。
+
+### 2.2 Redis — 缓存层
+
+- 短期缓存：会话状态、限流计数器。
+- 异步任务状态：生成周报、批量评估等耗时任务的进度追踪。
+- 非必需：MVP 阶段可跳过，用内存字典替代。
+
+### 2.3 Object Storage — 文件存储
+
+- 音频文件（口语音频、听力材料）。
+- 作文附件和原始材料文件。
+- MVP 阶段不涉及，后续接入。
+
+### 2.4 存储选型总结
+
+```text
+PostgreSQL (主)  ─── 核心业务 + JSONB + pgvector 向量 + LangGraph state
+Redis (可选)     ─── 缓存 + 限流 + 异步任务
+Object Storage   ─── 大文件（音频、附件）— 后续接入
+```
+
+### 2.5 部署方式
+
+本地开发和生产部署均通过 Docker Compose 管理：
+
+```bash
+# 一键启动所有依赖
+docker compose up -d
+
+# 查看服务状态
+docker compose ps
+```
+
+详见 README.md 中的 Docker 部署章节。
 
 ## 3. 核心表
 
@@ -272,7 +315,7 @@ error
   "models": [
     {
       "provider": "ollama",
-      "model": "qwen3:latest",
+      "model": "gemma4:e2b",
       "task_type": "writing_feedback",
       "latency_ms": 1830,
       "prompt_chars": 2400,

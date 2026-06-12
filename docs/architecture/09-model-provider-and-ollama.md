@@ -50,8 +50,8 @@ model_provider:
   default_provider: ollama
   ollama:
     base_url: http://localhost:11434
-    chat_model: qwen3:latest
-    utility_model: qwen3:latest
+    chat_model: gemma4:e2b
+    utility_model: gemma4:e2b
     embedding_model: nomic-embed-text:latest
   fallback:
     enabled: false
@@ -102,7 +102,7 @@ class ModelClient(Protocol):
   "temperature": 0.3,
   "max_tokens": 1200,
   "preferred_provider": "ollama",
-  "preferred_model": "qwen3:latest"
+  "preferred_model": "gemma4:e2b"
 }
 ```
 
@@ -111,7 +111,7 @@ class ModelClient(Protocol):
 ```json
 {
   "provider": "ollama",
-  "model": "qwen3:latest",
+  "model": "gemma4:e2b",
   "content": "...",
   "structured": {},
   "latency_ms": 1830,
@@ -167,7 +167,7 @@ Fallback 事件必须写入 trace：
 ```json
 {
   "event": "model_fallback",
-  "from": "ollama:qwen3:latest",
+  "from": "ollama:gemma4:e2b",
   "to": "openai_compatible:configured-model",
   "reason": "schema_validation_failed",
   "user_authorized": true
@@ -196,7 +196,7 @@ GET /internal/model/health
   "default_provider": "ollama",
   "ollama_reachable": true,
   "chat_model": {
-    "name": "qwen3:latest",
+    "name": "gemma4:e2b",
     "available": true
   },
   "embedding_model": {
