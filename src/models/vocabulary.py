@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 from typing import Optional
 
-from sqlalchemy import DateTime, Float, Integer, SmallInteger, String
+from sqlalchemy import DateTime, Float, ForeignKey, Integer, SmallInteger, String
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -13,7 +13,12 @@ from src.models.base import TimestampMixin, UUIDPrimaryKeyMixin
 class VocabularyItem(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     __tablename__ = "vocabulary_items"
 
-    learner_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False, index=True)
+    learner_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("learners.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
     word: Mapped[str] = mapped_column(String(255), nullable=False)
     phonetic: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     level: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
@@ -38,7 +43,12 @@ class VocabularyItem(UUIDPrimaryKeyMixin, TimestampMixin, Base):
 class ReviewSchedule(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     __tablename__ = "review_schedules"
 
-    learner_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False, index=True)
+    learner_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("learners.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
     item_type: Mapped[str] = mapped_column(String(50), nullable=False)
     item_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
     scheduled_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)

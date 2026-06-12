@@ -1,19 +1,30 @@
-from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
 import httpx
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel, Field, field_validator
 
-from src.config import settings
+from src.api.deps import get_model_router
+from src.providers.base import ChatRequest as ModelChatRequest
+from src.providers.router import ModelRouter
 
 router = APIRouter(prefix="/api/chat", tags=["chat"])
 
 
 class ChatRequest(BaseModel):
-    message: str
-    skill_focus: str | None = None
+    message: str = Field(min_length=1, max_length=4000)
+    skill_focus: str | None = Field(default=None, max_length=50)
+
+    @field_validator("message")
+    @classmethod
+    def message_must_not_be_blank(cls, value: str) -> str:
+        stripped = value.strip()
+        if not stripped:
+            raise ValueError("Message must not be blank")
+        return stripped
 
 
 class ChatResponse(BaseModel):
     reply: str
+    response: str
     skill_focus: str | None = None
 
 
@@ -30,34 +41,28 @@ TUTOR_SYSTEM_PROMPT = """你是BinnAgent，一位专业的英语学习AI助教�
 
 
 @router.post("/send", response_model=ChatResponse)
-async def chat_send(req: ChatRequest) -> ChatResponse:
+async def chat_send(
+    req: ChatRequest,
+    model_router: ModelRouter = Depends(get_model_router),
+) -> ChatResponse:
     system_msg = TUTOR_SYSTEM_PROMPT
     if req.skill_focus:
         system_msg += f"\n\n当前重点练习: {req.skill_focus}"
 
-    payload = {
-        "model": settings.ollama_chat_model,
-        "messages": [
-            {"role": "system", "content": system_msg},
-            {"role": "user", "content": req.message},
-        ],
-        "stream": False,
-        "options": {
-            "temperature": 0.7,
-            "num_predict": 1024,
-        },
-    }
-
     try:
-        async with httpx.AsyncClient(
-            base_url=settings.ollama_base_url,
-            timeout=httpx.Timeout(120.0),
-        ) as client:
-            resp = await client.post("/api/chat", json=payload)
-            resp.raise_for_status()
-            data = resp.json()
-            reply = data.get("message", {}).get("content", "抱歉，我暂时无法回复。")
-    except httpx.HTTPError as e:
-        raise HTTPException(status_code=503, detail=f"Ollama service unavailable: {e}")
+        model_response = await model_router.chat(
+            ModelChatRequest(
+                messages=[
+                    {"role": "system", "content": system_msg},
+                    {"role": "user", "content": req.message},
+                ],
+                task_type="learning_chat",
+                temperature=0.7,
+                max_tokens=1024,
+            )
+        )
+        reply = model_response.content or "抱歉，我暂时无法回复。"
+    except httpx.HTTPError:
+        raise HTTPException(status_code=503, detail="Ollama service unavailable")
 
-    return ChatResponse(reply=reply, skill_focus=req.skill_focus)
+    return ChatResponse(reply=reply, response=reply, skill_focus=req.skill_focus)

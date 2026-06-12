@@ -11,6 +11,9 @@ from src.main import app
 def mock_session():
     """Override get_db_session with a controlled mock session."""
     session = AsyncMock()
+    learner_result = MagicMock()
+    learner_result.scalar_one_or_none.return_value = uuid.uuid4()
+    session.execute = AsyncMock(return_value=learner_result)
     app.dependency_overrides[deps.get_db_session] = lambda: session
     yield session
     app.dependency_overrides.clear()
@@ -111,6 +114,31 @@ class TestAddWord:
             meanings=["a greeting"],
         )
 
+    @pytest.mark.asyncio
+    async def test_add_word_unknown_learner_returns_404(self, client, mock_session):
+        learner_result = MagicMock()
+        learner_result.scalar_one_or_none.return_value = None
+        mock_session.execute.return_value = learner_result
+
+        with patch("src.api.vocabulary.VocabularyStore") as MockStore:
+            response = await client.post(
+                f"/api/learners/{uuid.uuid4()}/vocabulary/add",
+                json={"word": "hello"},
+            )
+
+        assert response.status_code == 404
+        assert response.json()["detail"] == "Learner not found"
+        MockStore.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_add_word_blank_word_returns_422(self, client, mock_session):
+        response = await client.post(
+            f"/api/learners/{uuid.uuid4()}/vocabulary/add",
+            json={"word": "   "},
+        )
+
+        assert response.status_code == 422
+
 
 class TestGetDueReviews:
     @pytest.mark.asyncio
@@ -154,6 +182,19 @@ class TestGetDueReviews:
         assert response.status_code == 200
         data = response.json()
         assert data == []
+
+    @pytest.mark.asyncio
+    async def test_get_due_reviews_unknown_learner_returns_404(self, client, mock_session):
+        learner_result = MagicMock()
+        learner_result.scalar_one_or_none.return_value = None
+        mock_session.execute.return_value = learner_result
+
+        with patch("src.api.vocabulary.VocabularyStore") as MockStore:
+            response = await client.get(f"/api/learners/{uuid.uuid4()}/vocabulary/due")
+
+        assert response.status_code == 404
+        assert response.json()["detail"] == "Learner not found"
+        MockStore.assert_not_called()
 
 
 class TestReviewWord:
@@ -236,7 +277,61 @@ class TestReviewWord:
             )
 
         mock_store.update_confidence.assert_awaited_once_with(
+            learner_id=learner_id,
             item_id=uuid.UUID(str(word_id)),
             correct=True,
             response_time_ms=2000,
         )
+
+    @pytest.mark.asyncio
+    async def test_review_word_invalid_word_id_returns_422(self, client, mock_session):
+        learner_id = uuid.uuid4()
+
+        response = await client.post(
+            f"/api/learners/{learner_id}/vocabulary/review",
+            json={"word_id": "not-a-uuid", "correct": True},
+        )
+
+        assert response.status_code == 422
+
+    @pytest.mark.asyncio
+    async def test_review_word_negative_response_time_returns_422(self, client, mock_session):
+        response = await client.post(
+            f"/api/learners/{uuid.uuid4()}/vocabulary/review",
+            json={"word_id": str(uuid.uuid4()), "correct": True, "response_time_ms": -1},
+        )
+
+        assert response.status_code == 422
+
+    @pytest.mark.asyncio
+    async def test_review_word_not_found_returns_404(self, client, mock_session):
+        learner_id = uuid.uuid4()
+        word_id = uuid.uuid4()
+
+        with patch("src.api.vocabulary.VocabularyStore") as MockStore:
+            mock_store = MockStore.return_value
+            mock_store.update_confidence = AsyncMock(side_effect=ValueError("not found"))
+
+            response = await client.post(
+                f"/api/learners/{learner_id}/vocabulary/review",
+                json={"word_id": str(word_id), "correct": True},
+            )
+
+        assert response.status_code == 404
+        assert response.json()["detail"] == "Vocabulary item not found"
+
+    @pytest.mark.asyncio
+    async def test_review_word_unknown_learner_returns_404(self, client, mock_session):
+        learner_result = MagicMock()
+        learner_result.scalar_one_or_none.return_value = None
+        mock_session.execute.return_value = learner_result
+
+        with patch("src.api.vocabulary.VocabularyStore") as MockStore:
+            response = await client.post(
+                f"/api/learners/{uuid.uuid4()}/vocabulary/review",
+                json={"word_id": str(uuid.uuid4()), "correct": True},
+            )
+
+        assert response.status_code == 404
+        assert response.json()["detail"] == "Learner not found"
+        MockStore.assert_not_called()

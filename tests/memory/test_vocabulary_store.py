@@ -30,7 +30,7 @@ class TestAddWord:
         mock_db.commit = AsyncMock()
         mock_db.refresh = AsyncMock()
 
-        item = await store.add_word(
+        await store.add_word(
             learner_id=learner_id,
             word="hello",
             phonetic="/həˈloʊ/",
@@ -55,6 +55,23 @@ class TestAddWord:
         assert added_item.confidence == 0.0
         assert added_item.review_count == 0
         assert added_item.next_review_at is not None
+
+    @pytest.mark.asyncio
+    async def test_add_word_normalizes_word_before_insert(self, store, mock_db):
+        learner_id = uuid.uuid4()
+
+        mock_result = MagicMock()
+        mock_result.scalar_one_or_none.return_value = None
+        mock_db.execute = AsyncMock(return_value=mock_result)
+        mock_db.commit = AsyncMock()
+        mock_db.refresh = AsyncMock()
+
+        await store.add_word(learner_id=learner_id, word="  Hello  ")
+
+        added_item = mock_db.add.call_args.args[0]
+        executed_query = mock_db.execute.await_args.args[0]
+        assert added_item.word == "hello"
+        assert "lower(vocabulary_items.word)" in str(executed_query)
 
     @pytest.mark.asyncio
     async def test_add_duplicate_word_returns_existing(self, store, mock_db):
@@ -85,6 +102,27 @@ class TestAddWord:
         mock_db.add.assert_not_called()
         mock_db.commit.assert_not_called()
 
+    @pytest.mark.asyncio
+    async def test_add_duplicate_word_matches_case_insensitively(self, store, mock_db):
+        learner_id = uuid.uuid4()
+        existing_item = VocabularyItem(
+            id=uuid.uuid4(),
+            learner_id=learner_id,
+            word="hello",
+            status="learning",
+        )
+
+        mock_result = MagicMock()
+        mock_result.scalar_one_or_none.return_value = existing_item
+        mock_db.execute = AsyncMock(return_value=mock_result)
+
+        item = await store.add_word(learner_id=learner_id, word="HELLO")
+
+        executed_query = mock_db.execute.await_args.args[0]
+        assert item is existing_item
+        assert "lower(vocabulary_items.word)" in str(executed_query)
+        mock_db.add.assert_not_called()
+
 
 class TestGetWord:
     @pytest.mark.asyncio
@@ -105,6 +143,26 @@ class TestGetWord:
 
         assert result is expected
         mock_db.execute.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_get_word_matches_case_insensitively(self, store, mock_db):
+        learner_id = uuid.uuid4()
+        expected = VocabularyItem(
+            id=uuid.uuid4(),
+            learner_id=learner_id,
+            word="world",
+            status="learning",
+        )
+
+        mock_result = MagicMock()
+        mock_result.scalar_one_or_none.return_value = expected
+        mock_db.execute = AsyncMock(return_value=mock_result)
+
+        result = await store.get_word(learner_id, "  WORLD  ")
+
+        executed_query = mock_db.execute.await_args.args[0]
+        assert result is expected
+        assert "lower(vocabulary_items.word)" in str(executed_query)
 
     @pytest.mark.asyncio
     async def test_get_word_not_found(self, store, mock_db):
@@ -174,7 +232,9 @@ class TestUpdateConfidence:
         mock_db.commit = AsyncMock()
         mock_db.refresh = AsyncMock()
 
-        updated = await store.update_confidence(item_id, correct=True, response_time_ms=1500)
+        updated = await store.update_confidence(
+            item.learner_id, item_id, correct=True, response_time_ms=1500
+        )
 
         assert updated.confidence == 0.6
         assert updated.review_count == 1
@@ -199,7 +259,9 @@ class TestUpdateConfidence:
         mock_db.commit = AsyncMock()
         mock_db.refresh = AsyncMock()
 
-        updated = await store.update_confidence(item_id, correct=False, response_time_ms=1500)
+        updated = await store.update_confidence(
+            item.learner_id, item_id, correct=False, response_time_ms=1500
+        )
 
         assert updated.confidence == 0.35
         assert updated.review_count == 1
@@ -224,7 +286,9 @@ class TestUpdateConfidence:
         mock_db.commit = AsyncMock()
         mock_db.refresh = AsyncMock()
 
-        updated = await store.update_confidence(item_id, correct=True, response_time_ms=2000)
+        updated = await store.update_confidence(
+            item.learner_id, item_id, correct=True, response_time_ms=2000
+        )
 
         assert updated.confidence == 0.95
         assert updated.review_count == 4
@@ -249,7 +313,9 @@ class TestUpdateConfidence:
         mock_db.commit = AsyncMock()
         mock_db.refresh = AsyncMock()
 
-        updated = await store.update_confidence(item_id, correct=True, response_time_ms=1000)
+        updated = await store.update_confidence(
+            item.learner_id, item_id, correct=True, response_time_ms=1000
+        )
 
         assert updated.confidence == 1.0
         assert updated.status == "mastered"
@@ -272,7 +338,9 @@ class TestUpdateConfidence:
         mock_db.commit = AsyncMock()
         mock_db.refresh = AsyncMock()
 
-        updated = await store.update_confidence(item_id, correct=False, response_time_ms=500)
+        updated = await store.update_confidence(
+            item.learner_id, item_id, correct=False, response_time_ms=500
+        )
 
         assert updated.confidence == 0.0
         assert updated.review_count == 1
@@ -284,7 +352,31 @@ class TestUpdateConfidence:
         mock_db.execute = AsyncMock(return_value=mock_result)
 
         with pytest.raises(ValueError, match="VocabularyItem with id"):
-            await store.update_confidence(uuid.uuid4(), correct=True, response_time_ms=1000)
+            await store.update_confidence(
+                uuid.uuid4(), uuid.uuid4(), correct=True, response_time_ms=1000
+            )
+
+    @pytest.mark.asyncio
+    async def test_update_confidence_raises_when_item_belongs_to_another_learner(
+        self, store, mock_db
+    ):
+        item_id = uuid.uuid4()
+        other_learner_id = uuid.uuid4()
+
+        mock_result = MagicMock()
+        mock_result.scalar_one_or_none.return_value = None
+        mock_db.execute = AsyncMock(return_value=mock_result)
+
+        with pytest.raises(ValueError, match="VocabularyItem with id"):
+            await store.update_confidence(
+                other_learner_id,
+                item_id,
+                correct=True,
+                response_time_ms=1000,
+            )
+
+        executed_query = mock_db.execute.await_args.args[0]
+        assert "vocabulary_items.learner_id" in str(executed_query)
 
     @pytest.mark.asyncio
     async def test_update_confidence_correct_sets_sm2_interval(self, store, mock_db):
@@ -305,7 +397,9 @@ class TestUpdateConfidence:
         mock_db.commit = AsyncMock()
         mock_db.refresh = AsyncMock()
 
-        updated = await store.update_confidence(item_id, correct=True, response_time_ms=1000)
+        updated = await store.update_confidence(
+            item.learner_id, item_id, correct=True, response_time_ms=1000
+        )
 
         assert updated.review_count == 1
         expected = start_time + timedelta(days=1)
@@ -331,7 +425,9 @@ class TestUpdateConfidence:
         mock_db.commit = AsyncMock()
         mock_db.refresh = AsyncMock()
 
-        updated = await store.update_confidence(item_id, correct=True, response_time_ms=1000)
+        updated = await store.update_confidence(
+            item.learner_id, item_id, correct=True, response_time_ms=1000
+        )
 
         assert updated.review_count == 6
         expected = start_time + timedelta(days=30)
@@ -356,7 +452,9 @@ class TestUpdateConfidence:
         mock_db.commit = AsyncMock()
         mock_db.refresh = AsyncMock()
 
-        updated = await store.update_confidence(item_id, correct=False, response_time_ms=1000)
+        updated = await store.update_confidence(
+            item.learner_id, item_id, correct=False, response_time_ms=1000
+        )
 
         assert updated.review_count == 6
         expected = start_time + timedelta(days=1)

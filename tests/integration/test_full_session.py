@@ -16,6 +16,9 @@ def mock_session():
     session = AsyncMock()
     session.add = MagicMock()
     session.flush = AsyncMock()
+    learner_result = MagicMock()
+    learner_result.scalar_one_or_none.return_value = uuid.uuid4()
+    session.execute = AsyncMock(return_value=learner_result)
 
     async def _refresh(instance):
         if hasattr(instance, "id") and instance.id is None:

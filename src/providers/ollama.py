@@ -14,11 +14,13 @@ class OllamaClient(ModelClient):
         base_url: str | None = None,
         chat_model: str | None = None,
         utility_model: str | None = None,
+        embedding_model: str | None = None,
         timeout: float = 60.0,
     ) -> None:
         self.base_url = (base_url or settings.ollama_base_url).rstrip("/")
         self.chat_model = chat_model or settings.ollama_chat_model
         self.utility_model = utility_model or settings.ollama_utility_model
+        self.embedding_model = embedding_model or settings.ollama_embedding_model
         self._timeout = timeout
         self._client: httpx.AsyncClient | None = None
 
@@ -83,6 +85,7 @@ class OllamaClient(ModelClient):
             "reachable": False,
             "chat_model": {"name": self.chat_model, "available": False},
             "utility_model": {"name": self.utility_model, "available": False},
+            "embedding_model": {"name": self.embedding_model, "available": False},
         }
 
         try:
@@ -91,11 +94,15 @@ class OllamaClient(ModelClient):
             result["reachable"] = True
 
             models_data = resp.json()
-            available_models = {m["name"] for m in models_data.get("models", [])}
+            models = models_data.get("models", []) if isinstance(models_data, dict) else []
+            available_models = {
+                m["name"] for m in models if isinstance(m, dict) and isinstance(m.get("name"), str)
+            }
 
             result["chat_model"]["available"] = self.chat_model in available_models
             result["utility_model"]["available"] = self.utility_model in available_models
-        except httpx.HTTPError:
+            result["embedding_model"]["available"] = self.embedding_model in available_models
+        except (httpx.HTTPError, ValueError, TypeError):
             pass
 
         return result

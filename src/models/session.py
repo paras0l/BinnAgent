@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 from typing import Optional
 
-from sqlalchemy import DateTime, SmallInteger, String, Text
+from sqlalchemy import DateTime, ForeignKey, SmallInteger, String, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -13,7 +13,12 @@ from src.models.base import TimestampMixin, UUIDPrimaryKeyMixin
 class LearningSession(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     __tablename__ = "learning_sessions"
 
-    learner_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False, index=True)
+    learner_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("learners.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
     thread_id: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     run_id: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     session_type: Mapped[str] = mapped_column(String(50), nullable=False)
@@ -31,9 +36,17 @@ class LearningSession(UUIDPrimaryKeyMixin, TimestampMixin, Base):
 class LearningTask(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     __tablename__ = "learning_tasks"
 
-    learner_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False, index=True)
+    learner_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("learners.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
     session_id: Mapped[Optional[uuid.UUID]] = mapped_column(
-        UUID(as_uuid=True), nullable=True, index=True
+        UUID(as_uuid=True),
+        ForeignKey("learning_sessions.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
     )
     task_type: Mapped[str] = mapped_column(String(50), nullable=False)
     skill: Mapped[str] = mapped_column(String(50), nullable=False)

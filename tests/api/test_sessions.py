@@ -13,6 +13,9 @@ def mock_session():
     session = AsyncMock()
     session.add = MagicMock()
     session.flush = AsyncMock()
+    learner_result = MagicMock()
+    learner_result.scalar_one_or_none.return_value = uuid.uuid4()
+    session.execute = AsyncMock(return_value=learner_result)
 
     async def _refresh(instance):
         if hasattr(instance, "id") and instance.id is None:
@@ -82,3 +85,45 @@ class TestStartSession:
         )
 
         assert response.status_code == 422
+
+    @pytest.mark.asyncio
+    async def test_start_session_invalid_learner_id_returns_422(self, client):
+        response = await client.post(
+            "/api/sessions/start",
+            json={"learner_id": "not-a-uuid"},
+        )
+
+        assert response.status_code == 422
+
+    @pytest.mark.asyncio
+    async def test_start_session_unknown_learner_returns_404(self, client, mock_session):
+        learner_result = MagicMock()
+        learner_result.scalar_one_or_none.return_value = None
+        mock_session.execute.return_value = learner_result
+
+        response = await client.post(
+            "/api/sessions/start",
+            json={"learner_id": str(uuid.uuid4())},
+        )
+
+        assert response.status_code == 404
+        assert response.json()["detail"] == "Learner not found"
+
+    @pytest.mark.asyncio
+    @patch("src.api.sessions.daily_lesson_graph.ainvoke")
+    async def test_start_session_marks_session_failed_when_graph_fails(
+        self, mock_ainvoke, client, mock_session
+    ):
+        mock_ainvoke.side_effect = RuntimeError("graph exploded")
+
+        response = await client.post(
+            "/api/sessions/start",
+            json={"learner_id": str(uuid.uuid4())},
+        )
+
+        assert response.status_code == 500
+        assert response.json()["detail"] == "Failed to start learning session"
+        session = mock_session.add.call_args.args[0]
+        assert session.status == "failed"
+        assert session.summary == "graph exploded"
+        assert mock_session.commit.await_count >= 2

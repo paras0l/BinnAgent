@@ -13,6 +13,7 @@ def ollama_client() -> OllamaClient:
         base_url="http://test:11434",
         chat_model="test-model:latest",
         utility_model="test-utility:latest",
+        embedding_model="test-embedding:latest",
     )
 
 
@@ -167,7 +168,7 @@ async def test_health_check_reachable(ollama_client: OllamaClient) -> None:
                 "models": [
                     {"name": "test-model:latest"},
                     {"name": "test-utility:latest"},
-                    {"name": "nomic-embed-text:latest"},
+                    {"name": "test-embedding:latest"},
                 ],
             },
         )
@@ -180,6 +181,7 @@ async def test_health_check_reachable(ollama_client: OllamaClient) -> None:
     assert result["reachable"] is True
     assert result["chat_model"]["available"] is True
     assert result["utility_model"]["available"] is True
+    assert result["embedding_model"]["available"] is True
 
 
 @pytest.mark.asyncio
@@ -198,6 +200,7 @@ async def test_health_check_unreachable(ollama_client: OllamaClient) -> None:
 
     assert result["reachable"] is False
     assert result["chat_model"]["available"] is False
+    assert result["embedding_model"]["available"] is False
     assert result["utility_model"]["available"] is False
 
 
@@ -219,6 +222,48 @@ async def test_health_check_model_not_available(ollama_client: OllamaClient) -> 
 
     assert result["reachable"] is True
     assert result["chat_model"]["available"] is False
+    assert result["utility_model"]["available"] is False
+    assert result["embedding_model"]["available"] is False
+
+
+@pytest.mark.asyncio
+async def test_health_check_malformed_response_marks_models_unavailable(
+    ollama_client: OllamaClient,
+) -> None:
+    mock_resp = MagicMock(spec=httpx.Response)
+    mock_resp.raise_for_status = MagicMock()
+    mock_resp.json.side_effect = ValueError("bad json")
+
+    mock_client = MagicMock(spec=httpx.AsyncClient)
+    mock_client.get = AsyncMock(return_value=mock_resp)
+    ollama_client._client = mock_client
+
+    result = await ollama_client.health_check()
+
+    assert result["reachable"] is True
+    assert result["chat_model"]["available"] is False
+
+
+@pytest.mark.asyncio
+async def test_health_check_ignores_malformed_model_entries(ollama_client: OllamaClient) -> None:
+    mock_client = MagicMock(spec=httpx.AsyncClient)
+    mock_client.get = AsyncMock(
+        return_value=_mock_response(
+            json_data={
+                "models": [
+                    {"name": "test-model:latest"},
+                    {"bad": "entry"},
+                    "not-a-dict",
+                ],
+            },
+        )
+    )
+    ollama_client._client = mock_client
+
+    result = await ollama_client.health_check()
+
+    assert result["reachable"] is True
+    assert result["chat_model"]["available"] is True
     assert result["utility_model"]["available"] is False
 
 

@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { StatsCards } from '@/components/dashboard/StatsCards'
 import { VocabReviewCard } from '@/components/dashboard/VocabReviewCard'
 import { ErrorPatternList } from '@/components/dashboard/ErrorPatternList'
@@ -16,8 +17,12 @@ const sampleErrors = [
 ]
 
 export function DashboardPage() {
+  const [currentVocabIndex, setCurrentVocabIndex] = useState(0)
+  const currentVocab = sampleVocab[currentVocabIndex]
+
   const handleRate = (rating: 1 | 2 | 3 | 4) => {
     console.log('Rated:', rating)
+    setCurrentVocabIndex(prev => (prev + 1) % sampleVocab.length)
   }
 
   return (
@@ -30,10 +35,11 @@ export function DashboardPage() {
       />
 
       <VocabReviewCard
-        word={sampleVocab[0].word}
-        definition={sampleVocab[0].definition}
-        example={sampleVocab[0].example}
-        currentIndex={0}
+        key={currentVocab.word}
+        word={currentVocab.word}
+        definition={currentVocab.definition}
+        example={currentVocab.example}
+        currentIndex={currentVocabIndex}
         totalCount={sampleVocab.length}
         onRate={handleRate}
       />

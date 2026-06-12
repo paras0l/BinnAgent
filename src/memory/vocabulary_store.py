@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime, timedelta, timezone
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.models.vocabulary import VocabularyItem
@@ -22,11 +22,13 @@ class VocabularyStore:
         examples: list | None = None,
         source_ref: str | None = None,
     ) -> VocabularyItem:
+        normalized_word = word.strip().lower()
+
         # Check if word already exists for this learner (no duplicates)
         result = await self.db.execute(
             select(VocabularyItem).where(
                 VocabularyItem.learner_id == learner_id,
-                VocabularyItem.word == word,
+                func.lower(VocabularyItem.word) == normalized_word,
             )
         )
         existing = result.scalar_one_or_none()
@@ -35,7 +37,7 @@ class VocabularyStore:
 
         item = VocabularyItem(
             learner_id=learner_id,
-            word=word,
+            word=normalized_word,
             phonetic=phonetic,
             level=level,
             meanings=meanings or [],
@@ -53,10 +55,11 @@ class VocabularyStore:
         return item
 
     async def get_word(self, learner_id: uuid.UUID, word: str) -> VocabularyItem | None:
+        normalized_word = word.strip().lower()
         result = await self.db.execute(
             select(VocabularyItem).where(
                 VocabularyItem.learner_id == learner_id,
-                VocabularyItem.word == word,
+                func.lower(VocabularyItem.word) == normalized_word,
             )
         )
         return result.scalar_one_or_none()
@@ -76,9 +79,14 @@ class VocabularyStore:
         return list(result.scalars().all())
 
     async def update_confidence(
-        self, item_id: uuid.UUID, correct: bool, response_time_ms: int
+        self, learner_id: uuid.UUID, item_id: uuid.UUID, correct: bool, response_time_ms: int | None
     ) -> VocabularyItem:
-        result = await self.db.execute(select(VocabularyItem).where(VocabularyItem.id == item_id))
+        result = await self.db.execute(
+            select(VocabularyItem).where(
+                VocabularyItem.id == item_id,
+                VocabularyItem.learner_id == learner_id,
+            )
+        )
         item = result.scalar_one_or_none()
         if not item:
             raise ValueError(f"VocabularyItem with id {item_id} not found")

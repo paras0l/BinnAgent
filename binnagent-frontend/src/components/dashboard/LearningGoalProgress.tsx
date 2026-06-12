@@ -4,8 +4,12 @@ interface LearningGoalProgressProps {
 }
 
 export function LearningGoalProgress({ dailyGoal, weeklyGoal }: LearningGoalProgressProps) {
-  const dailyPercent = Math.round((dailyGoal.completed / dailyGoal.total) * 100)
-  const weeklyPercent = Math.round((weeklyGoal.completed / weeklyGoal.total) * 100)
+  const toPercent = (completed: number, total: number) => {
+    if (total <= 0) return 0
+    return Math.max(0, Math.min(100, Math.round((completed / total) * 100)))
+  }
+  const dailyPercent = toPercent(dailyGoal.completed, dailyGoal.total)
+  const weeklyPercent = toPercent(weeklyGoal.completed, weeklyGoal.total)
 
   return (
     <div className="rounded-xl border bg-card p-6">

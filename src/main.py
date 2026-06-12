@@ -8,11 +8,15 @@ from src.api.learners import router as learners_router
 from src.api.sessions import router as sessions_router
 from src.api.vocabulary import router as vocabulary_router
 from src.api.chat import router as chat_router
+from src.providers.router import router as model_router
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
-    yield
+    try:
+        yield
+    finally:
+        await model_router.close()
 
 
 app = FastAPI(

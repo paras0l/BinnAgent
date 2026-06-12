@@ -1,18 +1,20 @@
 import uuid
 
-from fastapi import APIRouter, Depends
-from pydantic import BaseModel
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel, Field
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.api.deps import get_db_session
 from src.graph.main_graph import daily_lesson_graph
+from src.models.learner import Learner
 from src.models.session import LearningSession
 
 router = APIRouter(prefix="/api/sessions", tags=["sessions"])
 
 
 class StartSessionRequest(BaseModel):
-    learner_id: str
+    learner_id: uuid.UUID
     user_message: str = "开始今日课程"
 
 
@@ -21,10 +23,16 @@ class SessionDetailResponse(BaseModel):
     status: str
     active_skill: str | None = None
     today_goal: str | None = None
-    messages: list[dict] = []
+    messages: list[dict] = Field(default_factory=list)
     feedback: dict | None = None
-    review_items: list[dict] = []
-    input_materials: list[dict] = []
+    review_items: list[dict] = Field(default_factory=list)
+    input_materials: list[dict] = Field(default_factory=list)
+
+
+async def _ensure_learner_exists(db: AsyncSession, learner_id: uuid.UUID) -> None:
+    result = await db.execute(select(Learner.id).where(Learner.id == learner_id))
+    if result.scalar_one_or_none() is None:
+        raise HTTPException(status_code=404, detail="Learner not found")
 
 
 @router.post("/start", response_model=SessionDetailResponse)
@@ -32,7 +40,9 @@ async def start_session(
     req: StartSessionRequest,
     db: AsyncSession = Depends(get_db_session),
 ) -> SessionDetailResponse:
-    learner_id = uuid.UUID(req.learner_id)
+    learner_id = req.learner_id
+    await _ensure_learner_exists(db, learner_id)
+
     session = LearningSession(
         learner_id=learner_id,
         session_type="daily_lesson",
@@ -51,7 +61,13 @@ async def start_session(
         "messages": [{"role": "user", "content": req.user_message}],
     }
 
-    result = await daily_lesson_graph.ainvoke(initial_state)
+    try:
+        result = await daily_lesson_graph.ainvoke(initial_state)
+    except Exception as exc:
+        session.status = "failed"
+        session.summary = str(exc)[:500]
+        await db.commit()
+        raise HTTPException(status_code=500, detail="Failed to start learning session")
 
     session.active_skill = result.get("active_skill")
     session.today_goal = result.get("today_goal")

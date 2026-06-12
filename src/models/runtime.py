@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 from typing import Optional
 
-from sqlalchemy import Boolean, DateTime, Float, Integer, SmallInteger, String, Text
+from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, SmallInteger, String, Text
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -14,7 +14,10 @@ class AgentThread(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     __tablename__ = "agent_threads"
 
     learner_id: Mapped[Optional[uuid.UUID]] = mapped_column(
-        UUID(as_uuid=True), nullable=True, index=True
+        UUID(as_uuid=True),
+        ForeignKey("learners.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
     )
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="active")
     metadata_: Mapped[Optional[dict]] = mapped_column(
@@ -28,8 +31,17 @@ class AgentThread(UUIDPrimaryKeyMixin, TimestampMixin, Base):
 class AgentRun(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     __tablename__ = "agent_runs"
 
-    thread_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False, index=True)
-    session_id: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), nullable=True)
+    thread_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("agent_threads.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    session_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("learning_sessions.id", ondelete="SET NULL"),
+        nullable=True,
+    )
     graph_name: Mapped[str] = mapped_column(String(100), nullable=False)
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="running")
     model_usage: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True, default=dict)
@@ -46,7 +58,12 @@ class AgentRun(UUIDPrimaryKeyMixin, TimestampMixin, Base):
 class AgentEvent(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     __tablename__ = "agent_events"
 
-    run_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False, index=True)
+    run_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("agent_runs.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
     event_type: Mapped[str] = mapped_column(String(50), nullable=False)
     node_name: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     payload: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True, default=dict)
@@ -58,7 +75,12 @@ class AgentEvent(UUIDPrimaryKeyMixin, TimestampMixin, Base):
 class ToolCall(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     __tablename__ = "tool_calls"
 
-    run_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False, index=True)
+    run_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("agent_runs.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
     node_name: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     tool_name: Mapped[str] = mapped_column(String(100), nullable=False)
     input_summary: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
@@ -74,7 +96,12 @@ class ToolCall(UUIDPrimaryKeyMixin, TimestampMixin, Base):
 class ModelCallLog(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     __tablename__ = "model_call_logs"
 
-    run_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False, index=True)
+    run_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("agent_runs.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
     node_name: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     task_type: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
     provider: Mapped[str] = mapped_column(String(50), nullable=False)

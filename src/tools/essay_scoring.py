@@ -1,9 +1,8 @@
 from dataclasses import dataclass, field
 from typing import Optional
 
-import httpx
-
-from src.config import settings
+from src.providers.base import ChatRequest
+from src.providers.router import router
 
 
 @dataclass
@@ -36,6 +35,7 @@ class EssayScoringTool:
     async def _score_via_llm(self, text: str, prompt: Optional[str] = None) -> EssayScoringResult:
         import json as _json
 
+        word_count = len(text.split())
         context = f"写作题目: {prompt}\n\n" if prompt else ""
         user_msg = (
             f"{context}请对以下英语作文进行评分和反馈。\n\n"
@@ -47,32 +47,25 @@ class EssayScoringTool:
         )
 
         try:
-            async with httpx.AsyncClient(
-                base_url=settings.ollama_base_url,
-                timeout=httpx.Timeout(120.0),
-            ) as client:
-                resp = await client.post(
-                    "/api/chat",
-                    json={
-                        "model": settings.ollama_chat_model,
-                        "messages": [
-                            {
-                                "role": "system",
-                                "content": (
-                                    "你是一位专业的英语作文评分老师，熟悉CET-4和CET-6写作评分标准。"
-                                    "请从词汇、语法、结构、内容四个方面评分，总分25分。"
-                                    "请用JSON格式回复。"
-                                ),
-                            },
-                            {"role": "user", "content": user_msg},
-                        ],
-                        "stream": False,
-                        "options": {"temperature": 0.3, "num_predict": 1024},
-                    },
+            response = await router.chat(
+                ChatRequest(
+                    messages=[
+                        {
+                            "role": "system",
+                            "content": (
+                                "你是一位专业的英语作文评分老师，熟悉CET-4和CET-6写作评分标准。"
+                                "请从词汇、语法、结构、内容四个方面评分，总分25分。"
+                                "请用JSON格式回复。"
+                            ),
+                        },
+                        {"role": "user", "content": user_msg},
+                    ],
+                    task_type="essay_scoring",
+                    temperature=0.3,
+                    max_tokens=1024,
                 )
-                resp.raise_for_status()
-                data = resp.json()
-                content = data.get("message", {}).get("content", "")
+            )
+            content = response.content
 
             parsed = _json.loads(content)
             score = float(parsed.get("score", 10.0))

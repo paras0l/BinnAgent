@@ -1,5 +1,6 @@
-from datetime import datetime
-from src.tools.srs import SRSCard, srs_scheduler, INTERVALS
+from datetime import datetime, timezone
+
+from src.tools.srs import SRSCard, srs_scheduler
 
 
 class TestSRSCorrectAnswer:
@@ -13,6 +14,7 @@ class TestSRSCorrectAnswer:
         assert card.last_result is True
         assert card.review_count == 1
         assert card.next_review is not None
+        assert card.next_review.tzinfo is not None
 
         # Second correct answer -> interval=2, confidence=0.4
         card = srs_scheduler.schedule_next(card, correct=True)
@@ -41,7 +43,7 @@ class TestSRSWrongAnswer:
 
 class TestSRSRecommendDrill:
     def test_recommend_drill_filters_due_cards(self):
-        now = datetime.now()
+        now = datetime.now(timezone.utc)
         card_due = SRSCard(item_id="due_1", item_type="vocabulary", next_review=now)
         card_future = SRSCard(
             item_id="future_1", item_type="vocabulary", next_review=now.replace(year=now.year + 1)
@@ -53,3 +55,14 @@ class TestSRSRecommendDrill:
         assert card_due in recommended
         assert card_no_review in recommended
         assert card_future not in recommended
+
+    def test_recommend_drill_handles_legacy_naive_datetimes(self):
+        card_due = SRSCard(
+            item_id="legacy_due",
+            item_type="vocabulary",
+            next_review=datetime(2026, 1, 1),
+        )
+
+        recommended = srs_scheduler.recommend_drill([card_due], limit=10)
+
+        assert recommended == [card_due]

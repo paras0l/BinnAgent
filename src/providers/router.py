@@ -30,8 +30,16 @@ class ModelRouter:
             results[name] = await client.health_check()
         if not results:
             ollama = OllamaClient()
-            results["ollama"] = await ollama.health_check()
+            try:
+                results["ollama"] = await ollama.health_check()
+            finally:
+                await ollama.close()
         return results
+
+    async def close(self) -> None:
+        for client in self._clients.values():
+            await client.close()
+        self._clients.clear()
 
 
 router = ModelRouter()

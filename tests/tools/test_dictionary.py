@@ -1,4 +1,10 @@
+from unittest.mock import AsyncMock
+import importlib
+
+from src.providers.base import ChatResponse
 from src.tools.dictionary import DictionaryLookupRequest, DictionaryLookupResponse, dictionary
+
+dictionary_module = importlib.import_module("src.tools.dictionary")
 
 
 class TestDictionaryLookupKnownWord:
@@ -26,6 +32,26 @@ class TestDictionaryLookupUnknownWord:
         assert isinstance(response, DictionaryLookupResponse)
         assert response.word == "xyz"
         assert response.provider in ("ollama", "ollama_error")
+
+    async def test_lookup_unknown_word_uses_model_router(self, monkeypatch):
+        mock_router = AsyncMock()
+        mock_router.chat = AsyncMock(
+            return_value=ChatResponse(
+                provider="ollama",
+                model="gemma4:e2b",
+                content='{"phonetic": "/test/", "meanings": [{"definition": "test"}]}',
+            )
+        )
+        monkeypatch.setattr(dictionary_module, "router", mock_router)
+
+        response = await dictionary.lookup(DictionaryLookupRequest(word="xyz"))
+
+        assert response.provider == "ollama"
+        assert response.phonetic == "/test/"
+        request = mock_router.chat.await_args.args[0]
+        assert request.task_type == "dictionary_lookup"
+        assert request.temperature == 0.3
+        assert request.max_tokens == 512
 
 
 class TestDictionaryLookupWithContext:

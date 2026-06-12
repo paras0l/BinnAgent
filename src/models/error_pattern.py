@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 from typing import Optional
 
-from sqlalchemy import DateTime, SmallInteger, String, Text
+from sqlalchemy import DateTime, ForeignKey, SmallInteger, String, Text
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -13,7 +13,12 @@ from src.models.base import TimestampMixin, UUIDPrimaryKeyMixin
 class ErrorPattern(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     __tablename__ = "error_patterns"
 
-    learner_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False, index=True)
+    learner_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("learners.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
     skill: Mapped[str] = mapped_column(String(50), nullable=False)
     pattern: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)

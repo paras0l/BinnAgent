@@ -1,9 +1,8 @@
 from dataclasses import dataclass, field
 from typing import Optional
 
-import httpx
-
-from src.config import settings
+from src.providers.base import ChatRequest
+from src.providers.router import router
 
 
 @dataclass
@@ -648,28 +647,21 @@ class DictionaryTool:
         )
 
         try:
-            async with httpx.AsyncClient(
-                base_url=settings.ollama_base_url,
-                timeout=httpx.Timeout(60.0),
-            ) as client:
-                resp = await client.post(
-                    "/api/chat",
-                    json={
-                        "model": settings.ollama_chat_model,
-                        "messages": [
-                            {
-                                "role": "system",
-                                "content": "你是一位专业的英语词典助手。请用JSON格式回复词典信息。",
-                            },
-                            {"role": "user", "content": prompt},
-                        ],
-                        "stream": False,
-                        "options": {"temperature": 0.3, "num_predict": 512},
-                    },
+            response = await router.chat(
+                ChatRequest(
+                    messages=[
+                        {
+                            "role": "system",
+                            "content": "你是一位专业的英语词典助手。请用JSON格式回复词典信息。",
+                        },
+                        {"role": "user", "content": prompt},
+                    ],
+                    task_type="dictionary_lookup",
+                    temperature=0.3,
+                    max_tokens=512,
                 )
-                resp.raise_for_status()
-                data = resp.json()
-                content = data.get("message", {}).get("content", "")
+            )
+            content = response.content
 
             parsed = _json.loads(content)
             return DictionaryLookupResponse(

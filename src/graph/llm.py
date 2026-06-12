@@ -1,8 +1,5 @@
-from typing import Any
-
-import httpx
-
-from src.config import settings
+from src.providers.base import ChatRequest
+from src.providers.router import router
 
 
 async def call_llm(
@@ -16,21 +13,12 @@ async def call_llm(
         all_messages.append({"role": "system", "content": system_prompt})
     all_messages.extend(messages)
 
-    payload: dict[str, Any] = {
-        "model": settings.ollama_chat_model,
-        "messages": all_messages,
-        "stream": False,
-        "options": {
-            "temperature": temperature,
-            "num_predict": max_tokens,
-        },
-    }
-
-    async with httpx.AsyncClient(
-        base_url=settings.ollama_base_url,
-        timeout=httpx.Timeout(60.0),
-    ) as client:
-        resp = await client.post("/api/chat", json=payload)
-        resp.raise_for_status()
-        data = resp.json()
-        return data.get("message", {}).get("content", "")
+    response = await router.chat(
+        ChatRequest(
+            messages=all_messages,
+            task_type="graph_node",
+            temperature=temperature,
+            max_tokens=max_tokens,
+        )
+    )
+    return response.content

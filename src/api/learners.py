@@ -3,7 +3,7 @@ from datetime import date
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -17,15 +17,23 @@ router = APIRouter(prefix="/api/learners", tags=["learners"])
 
 
 class CreateLearnerRequest(BaseModel):
-    nickname: str
-    email: Optional[str] = None
+    nickname: str = Field(min_length=1, max_length=100)
+    email: Optional[str] = Field(default=None, max_length=255)
+
+    @field_validator("nickname")
+    @classmethod
+    def nickname_must_not_be_blank(cls, value: str) -> str:
+        stripped = value.strip()
+        if not stripped:
+            raise ValueError("Nickname must not be blank")
+        return stripped
 
 
 class CreateProfileRequest(BaseModel):
-    target_exam: Optional[str] = None
-    target_score: Optional[int] = None
+    target_exam: Optional[str] = Field(default=None, max_length=50)
+    target_score: Optional[int] = Field(default=None, ge=0, le=710)
     exam_date: Optional[date] = None
-    daily_time_budget_minutes: Optional[int] = None
+    daily_time_budget_minutes: Optional[int] = Field(default=None, ge=1, le=600)
 
 
 # --- Response schemas ---

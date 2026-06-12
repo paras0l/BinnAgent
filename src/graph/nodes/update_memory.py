@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from src.graph.state import LearningState
 
 
@@ -12,7 +14,7 @@ async def update_memory(state: LearningState) -> dict:
         memory_candidates.append(
             {
                 "type": "practice_record",
-                "timestamp": "2026-01-01T00:00:00",
+                "timestamp": datetime.now(timezone.utc).isoformat(),
                 "summary": "完成了一次练习",
                 "metadata": {
                     "active_skill": state.get("active_skill"),

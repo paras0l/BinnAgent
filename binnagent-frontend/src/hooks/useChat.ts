@@ -7,6 +7,12 @@ interface Message {
   timestamp: number
 }
 
+interface ChatResponse {
+  reply?: string
+  response?: string
+  message?: string
+}
+
 export function useChat() {
   const [messages, setMessages] = useState<Message[]>([])
   const [isLoading, setIsLoading] = useState(false)
@@ -44,17 +50,21 @@ export function useChat() {
 
       if (!response.ok) throw new Error('Chat request failed')
       
-      const data = await response.json()
+      const data: ChatResponse = await response.json()
+      const assistantContent =
+        data.reply || data.response || data.message || 'Sorry, I could not process your request.'
       
       setMessages(prev =>
         prev.map(m =>
           m.id === assistantId
-            ? { ...m, content: data.response || data.message || 'Sorry, I could not process your request.' }
+            ? { ...m, content: assistantContent }
             : m
         )
       )
     } catch (err: unknown) {
-      if (err instanceof Error && err.name !== 'AbortError') {
+      if (err instanceof Error && err.name === 'AbortError') {
+        setMessages(prev => prev.filter(m => m.id !== assistantId))
+      } else if (err instanceof Error) {
         console.error('Chat error:', err)
         setMessages(prev =>
           prev.map(m =>

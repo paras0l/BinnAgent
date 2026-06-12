@@ -60,6 +60,12 @@ class TestCreateLearner:
 
         assert response.status_code == 422
 
+    @pytest.mark.asyncio
+    async def test_create_learner_blank_nickname_returns_422(self, client, mock_session):
+        response = await client.post("/api/learners", json={"nickname": "   "})
+
+        assert response.status_code == 422
+
 
 class TestGetLearner:
     @pytest.mark.asyncio
@@ -161,6 +167,24 @@ class TestCreateProfile:
 
         assert response.status_code == 409
         assert response.json()["detail"] == "Profile already exists"
+
+    @pytest.mark.asyncio
+    async def test_create_profile_invalid_score_returns_422(self, client, mock_session):
+        response = await client.post(
+            f"/api/learners/{uuid.uuid4()}/profile",
+            json={"target_score": 999},
+        )
+
+        assert response.status_code == 422
+
+    @pytest.mark.asyncio
+    async def test_create_profile_invalid_time_budget_returns_422(self, client, mock_session):
+        response = await client.post(
+            f"/api/learners/{uuid.uuid4()}/profile",
+            json={"daily_time_budget_minutes": 0},
+        )
+
+        assert response.status_code == 422
 
 
 class TestGetProfile:

@@ -6,6 +6,17 @@
 
 ## 快速开始
 
+### 一键启动开发环境
+
+```bash
+./scripts/dev.sh
+```
+
+脚本会启动 Docker 服务（PostgreSQL、Redis、后端 API）、执行数据库迁移，并启动前端开发服务器。
+
+- 后端 API：http://localhost:8000/docs
+- 前端页面：http://localhost:3000
+
 ### Docker 部署（推荐）
 
 ```bash

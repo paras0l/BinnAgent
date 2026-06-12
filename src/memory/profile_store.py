@@ -33,5 +33,5 @@ class ProfileStore:
         )
         profile = result.scalar_one_or_none()
         if profile:
-            profile.weak_skills = {"skills": skills}
+            profile.weak_skills = skills
             await self.db.commit()
