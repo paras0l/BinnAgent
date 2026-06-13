@@ -1,4 +1,6 @@
 import uuid
+from datetime import datetime, timezone
+import logging
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
@@ -7,10 +9,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.api.deps import get_db_session
 from src.graph.main_graph import daily_lesson_graph
+from src.memory.extraction import MemoryExtractionService
 from src.models.learner import Learner
 from src.models.session import LearningSession
 
 router = APIRouter(prefix="/api/sessions", tags=["sessions"])
+logger = logging.getLogger(__name__)
 
 
 class StartSessionRequest(BaseModel):
@@ -47,6 +51,7 @@ async def start_session(
         learner_id=learner_id,
         session_type="daily_lesson",
         status="active",
+        started_at=datetime.now(timezone.utc),
     )
     db.add(session)
     await db.commit()
@@ -65,6 +70,7 @@ async def start_session(
         result = await daily_lesson_graph.ainvoke(initial_state)
     except Exception as exc:
         session.status = "failed"
+        session.completed_at = datetime.now(timezone.utc)
         session.summary = str(exc)[:500]
         await db.commit()
         raise HTTPException(status_code=500, detail="Failed to start learning session")
@@ -72,6 +78,16 @@ async def start_session(
     session.active_skill = result.get("active_skill")
     session.today_goal = result.get("today_goal")
     session.status = "completed"
+    session.completed_at = datetime.now(timezone.utc)
+    session.summary = _session_summary(result)
+    try:
+        await MemoryExtractionService(db).capture_session_result(
+            learner_id=learner_id,
+            session_id=session.id,
+            result=result,
+        )
+    except Exception:
+        logger.exception("Failed to capture session memory")
     await db.commit()
     await db.refresh(session)
 
@@ -94,3 +110,15 @@ async def start_session(
         review_items=result.get("review_items", []),
         input_materials=result.get("input_materials", []),
     )
+
+
+def _session_summary(result: dict) -> str | None:
+    today_goal = result.get("today_goal")
+    active_skill = result.get("active_skill")
+    if today_goal and active_skill:
+        return f"{active_skill}: {today_goal}"
+    if today_goal:
+        return str(today_goal)
+    if active_skill:
+        return f"Completed {active_skill} practice"
+    return None

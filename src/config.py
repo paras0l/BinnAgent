@@ -13,6 +13,9 @@ class Settings(BaseSettings):
     ollama_chat_model: str = "gemma4:e2b"
     ollama_utility_model: str = "gemma4:e2b"
     ollama_embedding_model: str = "nomic-embed-text:latest"
+    chat_max_tokens: int = 2048
+    chat_history_limit: int = 12
+    chat_auto_continue_limit: int = 2
     fallback_enabled: bool = False
     redis_url: str = "redis://localhost:6379/0"
     debug: bool = False

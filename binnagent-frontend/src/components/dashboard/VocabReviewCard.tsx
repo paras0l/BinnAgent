@@ -3,8 +3,8 @@ import { RotateCcw } from 'lucide-react'
 
 interface VocabReviewCardProps {
   word: string
-  definition: string
-  example: string
+  definition?: string | null
+  example?: string | null
   currentIndex: number
   totalCount: number
   onRate: (rating: 1 | 2 | 3 | 4) => void
@@ -50,8 +50,12 @@ export function VocabReviewCard({
 
           <div className="absolute inset-0 flex flex-col items-center justify-center rounded-2xl border bg-card p-8 backface-hidden rotate-y-180">
             <p className="text-2xl font-bold text-foreground">{word}</p>
-            <p className="mt-2 text-lg text-muted-foreground">{definition}</p>
-            <p className="mt-4 text-sm text-muted-foreground italic">"{example}"</p>
+            <p className="mt-2 text-lg text-muted-foreground">
+              {definition || '暂无释义，建议先补充词典信息'}
+            </p>
+            <p className="mt-4 text-sm text-muted-foreground italic">
+              {example ? `"${example}"` : '暂无例句'}
+            </p>
           </div>
         </div>
       </div>

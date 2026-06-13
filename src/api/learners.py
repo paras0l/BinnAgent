@@ -4,7 +4,7 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, ConfigDict, Field, field_validator
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.api.deps import get_db_session
@@ -27,6 +27,18 @@ class CreateLearnerRequest(BaseModel):
         if not stripped:
             raise ValueError("Nickname must not be blank")
         return stripped
+
+    @field_validator("email")
+    @classmethod
+    def normalize_email(cls, value: Optional[str]) -> Optional[str]:
+        if value is None:
+            return None
+        stripped = value.strip().lower()
+        return stripped or None
+
+
+class LoginLearnerRequest(CreateLearnerRequest):
+    pass
 
 
 class CreateProfileRequest(BaseModel):
@@ -65,6 +77,37 @@ async def create_learner(
     body: CreateLearnerRequest,
     db: AsyncSession = Depends(get_db_session),
 ) -> Learner:
+    learner = Learner(nickname=body.nickname, email=body.email)
+    db.add(learner)
+    await db.flush()
+    await db.refresh(learner)
+    return learner
+
+
+@router.post("/login", response_model=LearnerResponse)
+async def login_learner(
+    body: LoginLearnerRequest,
+    db: AsyncSession = Depends(get_db_session),
+) -> Learner:
+    if body.email:
+        result = await db.execute(select(Learner).where(Learner.email == body.email))
+        existing = result.scalar_one_or_none()
+        if existing is not None:
+            return existing
+
+    nickname_result = await db.execute(
+        select(Learner)
+        .where(func.lower(Learner.nickname) == body.nickname.lower())
+        .order_by(Learner.created_at.asc())
+    )
+    existing_by_nickname = nickname_result.scalars().first()
+    if existing_by_nickname is not None:
+        if body.email and existing_by_nickname.email is None:
+            existing_by_nickname.email = body.email
+            await db.flush()
+            await db.refresh(existing_by_nickname)
+        return existing_by_nickname
+
     learner = Learner(nickname=body.nickname, email=body.email)
     db.add(learner)
     await db.flush()

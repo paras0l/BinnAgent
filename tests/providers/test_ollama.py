@@ -24,6 +24,24 @@ def _mock_response(status_code: int = 200, json_data: dict | None = None) -> Mag
     return resp
 
 
+class _MockStreamResponse:
+    def __init__(self, lines: list[str]) -> None:
+        self.lines = lines
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, exc_type, exc, tb):
+        return False
+
+    def raise_for_status(self) -> None:
+        return None
+
+    async def aiter_lines(self):
+        for line in self.lines:
+            yield line
+
+
 @pytest.mark.asyncio
 async def test_chat_returns_response(ollama_client: OllamaClient) -> None:
     mock_client = MagicMock(spec=httpx.AsyncClient)
@@ -59,6 +77,47 @@ async def test_chat_returns_response(ollama_client: OllamaClient) -> None:
     assert call_kwargs["json"]["model"] == "test-model:latest"
     assert call_kwargs["json"]["messages"] == [{"role": "user", "content": "Say hello"}]
     assert call_kwargs["json"]["stream"] is False
+
+
+@pytest.mark.asyncio
+async def test_stream_chat_yields_content_chunks(ollama_client: OllamaClient) -> None:
+    mock_client = MagicMock(spec=httpx.AsyncClient)
+    mock_client.stream.return_value = _MockStreamResponse(
+        [
+            '{"message":{"role":"assistant","content":"Hello "},"done":false}',
+            '{"message":{"role":"assistant","content":"there"},"done":false}',
+            '{"message":{"role":"assistant","content":""},"done":true}',
+        ]
+    )
+    ollama_client._client = mock_client
+
+    request = ChatRequest(messages=[{"role": "user", "content": "Say hello"}])
+    chunks = [chunk async for chunk in ollama_client.stream_chat(request)]
+
+    assert [chunk.content for chunk in chunks] == ["Hello ", "there", ""]
+    assert chunks[-1].finish_reason == "stop"
+    assert mock_client.stream.call_args.args == ("POST", "/api/chat")
+    call_kwargs = mock_client.stream.call_args[1]
+    assert call_kwargs["json"]["stream"] is True
+    assert call_kwargs["json"]["model"] == "test-model:latest"
+
+
+@pytest.mark.asyncio
+async def test_stream_chat_exposes_length_finish_reason(ollama_client: OllamaClient) -> None:
+    mock_client = MagicMock(spec=httpx.AsyncClient)
+    mock_client.stream.return_value = _MockStreamResponse(
+        [
+            '{"message":{"role":"assistant","content":"Long answer"},"done":false}',
+            '{"message":{"role":"assistant","content":""},"done":true,"done_reason":"length"}',
+        ]
+    )
+    ollama_client._client = mock_client
+
+    request = ChatRequest(messages=[{"role": "user", "content": "Explain everything"}])
+    chunks = [chunk async for chunk in ollama_client.stream_chat(request)]
+
+    assert chunks[0].content == "Long answer"
+    assert chunks[-1].finish_reason == "length"
 
 
 @pytest.mark.asyncio

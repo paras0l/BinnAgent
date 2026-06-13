@@ -31,3 +31,25 @@ def test_foreign_key_migration_deduplicates_vocabulary_case_insensitively() -> N
     assert "uq_vocabulary_items_learner_lower_word" in migration
     assert "lower(word)" in migration
     assert "unique=True" in migration
+
+
+def test_conversation_message_migration_links_learners_and_threads() -> None:
+    migration = Path(
+        "alembic/versions/7c2d9e1f3a4b_add_conversation_messages.py"
+    ).read_text()
+
+    assert "conversation_messages" in migration
+    assert "fk_conversation_messages_learner_id" in migration
+    assert "fk_conversation_messages_thread_id" in migration
+    assert "ix_conversation_messages_learner_thread_created" in migration
+
+
+def test_conversation_message_sequence_migration_backfills_stable_order() -> None:
+    migration = Path(
+        "alembic/versions/8d3e4f5a6b7c_add_conversation_message_sequence.py"
+    ).read_text()
+
+    assert "sequence" in migration
+    assert "row_number() OVER" in migration
+    assert "uq_conversation_messages_thread_sequence" in migration
+    assert "ix_conversation_messages_learner_thread_sequence" in migration

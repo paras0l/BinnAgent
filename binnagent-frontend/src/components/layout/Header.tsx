@@ -1,11 +1,14 @@
-import { Bot, BookOpen } from 'lucide-react'
+import { Bot, BookOpen, LogOut, User } from 'lucide-react'
+import type { Learner } from '@/types'
 
 interface HeaderProps {
   activeTab: 'chat' | 'dashboard'
+  learner: Learner
+  onLogout: () => void
   onTabChange: (tab: 'chat' | 'dashboard') => void
 }
 
-export function Header({ activeTab, onTabChange }: HeaderProps) {
+export function Header({ activeTab, learner, onLogout, onTabChange }: HeaderProps) {
   return (
     <header className="fixed top-0 left-0 right-0 z-50 h-16 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="flex h-full items-center justify-between px-6">
@@ -14,30 +17,46 @@ export function Header({ activeTab, onTabChange }: HeaderProps) {
           <span className="text-xl font-bold text-foreground">BinnAgent</span>
         </div>
         
-        <nav className="flex gap-1">
-          <button
-            onClick={() => onTabChange('chat')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-              activeTab === 'chat'
-                ? 'bg-primary/10 text-primary font-medium'
-                : 'text-muted-foreground hover:bg-muted'
-            }`}
-          >
-            <Bot className="h-4 w-4" />
-            AI对话
-          </button>
-          <button
-            onClick={() => onTabChange('dashboard')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-              activeTab === 'dashboard'
-                ? 'bg-primary/10 text-primary font-medium'
-                : 'text-muted-foreground hover:bg-muted'
-            }`}
-          >
-            <BookOpen className="h-4 w-4" />
-            学习中心
-          </button>
-        </nav>
+        <div className="flex items-center gap-4">
+          <nav className="flex gap-1">
+            <button
+              onClick={() => onTabChange('chat')}
+              className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors sm:px-4 ${
+                activeTab === 'chat'
+                  ? 'bg-primary/10 font-medium text-primary'
+                  : 'text-muted-foreground hover:bg-muted'
+              }`}
+            >
+              <Bot className="h-4 w-4" />
+              <span className="hidden sm:inline">AI对话</span>
+            </button>
+            <button
+              onClick={() => onTabChange('dashboard')}
+              className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors sm:px-4 ${
+                activeTab === 'dashboard'
+                  ? 'bg-primary/10 font-medium text-primary'
+                  : 'text-muted-foreground hover:bg-muted'
+              }`}
+            >
+              <BookOpen className="h-4 w-4" />
+              <span className="hidden sm:inline">学习中心</span>
+            </button>
+          </nav>
+
+          <div className="flex items-center gap-2 border-l pl-4">
+            <User className="h-4 w-4 text-muted-foreground" />
+            <span className="max-w-28 truncate text-sm font-medium text-foreground">
+              {learner.nickname}
+            </span>
+            <button
+              onClick={onLogout}
+              className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              title="切换学习者"
+            >
+              <LogOut className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
       </div>
     </header>
   )

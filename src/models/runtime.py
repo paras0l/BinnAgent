@@ -28,6 +28,33 @@ class AgentThread(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         return f"<AgentThread {self.id} learner={self.learner_id}>"
 
 
+class ConversationMessage(UUIDPrimaryKeyMixin, TimestampMixin, Base):
+    __tablename__ = "conversation_messages"
+
+    learner_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("learners.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    thread_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("agent_threads.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    role: Mapped[str] = mapped_column(String(20), nullable=False)
+    content: Mapped[str] = mapped_column(Text, nullable=False)
+    sequence: Mapped[int] = mapped_column(Integer, nullable=False)
+    skill_focus: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    metadata_: Mapped[Optional[dict]] = mapped_column(
+        "metadata", JSONB, nullable=True, default=dict
+    )
+
+    def __repr__(self) -> str:
+        return f"<ConversationMessage {self.role} thread={self.thread_id}>"
+
+
 class AgentRun(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     __tablename__ = "agent_runs"
 

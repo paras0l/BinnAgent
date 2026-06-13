@@ -19,6 +19,7 @@ class ErrorStore:
         description: str | None = None,
         severity: str | None = None,
         evidence_ref: str | None = None,
+        commit: bool = True,
     ) -> ErrorPattern:
         now = datetime.now(timezone.utc)
 
@@ -45,8 +46,11 @@ class ErrorStore:
             elif existing.frequency >= 5:
                 existing.severity = "medium"
 
-            await self.db.commit()
-            await self.db.refresh(existing)
+            if commit:
+                await self.db.commit()
+                await self.db.refresh(existing)
+            else:
+                await self.db.flush()
             return existing
 
         error = ErrorPattern(
@@ -60,8 +64,11 @@ class ErrorStore:
             last_seen_at=now,
         )
         self.db.add(error)
-        await self.db.commit()
-        await self.db.refresh(error)
+        if commit:
+            await self.db.commit()
+            await self.db.refresh(error)
+        else:
+            await self.db.flush()
         return error
 
     async def get_top_errors(

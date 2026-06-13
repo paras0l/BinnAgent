@@ -1,4 +1,6 @@
 import { Bot, User } from 'lucide-react'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 
 interface MessageBubbleProps {
   role: 'user' | 'assistant'
@@ -27,10 +29,19 @@ export function MessageBubble({ role, content, timestamp, isStreaming }: Message
           ? 'bg-primary text-primary-foreground rounded-tr-sm'
           : 'bg-muted text-foreground rounded-tl-sm'
       }`}>
-        <p className="text-sm leading-relaxed whitespace-pre-wrap">
-          {content}
-          {isStreaming && <span className="animate-pulse">▊</span>}
-        </p>
+        {isUser ? (
+          <p className="whitespace-pre-wrap text-sm leading-relaxed">
+            {content}
+            {isStreaming && <span className="animate-pulse">▊</span>}
+          </p>
+        ) : (
+          <div className="markdown-body text-sm leading-relaxed">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              {content || (isStreaming ? ' ' : '')}
+            </ReactMarkdown>
+            {isStreaming && <span className="animate-pulse">▊</span>}
+          </div>
+        )}
         <span className="mt-1 block text-[10px] opacity-60">
           {formatTime(timestamp)}
         </span>

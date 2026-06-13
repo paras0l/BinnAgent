@@ -1,11 +1,11 @@
 import json
 import time
-from typing import Any
+from typing import Any, AsyncIterator
 
 import httpx
 
 from src.config import settings
-from src.providers.base import ChatRequest, ChatResponse, ModelClient
+from src.providers.base import ChatRequest, ChatResponse, ChatStreamChunk, ModelClient
 
 
 class OllamaClient(ModelClient):
@@ -34,18 +34,7 @@ class OllamaClient(ModelClient):
         return self._client
 
     async def chat(self, request: ChatRequest) -> ChatResponse:
-        payload: dict[str, Any] = {
-            "model": request.preferred_model or self.chat_model,
-            "messages": request.messages,
-            "stream": False,
-            "options": {
-                "temperature": request.temperature,
-                "num_predict": request.max_tokens,
-            },
-        }
-
-        if request.response_schema:
-            payload["format"] = request.response_schema
+        payload = self._chat_payload(request, stream=False)
 
         start = time.monotonic()
         response = await self.client.post("/api/chat", json=payload)
@@ -78,6 +67,40 @@ class OllamaClient(ModelClient):
             usage=usage,
             finish_reason=finish_reason,
         )
+
+    async def stream_chat(self, request: ChatRequest) -> AsyncIterator[ChatStreamChunk]:
+        payload = self._chat_payload(request, stream=True)
+
+        async with self.client.stream("POST", "/api/chat", json=payload) as response:
+            response.raise_for_status()
+            async for line in response.aiter_lines():
+                if not line:
+                    continue
+                data = json.loads(line)
+                content = data.get("message", {}).get("content", "")
+                if content:
+                    yield ChatStreamChunk(content=content)
+                if data.get("done"):
+                    yield ChatStreamChunk(
+                        finish_reason=data.get("done_reason", data.get("finish_reason", "stop"))
+                    )
+                    break
+
+    def _chat_payload(self, request: ChatRequest, *, stream: bool) -> dict[str, Any]:
+        payload: dict[str, Any] = {
+            "model": request.preferred_model or self.chat_model,
+            "messages": request.messages,
+            "stream": stream,
+            "options": {
+                "temperature": request.temperature,
+                "num_predict": request.max_tokens,
+            },
+        }
+
+        if request.response_schema:
+            payload["format"] = request.response_schema
+
+        return payload
 
     async def health_check(self) -> dict[str, Any]:
         result: dict[str, Any] = {

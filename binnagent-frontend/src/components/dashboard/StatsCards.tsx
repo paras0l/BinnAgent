@@ -18,7 +18,7 @@ export function StatsCards({ todayReviews, streakDays, accuracy, totalVocab }: S
     },
     {
       title: '连续天数',
-      value: `${streakDays}🔥`,
+      value: `${streakDays}天`,
       icon: Flame,
       color: 'text-warning',
       bgColor: 'bg-warning/10',

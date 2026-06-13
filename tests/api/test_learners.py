@@ -67,6 +67,97 @@ class TestCreateLearner:
         assert response.status_code == 422
 
 
+class TestLoginLearner:
+    @pytest.mark.asyncio
+    async def test_login_with_existing_email_returns_same_learner(self, client, mock_session):
+        learner_id = uuid.uuid4()
+        learner = Learner(nickname="Alice", email="alice@example.com")
+        learner.id = learner_id
+
+        mock_result = MagicMock()
+        mock_result.scalar_one_or_none.return_value = learner
+        mock_session.execute = AsyncMock(return_value=mock_result)
+
+        response = await client.post(
+            "/api/learners/login",
+            json={"nickname": "Alice Again", "email": "ALICE@example.com"},
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["id"] == str(learner_id)
+        assert data["nickname"] == "Alice"
+        assert data["email"] == "alice@example.com"
+        mock_session.add.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_login_with_new_email_creates_learner(self, client, mock_session):
+        email_result = MagicMock()
+        email_result.scalar_one_or_none.return_value = None
+        nickname_result = MagicMock()
+        nickname_result.scalars.return_value.first.return_value = None
+        mock_session.execute = AsyncMock(side_effect=[email_result, nickname_result])
+
+        response = await client.post(
+            "/api/learners/login",
+            json={"nickname": " Bob ", "email": " BOB@example.com "},
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["nickname"] == "Bob"
+        assert data["email"] == "bob@example.com"
+        mock_session.add.assert_called_once()
+        mock_session.flush.assert_awaited_once()
+        mock_session.refresh.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_login_with_existing_nickname_returns_same_learner(self, client, mock_session):
+        learner_id = uuid.uuid4()
+        learner = Learner(nickname="Alice")
+        learner.id = learner_id
+
+        nickname_result = MagicMock()
+        nickname_result.scalars.return_value.first.return_value = learner
+        mock_session.execute = AsyncMock(return_value=nickname_result)
+
+        response = await client.post(
+            "/api/learners/login",
+            json={"nickname": " alice "},
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["id"] == str(learner_id)
+        assert data["nickname"] == "Alice"
+        mock_session.add.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_login_with_existing_nickname_can_bind_email(self, client, mock_session):
+        learner_id = uuid.uuid4()
+        learner = Learner(nickname="Alice")
+        learner.id = learner_id
+
+        email_result = MagicMock()
+        email_result.scalar_one_or_none.return_value = None
+        nickname_result = MagicMock()
+        nickname_result.scalars.return_value.first.return_value = learner
+        mock_session.execute = AsyncMock(side_effect=[email_result, nickname_result])
+
+        response = await client.post(
+            "/api/learners/login",
+            json={"nickname": "Alice", "email": "alice@example.com"},
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["id"] == str(learner_id)
+        assert data["email"] == "alice@example.com"
+        assert learner.email == "alice@example.com"
+        mock_session.add.assert_not_called()
+        mock_session.flush.assert_awaited_once()
+
+
 class TestGetLearner:
     @pytest.mark.asyncio
     async def test_get_learner(self, client, mock_session):

@@ -5,7 +5,7 @@ interface ErrorPattern {
   id: string
   name: string
   count: number
-  example: string
+  example?: string | null
 }
 
 interface ErrorPatternListProps {
@@ -19,7 +19,11 @@ export function ErrorPatternList({ patterns }: ErrorPatternListProps) {
     <div className="rounded-xl border bg-card p-6">
       <h3 className="text-lg font-semibold text-foreground mb-4">错误模式分析</h3>
       <div className="space-y-2">
-        {patterns.map((pattern) => (
+        {patterns.length === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            暂无错因记录。完成对话、写作批改或词汇复习后，这里会逐步沉淀你的薄弱点。
+          </p>
+        ) : patterns.map((pattern) => (
           <div
             key={pattern.id}
             className="rounded-lg border p-4 cursor-pointer transition-colors hover:bg-muted"
@@ -37,7 +41,9 @@ export function ErrorPatternList({ patterns }: ErrorPatternListProps) {
               )}
             </div>
             {expandedId === pattern.id && (
-              <p className="mt-2 text-sm text-muted-foreground">{pattern.example}</p>
+              <p className="mt-2 text-sm text-muted-foreground">
+                {pattern.example || '还没有可展示的例句证据。'}
+              </p>
             )}
           </div>
         ))}

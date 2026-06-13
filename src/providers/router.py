@@ -1,6 +1,6 @@
-from typing import Any
+from typing import Any, AsyncIterator
 
-from src.providers.base import ChatRequest, ChatResponse
+from src.providers.base import ChatRequest, ChatResponse, ChatStreamChunk
 from src.providers.ollama import OllamaClient
 
 
@@ -15,14 +15,22 @@ class ModelRouter:
         return self._clients.get(name)
 
     async def chat(self, request: ChatRequest) -> ChatResponse:
-        provider = request.preferred_provider
+        client = self._get_or_create_client(request.preferred_provider)
+        return await client.chat(request)
+
+    async def stream_chat(self, request: ChatRequest) -> AsyncIterator[ChatStreamChunk]:
+        client = self._get_or_create_client(request.preferred_provider)
+        async for chunk in client.stream_chat(request):
+            yield chunk
+
+    def _get_or_create_client(self, provider: str) -> OllamaClient:
         client = self._clients.get(provider)
 
         if client is None:
             client = OllamaClient()
             self._clients[provider] = client
 
-        return await client.chat(request)
+        return client
 
     async def health_check(self) -> dict[str, Any]:
         results: dict[str, Any] = {}

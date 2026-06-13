@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, timezone
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.models.vocabulary import VocabularyItem
+from src.models.vocabulary import ReviewSchedule, VocabularyItem
 
 
 class VocabularyStore:
@@ -33,6 +33,28 @@ class VocabularyStore:
         )
         existing = result.scalar_one_or_none()
         if existing:
+            changed = False
+            if meanings and not existing.meanings:
+                existing.meanings = meanings
+                changed = True
+            if collocations and not existing.collocations:
+                existing.collocations = collocations
+                changed = True
+            if examples and not existing.examples:
+                existing.examples = examples
+                changed = True
+            if source_ref and not existing.source_ref:
+                existing.source_ref = source_ref
+                changed = True
+            if phonetic and not existing.phonetic:
+                existing.phonetic = phonetic
+                changed = True
+            if level and not existing.level:
+                existing.level = level
+                changed = True
+            if changed:
+                await self.db.commit()
+                await self.db.refresh(existing)
             return existing
 
         item = VocabularyItem(
@@ -92,6 +114,8 @@ class VocabularyStore:
             raise ValueError(f"VocabularyItem with id {item_id} not found")
 
         now = datetime.now(timezone.utc)
+        confidence_before = item.confidence
+        previous_next_review = item.next_review_at or now
         item.review_count += 1
         item.last_reviewed_at = now
 
@@ -108,6 +132,19 @@ class VocabularyStore:
             item.status = "learning"
             item.next_review_at = now + timedelta(days=1)
 
+        review = ReviewSchedule(
+            learner_id=learner_id,
+            item_type="vocabulary",
+            item_id=item.id,
+            scheduled_at=previous_next_review,
+            completed_at=now,
+            result="correct" if correct else "incorrect",
+            response_time_ms=response_time_ms,
+            confidence_before=confidence_before,
+            confidence_after=item.confidence,
+            recommended_next_drill="word_review",
+        )
+        self.db.add(review)
         await self.db.commit()
         await self.db.refresh(item)
         return item

@@ -86,6 +86,8 @@ class TestAddWord:
         mock_result = MagicMock()
         mock_result.scalar_one_or_none.return_value = existing_item
         mock_db.execute = AsyncMock(return_value=mock_result)
+        mock_db.commit = AsyncMock()
+        mock_db.refresh = AsyncMock()
 
         item = await store.add_word(
             learner_id=learner_id,
@@ -99,8 +101,46 @@ class TestAddWord:
         )
 
         assert item is existing_item
+        assert existing_item.phonetic == "/həˈloʊ/"
+        assert existing_item.level == "A1"
         mock_db.add.assert_not_called()
-        mock_db.commit.assert_not_called()
+        mock_db.commit.assert_awaited_once()
+        mock_db.refresh.assert_awaited_once_with(existing_item)
+
+    @pytest.mark.asyncio
+    async def test_add_duplicate_word_backfills_missing_details(self, store, mock_db):
+        learner_id = uuid.uuid4()
+        existing_item = VocabularyItem(
+            id=uuid.uuid4(),
+            learner_id=learner_id,
+            word="significant",
+            status="learning",
+            meanings=[],
+            examples=[],
+            source_ref=None,
+        )
+
+        mock_result = MagicMock()
+        mock_result.scalar_one_or_none.return_value = existing_item
+        mock_db.execute = AsyncMock(return_value=mock_result)
+        mock_db.commit = AsyncMock()
+        mock_db.refresh = AsyncMock()
+
+        item = await store.add_word(
+            learner_id=learner_id,
+            word="significant",
+            meanings=[{"definition": "important"}],
+            examples=["This is a significant change."],
+            source_ref="conversation_message:1",
+        )
+
+        assert item is existing_item
+        assert existing_item.meanings == [{"definition": "important"}]
+        assert existing_item.examples == ["This is a significant change."]
+        assert existing_item.source_ref == "conversation_message:1"
+        mock_db.add.assert_not_called()
+        mock_db.commit.assert_awaited_once()
+        mock_db.refresh.assert_awaited_once_with(existing_item)
 
     @pytest.mark.asyncio
     async def test_add_duplicate_word_matches_case_insensitively(self, store, mock_db):

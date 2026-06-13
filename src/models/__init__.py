@@ -5,6 +5,7 @@ from src.models.runtime import (
     AgentEvent,
     AgentRun,
     AgentThread,
+    ConversationMessage,
     ModelCallLog,
     ToolCall,
 )
@@ -16,6 +17,7 @@ __all__ = [
     "AgentRun",
     "AgentThread",
     "Base",
+    "ConversationMessage",
     "ErrorPattern",
     "Learner",
     "LearnerProfile",
