@@ -163,6 +163,16 @@ class TestAddWord:
         assert "lower(vocabulary_items.word)" in str(executed_query)
         mock_db.add.assert_not_called()
 
+    @pytest.mark.asyncio
+    async def test_add_word_rejects_invalid_entry(self, store, mock_db):
+        with pytest.raises(ValueError, match="Invalid vocabulary word"):
+            await store.add_word(learner_id=uuid.uuid4(), word="definition")
+
+        with pytest.raises(ValueError, match="Invalid vocabulary word"):
+            await store.add_word(learner_id=uuid.uuid4(), word="two words")
+
+        mock_db.execute.assert_not_called()
+
 
 class TestGetWord:
     @pytest.mark.asyncio
@@ -213,6 +223,40 @@ class TestGetWord:
         result = await store.get_word(uuid.uuid4(), "nonexistent")
 
         assert result is None
+
+
+class TestDeleteWord:
+    @pytest.mark.asyncio
+    async def test_delete_word_removes_item_and_review_schedules(self, store, mock_db):
+        learner_id = uuid.uuid4()
+        item_id = uuid.uuid4()
+        item = VocabularyItem(
+            id=item_id,
+            learner_id=learner_id,
+            word="significant",
+            status="learning",
+        )
+
+        mock_result = MagicMock()
+        mock_result.scalar_one_or_none.return_value = item
+        mock_db.execute = AsyncMock(return_value=mock_result)
+        mock_db.delete = AsyncMock()
+        mock_db.commit = AsyncMock()
+
+        await store.delete_word(learner_id, item_id)
+
+        assert mock_db.execute.await_count == 2
+        mock_db.delete.assert_awaited_once_with(item)
+        mock_db.commit.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_delete_word_raises_when_item_not_found(self, store, mock_db):
+        mock_result = MagicMock()
+        mock_result.scalar_one_or_none.return_value = None
+        mock_db.execute = AsyncMock(return_value=mock_result)
+
+        with pytest.raises(ValueError, match="VocabularyItem with id"):
+            await store.delete_word(uuid.uuid4(), uuid.uuid4())
 
 
 class TestGetDueReviews:

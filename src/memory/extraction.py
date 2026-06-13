@@ -8,6 +8,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.memory.error_store import ErrorStore
+from src.memory.vocabulary_rules import normalize_vocabulary_word
 from src.models.session import LearningSession
 from src.models.vocabulary import VocabularyItem
 
@@ -109,13 +110,14 @@ class MemoryExtractionService:
         if _is_vocabulary_learning(user_message, assistant_reply, active_skill):
             source_ref = _source_ref("conversation_message", assistant_message_id, thread_id)
             for word in _extract_vocabulary_candidates(user_message, assistant_reply):
-                await self._upsert_vocabulary(
+                item = await self._upsert_vocabulary(
                     learner_id=learner_id,
                     word=word,
                     source_ref=source_ref,
                     definition=_definition_for_word(word, assistant_reply),
                 )
-                vocabulary_count += 1
+                if item is not None:
+                    vocabulary_count += 1
 
         if _is_evaluable_submission(user_message, active_skill):
             source_ref = _source_ref("conversation_message", assistant_message_id, thread_id)
@@ -176,13 +178,14 @@ class MemoryExtractionService:
             for item in words:
                 if not isinstance(item, dict) or not isinstance(item.get("word"), str):
                     continue
-                await self._upsert_vocabulary(
+                item_obj = await self._upsert_vocabulary(
                     learner_id=learner_id,
                     word=item["word"],
                     source_ref=f"session:{session_id}",
                     definition=item.get("definition") if isinstance(item.get("definition"), str) else None,
                 )
-                vocabulary_count += 1
+                if item_obj is not None:
+                    vocabulary_count += 1
 
         issue_text = " ".join(
             str(issue)
@@ -213,8 +216,10 @@ class MemoryExtractionService:
         word: str,
         source_ref: str | None,
         definition: str | None = None,
-    ) -> VocabularyItem:
-        normalized_word = word.strip().lower()
+    ) -> VocabularyItem | None:
+        normalized_word = normalize_vocabulary_word(word)
+        if normalized_word is None:
+            return None
         result = await self.db.execute(
             select(VocabularyItem).where(
                 VocabularyItem.learner_id == learner_id,
@@ -276,14 +281,14 @@ def _is_vocabulary_learning(user_message: str, assistant_reply: str, active_skil
 
 
 def _extract_vocabulary_candidates(user_message: str, assistant_reply: str) -> list[str]:
-    text = f"{user_message}\n{assistant_reply}"
     candidates: list[str] = []
-    for raw_word in _WORD_RE.findall(text):
-        word = raw_word.strip("'-").lower()
-        if len(word) < 4 or word in _STOPWORDS:
+    for raw_word in [
+        *_extract_reply_entry_words(assistant_reply),
+        *_WORD_RE.findall(user_message),
+    ]:
+        word = normalize_vocabulary_word(raw_word)
+        if word is None or word in _STOPWORDS:
             continue
-        if word.endswith("'s"):
-            word = word[:-2]
         if word not in candidates:
             candidates.append(word)
         if len(candidates) >= 5:
@@ -291,11 +296,28 @@ def _extract_vocabulary_candidates(user_message: str, assistant_reply: str) -> l
     return candidates
 
 
+def _extract_reply_entry_words(assistant_reply: str) -> list[str]:
+    entry_words: list[str] = []
+    for line in assistant_reply.splitlines():
+        stripped = line.strip()
+        match = re.match(r"^(?:[-*]\s*)?`?([A-Za-z][A-Za-z-]{2,30})`?\s*(?:[:：]|[-–—]\s)", stripped)
+        if match:
+            entry_words.append(match.group(1))
+    return entry_words
+
+
 def _definition_for_word(word: str, assistant_reply: str) -> str | None:
     for line in assistant_reply.splitlines():
         stripped = line.strip(" -*`")
-        if word.lower() in stripped.lower() and 4 <= len(stripped) <= 220:
-            return stripped
+        match = re.match(
+            rf"^`?{re.escape(word)}`?\s*(?:[:：]|[-–—]\s)(.+)$",
+            stripped,
+            flags=re.IGNORECASE,
+        )
+        if match:
+            definition = match.group(1).strip(" -*`")
+            if 4 <= len(definition) <= 220:
+                return definition
     return None
 
 

@@ -4,6 +4,8 @@ export interface Learner {
   email?: string | null
 }
 
+export type AppTab = 'chat' | 'explore' | 'dashboard'
+
 export interface ChatMessage {
   id: string
   role: 'user' | 'assistant'
@@ -78,4 +80,27 @@ export interface DashboardSummary {
     completed: number
     total: number
   }
+}
+
+export interface VocabularyListItem {
+  id: string
+  word: string
+  phonetic?: string | null
+  status: string
+  confidence: number
+  review_count: number
+  meaning?: string | null
+  last_reviewed_at?: string | null
+  next_review_at?: string | null
+}
+
+export interface ExplorePreference {
+  id: string
+  learner_id: string
+  feature_id: string
+  is_favorite: boolean
+  priority: number
+  last_used_at?: string | null
+  created_at: string
+  updated_at: string
 }

@@ -32,31 +32,41 @@ export function VocabReviewCard({
   return (
     <div className="flex flex-col items-center gap-4">
       <div
-        className="relative w-full max-w-md h-64 cursor-pointer perspective-1000"
+        className="flex min-h-64 w-full max-w-md cursor-pointer flex-col items-center justify-center rounded-2xl border bg-card p-8 text-center shadow-sm transition-colors hover:border-primary/40"
         onClick={handleFlip}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault()
+            handleFlip()
+          }
+        }}
       >
-        <div
-          className={`absolute inset-0 transition-transform duration-500 transform-style-3d ${
-            isFlipped ? 'rotate-y-180' : ''
-          }`}
-        >
-          <div className="absolute inset-0 flex flex-col items-center justify-center rounded-2xl border bg-card p-8 backface-hidden">
-            <p className="text-4xl font-bold text-foreground">{word}</p>
-            <div className="mt-4 flex items-center gap-2 text-muted-foreground">
-              <RotateCcw className="h-4 w-4" />
-              <span className="text-sm">点击翻转</span>
-            </div>
-          </div>
-
-          <div className="absolute inset-0 flex flex-col items-center justify-center rounded-2xl border bg-card p-8 backface-hidden rotate-y-180">
-            <p className="text-2xl font-bold text-foreground">{word}</p>
-            <p className="mt-2 text-lg text-muted-foreground">
-              {definition || '暂无释义，建议先补充词典信息'}
-            </p>
-            <p className="mt-4 text-sm text-muted-foreground italic">
-              {example ? `"${example}"` : '暂无例句'}
-            </p>
-          </div>
+        <div className="transition-opacity duration-200">
+          {!isFlipped ? (
+            <>
+              <p className="text-4xl font-bold text-foreground">{word}</p>
+              <div className="mt-4 flex items-center gap-2 text-muted-foreground">
+                <RotateCcw className="h-4 w-4" />
+                <span className="text-sm">点击查看释义</span>
+              </div>
+            </>
+          ) : (
+            <>
+              <p className="text-2xl font-bold text-foreground">{word}</p>
+              <p className="mt-3 text-lg text-muted-foreground">
+                {definition || '暂无释义，建议先补充词典信息'}
+              </p>
+              <p className="mt-4 text-sm text-muted-foreground italic">
+                {example ? `"${example}"` : '暂无例句'}
+              </p>
+              <div className="mt-5 flex items-center justify-center gap-2 text-muted-foreground">
+                <RotateCcw className="h-4 w-4" />
+                <span className="text-sm">再次点击查看单词</span>
+              </div>
+            </>
+          )}
         </div>
       </div>
 

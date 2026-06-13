@@ -1,20 +1,24 @@
-import { useState } from 'react'
 import { Send, Square } from 'lucide-react'
 
 interface ChatInputProps {
   onSend: (message: string) => void
   onCancel: () => void
   isLoading: boolean
+  message: string
+  onMessageChange: (value: string) => void
 }
 
-export function ChatInput({ onSend, onCancel, isLoading }: ChatInputProps) {
-  const [message, setMessage] = useState('')
-
+export function ChatInput({
+  onSend,
+  onCancel,
+  isLoading,
+  message,
+  onMessageChange,
+}: ChatInputProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (message.trim() && !isLoading) {
       onSend(message.trim())
-      setMessage('')
     }
   }
 
@@ -30,7 +34,7 @@ export function ChatInput({ onSend, onCancel, isLoading }: ChatInputProps) {
       <input
         type="text"
         value={message}
-        onChange={(e) => setMessage(e.target.value)}
+        onChange={(e) => onMessageChange(e.target.value)}
         onKeyDown={handleKeyDown}
         placeholder="输入你想练习的内容..."
         className="flex-1 rounded-xl border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"

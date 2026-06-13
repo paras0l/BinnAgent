@@ -10,9 +10,15 @@ import { MemoryPanel } from './MemoryPanel'
 
 interface ChatContainerProps {
   learnerId: string
+  draft: string
+  onDraftChange: (value: string) => void
 }
 
-export function ChatContainer({ learnerId }: ChatContainerProps) {
+export function ChatContainer({
+  learnerId,
+  draft,
+  onDraftChange,
+}: ChatContainerProps) {
   const {
     messages,
     threadId,
@@ -36,6 +42,10 @@ export function ChatContainer({ learnerId }: ChatContainerProps) {
   const handleStartLesson = () => sendMessage('开始一节对话课')
   const handleReviewVocab = () => sendMessage('我想复习今天的词汇')
   const handlePracticeSpeaking = () => sendMessage('我想练习口语场景')
+  const handleSendMessage = (content: string) => {
+    onDraftChange('')
+    sendMessage(content)
+  }
   const activeConversation = conversations.find((conversation) => conversation.thread_id === threadId)
 
   return (
@@ -113,7 +123,13 @@ export function ChatContainer({ learnerId }: ChatContainerProps) {
         </div>
 
         <div className="border-t p-4">
-          <ChatInput onSend={sendMessage} onCancel={cancel} isLoading={isLoading} />
+          <ChatInput
+            onSend={handleSendMessage}
+            onCancel={cancel}
+            isLoading={isLoading}
+            message={draft}
+            onMessageChange={onDraftChange}
+          />
         </div>
       </section>
 

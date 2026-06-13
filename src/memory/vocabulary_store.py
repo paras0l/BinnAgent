@@ -1,9 +1,10 @@
 import uuid
 from datetime import datetime, timedelta, timezone
 
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.memory.vocabulary_rules import normalize_vocabulary_word
 from src.models.vocabulary import ReviewSchedule, VocabularyItem
 
 
@@ -22,7 +23,9 @@ class VocabularyStore:
         examples: list | None = None,
         source_ref: str | None = None,
     ) -> VocabularyItem:
-        normalized_word = word.strip().lower()
+        normalized_word = normalize_vocabulary_word(word)
+        if normalized_word is None:
+            raise ValueError("Invalid vocabulary word")
 
         # Check if word already exists for this learner (no duplicates)
         result = await self.db.execute(
@@ -77,7 +80,9 @@ class VocabularyStore:
         return item
 
     async def get_word(self, learner_id: uuid.UUID, word: str) -> VocabularyItem | None:
-        normalized_word = word.strip().lower()
+        normalized_word = normalize_vocabulary_word(word)
+        if normalized_word is None:
+            return None
         result = await self.db.execute(
             select(VocabularyItem).where(
                 VocabularyItem.learner_id == learner_id,
@@ -148,3 +153,24 @@ class VocabularyStore:
         await self.db.commit()
         await self.db.refresh(item)
         return item
+
+    async def delete_word(self, learner_id: uuid.UUID, item_id: uuid.UUID) -> None:
+        result = await self.db.execute(
+            select(VocabularyItem).where(
+                VocabularyItem.id == item_id,
+                VocabularyItem.learner_id == learner_id,
+            )
+        )
+        item = result.scalar_one_or_none()
+        if not item:
+            raise ValueError(f"VocabularyItem with id {item_id} not found")
+
+        await self.db.execute(
+            delete(ReviewSchedule).where(
+                ReviewSchedule.learner_id == learner_id,
+                ReviewSchedule.item_type == "vocabulary",
+                ReviewSchedule.item_id == item_id,
+            )
+        )
+        await self.db.delete(item)
+        await self.db.commit()

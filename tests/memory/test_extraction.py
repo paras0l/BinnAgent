@@ -63,6 +63,55 @@ class TestMemoryExtractionService:
         mock_db.add.assert_not_called()
 
     @pytest.mark.asyncio
+    async def test_chat_vocabulary_learning_skips_meta_words_from_reply(self, mock_db):
+        mock_db.execute = AsyncMock(return_value=_one(None))
+
+        result = await MemoryExtractionService(mock_db).capture_chat_turn(
+            learner_id=uuid.uuid4(),
+            user_message="讲解 significant 这个单词的意思",
+            assistant_reply=(
+                "Definition: important or noticeable.\n"
+                "Meaning: this word is common in CET writing.\n"
+                "significant: important enough to be noticed."
+            ),
+        )
+
+        added_vocab = [
+            obj for call in mock_db.add.call_args_list for obj in call.args if isinstance(obj, VocabularyItem)
+        ]
+        assert result.vocabulary_count == 1
+        assert [item.word for item in added_vocab] == ["significant"]
+
+    @pytest.mark.asyncio
+    async def test_session_result_skips_invalid_vocabulary_words(self, mock_db):
+        mock_db.execute = AsyncMock(return_value=_one(None))
+
+        result = await MemoryExtractionService(mock_db).capture_session_result(
+            learner_id=uuid.uuid4(),
+            session_id=uuid.uuid4(),
+            result={
+                "active_skill": "vocabulary",
+                "input_materials": [
+                    {
+                        "type": "vocabulary_list",
+                        "words": [
+                            {"word": "definition", "definition": "meta label"},
+                            {"word": "two words", "definition": "not a single word"},
+                            {"word": "sustainable", "definition": "able to continue"},
+                        ],
+                    }
+                ],
+                "agent_feedback": {},
+            },
+        )
+
+        added_vocab = [
+            obj for call in mock_db.add.call_args_list for obj in call.args if isinstance(obj, VocabularyItem)
+        ]
+        assert result.vocabulary_count == 1
+        assert [item.word for item in added_vocab] == ["sustainable"]
+
+    @pytest.mark.asyncio
     async def test_chat_evaluable_writing_records_error_pattern(self, mock_db):
         mock_db.execute = AsyncMock(return_value=_one(None))
 

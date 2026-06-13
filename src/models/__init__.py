@@ -1,5 +1,6 @@
 from src.models.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
 from src.models.error_pattern import ErrorPattern
+from src.models.explore import ExploreFeaturePreference
 from src.models.learner import Learner, LearnerProfile
 from src.models.runtime import (
     AgentEvent,
@@ -19,6 +20,7 @@ __all__ = [
     "Base",
     "ConversationMessage",
     "ErrorPattern",
+    "ExploreFeaturePreference",
     "Learner",
     "LearnerProfile",
     "LearningSession",

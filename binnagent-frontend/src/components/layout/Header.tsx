@@ -1,11 +1,11 @@
-import { Bot, BookOpen, LogOut, User } from 'lucide-react'
-import type { Learner } from '@/types'
+import { Bot, BookOpen, Compass, LogOut, User } from 'lucide-react'
+import type { AppTab, Learner } from '@/types'
 
 interface HeaderProps {
-  activeTab: 'chat' | 'dashboard'
+  activeTab: AppTab
   learner: Learner
   onLogout: () => void
-  onTabChange: (tab: 'chat' | 'dashboard') => void
+  onTabChange: (tab: AppTab) => void
 }
 
 export function Header({ activeTab, learner, onLogout, onTabChange }: HeaderProps) {
@@ -29,6 +29,17 @@ export function Header({ activeTab, learner, onLogout, onTabChange }: HeaderProp
             >
               <Bot className="h-4 w-4" />
               <span className="hidden sm:inline">AI对话</span>
+            </button>
+            <button
+              onClick={() => onTabChange('explore')}
+              className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors sm:px-4 ${
+                activeTab === 'explore'
+                  ? 'bg-primary/10 font-medium text-primary'
+                  : 'text-muted-foreground hover:bg-muted'
+              }`}
+            >
+              <Compass className="h-4 w-4" />
+              <span className="hidden sm:inline">探索</span>
             </button>
             <button
               onClick={() => onTabChange('dashboard')}

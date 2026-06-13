@@ -53,3 +53,14 @@ def test_conversation_message_sequence_migration_backfills_stable_order() -> Non
     assert "row_number() OVER" in migration
     assert "uq_conversation_messages_thread_sequence" in migration
     assert "ix_conversation_messages_learner_thread_sequence" in migration
+
+
+def test_explore_feature_preferences_migration_persists_learner_favorites() -> None:
+    migration = Path(
+        "alembic/versions/9e4f5a6b7c8d_add_explore_feature_preferences.py"
+    ).read_text()
+
+    assert "explore_feature_preferences" in migration
+    assert "fk_explore_feature_preferences_learner_id" in migration
+    assert "uq_explore_feature_preferences_learner_feature" in migration
+    assert "last_used_at" in migration

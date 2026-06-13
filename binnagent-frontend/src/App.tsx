@@ -2,11 +2,13 @@ import { useEffect, useState } from 'react'
 import { Header } from './components/layout/Header'
 import { ChatPage } from './pages/ChatPage'
 import { DashboardPage } from './pages/DashboardPage'
+import { ExplorePage } from './pages/ExplorePage'
 import { LoginPage } from './pages/LoginPage'
-import type { Learner } from './types'
+import type { AppTab, Learner } from './types'
 
 function App() {
-  const [activeTab, setActiveTab] = useState<'chat' | 'dashboard'>('chat')
+  const [activeTab, setActiveTab] = useState<AppTab>('chat')
+  const [chatDraft, setChatDraft] = useState('')
   const [currentLearner, setCurrentLearner] = useState<Learner | null>(() => {
     const cached = localStorage.getItem('binnLearner')
     if (!cached) return null
@@ -46,6 +48,11 @@ function App() {
     localStorage.removeItem('binnLearner')
     setCurrentLearner(null)
     setActiveTab('chat')
+    setChatDraft('')
+  }
+
+  const handleDraftPrompt = (prompt: string) => {
+    setChatDraft(prompt)
   }
 
   if (isRestoringLearner) {
@@ -70,7 +77,17 @@ function App() {
       />
       <main className="pt-16">
         {activeTab === 'chat' ? (
-          <ChatPage learner={currentLearner} />
+          <ChatPage
+            learner={currentLearner}
+            draft={chatDraft}
+            onDraftChange={setChatDraft}
+          />
+        ) : activeTab === 'explore' ? (
+          <ExplorePage
+            learner={currentLearner}
+            onTabChange={setActiveTab}
+            onDraftPrompt={handleDraftPrompt}
+          />
         ) : (
           <DashboardPage learner={currentLearner} />
         )}

@@ -5,6 +5,7 @@ from fastapi import FastAPI
 
 from src.api.conversations import router as conversations_router
 from src.api.dashboard import router as dashboard_router
+from src.api.explore import router as explore_router
 from src.api.health import router as health_router
 from src.api.learners import router as learners_router
 from src.api.memory import router as memory_router
@@ -32,6 +33,7 @@ app.include_router(health_router)
 app.include_router(learners_router)
 app.include_router(conversations_router)
 app.include_router(dashboard_router)
+app.include_router(explore_router)
 app.include_router(memory_router)
 app.include_router(sessions_router)
 app.include_router(vocabulary_router)
