@@ -22,6 +22,7 @@ class VocabularyStore:
         collocations: list | None = None,
         examples: list | None = None,
         source_ref: str | None = None,
+        commit: bool = True,
     ) -> VocabularyItem:
         normalized_word = normalize_vocabulary_word(word)
         if normalized_word is None:
@@ -55,9 +56,11 @@ class VocabularyStore:
             if level and not existing.level:
                 existing.level = level
                 changed = True
-            if changed:
+            if changed and commit:
                 await self.db.commit()
                 await self.db.refresh(existing)
+            elif changed:
+                await self.db.flush()
             return existing
 
         item = VocabularyItem(
@@ -75,8 +78,11 @@ class VocabularyStore:
             next_review_at=datetime.now(timezone.utc),
         )
         self.db.add(item)
-        await self.db.commit()
-        await self.db.refresh(item)
+        if commit:
+            await self.db.commit()
+            await self.db.refresh(item)
+        else:
+            await self.db.flush()
         return item
 
     async def get_word(self, learner_id: uuid.UUID, word: str) -> VocabularyItem | None:

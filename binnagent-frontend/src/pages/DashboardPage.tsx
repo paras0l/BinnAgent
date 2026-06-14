@@ -22,6 +22,7 @@ export function DashboardPage({ learner }: DashboardPageProps) {
   const [vocabularyItems, setVocabularyItems] = useState<VocabularyListItem[]>([])
   const [vocabQuery, setVocabQuery] = useState('')
   const [newWord, setNewWord] = useState('')
+  const [newPhonetic, setNewPhonetic] = useState('')
   const [newMeaning, setNewMeaning] = useState('')
   const [error, setError] = useState('')
 
@@ -120,11 +121,13 @@ export function DashboardPage({ learner }: DashboardPageProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           word,
+          phonetic: newPhonetic.trim() || null,
           meanings: meaning ? [meaning] : null,
         }),
       })
       if (!response.ok) throw new Error('Add word failed')
       setNewWord('')
+      setNewPhonetic('')
       setNewMeaning('')
       await loadDashboard()
       if (isVocabListOpen) await loadVocabularyList()
@@ -270,12 +273,19 @@ export function DashboardPage({ learner }: DashboardPageProps) {
           <Plus className="h-4 w-4 text-primary" />
           <h2 className="text-sm font-semibold text-foreground">加入词汇本</h2>
         </div>
-        <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)_auto]">
+        <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,2fr)_auto]">
           <input
             value={newWord}
             onChange={(event) => setNewWord(event.target.value)}
             className="rounded-lg border bg-background px-3 py-2 text-sm outline-none transition-colors focus:border-primary"
             placeholder="significant"
+            maxLength={255}
+          />
+          <input
+            value={newPhonetic}
+            onChange={(event) => setNewPhonetic(event.target.value)}
+            className="rounded-lg border bg-background px-3 py-2 text-sm outline-none transition-colors focus:border-primary"
+            placeholder="可选音标，例如：/sɪɡˈnɪfɪkənt/"
             maxLength={255}
           />
           <input
@@ -301,6 +311,7 @@ export function DashboardPage({ learner }: DashboardPageProps) {
           <VocabReviewCard
             key={currentVocab.id}
             word={currentVocab.word}
+            phonetic={currentVocab.phonetic}
             definition={currentVocab.definition}
             example={currentVocab.example}
             currentIndex={currentVocabIndex}

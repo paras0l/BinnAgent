@@ -7,11 +7,13 @@ from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.api.deps import get_db_session
+from src.api.deps import get_db_session, get_model_router
+from src.agents.vocabulary_agent import VocabularyAgentService, should_trigger_vocabulary_agent
 from src.graph.main_graph import daily_lesson_graph
 from src.memory.extraction import MemoryExtractionService
 from src.models.learner import Learner
 from src.models.session import LearningSession
+from src.providers.router import ModelRouter
 
 router = APIRouter(prefix="/api/sessions", tags=["sessions"])
 logger = logging.getLogger(__name__)
@@ -43,6 +45,7 @@ async def _ensure_learner_exists(db: AsyncSession, learner_id: uuid.UUID) -> Non
 async def start_session(
     req: StartSessionRequest,
     db: AsyncSession = Depends(get_db_session),
+    model_router: ModelRouter = Depends(get_model_router),
 ) -> SessionDetailResponse:
     learner_id = req.learner_id
     await _ensure_learner_exists(db, learner_id)
@@ -88,6 +91,20 @@ async def start_session(
         )
     except Exception:
         logger.exception("Failed to capture session memory")
+    session_material_text = _session_material_text(result)
+    if session_material_text and should_trigger_vocabulary_agent(
+        user_message=req.user_message,
+        skill_focus=session.active_skill,
+    ):
+        try:
+            await VocabularyAgentService(db, model_router).capture_chat_turn(
+                learner_id=learner_id,
+                user_message=req.user_message,
+                assistant_reply=session_material_text,
+                source_ref=f"session:{session.id}",
+            )
+        except Exception:
+            logger.exception("Failed to capture session vocabulary")
     await db.commit()
     await db.refresh(session)
 
@@ -122,3 +139,14 @@ def _session_summary(result: dict) -> str | None:
     if active_skill:
         return f"Completed {active_skill} practice"
     return None
+
+
+def _session_material_text(result: dict) -> str:
+    parts: list[str] = []
+    for material in result.get("input_materials", []):
+        if isinstance(material, dict):
+            parts.append(str(material))
+    feedback = result.get("agent_feedback")
+    if isinstance(feedback, dict):
+        parts.append(str(feedback))
+    return "\n".join(parts)

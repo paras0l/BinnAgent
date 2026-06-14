@@ -9,6 +9,9 @@ import type { AppTab, Learner } from './types'
 function App() {
   const [activeTab, setActiveTab] = useState<AppTab>('chat')
   const [chatDraft, setChatDraft] = useState('')
+  const [chatSkillFocus, setChatSkillFocus] = useState<string | null>(null)
+  const [isChatGenerating, setIsChatGenerating] = useState(false)
+  const [lockMessage, setLockMessage] = useState('')
   const [currentLearner, setCurrentLearner] = useState<Learner | null>(() => {
     const cached = localStorage.getItem('binnLearner')
     if (!cached) return null
@@ -44,15 +47,34 @@ function App() {
   }, [])
 
   const handleLogout = () => {
+    if (isChatGenerating) {
+      setLockMessage('回答生成中，请先等待完成或点击取消。')
+      return
+    }
     localStorage.removeItem('binnLearnerId')
     localStorage.removeItem('binnLearner')
     setCurrentLearner(null)
     setActiveTab('chat')
     setChatDraft('')
+    setChatSkillFocus(null)
   }
 
-  const handleDraftPrompt = (prompt: string) => {
+  const handleDraftPrompt = (prompt: string, skillFocus?: string | null) => {
+    if (isChatGenerating) {
+      setLockMessage('回答生成中，请先等待完成或点击取消。')
+      return
+    }
     setChatDraft(prompt)
+    setChatSkillFocus(skillFocus ?? null)
+  }
+
+  const handleTabChange = (tab: AppTab) => {
+    if (isChatGenerating && tab !== 'chat') {
+      setLockMessage('回答生成中，请先等待完成或点击取消。')
+      return
+    }
+    setLockMessage('')
+    setActiveTab(tab)
   }
 
   if (isRestoringLearner) {
@@ -71,9 +93,11 @@ function App() {
     <div className="min-h-screen bg-background">
       <Header
         activeTab={activeTab}
+        isLocked={isChatGenerating}
+        lockMessage={lockMessage}
         learner={currentLearner}
         onLogout={handleLogout}
-        onTabChange={setActiveTab}
+        onTabChange={handleTabChange}
       />
       <main className="pt-16">
         {activeTab === 'chat' ? (
@@ -81,11 +105,17 @@ function App() {
             learner={currentLearner}
             draft={chatDraft}
             onDraftChange={setChatDraft}
+            skillFocus={chatSkillFocus}
+            onSkillFocusChange={setChatSkillFocus}
+            onGeneratingChange={setIsChatGenerating}
+            onLockedAction={() => setLockMessage('回答生成中，请先等待完成或点击取消。')}
           />
         ) : activeTab === 'explore' ? (
           <ExplorePage
             learner={currentLearner}
-            onTabChange={setActiveTab}
+            isLocked={isChatGenerating}
+            onLockedAction={() => setLockMessage('回答生成中，请先等待完成或点击取消。')}
+            onTabChange={handleTabChange}
             onDraftPrompt={handleDraftPrompt}
           />
         ) : (

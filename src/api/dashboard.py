@@ -66,12 +66,30 @@ def _first_text(value: Any) -> str | None:
         if isinstance(first, str):
             return first
         if isinstance(first, dict):
-            for key in ("definition", "meaning", "content", "text", "en"):
+            for key in (
+                "definition_zh",
+                "sentence",
+                "definition",
+                "meaning",
+                "content",
+                "text",
+                "definition_en",
+                "en",
+            ):
                 text = first.get(key)
                 if isinstance(text, str) and text:
                     return text
     if isinstance(value, dict):
-        for key in ("definition", "meaning", "content", "text", "en"):
+        for key in (
+            "definition_zh",
+            "sentence",
+            "definition",
+            "meaning",
+            "content",
+            "text",
+            "definition_en",
+            "en",
+        ):
             text = value.get(key)
             if isinstance(text, str) and text:
                 return text

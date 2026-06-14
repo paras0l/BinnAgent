@@ -21,8 +21,10 @@ type FeatureAction = 'chat' | 'session' | 'tool' | 'todo'
 
 interface ExplorePageProps {
   learner: Learner
+  isLocked?: boolean
+  onLockedAction?: () => void
   onTabChange: (tab: AppTab) => void
-  onDraftPrompt: (prompt: string) => void
+  onDraftPrompt: (prompt: string, skillFocus?: string | null) => void
 }
 
 interface ExploreFeature {
@@ -190,7 +192,13 @@ const FEATURES: ExploreFeature[] = [
   },
 ]
 
-export function ExplorePage({ learner, onTabChange, onDraftPrompt }: ExplorePageProps) {
+export function ExplorePage({
+  learner,
+  isLocked = false,
+  onLockedAction,
+  onTabChange,
+  onDraftPrompt,
+}: ExplorePageProps) {
   const [preferences, setPreferences] = useState<ExplorePreference[]>([])
   const [category, setCategory] = useState<FeatureCategory>('all')
   const [query, setQuery] = useState('')
@@ -266,6 +274,11 @@ export function ExplorePage({ learner, onTabChange, onDraftPrompt }: ExplorePage
   }
 
   const handleToggleFavorite = async (feature: ExploreFeature) => {
+    if (isLocked) {
+      onLockedAction?.()
+      setMessage('回答生成中，请先等待完成或点击取消。')
+      return
+    }
     const current = preferenceMap.get(feature.id)
     const nextFavorite = !current?.is_favorite
     try {
@@ -280,6 +293,12 @@ export function ExplorePage({ learner, onTabChange, onDraftPrompt }: ExplorePage
   }
 
   const handleLaunch = async (feature: ExploreFeature) => {
+    if (isLocked) {
+      onLockedAction?.()
+      setMessage('回答生成中，请先等待完成或点击取消。')
+      return
+    }
+
     if (feature.status === 'todo' || feature.action === 'todo') {
       setMessage(`${feature.title}：功能待开发。${feature.outcome}`)
       return
@@ -292,7 +311,7 @@ export function ExplorePage({ learner, onTabChange, onDraftPrompt }: ExplorePage
     }
 
     if (feature.action === 'chat' && feature.prompt) {
-      onDraftPrompt(feature.prompt)
+      onDraftPrompt(feature.prompt, feature.category === 'vocabulary' ? 'vocabulary_deposit' : null)
       onTabChange('chat')
       return
     }
@@ -366,6 +385,7 @@ export function ExplorePage({ learner, onTabChange, onDraftPrompt }: ExplorePage
                 feature={feature}
                 isFavorite
                 isLoading={isLoading}
+                isLocked={isLocked}
                 onLaunch={() => void handleLaunch(feature)}
                 onToggleFavorite={() => void handleToggleFavorite(feature)}
               />
@@ -383,6 +403,7 @@ export function ExplorePage({ learner, onTabChange, onDraftPrompt }: ExplorePage
               feature={feature}
               isFavorite={Boolean(preferenceMap.get(feature.id)?.is_favorite)}
               isLoading={isLoading}
+              isLocked={isLocked}
               onLaunch={() => void handleLaunch(feature)}
               onToggleFavorite={() => void handleToggleFavorite(feature)}
             />
@@ -397,12 +418,14 @@ function FeatureCard({
   feature,
   isFavorite,
   isLoading,
+  isLocked,
   onLaunch,
   onToggleFavorite,
 }: {
   feature: ExploreFeature
   isFavorite: boolean
   isLoading: boolean
+  isLocked: boolean
   onLaunch: () => void
   onToggleFavorite: () => void
 }) {
@@ -421,9 +444,9 @@ function FeatureCard({
         </div>
         <button
           onClick={onToggleFavorite}
-          disabled={isLoading}
+          disabled={isLoading || isLocked}
           className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-warning disabled:opacity-50"
-          title={isFavorite ? '取消收藏' : '收藏入口'}
+          title={isLocked ? '回答生成中，请先等待完成或取消' : isFavorite ? '取消收藏' : '收藏入口'}
         >
           {isFavorite ? <Star className="h-4 w-4 fill-warning text-warning" /> : <StarOff className="h-4 w-4" />}
         </button>
@@ -448,11 +471,13 @@ function FeatureCard({
         </span>
         <button
           onClick={onLaunch}
+          disabled={isLocked}
           className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
             isTodo
               ? 'border text-muted-foreground hover:bg-muted'
               : 'bg-primary text-primary-foreground hover:bg-primary/90'
-          }`}
+          } disabled:cursor-not-allowed disabled:opacity-50`}
+          title={isLocked ? '回答生成中，请先等待完成或取消' : isTodo ? '查看说明' : '开始'}
         >
           {isTodo ? '查看说明' : '开始'}
         </button>

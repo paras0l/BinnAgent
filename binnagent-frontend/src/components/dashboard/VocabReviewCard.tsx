@@ -3,6 +3,7 @@ import { RotateCcw } from 'lucide-react'
 
 interface VocabReviewCardProps {
   word: string
+  phonetic?: string | null
   definition?: string | null
   example?: string | null
   currentIndex: number
@@ -12,6 +13,7 @@ interface VocabReviewCardProps {
 
 export function VocabReviewCard({
   word,
+  phonetic,
   definition,
   example,
   currentIndex,
@@ -47,6 +49,9 @@ export function VocabReviewCard({
           {!isFlipped ? (
             <>
               <p className="text-4xl font-bold text-foreground">{word}</p>
+              {phonetic && (
+                <p className="mt-2 text-lg font-medium text-primary">{phonetic}</p>
+              )}
               <div className="mt-4 flex items-center gap-2 text-muted-foreground">
                 <RotateCcw className="h-4 w-4" />
                 <span className="text-sm">点击查看释义</span>
@@ -55,6 +60,9 @@ export function VocabReviewCard({
           ) : (
             <>
               <p className="text-2xl font-bold text-foreground">{word}</p>
+              {phonetic && (
+                <p className="mt-2 text-sm font-medium text-primary">{phonetic}</p>
+              )}
               <p className="mt-3 text-lg text-muted-foreground">
                 {definition || '暂无释义，建议先补充词典信息'}
               </p>

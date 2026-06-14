@@ -6,13 +6,19 @@ import logging
 from typing import Any
 
 import httpx
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field, field_validator
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.api.deps import get_db_session, get_model_router
+from src.agents.vocabulary_agent import (
+    VOCABULARY_AGENT_NAME,
+    VocabularyAgentResult,
+    VocabularyAgentService,
+)
+from src.agents.skills import AgentSkill, apply_skill_to_metadata, resolve_effective_skill
 from src.config import settings
 from src.db import async_session_factory
 from src.memory.extraction import MemoryExtractionService
@@ -30,6 +36,7 @@ class ChatRequest(BaseModel):
     message: str = Field(min_length=1, max_length=4000)
     thread_id: uuid.UUID | None = None
     skill_focus: str | None = Field(default=None, max_length=50)
+    skill_id: str | None = Field(default=None, max_length=100)
 
     @field_validator("message")
     @classmethod
@@ -48,6 +55,9 @@ class ChatResponse(BaseModel):
     finish_reason: str = "stop"
     continuation_count: int = 0
     skill_focus: str | None = None
+    skill_id: str | None = None
+    skill_name: str | None = None
+    skill_events: list[dict[str, Any]] = Field(default_factory=list)
 
 
 TUTOR_SYSTEM_PROMPT = """你是BinnAgent，一位专业的英语学习AI助教。你的职责是帮助学员提高英语水平，特别是针对CET-4和CET-6考试。
@@ -130,11 +140,14 @@ def _model_request(
     thread: AgentThread,
     history: list[ConversationMessage],
     *,
+    skill: AgentSkill | None = None,
     max_tokens: int | None = None,
     continuation_text: str | None = None,
 ) -> ModelChatRequest:
     system_msg = TUTOR_SYSTEM_PROMPT
-    if req.skill_focus:
+    if skill is not None:
+        system_msg += f"\n\n当前 Agent Skill: {skill.name}\n{skill.system_prompt_patch}"
+    elif req.skill_focus:
         system_msg += f"\n\n当前重点练习: {req.skill_focus}"
 
     messages = [{"role": "system", "content": system_msg}]
@@ -202,8 +215,9 @@ async def _complete_non_streaming(
     thread: AgentThread,
     history: list[ConversationMessage],
     model_router: ModelRouter,
+    skill: AgentSkill | None,
 ) -> tuple[str, str, int]:
-    response = await model_router.chat(_model_request(req, thread, history))
+    response = await model_router.chat(_model_request(req, thread, history, skill=skill))
     reply_parts = [response.content]
     finish_reason = response.finish_reason
     continuation_count = 0
@@ -215,6 +229,7 @@ async def _complete_non_streaming(
                 req,
                 thread,
                 history,
+                skill=skill,
                 continuation_text="".join(reply_parts),
             )
         )
@@ -285,6 +300,7 @@ async def _persist_stream_assistant_message(
     history: list[ConversationMessage],
     assistant_reply: str,
     model_router: ModelRouter,
+    skill: AgentSkill | None,
 ) -> ConversationMessage:
     async with async_session_factory() as db:
         try:
@@ -308,7 +324,7 @@ async def _persist_stream_assistant_message(
                     learner_id=req.learner_id,
                     thread_id=thread.id,
                 ),
-                skill_focus=req.skill_focus,
+                skill_focus=_skill_focus_value(skill, req),
                 metadata_={},
             )
             db.add(assistant_message)
@@ -319,6 +335,7 @@ async def _persist_stream_assistant_message(
                 thread_id=thread.id,
                 assistant_reply=assistant_reply,
                 assistant_message_id=assistant_message.id,
+                skill=skill,
             )
             _touch_thread(thread, req.message)
             await _maybe_update_thread_summary(
@@ -340,10 +357,14 @@ async def _persist_stream_assistant_message(
 @router.post("/send", response_model=ChatResponse)
 async def chat_send(
     req: ChatRequest,
+    background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db_session),
     model_router: ModelRouter = Depends(get_model_router),
 ) -> ChatResponse:
     thread = await _get_or_create_thread(req, db)
+    skill = _resolve_skill(req, thread)
+    if skill is not None:
+        thread.metadata_ = apply_skill_to_metadata(thread.metadata_, skill)
     history = await _conversation_history(req, db, thread)
 
     user_message = ConversationMessage(
@@ -356,7 +377,7 @@ async def chat_send(
             learner_id=req.learner_id,
             thread_id=thread.id,
         ),
-        skill_focus=req.skill_focus,
+        skill_focus=_skill_focus_value(skill, req),
         metadata_={},
     )
     db.add(user_message)
@@ -364,7 +385,7 @@ async def chat_send(
 
     try:
         reply, finish_reason, continuation_count = await _complete_non_streaming(
-            req, thread, history, model_router
+            req, thread, history, model_router, skill
         )
     except httpx.HTTPError:
         raise HTTPException(status_code=503, detail="Ollama service unavailable")
@@ -375,7 +396,7 @@ async def chat_send(
         role="assistant",
         content=reply,
         sequence=user_message.sequence + 1,
-        skill_focus=req.skill_focus,
+        skill_focus=_skill_focus_value(skill, req),
         metadata_={},
     )
     db.add(assistant_message)
@@ -386,6 +407,7 @@ async def chat_send(
         thread_id=thread.id,
         assistant_reply=reply,
         assistant_message_id=assistant_message.id,
+        skill=skill,
     )
     _touch_thread(thread, req.message)
     await _maybe_update_thread_summary(
@@ -398,6 +420,17 @@ async def chat_send(
     )
     await db.commit()
     await db.refresh(assistant_message)
+    skill_events: list[dict[str, Any]] = []
+    if _should_trigger_vocabulary_agent(skill):
+        skill_events.append(_skill_event("started", skill=skill))
+        background_tasks.add_task(
+            _run_vocabulary_agent_background,
+            req=req,
+            thread_id=thread.id,
+            assistant_reply=reply,
+            assistant_message_id=assistant_message.id,
+            model_router=model_router,
+        )
 
     return ChatResponse(
         reply=reply,
@@ -406,7 +439,10 @@ async def chat_send(
         message_id=assistant_message.id,
         finish_reason=finish_reason,
         continuation_count=continuation_count,
-        skill_focus=req.skill_focus,
+        skill_focus=_skill_focus_value(skill, req),
+        skill_id=skill.id if skill else None,
+        skill_name=skill.name if skill else None,
+        skill_events=skill_events,
     )
 
 
@@ -417,6 +453,7 @@ async def _capture_chat_memory_safely(
     thread_id: uuid.UUID,
     assistant_reply: str,
     assistant_message_id: uuid.UUID | None,
+    skill: AgentSkill | None,
 ) -> None:
     try:
         await MemoryExtractionService(db).capture_chat_turn(
@@ -425,10 +462,76 @@ async def _capture_chat_memory_safely(
             assistant_reply=assistant_reply,
             thread_id=thread_id,
             assistant_message_id=assistant_message_id,
-            skill_focus=req.skill_focus,
+            skill_focus=_skill_focus_value(skill, req),
         )
     except Exception:
         logger.exception("Failed to capture chat memory")
+
+
+def _resolve_skill(req: ChatRequest, thread: AgentThread) -> AgentSkill | None:
+    return resolve_effective_skill(
+        explicit_skill_id=req.skill_id,
+        legacy_skill_focus=req.skill_focus,
+        thread_metadata=thread.metadata_,
+        user_message=req.message,
+    )
+
+
+def _skill_focus_value(skill: AgentSkill | None, req: ChatRequest) -> str | None:
+    if skill is not None:
+        return skill.id
+    return req.skill_focus
+
+
+def _should_trigger_vocabulary_agent(skill: AgentSkill | None) -> bool:
+    return skill is not None and skill.agent_name == VOCABULARY_AGENT_NAME
+
+
+def _skill_event(
+    status: str,
+    *,
+    skill: AgentSkill | None,
+    saved_count: int | None = None,
+) -> dict[str, Any]:
+    event: dict[str, Any] = {
+        "name": skill.agent_name if skill else VOCABULARY_AGENT_NAME,
+        "skill_id": skill.id if skill else None,
+        "skill_name": skill.name if skill else None,
+        "status": status,
+    }
+    if skill is not None:
+        template = skill.status_messages.get(status)
+        if template:
+            event["message"] = template.format(saved_count=saved_count or 0)
+    if saved_count is not None:
+        event["saved_count"] = saved_count
+    return event
+
+
+async def _run_vocabulary_agent_background(
+    *,
+    req: ChatRequest,
+    thread_id: uuid.UUID,
+    assistant_reply: str,
+    assistant_message_id: uuid.UUID | None,
+    model_router: ModelRouter,
+) -> VocabularyAgentResult:
+    async with async_session_factory() as db:
+        try:
+            result = await VocabularyAgentService(db, model_router).capture_chat_turn(
+                learner_id=req.learner_id,
+                user_message=req.message,
+                assistant_reply=assistant_reply,
+                source_ref=f"conversation_message:{assistant_message_id}"
+                if assistant_message_id
+                else f"thread:{thread_id}",
+            )
+            await db.commit()
+            return result
+        except Exception:
+            await db.rollback()
+            logger.exception("Failed to run vocabulary agent")
+            return VocabularyAgentResult(failed=True)
 
 
 @router.post("/stream")
@@ -438,6 +541,9 @@ async def chat_stream(
     model_router: ModelRouter = Depends(get_model_router),
 ) -> StreamingResponse:
     thread = await _get_or_create_thread(req, db)
+    skill = _resolve_skill(req, thread)
+    if skill is not None:
+        thread.metadata_ = apply_skill_to_metadata(thread.metadata_, skill)
     history = await _conversation_history(req, db, thread)
 
     user_message = ConversationMessage(
@@ -450,7 +556,7 @@ async def chat_stream(
             learner_id=req.learner_id,
             thread_id=thread.id,
         ),
-        skill_focus=req.skill_focus,
+        skill_focus=_skill_focus_value(skill, req),
         metadata_={},
     )
     db.add(user_message)
@@ -463,7 +569,15 @@ async def chat_stream(
         chunks: list[str] = []
         finish_reason = "stop"
         continuation_count = 0
-        yield _sse_event("meta", {"thread_id": str(thread_id)})
+        yield _sse_event(
+            "meta",
+            {
+                "thread_id": str(thread_id),
+                "skill_id": skill.id if skill else None,
+                "skill_name": skill.name if skill else None,
+                "skill_focus": _skill_focus_value(skill, req),
+            },
+        )
 
         try:
             while True:
@@ -471,6 +585,7 @@ async def chat_stream(
                     req,
                     thread,
                     history,
+                    skill=skill,
                     continuation_text="".join(chunks) if continuation_count > 0 else None,
                 )
                 async for raw_chunk in model_router.stream_chat(request):
@@ -510,6 +625,7 @@ async def chat_stream(
                 history=history,
                 assistant_reply=reply,
                 model_router=model_router,
+                skill=skill,
             )
         except Exception:
             yield _sse_event("error", {"detail": "Failed to persist conversation memory"})
@@ -523,8 +639,29 @@ async def chat_stream(
                 "reply": reply,
                 "finish_reason": finish_reason,
                 "continuation_count": continuation_count,
+                "skill_id": skill.id if skill else None,
+                "skill_name": skill.name if skill else None,
             },
         )
+
+        if _should_trigger_vocabulary_agent(skill):
+            yield _sse_event("skill", _skill_event("started", skill=skill))
+            result = await _run_vocabulary_agent_background(
+                req=req,
+                thread_id=thread_id,
+                assistant_reply=reply,
+                assistant_message_id=assistant_message.id,
+                model_router=model_router,
+            )
+            if result.failed:
+                yield _sse_event("skill", _skill_event("failed", skill=skill))
+            elif result.saved_count > 0:
+                yield _sse_event(
+                    "skill",
+                    _skill_event("completed", skill=skill, saved_count=result.saved_count),
+                )
+            else:
+                yield _sse_event("skill", _skill_event("skipped", skill=skill, saved_count=0))
 
     return StreamingResponse(
         event_stream(),

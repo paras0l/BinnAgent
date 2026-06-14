@@ -7,6 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.api.deps import get_db_session
+from src.agents.skills import clear_skill_from_metadata
 from src.models.learner import Learner
 from src.models.runtime import AgentThread, ConversationMessage
 
@@ -30,6 +31,8 @@ class ConversationMessageResponse(BaseModel):
 
 class LatestConversationResponse(BaseModel):
     thread_id: uuid.UUID | None = None
+    skill_id: str | None = None
+    skill_name: str | None = None
     messages: list[ConversationMessageResponse] = Field(default_factory=list)
 
 
@@ -40,6 +43,8 @@ class ConversationThreadResponse(BaseModel):
     message_count: int
     created_at: datetime
     updated_at: datetime
+    skill_id: str | None = None
+    skill_name: str | None = None
 
 
 async def _ensure_learner_exists(db: AsyncSession, learner_id: uuid.UUID) -> None:
@@ -77,7 +82,13 @@ async def get_latest_conversation(
         return LatestConversationResponse()
 
     messages = await _list_thread_messages(db, learner_id, thread.id)
-    return LatestConversationResponse(thread_id=thread.id, messages=messages)
+    metadata = thread.metadata_ or {}
+    return LatestConversationResponse(
+        thread_id=thread.id,
+        skill_id=metadata.get("skill_id") if isinstance(metadata.get("skill_id"), str) else None,
+        skill_name=metadata.get("skill_name") if isinstance(metadata.get("skill_name"), str) else None,
+        messages=messages,
+    )
 
 
 @router.get("", response_model=list[ConversationThreadResponse])
@@ -107,6 +118,18 @@ async def get_conversation_messages(
     await _ensure_learner_exists(db, learner_id)
     await _get_owned_thread(db, learner_id, thread_id)
     return await _list_thread_messages(db, learner_id, thread_id)
+
+
+@router.delete("/{thread_id}/skill", status_code=204)
+async def exit_conversation_skill(
+    learner_id: uuid.UUID,
+    thread_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db_session),
+) -> None:
+    await _ensure_learner_exists(db, learner_id)
+    thread = await _get_owned_thread(db, learner_id, thread_id)
+    thread.metadata_ = clear_skill_from_metadata(thread.metadata_)
+    await db.flush()
 
 
 async def _list_threads(db: AsyncSession, learner_id: uuid.UUID) -> list[AgentThread]:
@@ -145,6 +168,8 @@ def _thread_response(
         message_count=len(messages),
         created_at=thread.created_at,
         updated_at=_thread_activity_key(thread),
+        skill_id=metadata.get("skill_id") if isinstance(metadata.get("skill_id"), str) else None,
+        skill_name=metadata.get("skill_name") if isinstance(metadata.get("skill_name"), str) else None,
     )
 
 

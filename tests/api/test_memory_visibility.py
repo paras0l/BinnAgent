@@ -43,7 +43,14 @@ class TestConversationList:
         learner_id = uuid.uuid4()
         thread_id = uuid.uuid4()
         now = datetime.now(timezone.utc)
-        thread = AgentThread(learner_id=learner_id, metadata_={"title": "四级阅读计划"})
+        thread = AgentThread(
+            learner_id=learner_id,
+            metadata_={
+                "title": "四级阅读计划",
+                "skill_id": "vocabulary_deposit",
+                "skill_name": "词汇 Skill",
+            },
+        )
         thread.id = thread_id
         thread.created_at = now
         thread.updated_at = now
@@ -82,6 +89,8 @@ class TestConversationList:
         assert data[0]["title"] == "四级阅读计划"
         assert data[0]["last_message"] == "我们先做一篇阅读。"
         assert data[0]["message_count"] == 2
+        assert data[0]["skill_id"] == "vocabulary_deposit"
+        assert data[0]["skill_name"] == "词汇 Skill"
 
     @pytest.mark.asyncio
     async def test_conversation_messages_use_sequence_when_timestamps_tie(
@@ -127,6 +136,31 @@ class TestConversationList:
         data = response.json()
         assert [message["content"] for message in data] == ["第一条", "第二条"]
         assert [message["sequence"] for message in data] == [1, 2]
+
+    @pytest.mark.asyncio
+    async def test_exit_conversation_skill_clears_thread_metadata(self, client, mock_session):
+        learner_id = uuid.uuid4()
+        thread_id = uuid.uuid4()
+        thread = AgentThread(
+            learner_id=learner_id,
+            metadata_={"skill_id": "vocabulary_deposit", "skill_name": "词汇 Skill"},
+        )
+        thread.id = thread_id
+        mock_session.execute = AsyncMock(
+            side_effect=[
+                _one(learner_id),
+                _one(thread),
+            ]
+        )
+
+        response = await client.delete(
+            f"/api/learners/{learner_id}/conversations/{thread_id}/skill"
+        )
+
+        assert response.status_code == 204
+        assert "skill_id" not in thread.metadata_
+        assert "skill_name" not in thread.metadata_
+        mock_session.flush.assert_awaited_once()
 
 
 class TestMemorySummary:

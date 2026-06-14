@@ -5,6 +5,7 @@ interface ConversationSidebarProps {
   conversations: ConversationThread[]
   activeThreadId: string | null
   isCollapsed: boolean
+  isLocked?: boolean
   onToggleCollapsed: () => void
   onNewConversation: () => void
   onSelectThread: (threadId: string) => void
@@ -14,6 +15,7 @@ export function ConversationSidebar({
   conversations,
   activeThreadId,
   isCollapsed,
+  isLocked = false,
   onToggleCollapsed,
   onNewConversation,
   onSelectThread,
@@ -30,8 +32,9 @@ export function ConversationSidebar({
         </button>
         <button
           onClick={onNewConversation}
-          className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-          title="新建对话"
+          disabled={isLocked}
+          className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent"
+          title={isLocked ? '回答生成中，请先等待完成或取消' : '新建对话'}
         >
           <MessageSquarePlus className="h-4 w-4" />
         </button>
@@ -57,7 +60,9 @@ export function ConversationSidebar({
         </div>
         <button
           onClick={onNewConversation}
-          className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-3 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+          disabled={isLocked}
+          className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-3 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-primary"
+          title={isLocked ? '回答生成中，请先等待完成或取消' : '新建对话'}
         >
           <MessageSquarePlus className="h-4 w-4" />
           新建对话
@@ -75,11 +80,13 @@ export function ConversationSidebar({
               <button
                 key={conversation.thread_id}
                 onClick={() => onSelectThread(conversation.thread_id)}
+                disabled={isLocked}
                 className={`w-full rounded-lg border p-3 text-left transition-colors ${
                   activeThreadId === conversation.thread_id
                     ? 'border-primary bg-primary/5'
                     : 'hover:bg-muted'
-                }`}
+                } disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-transparent`}
+                title={isLocked ? '回答生成中，请先等待完成或取消' : conversation.title}
               >
                 <p className="truncate text-sm font-medium text-foreground">
                   {conversation.title}

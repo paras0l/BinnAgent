@@ -13,6 +13,15 @@ export interface ChatMessage {
   timestamp: number
 }
 
+export interface ChatSkillEvent {
+  name: string
+  skill_id?: string | null
+  skill_name?: string | null
+  status: 'started' | 'completed' | 'skipped' | 'failed'
+  saved_count?: number
+  message?: string
+}
+
 export interface ConversationThread {
   thread_id: string
   title: string
@@ -20,6 +29,8 @@ export interface ConversationThread {
   message_count: number
   created_at: string
   updated_at: string
+  skill_id?: string | null
+  skill_name?: string | null
 }
 
 export interface MemorySummary {

@@ -4,49 +4,13 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any
 
-from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.memory.error_store import ErrorStore
-from src.memory.vocabulary_rules import normalize_vocabulary_word
 from src.models.session import LearningSession
-from src.models.vocabulary import VocabularyItem
 
 
 _WORD_RE = re.compile(r"\b[a-zA-Z][a-zA-Z'-]{2,24}\b")
-
-_STOPWORDS = {
-    "about",
-    "above",
-    "after",
-    "again",
-    "also",
-    "because",
-    "before",
-    "could",
-    "english",
-    "example",
-    "from",
-    "have",
-    "into",
-    "learn",
-    "learning",
-    "like",
-    "meaning",
-    "should",
-    "that",
-    "their",
-    "there",
-    "these",
-    "this",
-    "those",
-    "will",
-    "with",
-    "word",
-    "words",
-    "would",
-    "your",
-}
 
 _SKILL_KEYWORDS = {
     "vocabulary": ("词汇", "单词", "vocabulary", "word", "meaning", "means"),
@@ -82,13 +46,12 @@ _ERROR_PATTERNS = (
 
 @dataclass(frozen=True)
 class MemoryExtractionResult:
-    vocabulary_count: int = 0
     error_count: int = 0
     session_created: bool = False
 
 
 class MemoryExtractionService:
-    """Conservative rule-based Memory writer for chat and learning sessions."""
+    """Conservative rule-based writer for error memory and learning activity."""
 
     def __init__(self, db: AsyncSession):
         self.db = db
@@ -104,20 +67,7 @@ class MemoryExtractionService:
         skill_focus: str | None = None,
     ) -> MemoryExtractionResult:
         active_skill = _infer_skill(user_message, assistant_reply, skill_focus)
-        vocabulary_count = 0
         error_count = 0
-
-        if _is_vocabulary_learning(user_message, assistant_reply, active_skill):
-            source_ref = _source_ref("conversation_message", assistant_message_id, thread_id)
-            for word in _extract_vocabulary_candidates(user_message, assistant_reply):
-                item = await self._upsert_vocabulary(
-                    learner_id=learner_id,
-                    word=word,
-                    source_ref=source_ref,
-                    definition=_definition_for_word(word, assistant_reply),
-                )
-                if item is not None:
-                    vocabulary_count += 1
 
         if _is_evaluable_submission(user_message, active_skill):
             source_ref = _source_ref("conversation_message", assistant_message_id, thread_id)
@@ -152,11 +102,7 @@ class MemoryExtractionService:
             await self.db.flush()
             session_created = True
 
-        return MemoryExtractionResult(
-            vocabulary_count=vocabulary_count,
-            error_count=error_count,
-            session_created=session_created,
-        )
+        return MemoryExtractionResult(error_count=error_count, session_created=session_created)
 
     async def capture_session_result(
         self,
@@ -167,25 +113,7 @@ class MemoryExtractionService:
     ) -> MemoryExtractionResult:
         active_skill = _normalize_skill(result.get("active_skill")) or "general"
         feedback = result.get("agent_feedback") if isinstance(result.get("agent_feedback"), dict) else {}
-        input_materials = result.get("input_materials") if isinstance(result.get("input_materials"), list) else []
-        vocabulary_count = 0
         error_count = 0
-
-        for material in input_materials:
-            if not isinstance(material, dict) or material.get("type") != "vocabulary_list":
-                continue
-            words = material.get("words") if isinstance(material.get("words"), list) else []
-            for item in words:
-                if not isinstance(item, dict) or not isinstance(item.get("word"), str):
-                    continue
-                item_obj = await self._upsert_vocabulary(
-                    learner_id=learner_id,
-                    word=item["word"],
-                    source_ref=f"session:{session_id}",
-                    definition=item.get("definition") if isinstance(item.get("definition"), str) else None,
-                )
-                if item_obj is not None:
-                    vocabulary_count += 1
 
         issue_text = " ".join(
             str(issue)
@@ -207,52 +135,7 @@ class MemoryExtractionService:
                 )
                 error_count += 1
 
-        return MemoryExtractionResult(vocabulary_count=vocabulary_count, error_count=error_count)
-
-    async def _upsert_vocabulary(
-        self,
-        *,
-        learner_id: uuid.UUID,
-        word: str,
-        source_ref: str | None,
-        definition: str | None = None,
-    ) -> VocabularyItem | None:
-        normalized_word = normalize_vocabulary_word(word)
-        if normalized_word is None:
-            return None
-        result = await self.db.execute(
-            select(VocabularyItem).where(
-                VocabularyItem.learner_id == learner_id,
-                func.lower(VocabularyItem.word) == normalized_word,
-            )
-        )
-        existing = result.scalar_one_or_none()
-        now = datetime.now(timezone.utc)
-        meanings = [{"definition": definition}] if definition else []
-
-        if existing is not None:
-            if meanings and not existing.meanings:
-                existing.meanings = meanings
-            if source_ref and not existing.source_ref:
-                existing.source_ref = source_ref
-            if existing.next_review_at is None or existing.next_review_at > now:
-                existing.next_review_at = now
-            await self.db.flush()
-            return existing
-
-        item = VocabularyItem(
-            learner_id=learner_id,
-            word=normalized_word,
-            meanings=meanings,
-            source_ref=source_ref,
-            status="learning",
-            confidence=0.0,
-            review_count=0,
-            next_review_at=now,
-        )
-        self.db.add(item)
-        await self.db.flush()
-        return item
+        return MemoryExtractionResult(error_count=error_count)
 
 
 def _normalize_skill(value: Any) -> str | None:
@@ -271,54 +154,6 @@ def _infer_skill(user_message: str, assistant_reply: str, skill_focus: str | Non
         if any(keyword.lower() in text for keyword in keywords):
             return skill
     return "general"
-
-
-def _is_vocabulary_learning(user_message: str, assistant_reply: str, active_skill: str) -> bool:
-    text = f"{user_message}\n{assistant_reply}".lower()
-    return active_skill == "vocabulary" or any(
-        keyword in text for keyword in ("词汇", "单词", "meaning", "means", "definition")
-    )
-
-
-def _extract_vocabulary_candidates(user_message: str, assistant_reply: str) -> list[str]:
-    candidates: list[str] = []
-    for raw_word in [
-        *_extract_reply_entry_words(assistant_reply),
-        *_WORD_RE.findall(user_message),
-    ]:
-        word = normalize_vocabulary_word(raw_word)
-        if word is None or word in _STOPWORDS:
-            continue
-        if word not in candidates:
-            candidates.append(word)
-        if len(candidates) >= 5:
-            break
-    return candidates
-
-
-def _extract_reply_entry_words(assistant_reply: str) -> list[str]:
-    entry_words: list[str] = []
-    for line in assistant_reply.splitlines():
-        stripped = line.strip()
-        match = re.match(r"^(?:[-*]\s*)?`?([A-Za-z][A-Za-z-]{2,30})`?\s*(?:[:：]|[-–—]\s)", stripped)
-        if match:
-            entry_words.append(match.group(1))
-    return entry_words
-
-
-def _definition_for_word(word: str, assistant_reply: str) -> str | None:
-    for line in assistant_reply.splitlines():
-        stripped = line.strip(" -*`")
-        match = re.match(
-            rf"^`?{re.escape(word)}`?\s*(?:[:：]|[-–—]\s)(.+)$",
-            stripped,
-            flags=re.IGNORECASE,
-        )
-        if match:
-            definition = match.group(1).strip(" -*`")
-            if 4 <= len(definition) <= 220:
-                return definition
-    return None
 
 
 def _is_evaluable_submission(user_message: str, active_skill: str) -> bool:

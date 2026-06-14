@@ -7,7 +7,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.memory.extraction import MemoryExtractionService
 from src.models.error_pattern import ErrorPattern
 from src.models.session import LearningSession
-from src.models.vocabulary import VocabularyItem
 
 
 @pytest.fixture
@@ -26,7 +25,7 @@ def _one(value):
 
 class TestMemoryExtractionService:
     @pytest.mark.asyncio
-    async def test_chat_vocabulary_learning_adds_vocab_and_recent_session(self, mock_db):
+    async def test_chat_vocabulary_learning_creates_recent_session_without_vocab_write(self, mock_db):
         learner_id = uuid.uuid4()
         thread_id = uuid.uuid4()
         message_id = uuid.uuid4()
@@ -41,9 +40,7 @@ class TestMemoryExtractionService:
         )
 
         added = [call.args[0] for call in mock_db.add.call_args_list]
-        assert result.vocabulary_count >= 1
         assert result.session_created is True
-        assert any(isinstance(obj, VocabularyItem) and obj.word == "significant" for obj in added)
         assert any(
             isinstance(obj, LearningSession) and obj.session_type == "chat_learning"
             for obj in added
@@ -57,60 +54,11 @@ class TestMemoryExtractionService:
             assistant_reply="你好，今天想学点什么？",
         )
 
-        assert result.vocabulary_count == 0
         assert result.error_count == 0
         assert result.session_created is False
         mock_db.add.assert_not_called()
 
     @pytest.mark.asyncio
-    async def test_chat_vocabulary_learning_skips_meta_words_from_reply(self, mock_db):
-        mock_db.execute = AsyncMock(return_value=_one(None))
-
-        result = await MemoryExtractionService(mock_db).capture_chat_turn(
-            learner_id=uuid.uuid4(),
-            user_message="讲解 significant 这个单词的意思",
-            assistant_reply=(
-                "Definition: important or noticeable.\n"
-                "Meaning: this word is common in CET writing.\n"
-                "significant: important enough to be noticed."
-            ),
-        )
-
-        added_vocab = [
-            obj for call in mock_db.add.call_args_list for obj in call.args if isinstance(obj, VocabularyItem)
-        ]
-        assert result.vocabulary_count == 1
-        assert [item.word for item in added_vocab] == ["significant"]
-
-    @pytest.mark.asyncio
-    async def test_session_result_skips_invalid_vocabulary_words(self, mock_db):
-        mock_db.execute = AsyncMock(return_value=_one(None))
-
-        result = await MemoryExtractionService(mock_db).capture_session_result(
-            learner_id=uuid.uuid4(),
-            session_id=uuid.uuid4(),
-            result={
-                "active_skill": "vocabulary",
-                "input_materials": [
-                    {
-                        "type": "vocabulary_list",
-                        "words": [
-                            {"word": "definition", "definition": "meta label"},
-                            {"word": "two words", "definition": "not a single word"},
-                            {"word": "sustainable", "definition": "able to continue"},
-                        ],
-                    }
-                ],
-                "agent_feedback": {},
-            },
-        )
-
-        added_vocab = [
-            obj for call in mock_db.add.call_args_list for obj in call.args if isinstance(obj, VocabularyItem)
-        ]
-        assert result.vocabulary_count == 1
-        assert [item.word for item in added_vocab] == ["sustainable"]
-
     @pytest.mark.asyncio
     async def test_chat_evaluable_writing_records_error_pattern(self, mock_db):
         mock_db.execute = AsyncMock(return_value=_one(None))
@@ -161,9 +109,5 @@ class TestMemoryExtractionService:
         )
 
         added = [call.args[0] for call in mock_db.add.call_args_list]
-        assert result.vocabulary_count == 1
         assert result.error_count == 1
-        assert any(
-            isinstance(obj, VocabularyItem) and obj.word == "sustainable" for obj in added
-        )
         assert any(isinstance(obj, ErrorPattern) and obj.pattern == "word_choice" for obj in added)

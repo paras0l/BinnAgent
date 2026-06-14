@@ -281,6 +281,91 @@ class TestChatSend:
         assert "第一段" in second_contents
         assert "不要重复已回答内容" in second_contents[-1]
 
+    @pytest.mark.asyncio
+    async def test_chat_send_vocabulary_skill_returns_started_event(
+        self, client, mock_model_router, mock_session, monkeypatch
+    ):
+        async def fake_background(**kwargs):
+            return None
+
+        monkeypatch.setattr(chat_api, "_run_vocabulary_agent_background", fake_background)
+        mock_model_router.chat = AsyncMock(
+            return_value=ModelChatResponse(
+                provider="ollama",
+                model="gemma4:e2b",
+                content="significant: 重要的。",
+            )
+        )
+
+        response = await client.post(
+            "/api/chat/send",
+            json={
+                "learner_id": str(mock_session.learner_id),
+                "message": "讲解 significant",
+                "skill_focus": "vocabulary",
+            },
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["skill_id"] == "vocabulary_deposit"
+        assert data["skill_name"] == "词汇 Skill"
+        assert data["skill_events"][0]["name"] == "vocabulary_agent"
+        assert data["skill_events"][0]["skill_id"] == "vocabulary_deposit"
+        assert data["skill_events"][0]["status"] == "started"
+        threads = [obj for obj in mock_session.added_objects if isinstance(obj, AgentThread)]
+        assert threads[0].metadata_["skill_id"] == "vocabulary_deposit"
+
+    @pytest.mark.asyncio
+    async def test_chat_send_restores_thread_skill_without_request_skill(
+        self, client, mock_model_router, mock_session, monkeypatch
+    ):
+        thread_id = uuid.uuid4()
+        thread = AgentThread(
+            learner_id=mock_session.learner_id,
+            metadata_={"skill_id": "vocabulary_deposit", "skill_name": "词汇 Skill"},
+        )
+        thread.id = thread_id
+
+        async def fake_background(**kwargs):
+            return None
+
+        learner_result = MagicMock()
+        learner_result.scalar_one_or_none.return_value = mock_session.learner_id
+        thread_result = MagicMock()
+        thread_result.scalar_one_or_none.return_value = thread
+        history_result = MagicMock()
+        history_result.scalars.return_value.all.return_value = []
+        max_result = MagicMock()
+        max_result.scalar_one_or_none.return_value = 0
+        mock_session.execute = AsyncMock(
+            side_effect=[learner_result, thread_result, history_result, max_result]
+        )
+        monkeypatch.setattr(chat_api, "_run_vocabulary_agent_background", fake_background)
+        mock_model_router.chat = AsyncMock(
+            return_value=ModelChatResponse(provider="ollama", model="gemma4:e2b", content="OK")
+        )
+
+        response = await client.post(
+            "/api/chat/send",
+            json={
+                "learner_id": str(mock_session.learner_id),
+                "thread_id": str(thread_id),
+                "message": "那再讲一个例句",
+            },
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["skill_id"] == "vocabulary_deposit"
+        assert data["skill_events"][0]["status"] == "started"
+        request = mock_model_router.chat.await_args.args[0]
+        assert "当前 Agent Skill: 词汇 Skill" in request.messages[0]["content"]
+        messages = [
+            obj for obj in mock_session.added_objects if isinstance(obj, ConversationMessage)
+        ]
+        assert {message.skill_focus for message in messages} == {"vocabulary_deposit"}
+
 
 class TestChatStream:
     @pytest.mark.asyncio
@@ -380,3 +465,35 @@ class TestChatStream:
         ]
         assert messages[-1].role == "assistant"
         assert messages[-1].content == "第一段第二段"
+
+    @pytest.mark.asyncio
+    async def test_chat_stream_emits_vocabulary_skill_events_after_done(
+        self, client, mock_model_router, mock_session, mock_stream_persist_session, monkeypatch
+    ):
+        async def stream_chat(request):
+            yield ChatStreamChunk(content="significant means important.")
+            yield ChatStreamChunk(finish_reason="stop")
+
+        async def fake_vocabulary_agent(**kwargs):
+            return chat_api.VocabularyAgentResult(saved_count=2)
+
+        mock_model_router.stream_chat = stream_chat
+        monkeypatch.setattr(chat_api, "_run_vocabulary_agent_background", fake_vocabulary_agent)
+
+        response = await client.post(
+            "/api/chat/stream",
+            json={
+                "learner_id": str(mock_session.learner_id),
+                "message": "讲解 significant",
+                "skill_focus": "vocabulary",
+            },
+        )
+
+        assert response.status_code == 200
+        body = response.text
+        assert "event: done" in body
+        assert "event: skill" in body
+        assert '"skill_id": "vocabulary_deposit"' in body
+        assert '"status": "started"' in body
+        assert '"status": "completed"' in body
+        assert '"saved_count": 2' in body

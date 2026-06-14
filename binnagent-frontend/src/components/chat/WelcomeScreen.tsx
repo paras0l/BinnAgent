@@ -4,9 +4,17 @@ interface WelcomeScreenProps {
   onStartLesson: () => void
   onReviewVocab: () => void
   onPracticeSpeaking: () => void
+  isLocked?: boolean
 }
 
-export function WelcomeScreen({ onStartLesson, onReviewVocab, onPracticeSpeaking }: WelcomeScreenProps) {
+export function WelcomeScreen({
+  onStartLesson,
+  onReviewVocab,
+  onPracticeSpeaking,
+  isLocked = false,
+}: WelcomeScreenProps) {
+  const lockedTitle = '回答生成中，请先等待完成或取消'
+
   return (
     <div className="flex flex-col items-center justify-center h-full gap-8 p-8">
       <div className="flex size-20 items-center justify-center rounded-full bg-primary/10">
@@ -21,7 +29,9 @@ export function WelcomeScreen({ onStartLesson, onReviewVocab, onPracticeSpeaking
       <div className="flex flex-col gap-3 w-full max-w-md">
         <button
           onClick={onStartLesson}
-          className="flex items-center gap-3 rounded-xl border p-4 text-left transition-colors hover:bg-muted"
+          disabled={isLocked}
+          className="flex items-center gap-3 rounded-xl border p-4 text-left transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-transparent"
+          title={isLocked ? lockedTitle : '开始一节对话课'}
         >
           <div className="flex size-10 items-center justify-center rounded-lg bg-primary/10">
             <MessageSquare className="h-5 w-5 text-primary" />
@@ -34,7 +44,9 @@ export function WelcomeScreen({ onStartLesson, onReviewVocab, onPracticeSpeaking
 
         <button
           onClick={onReviewVocab}
-          className="flex items-center gap-3 rounded-xl border p-4 text-left transition-colors hover:bg-muted"
+          disabled={isLocked}
+          className="flex items-center gap-3 rounded-xl border p-4 text-left transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-transparent"
+          title={isLocked ? lockedTitle : '复习今天词汇'}
         >
           <div className="flex size-10 items-center justify-center rounded-lg bg-success/10">
             <BookOpen className="h-5 w-5 text-success" />
@@ -47,7 +59,9 @@ export function WelcomeScreen({ onStartLesson, onReviewVocab, onPracticeSpeaking
 
         <button
           onClick={onPracticeSpeaking}
-          className="flex items-center gap-3 rounded-xl border p-4 text-left transition-colors hover:bg-muted"
+          disabled={isLocked}
+          className="flex items-center gap-3 rounded-xl border p-4 text-left transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-transparent"
+          title={isLocked ? lockedTitle : '练习口语场景'}
         >
           <div className="flex size-10 items-center justify-center rounded-lg bg-accent/10">
             <Mic className="h-5 w-5 text-accent" />

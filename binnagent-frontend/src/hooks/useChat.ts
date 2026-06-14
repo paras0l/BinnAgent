@@ -1,8 +1,10 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
-import type { ChatMessage, ConversationThread, MemorySummary } from '@/types'
+import type { ChatMessage, ChatSkillEvent, ConversationThread, MemorySummary } from '@/types'
 
 interface HistoryResponse {
   thread_id: string | null
+  skill_id?: string | null
+  skill_name?: string | null
   messages: Array<{
     id: string
     role: 'user' | 'assistant'
@@ -42,14 +44,25 @@ function stripContinuationStatus(content: string): string {
   return content.replace(/\n\n_正在继续生成\.\.\._$/u, '')
 }
 
-export function useChat(learnerId: string) {
+export function useChat(
+  learnerId: string,
+  options: { onGeneratingChange?: (isGenerating: boolean) => void } = {}
+) {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [threadId, setThreadId] = useState<string | null>(null)
   const [conversations, setConversations] = useState<ConversationThread[]>([])
   const [memorySummary, setMemorySummary] = useState<MemorySummary | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [isLoadingHistory, setIsLoadingHistory] = useState(true)
+  const [skillStatus, setSkillStatus] = useState('')
+  const [activeSkillId, setActiveSkillId] = useState<string | null>(null)
+  const [activeSkillName, setActiveSkillName] = useState<string | null>(null)
   const abortRef = useRef<AbortController | null>(null)
+  const onGeneratingChangeRef = useRef(options.onGeneratingChange)
+
+  useEffect(() => {
+    onGeneratingChangeRef.current = options.onGeneratingChange
+  }, [options.onGeneratingChange])
 
   const loadConversations = useCallback(async () => {
     const response = await fetch(`/api/learners/${learnerId}/conversations`)
@@ -75,7 +88,11 @@ export function useChat(learnerId: string) {
       )
       if (!response.ok) throw new Error('Failed to load thread messages')
       const data: HistoryResponse['messages'] = await response.json()
+      const conversation = conversations.find(item => item.thread_id === nextThreadId)
       setThreadId(nextThreadId)
+      setActiveSkillId(conversation?.skill_id ?? null)
+      setActiveSkillName(conversation?.skill_name ?? null)
+      setSkillStatus('')
       setMessages(data.map(toChatMessage))
     } catch (err) {
       console.error('Conversation thread error:', err)
@@ -84,12 +101,38 @@ export function useChat(learnerId: string) {
     } finally {
       setIsLoadingHistory(false)
     }
-  }, [learnerId])
+  }, [conversations, learnerId])
 
   const startNewConversation = useCallback(() => {
     setThreadId(null)
     setMessages([])
+    setSkillStatus('')
+    setActiveSkillId(null)
+    setActiveSkillName(null)
   }, [])
+
+  const exitSkill = useCallback(async () => {
+    if (!threadId) {
+      setActiveSkillId(null)
+      setActiveSkillName(null)
+      setSkillStatus('')
+      return
+    }
+
+    try {
+      const response = await fetch(`/api/learners/${learnerId}/conversations/${threadId}/skill`, {
+        method: 'DELETE',
+      })
+      if (!response.ok) throw new Error('Failed to exit skill')
+      setActiveSkillId(null)
+      setActiveSkillName(null)
+      setSkillStatus('')
+      void loadConversations()
+    } catch (err) {
+      console.error('Exit skill error:', err)
+      setSkillStatus('退出 Skill 失败，请稍后重试。')
+    }
+  }, [learnerId, loadConversations, threadId])
 
   useEffect(() => {
     let cancelled = false
@@ -106,6 +149,8 @@ export function useChat(learnerId: string) {
         .then(([latest]) => {
           if (cancelled) return
           setThreadId(latest.thread_id)
+          setActiveSkillId(latest.skill_id ?? null)
+          setActiveSkillName(latest.skill_name ?? null)
           setMessages(latest.messages.map(toChatMessage))
         })
         .catch((err) => {
@@ -126,7 +171,9 @@ export function useChat(learnerId: string) {
     }
   }, [learnerId, loadConversations, loadMemorySummary])
 
-  const sendMessage = useCallback(async (content: string) => {
+  const sendMessage = useCallback(async (content: string, skillId?: string | null) => {
+    setSkillStatus('')
+    const requestedSkillId = skillId ?? activeSkillId
     const userMsg: ChatMessage = {
       id: crypto.randomUUID(),
       role: 'user',
@@ -135,6 +182,7 @@ export function useChat(learnerId: string) {
     }
     setMessages(prev => [...prev, userMsg])
     setIsLoading(true)
+    onGeneratingChangeRef.current?.(true)
 
     const assistantId = crypto.randomUUID()
     const assistantMsg: ChatMessage = {
@@ -156,6 +204,7 @@ export function useChat(learnerId: string) {
           learner_id: learnerId,
           message: content,
           thread_id: threadId,
+          skill_id: requestedSkillId || undefined,
         }),
         signal: controller.signal,
       })
@@ -169,6 +218,8 @@ export function useChat(learnerId: string) {
       const handleStreamEvent = (parsed: StreamEvent) => {
         if (parsed.event === 'meta' && typeof parsed.data.thread_id === 'string') {
           setThreadId(parsed.data.thread_id)
+          setActiveSkillId(typeof parsed.data.skill_id === 'string' ? parsed.data.skill_id : null)
+          setActiveSkillName(typeof parsed.data.skill_name === 'string' ? parsed.data.skill_name : null)
         }
 
         if (parsed.event === 'delta' && typeof parsed.data.content === 'string') {
@@ -192,7 +243,9 @@ export function useChat(learnerId: string) {
           )
         }
 
-        if (parsed.event === 'done') {
+      if (parsed.event === 'done') {
+        setIsLoading(false)
+        onGeneratingChangeRef.current?.(false)
           if (typeof parsed.data.thread_id === 'string') {
             setThreadId(parsed.data.thread_id)
           }
@@ -209,6 +262,27 @@ export function useChat(learnerId: string) {
           )
           void loadConversations()
           void loadMemorySummary()
+        }
+
+        if (parsed.event === 'skill') {
+          const event = parsed.data as unknown as ChatSkillEvent
+          if (event.skill_id) {
+            setActiveSkillId(event.skill_id)
+          }
+          if (event.skill_name) {
+            setActiveSkillName(event.skill_name)
+          }
+          if (event.name !== 'vocabulary_agent') return
+          if (event.status === 'started') {
+            setSkillStatus(event.message || '词汇 Agent 正在后台整理词卡...')
+          } else if (event.status === 'completed') {
+            setSkillStatus(event.message || `已沉淀 ${event.saved_count ?? 0} 个词到词汇本`)
+            void loadMemorySummary()
+          } else if (event.status === 'skipped') {
+            setSkillStatus(event.message || '本轮没有发现符合标准的可沉淀词汇')
+          } else if (event.status === 'failed') {
+            setSkillStatus(event.message || '词汇沉淀暂时失败，对话内容已保留')
+          }
         }
 
         if (parsed.event === 'error') {
@@ -261,13 +335,15 @@ export function useChat(learnerId: string) {
       }
     } finally {
       setIsLoading(false)
+      onGeneratingChangeRef.current?.(false)
       abortRef.current = null
     }
-  }, [learnerId, threadId, loadConversations, loadMemorySummary])
+  }, [activeSkillId, learnerId, threadId, loadConversations, loadMemorySummary])
 
   const cancel = useCallback(() => {
     abortRef.current?.abort()
     setIsLoading(false)
+    onGeneratingChangeRef.current?.(false)
   }, [])
 
   return {
@@ -275,8 +351,12 @@ export function useChat(learnerId: string) {
     threadId,
     conversations,
     memorySummary,
+    skillStatus,
+    activeSkillId,
+    activeSkillName,
     sendMessage,
     cancel,
+    exitSkill,
     loadThread,
     startNewConversation,
     isLoading,
