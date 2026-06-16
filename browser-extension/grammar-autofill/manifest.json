@@ -1,0 +1,18 @@
+{
+  "manifest_version": 3,
+  "name": "BinnAgent Grammar Autofill",
+  "version": "0.1.0",
+  "description": "Autofill BinnAgent grammar prompts into AI chat sites and send generated HTML back.",
+  "permissions": ["storage", "tabs", "clipboardRead"],
+  "host_permissions": ["<all_urls>"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content-script.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}

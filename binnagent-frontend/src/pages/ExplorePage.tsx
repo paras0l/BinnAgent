@@ -37,7 +37,7 @@ interface ExploreFeature {
   status: FeatureStatus
   action: FeatureAction
   prompt?: string
-  toolTarget?: 'dashboard'
+  toolTarget?: 'dashboard' | 'pronunciation' | 'grammar'
 }
 
 const CATEGORIES: Array<{ id: FeatureCategory; label: string }> = [
@@ -120,13 +120,13 @@ const FEATURES: ExploreFeature[] = [
   {
     id: 'grammar-explain',
     category: 'grammar',
-    title: '语法讲解',
-    description: '围绕一个语法点给出规则、例句和小练习。',
-    whenToUse: '遇到从句、时态、非谓语等规则模糊，想快速弄懂时使用。',
-    outcome: '得到中英结合讲解和即时练习。',
+    title: '语法微知识点',
+    description: '按分类选择一个小语法点，用外部 AI 生成精讲 HTML。',
+    whenToUse: '遇到主将从现、because 与 because of、which/that 选择这类小规则，想集中学透时使用。',
+    outcome: '复制受控 prompt，跳转 DeepSeek 等网站生成 HTML，回到原页面阅读精讲。',
     status: 'ready',
-    action: 'chat',
-    prompt: '请用适合 CET 学习者的方式讲解一个语法点：定语从句。请包含规则、3 个英文例句、常见错误和 2 道小练习。',
+    action: 'tool',
+    toolTarget: 'grammar',
   },
   {
     id: 'translation-practice',
@@ -149,6 +149,17 @@ const FEATURES: ExploreFeature[] = [
     status: 'ready',
     action: 'chat',
     prompt: '请和我进行 CET 口语场景模拟。主题是校园学习计划。你先扮演考官提问，每次只问一个问题，并在我回答后给出更自然的表达建议。',
+  },
+  {
+    id: 'phonetic-association',
+    category: 'speaking',
+    title: '音标图像联想训练',
+    description: '用 48 张图像联想卡片记住常见音标，并跟读重点音素。',
+    whenToUse: '音标不熟、单词发音常靠猜，或想系统补一遍口语基础时使用。',
+    outcome: '进入音标训练页，完成卡片、跟读、连读弱读、重音和语调练习。',
+    status: 'ready',
+    action: 'tool',
+    toolTarget: 'pronunciation',
   },
   {
     id: 'listening-intensive',
@@ -316,8 +327,8 @@ export function ExplorePage({
       return
     }
 
-    if (feature.action === 'tool' && feature.toolTarget === 'dashboard') {
-      onTabChange('dashboard')
+    if (feature.action === 'tool' && feature.toolTarget) {
+      onTabChange(feature.toolTarget)
       return
     }
 

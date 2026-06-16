@@ -4,7 +4,7 @@ export interface Learner {
   email?: string | null
 }
 
-export type AppTab = 'chat' | 'explore' | 'dashboard'
+export type AppTab = 'chat' | 'explore' | 'dashboard' | 'pronunciation' | 'grammar'
 
 export interface ChatMessage {
   id: string

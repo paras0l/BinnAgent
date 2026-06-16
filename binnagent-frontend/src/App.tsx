@@ -3,7 +3,9 @@ import { Header } from './components/layout/Header'
 import { ChatPage } from './pages/ChatPage'
 import { DashboardPage } from './pages/DashboardPage'
 import { ExplorePage } from './pages/ExplorePage'
+import { GrammarPage } from './pages/GrammarPage'
 import { LoginPage } from './pages/LoginPage'
+import { PronunciationPage } from './pages/PronunciationPage'
 import type { AppTab, Learner } from './types'
 
 function App() {
@@ -118,6 +120,10 @@ function App() {
             onTabChange={handleTabChange}
             onDraftPrompt={handleDraftPrompt}
           />
+        ) : activeTab === 'pronunciation' ? (
+          <PronunciationPage learner={currentLearner} />
+        ) : activeTab === 'grammar' ? (
+          <GrammarPage learner={currentLearner} onTabChange={handleTabChange} />
         ) : (
           <DashboardPage learner={currentLearner} />
         )}
