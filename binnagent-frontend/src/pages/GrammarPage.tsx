@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   ArrowLeft,
   Check,
+  CheckCircle2,
   Clipboard,
   ExternalLink,
   FileInput,
@@ -10,6 +11,8 @@ import {
   Puzzle,
   RefreshCw,
   Search,
+  Star,
+  StarOff,
   Trash2,
   X,
 } from 'lucide-react'
@@ -19,7 +22,8 @@ import {
   type GrammarCategory,
   type GrammarTopic,
 } from '@/data/grammarTopics'
-import type { AppTab, Learner } from '@/types'
+import type { AppTab, GrammarHtmlCacheResponse, Learner, LearningProgressItem } from '@/types'
+import { useToast } from '@/hooks/useToast'
 
 type CategoryFilter = 'all' | GrammarCategory
 
@@ -32,7 +36,8 @@ interface GrammarTarget {
 interface StoredGrammarState {
   topicId: string
   prompt: string
-  html: string
+  html?: string
+  htmlByTopicId?: Record<string, string>
   targetId: string
   targets: GrammarTarget[]
 }
@@ -47,7 +52,10 @@ const DEFAULT_TARGETS: GrammarTarget[] = [
 ]
 
 const STORAGE_KEY = 'binnGrammarMicroLesson'
+const PROMPT_VERSION = 'grammar-micro-v1'
 const EXTENSION_PATH = '/Users/binge/Documents/BinnAgent/browser-extension/grammar-autofill'
+
+type CacheStatus = 'idle' | 'loading' | 'hit' | 'miss' | 'saving' | 'saved' | 'error' | 'bypassed'
 
 const BASE_IFRAME_STYLE = `
   <style>
@@ -85,6 +93,7 @@ const BASE_IFRAME_STYLE = `
 `
 
 export function GrammarPage({ learner, onTabChange }: GrammarPageProps) {
+  const { showToast } = useToast()
   const storedState = useMemo(() => readStoredGrammarState(), [])
   const [category, setCategory] = useState<CategoryFilter>('all')
   const [query, setQuery] = useState('')
@@ -99,8 +108,10 @@ export function GrammarPage({ learner, onTabChange }: GrammarPageProps) {
   const [targetId, setTargetId] = useState(storedState.targetId || DEFAULT_TARGETS[0].id)
   const [newTargetLabel, setNewTargetLabel] = useState('')
   const [newTargetUrl, setNewTargetUrl] = useState('')
-  const [html, setHtml] = useState(storedState.html)
-  const [message, setMessage] = useState('')
+  const [htmlByTopicId, setHtmlByTopicId] = useState<Record<string, string>>(storedState.htmlByTopicId ?? {})
+  const [cacheStatusByTopicId, setCacheStatusByTopicId] = useState<Record<string, CacheStatus>>({})
+  const [bypassedCacheTopicIds, setBypassedCacheTopicIds] = useState<string[]>([])
+  const [progressByTopicId, setProgressByTopicId] = useState<Record<string, LearningProgressItem>>({})
   const [isCopied, setIsCopied] = useState(false)
   const [isExtensionPathCopied, setIsExtensionPathCopied] = useState(false)
   const [isImmersiveReading, setIsImmersiveReading] = useState(false)
@@ -111,29 +122,185 @@ export function GrammarPage({ learner, onTabChange }: GrammarPageProps) {
   )
 
   const prompt = useMemo(() => buildGrammarPrompt(selectedTopic), [selectedTopic])
+  const promptHash = useMemo(
+    () => stableHash(`${PROMPT_VERSION}:${selectedTopic.id}:${prompt}`),
+    [prompt, selectedTopic.id]
+  )
+  const currentHtml = htmlByTopicId[selectedTopic.id] ?? ''
+  const currentProgress = progressByTopicId[selectedTopic.id]
+  const currentCacheStatus = cacheStatusByTopicId[selectedTopic.id] ?? 'idle'
+
+  const setTopicHtml = useCallback((topicId: string, nextHtml: string) => {
+    setHtmlByTopicId((current) => ({ ...current, [topicId]: nextHtml }))
+    setBypassedCacheTopicIds((current) => current.filter((id) => id !== topicId))
+    setCacheStatusByTopicId((current) => ({ ...current, [topicId]: nextHtml.trim() ? 'saving' : 'idle' }))
+  }, [])
+
+  const persistGrammarProgress = useCallback(
+    async (
+      topic: GrammarTopic,
+      payload: { is_favorite?: boolean; mark_opened?: boolean; mark_learned?: boolean }
+    ) => {
+      try {
+        const response = await fetch(
+          `/api/learners/${learner.id}/learning-progress/grammar/${encodeURIComponent(topic.id)}`,
+          {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              title: topic.title,
+              metadata: {
+                category: topic.category,
+                level: topic.level,
+                tags: topic.tags,
+                shortDescription: topic.shortDescription,
+              },
+              ...payload,
+            }),
+          }
+        )
+        if (!response.ok) throw new Error('Failed to persist grammar progress')
+        const updated = (await response.json()) as LearningProgressItem
+        setProgressByTopicId((current) => ({ ...current, [updated.item_id]: updated }))
+      } catch (err) {
+        console.error('Grammar progress save error:', err)
+        showToast('语法学习进度暂时无法保存，本地操作不会中断。', { variant: 'warning' })
+      }
+    },
+    [learner.id, showToast]
+  )
+
+  const saveGrammarHtmlToCache = useCallback(
+    async (topicId: string, html: string, hash: string) => {
+      setCacheStatusByTopicId((current) => ({ ...current, [topicId]: 'saving' }))
+      try {
+        const response = await fetch(
+          `/api/learners/${learner.id}/grammar/topics/${encodeURIComponent(topicId)}/html-cache`,
+          {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              html,
+              prompt_hash: hash,
+              prompt_version: PROMPT_VERSION,
+              source: 'frontend',
+            }),
+          }
+        )
+        if (!response.ok) throw new Error('Failed to save grammar cache')
+        setCacheStatusByTopicId((current) => ({ ...current, [topicId]: 'saved' }))
+      } catch (err) {
+        console.error('Grammar cache save error:', err)
+        setCacheStatusByTopicId((current) => ({ ...current, [topicId]: 'error' }))
+        showToast('语法 HTML 缓存暂时无法保存，但当前页面内容已保留。', { variant: 'warning' })
+      }
+    },
+    [learner.id, showToast]
+  )
 
   useEffect(() => {
     const stored: StoredGrammarState = {
       topicId: selectedTopic.id,
       prompt,
-      html,
+      htmlByTopicId,
       targetId,
       targets,
     }
     localStorage.setItem(STORAGE_KEY, JSON.stringify(stored))
-  }, [html, prompt, selectedTopic.id, targetId, targets])
+  }, [htmlByTopicId, prompt, selectedTopic.id, targetId, targets])
+
+  useEffect(() => {
+    let isMounted = true
+    fetch(`/api/learners/${learner.id}/learning-progress?skill=grammar`)
+      .then((response) => {
+        if (!response.ok) throw new Error('Failed to load grammar progress')
+        return response.json() as Promise<LearningProgressItem[]>
+      })
+      .then((items) => {
+        if (!isMounted) return
+        setProgressByTopicId(Object.fromEntries(items.map((item) => [item.item_id, item])))
+      })
+      .catch((err) => {
+        console.error('Grammar progress load error:', err)
+        if (isMounted) showToast('语法学习进度暂时无法加载，本页仍可继续使用。', { variant: 'warning' })
+      })
+    return () => {
+      isMounted = false
+    }
+  }, [learner.id, showToast])
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      void persistGrammarProgress(selectedTopic, { mark_opened: true })
+    }, 0)
+    return () => window.clearTimeout(timer)
+  }, [persistGrammarProgress, selectedTopic])
+
+  useEffect(() => {
+    if (currentHtml.trim()) return
+    if (bypassedCacheTopicIds.includes(selectedTopic.id)) {
+      return
+    }
+
+    let isMounted = true
+    const topicId = selectedTopic.id
+    const loadingTimer = window.setTimeout(() => {
+      if (isMounted) setCacheStatusByTopicId((current) => ({ ...current, [topicId]: 'loading' }))
+    }, 0)
+    fetch(
+      `/api/learners/${learner.id}/grammar/topics/${encodeURIComponent(topicId)}/html-cache?` +
+        new URLSearchParams({ prompt_hash: promptHash, prompt_version: PROMPT_VERSION }).toString()
+    )
+      .then((response) => {
+        if (!response.ok) throw new Error('Failed to load grammar cache')
+        return response.json() as Promise<GrammarHtmlCacheResponse>
+      })
+      .then((data) => {
+        if (!isMounted) return
+        if (data.cached && data.html) {
+          setHtmlByTopicId((current) => {
+            if (current[topicId]?.trim()) return current
+            return { ...current, [topicId]: data.html ?? '' }
+          })
+          setCacheStatusByTopicId((current) => ({ ...current, [topicId]: 'hit' }))
+        } else {
+          setCacheStatusByTopicId((current) => ({ ...current, [topicId]: 'miss' }))
+        }
+      })
+      .catch((err) => {
+        console.error('Grammar cache load error:', err)
+        if (isMounted) {
+          setCacheStatusByTopicId((current) => ({ ...current, [topicId]: 'error' }))
+          showToast('语法缓存暂时无法读取，可以继续手动生成或粘贴 HTML。', { variant: 'warning' })
+        }
+      })
+
+    return () => {
+      isMounted = false
+      window.clearTimeout(loadingTimer)
+    }
+  }, [bypassedCacheTopicIds, currentHtml, learner.id, promptHash, selectedTopic.id, showToast])
+
+  useEffect(() => {
+    const html = currentHtml.trim()
+    if (!html) return
+    const timer = window.setTimeout(() => {
+      void saveGrammarHtmlToCache(selectedTopic.id, html, promptHash)
+    }, 900)
+    return () => window.clearTimeout(timer)
+  }, [currentHtml, promptHash, saveGrammarHtmlToCache, selectedTopic.id])
 
   useEffect(() => {
     const handleReturnedHtml = (event: MessageEvent) => {
       if (event.source !== window) return
       const data = event.data as { type?: string; html?: string }
       if (data?.type !== 'BINN_GRAMMAR_HTML_RETURNED' || typeof data.html !== 'string') return
-      setHtml(extractHtmlFragment(data.html))
-      setMessage('已从浏览器扩展接收 HTML，预览区已更新。')
+      setTopicHtml(selectedTopic.id, extractHtmlFragment(data.html))
+      showToast('已从浏览器扩展接收 HTML，预览区已更新。', { variant: 'success' })
     }
     window.addEventListener('message', handleReturnedHtml)
     return () => window.removeEventListener('message', handleReturnedHtml)
-  }, [])
+  }, [selectedTopic.id, setTopicHtml, showToast])
 
   useEffect(() => {
     if (!isImmersiveReading) return
@@ -156,11 +323,11 @@ export function GrammarPage({ learner, onTabChange }: GrammarPageProps) {
   }, [category, query])
 
   const selectedTarget = targets.find((target) => target.id === targetId) ?? targets[0] ?? DEFAULT_TARGETS[0]
-  const safeHtml = useMemo(() => sanitizeHtml(extractHtmlFragment(html)), [html])
+  const safeHtml = useMemo(() => sanitizeHtml(extractHtmlFragment(currentHtml)), [currentHtml])
   const iframeSrcDoc = `${BASE_IFRAME_STYLE}<body>${safeHtml || emptyPreviewMarkup(selectedTopic.title)}</body>`
   const immersiveSrcDoc = useMemo(
-    () => buildImmersiveSrcDoc(extractHtmlFragment(html), selectedTopic.title),
-    [html, selectedTopic.title]
+    () => buildImmersiveSrcDoc(extractHtmlFragment(currentHtml), selectedTopic.title),
+    [currentHtml, selectedTopic.title]
   )
 
   const copyPrompt = async () => {
@@ -177,11 +344,11 @@ export function GrammarPage({ learner, onTabChange }: GrammarPageProps) {
         window.location.origin
       )
       setIsCopied(true)
-      setMessage('Prompt 已复制。若已安装扩展，跳转后会尝试自动填充输入框。')
+      showToast('Prompt 已复制。若已安装扩展，跳转后会尝试自动填充输入框。', { variant: 'success' })
       window.setTimeout(() => setIsCopied(false), 1800)
     } catch (err) {
       console.error('Copy grammar prompt error:', err)
-      setMessage('复制失败，请手动复制 prompt。')
+      showToast('复制失败，请手动复制 prompt。', { variant: 'error' })
     }
   }
 
@@ -190,15 +357,29 @@ export function GrammarPage({ learner, onTabChange }: GrammarPageProps) {
     window.open(normalizeUrl(selectedTarget.url), '_blank', 'noopener,noreferrer')
   }
 
+  const regenerateCurrentTopic = () => {
+    setHtmlByTopicId((current) => {
+      const next = { ...current }
+      delete next[selectedTopic.id]
+      return next
+    })
+    setBypassedCacheTopicIds((current) => uniqueList([selectedTopic.id, ...current]))
+    setCacheStatusByTopicId((current) => ({ ...current, [selectedTopic.id]: 'bypassed' }))
+    showToast('已清空当前知识点的 HTML。下一次返回的新 HTML 会覆盖缓存。', {
+      variant: 'warning',
+      duration: 5000,
+    })
+  }
+
   const copyExtensionPath = async () => {
     try {
       await navigator.clipboard.writeText(EXTENSION_PATH)
       setIsExtensionPathCopied(true)
-      setMessage('扩展目录路径已复制。打开 Chrome/Edge 扩展页后选择这个文件夹。')
+      showToast('扩展目录路径已复制。打开 Chrome/Edge 扩展页后选择这个文件夹。', { variant: 'success' })
       window.setTimeout(() => setIsExtensionPathCopied(false), 1800)
     } catch (err) {
       console.error('Copy extension path error:', err)
-      setMessage(`扩展目录：${EXTENSION_PATH}`)
+      showToast(`扩展目录：${EXTENSION_PATH}`, { variant: 'info', duration: 7000 })
     }
   }
 
@@ -206,7 +387,7 @@ export function GrammarPage({ learner, onTabChange }: GrammarPageProps) {
     const label = newTargetLabel.trim()
     const url = normalizeUrl(newTargetUrl)
     if (!label || !url) {
-      setMessage('请填写目标网站名称和网址。')
+      showToast('请填写目标网站名称和网址。', { variant: 'warning' })
       return
     }
     const target: GrammarTarget = {
@@ -218,12 +399,12 @@ export function GrammarPage({ learner, onTabChange }: GrammarPageProps) {
     setTargetId(target.id)
     setNewTargetLabel('')
     setNewTargetUrl('')
-    setMessage('目标网站已添加。')
+    showToast('目标网站已添加。', { variant: 'success' })
   }
 
   const removeTarget = (id: string) => {
     if (targets.length <= 1) {
-      setMessage('至少保留一个跳转目标。')
+      showToast('至少保留一个跳转目标。', { variant: 'warning' })
       return
     }
     setTargets((prev) => prev.filter((target) => target.id !== id))
@@ -257,12 +438,6 @@ export function GrammarPage({ learner, onTabChange }: GrammarPageProps) {
           </div>
         </div>
       </section>
-
-      {message && (
-        <div className="rounded-lg border border-primary/20 bg-primary/5 px-4 py-3 text-sm text-foreground">
-          {message}
-        </div>
-      )}
 
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_420px]">
         <section className="flex min-h-[620px] flex-col rounded-xl border bg-card p-5">
@@ -311,9 +486,13 @@ export function GrammarPage({ learner, onTabChange }: GrammarPageProps) {
                     <p className="text-xs text-muted-foreground">{GRAMMAR_CATEGORY_LABELS[topic.category]}</p>
                     <h3 className="mt-1 text-base font-semibold text-foreground">{topic.title}</h3>
                   </div>
-                  <span className="shrink-0 rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground">
-                    {topic.level}
-                  </span>
+                  <div className="flex shrink-0 items-center gap-1">
+                    {progressByTopicId[topic.id]?.is_favorite && <Star className="h-4 w-4 fill-warning text-warning" />}
+                    {progressByTopicId[topic.id]?.status === 'learned' && <CheckCircle2 className="h-4 w-4 text-success" />}
+                    <span className="rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground">
+                      {topic.level}
+                    </span>
+                  </div>
                 </div>
                 <p className="mt-3 line-clamp-2 text-sm text-muted-foreground">{topic.shortDescription}</p>
                 <div className="mt-3 flex flex-wrap gap-1">
@@ -335,8 +514,48 @@ export function GrammarPage({ learner, onTabChange }: GrammarPageProps) {
 
             <div className="mt-4 rounded-lg border bg-background p-3">
               <p className="text-xs font-medium text-muted-foreground">当前知识点</p>
-              <p className="mt-1 text-base font-semibold text-foreground">{selectedTopic.title}</p>
+              <div className="mt-1 flex items-center justify-between gap-3">
+                <p className="text-base font-semibold text-foreground">{selectedTopic.title}</p>
+                <span className="rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground">
+                  打开 {currentProgress?.opened_count ?? 0} 次
+                </span>
+              </div>
               <p className="mt-2 text-sm text-muted-foreground">{selectedTopic.shortDescription}</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() =>
+                    void persistGrammarProgress(selectedTopic, {
+                      is_favorite: !currentProgress?.is_favorite,
+                    })
+                  }
+                  className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-medium text-foreground transition-colors hover:bg-muted"
+                >
+                  {currentProgress?.is_favorite ? (
+                    <Star className="h-4 w-4 fill-warning text-warning" />
+                  ) : (
+                    <StarOff className="h-4 w-4" />
+                  )}
+                  {currentProgress?.is_favorite ? '取消喜爱' : '喜爱'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void persistGrammarProgress(selectedTopic, { mark_learned: true })}
+                  className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-60"
+                  disabled={currentProgress?.status === 'learned'}
+                >
+                  <CheckCircle2 className="h-4 w-4 text-success" />
+                  {currentProgress?.status === 'learned' ? '已学习' : '标记已学习'}
+                </button>
+                <button
+                  type="button"
+                  onClick={regenerateCurrentTopic}
+                  className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-medium text-foreground transition-colors hover:bg-muted"
+                >
+                  <RefreshCw className="h-4 w-4" />
+                  重新生成
+                </button>
+              </div>
             </div>
 
             <label className="mt-4 block text-sm font-medium text-foreground" htmlFor="grammar-target">
@@ -455,10 +674,11 @@ export function GrammarPage({ learner, onTabChange }: GrammarPageProps) {
             <div>
               <h2 className="text-lg font-semibold text-foreground">HTML 输入</h2>
               <p className="text-sm text-muted-foreground">扩展回传或手动粘贴 AI 输出的 HTML。</p>
+              <p className="mt-1 text-xs text-muted-foreground">{cacheStatusText(currentCacheStatus)}</p>
             </div>
             <button
               type="button"
-              onClick={() => setHtml('')}
+              onClick={() => setTopicHtml(selectedTopic.id, '')}
               className="rounded-lg border p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
               title="清空 HTML"
             >
@@ -466,8 +686,8 @@ export function GrammarPage({ learner, onTabChange }: GrammarPageProps) {
             </button>
           </div>
           <textarea
-            value={html}
-            onChange={(event) => setHtml(event.target.value)}
+            value={currentHtml}
+            onChange={(event) => setTopicHtml(selectedTopic.id, event.target.value)}
             className="mt-4 h-[460px] w-full resize-none rounded-lg border bg-background p-3 font-mono text-xs leading-relaxed text-foreground outline-none focus:border-primary"
             placeholder="把 AI 返回的 HTML 片段粘贴到这里，或使用浏览器扩展发送回 BinnAgent。"
           />
@@ -569,16 +789,25 @@ function buildGrammarPrompt(topic: GrammarTopic) {
 相关标签：${topic.tags.join('、')}`
 }
 
-function readStoredGrammarState(): Partial<StoredGrammarState> & { html: string; targets: GrammarTarget[] } {
-  const fallback = { html: '', targets: [] }
+function readStoredGrammarState(): Partial<StoredGrammarState> & {
+  htmlByTopicId: Record<string, string>
+  targets: GrammarTarget[]
+} {
+  const fallback = { htmlByTopicId: {}, targets: [] }
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return fallback
     const stored = JSON.parse(raw) as Partial<StoredGrammarState>
+    const htmlByTopicId =
+      stored.htmlByTopicId && typeof stored.htmlByTopicId === 'object'
+        ? stored.htmlByTopicId
+        : typeof stored.html === 'string' && typeof stored.topicId === 'string'
+          ? { [stored.topicId]: stored.html }
+          : {}
     return {
       topicId: typeof stored.topicId === 'string' ? stored.topicId : undefined,
       targetId: typeof stored.targetId === 'string' ? stored.targetId : undefined,
-      html: typeof stored.html === 'string' ? stored.html : '',
+      htmlByTopicId,
       targets: Array.isArray(stored.targets) ? stored.targets.filter(isGrammarTarget) : [],
     }
   } catch {
@@ -598,6 +827,30 @@ function normalizeUrl(value: string) {
   if (!trimmed) return ''
   if (/^https?:\/\//i.test(trimmed)) return trimmed
   return `https://${trimmed}`
+}
+
+function uniqueList(items: string[]) {
+  return Array.from(new Set(items))
+}
+
+function stableHash(value: string) {
+  let hash = 2166136261
+  for (let index = 0; index < value.length; index += 1) {
+    hash ^= value.charCodeAt(index)
+    hash = Math.imul(hash, 16777619)
+  }
+  return (hash >>> 0).toString(16).padStart(8, '0')
+}
+
+function cacheStatusText(status: CacheStatus) {
+  if (status === 'loading') return '正在查找缓存...'
+  if (status === 'hit') return '已使用缓存讲解，可直接阅读或重新生成。'
+  if (status === 'miss') return '暂无缓存，可复制指令生成。'
+  if (status === 'saving') return '正在保存 HTML 缓存...'
+  if (status === 'saved') return 'HTML 已保存到缓存。'
+  if (status === 'bypassed') return '已跳过缓存，请重新生成当前知识点。'
+  if (status === 'error') return '缓存服务暂时不可用，本地内容仍可使用。'
+  return '选择知识点后会自动查找缓存。'
 }
 
 function extractHtmlFragment(value: string) {

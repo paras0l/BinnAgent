@@ -6,9 +6,11 @@ import { ExplorePage } from './pages/ExplorePage'
 import { GrammarPage } from './pages/GrammarPage'
 import { LoginPage } from './pages/LoginPage'
 import { PronunciationPage } from './pages/PronunciationPage'
+import { useToast } from './hooks/useToast'
 import type { AppTab, Learner } from './types'
 
 function App() {
+  const { showToast } = useToast()
   const [activeTab, setActiveTab] = useState<AppTab>('chat')
   const [chatDraft, setChatDraft] = useState('')
   const [chatSkillFocus, setChatSkillFocus] = useState<string | null>(null)
@@ -51,6 +53,7 @@ function App() {
   const handleLogout = () => {
     if (isChatGenerating) {
       setLockMessage('回答生成中，请先等待完成或点击取消。')
+      showToast('回答生成中，请先等待完成或点击取消。', { variant: 'warning' })
       return
     }
     localStorage.removeItem('binnLearnerId')
@@ -64,6 +67,7 @@ function App() {
   const handleDraftPrompt = (prompt: string, skillFocus?: string | null) => {
     if (isChatGenerating) {
       setLockMessage('回答生成中，请先等待完成或点击取消。')
+      showToast('回答生成中，请先等待完成或点击取消。', { variant: 'warning' })
       return
     }
     setChatDraft(prompt)
@@ -73,6 +77,7 @@ function App() {
   const handleTabChange = (tab: AppTab) => {
     if (isChatGenerating && tab !== 'chat') {
       setLockMessage('回答生成中，请先等待完成或点击取消。')
+      showToast('回答生成中，请先等待完成或点击取消。', { variant: 'warning' })
       return
     }
     setLockMessage('')
@@ -110,13 +115,19 @@ function App() {
             skillFocus={chatSkillFocus}
             onSkillFocusChange={setChatSkillFocus}
             onGeneratingChange={setIsChatGenerating}
-            onLockedAction={() => setLockMessage('回答生成中，请先等待完成或点击取消。')}
+            onLockedAction={() => {
+              setLockMessage('回答生成中，请先等待完成或点击取消。')
+              showToast('回答生成中，请先等待完成或点击取消。', { variant: 'warning' })
+            }}
           />
         ) : activeTab === 'explore' ? (
           <ExplorePage
             learner={currentLearner}
             isLocked={isChatGenerating}
-            onLockedAction={() => setLockMessage('回答生成中，请先等待完成或点击取消。')}
+            onLockedAction={() => {
+              setLockMessage('回答生成中，请先等待完成或点击取消。')
+              showToast('回答生成中，请先等待完成或点击取消。', { variant: 'warning' })
+            }}
             onTabChange={handleTabChange}
             onDraftPrompt={handleDraftPrompt}
           />

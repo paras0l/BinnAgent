@@ -14,6 +14,7 @@ import {
   Wrench,
 } from 'lucide-react'
 import type { AppTab, ExplorePreference, Learner } from '@/types'
+import { useToast } from '@/hooks/useToast'
 
 type FeatureCategory = 'all' | 'listening' | 'speaking' | 'reading' | 'writing' | 'vocabulary' | 'grammar' | 'exam'
 type FeatureStatus = 'ready' | 'todo'
@@ -210,10 +211,10 @@ export function ExplorePage({
   onTabChange,
   onDraftPrompt,
 }: ExplorePageProps) {
+  const { showToast } = useToast()
   const [preferences, setPreferences] = useState<ExplorePreference[]>([])
   const [category, setCategory] = useState<FeatureCategory>('all')
   const [query, setQuery] = useState('')
-  const [message, setMessage] = useState('')
   const [isLoading, setIsLoading] = useState(true)
 
   const loadPreferences = useCallback(async () => {
@@ -225,11 +226,11 @@ export function ExplorePage({
       setPreferences(data)
     } catch (err) {
       console.error('Explore preferences error:', err)
-      setMessage('探索偏好暂时无法加载，功能入口仍可使用。')
+      showToast('探索偏好暂时无法加载，功能入口仍可使用。', { variant: 'warning' })
     } finally {
       setIsLoading(false)
     }
-  }, [learner.id])
+  }, [learner.id, showToast])
 
   useEffect(() => {
     const timer = window.setTimeout(() => void loadPreferences(), 0)
@@ -287,7 +288,6 @@ export function ExplorePage({
   const handleToggleFavorite = async (feature: ExploreFeature) => {
     if (isLocked) {
       onLockedAction?.()
-      setMessage('回答生成中，请先等待完成或点击取消。')
       return
     }
     const current = preferenceMap.get(feature.id)
@@ -299,19 +299,21 @@ export function ExplorePage({
       })
     } catch (err) {
       console.error('Favorite update error:', err)
-      setMessage('收藏状态保存失败，请稍后重试。')
+      showToast('收藏状态保存失败，请稍后重试。', { variant: 'error' })
     }
   }
 
   const handleLaunch = async (feature: ExploreFeature) => {
     if (isLocked) {
       onLockedAction?.()
-      setMessage('回答生成中，请先等待完成或点击取消。')
       return
     }
 
     if (feature.status === 'todo' || feature.action === 'todo') {
-      setMessage(`${feature.title}：功能待开发。${feature.outcome}`)
+      showToast(`${feature.title}：功能待开发。${feature.outcome}`, {
+        variant: 'info',
+        duration: 6000,
+      })
       return
     }
 
@@ -379,12 +381,6 @@ export function ExplorePage({
           ))}
         </div>
       </section>
-
-      {message && (
-        <div className="rounded-lg border border-warning/30 bg-warning/5 px-4 py-3 text-sm text-foreground">
-          {message}
-        </div>
-      )}
 
       {favorites.length > 0 && (
         <section>

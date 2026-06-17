@@ -14,7 +14,7 @@ import {
   X,
   Zap,
 } from 'lucide-react'
-import type { Learner } from '@/types'
+import type { Learner, LearningProgressItem } from '@/types'
 
 type PhonemeCategory = 'monophthong' | 'diphthong' | 'consonant'
 type CategoryFilter = 'all' | PhonemeCategory
@@ -507,6 +507,26 @@ function uniqueList(items: string[]) {
   return Array.from(new Set(items))
 }
 
+function progressFromBackend(items: LearningProgressItem[]): ProgressState {
+  const opened = items
+    .filter((item) => item.opened_count > 0)
+    .map((item) => item.item_id)
+  const completed = items
+    .filter((item) => item.status === 'learned')
+    .map((item) => item.item_id)
+  const recent = [...items]
+    .filter((item) => item.last_opened_at)
+    .sort((a, b) => Date.parse(b.last_opened_at ?? '') - Date.parse(a.last_opened_at ?? ''))
+    .map((item) => item.item_id)
+    .slice(0, 8)
+
+  return {
+    opened: uniqueList(opened),
+    completed: uniqueList(completed),
+    recent: uniqueList(recent),
+  }
+}
+
 export function PronunciationPage({ learner }: PronunciationPageProps) {
   const storageKey = `binnPronunciation:${STORAGE_VERSION}:${learner.id}`
   const [filter, setFilter] = useState<CategoryFilter>('all')
@@ -515,10 +535,32 @@ export function PronunciationPage({ learner }: PronunciationPageProps) {
   const [progress, setProgress] = useState<ProgressState>(() => loadProgress(storageKey))
   const [activeHighlight, setActiveHighlight] = useState<HighlightTarget>(null)
   const [speechMessage, setSpeechMessage] = useState('')
+  const [progressMessage, setProgressMessage] = useState('')
 
   useEffect(() => {
     localStorage.setItem(storageKey, JSON.stringify(progress))
   }, [progress, storageKey])
+
+  useEffect(() => {
+    let isMounted = true
+    fetch(`/api/learners/${learner.id}/learning-progress?skill=pronunciation`)
+      .then((response) => {
+        if (!response.ok) throw new Error('Failed to load pronunciation progress')
+        return response.json() as Promise<LearningProgressItem[]>
+      })
+      .then((items) => {
+        if (!isMounted || items.length === 0) return
+        setProgress(progressFromBackend(items))
+        setProgressMessage('')
+      })
+      .catch((err) => {
+        console.error('Pronunciation progress load error:', err)
+        if (isMounted) setProgressMessage('发音进度暂时无法同步，已使用本地进度。')
+      })
+    return () => {
+      isMounted = false
+    }
+  }, [learner.id])
 
   const selected = PHONEMES.find((item) => item.id === selectedId) ?? null
 
@@ -545,6 +587,7 @@ export function PronunciationPage({ learner }: PronunciationPageProps) {
       completed: current.completed,
       recent: uniqueList([phoneme.id, ...current.recent]).slice(0, 8),
     }))
+    void persistPronunciationProgress(phoneme, { mark_opened: true })
   }
 
   const handleSpeak = (text: string, target: HighlightTarget = null) => {
@@ -575,6 +618,38 @@ export function PronunciationPage({ learner }: PronunciationPageProps) {
       completed: uniqueList([selected.id, ...current.completed]),
       recent: uniqueList([selected.id, ...current.recent]).slice(0, 8),
     }))
+    void persistPronunciationProgress(selected, { mark_learned: true })
+  }
+
+  async function persistPronunciationProgress(
+    phoneme: PhonemeCard,
+    payload: { mark_opened?: boolean; mark_learned?: boolean }
+  ) {
+    try {
+      const response = await fetch(
+        `/api/learners/${learner.id}/learning-progress/pronunciation/${encodeURIComponent(phoneme.id)}`,
+        {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: `${phoneme.symbol} ${phoneme.word}`,
+            metadata: {
+              category: phoneme.category,
+              symbol: phoneme.symbol,
+              word: phoneme.word,
+              wordPhonetic: phoneme.wordPhonetic,
+              meaning: phoneme.meaning,
+            },
+            ...payload,
+          }),
+        }
+      )
+      if (!response.ok) throw new Error('Failed to persist pronunciation progress')
+      setProgressMessage('')
+    } catch (err) {
+      console.error('Pronunciation progress save error:', err)
+      setProgressMessage('发音进度暂时无法同步，已保存在本地。')
+    }
   }
 
   const goToOffset = (offset: number) => {
@@ -608,6 +683,7 @@ export function PronunciationPage({ learner }: PronunciationPageProps) {
             <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
               先用卡片建立声音和画面的连接，再进入详情跟读目标音素。每天完成 5 个，口语底盘会一点点稳起来。
             </p>
+            {progressMessage && <p className="mt-2 text-xs text-warning">{progressMessage}</p>}
           </div>
           <div className="grid grid-cols-3 gap-2 text-center sm:min-w-96">
             <StatTile label="音标总数" value={PHONEMES.length} />

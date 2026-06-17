@@ -2,12 +2,14 @@ import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { Bot, Loader2 } from 'lucide-react'
 import type { Learner } from '@/types'
+import { useToast } from '@/hooks/useToast'
 
 interface LoginPageProps {
   onLogin: (learner: Learner) => void
 }
 
 export function LoginPage({ onLogin }: LoginPageProps) {
+  const { showToast } = useToast()
   const [nickname, setNickname] = useState('')
   const [email, setEmail] = useState('')
   const [error, setError] = useState('')
@@ -21,6 +23,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
     const trimmedEmail = email.trim()
     if (!trimmedNickname) {
       setError('请输入昵称')
+      showToast('请输入昵称', { variant: 'warning' })
       return
     }
 
@@ -44,6 +47,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
     } catch (err) {
       console.error('Learner login failed:', err)
       setError('暂时无法进入学习空间，请稍后重试。')
+      showToast('暂时无法进入学习空间，请稍后重试。', { variant: 'error' })
     } finally {
       setIsSubmitting(false)
     }

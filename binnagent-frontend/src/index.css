@@ -30,6 +30,43 @@ body {
   font-family: var(--font-sans);
 }
 
+@keyframes toast-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-0.75rem) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes toast-progress {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
+
+.toast-enter {
+  animation: toast-enter 180ms ease-out both;
+}
+
+.toast-progress {
+  animation-name: toast-progress;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toast-enter,
+  .toast-progress {
+    animation: none;
+  }
+}
+
 .markdown-body {
   overflow-wrap: anywhere;
 }

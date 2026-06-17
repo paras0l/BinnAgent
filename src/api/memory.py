@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.api.deps import get_db_session
 from src.models.error_pattern import ErrorPattern
 from src.models.learner import Learner
+from src.models.learning_progress import LearningProgressItem
 from src.models.runtime import AgentThread, ConversationMessage
 from src.models.session import LearningSession
 from src.models.vocabulary import VocabularyItem
@@ -28,6 +29,13 @@ class MemoryStats(BaseModel):
     total_vocab: int = 0
     due_reviews: int = 0
     mastered_vocab: int = 0
+
+
+class MemorySkillProgress(BaseModel):
+    grammar_learned: int = 0
+    grammar_favorites: int = 0
+    pronunciation_learned: int = 0
+    pronunciation_opened: int = 0
 
 
 class MemoryErrorPattern(BaseModel):
@@ -52,6 +60,7 @@ class MemorySummaryResponse(BaseModel):
     latest_thread_summary: str | None = None
     error_patterns: list[MemoryErrorPattern] = Field(default_factory=list)
     recent_sessions: list[MemorySession] = Field(default_factory=list)
+    skill_progress: MemorySkillProgress = Field(default_factory=MemorySkillProgress)
 
 
 @router.get("/summary", response_model=MemorySummaryResponse)
@@ -90,6 +99,42 @@ async def get_memory_summary(
             VocabularyItem.learner_id == learner_id,
             VocabularyItem.status != "mastered",
             VocabularyItem.next_review_at <= datetime.now(timezone.utc),
+        )
+    )
+    grammar_learned_result = await db.execute(
+        select(func.count())
+        .select_from(LearningProgressItem)
+        .where(
+            LearningProgressItem.learner_id == learner_id,
+            LearningProgressItem.skill == "grammar",
+            LearningProgressItem.status == "learned",
+        )
+    )
+    grammar_favorites_result = await db.execute(
+        select(func.count())
+        .select_from(LearningProgressItem)
+        .where(
+            LearningProgressItem.learner_id == learner_id,
+            LearningProgressItem.skill == "grammar",
+            LearningProgressItem.is_favorite.is_(True),
+        )
+    )
+    pronunciation_learned_result = await db.execute(
+        select(func.count())
+        .select_from(LearningProgressItem)
+        .where(
+            LearningProgressItem.learner_id == learner_id,
+            LearningProgressItem.skill == "pronunciation",
+            LearningProgressItem.status == "learned",
+        )
+    )
+    pronunciation_opened_result = await db.execute(
+        select(func.count())
+        .select_from(LearningProgressItem)
+        .where(
+            LearningProgressItem.learner_id == learner_id,
+            LearningProgressItem.skill == "pronunciation",
+            LearningProgressItem.opened_count > 0,
         )
     )
 
@@ -137,6 +182,12 @@ async def get_memory_summary(
             )
             for session in session_result.scalars().all()
         ],
+        skill_progress=MemorySkillProgress(
+            grammar_learned=int(grammar_learned_result.scalar_one() or 0),
+            grammar_favorites=int(grammar_favorites_result.scalar_one() or 0),
+            pronunciation_learned=int(pronunciation_learned_result.scalar_one() or 0),
+            pronunciation_opened=int(pronunciation_opened_result.scalar_one() or 0),
+        ),
     )
 
 

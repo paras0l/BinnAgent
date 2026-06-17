@@ -178,6 +178,10 @@ class TestMemorySummary:
                 _count(0),
                 _count(0),
                 _count(0),
+                _count(0),
+                _count(0),
+                _count(0),
+                _count(0),
                 _many([]),
                 _many([]),
             ]
@@ -191,5 +195,44 @@ class TestMemorySummary:
         assert data["stats"]["conversation_count"] == 0
         assert data["stats"]["message_count"] == 0
         assert data["stats"]["total_vocab"] == 0
+        assert data["skill_progress"] == {
+            "grammar_learned": 0,
+            "grammar_favorites": 0,
+            "pronunciation_learned": 0,
+            "pronunciation_opened": 0,
+        }
         assert data["error_patterns"] == []
         assert data["recent_sessions"] == []
+
+    @pytest.mark.asyncio
+    async def test_memory_summary_includes_skill_progress_counts(self, client, mock_session):
+        learner_id = uuid.uuid4()
+        learner = Learner(nickname="Alice", email=None)
+        learner.id = learner_id
+
+        mock_session.execute = AsyncMock(
+            side_effect=[
+                _one(learner),
+                _many([]),
+                _count(0),
+                _count(0),
+                _count(0),
+                _count(0),
+                _count(3),
+                _count(2),
+                _count(5),
+                _count(8),
+                _many([]),
+                _many([]),
+            ]
+        )
+
+        response = await client.get(f"/api/learners/{learner_id}/memory/summary")
+
+        assert response.status_code == 200
+        assert response.json()["skill_progress"] == {
+            "grammar_learned": 3,
+            "grammar_favorites": 2,
+            "pronunciation_learned": 5,
+            "pronunciation_opened": 8,
+        }

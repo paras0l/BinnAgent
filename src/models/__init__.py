@@ -2,6 +2,7 @@ from src.models.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
 from src.models.error_pattern import ErrorPattern
 from src.models.explore import ExploreFeaturePreference
 from src.models.learner import Learner, LearnerProfile
+from src.models.learning_progress import LearningProgressItem
 from src.models.runtime import (
     AgentEvent,
     AgentRun,
@@ -24,6 +25,7 @@ __all__ = [
     "Learner",
     "LearnerProfile",
     "LearningSession",
+    "LearningProgressItem",
     "LearningTask",
     "ModelCallLog",
     "ReviewSchedule",

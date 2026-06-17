@@ -5,12 +5,14 @@ import { VocabReviewCard } from '@/components/dashboard/VocabReviewCard'
 import { ErrorPatternList } from '@/components/dashboard/ErrorPatternList'
 import { LearningGoalProgress } from '@/components/dashboard/LearningGoalProgress'
 import type { DashboardSummary, Learner, VocabularyListItem } from '@/types'
+import { useToast } from '@/hooks/useToast'
 
 interface DashboardPageProps {
   learner: Learner
 }
 
 export function DashboardPage({ learner }: DashboardPageProps) {
+  const { showToast } = useToast()
   const [summary, setSummary] = useState<DashboardSummary | null>(null)
   const [currentVocabIndex, setCurrentVocabIndex] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
@@ -38,10 +40,11 @@ export function DashboardPage({ learner }: DashboardPageProps) {
     } catch (err) {
       console.error('Dashboard error:', err)
       setError('学习中心暂时无法加载，请稍后重试。')
+      showToast('学习中心暂时无法加载，请稍后重试。', { variant: 'error' })
     } finally {
       setIsLoading(false)
     }
-  }, [learner.id])
+  }, [learner.id, showToast])
 
   const loadVocabularyList = useCallback(async () => {
     setIsLoadingVocabulary(true)
@@ -53,10 +56,11 @@ export function DashboardPage({ learner }: DashboardPageProps) {
     } catch (err) {
       console.error('Vocabulary list error:', err)
       setError('词汇列表暂时无法加载，请稍后重试。')
+      showToast('词汇列表暂时无法加载，请稍后重试。', { variant: 'error' })
     } finally {
       setIsLoadingVocabulary(false)
     }
-  }, [learner.id])
+  }, [learner.id, showToast])
 
   useEffect(() => {
     const timer = window.setTimeout(() => void loadDashboard(), 0)
@@ -100,6 +104,7 @@ export function DashboardPage({ learner }: DashboardPageProps) {
     } catch (err) {
       console.error('Vocabulary review error:', err)
       setError('词卡评分失败，请稍后重试。')
+      showToast('词卡评分失败，请稍后重试。', { variant: 'error' })
     } finally {
       setIsReviewing(false)
     }
@@ -110,6 +115,7 @@ export function DashboardPage({ learner }: DashboardPageProps) {
     const meaning = newMeaning.trim()
     if (!word) {
       setError('请输入要加入词汇本的单词。')
+      showToast('请输入要加入词汇本的单词。', { variant: 'warning' })
       return
     }
 
@@ -131,9 +137,11 @@ export function DashboardPage({ learner }: DashboardPageProps) {
       setNewMeaning('')
       await loadDashboard()
       if (isVocabListOpen) await loadVocabularyList()
+      showToast(`已将「${word}」加入词汇本。`, { variant: 'success' })
     } catch (err) {
       console.error('Add vocabulary error:', err)
       setError('加入词汇本失败，请稍后重试。')
+      showToast('加入词汇本失败，请稍后重试。', { variant: 'error' })
     } finally {
       setIsAddingWord(false)
     }
@@ -153,9 +161,11 @@ export function DashboardPage({ learner }: DashboardPageProps) {
       setVocabularyItems((items) => items.filter((existing) => existing.id !== item.id))
       await loadDashboard()
       if (isVocabListOpen) await loadVocabularyList()
+      showToast(`已从词汇本删除「${item.word}」。`, { variant: 'success' })
     } catch (err) {
       console.error('Delete vocabulary error:', err)
       setError('删除词汇失败，请稍后重试。')
+      showToast('删除词汇失败，请稍后重试。', { variant: 'error' })
     } finally {
       setDeletingWordId(null)
     }

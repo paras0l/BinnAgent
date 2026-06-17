@@ -115,3 +115,29 @@ export interface ExplorePreference {
   created_at: string
   updated_at: string
 }
+
+export interface LearningProgressItem {
+  id: string
+  learner_id: string
+  skill: 'grammar' | 'pronunciation' | string
+  item_id: string
+  title: string
+  status: 'opened' | 'learned' | string
+  is_favorite: boolean
+  opened_count: number
+  last_opened_at?: string | null
+  learned_at?: string | null
+  metadata: Record<string, unknown>
+  created_at: string
+  updated_at: string
+}
+
+export interface GrammarHtmlCacheResponse {
+  topic_id: string
+  prompt_hash: string
+  prompt_version: string
+  cached: boolean
+  html?: string | null
+  source?: string | null
+  stored_at?: string | null
+}

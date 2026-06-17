@@ -64,3 +64,16 @@ def test_explore_feature_preferences_migration_persists_learner_favorites() -> N
     assert "fk_explore_feature_preferences_learner_id" in migration
     assert "uq_explore_feature_preferences_learner_feature" in migration
     assert "last_used_at" in migration
+
+
+def test_learning_progress_migration_persists_grammar_and_pronunciation_memory() -> None:
+    migration = Path(
+        "alembic/versions/a1b2c3d4e5f6_add_learning_progress_items.py"
+    ).read_text()
+
+    assert "learning_progress_items" in migration
+    assert "fk_learning_progress_items_learner_id" in migration
+    assert "uq_learning_progress_learner_skill_item" in migration
+    assert "is_favorite" in migration
+    assert "learned_at" in migration
+    assert "metadata" in migration
