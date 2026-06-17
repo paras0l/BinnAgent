@@ -43,7 +43,7 @@ body {
 
 @keyframes toast-progress {
   from {
-    transform: scaleX(1);
+    transform: scaleX(var(--toast-progress-from, 1));
   }
   to {
     transform: scaleX(0);

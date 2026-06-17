@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react'
 import { AlertCircle, CheckCircle2, Info, TriangleAlert, X } from 'lucide-react'
 
 export interface ToastProps {
@@ -6,7 +7,12 @@ export interface ToastProps {
   title?: string
   variant?: 'info' | 'success' | 'warning' | 'error'
   duration?: number
+  remainingMs?: number
+  isPaused?: boolean
   onDismiss: (id: string) => void
+  onPause?: (id: string) => void
+  onResume?: (id: string) => void
+  onTogglePause?: (id: string) => void
 }
 
 const variantStyles = {
@@ -42,10 +48,16 @@ export function Toast({
   title,
   variant = 'info',
   duration = 4000,
+  remainingMs = duration,
+  isPaused = false,
   onDismiss,
+  onPause,
+  onResume,
+  onTogglePause,
 }: ToastProps) {
   const styles = variantStyles[variant]
   const Icon = styles.icon
+  const progress = Math.max(0, Math.min(1, remainingMs / duration))
 
   return (
     <div
@@ -53,6 +65,12 @@ export function Toast({
       role="status"
       aria-live="polite"
       aria-atomic="true"
+      aria-label={isPaused ? '通知已暂停，点击可继续倒计时' : undefined}
+      onClick={() => onTogglePause?.(id)}
+      onMouseEnter={() => onPause?.(id)}
+      onMouseLeave={() => onResume?.(id)}
+      onFocus={() => onPause?.(id)}
+      onBlur={() => onResume?.(id)}
     >
       <div className="flex items-start gap-3">
         <div className={`mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg ${styles.iconClassName}`}>
@@ -67,7 +85,10 @@ export function Toast({
       </div>
       <button
         type="button"
-        onClick={() => onDismiss(id)}
+        onClick={(event) => {
+          event.stopPropagation()
+          onDismiss(id)
+        }}
         className="absolute right-3 top-3 inline-flex size-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
         aria-label="关闭通知"
       >
@@ -76,7 +97,12 @@ export function Toast({
       <div className="absolute inset-x-0 bottom-0 h-1 bg-muted">
         <div
           className={`h-full origin-left ${styles.progressClassName} toast-progress`}
-          style={{ animationDuration: `${duration}ms` }}
+          style={{
+            animationDuration: `${remainingMs}ms`,
+            animationPlayState: isPaused ? 'paused' : 'running',
+            transform: `scaleX(${progress})`,
+            '--toast-progress-from': progress,
+          } as CSSProperties}
         />
       </div>
     </div>

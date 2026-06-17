@@ -18,6 +18,7 @@ This design documents the unified toast notification system for BinnAgent. User-
 - **Position**: Fixed top-center, below the app header on authenticated pages.
 - **Focus behavior**: Toasts must never request focus, move focus, or block keyboard flow.
 - **Queue behavior**: Show at most three active toasts; newest notifications remain visible.
+- **Pause behavior**: Hovering, focusing, or clicking a toast pauses its dismissal countdown. Clicking a paused toast resumes it. The close button only dismisses the toast.
 
 ### User Experience Goals
 1. **Visible**: Notifications appear in one predictable, prominent area.
@@ -128,6 +129,7 @@ interface ToastState {
 ### 3. User Controls
 - **Manual dismiss**: User can click the close button at any time
 - **Auto-dismiss**: Toast automatically disappears after its configured duration
+- **Pause/resume**: Hover or keyboard focus pauses while the pointer/focus remains on the toast. A direct toast click pins the pause state; another click resumes the countdown.
 - **Progress indication**: Visual countdown shows remaining time
 - **No focus capture**: The toast does not call `focus()` and does not require acknowledgement
 
