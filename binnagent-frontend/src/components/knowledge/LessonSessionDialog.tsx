@@ -6,12 +6,14 @@ interface LessonSessionDialogProps {
   session: KnowledgeLessonSession | null
   onClose: () => void
   onAttempt: (knowledgePointId: string, correct: boolean) => Promise<KnowledgeAttemptResult>
+  onComplete: () => Promise<void>
 }
 
-export function LessonSessionDialog({ session, onClose, onAttempt }: LessonSessionDialogProps) {
+export function LessonSessionDialog({ session, onClose, onAttempt, onComplete }: LessonSessionDialogProps) {
   const [completedIds, setCompletedIds] = useState<Set<string>>(() => new Set())
   const [pendingId, setPendingId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [isCompleting, setIsCompleting] = useState(false)
   const completedCount = completedIds.size
   const allCompleted = useMemo(
     () => Boolean(session && completedCount === session.knowledge_points.length),
@@ -30,6 +32,21 @@ export function LessonSessionDialog({ session, onClose, onAttempt }: LessonSessi
       setError(attemptError instanceof Error ? attemptError.message : '学习记录保存失败。')
     } finally {
       setPendingId(null)
+    }
+  }
+
+  const handleFinish = async () => {
+    if (!allCompleted) {
+      onClose()
+      return
+    }
+    setIsCompleting(true)
+    setError(null)
+    try {
+      await onComplete()
+    } catch (completeError) {
+      setError(completeError instanceof Error ? completeError.message : '课程完成状态保存失败。')
+      setIsCompleting(false)
     }
   }
 
@@ -84,8 +101,9 @@ export function LessonSessionDialog({ session, onClose, onAttempt }: LessonSessi
         {error ? <p className="mt-3 text-sm font-semibold text-red-600">{error}</p> : null}
 
         <div className="mt-5 flex justify-end">
-          <button type="button" onClick={onClose} className={`rounded-lg px-5 py-2.5 text-sm font-extrabold text-white ${allCompleted ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-slate-700 hover:bg-slate-800'}`}>
-            {allCompleted ? '完成今日课程' : '稍后继续'}
+          <button type="button" disabled={isCompleting || pendingId !== null} onClick={() => void handleFinish()} className={`inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-extrabold text-white disabled:cursor-not-allowed disabled:opacity-60 ${allCompleted ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-slate-700 hover:bg-slate-800'}`}>
+            {isCompleting ? <LoaderCircle className="size-4 animate-spin" /> : null}
+            {allCompleted ? '完成并进入下一单元' : '稍后继续'}
           </button>
         </div>
       </section>

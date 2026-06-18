@@ -92,6 +92,70 @@ PEP_GRADE7_LOWER_KNOWLEDGE: dict[str, tuple[str, str, str, str]] = {
     ),
 }
 
+PEP_GRADE7_UPPER_KNOWLEDGE: dict[str, tuple[str, str, str, str]] = {
+    "Starter Unit 2": (
+        "pattern.whats-this-english",
+        "sentence_pattern",
+        "What's this in English?",
+        "询问某个物品用英语怎么表达。",
+    ),
+    "Starter Unit 3": (
+        "pattern.what-color",
+        "sentence_pattern",
+        "What color is it?",
+        "询问并描述物品的颜色。",
+    ),
+    "Unit 1": ("grammar.be-verbs", "grammar", "am / is / are", "使用 be 动词介绍自己和他人。"),
+    "Unit 2": (
+        "grammar.demonstratives-family",
+        "grammar",
+        "this / that / these / those",
+        "使用指示代词介绍家人。",
+    ),
+    "Unit 3": (
+        "grammar.possessive-pronouns",
+        "grammar",
+        "Possessive pronouns",
+        "使用物主代词询问物品归属。",
+    ),
+    "Unit 4": (
+        "grammar.where-questions",
+        "grammar",
+        "Where questions",
+        "使用 where 询问物品的位置。",
+    ),
+    "Unit 5": (
+        "grammar.have-has",
+        "grammar",
+        "have / has",
+        "使用 have 和 has 谈论拥有的物品。",
+    ),
+    "Unit 6": (
+        "grammar.like-present",
+        "grammar",
+        "like in the simple present",
+        "使用一般现在时表达食物喜好。",
+    ),
+    "Unit 7": (
+        "pattern.how-much",
+        "sentence_pattern",
+        "How much ...?",
+        "询问商品价格并进行购物交流。",
+    ),
+    "Unit 8": (
+        "grammar.when-questions",
+        "grammar",
+        "When questions",
+        "使用 when 询问日期和生日。",
+    ),
+    "Unit 9": (
+        "pattern.favorite-subject",
+        "sentence_pattern",
+        "What's your favorite subject?",
+        "询问并说明最喜欢的学科及原因。",
+    ),
+}
+
 
 def _parse_pdf(path: Path) -> ParsedTextbook:
     reader = PdfReader(path)
@@ -123,6 +187,23 @@ def _known_knowledge(source_id: uuid.UUID, node_id: uuid.UUID, title: str) -> li
     lower_item = PEP_GRADE7_LOWER_KNOWLEDGE.get(title)
     if lower_item:
         key, point_type, point_title, summary = lower_item
+        return [
+            KnowledgePoint(
+                source_id=source_id,
+                curriculum_node_id=node_id,
+                canonical_key=f"{key}.{str(source_id)[:8]}",
+                type=point_type,
+                title=point_title,
+                summary=summary,
+                source_page="目录",
+                difficulty=0.3,
+                status="draft",
+                content={"origin": "verified_toc_fallback", "requires_review": True},
+            )
+        ]
+    upper_item = PEP_GRADE7_UPPER_KNOWLEDGE.get(title)
+    if upper_item:
+        key, point_type, point_title, summary = upper_item
         return [
             KnowledgePoint(
                 source_id=source_id,

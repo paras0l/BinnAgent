@@ -1,5 +1,6 @@
 import uuid
-from datetime import datetime, timezone
+from collections import Counter
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -18,6 +19,7 @@ router = APIRouter(prefix="/api/learners/{learner_id}/dashboard", tags=["dashboa
 
 class DashboardStats(BaseModel):
     today_reviews: int = 0
+    today_completed_reviews: int = 0
     streak_days: int = 0
     accuracy: int = 0
     total_vocab: int = 0
@@ -46,12 +48,18 @@ class DashboardGoal(BaseModel):
     total: int
 
 
+class DashboardDailyActivity(BaseModel):
+    date: str
+    count: int
+
+
 class DashboardResponse(BaseModel):
     stats: DashboardStats
     review_items: list[DashboardReviewItem] = Field(default_factory=list)
     error_patterns: list[DashboardErrorPattern] = Field(default_factory=list)
     today_goal: DashboardGoal
     weekly_goal: DashboardGoal
+    daily_activity: list[DashboardDailyActivity] = Field(default_factory=list)
 
 
 async def _ensure_learner_exists(db: AsyncSession, learner_id: uuid.UUID) -> None:
@@ -121,6 +129,7 @@ async def get_dashboard(
 ) -> DashboardResponse:
     await _ensure_learner_exists(db, learner_id)
     now = datetime.now(timezone.utc)
+    today = now.date()
 
     total_vocab_result = await db.execute(
         select(func.count()).select_from(VocabularyItem).where(VocabularyItem.learner_id == learner_id)
@@ -152,6 +161,12 @@ async def get_dashboard(
     if recent_reviews:
         correct = sum(1 for review in recent_reviews if review.result == "correct")
         accuracy = round(correct / len(recent_reviews) * 100)
+    today_completed_reviews = sum(
+        1
+        for review in recent_reviews
+        if review.completed_at is not None
+        and review.completed_at.astimezone(timezone.utc).date() == today
+    )
 
     sessions_result = await db.execute(
         select(LearningSession)
@@ -161,7 +176,7 @@ async def get_dashboard(
             LearningSession.completed_at.is_not(None),
         )
         .order_by(LearningSession.completed_at.desc())
-        .limit(30)
+        .limit(180)
     )
     sessions = list(sessions_result.scalars().all())
     streak_days = _streak_days(sessions)
@@ -205,15 +220,27 @@ async def get_dashboard(
         for pattern in error_result.scalars().all()
     ]
 
-    today = now.date()
     today_completed = sum(
         1 for session in sessions if session.completed_at and session.completed_at.date() == today
     )
     weekly_completed = min(len(sessions), 5)
+    session_counts = Counter(
+        session.completed_at.astimezone(timezone.utc).date()
+        for session in sessions
+        if session.completed_at is not None
+    )
+    daily_activity = [
+        DashboardDailyActivity(
+            date=(today - timedelta(days=offset)).isoformat(),
+            count=session_counts[today - timedelta(days=offset)],
+        )
+        for offset in range(13, -1, -1)
+    ]
 
     return DashboardResponse(
         stats=DashboardStats(
             today_reviews=today_reviews,
+            today_completed_reviews=today_completed_reviews,
             streak_days=streak_days,
             accuracy=accuracy,
             total_vocab=total_vocab,
@@ -222,4 +249,5 @@ async def get_dashboard(
         error_patterns=error_patterns,
         today_goal=DashboardGoal(label="今日课程", completed=today_completed, total=1),
         weekly_goal=DashboardGoal(label="本周练习", completed=weekly_completed, total=5),
+        daily_activity=daily_activity,
     )

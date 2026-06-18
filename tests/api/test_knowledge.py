@@ -110,6 +110,7 @@ async def test_overview_returns_ordered_curriculum_and_knowledge(client, knowled
             _one(learner_id),
             _one(source),
             _many(nodes),
+            _many([]),
             _many([point]),
             _many([]),
         ]
@@ -124,6 +125,34 @@ async def test_overview_returns_ordered_curriculum_and_knowledge(client, knowled
     assert data["knowledge_points"][0]["title"] == "Good morning!"
     assert data["daily_lesson"]["estimated_minutes"] == 20
     assert data["path"][0]["status"] == "current"
+
+
+@pytest.mark.asyncio
+async def test_overview_switches_content_to_requested_curriculum_node(client, knowledge_session):
+    learner_id = uuid.uuid4()
+    source = _source()
+    nodes = [_node(source.id, 1), _node(source.id, 2)]
+    point = _point(source.id, nodes[1].id)
+    point.title = "What's this in English?"
+    knowledge_session.execute = AsyncMock(
+        side_effect=[
+            _one(learner_id),
+            _one(source),
+            _many(nodes),
+            _many([]),
+            _many([point]),
+            _many([]),
+        ]
+    )
+
+    response = await client.get(
+        f"/api/learners/{learner_id}/knowledge-base?node_id={nodes[1].id}"
+    )
+
+    assert response.status_code == 200
+    assert response.json()["current_node_id"] == str(nodes[1].id)
+    assert response.json()["current_unit"]["title"] == "Starter Unit 2"
+    assert response.json()["knowledge_points"][0]["title"] == "What's this in English?"
 
 
 @pytest.mark.asyncio
@@ -144,6 +173,53 @@ async def test_start_lesson_persists_session_and_tasks(client, knowledge_session
     assert response.json()["knowledge_points"][0]["id"] == str(point.id)
     assert sum(isinstance(item, LearningSession) for item in knowledge_session.added_objects) == 1
     assert sum(isinstance(item, LearningTask) for item in knowledge_session.added_objects) == 3
+
+
+@pytest.mark.asyncio
+async def test_complete_lesson_marks_session_and_tasks_and_recommends_next(
+    client, knowledge_session
+):
+    learner_id = uuid.uuid4()
+    source = _source()
+    current_node = _node(source.id, 1)
+    next_node = _node(source.id, 2)
+    session = LearningSession(
+        learner_id=learner_id,
+        session_type="textbook_lesson",
+        active_skill="knowledge",
+        status="in_progress",
+    )
+    session.id = uuid.uuid4()
+    tasks = [
+        LearningTask(
+            learner_id=learner_id,
+            session_id=session.id,
+            task_type="textbook_knowledge",
+            skill="knowledge",
+            title="知识讲解",
+            status="pending",
+            input_ref=f"curriculum:{current_node.id}",
+        )
+    ]
+    knowledge_session.execute = AsyncMock(
+        side_effect=[
+            _one(learner_id),
+            _one(session),
+            _many(tasks),
+            _one(current_node),
+            _one(next_node),
+        ]
+    )
+
+    response = await client.post(
+        f"/api/learners/{learner_id}/knowledge-base/lessons/{session.id}/complete"
+    )
+
+    assert response.status_code == 200
+    assert response.json()["next_node_id"] == str(next_node.id)
+    assert session.status == "completed"
+    assert session.completed_at is not None
+    assert tasks[0].status == "completed"
 
 
 @pytest.mark.asyncio

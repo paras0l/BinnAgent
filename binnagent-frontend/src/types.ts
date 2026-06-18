@@ -7,7 +7,6 @@ export interface Learner {
 export type AppTab =
   | 'chat'
   | 'explore'
-  | 'knowledge'
   | 'dashboard'
   | 'pronunciation'
   | 'grammar'
@@ -110,6 +109,14 @@ export interface KnowledgeAttemptResult {
   next_review_at: string
 }
 
+export interface KnowledgeLessonCompleteResult {
+  session_id: string
+  completed_node_id: string
+  next_node_id?: string | null
+  next_unit_title?: string | null
+  all_completed: boolean
+}
+
 export interface ChatMessage {
   id: string
   role: 'user' | 'assistant'
@@ -166,6 +173,7 @@ export interface MemorySummary {
 export interface DashboardSummary {
   stats: {
     today_reviews: number
+    today_completed_reviews: number
     streak_days: number
     accuracy: number
     total_vocab: number
@@ -195,6 +203,10 @@ export interface DashboardSummary {
     completed: number
     total: number
   }
+  daily_activity: Array<{
+    date: string
+    count: number
+  }>
 }
 
 export interface VocabularyListItem {

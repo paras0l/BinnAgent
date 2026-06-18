@@ -56,6 +56,14 @@ class StartLessonResponse(BaseModel):
     knowledge_points: list[dict[str, Any]]
 
 
+class CompleteLessonResponse(BaseModel):
+    session_id: uuid.UUID
+    completed_node_id: uuid.UUID
+    next_node_id: uuid.UUID | None = None
+    next_unit_title: str | None = None
+    all_completed: bool = False
+
+
 class UploadResponse(BaseModel):
     source_id: uuid.UUID
     filename: str
@@ -78,9 +86,40 @@ async def _ensure_learner(db: AsyncSession, learner_id: uuid.UUID) -> None:
         raise HTTPException(status_code=404, detail="Learner not found")
 
 
+def _lesson_parts(points: list[KnowledgePoint]) -> list[dict[str, Any]]:
+    labels: list[str] = []
+    type_labels = {
+        "vocabulary": "核心词汇",
+        "grammar": "语法要点",
+        "phrase": "重点词组",
+        "sentence_pattern": "固定句式",
+    }
+    for point in points:
+        label = type_labels.get(point.type, "知识讲解")
+        if label not in labels:
+            labels.append(label)
+    labels = labels[:2]
+    if not labels:
+        labels.append("知识讲解")
+    if len(labels) == 1:
+        labels.append("知识巩固")
+    labels.append("课本练习")
+    minutes = [6, 6, 8]
+    return [
+        {
+            "id": f"part-{index + 1}",
+            "title": title,
+            "estimated_minutes": minutes[index],
+            "completed": False,
+        }
+        for index, title in enumerate(labels)
+    ]
+
+
 @router.get("/api/learners/{learner_id}/knowledge-base")
 async def knowledge_base_overview(
     learner_id: uuid.UUID,
+    node_id: uuid.UUID | None = Query(default=None),
     db: AsyncSession = Depends(get_db_session),
 ) -> dict[str, Any]:
     await _ensure_learner(db, learner_id)
@@ -102,12 +141,34 @@ async def knowledge_base_overview(
     nodes = list(node_result.scalars().all())
     if not nodes:
         raise HTTPException(status_code=409, detail="Textbook curriculum has not been generated")
-    current_node = nodes[0]
+    completed_task_result = await db.execute(
+        select(LearningTask).where(
+            LearningTask.learner_id == learner_id,
+            LearningTask.skill == "knowledge",
+            LearningTask.status == "completed",
+        )
+    )
+    completed_node_ids: set[uuid.UUID] = set()
+    for task in completed_task_result.scalars().all():
+        if not task.input_ref or not task.input_ref.startswith("curriculum:"):
+            continue
+        try:
+            completed_node_ids.add(uuid.UUID(task.input_ref.removeprefix("curriculum:")))
+        except ValueError:
+            continue
+
+    recommended_node = next((node for node in nodes if node.id not in completed_node_ids), nodes[-1])
+    if node_id is not None:
+        display_node = next((node for node in nodes if node.id == node_id), None)
+        if display_node is None:
+            raise HTTPException(status_code=404, detail="Curriculum node not found in textbook")
+    else:
+        display_node = recommended_node
 
     point_result = await db.execute(
         select(KnowledgePoint)
         .where(
-            KnowledgePoint.curriculum_node_id == current_node.id,
+            KnowledgePoint.curriculum_node_id == display_node.id,
             KnowledgePoint.status == "published",
         )
         .order_by(KnowledgePoint.created_at.asc())
@@ -124,17 +185,25 @@ async def knowledge_base_overview(
         )
         states = {item.knowledge_point_id: item for item in state_result.scalars().all()}
 
-    learned = sum(1 for state in states.values() if state.status == "mastered")
-    progress = min(1.0, max(0.18, learned / max(source.knowledge_count, 1)))
+    progress = len(completed_node_ids.intersection({node.id for node in nodes})) / len(nodes)
+    recommended_index = nodes.index(recommended_node)
+    path_start = max(0, recommended_index - 1)
     path = []
-    for node in nodes[:3]:
+    for node in nodes[path_start:path_start + 3]:
+        path_status = (
+            "completed"
+            if node.id in completed_node_ids
+            else "current"
+            if node.id == recommended_node.id
+            else "next"
+        )
         path.append(
             {
                 "id": str(node.id),
                 "ordinal": node.ordinal,
                 "title": node.title,
                 "subtitle": node.subtitle or "",
-                "status": "current" if node.id == current_node.id else "next",
+                "status": path_status,
                 "estimated_minutes": node.estimated_minutes or 20,
             }
         )
@@ -158,33 +227,30 @@ async def knowledge_base_overview(
                 "title": node.title,
                 "subtitle": node.subtitle,
                 "ordinal": node.ordinal,
-                "status": "in_progress" if node.id == current_node.id else "available",
-                "progress": progress if node.id == current_node.id else 0,
+                "status": (
+                    "completed"
+                    if node.id in completed_node_ids
+                    else "in_progress"
+                    if node.id == recommended_node.id
+                    else "available"
+                ),
+                "progress": 1.0 if node.id in completed_node_ids else 0.0,
                 "estimated_minutes": node.estimated_minutes,
             }
             for node in nodes
         ],
-        "current_node_id": str(current_node.id),
+        "current_node_id": str(display_node.id),
         "current_unit": {
-            "id": str(current_node.id),
-            "title": current_node.title,
-            "subtitle": current_node.subtitle or "",
-            "estimated_minutes": current_node.estimated_minutes or 20,
+            "id": str(display_node.id),
+            "title": display_node.title,
+            "subtitle": display_node.subtitle or "",
+            "estimated_minutes": display_node.estimated_minutes or 20,
         },
         "daily_lesson": {
-            "id": f"lesson-{current_node.id}",
-            "title": f"{current_node.title} {current_node.subtitle or ''}".strip(),
-            "estimated_minutes": current_node.estimated_minutes or 20,
-            "parts": [
-                {
-                    "id": "greetings",
-                    "title": "问候表达",
-                    "estimated_minutes": 6,
-                    "completed": False,
-                },
-                {"id": "letters", "title": "字母 A–H", "estimated_minutes": 6, "completed": False},
-                {"id": "practice", "title": "课本练习", "estimated_minutes": 8, "completed": False},
-            ],
+            "id": f"lesson-{display_node.id}",
+            "title": f"{display_node.title} {display_node.subtitle or ''}".strip(),
+            "estimated_minutes": display_node.estimated_minutes or 20,
+            "parts": _lesson_parts(points),
         },
         "knowledge_points": [
             {
@@ -198,9 +264,7 @@ async def knowledge_base_overview(
             for point in points
         ],
         "path": path,
-        "recommendation_reason": (
-            "继续学习问候表达能帮助你建立日常交流基础，并为后续介绍自己和他人做铺垫。"
-        ),
+        "recommendation_reason": f"已根据教材顺序和完成记录，为你推荐 {recommended_node.title}。",
     }
 
 
@@ -227,6 +291,7 @@ async def start_knowledge_lesson(
         .order_by(KnowledgePoint.created_at.asc())
     )
     points = list(point_result.scalars().all())
+    lesson_parts = _lesson_parts(points)
 
     now = datetime.now(timezone.utc)
     session = LearningSession(
@@ -239,15 +304,15 @@ async def start_knowledge_lesson(
     )
     db.add(session)
     await db.flush()
-    for title, minutes in [("问候表达", 6), ("字母 A–H", 6), ("课本练习", 8)]:
+    for part in lesson_parts:
         db.add(
             LearningTask(
                 learner_id=learner_id,
                 session_id=session.id,
                 task_type="textbook_knowledge",
                 skill="knowledge",
-                title=title,
-                estimated_minutes=minutes,
+                title=part["title"],
+                estimated_minutes=part["estimated_minutes"],
                 status="pending",
                 input_ref=f"curriculum:{node.id}",
             )
@@ -255,11 +320,7 @@ async def start_knowledge_lesson(
     return StartLessonResponse(
         session_id=session.id,
         title=f"{node.title} {node.subtitle or ''}".strip(),
-        parts=[
-            LessonPartResponse(id="greetings", title="问候表达", estimated_minutes=6),
-            LessonPartResponse(id="letters", title="字母 A–H", estimated_minutes=6),
-            LessonPartResponse(id="practice", title="课本练习", estimated_minutes=8),
-        ],
+        parts=[LessonPartResponse(**part) for part in lesson_parts],
         knowledge_points=[
             {
                 "id": str(point.id),
@@ -269,6 +330,78 @@ async def start_knowledge_lesson(
             }
             for point in points
         ],
+    )
+
+
+@router.post(
+    "/api/learners/{learner_id}/knowledge-base/lessons/{session_id}/complete",
+    response_model=CompleteLessonResponse,
+)
+async def complete_knowledge_lesson(
+    learner_id: uuid.UUID,
+    session_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db_session),
+) -> CompleteLessonResponse:
+    await _ensure_learner(db, learner_id)
+    session_result = await db.execute(
+        select(LearningSession).where(
+            LearningSession.id == session_id,
+            LearningSession.learner_id == learner_id,
+            LearningSession.active_skill == "knowledge",
+        )
+    )
+    session = session_result.scalar_one_or_none()
+    if session is None:
+        raise HTTPException(status_code=404, detail="Knowledge lesson session not found")
+
+    task_result = await db.execute(
+        select(LearningTask).where(LearningTask.session_id == session.id)
+    )
+    tasks = list(task_result.scalars().all())
+    curriculum_ref = next(
+        (task.input_ref for task in tasks if task.input_ref and task.input_ref.startswith("curriculum:")),
+        None,
+    )
+    if curriculum_ref is None:
+        raise HTTPException(status_code=409, detail="Lesson is missing curriculum reference")
+    try:
+        completed_node_id = uuid.UUID(curriculum_ref.removeprefix("curriculum:"))
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail="Lesson curriculum reference is invalid") from exc
+
+    node_result = await db.execute(
+        select(CurriculumNode).where(CurriculumNode.id == completed_node_id)
+    )
+    completed_node = node_result.scalar_one_or_none()
+    if completed_node is None:
+        raise HTTPException(status_code=404, detail="Curriculum node not found")
+
+    next_result = await db.execute(
+        select(CurriculumNode)
+        .where(
+            CurriculumNode.source_id == completed_node.source_id,
+            CurriculumNode.parent_id.is_(None),
+            CurriculumNode.ordinal > completed_node.ordinal,
+        )
+        .order_by(CurriculumNode.ordinal.asc())
+        .limit(1)
+    )
+    next_node = next_result.scalar_one_or_none()
+    now = datetime.now(timezone.utc)
+    session.status = "completed"
+    session.completed_at = now
+    session.summary = f"完成教材课程：{completed_node.title} {completed_node.subtitle or ''}".strip()
+    for task in tasks:
+        task.status = "completed"
+        task.completed_at = now
+    await db.flush()
+
+    return CompleteLessonResponse(
+        session_id=session.id,
+        completed_node_id=completed_node.id,
+        next_node_id=next_node.id if next_node else None,
+        next_unit_title=(f"{next_node.title} {next_node.subtitle or ''}".strip() if next_node else None),
+        all_completed=next_node is None,
     )
 
 

@@ -1,4 +1,4 @@
-import { Bot, BookOpen, Compass, LibraryBig, LogOut, User } from 'lucide-react'
+import { Bot, BookOpen, Compass, LogOut, User } from 'lucide-react'
 import type { AppTab, Learner } from '@/types'
 
 interface HeaderProps {
@@ -51,19 +51,6 @@ export function Header({
             >
               <Compass className="h-4 w-4" />
               <span className="hidden sm:inline">探索</span>
-            </button>
-            <button
-              onClick={() => onTabChange('knowledge')}
-              disabled={isTabDisabled('knowledge')}
-              className={`flex items-center gap-2 rounded-lg px-2.5 py-2 text-sm transition-colors focus-visible:outline-2 focus-visible:outline-primary sm:px-4 ${
-                activeTab === 'knowledge'
-                  ? 'bg-primary/10 font-medium text-primary'
-                  : 'text-muted-foreground hover:bg-muted'
-              } disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent`}
-              title={isTabDisabled('knowledge') ? '回答生成中，请先等待完成或取消' : '七年级知识库'}
-            >
-              <LibraryBig className="h-4 w-4" />
-              <span className="hidden lg:inline">七年级知识库</span>
             </button>
             <button
               onClick={() => onTabChange('dashboard')}

@@ -16,6 +16,7 @@ const KnowledgeBasePage = lazy(() =>
 function App() {
   const { showToast } = useToast()
   const [activeTab, setActiveTab] = useState<AppTab>('chat')
+  const [learningCenterView, setLearningCenterView] = useState<'home' | 'daily-learning'>('home')
   const [chatDraft, setChatDraft] = useState('')
   const [chatSkillFocus, setChatSkillFocus] = useState<string | null>(null)
   const [isChatGenerating, setIsChatGenerating] = useState(false)
@@ -80,6 +81,7 @@ function App() {
       showToast('回答生成中，请先等待完成或点击取消。', { variant: 'warning' })
       return
     }
+    if (tab === 'dashboard') setLearningCenterView('home')
     setActiveTab(tab)
   }
 
@@ -129,14 +131,22 @@ function App() {
           />
         ) : activeTab === 'pronunciation' ? (
           <PronunciationPage learner={currentLearner} />
-        ) : activeTab === 'knowledge' ? (
-          <Suspense fallback={<div className="flex min-h-[calc(100vh-4rem)] items-center justify-center text-sm text-muted-foreground">正在打开知识库...</div>}>
-            <KnowledgeBasePage learner={currentLearner} />
-          </Suspense>
         ) : activeTab === 'grammar' ? (
           <GrammarPage learner={currentLearner} onTabChange={handleTabChange} />
         ) : (
-          <DashboardPage learner={currentLearner} />
+          learningCenterView === 'daily-learning' ? (
+            <Suspense fallback={<div className="flex min-h-[calc(100vh-4rem)] items-center justify-center text-sm text-muted-foreground">正在打开每日学习...</div>}>
+              <KnowledgeBasePage
+                learner={currentLearner}
+                onBack={() => setLearningCenterView('home')}
+              />
+            </Suspense>
+          ) : (
+            <DashboardPage
+              learner={currentLearner}
+              onOpenDailyLearning={() => setLearningCenterView('daily-learning')}
+            />
+          )
         )}
       </main>
     </div>

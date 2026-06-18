@@ -60,7 +60,11 @@ export function KnowledgeContextPanel({ overview, onUpload }: KnowledgeContextPa
                 <p className="truncate text-sm font-extrabold text-slate-800">{item.title}</p>
                 <p className="mt-0.5 truncate text-xs text-slate-500">{item.subtitle}</p>
                 <p className={`mt-1 text-xs font-semibold ${item.status === 'current' ? 'text-indigo-600' : 'text-slate-400'}`}>
-                  {item.status === 'current' ? '当前正在学习' : `预计 ${item.estimated_minutes ?? 20} 分钟`}
+                  {item.status === 'current'
+                    ? '当前正在学习'
+                    : item.status === 'completed'
+                      ? '已完成'
+                      : `预计 ${item.estimated_minutes ?? 20} 分钟`}
                 </p>
               </div>
             </li>

@@ -1,4 +1,4 @@
-import { AlertCircle, LoaderCircle, Search } from 'lucide-react'
+import { AlertCircle, ChevronLeft, LoaderCircle, Search } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { CurriculumRail } from '@/components/knowledge/CurriculumRail'
 import { DailyLessonCard } from '@/components/knowledge/DailyLessonCard'
@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/useToast'
 import type {
   KnowledgeAttemptResult,
   KnowledgeBaseOverview,
+  KnowledgeLessonCompleteResult,
   KnowledgeLessonSession,
   KnowledgeUploadResult,
   Learner,
@@ -17,9 +18,10 @@ import type {
 
 interface KnowledgeBasePageProps {
   learner: Learner
+  onBack: () => void
 }
 
-export function KnowledgeBasePage({ learner }: KnowledgeBasePageProps) {
+export function KnowledgeBasePage({ learner, onBack }: KnowledgeBasePageProps) {
   const { showToast } = useToast()
   const [overview, setOverview] = useState<KnowledgeBaseOverview | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -31,11 +33,12 @@ export function KnowledgeBasePage({ learner }: KnowledgeBasePageProps) {
   const [lessonSession, setLessonSession] = useState<KnowledgeLessonSession | null>(null)
   const [isStartingLesson, setIsStartingLesson] = useState(false)
 
-  const loadOverview = useCallback(async () => {
+  const loadOverview = useCallback(async (nodeId?: string | null) => {
     setIsLoading(true)
     setError(null)
     try {
-      const response = await fetch(`/api/learners/${learner.id}/knowledge-base`)
+      const query = nodeId ? `?node_id=${encodeURIComponent(nodeId)}` : ''
+      const response = await fetch(`/api/learners/${learner.id}/knowledge-base${query}`)
       if (!response.ok) throw new Error('知识库暂时无法加载。')
       const data = await response.json() as KnowledgeBaseOverview
       setOverview(data)
@@ -105,6 +108,12 @@ export function KnowledgeBasePage({ learner }: KnowledgeBasePageProps) {
     }
   }
 
+  const handleSelectNode = (nodeId: string) => {
+    if (nodeId === selectedNodeId) return
+    setSelectedNodeId(nodeId)
+    void loadOverview(nodeId)
+  }
+
   const handleAttempt = async (knowledgePointId: string, correct: boolean) => {
     if (!lessonSession) throw new Error('课程会话已经结束。')
     const response = await fetch(`/api/learners/${learner.id}/knowledge-base/attempts`, {
@@ -121,11 +130,29 @@ export function KnowledgeBasePage({ learner }: KnowledgeBasePageProps) {
     return await response.json() as KnowledgeAttemptResult
   }
 
+  const handleCompleteLesson = async () => {
+    if (!lessonSession) throw new Error('课程会话已经结束。')
+    const response = await fetch(
+      `/api/learners/${learner.id}/knowledge-base/lessons/${lessonSession.session_id}/complete`,
+      { method: 'POST' },
+    )
+    if (!response.ok) throw new Error('课程完成状态保存失败，请重试。')
+    const result = await response.json() as KnowledgeLessonCompleteResult
+    setLessonSession(null)
+    if (result.next_node_id) {
+      showToast(`本单元已完成，接下来学习「${result.next_unit_title}」。`, { variant: 'success', duration: 6000 })
+      await loadOverview(result.next_node_id)
+    } else {
+      showToast('恭喜，你已经完成本册全部课程！', { variant: 'success', duration: 6000 })
+      await loadOverview()
+    }
+  }
+
   if (isLoading && !overview) {
     return (
       <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center bg-white text-sm text-slate-500">
         <LoaderCircle className="mr-2 size-4 animate-spin text-indigo-600" />
-        正在打开七年级知识库...
+        正在打开每日学习...
       </div>
     )
   }
@@ -144,18 +171,29 @@ export function KnowledgeBasePage({ learner }: KnowledgeBasePageProps) {
   }
 
   return (
-    <div className="knowledge-shell grid min-h-[calc(100vh-4rem)] bg-white">
+    <div className="min-h-[calc(100vh-4rem)] bg-white">
+      <div className="flex h-12 items-center border-b border-slate-200 px-4 text-sm text-slate-500 sm:px-6">
+        <button type="button" onClick={onBack} className="inline-flex items-center gap-1 font-semibold transition-colors hover:text-indigo-600">
+          <ChevronLeft className="size-4" />
+          学习中心
+        </button>
+        <span className="mx-2 text-slate-300">/</span>
+        <span>每日学习</span>
+        <span className="mx-2 text-slate-300">/</span>
+        <span className="hidden sm:inline">教材课程 / 初中 / 七年级英语</span>
+      </div>
+      <div className="knowledge-shell grid min-h-[calc(100vh-7rem)] bg-white">
       <CurriculumRail
         nodes={overview.curriculum}
         currentNodeId={selectedNodeId ?? overview.current_node_id}
         progress={overview.source.progress}
-        onSelect={setSelectedNodeId}
+        onSelect={handleSelectNode}
         onManage={() => setIsUploadOpen(true)}
       />
 
       <main className="min-w-0 px-6 py-8 xl:px-8">
         <div className="mx-auto max-w-4xl">
-          <h1 className="text-3xl font-black tracking-tight text-slate-950">七年级知识库</h1>
+          <h1 className="text-3xl font-black tracking-tight text-slate-950">七年级英语 · 每日学习</h1>
           <p className="mt-2 text-sm text-slate-500">沿着课本顺序学习，也可以从知识点自由探索。</p>
 
           <label className="mt-6 flex h-12 items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 shadow-[0_1px_2px_rgba(15,23,42,0.02)] focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-100">
@@ -186,13 +224,16 @@ export function KnowledgeBasePage({ learner }: KnowledgeBasePageProps) {
       <KnowledgeContextPanel overview={overview} onUpload={() => setIsUploadOpen(true)} />
       <UploadTextbookDialog open={isUploadOpen} onClose={() => setIsUploadOpen(false)} onUpload={handleUpload} />
       <LessonSessionDialog
+        key={lessonSession?.session_id ?? 'closed-lesson'}
         session={lessonSession}
         onClose={() => {
           setLessonSession(null)
           void loadOverview()
         }}
         onAttempt={handleAttempt}
+        onComplete={handleCompleteLesson}
       />
+      </div>
     </div>
   )
 }
