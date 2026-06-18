@@ -15,7 +15,6 @@ function App() {
   const [chatDraft, setChatDraft] = useState('')
   const [chatSkillFocus, setChatSkillFocus] = useState<string | null>(null)
   const [isChatGenerating, setIsChatGenerating] = useState(false)
-  const [lockMessage, setLockMessage] = useState('')
   const [currentLearner, setCurrentLearner] = useState<Learner | null>(() => {
     const cached = localStorage.getItem('binnLearner')
     if (!cached) return null
@@ -52,7 +51,6 @@ function App() {
 
   const handleLogout = () => {
     if (isChatGenerating) {
-      setLockMessage('回答生成中，请先等待完成或点击取消。')
       showToast('回答生成中，请先等待完成或点击取消。', { variant: 'warning' })
       return
     }
@@ -66,7 +64,6 @@ function App() {
 
   const handleDraftPrompt = (prompt: string, skillFocus?: string | null) => {
     if (isChatGenerating) {
-      setLockMessage('回答生成中，请先等待完成或点击取消。')
       showToast('回答生成中，请先等待完成或点击取消。', { variant: 'warning' })
       return
     }
@@ -76,11 +73,9 @@ function App() {
 
   const handleTabChange = (tab: AppTab) => {
     if (isChatGenerating && tab !== 'chat') {
-      setLockMessage('回答生成中，请先等待完成或点击取消。')
       showToast('回答生成中，请先等待完成或点击取消。', { variant: 'warning' })
       return
     }
-    setLockMessage('')
     setActiveTab(tab)
   }
 
@@ -101,7 +96,6 @@ function App() {
       <Header
         activeTab={activeTab}
         isLocked={isChatGenerating}
-        lockMessage={lockMessage}
         learner={currentLearner}
         onLogout={handleLogout}
         onTabChange={handleTabChange}
@@ -116,7 +110,6 @@ function App() {
             onSkillFocusChange={setChatSkillFocus}
             onGeneratingChange={setIsChatGenerating}
             onLockedAction={() => {
-              setLockMessage('回答生成中，请先等待完成或点击取消。')
               showToast('回答生成中，请先等待完成或点击取消。', { variant: 'warning' })
             }}
           />
@@ -125,7 +118,6 @@ function App() {
             learner={currentLearner}
             isLocked={isChatGenerating}
             onLockedAction={() => {
-              setLockMessage('回答生成中，请先等待完成或点击取消。')
               showToast('回答生成中，请先等待完成或点击取消。', { variant: 'warning' })
             }}
             onTabChange={handleTabChange}

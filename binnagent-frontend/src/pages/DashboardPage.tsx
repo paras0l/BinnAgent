@@ -26,10 +26,8 @@ export function DashboardPage({ learner }: DashboardPageProps) {
   const [newWord, setNewWord] = useState('')
   const [newPhonetic, setNewPhonetic] = useState('')
   const [newMeaning, setNewMeaning] = useState('')
-  const [error, setError] = useState('')
 
   const loadDashboard = useCallback(async () => {
-    setError('')
     setIsLoading(true)
     try {
       const response = await fetch(`/api/learners/${learner.id}/dashboard`)
@@ -39,7 +37,6 @@ export function DashboardPage({ learner }: DashboardPageProps) {
       setCurrentVocabIndex(0)
     } catch (err) {
       console.error('Dashboard error:', err)
-      setError('学习中心暂时无法加载，请稍后重试。')
       showToast('学习中心暂时无法加载，请稍后重试。', { variant: 'error' })
     } finally {
       setIsLoading(false)
@@ -55,7 +52,6 @@ export function DashboardPage({ learner }: DashboardPageProps) {
       setVocabularyItems(data)
     } catch (err) {
       console.error('Vocabulary list error:', err)
-      setError('词汇列表暂时无法加载，请稍后重试。')
       showToast('词汇列表暂时无法加载，请稍后重试。', { variant: 'error' })
     } finally {
       setIsLoadingVocabulary(false)
@@ -103,7 +99,6 @@ export function DashboardPage({ learner }: DashboardPageProps) {
       if (isVocabListOpen) await loadVocabularyList()
     } catch (err) {
       console.error('Vocabulary review error:', err)
-      setError('词卡评分失败，请稍后重试。')
       showToast('词卡评分失败，请稍后重试。', { variant: 'error' })
     } finally {
       setIsReviewing(false)
@@ -114,13 +109,11 @@ export function DashboardPage({ learner }: DashboardPageProps) {
     const word = newWord.trim()
     const meaning = newMeaning.trim()
     if (!word) {
-      setError('请输入要加入词汇本的单词。')
       showToast('请输入要加入词汇本的单词。', { variant: 'warning' })
       return
     }
 
     setIsAddingWord(true)
-    setError('')
     try {
       const response = await fetch(`/api/learners/${learner.id}/vocabulary/add`, {
         method: 'POST',
@@ -140,7 +133,6 @@ export function DashboardPage({ learner }: DashboardPageProps) {
       showToast(`已将「${word}」加入词汇本。`, { variant: 'success' })
     } catch (err) {
       console.error('Add vocabulary error:', err)
-      setError('加入词汇本失败，请稍后重试。')
       showToast('加入词汇本失败，请稍后重试。', { variant: 'error' })
     } finally {
       setIsAddingWord(false)
@@ -152,7 +144,6 @@ export function DashboardPage({ learner }: DashboardPageProps) {
     if (!shouldDelete) return
 
     setDeletingWordId(item.id)
-    setError('')
     try {
       const response = await fetch(`/api/learners/${learner.id}/vocabulary/${item.id}`, {
         method: 'DELETE',
@@ -164,7 +155,6 @@ export function DashboardPage({ learner }: DashboardPageProps) {
       showToast(`已从词汇本删除「${item.word}」。`, { variant: 'success' })
     } catch (err) {
       console.error('Delete vocabulary error:', err)
-      setError('删除词汇失败，请稍后重试。')
       showToast('删除词汇失败，请稍后重试。', { variant: 'error' })
     } finally {
       setDeletingWordId(null)
@@ -186,7 +176,7 @@ export function DashboardPage({ learner }: DashboardPageProps) {
     return (
       <div className="container mx-auto p-6">
         <div className="rounded-xl border bg-card p-8 text-center">
-          <p className="text-sm text-error">{error || '学习中心暂时不可用。'}</p>
+          <p className="text-sm text-muted-foreground">学习中心暂时不可用。</p>
           <button
             onClick={() => void loadDashboard()}
             className="mt-4 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
@@ -207,12 +197,6 @@ export function DashboardPage({ learner }: DashboardPageProps) {
         totalVocab={summary.stats.total_vocab}
         onTotalVocabClick={handleOpenVocabularyList}
       />
-
-      {error && (
-        <div className="rounded-lg border border-error/30 bg-error/5 px-4 py-3 text-sm text-error">
-          {error}
-        </div>
-      )}
 
       {isVocabListOpen && (
         <section className="rounded-xl border bg-card p-4">
