@@ -12,17 +12,14 @@ export function LoginPage({ onLogin }: LoginPageProps) {
   const { showToast } = useToast()
   const [nickname, setNickname] = useState('')
   const [email, setEmail] = useState('')
-  const [error, setError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    setError('')
 
     const trimmedNickname = nickname.trim()
     const trimmedEmail = email.trim()
     if (!trimmedNickname) {
-      setError('请输入昵称')
       showToast('请输入昵称', { variant: 'warning' })
       return
     }
@@ -46,7 +43,6 @@ export function LoginPage({ onLogin }: LoginPageProps) {
       onLogin(learner)
     } catch (err) {
       console.error('Learner login failed:', err)
-      setError('暂时无法进入学习空间，请稍后重试。')
       showToast('暂时无法进入学习空间，请稍后重试。', { variant: 'error' })
     } finally {
       setIsSubmitting(false)
@@ -89,8 +85,6 @@ export function LoginPage({ onLogin }: LoginPageProps) {
               maxLength={255}
             />
           </label>
-
-          {error && <p className="text-sm text-error">{error}</p>}
 
           <button
             type="submit"

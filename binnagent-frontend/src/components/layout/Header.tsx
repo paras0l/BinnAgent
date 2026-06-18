@@ -4,7 +4,6 @@ import type { AppTab, Learner } from '@/types'
 interface HeaderProps {
   activeTab: AppTab
   isLocked?: boolean
-  lockMessage?: string
   learner: Learner
   onLogout: () => void
   onTabChange: (tab: AppTab) => void
@@ -13,7 +12,6 @@ interface HeaderProps {
 export function Header({
   activeTab,
   isLocked = false,
-  lockMessage = '',
   learner,
   onLogout,
   onTabChange,
@@ -68,12 +66,6 @@ export function Header({
               <span className="hidden sm:inline">学习中心</span>
             </button>
           </nav>
-
-          {isLocked && (
-            <div className="hidden rounded-lg border border-warning/30 bg-warning/5 px-3 py-2 text-xs text-foreground lg:block">
-              {lockMessage || '回答生成中，请先等待完成或取消。'}
-            </div>
-          )}
 
           <div className="flex items-center gap-2 border-l pl-4">
             <User className="h-4 w-4 text-muted-foreground" />

@@ -10,3 +10,4 @@ __pycache__/
 *.egg-info/
 binnagent-frontend/node_modules/
 binnagent-frontend/dist/
+englishwiki/
