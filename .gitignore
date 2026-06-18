@@ -11,3 +11,5 @@ __pycache__/
 binnagent-frontend/node_modules/
 binnagent-frontend/dist/
 englishwiki/
+tmp/
+var/

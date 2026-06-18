@@ -1,4 +1,4 @@
-import { Bot, BookOpen, Compass, LogOut, User } from 'lucide-react'
+import { Bot, BookOpen, Compass, LibraryBig, LogOut, User } from 'lucide-react'
 import type { AppTab, Learner } from '@/types'
 
 interface HeaderProps {
@@ -20,17 +20,17 @@ export function Header({
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 h-16 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="flex h-full items-center justify-between px-6">
+      <div className="flex h-full items-center justify-between px-3 sm:px-6">
         <div className="flex items-center gap-2">
           <Bot className="h-6 w-6 text-primary" />
-          <span className="text-xl font-bold text-foreground">BinnAgent</span>
+          <span className="hidden text-xl font-bold text-foreground sm:inline">BinnAgent</span>
         </div>
         
-        <div className="flex items-center gap-4">
-          <nav className="flex gap-1">
+        <div className="flex items-center gap-1 sm:gap-4">
+          <nav className="flex gap-0.5 sm:gap-1">
             <button
               onClick={() => onTabChange('chat')}
-              className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors sm:px-4 ${
+              className={`flex items-center gap-2 rounded-lg px-2.5 py-2 text-sm transition-colors focus-visible:outline-2 focus-visible:outline-primary sm:px-4 ${
                 activeTab === 'chat'
                   ? 'bg-primary/10 font-medium text-primary'
                   : 'text-muted-foreground hover:bg-muted'
@@ -42,7 +42,7 @@ export function Header({
             <button
               onClick={() => onTabChange('explore')}
               disabled={isTabDisabled('explore')}
-              className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors sm:px-4 ${
+              className={`flex items-center gap-2 rounded-lg px-2.5 py-2 text-sm transition-colors focus-visible:outline-2 focus-visible:outline-primary sm:px-4 ${
                 activeTab === 'explore'
                   ? 'bg-primary/10 font-medium text-primary'
                   : 'text-muted-foreground hover:bg-muted'
@@ -53,9 +53,22 @@ export function Header({
               <span className="hidden sm:inline">探索</span>
             </button>
             <button
+              onClick={() => onTabChange('knowledge')}
+              disabled={isTabDisabled('knowledge')}
+              className={`flex items-center gap-2 rounded-lg px-2.5 py-2 text-sm transition-colors focus-visible:outline-2 focus-visible:outline-primary sm:px-4 ${
+                activeTab === 'knowledge'
+                  ? 'bg-primary/10 font-medium text-primary'
+                  : 'text-muted-foreground hover:bg-muted'
+              } disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent`}
+              title={isTabDisabled('knowledge') ? '回答生成中，请先等待完成或取消' : '七年级知识库'}
+            >
+              <LibraryBig className="h-4 w-4" />
+              <span className="hidden lg:inline">七年级知识库</span>
+            </button>
+            <button
               onClick={() => onTabChange('dashboard')}
               disabled={isTabDisabled('dashboard')}
-              className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors sm:px-4 ${
+              className={`flex items-center gap-2 rounded-lg px-2.5 py-2 text-sm transition-colors focus-visible:outline-2 focus-visible:outline-primary sm:px-4 ${
                 activeTab === 'dashboard'
                   ? 'bg-primary/10 font-medium text-primary'
                   : 'text-muted-foreground hover:bg-muted'
@@ -67,9 +80,9 @@ export function Header({
             </button>
           </nav>
 
-          <div className="flex items-center gap-2 border-l pl-4">
-            <User className="h-4 w-4 text-muted-foreground" />
-            <span className="max-w-28 truncate text-sm font-medium text-foreground">
+          <div className="flex items-center gap-2 border-l pl-1 sm:pl-4">
+            <User className="hidden h-4 w-4 text-muted-foreground md:block" />
+            <span className="hidden max-w-28 truncate text-sm font-medium text-foreground md:block">
               {learner.nickname}
             </span>
             <button

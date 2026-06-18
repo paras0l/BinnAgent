@@ -4,7 +4,111 @@ export interface Learner {
   email?: string | null
 }
 
-export type AppTab = 'chat' | 'explore' | 'dashboard' | 'pronunciation' | 'grammar'
+export type AppTab =
+  | 'chat'
+  | 'explore'
+  | 'knowledge'
+  | 'dashboard'
+  | 'pronunciation'
+  | 'grammar'
+
+export type KnowledgeType =
+  | 'vocabulary'
+  | 'grammar'
+  | 'phrase'
+  | 'sentence_pattern'
+
+export interface CurriculumNode {
+  id: string
+  parent_id?: string | null
+  node_type: 'textbook' | 'unit' | 'section' | 'lesson'
+  title: string
+  subtitle?: string | null
+  ordinal: number
+  status: 'locked' | 'available' | 'in_progress' | 'completed'
+  progress: number
+  estimated_minutes?: number | null
+}
+
+export interface KnowledgePointSummary {
+  id: string
+  title: string
+  type: KnowledgeType
+  summary: string
+  source_page: string
+  mastery: number
+}
+
+export interface DailyLessonPart {
+  id: string
+  title: string
+  estimated_minutes: number
+  completed: boolean
+}
+
+export interface KnowledgeBaseOverview {
+  source: {
+    id: string
+    title: string
+    publisher: string
+    edition: string
+    status: 'draft' | 'processing' | 'review_required' | 'published' | 'failed'
+    unit_count: number
+    knowledge_count: number
+    progress: number
+  }
+  curriculum: CurriculumNode[]
+  current_node_id: string
+  current_unit: {
+    id: string
+    title: string
+    subtitle: string
+    estimated_minutes: number
+  }
+  daily_lesson: {
+    id: string
+    title: string
+    estimated_minutes: number
+    parts: DailyLessonPart[]
+  }
+  knowledge_points: KnowledgePointSummary[]
+  path: Array<{
+    id: string
+    ordinal: number
+    title: string
+    subtitle: string
+    status: 'current' | 'next' | 'locked' | 'completed'
+    estimated_minutes?: number | null
+  }>
+  recommendation_reason: string
+}
+
+export interface KnowledgeUploadResult {
+  source_id: string
+  filename: string
+  status: 'uploaded' | 'processing'
+  message: string
+}
+
+export interface KnowledgeLessonSession {
+  session_id: string
+  title: string
+  parts: DailyLessonPart[]
+  knowledge_points: Array<{
+    id: string
+    title: string
+    summary: string
+    type: KnowledgeType
+  }>
+}
+
+export interface KnowledgeAttemptResult {
+  knowledge_point_id: string
+  status: string
+  mastery_score: number
+  exposure_count: number
+  next_review_at: string
+}
 
 export interface ChatMessage {
   id: string

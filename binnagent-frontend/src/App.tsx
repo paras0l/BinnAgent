@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { Header } from './components/layout/Header'
 import { ChatPage } from './pages/ChatPage'
 import { DashboardPage } from './pages/DashboardPage'
@@ -8,6 +8,10 @@ import { LoginPage } from './pages/LoginPage'
 import { PronunciationPage } from './pages/PronunciationPage'
 import { useToast } from './hooks/useToast'
 import type { AppTab, Learner } from './types'
+
+const KnowledgeBasePage = lazy(() =>
+  import('./pages/KnowledgeBasePage').then((module) => ({ default: module.KnowledgeBasePage }))
+)
 
 function App() {
   const { showToast } = useToast()
@@ -125,6 +129,10 @@ function App() {
           />
         ) : activeTab === 'pronunciation' ? (
           <PronunciationPage learner={currentLearner} />
+        ) : activeTab === 'knowledge' ? (
+          <Suspense fallback={<div className="flex min-h-[calc(100vh-4rem)] items-center justify-center text-sm text-muted-foreground">正在打开知识库...</div>}>
+            <KnowledgeBasePage learner={currentLearner} />
+          </Suspense>
         ) : activeTab === 'grammar' ? (
           <GrammarPage learner={currentLearner} onTabChange={handleTabChange} />
         ) : (

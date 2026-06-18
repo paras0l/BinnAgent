@@ -18,6 +18,8 @@ class Settings(BaseSettings):
     chat_auto_continue_limit: int = 2
     fallback_enabled: bool = False
     redis_url: str = "redis://localhost:6379/0"
+    knowledge_upload_dir: str = "var/knowledge/uploads"
+    knowledge_max_upload_bytes: int = 52_428_800
     debug: bool = False
 
 

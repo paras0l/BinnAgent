@@ -1,0 +1,510 @@
+import hashlib
+import uuid
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+from typing import Any, Literal
+
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
+from pydantic import BaseModel, Field
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from src.api.deps import get_db_session
+from src.config import settings
+from src.knowledge.processor import process_uploaded_textbook
+from src.models.knowledge import (
+    CurriculumNode,
+    KnowledgeLearningEvent,
+    KnowledgePoint,
+    KnowledgeSource,
+    LearnerKnowledgeState,
+)
+from src.models.learner import Learner
+from src.models.session import LearningSession, LearningTask
+from src.models.vocabulary import ReviewSchedule, VocabularyItem
+
+router = APIRouter(tags=["knowledge-base"])
+
+
+class LessonPartResponse(BaseModel):
+    id: str
+    title: str
+    estimated_minutes: int
+    completed: bool = False
+
+
+class KnowledgeAttemptRequest(BaseModel):
+    knowledge_point_id: uuid.UUID
+    session_id: uuid.UUID | None = None
+    correct: bool
+    response_time_ms: int | None = Field(default=None, ge=0, le=3_600_000)
+    hint_count: int = Field(default=0, ge=0, le=20)
+
+
+class KnowledgeAttemptResponse(BaseModel):
+    knowledge_point_id: uuid.UUID
+    status: str
+    mastery_score: float
+    exposure_count: int
+    next_review_at: datetime
+
+
+class StartLessonResponse(BaseModel):
+    session_id: uuid.UUID
+    title: str
+    parts: list[LessonPartResponse]
+    knowledge_points: list[dict[str, Any]]
+
+
+class UploadResponse(BaseModel):
+    source_id: uuid.UUID
+    filename: str
+    status: Literal["uploaded", "processing"]
+    message: str
+
+
+class IngestResponse(BaseModel):
+    source_id: uuid.UUID
+    status: str
+    page_count: int
+    unit_count: int
+    knowledge_count: int
+    message: str
+
+
+async def _ensure_learner(db: AsyncSession, learner_id: uuid.UUID) -> None:
+    result = await db.execute(select(Learner.id).where(Learner.id == learner_id))
+    if result.scalar_one_or_none() is None:
+        raise HTTPException(status_code=404, detail="Learner not found")
+
+
+@router.get("/api/learners/{learner_id}/knowledge-base")
+async def knowledge_base_overview(
+    learner_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db_session),
+) -> dict[str, Any]:
+    await _ensure_learner(db, learner_id)
+    source_result = await db.execute(
+        select(KnowledgeSource)
+        .where(KnowledgeSource.grade == "grade-7", KnowledgeSource.status == "published")
+        .order_by(KnowledgeSource.volume.asc(), KnowledgeSource.created_at.asc())
+        .limit(1)
+    )
+    source = source_result.scalar_one_or_none()
+    if source is None:
+        raise HTTPException(status_code=404, detail="Published Grade 7 textbook not found")
+
+    node_result = await db.execute(
+        select(CurriculumNode)
+        .where(CurriculumNode.source_id == source.id, CurriculumNode.parent_id.is_(None))
+        .order_by(CurriculumNode.ordinal.asc())
+    )
+    nodes = list(node_result.scalars().all())
+    if not nodes:
+        raise HTTPException(status_code=409, detail="Textbook curriculum has not been generated")
+    current_node = nodes[0]
+
+    point_result = await db.execute(
+        select(KnowledgePoint)
+        .where(
+            KnowledgePoint.curriculum_node_id == current_node.id,
+            KnowledgePoint.status == "published",
+        )
+        .order_by(KnowledgePoint.created_at.asc())
+    )
+    points = list(point_result.scalars().all())
+    point_ids = [point.id for point in points]
+    states: dict[uuid.UUID, LearnerKnowledgeState] = {}
+    if point_ids:
+        state_result = await db.execute(
+            select(LearnerKnowledgeState).where(
+                LearnerKnowledgeState.learner_id == learner_id,
+                LearnerKnowledgeState.knowledge_point_id.in_(point_ids),
+            )
+        )
+        states = {item.knowledge_point_id: item for item in state_result.scalars().all()}
+
+    learned = sum(1 for state in states.values() if state.status == "mastered")
+    progress = min(1.0, max(0.18, learned / max(source.knowledge_count, 1)))
+    path = []
+    for node in nodes[:3]:
+        path.append(
+            {
+                "id": str(node.id),
+                "ordinal": node.ordinal,
+                "title": node.title,
+                "subtitle": node.subtitle or "",
+                "status": "current" if node.id == current_node.id else "next",
+                "estimated_minutes": node.estimated_minutes or 20,
+            }
+        )
+
+    return {
+        "source": {
+            "id": str(source.id),
+            "title": source.title,
+            "publisher": source.publisher or "人民教育出版社（PEP）",
+            "edition": source.edition or "人教版",
+            "status": source.status,
+            "unit_count": source.unit_count,
+            "knowledge_count": source.knowledge_count,
+            "progress": progress,
+        },
+        "curriculum": [
+            {
+                "id": str(node.id),
+                "parent_id": str(node.parent_id) if node.parent_id else None,
+                "node_type": node.node_type,
+                "title": node.title,
+                "subtitle": node.subtitle,
+                "ordinal": node.ordinal,
+                "status": "in_progress" if node.id == current_node.id else "available",
+                "progress": progress if node.id == current_node.id else 0,
+                "estimated_minutes": node.estimated_minutes,
+            }
+            for node in nodes
+        ],
+        "current_node_id": str(current_node.id),
+        "current_unit": {
+            "id": str(current_node.id),
+            "title": current_node.title,
+            "subtitle": current_node.subtitle or "",
+            "estimated_minutes": current_node.estimated_minutes or 20,
+        },
+        "daily_lesson": {
+            "id": f"lesson-{current_node.id}",
+            "title": f"{current_node.title} {current_node.subtitle or ''}".strip(),
+            "estimated_minutes": current_node.estimated_minutes or 20,
+            "parts": [
+                {
+                    "id": "greetings",
+                    "title": "问候表达",
+                    "estimated_minutes": 6,
+                    "completed": False,
+                },
+                {"id": "letters", "title": "字母 A–H", "estimated_minutes": 6, "completed": False},
+                {"id": "practice", "title": "课本练习", "estimated_minutes": 8, "completed": False},
+            ],
+        },
+        "knowledge_points": [
+            {
+                "id": str(point.id),
+                "title": point.title,
+                "type": point.type,
+                "summary": point.summary,
+                "source_page": point.source_page,
+                "mastery": states.get(point.id).mastery_score if point.id in states else 0.0,
+            }
+            for point in points
+        ],
+        "path": path,
+        "recommendation_reason": (
+            "继续学习问候表达能帮助你建立日常交流基础，并为后续介绍自己和他人做铺垫。"
+        ),
+    }
+
+
+@router.post(
+    "/api/learners/{learner_id}/knowledge-base/lessons/{curriculum_node_id}/start",
+    response_model=StartLessonResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def start_knowledge_lesson(
+    learner_id: uuid.UUID,
+    curriculum_node_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db_session),
+) -> StartLessonResponse:
+    await _ensure_learner(db, learner_id)
+    node_result = await db.execute(
+        select(CurriculumNode).where(CurriculumNode.id == curriculum_node_id)
+    )
+    node = node_result.scalar_one_or_none()
+    if node is None:
+        raise HTTPException(status_code=404, detail="Curriculum node not found")
+    point_result = await db.execute(
+        select(KnowledgePoint)
+        .where(KnowledgePoint.curriculum_node_id == node.id, KnowledgePoint.status == "published")
+        .order_by(KnowledgePoint.created_at.asc())
+    )
+    points = list(point_result.scalars().all())
+
+    now = datetime.now(timezone.utc)
+    session = LearningSession(
+        learner_id=learner_id,
+        session_type="textbook_lesson",
+        active_skill="knowledge",
+        today_goal=f"学习 {node.title} {node.subtitle or ''}".strip(),
+        status="in_progress",
+        started_at=now,
+    )
+    db.add(session)
+    await db.flush()
+    for title, minutes in [("问候表达", 6), ("字母 A–H", 6), ("课本练习", 8)]:
+        db.add(
+            LearningTask(
+                learner_id=learner_id,
+                session_id=session.id,
+                task_type="textbook_knowledge",
+                skill="knowledge",
+                title=title,
+                estimated_minutes=minutes,
+                status="pending",
+                input_ref=f"curriculum:{node.id}",
+            )
+        )
+    return StartLessonResponse(
+        session_id=session.id,
+        title=f"{node.title} {node.subtitle or ''}".strip(),
+        parts=[
+            LessonPartResponse(id="greetings", title="问候表达", estimated_minutes=6),
+            LessonPartResponse(id="letters", title="字母 A–H", estimated_minutes=6),
+            LessonPartResponse(id="practice", title="课本练习", estimated_minutes=8),
+        ],
+        knowledge_points=[
+            {
+                "id": str(point.id),
+                "title": point.title,
+                "summary": point.summary,
+                "type": point.type,
+            }
+            for point in points
+        ],
+    )
+
+
+@router.post(
+    "/api/learners/{learner_id}/knowledge-base/attempts",
+    response_model=KnowledgeAttemptResponse,
+)
+async def record_knowledge_attempt(
+    learner_id: uuid.UUID,
+    body: KnowledgeAttemptRequest,
+    db: AsyncSession = Depends(get_db_session),
+) -> KnowledgeAttemptResponse:
+    await _ensure_learner(db, learner_id)
+    point_result = await db.execute(
+        select(KnowledgePoint).where(KnowledgePoint.id == body.knowledge_point_id)
+    )
+    point = point_result.scalar_one_or_none()
+    if point is None:
+        raise HTTPException(status_code=404, detail="Knowledge point not found")
+
+    state_result = await db.execute(
+        select(LearnerKnowledgeState).where(
+            LearnerKnowledgeState.learner_id == learner_id,
+            LearnerKnowledgeState.knowledge_point_id == point.id,
+        )
+    )
+    learner_state = state_result.scalar_one_or_none()
+    if learner_state is None:
+        learner_state = LearnerKnowledgeState(
+            learner_id=learner_id,
+            knowledge_point_id=point.id,
+            status="learning",
+            mastery_score=0.0,
+            confidence=0.0,
+            exposure_count=0,
+            correct_count=0,
+            evidence_summary={},
+        )
+        db.add(learner_state)
+
+    now = datetime.now(timezone.utc)
+    previous_mastery = learner_state.mastery_score or 0.0
+    change = 0.18 if body.correct else -0.12
+    if body.hint_count:
+        change -= min(body.hint_count * 0.02, 0.08)
+    mastery = min(1.0, max(0.0, previous_mastery + change))
+    learner_state.mastery_score = mastery
+    learner_state.confidence = min(1.0, 0.2 + (learner_state.exposure_count + 1) * 0.12)
+    learner_state.exposure_count = (learner_state.exposure_count or 0) + 1
+    learner_state.correct_count = (learner_state.correct_count or 0) + int(body.correct)
+    learner_state.status = (
+        "mastered" if mastery >= 0.8 else "reviewing" if not body.correct else "learning"
+    )
+    learner_state.last_seen_at = now
+    learner_state.next_review_at = now + timedelta(days=4 if body.correct else 1)
+    learner_state.evidence_summary = {
+        "last_result": "correct" if body.correct else "incorrect",
+        "response_time_ms": body.response_time_ms,
+        "hint_count": body.hint_count,
+    }
+
+    db.add(
+        KnowledgeLearningEvent(
+            learner_id=learner_id,
+            session_id=body.session_id,
+            event_type="knowledge_practiced",
+            knowledge_point_id=point.id,
+            payload={
+                "correct": body.correct,
+                "response_time_ms": body.response_time_ms,
+                "hint_count": body.hint_count,
+                "mastery_before": previous_mastery,
+                "mastery_after": mastery,
+            },
+            occurred_at=now,
+        )
+    )
+    db.add(
+        ReviewSchedule(
+            learner_id=learner_id,
+            item_type="knowledge",
+            item_id=point.id,
+            scheduled_at=learner_state.next_review_at,
+            result="correct" if body.correct else "incorrect",
+            response_time_ms=body.response_time_ms,
+            confidence_before=previous_mastery,
+            confidence_after=mastery,
+            recommended_next_drill="textbook_review",
+        )
+    )
+
+    if point.type == "vocabulary":
+        vocab_result = await db.execute(
+            select(VocabularyItem).where(
+                VocabularyItem.learner_id == learner_id,
+                func.lower(VocabularyItem.word) == point.title.lower(),
+            )
+        )
+        vocab = vocab_result.scalar_one_or_none()
+        if vocab is None:
+            db.add(
+                VocabularyItem(
+                    learner_id=learner_id,
+                    word=point.title,
+                    level="grade-7",
+                    meanings=[point.summary],
+                    source_ref=f"knowledge:{point.id}",
+                    status="learning",
+                    confidence=mastery,
+                    next_review_at=learner_state.next_review_at,
+                )
+            )
+        else:
+            vocab.confidence = mastery
+            vocab.next_review_at = learner_state.next_review_at
+
+    await db.flush()
+    return KnowledgeAttemptResponse(
+        knowledge_point_id=point.id,
+        status=learner_state.status,
+        mastery_score=mastery,
+        exposure_count=learner_state.exposure_count,
+        next_review_at=learner_state.next_review_at,
+    )
+
+
+def _is_grade7_filename(filename: str) -> bool:
+    normalized = filename.casefold().replace("_", "-")
+    return any(token in normalized for token in ("七年级", "7年级", "grade-7", "grade7"))
+
+
+@router.post(
+    "/api/knowledge/sources/uploads",
+    response_model=UploadResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def upload_knowledge_source(
+    request: Request,
+    learner_id: uuid.UUID = Query(),
+    filename: str = Query(min_length=1, max_length=500),
+    db: AsyncSession = Depends(get_db_session),
+) -> UploadResponse:
+    await _ensure_learner(db, learner_id)
+    safe_filename = Path(filename).name
+    if not safe_filename.lower().endswith(".pdf"):
+        raise HTTPException(status_code=415, detail="仅支持 PDF 教材")
+    if not _is_grade7_filename(safe_filename):
+        raise HTTPException(status_code=422, detail="当前仅支持七年级教材，请检查文件名")
+    if request.headers.get("content-type", "").split(";", 1)[0].strip() != "application/pdf":
+        raise HTTPException(status_code=415, detail="Content-Type 必须为 application/pdf")
+
+    data = await request.body()
+    if not data.startswith(b"%PDF"):
+        raise HTTPException(status_code=422, detail="文件不是有效的 PDF")
+    if len(data) > settings.knowledge_max_upload_bytes:
+        raise HTTPException(status_code=413, detail="PDF 不能超过 50 MB")
+
+    digest = hashlib.sha256(data).hexdigest()
+    duplicate_result = await db.execute(
+        select(KnowledgeSource).where(KnowledgeSource.sha256 == digest)
+    )
+    duplicate = duplicate_result.scalar_one_or_none()
+    if duplicate is not None:
+        return UploadResponse(
+            source_id=duplicate.id,
+            filename=duplicate.filename,
+            status="uploaded" if duplicate.status == "uploaded" else "processing",
+            message="该教材已存在，已复用现有知识版本。",
+        )
+
+    upload_dir = Path(settings.knowledge_upload_dir).resolve()
+    upload_dir.mkdir(parents=True, exist_ok=True)
+    destination = upload_dir / f"{digest}.pdf"
+    destination.write_bytes(data)
+    source = KnowledgeSource(
+        owner_learner_id=learner_id,
+        title=safe_filename.removesuffix(".pdf"),
+        filename=safe_filename,
+        publisher=None,
+        edition=None,
+        grade="grade-7",
+        volume="lower" if "下册" in safe_filename else "upper" if "上册" in safe_filename else None,
+        status="uploaded",
+        visibility="private",
+        object_key=str(destination),
+        sha256=digest,
+        file_size=len(data),
+        unit_count=0,
+        knowledge_count=0,
+        metadata_={"stage": "uploaded"},
+    )
+    db.add(source)
+    await db.flush()
+    return UploadResponse(
+        source_id=source.id,
+        filename=source.filename,
+        status="uploaded",
+        message="教材上传成功，已进入知识生成流程。",
+    )
+
+
+@router.post("/api/knowledge/sources/{source_id}/ingest", response_model=IngestResponse)
+async def ingest_knowledge_source(
+    source_id: uuid.UUID,
+    learner_id: uuid.UUID = Query(),
+    db: AsyncSession = Depends(get_db_session),
+) -> IngestResponse:
+    await _ensure_learner(db, learner_id)
+    result = await db.execute(select(KnowledgeSource).where(KnowledgeSource.id == source_id))
+    source = result.scalar_one_or_none()
+    if source is None:
+        raise HTTPException(status_code=404, detail="教材不存在")
+    if source.owner_learner_id not in (None, learner_id):
+        raise HTTPException(status_code=403, detail="无权处理该教材")
+    if source.status == "published":
+        return IngestResponse(
+            source_id=source.id,
+            status=source.status,
+            page_count=source.page_count or 0,
+            unit_count=source.unit_count,
+            knowledge_count=source.knowledge_count,
+            message="已复用发布中的教材知识。",
+        )
+    try:
+        source.status = "processing"
+        await db.flush()
+        parsed = await process_uploaded_textbook(db, source)
+    except Exception as exc:
+        source.status = "failed"
+        source.metadata_ = {"stage": "failed", "error": str(exc)[:500]}
+        raise HTTPException(status_code=422, detail="PDF 解析失败，请检查文件或稍后重试") from exc
+    return IngestResponse(
+        source_id=source.id,
+        status=source.status,
+        page_count=parsed.page_count,
+        unit_count=source.unit_count,
+        knowledge_count=source.knowledge_count,
+        message="教材解析完成，知识草稿等待审核发布。",
+    )

@@ -39,6 +39,9 @@ services:
       BINN_OLLAMA_UTILITY_MODEL: ${BINN_OLLAMA_UTILITY_MODEL:-gemma4:e2b}
       BINN_OLLAMA_EMBEDDING_MODEL: ${BINN_OLLAMA_EMBEDDING_MODEL:-nomic-embed-text:latest}
       BINN_REDIS_URL: redis://redis:6379/0
+      BINN_KNOWLEDGE_UPLOAD_DIR: /app/var/knowledge/uploads
+    volumes:
+      - knowledge_data:/app/var/knowledge
     depends_on:
       db:
         condition: service_healthy
@@ -47,3 +50,4 @@ services:
 
 volumes:
   pgdata:
+  knowledge_data:

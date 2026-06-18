@@ -3,19 +3,20 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
+from src.api.chat import router as chat_router
 from src.api.conversations import router as conversations_router
 from src.api.dashboard import router as dashboard_router
 from src.api.explore import router as explore_router
 from src.api.grammar import router as grammar_router
 from src.api.health import router as health_router
+from src.api.knowledge import router as knowledge_router
 from src.api.learners import router as learners_router
 from src.api.learning_progress import router as learning_progress_router
 from src.api.memory import router as memory_router
 from src.api.sessions import router as sessions_router
 from src.api.vocabulary import router as vocabulary_router
-from src.api.chat import router as chat_router
-from src.providers.router import router as model_router
 from src.cache import close_redis
+from src.providers.router import router as model_router
 
 
 @asynccontextmanager
@@ -41,6 +42,7 @@ app.include_router(explore_router)
 app.include_router(grammar_router)
 app.include_router(learning_progress_router)
 app.include_router(memory_router)
+app.include_router(knowledge_router)
 app.include_router(sessions_router)
 app.include_router(vocabulary_router)
 app.include_router(chat_router)

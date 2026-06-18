@@ -71,6 +71,7 @@ npm run dev
 - [07. Evaluation & Observability](docs/architecture/07-evaluation-observability.md)
 - [08. MVP Roadmap](docs/architecture/08-mvp-roadmap.md)
 - [09. Model Provider & Ollama](docs/architecture/09-model-provider-and-ollama.md)
+- [10. Knowledge Base](docs/architecture/10-knowledge-base.md)
 
 ### 前端文档
 
