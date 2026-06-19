@@ -19,7 +19,13 @@ from src.models.runtime import (
     ToolCall,
 )
 from src.models.session import LearningSession, LearningTask
-from src.models.vocabulary import ReviewSchedule, VocabularyItem
+from src.models.vocabulary import (
+    ReviewSchedule,
+    VocabularyAttempt,
+    VocabularyItem,
+    VocabularyItemSource,
+    VocabularyPracticeSession,
+)
 
 __all__ = [
     "AgentEvent",
@@ -45,4 +51,7 @@ __all__ = [
     "ToolCall",
     "UUIDPrimaryKeyMixin",
     "VocabularyItem",
+    "VocabularyItemSource",
+    "VocabularyPracticeSession",
+    "VocabularyAttempt",
 ]

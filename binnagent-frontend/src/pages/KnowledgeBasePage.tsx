@@ -15,13 +15,15 @@ import type {
   KnowledgeUploadResult,
   Learner,
 } from '@/types'
+import type { VocabularyPracticeMode } from '@/pages/VocabularyPracticePage'
 
 interface KnowledgeBasePageProps {
   learner: Learner
   onBack: () => void
+  onStartVocabularyPractice: (mode: VocabularyPracticeMode, nodeId: string, sourceLabel: string) => void
 }
 
-export function KnowledgeBasePage({ learner, onBack }: KnowledgeBasePageProps) {
+export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice }: KnowledgeBasePageProps) {
   const { showToast } = useToast()
   const [overview, setOverview] = useState<KnowledgeBaseOverview | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -215,6 +217,10 @@ export function KnowledgeBasePage({ learner, onBack }: KnowledgeBasePageProps) {
               onContinue={() => void handleStartLesson()}
             />
             {isStartingLesson ? <p className="mt-2 flex items-center justify-end gap-2 text-xs font-semibold text-slate-500"><LoaderCircle className="size-3.5 animate-spin" />正在准备课程...</p> : null}
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+              <button type="button" onClick={() => onStartVocabularyPractice('review', overview.current_unit.id, `七上 · ${overview.current_unit.title}`)} className="rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm font-black text-indigo-700 transition hover:border-indigo-300">学习本单元词汇</button>
+              <button type="button" onClick={() => onStartVocabularyPractice('spelling', overview.current_unit.id, `七上 · ${overview.current_unit.title}`)} className="rounded-xl bg-indigo-600 px-4 py-3 text-sm font-black text-white transition hover:bg-indigo-700">练习本单元拼写</button>
+            </div>
           </div>
 
           <KnowledgeList items={visibleKnowledge} filter={filter} onFilterChange={setFilter} />

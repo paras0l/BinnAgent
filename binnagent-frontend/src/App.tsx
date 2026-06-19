@@ -6,6 +6,7 @@ import { ExplorePage } from './pages/ExplorePage'
 import { GrammarPage } from './pages/GrammarPage'
 import { LoginPage } from './pages/LoginPage'
 import { PronunciationPage } from './pages/PronunciationPage'
+import { VocabularyPracticePage, type VocabularyPracticeMode } from './pages/VocabularyPracticePage'
 import { useToast } from './hooks/useToast'
 import type { AppTab, Learner } from './types'
 
@@ -16,7 +17,10 @@ const KnowledgeBasePage = lazy(() =>
 function App() {
   const { showToast } = useToast()
   const [activeTab, setActiveTab] = useState<AppTab>('chat')
-  const [learningCenterView, setLearningCenterView] = useState<'home' | 'daily-learning'>('home')
+  const [learningCenterView, setLearningCenterView] = useState<'home' | 'daily-learning' | 'vocabulary-practice'>('home')
+  const [practiceMode, setPracticeMode] = useState<VocabularyPracticeMode>('review')
+  const [practiceNodeId, setPracticeNodeId] = useState<string | null>(null)
+  const [practiceSourceLabel, setPracticeSourceLabel] = useState<string | null>(null)
   const [chatDraft, setChatDraft] = useState('')
   const [chatSkillFocus, setChatSkillFocus] = useState<string | null>(null)
   const [isChatGenerating, setIsChatGenerating] = useState(false)
@@ -85,6 +89,13 @@ function App() {
     setActiveTab(tab)
   }
 
+  const openVocabularyPractice = (mode: VocabularyPracticeMode, nodeId?: string | null, sourceLabel?: string | null) => {
+    setPracticeMode(mode)
+    setPracticeNodeId(nodeId ?? null)
+    setPracticeSourceLabel(sourceLabel ?? null)
+    setLearningCenterView('vocabulary-practice')
+  }
+
   if (isRestoringLearner) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background text-sm text-muted-foreground">
@@ -95,6 +106,18 @@ function App() {
 
   if (!currentLearner) {
     return <LoginPage onLogin={setCurrentLearner} />
+  }
+
+  if (activeTab === 'dashboard' && learningCenterView === 'vocabulary-practice') {
+    return (
+      <VocabularyPracticePage
+        learner={currentLearner}
+        initialMode={practiceMode}
+        curriculumNodeId={practiceNodeId}
+        sourceLabel={practiceSourceLabel}
+        onExit={() => setLearningCenterView(practiceNodeId ? 'daily-learning' : 'home')}
+      />
+    )
   }
 
   return (
@@ -139,12 +162,14 @@ function App() {
               <KnowledgeBasePage
                 learner={currentLearner}
                 onBack={() => setLearningCenterView('home')}
+                onStartVocabularyPractice={openVocabularyPractice}
               />
             </Suspense>
           ) : (
             <DashboardPage
               learner={currentLearner}
               onOpenDailyLearning={() => setLearningCenterView('daily-learning')}
+              onStartVocabularyPractice={(mode) => openVocabularyPractice(mode)}
             />
           )
         )}

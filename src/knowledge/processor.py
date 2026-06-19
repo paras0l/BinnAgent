@@ -27,6 +27,32 @@ class ParsedTextbook:
     text_char_count: int
 
 
+@dataclass(frozen=True)
+class ParsedVocabularyEntry:
+    unit_title: str
+    expression: str
+    canonical_expression: str
+    phonetic: str | None
+    meaning: str
+    lesson_page: str
+    pdf_page: int
+    entry_kind: str
+    confidence: float
+
+
+VOCABULARY_HEADING = "Words and Expressions in Each Unit"
+VOCABULARY_INDEX_HEADING = "Vocabulary Index"
+VOCABULARY_UNIT_PATTERN = re.compile(r"^(Starter\s+Unit|Unit)\s+(\d+)\s*$", re.IGNORECASE)
+VOCABULARY_PAGE_REF_PATTERN = re.compile(r"\s+p\.(S?\d+(?:[–-]S?\d+)?)\s*$", re.IGNORECASE)
+PHONETIC_PATTERN = re.compile(
+    r"^(?P<expression>.+?)\s+(?P<phonetic>/[^/]+/(?:\s*,\s*/[^/]+/)?)\s*(?P<rest>.*)$"
+)
+PART_OF_SPEECH_PATTERN = re.compile(
+    r"\b(?:adj|adv|art|conj|interj|modal\s+v|n|num|prep|pron|v)\.(?:\s*&\s*(?:adj|adv|n|pron|v)\.)?",
+    re.IGNORECASE,
+)
+
+
 PEP_GRADE7_LOWER_UNITS: tuple[ParsedUnit, ...] = (
     ParsedUnit("Unit 1", "Can you play the guitar?", 1),
     ParsedUnit("Unit 2", "What time do you go to school?", 7),
@@ -183,6 +209,128 @@ def _parse_pdf(path: Path) -> ParsedTextbook:
     )
 
 
+def _normalize_unit_title(value: str) -> str:
+    match = VOCABULARY_UNIT_PATTERN.fullmatch(" ".join(value.split()))
+    if not match:
+        return " ".join(value.split())
+    prefix = "Starter Unit" if match.group(1).lower().startswith("starter") else "Unit"
+    return f"{prefix} {int(match.group(2))}"
+
+
+def _normalize_expression(value: str) -> str:
+    expression = " ".join(value.split()).strip(" ·—-")
+    expression = expression.replace("a/f_ternoon", "afternoon")
+    expression = expression.replace("_", "")
+    return expression
+
+
+def _canonical_expression(value: str) -> str:
+    value = value.casefold().replace("’", "'")
+    value = re.sub(r"[^a-z0-9'./ -]+", "", value)
+    return re.sub(r"\s+", " ", value).strip(" .-/")
+
+
+def _entry_kind(expression: str) -> str:
+    if len(expression) <= 8 and expression.replace(".", "").isupper():
+        return "abbreviation"
+    if " " in expression or "/" in expression:
+        return "phrase"
+    if expression[:1].isupper():
+        return "proper_noun"
+    return "word"
+
+
+def _parse_vocabulary_chunk(
+    unit_title: str,
+    pdf_page: int,
+    chunk: str,
+    lesson_page: str,
+) -> ParsedVocabularyEntry | None:
+    normalized = " ".join(chunk.split())
+    phonetic_match = PHONETIC_PATTERN.match(normalized)
+    phonetic: str | None = None
+    if phonetic_match:
+        expression = _normalize_expression(phonetic_match.group("expression"))
+        phonetic = phonetic_match.group("phonetic").strip()
+        rest = phonetic_match.group("rest").strip()
+    else:
+        pos_match = PART_OF_SPEECH_PATTERN.search(normalized)
+        cjk_match = re.search(r"[\u3400-\u9fff]", normalized)
+        split_at = (
+            pos_match.start() if pos_match else cjk_match.start() if cjk_match else len(normalized)
+        )
+        expression = _normalize_expression(normalized[:split_at])
+        rest = normalized[split_at:].strip()
+    canonical = _canonical_expression(expression)
+    if not canonical or not re.search(r"[a-z]", canonical) or len(expression) > 100:
+        return None
+    meaning = PART_OF_SPEECH_PATTERN.sub("", rest, count=1).strip(" ;；")
+    confidence = 0.98 if phonetic and meaning else 0.92 if meaning else 0.72
+    return ParsedVocabularyEntry(
+        unit_title=unit_title,
+        expression=expression,
+        canonical_expression=canonical,
+        phonetic=phonetic,
+        meaning=meaning or "教材词表收录词汇",
+        lesson_page=lesson_page,
+        pdf_page=pdf_page,
+        entry_kind=_entry_kind(expression),
+        confidence=confidence,
+    )
+
+
+def _parse_unit_vocabulary(reader: PdfReader) -> tuple[ParsedVocabularyEntry, ...]:
+    start_threshold = int(len(reader.pages) * 0.7)
+    in_vocabulary_section = False
+    current_unit: str | None = None
+    buffer: list[str] = []
+    entries: list[ParsedVocabularyEntry] = []
+    ignored_lines = {"Page PB", VOCABULARY_HEADING, "9594", "9796", "9998", "101100", "103102"}
+
+    for pdf_page, page in enumerate(reader.pages, start=1):
+        text = page.extract_text() or ""
+        if not in_vocabulary_section:
+            if pdf_page < start_threshold or VOCABULARY_HEADING not in text:
+                continue
+            in_vocabulary_section = True
+        if VOCABULARY_INDEX_HEADING in text:
+            break
+
+        for raw_line in text.splitlines():
+            line = " ".join(raw_line.split())
+            if (
+                not line
+                or line in ignored_lines
+                or line.isdigit()
+                or line.startswith("（注：")
+                or line.startswith("在英式发音")
+                or line.startswith(VOCABULARY_HEADING)
+            ):
+                continue
+            unit_match = VOCABULARY_UNIT_PATTERN.fullmatch(line)
+            if unit_match:
+                buffer.clear()
+                current_unit = _normalize_unit_title(line)
+                continue
+            if current_unit is None:
+                continue
+            buffer.append(line)
+            combined = " ".join(buffer)
+            page_ref_match = VOCABULARY_PAGE_REF_PATTERN.search(combined)
+            if not page_ref_match:
+                continue
+            entry = _parse_vocabulary_chunk(
+                current_unit,
+                pdf_page,
+                combined[: page_ref_match.start()],
+                page_ref_match.group(1),
+            )
+            if entry is not None:
+                entries.append(entry)
+            buffer.clear()
+    return tuple(entries)
+
+
 def _known_knowledge(source_id: uuid.UUID, node_id: uuid.UUID, title: str) -> list[KnowledgePoint]:
     lower_item = PEP_GRADE7_LOWER_KNOWLEDGE.get(title)
     if lower_item:
@@ -260,6 +408,7 @@ async def process_uploaded_textbook(db: AsyncSession, source: KnowledgeSource) -
         raise ValueError("Knowledge source has no stored PDF")
     path = Path(source.object_key)
     parsed = await asyncio.to_thread(_parse_pdf, path)
+    vocabulary_entries = await asyncio.to_thread(lambda: _parse_unit_vocabulary(PdfReader(path)))
     used_toc_fallback = False
     if not parsed.units and "七年级下册" in source.filename:
         parsed = ParsedTextbook(
@@ -292,6 +441,43 @@ async def process_uploaded_textbook(db: AsyncSession, source: KnowledgeSource) -
     knowledge_points: list[KnowledgePoint] = []
     for node in nodes:
         knowledge_points.extend(_known_knowledge(source.id, node.id, node.title))
+    nodes_by_title = {_normalize_unit_title(node.title): node for node in nodes}
+    seen_vocabulary_keys: set[tuple[uuid.UUID, str]] = set()
+    for entry in vocabulary_entries:
+        node = nodes_by_title.get(entry.unit_title)
+        if node is None:
+            continue
+        duplicate_key = (node.id, entry.canonical_expression)
+        if duplicate_key in seen_vocabulary_keys:
+            continue
+        seen_vocabulary_keys.add(duplicate_key)
+        slug = re.sub(r"[^a-z0-9]+", "-", entry.canonical_expression).strip("-")
+        knowledge_points.append(
+            KnowledgePoint(
+                source_id=source.id,
+                curriculum_node_id=node.id,
+                canonical_key=f"vocabulary.{slug}.{str(source.id)[:8]}.{node.ordinal}",
+                type="vocabulary",
+                title=entry.expression,
+                summary=entry.meaning,
+                source_page=f"P.{entry.lesson_page}",
+                difficulty=0.2,
+                status="draft",
+                content={
+                    "origin": "unit_wordlist_parser",
+                    "role": "unit_wordlist",
+                    "lemma": entry.canonical_expression,
+                    "entry_kind": entry.entry_kind,
+                    "phonetic": entry.phonetic,
+                    "definitions_zh": [entry.meaning],
+                    "examples": [],
+                    "lesson_printed_page": entry.lesson_page,
+                    "evidence_pdf_page": entry.pdf_page,
+                    "parser_confidence": entry.confidence,
+                    "requires_review": entry.confidence < 0.85,
+                },
+            )
+        )
     for point in knowledge_points:
         db.add(point)
 
@@ -302,7 +488,8 @@ async def process_uploaded_textbook(db: AsyncSession, source: KnowledgeSource) -
     source.metadata_ = {
         "stage": "validated",
         "text_char_count": parsed.text_char_count,
-        "parser": "pypdf+rule-based-v1",
+        "parser": "pypdf+unit-wordlist-v2",
+        "vocabulary_entry_count": len(vocabulary_entries),
         "toc_fallback": used_toc_fallback,
         "warning": None if nodes else "未识别到目录结构，需要人工校对",
     }

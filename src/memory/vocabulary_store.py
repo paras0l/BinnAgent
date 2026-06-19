@@ -66,6 +66,9 @@ class VocabularyStore:
         item = VocabularyItem(
             learner_id=learner_id,
             word=normalized_word,
+            canonical_key=normalized_word,
+            entry_kind="word",
+            preferred_accent="auto",
             phonetic=phonetic,
             level=level,
             meanings=meanings or [],

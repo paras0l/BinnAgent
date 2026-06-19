@@ -22,6 +22,8 @@
 - 教材原有讲解、例句、活动和练习。
 - 知识点之间的先修、同义、对比、包含和复现关系。
 
+教材后部 `Words and Expressions in Each Unit` 的专用解析、单元词汇注入与背词闭环详见 [11-vocabulary-learning.md](./11-vocabulary-learning.md)。
+
 模块最终服务两类场景：
 
 1. **教材探索**：用户按教材顺序浏览单元、知识和练习，也能沿知识链接横向探索。

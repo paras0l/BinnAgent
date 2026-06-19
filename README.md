@@ -72,11 +72,13 @@ npm run dev
 - [08. MVP Roadmap](docs/architecture/08-mvp-roadmap.md)
 - [09. Model Provider & Ollama](docs/architecture/09-model-provider-and-ollama.md)
 - [10. Knowledge Base](docs/architecture/10-knowledge-base.md)
+- [11. Vocabulary Learning](docs/architecture/11-vocabulary-learning.md)
 
 ### 前端文档
 
 - [Web Frontend](docs/web-frontend.md) — React 前端设计与实现
 - [Web Frontend Design Spec](docs/superpowers/specs/2026-06-12-web-frontend-design.md) — 详细设计规范
+- [Spelling Training UI/UX](docs/superpowers/specs/2026-06-19-spelling-training-uiux.md) — 拼写训练流程、界面状态与交互规范
 
 ### 开发指南
 

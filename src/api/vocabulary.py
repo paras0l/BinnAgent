@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.api.deps import get_db_session
 from src.memory.vocabulary_store import VocabularyStore
 from src.models.learner import Learner
-from src.models.vocabulary import VocabularyItem
+from src.models.vocabulary import VocabularyItem, VocabularyItemSource
 
 router = APIRouter(prefix="/api/learners/{learner_id}/vocabulary", tags=["vocabulary"])
 
@@ -55,6 +55,7 @@ class VocabularyListItemResponse(BaseModel):
     meaning: str | None = None
     last_reviewed_at: str | None = None
     next_review_at: str | None = None
+    sources: list[dict[str, Any]] = Field(default_factory=list)
 
 
 async def _ensure_learner_exists(db: AsyncSession, learner_id: uuid.UUID) -> None:
@@ -119,6 +120,37 @@ async def list_vocabulary(
             VocabularyItem.created_at.desc(),
         )
     )
+    items = list(result.scalars().all())
+    item_ids = [item.id for item in items]
+    source_map: dict[uuid.UUID, list[dict[str, Any]]] = {item_id: [] for item_id in item_ids}
+    if item_ids:
+        source_result = await db.execute(
+            select(VocabularyItemSource).where(
+                VocabularyItemSource.learner_id == learner_id,
+                VocabularyItemSource.vocabulary_item_id.in_(item_ids),
+                VocabularyItemSource.active.is_(True),
+            )
+        )
+        for source in source_result.scalars().all():
+            source_map[source.vocabulary_item_id].append(
+                {
+                    "type": source.source_type,
+                    "label": source.display_label,
+                    "context": source.context_snapshot or {},
+                }
+            )
+    for item in items:
+        if source_map[item.id] or not item.source_ref:
+            continue
+        source_type = item.source_ref.split(":", 1)[0]
+        label = (
+            "对话"
+            if source_type == "conversation_message"
+            else "课程"
+            if source_type == "session"
+            else "手动"
+        )
+        source_map[item.id].append({"type": source_type, "label": label, "context": {}})
     return [
         VocabularyListItemResponse(
             id=item.id,
@@ -130,8 +162,9 @@ async def list_vocabulary(
             meaning=_first_text(item.meanings),
             last_reviewed_at=_iso(item.last_reviewed_at),
             next_review_at=_iso(item.next_review_at),
+            sources=source_map[item.id],
         )
-        for item in result.scalars().all()
+        for item in items
     ]
 
 
@@ -151,6 +184,7 @@ async def add_word(
             phonetic=req.phonetic,
             level=req.level,
             meanings=req.meanings,
+            source_ref="manual",
         )
     except ValueError:
         raise HTTPException(status_code=422, detail="Invalid vocabulary word")

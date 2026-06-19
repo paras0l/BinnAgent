@@ -31,6 +31,12 @@ def _many(values: list):
     return result
 
 
+def _scalar(value):
+    result = MagicMock()
+    result.scalar_one.return_value = value
+    return result
+
+
 @pytest.fixture
 def knowledge_session():
     session = AsyncMock()
@@ -145,9 +151,7 @@ async def test_overview_switches_content_to_requested_curriculum_node(client, kn
         ]
     )
 
-    response = await client.get(
-        f"/api/learners/{learner_id}/knowledge-base?node_id={nodes[1].id}"
-    )
+    response = await client.get(f"/api/learners/{learner_id}/knowledge-base?node_id={nodes[1].id}")
 
     assert response.status_code == 200
     assert response.json()["current_node_id"] == str(nodes[1].id)
@@ -162,7 +166,13 @@ async def test_start_lesson_persists_session_and_tasks(client, knowledge_session
     node = _node(source.id)
     point = _point(source.id, node.id)
     knowledge_session.execute = AsyncMock(
-        side_effect=[_one(learner_id), _one(node), _many([point])]
+        side_effect=[
+            _one(learner_id),
+            _one(node),
+            _many([point]),
+            _scalar(source),
+            _many([]),
+        ]
     )
 
     response = await client.post(
@@ -171,6 +181,7 @@ async def test_start_lesson_persists_session_and_tasks(client, knowledge_session
 
     assert response.status_code == 201
     assert response.json()["knowledge_points"][0]["id"] == str(point.id)
+    assert response.json()["vocabulary_enrollment"]["total"] == 0
     assert sum(isinstance(item, LearningSession) for item in knowledge_session.added_objects) == 1
     assert sum(isinstance(item, LearningTask) for item in knowledge_session.added_objects) == 3
 

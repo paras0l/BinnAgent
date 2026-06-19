@@ -22,6 +22,7 @@ from src.models.knowledge import (
 from src.models.learner import Learner
 from src.models.session import LearningSession, LearningTask
 from src.models.vocabulary import ReviewSchedule, VocabularyItem
+from src.vocabulary.learning import canonical_vocabulary_key, enroll_unit_vocabulary
 
 router = APIRouter(tags=["knowledge-base"])
 
@@ -54,6 +55,7 @@ class StartLessonResponse(BaseModel):
     title: str
     parts: list[LessonPartResponse]
     knowledge_points: list[dict[str, Any]]
+    vocabulary_enrollment: dict[str, int]
 
 
 class CompleteLessonResponse(BaseModel):
@@ -157,7 +159,9 @@ async def knowledge_base_overview(
         except ValueError:
             continue
 
-    recommended_node = next((node for node in nodes if node.id not in completed_node_ids), nodes[-1])
+    recommended_node = next(
+        (node for node in nodes if node.id not in completed_node_ids), nodes[-1]
+    )
     if node_id is not None:
         display_node = next((node for node in nodes if node.id == node_id), None)
         if display_node is None:
@@ -189,7 +193,7 @@ async def knowledge_base_overview(
     recommended_index = nodes.index(recommended_node)
     path_start = max(0, recommended_index - 1)
     path = []
-    for node in nodes[path_start:path_start + 3]:
+    for node in nodes[path_start : path_start + 3]:
         path_status = (
             "completed"
             if node.id in completed_node_ids
@@ -292,6 +296,7 @@ async def start_knowledge_lesson(
     )
     points = list(point_result.scalars().all())
     lesson_parts = _lesson_parts(points)
+    enrollment = await enroll_unit_vocabulary(db, learner_id, node)
 
     now = datetime.now(timezone.utc)
     session = LearningSession(
@@ -330,6 +335,12 @@ async def start_knowledge_lesson(
             }
             for point in points
         ],
+        vocabulary_enrollment={
+            "total": enrollment.total,
+            "newly_added": enrollment.newly_added,
+            "source_linked": enrollment.source_linked,
+            "already_known": enrollment.already_known,
+        },
     )
 
 
@@ -359,7 +370,11 @@ async def complete_knowledge_lesson(
     )
     tasks = list(task_result.scalars().all())
     curriculum_ref = next(
-        (task.input_ref for task in tasks if task.input_ref and task.input_ref.startswith("curriculum:")),
+        (
+            task.input_ref
+            for task in tasks
+            if task.input_ref and task.input_ref.startswith("curriculum:")
+        ),
         None,
     )
     if curriculum_ref is None:
@@ -367,7 +382,9 @@ async def complete_knowledge_lesson(
     try:
         completed_node_id = uuid.UUID(curriculum_ref.removeprefix("curriculum:"))
     except ValueError as exc:
-        raise HTTPException(status_code=409, detail="Lesson curriculum reference is invalid") from exc
+        raise HTTPException(
+            status_code=409, detail="Lesson curriculum reference is invalid"
+        ) from exc
 
     node_result = await db.execute(
         select(CurriculumNode).where(CurriculumNode.id == completed_node_id)
@@ -390,7 +407,9 @@ async def complete_knowledge_lesson(
     now = datetime.now(timezone.utc)
     session.status = "completed"
     session.completed_at = now
-    session.summary = f"完成教材课程：{completed_node.title} {completed_node.subtitle or ''}".strip()
+    session.summary = (
+        f"完成教材课程：{completed_node.title} {completed_node.subtitle or ''}".strip()
+    )
     for task in tasks:
         task.status = "completed"
         task.completed_at = now
@@ -400,7 +419,9 @@ async def complete_knowledge_lesson(
         session_id=session.id,
         completed_node_id=completed_node.id,
         next_node_id=next_node.id if next_node else None,
-        next_unit_title=(f"{next_node.title} {next_node.subtitle or ''}".strip() if next_node else None),
+        next_unit_title=(
+            f"{next_node.title} {next_node.subtitle or ''}".strip() if next_node else None
+        ),
         all_completed=next_node is None,
     )
 
@@ -506,6 +527,9 @@ async def record_knowledge_attempt(
                 VocabularyItem(
                     learner_id=learner_id,
                     word=point.title,
+                    canonical_key=canonical_vocabulary_key(point.title),
+                    entry_kind=(point.content or {}).get("entry_kind") or "word",
+                    preferred_accent="auto",
                     level="grade-7",
                     meanings=[point.summary],
                     source_ref=f"knowledge:{point.id}",

@@ -1,6 +1,7 @@
 .DS_Store
 .env
 .venv/
+uv.lock
 .idea/
 .pytest_cache/
 .ruff_cache/

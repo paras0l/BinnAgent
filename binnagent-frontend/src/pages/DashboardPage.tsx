@@ -19,13 +19,15 @@ import { ErrorPatternList } from '@/components/dashboard/ErrorPatternList'
 import { LearningGoalProgress } from '@/components/dashboard/LearningGoalProgress'
 import type { DashboardSummary, Learner, VocabularyListItem } from '@/types'
 import { useToast } from '@/hooks/useToast'
+import type { VocabularyPracticeMode } from '@/pages/VocabularyPracticePage'
 
 interface DashboardPageProps {
   learner: Learner
   onOpenDailyLearning: () => void
+  onStartVocabularyPractice: (mode: VocabularyPracticeMode) => void
 }
 
-export function DashboardPage({ learner, onOpenDailyLearning }: DashboardPageProps) {
+export function DashboardPage({ learner, onOpenDailyLearning, onStartVocabularyPractice }: DashboardPageProps) {
   const { showToast } = useToast()
   const [summary, setSummary] = useState<DashboardSummary | null>(null)
   const [currentVocabIndex, setCurrentVocabIndex] = useState(0)
@@ -210,6 +212,7 @@ export function DashboardPage({ learner, onOpenDailyLearning }: DashboardPagePro
         summary={summary}
         onOpenDailyLearning={onOpenDailyLearning}
         onOpenVocabulary={() => setActiveWorkspace('vocabulary')}
+        onStartVocabularyPractice={onStartVocabularyPractice}
       />
     )
   }
@@ -239,6 +242,11 @@ export function DashboardPage({ learner, onOpenDailyLearning }: DashboardPagePro
             管理词汇本
           </button>
         </div>
+
+        <section className="grid gap-3 sm:grid-cols-2">
+          <button type="button" onClick={() => onStartVocabularyPractice('review')} className="rounded-xl bg-indigo-600 px-5 py-4 text-left text-white shadow-lg shadow-indigo-100 transition hover:bg-indigo-700"><span className="block text-base font-black">开始沉浸式复习</span><span className="mt-1 block text-xs text-indigo-100">听发音、回忆词义，按掌握程度安排复习</span></button>
+          <button type="button" onClick={() => onStartVocabularyPractice('spelling')} className="rounded-xl border border-indigo-200 bg-indigo-50 px-5 py-4 text-left text-indigo-800 transition hover:border-indigo-300"><span className="block text-base font-black">拼写练习</span><span className="mt-1 block text-xs text-indigo-600">听音主动拼写，获得字母级反馈</span></button>
+        </section>
 
       {isVocabListOpen && (
         <section className="rounded-[13px] border border-slate-200 bg-white p-5 shadow-[0_4px_14px_rgba(15,23,42,0.05)]">
@@ -383,11 +391,13 @@ function LearningCenterHome({
   summary,
   onOpenDailyLearning,
   onOpenVocabulary,
+  onStartVocabularyPractice,
 }: {
   learnerName: string
   summary: DashboardSummary
   onOpenDailyLearning: () => void
   onOpenVocabulary: () => void
+  onStartVocabularyPractice: (mode: VocabularyPracticeMode) => void
 }) {
   const todayPercent = toPercent(summary.today_goal.completed, summary.today_goal.total)
   const weeklyPercent = toPercent(summary.weekly_goal.completed, summary.weekly_goal.total)
@@ -512,7 +522,8 @@ function LearningCenterHome({
                 <span>{completedReviews} 个</span>
               </div>
               <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-                <button type="button" onClick={onOpenVocabulary} className="flex-1 rounded-lg bg-indigo-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-indigo-700">开始复习</button>
+                <button type="button" onClick={() => onStartVocabularyPractice('review')} className="flex-1 rounded-lg bg-indigo-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-indigo-700">开始复习</button>
+                <button type="button" onClick={() => onStartVocabularyPractice('spelling')} className="flex-1 rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm font-bold text-indigo-700 transition hover:border-indigo-300">拼写练习</button>
                 <button type="button" onClick={onOpenVocabulary} className="inline-flex items-center justify-center gap-1 px-4 py-3 text-sm font-bold text-indigo-600 transition hover:text-indigo-700">管理词汇本 <ArrowRight className="size-4" /></button>
               </div>
             </article>

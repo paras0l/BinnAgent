@@ -99,6 +99,12 @@ export interface KnowledgeLessonSession {
     summary: string
     type: KnowledgeType
   }>
+  vocabulary_enrollment?: {
+    total: number
+    newly_added: number
+    source_linked: number
+    already_known: number
+  }
 }
 
 export interface KnowledgeAttemptResult {
@@ -219,6 +225,11 @@ export interface VocabularyListItem {
   meaning?: string | null
   last_reviewed_at?: string | null
   next_review_at?: string | null
+  sources: Array<{
+    type: string
+    label: string
+    context: Record<string, unknown>
+  }>
 }
 
 export interface ExplorePreference {

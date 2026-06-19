@@ -24,9 +24,9 @@ No application source code or tests exist yet. When implementation begins, prefe
 ### 核心原则
 
 > README 只放引用和简要摘要，详细内容放在独立文档中。
-
 **不要把所有内容塞进 README**。README 应该保持简洁，作为项目的入口索引。
 
+> uv.lock 仅作为本地依赖缓存并已忽略；不要删除或提交，应跨测试复用。
 ### 文档组织
 
 ```

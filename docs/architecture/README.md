@@ -23,6 +23,7 @@
 | [08-mvp-roadmap.md](./08-mvp-roadmap.md) | MVP 范围、里程碑、验收标准、简历包装 |
 | [09-model-provider-and-ollama.md](./09-model-provider-and-ollama.md) | 本地 LLM 优先策略、Ollama 默认接入、模型路由与降级 |
 | [10-knowledge-base.md](./10-knowledge-base.md) | 教材上传、知识抽取与归并、学习路径、每日课程和 Memory 闭环 |
+| [11-vocabulary-learning.md](./11-vocabulary-learning.md) | 教材单元词表解析、单元注入、来源标签、沉浸式背词、发音与拼写预留 |
 
 ## 阅读顺序
 
@@ -33,7 +34,8 @@
 3. 然后读 [02-langgraph-runtime.md](./02-langgraph-runtime.md)、[03-memory-system.md](./03-memory-system.md)、[04-multi-agent-collaboration.md](./04-multi-agent-collaboration.md)，理解核心 AI Agent 架构。
 4. 再读 [09-model-provider-and-ollama.md](./09-model-provider-and-ollama.md)，确认本地模型默认策略和云模型边界。
 5. 阅读 [10-knowledge-base.md](./10-knowledge-base.md)，理解教材如何转化为可持续维护的知识、路径和每日课程。
-6. 最后读工具、数据、评估和 MVP 文档，用于后续实现拆解。
+6. 阅读 [11-vocabulary-learning.md](./11-vocabulary-learning.md)，理解教材词表如何进入个人背词与复习闭环。
+7. 最后读工具、数据、评估和 MVP 文档，用于后续实现拆解。
 
 ## 设计原则
 

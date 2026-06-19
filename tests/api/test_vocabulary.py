@@ -41,10 +41,13 @@ class TestListVocabulary:
         item.meanings = [{"definition": "important or noticeable"}]
         item.last_reviewed_at = last_reviewed_at
         item.next_review_at = next_review_at
+        item.source_ref = None
 
         vocabulary_result = MagicMock()
         vocabulary_result.scalars.return_value.all.return_value = [item]
-        mock_session.execute.side_effect = [learner_result, vocabulary_result]
+        sources_result = MagicMock()
+        sources_result.scalars.return_value.all.return_value = []
+        mock_session.execute.side_effect = [learner_result, vocabulary_result, sources_result]
 
         response = await client.get(f"/api/learners/{learner_id}/vocabulary")
 
@@ -61,6 +64,7 @@ class TestListVocabulary:
                 "meaning": "important or noticeable",
                 "last_reviewed_at": last_reviewed_at.isoformat(),
                 "next_review_at": next_review_at.isoformat(),
+                "sources": [],
             }
         ]
 
@@ -184,6 +188,7 @@ class TestAddWord:
             phonetic="/həˈloʊ/",
             level="A1",
             meanings=["a greeting"],
+            source_ref="manual",
         )
 
     @pytest.mark.asyncio
@@ -435,9 +440,7 @@ class TestDeleteWord:
             mock_store = MockStore.return_value
             mock_store.delete_word = AsyncMock()
 
-            response = await client.delete(
-                f"/api/learners/{learner_id}/vocabulary/{word_id}"
-            )
+            response = await client.delete(f"/api/learners/{learner_id}/vocabulary/{word_id}")
 
         assert response.status_code == 204
         mock_store.delete_word.assert_awaited_once_with(
@@ -454,9 +457,7 @@ class TestDeleteWord:
             mock_store = MockStore.return_value
             mock_store.delete_word = AsyncMock(side_effect=ValueError("not found"))
 
-            response = await client.delete(
-                f"/api/learners/{learner_id}/vocabulary/{word_id}"
-            )
+            response = await client.delete(f"/api/learners/{learner_id}/vocabulary/{word_id}")
 
         assert response.status_code == 404
         assert response.json()["detail"] == "Vocabulary item not found"
