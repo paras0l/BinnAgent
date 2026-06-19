@@ -15,10 +15,12 @@ import {
 } from 'lucide-react'
 import type { AppTab, ExplorePreference, Learner } from '@/types'
 import { useToast } from '@/hooks/useToast'
+import { GrammarPage } from '@/pages/GrammarPage'
+import { VocabularyDetailPage } from '@/pages/VocabularyDetailPage'
 
 type FeatureCategory = 'all' | 'listening' | 'speaking' | 'reading' | 'writing' | 'vocabulary' | 'grammar' | 'exam'
 type FeatureStatus = 'ready' | 'todo'
-type FeatureAction = 'chat' | 'session' | 'tool' | 'todo'
+type FeatureAction = 'chat' | 'session' | 'tool' | 'vocabulary-detail' | 'todo'
 
 interface ExplorePageProps {
   learner: Learner
@@ -73,6 +75,16 @@ const FEATURES: ExploreFeature[] = [
     status: 'ready',
     action: 'tool',
     toolTarget: 'dashboard',
+  },
+  {
+    id: 'vocabulary-detail',
+    category: 'vocabulary',
+    title: '词汇详解',
+    description: '输入一个单词或词组，生成聚焦词义、搭配、语境和易错点的微课。',
+    whenToUse: '遇到一个词只知道中文意思，想进一步理解真实用法和常见搭配时使用。',
+    outcome: '获得包含核心义项、搭配、分级例句、易混辨析和练习的 HTML 详解。',
+    status: 'ready',
+    action: 'vocabulary-detail',
   },
   {
     id: 'add-vocabulary',
@@ -216,6 +228,10 @@ export function ExplorePage({
   const [category, setCategory] = useState<FeatureCategory>('all')
   const [query, setQuery] = useState('')
   const [isLoading, setIsLoading] = useState(true)
+  const [isVocabularyDetailOpen, setIsVocabularyDetailOpen] = useState(false)
+  const [vocabularyDetailDraft, setVocabularyDetailDraft] = useState('')
+  const [vocabularyDetailTerm, setVocabularyDetailTerm] = useState<string | null>(null)
+  const [isGrammarOpen, setIsGrammarOpen] = useState(false)
 
   const loadPreferences = useCallback(async () => {
     setIsLoading(true)
@@ -329,7 +345,17 @@ export function ExplorePage({
       return
     }
 
+    if (feature.action === 'vocabulary-detail') {
+      setVocabularyDetailDraft('')
+      setIsVocabularyDetailOpen(true)
+      return
+    }
+
     if (feature.action === 'tool' && feature.toolTarget) {
+      if (feature.toolTarget === 'grammar') {
+        setIsGrammarOpen(true)
+        return
+      }
       onTabChange(feature.toolTarget)
       return
     }
@@ -338,6 +364,30 @@ export function ExplorePage({
       onDraftPrompt('开始今日课程。请根据我的学习记录安排一次适合 CET 的综合练习。')
       onTabChange('chat')
     }
+  }
+
+  const startVocabularyDetail = () => {
+    const term = vocabularyDetailDraft.trim()
+    if (!term) {
+      showToast('请输入要详解的单词或词组。', { variant: 'warning' })
+      return
+    }
+    setVocabularyDetailTerm(term)
+    setIsVocabularyDetailOpen(false)
+  }
+
+  if (vocabularyDetailTerm) {
+    return (
+      <VocabularyDetailPage
+        term={vocabularyDetailTerm}
+        onBack={() => setVocabularyDetailTerm(null)}
+        backLabel="返回探索"
+      />
+    )
+  }
+
+  if (isGrammarOpen) {
+    return <GrammarPage learner={learner} onBack={() => setIsGrammarOpen(false)} />
   }
 
   return (
@@ -415,6 +465,53 @@ export function ExplorePage({
               onToggleFavorite={() => void handleToggleFavorite(feature)}
             />
           ))}
+        </div>
+      </section>
+
+      {isVocabularyDetailOpen ? (
+        <VocabularyDetailStartDialog
+          value={vocabularyDetailDraft}
+          onChange={setVocabularyDetailDraft}
+          onClose={() => setIsVocabularyDetailOpen(false)}
+          onStart={startVocabularyDetail}
+        />
+      ) : null}
+    </div>
+  )
+}
+
+function VocabularyDetailStartDialog({
+  value,
+  onChange,
+  onClose,
+  onStart,
+}: {
+  value: string
+  onChange: (value: string) => void
+  onClose: () => void
+  onStart: () => void
+}) {
+  return (
+    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/45 p-4" role="presentation">
+      <section className="w-full max-w-md rounded-2xl border bg-card p-6 shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="vocabulary-detail-title">
+        <p className="text-sm font-semibold text-primary">词汇详解</p>
+        <h2 id="vocabulary-detail-title" className="mt-1 text-xl font-bold text-foreground">想深入学习哪个词？</h2>
+        <p className="mt-2 text-sm text-muted-foreground">可以输入单词或词组，例如 afternoon、look after。</p>
+        <input
+          autoFocus
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter') onStart()
+            if (event.key === 'Escape') onClose()
+          }}
+          className="mt-5 w-full rounded-xl border bg-background px-4 py-3 text-base outline-none focus:border-primary"
+          placeholder="输入单词或词组"
+          aria-label="要详解的单词或词组"
+        />
+        <div className="mt-5 flex justify-end gap-3">
+          <button type="button" onClick={onClose} className="rounded-lg border px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-muted">取消</button>
+          <button type="button" onClick={onStart} className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90">开始详解</button>
         </div>
       </section>
     </div>

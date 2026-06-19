@@ -10,6 +10,7 @@ import {
 } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { Learner } from '@/types'
+import { VocabularyDetailPage } from '@/pages/VocabularyDetailPage'
 
 export type VocabularyPracticeMode = 'review' | 'spelling'
 
@@ -104,6 +105,7 @@ export function VocabularyPracticePage({
   const [isReviewRevealed, setIsReviewRevealed] = useState(false)
   const [inputWarning, setInputWarning] = useState<string | null>(null)
   const [availableTotal, setAvailableTotal] = useState<number | null>(null)
+  const [detailTerm, setDetailTerm] = useState<string | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const startedAt = useRef(0)
   const compositionRef = useRef(false)
@@ -318,6 +320,7 @@ export function VocabularyPracticePage({
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
+      if (detailTerm) return
       if (phase !== 'practice') return
       if (event.code === 'Space' && document.activeElement !== inputRef.current) {
         event.preventDefault()
@@ -333,6 +336,10 @@ export function VocabularyPracticePage({
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
   })
+
+  if (detailTerm) {
+    return <VocabularyDetailPage term={detailTerm} onBack={() => setDetailTerm(null)} />
+  }
 
   if (phase === 'setup') {
     return (
@@ -391,6 +398,7 @@ export function VocabularyPracticePage({
   }
 
   if (!task) return null
+  const learnMoreTerm = mode === 'review' ? task.word : feedback?.correct_answer
   const progress = ((task.current_index + 1) / task.total) * 100
   return (
     <div className="flex min-h-screen flex-col bg-[#fbfbfd] text-slate-950">
@@ -431,7 +439,18 @@ export function VocabularyPracticePage({
             </div>
           )}
 
-          <p className="mt-10 text-xs font-semibold text-slate-400">来自 {task.sources[0]?.label ?? sourceLabel ?? '我的词汇本'}</p>
+          <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
+            <p className="text-xs font-semibold text-slate-400">来自 {task.sources[0]?.label ?? sourceLabel ?? '我的词汇本'}</p>
+            {learnMoreTerm ? (
+              <button
+                type="button"
+                onClick={() => setDetailTerm(learnMoreTerm)}
+                className="inline-flex items-center gap-1 rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-xs font-black text-indigo-700 transition hover:border-indigo-400"
+              >
+                了解更多 <BookOpen className="size-3.5" />
+              </button>
+            ) : null}
+          </div>
         </section>
       </main>
 

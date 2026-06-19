@@ -1,8 +1,11 @@
 import uuid
 
 from src.knowledge.processor import (
+    GRADE7_UPPER_GRAMMAR_TOPICS,
     PEP_GRADE7_LOWER_UNITS,
     _known_knowledge,
+    _parse_notes_on_the_text,
+    _parse_pronunciation,
     _parse_unit_vocabulary,
 )
 
@@ -68,3 +71,64 @@ name /neɪm/ n. 名字；名称 p.1
     assert entries[0].part_of_speech == "n."
     assert entries[0].lesson_page == "S1"
     assert entries[1].entry_kind == "phrase"
+
+
+def test_vocabulary_expression_normalizes_pdf_text_layer_artifacts() -> None:
+    reader = _Reader(
+        [""] * 7
+        + [
+            """Words and Expressions in Each Unit
+Unit 1
+To m /tɒm/ 汤姆 p.2
+Unit 3
+Y ou’re welcome. 别客气。 p.14
+Unit 9
+/T_hursday /θɜːzdeɪ/ n. 星期四 p.52
+"""
+        ]
+        + ["Vocabulary Index"]
+    )
+
+    entries = _parse_unit_vocabulary(reader)
+
+    assert [entry.expression for entry in entries] == ["Tom", "You’re welcome.", "Thursday"]
+
+
+def test_grade7_upper_appendices_are_grouped_by_unit() -> None:
+    pages = [""] * 70 + [
+        "Notes on the Text 55 Starter Unit 1 Good morning! 1. greeting note "
+        "Unit 1 My name’s Gina. 1. name note",
+        "Notes on the Text 56 Unit 1 continued note Unit 2 This is my sister. family note",
+        "Tapescripts",
+        "Pronunciation 75 phoneme foundations",
+        "Pronunciation 79 Starter Unit 1 vowel practice Unit 1 vowel contrast",
+        "Grammar 85",
+    ]
+    reader = _Reader(pages)
+
+    notes = _parse_notes_on_the_text(reader)
+    pronunciation = _parse_pronunciation(reader)
+
+    assert [section.unit_title for section in notes] == [
+        "Starter Unit 1",
+        "Unit 1",
+        "Unit 2",
+    ]
+    assert "continued note" in notes[1].text
+    assert pronunciation[0].unit_title is None
+    assert pronunciation[0].text == "phoneme foundations"
+    assert pronunciation[1].unit_title == "Starter Unit 1"
+    assert pronunciation[2].unit_title == "Unit 1"
+
+
+def test_grade7_upper_grammar_appendix_maps_every_topic_to_units() -> None:
+    assert len(GRADE7_UPPER_GRAMMAR_TOPICS) == 16
+    assert all(topic["primary"] in topic["related"] for topic in GRADE7_UPPER_GRAMMAR_TOPICS)
+    assert {topic["key"] for topic in GRADE7_UPPER_GRAMMAR_TOPICS} >= {
+        "noun-plurals",
+        "articles",
+        "simple-present-be",
+        "simple-present-verbs",
+        "yes-no-questions",
+        "wh-questions",
+    }

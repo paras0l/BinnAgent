@@ -6,7 +6,7 @@ from typing import Any, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from pydantic import BaseModel, Field
-from sqlalchemy import func, select
+from sqlalchemy import and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.api.deps import get_db_session
@@ -95,6 +95,8 @@ def _lesson_parts(points: list[KnowledgePoint]) -> list[dict[str, Any]]:
         "grammar": "语法要点",
         "phrase": "重点词组",
         "sentence_pattern": "固定句式",
+        "pronunciation": "核心语音",
+        "text_note": "课文注释",
     }
     for point in points:
         label = type_labels.get(point.type, "知识讲解")
@@ -116,6 +118,16 @@ def _lesson_parts(points: list[KnowledgePoint]) -> list[dict[str, Any]]:
         }
         for index, title in enumerate(labels)
     ]
+
+
+def _unit_point_filter(node: CurriculumNode):
+    return or_(
+        KnowledgePoint.curriculum_node_id == node.id,
+        and_(
+            KnowledgePoint.type == "grammar",
+            KnowledgePoint.content["related_units"].contains([node.title]),
+        ),
+    )
 
 
 @router.get("/api/learners/{learner_id}/knowledge-base")
@@ -172,7 +184,7 @@ async def knowledge_base_overview(
     point_result = await db.execute(
         select(KnowledgePoint)
         .where(
-            KnowledgePoint.curriculum_node_id == display_node.id,
+            _unit_point_filter(display_node),
             KnowledgePoint.status == "published",
         )
         .order_by(KnowledgePoint.created_at.asc())
@@ -291,7 +303,7 @@ async def start_knowledge_lesson(
         raise HTTPException(status_code=404, detail="Curriculum node not found")
     point_result = await db.execute(
         select(KnowledgePoint)
-        .where(KnowledgePoint.curriculum_node_id == node.id, KnowledgePoint.status == "published")
+        .where(_unit_point_filter(node), KnowledgePoint.status == "published")
         .order_by(KnowledgePoint.created_at.asc())
     )
     points = list(point_result.scalars().all())

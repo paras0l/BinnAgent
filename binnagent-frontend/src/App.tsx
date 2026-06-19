@@ -155,7 +155,7 @@ function App() {
         ) : activeTab === 'pronunciation' ? (
           <PronunciationPage learner={currentLearner} />
         ) : activeTab === 'grammar' ? (
-          <GrammarPage learner={currentLearner} onTabChange={handleTabChange} />
+          <GrammarPage learner={currentLearner} onBack={() => handleTabChange('explore')} />
         ) : (
           learningCenterView === 'daily-learning' ? (
             <Suspense fallback={<div className="flex min-h-[calc(100vh-4rem)] items-center justify-center text-sm text-muted-foreground">正在打开每日学习...</div>}>

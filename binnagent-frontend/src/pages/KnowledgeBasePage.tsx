@@ -7,6 +7,7 @@ import { KnowledgeList, type KnowledgeFilter } from '@/components/knowledge/Know
 import { LessonSessionDialog } from '@/components/knowledge/LessonSessionDialog'
 import { UploadTextbookDialog } from '@/components/knowledge/UploadTextbookDialog'
 import { useToast } from '@/hooks/useToast'
+import { GrammarPage } from '@/pages/GrammarPage'
 import type {
   KnowledgeAttemptResult,
   KnowledgeBaseOverview,
@@ -36,6 +37,7 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice }
   const [lessonSession, setLessonSession] = useState<KnowledgeLessonSession | null>(null)
   const [isStartingLesson, setIsStartingLesson] = useState(false)
   const [unitVocabulary, setUnitVocabulary] = useState<UnitVocabularySummary | null>(null)
+  const [grammarTopic, setGrammarTopic] = useState<string | null>(null)
 
   const loadOverview = useCallback(async (nodeId?: string | null) => {
     setIsLoading(true)
@@ -189,6 +191,17 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice }
 
   const activeUnitVocabulary = unitVocabulary?.unit_id === overview.current_unit.id ? unitVocabulary : null
 
+  if (grammarTopic) {
+    return (
+      <GrammarPage
+        learner={learner}
+        initialTopic={grammarTopic}
+        onBack={() => setGrammarTopic(null)}
+        backLabel="返回单元知识"
+      />
+    )
+  }
+
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-white">
       <div className="flex h-12 items-center border-b border-slate-200 px-4 text-sm text-slate-500 sm:px-6">
@@ -246,7 +259,12 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice }
             </div>
           </div>
 
-          <KnowledgeList items={visibleKnowledge} filter={filter} onFilterChange={setFilter} />
+          <KnowledgeList
+            items={visibleKnowledge}
+            filter={filter}
+            onFilterChange={setFilter}
+            onStartGrammar={setGrammarTopic}
+          />
         </div>
       </main>
 

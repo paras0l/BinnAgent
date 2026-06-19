@@ -1,4 +1,4 @@
-import { BookText, ChevronDown, GripVertical } from 'lucide-react'
+import { ArrowUpRight, BookText, GripVertical } from 'lucide-react'
 import type { KnowledgePointSummary, KnowledgeType } from '@/types'
 
 export type KnowledgeFilter = 'all' | KnowledgeType
@@ -9,6 +9,8 @@ const FILTERS: Array<{ id: KnowledgeFilter; label: string }> = [
   { id: 'grammar', label: '语法' },
   { id: 'phrase', label: '词组' },
   { id: 'sentence_pattern', label: '句式' },
+  { id: 'pronunciation', label: '语音' },
+  { id: 'text_note', label: '课文注释' },
 ]
 
 const TYPE_LABELS: Record<KnowledgeType, string> = {
@@ -16,6 +18,8 @@ const TYPE_LABELS: Record<KnowledgeType, string> = {
   grammar: '语法',
   phrase: '词组',
   sentence_pattern: '句式',
+  pronunciation: '语音',
+  text_note: '课文注释',
 }
 
 const TYPE_STYLES: Record<KnowledgeType, string> = {
@@ -23,15 +27,18 @@ const TYPE_STYLES: Record<KnowledgeType, string> = {
   grammar: 'border-amber-200 bg-amber-50 text-amber-700',
   phrase: 'border-cyan-200 bg-cyan-50 text-cyan-700',
   sentence_pattern: 'border-indigo-200 bg-indigo-50 text-indigo-700',
+  pronunciation: 'border-violet-200 bg-violet-50 text-violet-700',
+  text_note: 'border-sky-200 bg-sky-50 text-sky-700',
 }
 
 interface KnowledgeListProps {
   items: KnowledgePointSummary[]
   filter: KnowledgeFilter
   onFilterChange: (filter: KnowledgeFilter) => void
+  onStartGrammar: (topic: string) => void
 }
 
-export function KnowledgeList({ items, filter, onFilterChange }: KnowledgeListProps) {
+export function KnowledgeList({ items, filter, onFilterChange, onStartGrammar }: KnowledgeListProps) {
   return (
     <section className="mt-7">
       <div className="flex items-center gap-2">
@@ -73,7 +80,19 @@ export function KnowledgeList({ items, filter, onFilterChange }: KnowledgeListPr
               className="grid grid-cols-[32px_minmax(150px,1fr)_90px_90px_120px_minmax(210px,1.4fr)] items-center border-b border-slate-100 px-1 py-3.5 text-sm transition-colors hover:bg-slate-50/70"
             >
               <GripVertical className="size-4 text-slate-300" />
-              <h3 className="font-extrabold text-slate-800">{item.title}</h3>
+              <div className="min-w-0">
+                <h3 className="font-extrabold text-slate-800">{item.title}</h3>
+                {item.type === 'grammar' ? (
+                  <button
+                    type="button"
+                    onClick={() => onStartGrammar(item.title)}
+                    className="mt-1 inline-flex items-center gap-1 text-xs font-bold text-indigo-600 transition hover:text-indigo-800"
+                    aria-label={`开始学习语法知识点：${item.title}`}
+                  >
+                    开始学习 <ArrowUpRight className="size-3" />
+                  </button>
+                ) : null}
+              </div>
               <span>
                 <span className={`inline-flex rounded-md border px-2 py-0.5 text-xs font-bold ${TYPE_STYLES[item.type]}`}>
                   {TYPE_LABELS[item.type]}
@@ -95,11 +114,6 @@ export function KnowledgeList({ items, filter, onFilterChange }: KnowledgeListPr
           )}
         </div>
       </div>
-
-      <button type="button" className="mx-auto mt-5 flex items-center gap-1 text-sm font-bold text-indigo-600 hover:text-indigo-700">
-        查看全部知识点
-        <ChevronDown className="size-4" />
-      </button>
     </section>
   )
 }

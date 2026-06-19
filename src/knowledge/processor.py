@@ -41,6 +41,14 @@ class ParsedVocabularyEntry:
     confidence: float
 
 
+@dataclass(frozen=True)
+class ParsedAppendixSection:
+    unit_title: str | None
+    printed_pages: str
+    pdf_pages: tuple[int, ...]
+    text: str
+
+
 VOCABULARY_HEADING = "Words and Expressions in Each Unit"
 VOCABULARY_INDEX_HEADING = "Vocabulary Index"
 VOCABULARY_UNIT_PATTERN = re.compile(r"^(Starter\s+Unit|Unit)\s+(\d+)\s*$", re.IGNORECASE)
@@ -51,6 +59,166 @@ PHONETIC_PATTERN = re.compile(
 PART_OF_SPEECH_PATTERN = re.compile(
     r"\b(?:adj|adv|art|conj|interj|modal\s+v|n|num|prep|pron|v)\.(?:\s*&\s*(?:adj|adv|n|pron|v)\.)?",
     re.IGNORECASE,
+)
+
+UPPER_UNIT_MARKER_PATTERN = re.compile(r"\b(Starter\s+Unit|Unit)\s+([1-9])\b", re.I)
+
+GRADE7_UPPER_NODE_TITLES = (
+    "Starter Unit 1",
+    "Starter Unit 2",
+    "Starter Unit 3",
+    "Unit 1",
+    "Unit 2",
+    "Unit 3",
+    "Unit 4",
+    "Unit 5",
+    "Unit 6",
+    "Unit 7",
+    "Unit 8",
+    "Unit 9",
+)
+
+# The appendix is organized by grammar category rather than unit. These mappings
+# follow the examples and target language in the unit pages, so learners see each
+# reference topic where it is first or most directly taught.
+GRADE7_UPPER_GRAMMAR_TOPICS: tuple[dict[str, object], ...] = (
+    {
+        "key": "parts-of-speech",
+        "title": "词类（Parts of Speech）",
+        "summary": "识别名词、代词、数词、动词、形容词、副词、冠词、介词、连词和感叹词。",
+        "page": "85",
+        "primary": "Starter Unit 1",
+        "related": list(GRADE7_UPPER_NODE_TITLES),
+    },
+    {
+        "key": "nouns-countability",
+        "title": "可数名词与不可数名词",
+        "summary": "区分可数名词和不可数名词，并正确使用单复数形式。",
+        "page": "85–86",
+        "primary": "Unit 6",
+        "related": ["Unit 2", "Unit 3", "Unit 6", "Unit 7"],
+    },
+    {
+        "key": "noun-plurals",
+        "title": "名词复数的构成与读音",
+        "summary": "掌握 -s/-es、辅音字母+y 等复数规则、读音及常见不规则复数。",
+        "page": "85–86",
+        "primary": "Unit 2",
+        "related": ["Unit 2", "Unit 3", "Unit 6", "Unit 7"],
+    },
+    {
+        "key": "noun-possessive",
+        "title": "名词所有格（Possessive Case）",
+        "summary": "使用 ’s、’ 表达所属关系。",
+        "page": "86",
+        "primary": "Unit 8",
+        "related": ["Unit 2", "Unit 8"],
+    },
+    {
+        "key": "articles",
+        "title": "冠词（Articles）",
+        "summary": "根据语境使用 the、a/an 或零冠词。",
+        "page": "87",
+        "primary": "Starter Unit 2",
+        "related": ["Starter Unit 2", "Unit 3", "Unit 5", "Unit 6"],
+    },
+    {
+        "key": "personal-pronouns",
+        "title": "人称代词（Personal Pronouns）",
+        "summary": "区分人称代词的主格和宾格，并保持人称与数一致。",
+        "page": "87",
+        "primary": "Unit 1",
+        "related": ["Unit 1", "Unit 2", "Unit 5", "Unit 9"],
+    },
+    {
+        "key": "possessive-pronouns",
+        "title": "物主代词（Possessive Pronouns）",
+        "summary": "区分形容词性物主代词与名词性物主代词。",
+        "page": "87–88",
+        "primary": "Unit 3",
+        "related": ["Unit 1", "Unit 3", "Unit 4"],
+    },
+    {
+        "key": "demonstratives",
+        "title": "指示代词（Demonstrative Pronouns）",
+        "summary": "根据远近和单复数使用 this、that、these、those。",
+        "page": "88",
+        "primary": "Unit 2",
+        "related": ["Unit 2", "Unit 3", "Unit 7"],
+    },
+    {
+        "key": "cardinal-numbers",
+        "title": "基数词（Cardinal Numbers）",
+        "summary": "使用基数词表达号码、数量、年龄和价格。",
+        "page": "88",
+        "primary": "Unit 1",
+        "related": ["Unit 1", "Unit 5", "Unit 7", "Unit 8"],
+    },
+    {
+        "key": "ordinal-numbers",
+        "title": "序数词（Ordinal Numbers）",
+        "summary": "掌握序数词的拼写与缩写，并用于日期表达。",
+        "page": "89",
+        "primary": "Unit 8",
+        "related": ["Unit 8"],
+    },
+    {
+        "key": "simple-present-be",
+        "title": "一般现在时：be 动词",
+        "summary": "使用 am/is/are 构成肯定句、否定句、疑问句和简略答语。",
+        "page": "89–90",
+        "primary": "Unit 1",
+        "related": ["Unit 1", "Unit 2", "Unit 4", "Unit 8", "Unit 9"],
+    },
+    {
+        "key": "simple-present-verbs",
+        "title": "一般现在时：实义动词",
+        "summary": "掌握第三人称单数变化以及 do/does 构成的否定句和疑问句。",
+        "page": "90–91",
+        "primary": "Unit 5",
+        "related": ["Unit 5", "Unit 6", "Unit 9"],
+    },
+    {
+        "key": "prepositions",
+        "title": "介词（Prepositions）",
+        "summary": "掌握本册 about、after、at、for、from、in、of、on、under、with 等常用介词短语。",
+        "page": "91–92",
+        "primary": "Unit 4",
+        "related": ["Starter Unit 2", "Unit 2", "Unit 3", "Unit 4", "Unit 7", "Unit 8", "Unit 9"],
+    },
+    {
+        "key": "sentence-types",
+        "title": "句子种类（Sentence Types）",
+        "summary": "区分陈述句、疑问句、祈使句和感叹句的用途与基本结构。",
+        "page": "92",
+        "primary": "Starter Unit 1",
+        "related": list(GRADE7_UPPER_NODE_TITLES),
+    },
+    {
+        "key": "yes-no-questions",
+        "title": "一般疑问句（Yes/No Questions）",
+        "summary": "用 be、do/does 提问，并使用 Yes/No 简略回答。",
+        "page": "93",
+        "primary": "Unit 3",
+        "related": ["Unit 1", "Unit 3", "Unit 5", "Unit 6"],
+    },
+    {
+        "key": "wh-questions",
+        "title": "特殊疑问句（Wh- Questions）",
+        "summary": "使用 what、who、where、when、why、how 获取具体信息。",
+        "page": "93",
+        "primary": "Unit 9",
+        "related": [
+            "Starter Unit 2",
+            "Starter Unit 3",
+            "Unit 1",
+            "Unit 2",
+            "Unit 4",
+            "Unit 7",
+            "Unit 8",
+            "Unit 9",
+        ],
+    },
 )
 
 
@@ -220,9 +388,21 @@ def _normalize_unit_title(value: str) -> str:
 
 def _normalize_expression(value: str) -> str:
     expression = " ".join(value.split()).strip(" ·—-")
-    expression = expression.replace("a/f_ternoon", "afternoon")
+    replacements = {
+        "a/f_ternoon": "afternoon",
+        "a/f_ter": "after",
+        "twel/f_th": "twelfth",
+        "/T_hursday": "Thursday",
+        "P .E.": "P.E.",
+        "P. M .": "P.M.",
+        "To m": "Tom",
+        "burg er": "burger",
+    }
+    for source, target in replacements.items():
+        expression = expression.replace(source, target)
+    expression = re.sub(r"\bY\s+ou", "You", expression)
     expression = expression.replace("_", "")
-    return expression
+    return expression.rstrip(" （").strip()
 
 
 def _canonical_expression(value: str) -> str:
@@ -335,6 +515,179 @@ def _parse_unit_vocabulary(reader: PdfReader) -> tuple[ParsedVocabularyEntry, ..
     return tuple(entries)
 
 
+def _clean_appendix_text(text: str, heading: str) -> str:
+    text = text.replace("Page PB", " ").replace(heading, " ")
+    text = re.sub(r"(?<![A-Za-z])\d{2,3}(?![A-Za-z])", " ", text, count=1)
+    text = re.sub(r"\s+", " ", text)
+    return text.strip()
+
+
+def _appendix_pages(
+    reader: PdfReader,
+    heading: str,
+    stop_heading: str,
+) -> list[tuple[int, str]]:
+    pages: list[tuple[int, str]] = []
+    active = False
+    start_threshold = int(len(reader.pages) * 0.5)
+    for pdf_page, page in enumerate(reader.pages, start=1):
+        text = page.extract_text() or ""
+        if not active:
+            if pdf_page < start_threshold or heading not in text:
+                continue
+            active = True
+        if stop_heading in text:
+            break
+        pages.append((pdf_page, _clean_appendix_text(text, heading)))
+    return pages
+
+
+def _group_appendix_by_unit(
+    pages: list[tuple[int, str]],
+) -> tuple[ParsedAppendixSection, ...]:
+    fragments: dict[str | None, list[str]] = {None: []}
+    evidence: dict[str | None, set[int]] = {None: set()}
+    current_unit: str | None = None
+    for pdf_page, text in pages:
+        matches = list(UPPER_UNIT_MARKER_PATTERN.finditer(text))
+        cursor = 0
+        for match in matches:
+            prefix = text[cursor : match.start()].strip()
+            if prefix:
+                fragments.setdefault(current_unit, []).append(prefix)
+                evidence.setdefault(current_unit, set()).add(pdf_page)
+            current_unit = _normalize_unit_title(match.group(0))
+            cursor = match.end()
+        suffix = text[cursor:].strip()
+        if suffix:
+            fragments.setdefault(current_unit, []).append(suffix)
+            evidence.setdefault(current_unit, set()).add(pdf_page)
+
+    result: list[ParsedAppendixSection] = []
+    for unit_title, values in fragments.items():
+        if not values:
+            continue
+        pdf_pages = tuple(sorted(evidence[unit_title]))
+        # In this edition appendix printed pages are consistently PDF page - 23.
+        printed = tuple(page - 23 for page in pdf_pages)
+        page_label = str(printed[0]) if len(printed) == 1 else f"{printed[0]}–{printed[-1]}"
+        result.append(
+            ParsedAppendixSection(
+                unit_title=unit_title,
+                printed_pages=page_label,
+                pdf_pages=pdf_pages,
+                text=" ".join(values),
+            )
+        )
+    return tuple(result)
+
+
+def _parse_notes_on_the_text(reader: PdfReader) -> tuple[ParsedAppendixSection, ...]:
+    pages = _appendix_pages(reader, "Notes on the Text", "Tapescripts")
+    return tuple(section for section in _group_appendix_by_unit(pages) if section.unit_title)
+
+
+def _parse_pronunciation(reader: PdfReader) -> tuple[ParsedAppendixSection, ...]:
+    pages = _appendix_pages(reader, "Pronunciation", "Grammar")
+    return _group_appendix_by_unit(pages)
+
+
+def _appendix_knowledge(
+    source_id: uuid.UUID,
+    nodes_by_title: dict[str, CurriculumNode],
+    notes: tuple[ParsedAppendixSection, ...],
+    pronunciation: tuple[ParsedAppendixSection, ...],
+) -> list[KnowledgePoint]:
+    points: list[KnowledgePoint] = []
+    for section in notes:
+        node = nodes_by_title.get(section.unit_title or "")
+        if node is None:
+            continue
+        slug = (section.unit_title or "general").casefold().replace(" ", "-")
+        points.append(
+            KnowledgePoint(
+                source_id=source_id,
+                curriculum_node_id=node.id,
+                canonical_key=f"notes-on-text.{slug}.{str(source_id)[:8]}",
+                type="text_note",
+                title=f"{section.unit_title} Notes on the Text",
+                summary="教材注释：重点句式、语法用法与地道英语文化知识。",
+                source_page=f"P.{section.printed_pages}",
+                difficulty=0.3,
+                status="draft",
+                content={
+                    "origin": "notes_on_text_parser",
+                    "role": "unit_reference",
+                    "extracted_text": section.text,
+                    "evidence_pdf_pages": list(section.pdf_pages),
+                    "requires_review": True,
+                },
+            )
+        )
+
+    for section in pronunciation:
+        unit_title = section.unit_title or "Starter Unit 1"
+        node = nodes_by_title.get(unit_title)
+        if node is None:
+            continue
+        slug = (section.unit_title or "foundations").casefold().replace(" ", "-")
+        points.append(
+            KnowledgePoint(
+                source_id=source_id,
+                curriculum_node_id=node.id,
+                canonical_key=f"pronunciation.{slug}.{str(source_id)[:8]}",
+                type="pronunciation",
+                title=(
+                    f"{section.unit_title} Pronunciation" if section.unit_title else "英语语音基础"
+                ),
+                summary=(
+                    "本册核心语音训练：音素、拼读规则、重音、连读及英美音差异。"
+                    if section.unit_title is None
+                    else "本单元核心拼读规则、音素辨析与朗读训练。"
+                ),
+                source_page=f"P.{section.printed_pages}",
+                difficulty=0.35,
+                status="draft",
+                content={
+                    "origin": "pronunciation_appendix_parser",
+                    "role": "core_pronunciation",
+                    "priority": "core",
+                    "extracted_text": section.text,
+                    "evidence_pdf_pages": list(section.pdf_pages),
+                    "requires_review": True,
+                },
+            )
+        )
+
+    for topic in GRADE7_UPPER_GRAMMAR_TOPICS:
+        primary = str(topic["primary"])
+        node = nodes_by_title.get(primary)
+        if node is None:
+            continue
+        points.append(
+            KnowledgePoint(
+                source_id=source_id,
+                curriculum_node_id=node.id,
+                canonical_key=f"grammar-reference.{topic['key']}.{str(source_id)[:8]}",
+                type="grammar",
+                title=str(topic["title"]),
+                summary=str(topic["summary"]),
+                source_page=f"P.{topic['page']}",
+                difficulty=0.35,
+                status="draft",
+                content={
+                    "origin": "grammar_appendix_mapping",
+                    "role": "grammar_reference",
+                    "primary_unit": primary,
+                    "related_units": topic["related"],
+                    "mapping_basis": "教材单元目标语言、Grammar Focus 与附录例句",
+                    "requires_review": False,
+                },
+            )
+        )
+    return points
+
+
 def _known_knowledge(source_id: uuid.UUID, node_id: uuid.UUID, title: str) -> list[KnowledgePoint]:
     lower_item = PEP_GRADE7_LOWER_KNOWLEDGE.get(title)
     if lower_item:
@@ -412,7 +765,15 @@ async def process_uploaded_textbook(db: AsyncSession, source: KnowledgeSource) -
         raise ValueError("Knowledge source has no stored PDF")
     path = Path(source.object_key)
     parsed = await asyncio.to_thread(_parse_pdf, path)
-    vocabulary_entries = await asyncio.to_thread(lambda: _parse_unit_vocabulary(PdfReader(path)))
+    reader = PdfReader(path)
+    vocabulary_entries = await asyncio.to_thread(lambda: _parse_unit_vocabulary(reader))
+    is_grade7_upper = "七年级上册" in source.filename
+    notes = (
+        await asyncio.to_thread(lambda: _parse_notes_on_the_text(reader)) if is_grade7_upper else ()
+    )
+    pronunciation = (
+        await asyncio.to_thread(lambda: _parse_pronunciation(reader)) if is_grade7_upper else ()
+    )
     used_toc_fallback = False
     if not parsed.units and "七年级下册" in source.filename:
         parsed = ParsedTextbook(
@@ -446,6 +807,10 @@ async def process_uploaded_textbook(db: AsyncSession, source: KnowledgeSource) -
     for node in nodes:
         knowledge_points.extend(_known_knowledge(source.id, node.id, node.title))
     nodes_by_title = {_normalize_unit_title(node.title): node for node in nodes}
+    if is_grade7_upper:
+        knowledge_points.extend(
+            _appendix_knowledge(source.id, nodes_by_title, notes, pronunciation)
+        )
     seen_vocabulary_keys: set[tuple[uuid.UUID, str]] = set()
     for entry in vocabulary_entries:
         node = nodes_by_title.get(entry.unit_title)
@@ -493,8 +858,11 @@ async def process_uploaded_textbook(db: AsyncSession, source: KnowledgeSource) -
     source.metadata_ = {
         "stage": "validated",
         "text_char_count": parsed.text_char_count,
-        "parser": "pypdf+unit-wordlist-v2",
+        "parser": "pypdf+grade7-appendices-v3",
         "vocabulary_entry_count": len(vocabulary_entries),
+        "notes_section_count": len(notes),
+        "pronunciation_section_count": len(pronunciation),
+        "grammar_reference_count": len(GRADE7_UPPER_GRAMMAR_TOPICS) if is_grade7_upper else 0,
         "toc_fallback": used_toc_fallback,
         "warning": None if nodes else "未识别到目录结构，需要人工校对",
     }

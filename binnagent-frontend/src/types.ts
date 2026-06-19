@@ -16,6 +16,8 @@ export type KnowledgeType =
   | 'grammar'
   | 'phrase'
   | 'sentence_pattern'
+  | 'pronunciation'
+  | 'text_note'
 
 export interface CurriculumNode {
   id: string

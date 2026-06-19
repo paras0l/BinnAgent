@@ -22,7 +22,7 @@ import {
   type GrammarCategory,
   type GrammarTopic,
 } from '@/data/grammarTopics'
-import type { AppTab, GrammarHtmlCacheResponse, Learner, LearningProgressItem } from '@/types'
+import type { GrammarHtmlCacheResponse, Learner, LearningProgressItem } from '@/types'
 import { useToast } from '@/hooks/useToast'
 
 type CategoryFilter = 'all' | GrammarCategory
@@ -44,7 +44,9 @@ interface StoredGrammarState {
 
 interface GrammarPageProps {
   learner: Learner
-  onTabChange: (tab: AppTab) => void
+  onBack: () => void
+  backLabel?: string
+  initialTopic?: string | null
 }
 
 const DEFAULT_TARGETS: GrammarTarget[] = [
@@ -92,15 +94,27 @@ const BASE_IFRAME_STYLE = `
   </style>
 `
 
-export function GrammarPage({ learner, onTabChange }: GrammarPageProps) {
+export function GrammarPage({ learner, onBack, backLabel = '返回探索', initialTopic }: GrammarPageProps) {
   const { showToast } = useToast()
   const storedState = useMemo(() => readStoredGrammarState(), [])
+  const topicOptions = useMemo(() => {
+    const title = initialTopic?.trim()
+    if (!title) return GRAMMAR_TOPICS
+    const existing = GRAMMAR_TOPICS.find((topic) => topic.title === title)
+    if (existing) return GRAMMAR_TOPICS
+    return [createGrammarTopic(title), ...GRAMMAR_TOPICS]
+  }, [initialTopic])
+  const initialTopicId = useMemo(() => {
+    const title = initialTopic?.trim()
+    if (!title) return null
+    return topicOptions.find((topic) => topic.title === title)?.id ?? null
+  }, [initialTopic, topicOptions])
   const [category, setCategory] = useState<CategoryFilter>('all')
   const [query, setQuery] = useState('')
   const [selectedTopicId, setSelectedTopicId] = useState(
-    storedState.topicId && GRAMMAR_TOPICS.some((topic) => topic.id === storedState.topicId)
+    initialTopicId ?? (storedState.topicId && topicOptions.some((topic) => topic.id === storedState.topicId)
       ? storedState.topicId
-      : GRAMMAR_TOPICS[0]?.id ?? ''
+      : topicOptions[0]?.id ?? '')
   )
   const [targets, setTargets] = useState<GrammarTarget[]>(
     storedState.targets.length > 0 ? storedState.targets : DEFAULT_TARGETS
@@ -117,8 +131,8 @@ export function GrammarPage({ learner, onTabChange }: GrammarPageProps) {
   const [isImmersiveReading, setIsImmersiveReading] = useState(false)
 
   const selectedTopic = useMemo(
-    () => GRAMMAR_TOPICS.find((topic) => topic.id === selectedTopicId) ?? GRAMMAR_TOPICS[0],
-    [selectedTopicId]
+    () => topicOptions.find((topic) => topic.id === selectedTopicId) ?? topicOptions[0],
+    [selectedTopicId, topicOptions]
   )
 
   const prompt = useMemo(() => buildGrammarPrompt(selectedTopic), [selectedTopic])
@@ -313,14 +327,14 @@ export function GrammarPage({ learner, onTabChange }: GrammarPageProps) {
 
   const visibleTopics = useMemo(() => {
     const normalized = query.trim().toLowerCase()
-    return GRAMMAR_TOPICS.filter((topic) => category === 'all' || topic.category === category).filter((topic) => {
+    return topicOptions.filter((topic) => category === 'all' || topic.category === category).filter((topic) => {
       if (!normalized) return true
       return [topic.title, topic.shortDescription, topic.level, ...topic.tags]
         .join(' ')
         .toLowerCase()
         .includes(normalized)
     })
-  }, [category, query])
+  }, [category, query, topicOptions])
 
   const selectedTarget = targets.find((target) => target.id === targetId) ?? targets[0] ?? DEFAULT_TARGETS[0]
   const safeHtml = useMemo(() => sanitizeHtml(extractHtmlFragment(currentHtml)), [currentHtml])
@@ -421,11 +435,11 @@ export function GrammarPage({ learner, onTabChange }: GrammarPageProps) {
           <div>
             <button
               type="button"
-              onClick={() => onTabChange('explore')}
+              onClick={onBack}
               className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
             >
               <ArrowLeft className="h-4 w-4" />
-              返回探索
+              {backLabel}
             </button>
             <p className="mt-4 text-sm font-semibold text-primary">语法微知识点</p>
             <h1 className="mt-1 text-2xl font-bold text-foreground">选择一个小语法点，让外部 AI 生成精讲 HTML</h1>
@@ -787,6 +801,31 @@ function buildGrammarPrompt(topic: GrammarTopic) {
 学习者背景：CET 四六级备考，喜欢中英结合、规则清楚、例句实用。
 知识点简介：${topic.shortDescription}
 相关标签：${topic.tags.join('、')}`
+}
+
+function createGrammarTopic(title: string): GrammarTopic {
+  const normalizedTitle = title.trim()
+  return {
+    id: `knowledge-${stableHash(normalizedTitle.toLocaleLowerCase())}`,
+    category: inferGrammarCategory(normalizedTitle),
+    title: normalizedTitle,
+    level: '基础',
+    tags: ['教材语法', '单元知识'],
+    shortDescription: `来自教材单元知识的语法点“${normalizedTitle}”，请围绕该标题识别并讲清最核心的规则。`,
+  }
+}
+
+function inferGrammarCategory(title: string): GrammarCategory {
+  const normalized = title.toLocaleLowerCase()
+  if (/冠词|article|介词|preposition/.test(normalized)) return 'article-preposition'
+  if (/时态|tense|现在时|过去时|将来时/.test(normalized)) return 'tense'
+  if (/从句|clause|疑问句|question/.test(normalized)) return 'clause'
+  if (/非谓语|不定式|动名词|分词/.test(normalized)) return 'nonfinite'
+  if (/虚拟|subjunctive/.test(normalized)) return 'subjunctive'
+  if (/情态|modal/.test(normalized)) return 'modal'
+  if (/主谓一致|agreement/.test(normalized)) return 'agreement'
+  if (/易错|辨析|区别/.test(normalized)) return 'error-prone'
+  return 'sentence-structure'
 }
 
 function readStoredGrammarState(): Partial<StoredGrammarState> & {
