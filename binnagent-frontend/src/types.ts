@@ -123,6 +123,16 @@ export interface KnowledgeLessonCompleteResult {
   all_completed: boolean
 }
 
+export interface UnitVocabularySummary {
+  unit_id: string
+  total: number
+  enrolled: number
+  new: number
+  learning: number
+  mastered: number
+  due: number
+}
+
 export interface ChatMessage {
   id: string
   role: 'user' | 'assistant'

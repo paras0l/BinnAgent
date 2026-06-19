@@ -5,11 +5,11 @@ from typing import Any, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.api.deps import get_db_session
-from src.models.knowledge import CurriculumNode
+from src.models.knowledge import CurriculumNode, KnowledgePoint
 from src.models.learner import Learner
 from src.models.vocabulary import (
     VocabularyAttempt,
@@ -34,7 +34,7 @@ class StartPracticeRequest(BaseModel):
     prompt_mode: Literal["audio", "meaning", "context"] = "audio"
     accent: Literal["uk", "us", "auto"] = "uk"
     curriculum_node_id: uuid.UUID | None = None
-    limit: int = Field(default=10, ge=1, le=20)
+    limit: int = Field(default=10, ge=1, le=500)
 
 
 class StartPracticeResponse(BaseModel):
@@ -106,8 +106,23 @@ def _first_text(value: Any) -> str | None:
         if isinstance(first, str):
             return first
         if isinstance(first, dict):
-            return next((str(v) for v in first.values() if isinstance(v, str)), None)
+            for key in ("definition_zh", "definition", "meaning", "text", "zh", "content"):
+                text = first.get(key)
+                if isinstance(text, str) and text.strip():
+                    return text.strip()
     return None
+
+
+def _part_of_speech(item: VocabularyItem) -> str:
+    if isinstance(item.meanings, list) and item.meanings and isinstance(item.meanings[0], dict):
+        value = item.meanings[0].get("part_of_speech") or item.meanings[0].get("pos")
+        if isinstance(value, str) and value.strip():
+            return value.strip()
+    return {
+        "phrase": "短语",
+        "proper_noun": "专有名词",
+        "abbreviation": "缩写",
+    }.get(item.entry_kind, "单词")
 
 
 def _blank_example(item: VocabularyItem) -> str | None:
@@ -138,6 +153,17 @@ async def unit_vocabulary_summary(
     db: AsyncSession = Depends(get_db_session),
 ) -> dict[str, Any]:
     await _ensure_learner(db, learner_id)
+    total_result = await db.execute(
+        select(func.count())
+        .select_from(KnowledgePoint)
+        .where(
+            KnowledgePoint.curriculum_node_id == curriculum_node_id,
+            KnowledgePoint.type == "vocabulary",
+            KnowledgePoint.status == "published",
+            KnowledgePoint.content["role"].as_string() == "unit_wordlist",
+        )
+    )
+    total = total_result.scalar_one()
     result = await db.execute(
         select(VocabularyItem, VocabularyItemSource)
         .join(VocabularyItemSource, VocabularyItemSource.vocabulary_item_id == VocabularyItem.id)
@@ -148,10 +174,12 @@ async def unit_vocabulary_summary(
         )
     )
     rows = result.all()
+    unenrolled = max(0, total - len(rows))
     return {
         "unit_id": str(curriculum_node_id),
-        "total": len(rows),
-        "new": sum(item.review_count == 0 for item, _ in rows),
+        "total": total,
+        "enrolled": len(rows),
+        "new": unenrolled + sum(item.review_count == 0 for item, _ in rows),
         "learning": sum(item.status in {"learning", "reviewing"} for item, _ in rows),
         "mastered": sum(item.status == "mastered" for item, _ in rows),
         "due": sum(
@@ -304,12 +332,13 @@ async def next_practice_task(
         "current_index": session.current_index,
         "total": len(session.item_ids),
         "prompt_mode": session.prompt_mode,
-        "answer_length": len(item.word),
+        "answer_length": len(item.canonical_key),
         "phonetic": item.phonetic,
         "pronunciations": [asset.__dict__ for asset in assets],
         "tts_text": item.word if all(asset.audio_url is None for asset in assets) else None,
         "context_with_blank": _blank_example(item),
         "sources": sources,
+        "part_of_speech": _part_of_speech(item),
     }
     if session.mode == "review":
         payload.update(
@@ -416,6 +445,7 @@ async def submit_practice_attempt(
         "correct_answer": item.word,
         "phonetic": item.phonetic,
         "meaning": _first_text(item.meanings),
+        "part_of_speech": _part_of_speech(item),
         "example": _first_text(item.examples),
         "error_type": existing.error_type,
         "letter_diff": existing.letter_diff or [],

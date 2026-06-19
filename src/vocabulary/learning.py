@@ -85,7 +85,14 @@ async def enroll_unit_vocabulary(
         item = items_by_key.get(key)
         content = point.content or {}
         if item is None:
-            meanings = content.get("definitions_zh") or [point.summary]
+            definitions = content.get("definitions_zh") or [point.summary]
+            meanings = [
+                {
+                    "part_of_speech": content.get("part_of_speech") or "单词",
+                    "definition_zh": definition,
+                }
+                for definition in definitions
+            ]
             examples = content.get("examples") or []
             item = VocabularyItem(
                 learner_id=learner_id,

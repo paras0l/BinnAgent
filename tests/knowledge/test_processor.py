@@ -65,5 +65,6 @@ name /neɪm/ n. 名字；名称 p.1
     ]
     assert entries[0].phonetic == "/ˈmɔːnɪŋ/"
     assert entries[0].meaning == "早晨；上午"
+    assert entries[0].part_of_speech == "n."
     assert entries[0].lesson_page == "S1"
     assert entries[1].entry_kind == "phrase"

@@ -37,6 +37,7 @@ class ParsedVocabularyEntry:
     lesson_page: str
     pdf_page: int
     entry_kind: str
+    part_of_speech: str | None
     confidence: float
 
 
@@ -264,6 +265,8 @@ def _parse_vocabulary_chunk(
     canonical = _canonical_expression(expression)
     if not canonical or not re.search(r"[a-z]", canonical) or len(expression) > 100:
         return None
+    part_of_speech_match = PART_OF_SPEECH_PATTERN.search(rest)
+    part_of_speech = part_of_speech_match.group(0) if part_of_speech_match else None
     meaning = PART_OF_SPEECH_PATTERN.sub("", rest, count=1).strip(" ;；")
     confidence = 0.98 if phonetic and meaning else 0.92 if meaning else 0.72
     return ParsedVocabularyEntry(
@@ -275,6 +278,7 @@ def _parse_vocabulary_chunk(
         lesson_page=lesson_page,
         pdf_page=pdf_page,
         entry_kind=_entry_kind(expression),
+        part_of_speech=part_of_speech,
         confidence=confidence,
     )
 
@@ -468,6 +472,7 @@ async def process_uploaded_textbook(db: AsyncSession, source: KnowledgeSource) -
                     "role": "unit_wordlist",
                     "lemma": entry.canonical_expression,
                     "entry_kind": entry.entry_kind,
+                    "part_of_speech": entry.part_of_speech,
                     "phonetic": entry.phonetic,
                     "definitions_zh": [entry.meaning],
                     "examples": [],

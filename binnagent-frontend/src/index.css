@@ -110,6 +110,22 @@ body {
   }
 }
 
+@keyframes vocab-confetti-pop {
+  0% { opacity: 0; transform: translate(0, 0) rotate(0deg) scale(0.4); }
+  20% { opacity: 1; }
+  100% { opacity: 0; transform: translate(var(--confetti-x), var(--confetti-y)) rotate(160deg) scale(1); }
+}
+
+.vocab-confetti {
+  animation: vocab-confetti-pop 700ms ease-out both;
+  animation-delay: calc(var(--confetti-index) * 28ms);
+  background: hsl(var(--confetti-hue) 82% 57%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vocab-confetti { animation: none; opacity: 0; }
+}
+
 .markdown-body {
   overflow-wrap: anywhere;
 }

@@ -43,6 +43,7 @@ interface PracticeTask {
   total: number
   answer_length: number
   phonetic?: string | null
+  part_of_speech: string
   pronunciations: Pronunciation[]
   tts_text?: string | null
   context_with_blank?: string | null
@@ -56,6 +57,7 @@ interface AttemptFeedback {
   result: 'correct' | 'incorrect' | 'revealed'
   correct_answer: string
   phonetic?: string | null
+  part_of_speech: string
   meaning?: string | null
   example?: string | null
   feedback_text: string
@@ -73,6 +75,7 @@ interface SessionSummary {
 }
 
 const counts = [5, 10, 15]
+const ENGLISH_SPELLING_PATTERN = /^[A-Za-z' -]*$/
 
 export function VocabularyPracticePage({
   learner,
@@ -83,6 +86,7 @@ export function VocabularyPracticePage({
 }: VocabularyPracticePageProps) {
   const [mode, setMode] = useState<VocabularyPracticeMode>(initialMode)
   const [limit, setLimit] = useState(10)
+  const [isCustomLimit, setIsCustomLimit] = useState(false)
   const [accent, setAccent] = useState<'uk' | 'us' | 'auto'>('uk')
   const [phase, setPhase] = useState<'setup' | 'loading' | 'practice' | 'summary'>('setup')
   const [sessionId, setSessionId] = useState<string | null>(null)
@@ -97,8 +101,14 @@ export function VocabularyPracticePage({
   const [isBusy, setIsBusy] = useState(false)
   const [isPlaying, setIsPlaying] = useState(false)
   const [isComposing, setIsComposing] = useState(false)
+  const [isReviewRevealed, setIsReviewRevealed] = useState(false)
+  const [inputWarning, setInputWarning] = useState<string | null>(null)
+  const [availableTotal, setAvailableTotal] = useState<number | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const startedAt = useRef(0)
+  const compositionRef = useRef(false)
+  const autoJudgeTimer = useRef<number | null>(null)
+  const lastAutoSubmitted = useRef('')
 
   const api = `/api/learners/${learner.id}/vocabulary`
 
@@ -117,10 +127,32 @@ export function VocabularyPracticePage({
     setHint(null)
     setHintCount(0)
     setReplayCount(0)
+    setIsReviewRevealed(false)
+    setInputWarning(null)
+    lastAutoSubmitted.current = ''
     startedAt.current = Date.now()
     setPhase('practice')
     window.setTimeout(() => inputRef.current?.focus(), 40)
   }, [api])
+
+  useEffect(() => {
+    const controller = new AbortController()
+    const url = curriculumNodeId ? `${api}/units/${curriculumNodeId}/summary` : api
+    fetch(url, { signal: controller.signal })
+      .then((response) => response.ok ? response.json() as Promise<{ total: number } | Array<{ status: string }>> : null)
+      .then((data) => {
+        if (Array.isArray(data)) setAvailableTotal(data.filter((item) => item.status !== 'mastered').length)
+        else setAvailableTotal(data?.total ?? null)
+      })
+      .catch((fetchError: unknown) => {
+        if (!(fetchError instanceof DOMException && fetchError.name === 'AbortError')) setAvailableTotal(null)
+      })
+    return () => controller.abort()
+  }, [api, curriculumNodeId])
+
+  useEffect(() => () => {
+    if (autoJudgeTimer.current !== null) window.clearTimeout(autoJudgeTimer.current)
+  }, [])
 
   const startPractice = async () => {
     setPhase('loading')
@@ -134,7 +166,7 @@ export function VocabularyPracticePage({
           prompt_mode: mode === 'spelling' ? 'audio' : 'meaning',
           accent,
           curriculum_node_id: curriculumNodeId ?? null,
-          limit,
+          limit: availableTotal ? Math.min(limit, availableTotal) : limit,
         }),
       })
       if (!response.ok) {
@@ -182,9 +214,10 @@ export function VocabularyPracticePage({
     }
   }, [accent, feedback, task])
 
-  const submitAttempt = async (options?: { reveal?: boolean; rating?: number }) => {
+  const submitAttempt = async (options?: { reveal?: boolean; rating?: number; answerOverride?: string }) => {
     if (!task || !sessionId || isBusy) return
-    if (mode === 'spelling' && !options?.reveal && !answer.trim()) {
+    const submittedAnswer = options?.answerOverride ?? answer
+    if (mode === 'spelling' && !options?.reveal && !submittedAnswer.trim()) {
       setError('先试着拼一下。')
       inputRef.current?.focus()
       return
@@ -199,7 +232,7 @@ export function VocabularyPracticePage({
           vocabulary_item_id: task.vocabulary_item_id,
           idempotency_key: crypto.randomUUID(),
           action: options?.reveal ? 'reveal' : 'submit',
-          answer: mode === 'spelling' ? answer : null,
+          answer: mode === 'spelling' ? submittedAnswer : null,
           rating: options?.rating ?? null,
           response_time_ms: Date.now() - startedAt.current,
           hint_count: hintCount,
@@ -213,6 +246,40 @@ export function VocabularyPracticePage({
     } finally {
       setIsBusy(false)
     }
+  }
+
+  const handleAnswerChange = (value: string) => {
+    setAnswer(value)
+    setError(null)
+    if (autoJudgeTimer.current !== null) window.clearTimeout(autoJudgeTimer.current)
+    if (!ENGLISH_SPELLING_PATTERN.test(value)) {
+      setInputWarning('检测到非英文字符，请切换到英文输入法后继续。')
+      return
+    }
+    setInputWarning(null)
+    if (
+      !compositionRef.current &&
+      !feedback &&
+      !isBusy &&
+      task &&
+      value.length === task.answer_length &&
+      value !== lastAutoSubmitted.current
+    ) {
+      autoJudgeTimer.current = window.setTimeout(() => {
+        lastAutoSubmitted.current = value
+        void submitAttempt({ answerOverride: value })
+      }, 260)
+    }
+  }
+
+  const retrySpelling = () => {
+    setFeedback(null)
+    setAnswer('')
+    setError(null)
+    setInputWarning(null)
+    lastAutoSubmitted.current = ''
+    window.setTimeout(() => inputRef.current?.focus(), 40)
+    void playAudio()
   }
 
   const advance = async () => {
@@ -281,10 +348,12 @@ export function VocabularyPracticePage({
               <Choice selected={mode === 'spelling'} onClick={() => setMode('spelling')}>听音拼写</Choice>
             </SetupGroup>
             <SetupGroup label="词汇来源">
-              <div className="rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm font-bold text-indigo-700">{sourceLabel ?? (curriculumNodeId ? '当前教材单元' : '全部待学词汇')}</div>
+              <div className="rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm font-bold text-indigo-700">{sourceLabel ?? (curriculumNodeId ? '当前教材单元' : '全部待学词汇')}{availableTotal !== null ? <span className="ml-2 text-indigo-500">共 {availableTotal} 词</span> : null}</div>
             </SetupGroup>
             <SetupGroup label="本组数量">
-              {counts.map((count) => <Choice key={count} selected={limit === count} onClick={() => setLimit(count)}>{count} 个</Choice>)}
+              {counts.filter((count) => availableTotal === null || count <= availableTotal).map((count) => <Choice key={count} selected={!isCustomLimit && limit === count} onClick={() => { setLimit(count); setIsCustomLimit(false) }}>{count} 个</Choice>)}
+              <Choice selected={isCustomLimit} onClick={() => { setLimit((current) => Math.min(current, availableTotal ?? current)); setIsCustomLimit(true) }}>自定义</Choice>
+              {isCustomLimit ? <label className="inline-flex items-center gap-2 rounded-xl border border-indigo-300 bg-white px-3 py-1.5 text-sm font-bold text-slate-600"><input type="number" min={1} max={availableTotal ?? undefined} value={limit} onChange={(event) => setLimit(Math.max(1, Math.min(availableTotal ?? Number.MAX_SAFE_INTEGER, Number(event.target.value) || 1)))} className="w-14 bg-transparent text-center text-slate-950 outline-none" aria-label="自定义本组数量" />个{availableTotal !== null ? <span className="text-xs text-slate-400">（1–{availableTotal}）</span> : null}</label> : null}
             </SetupGroup>
             <SetupGroup label="发音偏好">
               <Choice selected={accent === 'uk'} onClick={() => setAccent('uk')}>英音</Choice>
@@ -335,7 +404,7 @@ export function VocabularyPracticePage({
 
       <main className="flex flex-1 items-center justify-center px-4 py-10 sm:py-14">
         <section className="w-full max-w-[820px] text-center">
-          <p className="text-sm font-black uppercase tracking-[0.18em] text-indigo-600">{feedback ? (feedback.result === 'correct' ? '拼对了' : feedback.result === 'revealed' ? '先记住答案' : '差一点，再看看') : mode === 'spelling' ? '听发音，拼出这个词' : '认识这个词吗？'}</p>
+          <p className="text-sm font-black uppercase tracking-[0.18em] text-indigo-600">{mode === 'review' ? (feedback ? '已记录熟悉程度' : '认识这个词吗？') : feedback ? (feedback.result === 'correct' ? '拼对了' : feedback.result === 'revealed' ? '先记住答案' : '差一点，再看看') : '听发音，拼出这个词'}</p>
           <button onClick={() => void playAudio()} aria-label="播放发音" className={`mx-auto mt-7 flex size-24 items-center justify-center rounded-full bg-indigo-600 text-white shadow-[0_14px_36px_rgba(79,70,229,0.28)] transition hover:scale-[1.03] ${isPlaying ? 'ring-8 ring-indigo-100' : ''}`}><Volume2 className="size-10" /></button>
           <p className="mt-3 text-xs font-bold text-slate-400">点击播放 · 空格键重播 · {accent === 'us' ? '美音' : '英音'}</p>
 
@@ -343,22 +412,22 @@ export function VocabularyPracticePage({
             <div className="mt-10">
               <h1 className="text-5xl font-black tracking-tight sm:text-6xl">{task.word}</h1>
               {task.phonetic ? <p className="mt-3 text-lg text-slate-400">{task.phonetic}</p> : null}
-              <div className="mx-auto mt-8 max-w-xl rounded-2xl border border-slate-200 bg-white p-6 text-left shadow-sm"><p className="text-lg font-bold text-slate-800">{task.meaning ?? '暂无释义'}</p>{task.example ? <p className="mt-3 text-sm text-slate-500">{task.example}</p> : null}</div>
+              {feedback || isReviewRevealed ? <MeaningCard partOfSpeech={feedback?.part_of_speech ?? task.part_of_speech} meaning={feedback?.meaning ?? task.meaning} example={feedback?.example ?? task.example} /> : <button type="button" onClick={() => setIsReviewRevealed(true)} className="mt-8 rounded-xl border border-indigo-200 bg-indigo-50 px-5 py-3 text-sm font-black text-indigo-700 transition hover:border-indigo-300">偷看中文释义</button>}
             </div>
           ) : feedback ? (
             <FeedbackPanel feedback={feedback} />
           ) : (
             <div className="mx-auto mt-10 max-w-2xl">
               <label className="relative block cursor-text" onClick={() => inputRef.current?.focus()}>
-                <input ref={inputRef} value={answer} onChange={(event) => setAnswer(event.target.value)} onCompositionStart={() => setIsComposing(true)} onCompositionEnd={() => setIsComposing(false)} autoCapitalize="none" autoComplete="off" spellCheck={false} className="absolute inset-0 h-full w-full cursor-text opacity-0" aria-label="拼写答案" />
+                <input ref={inputRef} value={answer} onChange={(event) => handleAnswerChange(event.target.value)} onCompositionStart={() => { compositionRef.current = true; setIsComposing(true); setInputWarning('正在使用输入法，请切换到英文输入后再提交。') }} onCompositionEnd={(event) => { compositionRef.current = false; setIsComposing(false); handleAnswerChange(event.currentTarget.value) }} lang="en" inputMode="text" autoCapitalize="none" autoCorrect="off" autoComplete="off" spellCheck={false} className="absolute inset-0 h-full w-full cursor-text opacity-0" aria-label="拼写答案" />
                 <div className="flex min-h-16 flex-wrap items-end justify-center gap-2" aria-hidden="true">
                   {Array.from({ length: Math.max(task.answer_length, answer.length) }, (_, index) => <span key={index} className={`flex h-14 min-w-10 items-center justify-center border-b-2 text-3xl font-black ${answer[index] ? 'border-indigo-500 text-slate-950' : 'border-slate-300 text-transparent'}`}>{answer[index] ?? '·'}</span>)}
                 </div>
               </label>
               {error ? <p className="mt-4 text-sm font-bold text-amber-700">{error}</p> : null}
+              <p className={`mt-4 text-xs font-bold ${inputWarning ? 'text-orange-600' : 'text-slate-400'}`}>{inputWarning ?? '请使用英文键盘输入；填满字母后会自动检查。'}</p>
               <div className="mt-8 flex flex-wrap items-center justify-center gap-4 text-sm font-bold"><button onClick={() => void requestHint()} disabled={hintCount >= 3} className="inline-flex items-center gap-2 text-indigo-600 disabled:text-slate-300"><Lightbulb className="size-4" />{hintCount ? `再给一点提示 ${hintCount}/3` : '给我一个提示'}</button><span className="text-slate-300">|</span><button onClick={() => void submitAttempt({ reveal: true })} className="text-slate-500 hover:text-slate-800">不认识，先看答案</button></div>
               {hint ? <p className="mx-auto mt-5 max-w-xl rounded-xl bg-indigo-50 px-4 py-3 text-sm font-semibold text-indigo-800">{hint}</p> : null}
-              {task.context_with_blank ? <p className="mt-5 text-sm text-slate-500">{task.context_with_blank}</p> : null}
             </div>
           )}
 
@@ -368,9 +437,9 @@ export function VocabularyPracticePage({
 
       <footer className="border-t border-slate-200 bg-white px-4 py-5 sm:px-8">
         <div className="mx-auto flex max-w-5xl flex-col-reverse items-stretch justify-between gap-3 sm:flex-row sm:items-center">
-          <span className="hidden text-xs font-semibold text-slate-400 sm:block">{feedback ? 'Enter 进入下一词' : mode === 'spelling' ? 'Enter 检查拼写' : '根据回忆程度选择'}</span>
+          <span className="hidden text-xs font-semibold text-slate-400 sm:block">{feedback ? (feedback.result === 'revealed' ? '可以隐藏答案再拼一次' : 'Enter 进入下一词') : mode === 'spelling' ? '填满后自动检查，也可按 Enter' : '先判断熟悉程度，再查看释义'}</span>
           {feedback ? (
-            <div className="flex gap-3 sm:ml-auto">{feedback.can_retry ? <button onClick={() => { setFeedback(null); setAnswer(''); inputRef.current?.focus(); void playAudio() }} className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 px-5 py-3 text-sm font-black text-slate-700"><RotateCcw className="size-4" />再拼一次</button> : null}<button onClick={() => void advance()} disabled={isBusy} className="flex-1 rounded-xl bg-indigo-600 px-7 py-3 text-sm font-black text-white disabled:opacity-60">下一个</button></div>
+            <div className="flex gap-3 sm:ml-auto">{mode === 'spelling' && (feedback.can_retry || feedback.result === 'revealed') ? <button onClick={retrySpelling} className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 px-5 py-3 text-sm font-black text-slate-700"><RotateCcw className="size-4" />{feedback.result === 'revealed' ? '隐藏答案，继续拼写' : '再拼一次'}</button> : null}<button onClick={() => void advance()} disabled={isBusy} className="flex-1 rounded-xl bg-indigo-600 px-7 py-3 text-sm font-black text-white disabled:opacity-60">下一个</button></div>
           ) : mode === 'review' ? (
             <div className="grid grid-cols-4 gap-2 sm:ml-auto"><RatingButton label="忘了" onClick={() => void submitAttempt({ rating: 1 })} /><RatingButton label="模糊" onClick={() => void submitAttempt({ rating: 2 })} /><RatingButton label="记得" onClick={() => void submitAttempt({ rating: 3 })} /><RatingButton label="熟练" primary onClick={() => void submitAttempt({ rating: 4 })} /></div>
           ) : <button onClick={() => void submitAttempt()} disabled={isBusy} className="rounded-xl bg-indigo-600 px-8 py-3 text-sm font-black text-white disabled:opacity-60">{isBusy ? '正在检查…' : '检查拼写'}</button>}
@@ -390,7 +459,15 @@ function Choice({ selected, onClick, children }: { selected: boolean; onClick: (
 
 function FeedbackPanel({ feedback }: { feedback: AttemptFeedback }) {
   const success = feedback.result === 'correct'
-  return <div className="mx-auto mt-9 max-w-2xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"><div className="flex flex-wrap justify-center gap-1 font-mono text-4xl font-black">{feedback.letter_diff.length ? feedback.letter_diff.map((letter, index) => <span key={index} className={letter.status === 'match' ? 'text-emerald-600' : 'text-orange-500'}>{letter.correct ?? letter.answer}</span>) : <span className={success ? 'text-emerald-600' : 'text-slate-950'}>{feedback.correct_answer}</span>}</div>{feedback.phonetic ? <p className="mt-3 text-slate-400">{feedback.phonetic}</p> : null}<p className={`mt-5 text-base font-black ${success ? 'text-emerald-700' : 'text-orange-700'}`}>{feedback.feedback_text}</p>{feedback.meaning ? <p className="mt-3 text-sm text-slate-600">{feedback.meaning}</p> : null}{feedback.example ? <p className="mt-2 text-sm text-slate-400">{feedback.example}</p> : null}</div>
+  return <div className="relative mx-auto mt-9 max-w-2xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">{success ? <Celebration /> : null}<div className="flex flex-wrap justify-center gap-1 font-mono text-4xl font-black">{feedback.letter_diff.length ? feedback.letter_diff.map((letter, index) => <span key={index} className={letter.status === 'match' ? 'text-emerald-600' : 'text-orange-500'}>{letter.correct ?? letter.answer}</span>) : <span className={success ? 'text-emerald-600' : 'text-slate-950'}>{feedback.correct_answer}</span>}</div>{feedback.phonetic ? <p className="mt-3 text-slate-400">{feedback.phonetic}</p> : null}<p className={`mt-5 text-base font-black ${success ? 'text-emerald-700' : 'text-orange-700'}`}>{feedback.feedback_text}</p><div className="mt-4"><span className="rounded-md bg-slate-100 px-2 py-1 text-xs font-black text-slate-500">{feedback.part_of_speech}</span>{feedback.meaning ? <span className="ml-2 text-sm text-slate-600">{feedback.meaning}</span> : null}</div>{feedback.example ? <p className="mt-2 text-sm text-slate-400">{feedback.example}</p> : null}</div>
+}
+
+function MeaningCard({ partOfSpeech, meaning, example }: { partOfSpeech: string; meaning?: string | null; example?: string | null }) {
+  return <div className="mx-auto mt-8 max-w-xl rounded-2xl border border-slate-200 bg-white p-6 text-left shadow-sm"><div className="flex items-start gap-3"><span className="mt-0.5 shrink-0 rounded-md bg-indigo-50 px-2 py-1 text-xs font-black text-indigo-600">{partOfSpeech}</span><p className="text-lg font-bold text-slate-800">{meaning ?? '暂无中文释义'}</p></div>{example ? <p className="mt-4 border-t border-slate-100 pt-4 text-sm leading-6 text-slate-500">{example}</p> : null}</div>
+}
+
+function Celebration() {
+  return <div className="pointer-events-none absolute inset-x-1/2 top-8" aria-hidden="true">{Array.from({ length: 8 }, (_, index) => <i key={index} className="vocab-confetti absolute block size-2 rounded-sm" style={{ '--confetti-index': index, '--confetti-x': `${(index - 3.5) * 18}px`, '--confetti-y': `${-38 - (index % 3) * 9}px`, '--confetti-hue': `${42 + index * 32}` } as React.CSSProperties} />)}</div>
 }
 
 function SummaryMetric({ label, value }: { label: string; value: number }) {

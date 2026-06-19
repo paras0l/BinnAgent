@@ -14,6 +14,7 @@ import type {
   KnowledgeLessonSession,
   KnowledgeUploadResult,
   Learner,
+  UnitVocabularySummary,
 } from '@/types'
 import type { VocabularyPracticeMode } from '@/pages/VocabularyPracticePage'
 
@@ -34,6 +35,7 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice }
   const [isUploadOpen, setIsUploadOpen] = useState(false)
   const [lessonSession, setLessonSession] = useState<KnowledgeLessonSession | null>(null)
   const [isStartingLesson, setIsStartingLesson] = useState(false)
+  const [unitVocabulary, setUnitVocabulary] = useState<UnitVocabularySummary | null>(null)
 
   const loadOverview = useCallback(async (nodeId?: string | null) => {
     setIsLoading(true)
@@ -56,6 +58,19 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice }
     const timer = window.setTimeout(() => void loadOverview(), 0)
     return () => window.clearTimeout(timer)
   }, [loadOverview])
+
+  useEffect(() => {
+    const nodeId = overview?.current_unit.id
+    if (!nodeId) return
+    const controller = new AbortController()
+    fetch(`/api/learners/${learner.id}/vocabulary/units/${nodeId}/summary`, { signal: controller.signal })
+      .then((response) => response.ok ? response.json() as Promise<UnitVocabularySummary> : null)
+      .then((data) => setUnitVocabulary(data))
+      .catch((fetchError: unknown) => {
+        if (!(fetchError instanceof DOMException && fetchError.name === 'AbortError')) setUnitVocabulary(null)
+      })
+    return () => controller.abort()
+  }, [learner.id, overview?.current_unit.id])
 
   const visibleKnowledge = useMemo(() => {
     const normalizedQuery = query.trim().toLocaleLowerCase()
@@ -172,6 +187,8 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice }
     )
   }
 
+  const activeUnitVocabulary = unitVocabulary?.unit_id === overview.current_unit.id ? unitVocabulary : null
+
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-white">
       <div className="flex h-12 items-center border-b border-slate-200 px-4 text-sm text-slate-500 sm:px-6">
@@ -217,6 +234,12 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice }
               onContinue={() => void handleStartLesson()}
             />
             {isStartingLesson ? <p className="mt-2 flex items-center justify-end gap-2 text-xs font-semibold text-slate-500"><LoaderCircle className="size-3.5 animate-spin" />正在准备课程...</p> : null}
+            <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 rounded-xl bg-slate-50 px-4 py-3 text-xs font-bold text-slate-500" aria-label="本单元词汇统计">
+              <span className="text-slate-800">本单元共 {activeUnitVocabulary?.total ?? '—'} 词</span>
+              <span>新词 {activeUnitVocabulary?.new ?? '—'}</span>
+              <span>待复习 {activeUnitVocabulary?.due ?? '—'}</span>
+              <span>已掌握 {activeUnitVocabulary?.mastered ?? '—'}</span>
+            </div>
             <div className="mt-3 grid gap-3 sm:grid-cols-2">
               <button type="button" onClick={() => onStartVocabularyPractice('review', overview.current_unit.id, `七上 · ${overview.current_unit.title}`)} className="rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm font-black text-indigo-700 transition hover:border-indigo-300">学习本单元词汇</button>
               <button type="button" onClick={() => onStartVocabularyPractice('spelling', overview.current_unit.id, `七上 · ${overview.current_unit.title}`)} className="rounded-xl bg-indigo-600 px-4 py-3 text-sm font-black text-white transition hover:bg-indigo-700">练习本单元拼写</button>
