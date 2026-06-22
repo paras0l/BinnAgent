@@ -79,7 +79,11 @@ export function KnowledgeList({ items, filter, onFilterChange, onStartGrammar }:
               key={item.id}
               className="grid grid-cols-[32px_minmax(150px,1fr)_90px_90px_120px_minmax(210px,1.4fr)] items-center border-b border-slate-100 px-1 py-3.5 text-sm transition-colors hover:bg-slate-50/70"
             >
-              <GripVertical className="size-4 text-slate-300" />
+              {item.unit_order ? (
+                <span className="text-xs font-bold text-slate-400">{item.unit_order}</span>
+              ) : (
+                <GripVertical className="size-4 text-slate-300" />
+              )}
               <div className="min-w-0">
                 <h3 className="font-extrabold text-slate-800">{item.title}</h3>
                 {item.type === 'grammar' ? (

@@ -6,7 +6,7 @@ from typing import Any, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from pydantic import BaseModel, Field
-from sqlalchemy import and_, func, or_, select
+from sqlalchemy import and_, case, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.api.deps import get_db_session
@@ -130,6 +130,14 @@ def _unit_point_filter(node: CurriculumNode):
     )
 
 
+def _unit_point_order():
+    return (
+        case((KnowledgePoint.type == "vocabulary", 0), else_=1),
+        KnowledgePoint.content["unit_order"].as_integer().asc().nullslast(),
+        KnowledgePoint.created_at.asc(),
+    )
+
+
 @router.get("/api/learners/{learner_id}/knowledge-base")
 async def knowledge_base_overview(
     learner_id: uuid.UUID,
@@ -187,7 +195,7 @@ async def knowledge_base_overview(
             _unit_point_filter(display_node),
             KnowledgePoint.status == "published",
         )
-        .order_by(KnowledgePoint.created_at.asc())
+        .order_by(*_unit_point_order())
     )
     points = list(point_result.scalars().all())
     point_ids = [point.id for point in points]
@@ -275,6 +283,7 @@ async def knowledge_base_overview(
                 "type": point.type,
                 "summary": point.summary,
                 "source_page": point.source_page,
+                "unit_order": (point.content or {}).get("unit_order"),
                 "mastery": states.get(point.id).mastery_score if point.id in states else 0.0,
             }
             for point in points
@@ -304,7 +313,7 @@ async def start_knowledge_lesson(
     point_result = await db.execute(
         select(KnowledgePoint)
         .where(_unit_point_filter(node), KnowledgePoint.status == "published")
-        .order_by(KnowledgePoint.created_at.asc())
+        .order_by(*_unit_point_order())
     )
     points = list(point_result.scalars().all())
     lesson_parts = _lesson_parts(points)

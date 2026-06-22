@@ -44,7 +44,7 @@ def test_known_grade7_unit_generates_traceable_draft_knowledge() -> None:
     assert point.content["requires_review"] is True
 
 
-def test_unit_wordlist_parser_keeps_unit_page_and_expression_metadata() -> None:
+def test_unit_wordlist_parser_keeps_only_unit_expression_and_order() -> None:
     reader = _Reader(
         [""] * 7
         + [
@@ -66,11 +66,13 @@ name /neɪm/ n. 名字；名称 p.1
         ("Starter Unit 1", "Good morning!"),
         ("Unit 1", "name"),
     ]
-    assert entries[0].phonetic == "/ˈmɔːnɪŋ/"
-    assert entries[0].meaning == "早晨；上午"
-    assert entries[0].part_of_speech == "n."
-    assert entries[0].lesson_page == "S1"
-    assert entries[1].entry_kind == "phrase"
+    assert [item.unit_order for item in entries] == [1, 2, 1]
+    assert set(entries[0].__dict__) == {
+        "unit_title",
+        "expression",
+        "canonical_expression",
+        "unit_order",
+    }
 
 
 def test_vocabulary_expression_normalizes_pdf_text_layer_artifacts() -> None:

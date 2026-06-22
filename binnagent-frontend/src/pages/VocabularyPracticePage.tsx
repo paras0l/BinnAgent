@@ -10,6 +10,11 @@ import {
 } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { Learner } from '@/types'
+import {
+  RichVocabularyEntry,
+  type BilingualMeaning,
+  type DictionarySense,
+} from '@/components/vocabulary/RichVocabularyEntry'
 import { VocabularyDetailPage } from '@/pages/VocabularyDetailPage'
 
 export type VocabularyPracticeMode = 'review' | 'spelling'
@@ -44,7 +49,14 @@ interface PracticeTask {
   total: number
   answer_length: number
   phonetic?: string | null
+  phonetic_uk?: string | null
+  phonetic_us?: string | null
   part_of_speech: string
+  dictionary_senses: DictionarySense[]
+  word_forms: Record<string, string[]>
+  dictionary_tags: string[]
+  meanings: BilingualMeaning[]
+  examples: Array<string | Record<string, unknown>>
   pronunciations: Pronunciation[]
   tts_text?: string | null
   context_with_blank?: string | null
@@ -58,7 +70,14 @@ interface AttemptFeedback {
   result: 'correct' | 'incorrect' | 'revealed'
   correct_answer: string
   phonetic?: string | null
+  phonetic_uk?: string | null
+  phonetic_us?: string | null
   part_of_speech: string
+  dictionary_senses: DictionarySense[]
+  word_forms: Record<string, string[]>
+  dictionary_tags: string[]
+  meanings: BilingualMeaning[]
+  examples: Array<string | Record<string, unknown>>
   meaning?: string | null
   example?: string | null
   feedback_text: string
@@ -102,7 +121,6 @@ export function VocabularyPracticePage({
   const [isBusy, setIsBusy] = useState(false)
   const [isPlaying, setIsPlaying] = useState(false)
   const [isComposing, setIsComposing] = useState(false)
-  const [isReviewRevealed, setIsReviewRevealed] = useState(false)
   const [inputWarning, setInputWarning] = useState<string | null>(null)
   const [availableTotal, setAvailableTotal] = useState<number | null>(null)
   const [detailTerm, setDetailTerm] = useState<string | null>(null)
@@ -129,7 +147,6 @@ export function VocabularyPracticePage({
     setHint(null)
     setHintCount(0)
     setReplayCount(0)
-    setIsReviewRevealed(false)
     setInputWarning(null)
     lastAutoSubmitted.current = ''
     startedAt.current = Date.now()
@@ -184,10 +201,14 @@ export function VocabularyPracticePage({
     }
   }
 
-  const playAudio = useCallback(async () => {
+  const playAudio = useCallback(async (accentOverride?: 'uk' | 'us') => {
     if (!task) return
+    const requestedAccent = accentOverride ?? (accent === 'auto' ? 'uk' : accent)
+    if (accentOverride) setAccent(accentOverride)
     setReplayCount((count) => count + 1)
-    const recording = task.pronunciations.find((item) => item.audio_url)
+    const recording = task.pronunciations.find((item) => (
+      item.audio_url && item.accent.toLowerCase().includes(requestedAccent)
+    )) ?? task.pronunciations.find((item) => item.audio_url)
     setIsPlaying(true)
     try {
       if (recording?.audio_url) {
@@ -199,7 +220,7 @@ export function VocabularyPracticePage({
       } else if ('speechSynthesis' in window) {
         window.speechSynthesis.cancel()
         const utterance = new SpeechSynthesisUtterance(task.tts_text ?? feedback?.correct_answer ?? '')
-        utterance.lang = accent === 'us' ? 'en-US' : 'en-GB'
+        utterance.lang = requestedAccent === 'us' ? 'en-US' : 'en-GB'
         utterance.rate = 0.86
         utterance.onend = () => setIsPlaying(false)
         window.speechSynthesis.speak(utterance)
@@ -210,7 +231,7 @@ export function VocabularyPracticePage({
       setIsPlaying(false)
       if (task.tts_text && 'speechSynthesis' in window) {
         const utterance = new SpeechSynthesisUtterance(task.tts_text)
-        utterance.lang = accent === 'us' ? 'en-US' : 'en-GB'
+        utterance.lang = requestedAccent === 'us' ? 'en-US' : 'en-GB'
         window.speechSynthesis.speak(utterance)
       }
     }
@@ -331,6 +352,10 @@ export function VocabularyPracticePage({
         if (feedback) void advance()
         else if (mode === 'spelling') void submitAttempt()
       }
+      if (mode === 'review' && !feedback && ['1', '2', '3', '4'].includes(event.key)) {
+        event.preventDefault()
+        void submitAttempt({ rating: Number(event.key) })
+      }
       if (event.key === 'Escape') onExit()
     }
     window.addEventListener('keydown', onKeyDown)
@@ -338,7 +363,7 @@ export function VocabularyPracticePage({
   })
 
   if (detailTerm) {
-    return <VocabularyDetailPage term={detailTerm} onBack={() => setDetailTerm(null)} />
+    return <VocabularyDetailPage learner={learner} term={detailTerm} onBack={() => setDetailTerm(null)} />
   }
 
   if (phase === 'setup') {
@@ -403,25 +428,31 @@ export function VocabularyPracticePage({
   return (
     <div className="flex min-h-screen flex-col bg-[#fbfbfd] text-slate-950">
       <header className="border-b border-slate-200 bg-white px-4 py-4 sm:px-8">
-        <div className="mx-auto flex max-w-5xl items-center gap-5">
+        <div className="mx-auto flex max-w-[1420px] items-center gap-5">
           <button onClick={onExit} className="inline-flex shrink-0 items-center gap-2 text-sm font-bold text-slate-500 hover:text-indigo-600"><ArrowLeft className="size-4" />退出练习</button>
           <div className="mx-auto flex w-full max-w-xl items-center gap-3"><div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-indigo-600 transition-all" style={{ width: `${progress}%` }} /></div><span className="text-xs font-black text-slate-500">{task.current_index + 1} / {task.total}</span></div>
-          <span className="hidden shrink-0 rounded-full bg-indigo-50 px-3 py-1.5 text-xs font-black text-indigo-700 sm:inline">{task.sources[0]?.label ?? sourceLabel ?? '我的词汇本'}</span>
+          <span className="hidden shrink-0 text-sm font-bold text-slate-600 sm:inline">{task.sources[0]?.label ?? sourceLabel ?? '我的词汇本'}</span>
         </div>
       </header>
 
-      <main className="flex flex-1 items-center justify-center px-4 py-10 sm:py-14">
-        <section className="w-full max-w-[820px] text-center">
-          <p className="text-sm font-black uppercase tracking-[0.18em] text-indigo-600">{mode === 'review' ? (feedback ? '已记录熟悉程度' : '认识这个词吗？') : feedback ? (feedback.result === 'correct' ? '拼对了' : feedback.result === 'revealed' ? '先记住答案' : '差一点，再看看') : '听发音，拼出这个词'}</p>
-          <button onClick={() => void playAudio()} aria-label="播放发音" className={`mx-auto mt-7 flex size-24 items-center justify-center rounded-full bg-indigo-600 text-white shadow-[0_14px_36px_rgba(79,70,229,0.28)] transition hover:scale-[1.03] ${isPlaying ? 'ring-8 ring-indigo-100' : ''}`}><Volume2 className="size-10" /></button>
-          <p className="mt-3 text-xs font-bold text-slate-400">点击播放 · 空格键重播 · {accent === 'us' ? '美音' : '英音'}</p>
+      <main className={`flex flex-1 justify-center px-4 ${mode === 'review' ? 'py-4 sm:px-6 sm:py-5' : 'items-center py-10 sm:py-14'}`}>
+        <section className={`w-full ${mode === 'review' ? 'max-w-[1420px]' : 'max-w-[820px] text-center'}`}>
+          {mode === 'spelling' ? <><p className="text-sm font-black uppercase tracking-[0.18em] text-indigo-600">{feedback ? (feedback.result === 'correct' ? '拼对了' : feedback.result === 'revealed' ? '先记住答案' : '差一点，再看看') : '听发音，拼出这个词'}</p><button onClick={() => void playAudio()} aria-label="播放发音" className={`mx-auto mt-7 flex size-24 items-center justify-center rounded-full bg-indigo-600 text-white shadow-[0_14px_36px_rgba(79,70,229,0.28)] transition hover:scale-[1.03] ${isPlaying ? 'ring-8 ring-indigo-100' : ''}`}><Volume2 className="size-10" /></button><p className="mt-3 text-xs font-bold text-slate-400">点击播放 · 空格键重播 · {accent === 'us' ? '美音' : '英音'}</p></> : null}
 
           {mode === 'review' ? (
-            <div className="mt-10">
-              <h1 className="text-5xl font-black tracking-tight sm:text-6xl">{task.word}</h1>
-              {task.phonetic ? <p className="mt-3 text-lg text-slate-400">{task.phonetic}</p> : null}
-              {feedback || isReviewRevealed ? <MeaningCard partOfSpeech={feedback?.part_of_speech ?? task.part_of_speech} meaning={feedback?.meaning ?? task.meaning} example={feedback?.example ?? task.example} /> : <button type="button" onClick={() => setIsReviewRevealed(true)} className="mt-8 rounded-xl border border-indigo-200 bg-indigo-50 px-5 py-3 text-sm font-black text-indigo-700 transition hover:border-indigo-300">偷看中文释义</button>}
-            </div>
+            <RichVocabularyEntry
+              word={task.word ?? ''}
+              phonetic={task.phonetic}
+              phoneticUk={task.phonetic_uk}
+              phoneticUs={task.phonetic_us}
+              senses={task.dictionary_senses}
+              meanings={task.meanings}
+              examples={task.examples}
+              wordForms={task.word_forms}
+              tags={task.dictionary_tags}
+              activeAccent={accent}
+              onPlayAccent={(nextAccent) => void playAudio(nextAccent)}
+            />
           ) : feedback ? (
             <FeedbackPanel feedback={feedback} />
           ) : (
@@ -439,13 +470,13 @@ export function VocabularyPracticePage({
             </div>
           )}
 
-          <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
+          <div className={`${mode === 'review' ? 'mt-3 justify-end' : 'mt-10 justify-center'} flex flex-wrap items-center gap-3`}>
             <p className="text-xs font-semibold text-slate-400">来自 {task.sources[0]?.label ?? sourceLabel ?? '我的词汇本'}</p>
             {learnMoreTerm ? (
               <button
                 type="button"
                 onClick={() => setDetailTerm(learnMoreTerm)}
-                className="inline-flex items-center gap-1 rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-xs font-black text-indigo-700 transition hover:border-indigo-400"
+                className="inline-flex items-center gap-1 rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-xs font-black text-indigo-700 transition hover:border-indigo-400"
               >
                 了解更多 <BookOpen className="size-3.5" />
               </button>
@@ -455,12 +486,12 @@ export function VocabularyPracticePage({
       </main>
 
       <footer className="border-t border-slate-200 bg-white px-4 py-5 sm:px-8">
-        <div className="mx-auto flex max-w-5xl flex-col-reverse items-stretch justify-between gap-3 sm:flex-row sm:items-center">
+        <div className="mx-auto flex max-w-[1420px] flex-col-reverse items-stretch justify-between gap-3 sm:flex-row sm:items-center">
           <span className="hidden text-xs font-semibold text-slate-400 sm:block">{feedback ? (feedback.result === 'revealed' ? '可以隐藏答案再拼一次' : 'Enter 进入下一词') : mode === 'spelling' ? '填满后自动检查，也可按 Enter' : '先判断熟悉程度，再查看释义'}</span>
           {feedback ? (
             <div className="flex gap-3 sm:ml-auto">{mode === 'spelling' && (feedback.can_retry || feedback.result === 'revealed') ? <button onClick={retrySpelling} className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 px-5 py-3 text-sm font-black text-slate-700"><RotateCcw className="size-4" />{feedback.result === 'revealed' ? '隐藏答案，继续拼写' : '再拼一次'}</button> : null}<button onClick={() => void advance()} disabled={isBusy} className="flex-1 rounded-xl bg-indigo-600 px-7 py-3 text-sm font-black text-white disabled:opacity-60">下一个</button></div>
           ) : mode === 'review' ? (
-            <div className="grid grid-cols-4 gap-2 sm:ml-auto"><RatingButton label="忘了" onClick={() => void submitAttempt({ rating: 1 })} /><RatingButton label="模糊" onClick={() => void submitAttempt({ rating: 2 })} /><RatingButton label="记得" onClick={() => void submitAttempt({ rating: 3 })} /><RatingButton label="熟练" primary onClick={() => void submitAttempt({ rating: 4 })} /></div>
+            <div className="grid grid-cols-2 gap-2 sm:ml-auto sm:grid-cols-4"><RatingButton shortcut="1" label="忘记了" onClick={() => void submitAttempt({ rating: 1 })} /><RatingButton shortcut="2" label="有点模糊" onClick={() => void submitAttempt({ rating: 2 })} /><RatingButton shortcut="3" label="认识" primary onClick={() => void submitAttempt({ rating: 3 })} /><RatingButton shortcut="4" label="很熟" onClick={() => void submitAttempt({ rating: 4 })} /></div>
           ) : <button onClick={() => void submitAttempt()} disabled={isBusy} className="rounded-xl bg-indigo-600 px-8 py-3 text-sm font-black text-white disabled:opacity-60">{isBusy ? '正在检查…' : '检查拼写'}</button>}
         </div>
       </footer>
@@ -481,10 +512,6 @@ function FeedbackPanel({ feedback }: { feedback: AttemptFeedback }) {
   return <div className="relative mx-auto mt-9 max-w-2xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">{success ? <Celebration /> : null}<div className="flex flex-wrap justify-center gap-1 font-mono text-4xl font-black">{feedback.letter_diff.length ? feedback.letter_diff.map((letter, index) => <span key={index} className={letter.status === 'match' ? 'text-emerald-600' : 'text-orange-500'}>{letter.correct ?? letter.answer}</span>) : <span className={success ? 'text-emerald-600' : 'text-slate-950'}>{feedback.correct_answer}</span>}</div>{feedback.phonetic ? <p className="mt-3 text-slate-400">{feedback.phonetic}</p> : null}<p className={`mt-5 text-base font-black ${success ? 'text-emerald-700' : 'text-orange-700'}`}>{feedback.feedback_text}</p><div className="mt-4"><span className="rounded-md bg-slate-100 px-2 py-1 text-xs font-black text-slate-500">{feedback.part_of_speech}</span>{feedback.meaning ? <span className="ml-2 text-sm text-slate-600">{feedback.meaning}</span> : null}</div>{feedback.example ? <p className="mt-2 text-sm text-slate-400">{feedback.example}</p> : null}</div>
 }
 
-function MeaningCard({ partOfSpeech, meaning, example }: { partOfSpeech: string; meaning?: string | null; example?: string | null }) {
-  return <div className="mx-auto mt-8 max-w-xl rounded-2xl border border-slate-200 bg-white p-6 text-left shadow-sm"><div className="flex items-start gap-3"><span className="mt-0.5 shrink-0 rounded-md bg-indigo-50 px-2 py-1 text-xs font-black text-indigo-600">{partOfSpeech}</span><p className="text-lg font-bold text-slate-800">{meaning ?? '暂无中文释义'}</p></div>{example ? <p className="mt-4 border-t border-slate-100 pt-4 text-sm leading-6 text-slate-500">{example}</p> : null}</div>
-}
-
 function Celebration() {
   return <div className="pointer-events-none absolute inset-x-1/2 top-8" aria-hidden="true">{Array.from({ length: 8 }, (_, index) => <i key={index} className="vocab-confetti absolute block size-2 rounded-sm" style={{ '--confetti-index': index, '--confetti-x': `${(index - 3.5) * 18}px`, '--confetti-y': `${-38 - (index % 3) * 9}px`, '--confetti-hue': `${42 + index * 32}` } as React.CSSProperties} />)}</div>
 }
@@ -493,6 +520,6 @@ function SummaryMetric({ label, value }: { label: string; value: number }) {
   return <div className="rounded-xl bg-slate-50 px-3 py-4"><strong className="text-2xl font-black text-slate-950">{value}</strong><p className="mt-1 text-xs font-bold text-slate-500">{label}</p></div>
 }
 
-function RatingButton({ label, primary, onClick }: { label: string; primary?: boolean; onClick: () => void }) {
-  return <button onClick={onClick} className={`rounded-xl px-4 py-3 text-sm font-black ${primary ? 'bg-indigo-600 text-white' : 'border border-slate-200 bg-white text-slate-700 hover:border-indigo-300'}`}>{label}</button>
+function RatingButton({ label, shortcut, primary, onClick }: { label: string; shortcut: string; primary?: boolean; onClick: () => void }) {
+  return <button onClick={onClick} className={`min-w-28 rounded-xl border px-4 py-2.5 text-sm font-black transition ${primary ? 'border-amber-500 bg-amber-50 text-amber-800' : 'border-slate-200 bg-white text-slate-700 hover:border-indigo-300'}`}><span className="block">{label}</span><span className="mt-0.5 block text-[10px] font-semibold opacity-55">{shortcut} 键</span></button>
 }

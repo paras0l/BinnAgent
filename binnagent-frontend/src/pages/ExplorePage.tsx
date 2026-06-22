@@ -229,8 +229,6 @@ export function ExplorePage({
   const [query, setQuery] = useState('')
   const [isLoading, setIsLoading] = useState(true)
   const [isVocabularyDetailOpen, setIsVocabularyDetailOpen] = useState(false)
-  const [vocabularyDetailDraft, setVocabularyDetailDraft] = useState('')
-  const [vocabularyDetailTerm, setVocabularyDetailTerm] = useState<string | null>(null)
   const [isGrammarOpen, setIsGrammarOpen] = useState(false)
 
   const loadPreferences = useCallback(async () => {
@@ -346,7 +344,6 @@ export function ExplorePage({
     }
 
     if (feature.action === 'vocabulary-detail') {
-      setVocabularyDetailDraft('')
       setIsVocabularyDetailOpen(true)
       return
     }
@@ -366,23 +363,9 @@ export function ExplorePage({
     }
   }
 
-  const startVocabularyDetail = () => {
-    const term = vocabularyDetailDraft.trim()
-    if (!term) {
-      showToast('请输入要详解的单词或词组。', { variant: 'warning' })
-      return
-    }
-    setVocabularyDetailTerm(term)
-    setIsVocabularyDetailOpen(false)
-  }
-
-  if (vocabularyDetailTerm) {
+  if (isVocabularyDetailOpen) {
     return (
-      <VocabularyDetailPage
-        term={vocabularyDetailTerm}
-        onBack={() => setVocabularyDetailTerm(null)}
-        backLabel="返回探索"
-      />
+      <VocabularyDetailPage learner={learner} term="" onBack={() => setIsVocabularyDetailOpen(false)} backLabel="返回探索" />
     )
   }
 
@@ -468,52 +451,6 @@ export function ExplorePage({
         </div>
       </section>
 
-      {isVocabularyDetailOpen ? (
-        <VocabularyDetailStartDialog
-          value={vocabularyDetailDraft}
-          onChange={setVocabularyDetailDraft}
-          onClose={() => setIsVocabularyDetailOpen(false)}
-          onStart={startVocabularyDetail}
-        />
-      ) : null}
-    </div>
-  )
-}
-
-function VocabularyDetailStartDialog({
-  value,
-  onChange,
-  onClose,
-  onStart,
-}: {
-  value: string
-  onChange: (value: string) => void
-  onClose: () => void
-  onStart: () => void
-}) {
-  return (
-    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/45 p-4" role="presentation">
-      <section className="w-full max-w-md rounded-2xl border bg-card p-6 shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="vocabulary-detail-title">
-        <p className="text-sm font-semibold text-primary">词汇详解</p>
-        <h2 id="vocabulary-detail-title" className="mt-1 text-xl font-bold text-foreground">想深入学习哪个词？</h2>
-        <p className="mt-2 text-sm text-muted-foreground">可以输入单词或词组，例如 afternoon、look after。</p>
-        <input
-          autoFocus
-          value={value}
-          onChange={(event) => onChange(event.target.value)}
-          onKeyDown={(event) => {
-            if (event.key === 'Enter') onStart()
-            if (event.key === 'Escape') onClose()
-          }}
-          className="mt-5 w-full rounded-xl border bg-background px-4 py-3 text-base outline-none focus:border-primary"
-          placeholder="输入单词或词组"
-          aria-label="要详解的单词或词组"
-        />
-        <div className="mt-5 flex justify-end gap-3">
-          <button type="button" onClick={onClose} className="rounded-lg border px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-muted">取消</button>
-          <button type="button" onClick={onStart} className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90">开始详解</button>
-        </div>
-      </section>
     </div>
   )
 }

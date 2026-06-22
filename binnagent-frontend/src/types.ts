@@ -37,6 +37,7 @@ export interface KnowledgePointSummary {
   type: KnowledgeType
   summary: string
   source_page: string
+  unit_order?: number | null
   mastery: number
 }
 

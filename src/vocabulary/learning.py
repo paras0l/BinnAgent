@@ -15,6 +15,7 @@ from src.models.vocabulary import (
     VocabularyItemSource,
     VocabularyPracticeSession,
 )
+from src.tools.free_dictionary import lookup_free_dictionary_batch
 
 
 def canonical_vocabulary_key(value: str) -> str:
@@ -29,6 +30,16 @@ def source_label(source: KnowledgeSource, node: CurriculumNode) -> str:
     )
     unit = node.title.replace("Starter Unit", "SU").replace("Unit", "U").replace(" ", "")
     return f"{volume} · {unit}"
+
+
+def _entry_kind(expression: str) -> str:
+    if len(expression) <= 8 and expression.replace(".", "").isupper():
+        return "abbreviation"
+    if " " in expression or "/" in expression:
+        return "phrase"
+    if expression[:1].isupper():
+        return "proper_noun"
+    return "word"
 
 
 @dataclass(frozen=True)
@@ -55,7 +66,7 @@ async def enroll_unit_vocabulary(
             KnowledgePoint.type == "vocabulary",
             KnowledgePoint.status == "published",
         )
-        .order_by(KnowledgePoint.created_at.asc())
+        .order_by(KnowledgePoint.content["unit_order"].as_integer().asc())
     )
     points = [
         point
@@ -79,33 +90,43 @@ async def enroll_unit_vocabulary(
     items_by_key = {
         item.canonical_key: item for item in (item_result.scalars().all() if item_result else [])
     }
+    lookup_words = [
+        point.title
+        for point, key in zip(points, keys, strict=True)
+        if key not in items_by_key or items_by_key[key].dictionary_enriched_at is None
+    ]
+    dictionary_entries = await lookup_free_dictionary_batch(lookup_words) if lookup_words else {}
     newly_added = 0
     already_known = 0
     for point, key in zip(points, keys, strict=True):
         item = items_by_key.get(key)
-        content = point.content or {}
+        dictionary_entry = dictionary_entries.get(point.title)
         if item is None:
-            definitions = content.get("definitions_zh") or [point.summary]
-            meanings = [
-                {
-                    "part_of_speech": content.get("part_of_speech") or "单词",
-                    "definition_zh": definition,
-                }
-                for definition in definitions
-            ]
-            examples = content.get("examples") or []
             item = VocabularyItem(
                 learner_id=learner_id,
                 word=point.title,
                 canonical_key=key,
-                entry_kind=content.get("entry_kind") or "word",
+                entry_kind=_entry_kind(point.title),
                 preferred_accent="auto",
-                phonetic=content.get("phonetic"),
+                phonetic=dictionary_entry.phonetic if dictionary_entry else None,
+                phonetic_uk=dictionary_entry.phonetic_uk if dictionary_entry else None,
+                phonetic_us=dictionary_entry.phonetic_us if dictionary_entry else None,
                 level="grade-7",
-                meanings=meanings,
+                meanings=dictionary_entry.meanings if dictionary_entry else [],
+                dictionary_senses=(
+                    dictionary_entry.dictionary_senses if dictionary_entry else []
+                ),
+                word_forms=dictionary_entry.word_forms if dictionary_entry else {},
+                dictionary_tags=dictionary_entry.dictionary_tags if dictionary_entry else [],
                 collocations=[],
-                examples=examples,
+                examples=dictionary_entry.examples if dictionary_entry else [],
                 source_ref=f"knowledge:{point.id}",
+                dictionary_provider=(dictionary_entry.provider if dictionary_entry else None),
+                dictionary_enriched_at=(
+                    None
+                    if dictionary_entry and dictionary_entry.provider.endswith("_error")
+                    else datetime.now(timezone.utc)
+                ),
                 status="learning",
                 confidence=0.0,
                 review_count=0,
@@ -116,10 +137,21 @@ async def enroll_unit_vocabulary(
             newly_added += 1
         else:
             already_known += 1
-            if not item.phonetic and content.get("phonetic"):
-                item.phonetic = content["phonetic"]
-            if not item.meanings:
-                item.meanings = content.get("definitions_zh") or [point.summary]
+            if dictionary_entry:
+                item.phonetic = dictionary_entry.phonetic
+                item.phonetic_uk = dictionary_entry.phonetic_uk
+                item.phonetic_us = dictionary_entry.phonetic_us
+                item.meanings = dictionary_entry.meanings
+                item.dictionary_senses = dictionary_entry.dictionary_senses
+                item.word_forms = dictionary_entry.word_forms
+                item.dictionary_tags = dictionary_entry.dictionary_tags
+                item.examples = dictionary_entry.examples
+                item.dictionary_provider = dictionary_entry.provider
+                item.dictionary_enriched_at = (
+                    None
+                    if dictionary_entry.provider.endswith("_error")
+                    else datetime.now(timezone.utc)
+                )
     await db.flush()
 
     item_ids = [items_by_key[key].id for key in keys]
@@ -159,7 +191,12 @@ async def enroll_unit_vocabulary(
                     "book": source.title,
                     "unit": node.title,
                     "source_page": point.source_page,
-                    "pdf_page": (point.content or {}).get("evidence_pdf_page"),
+                    "unit_order": (point.content or {}).get("unit_order"),
+                    "dictionary_provider": (
+                        dictionary_entries.get(point.title).provider
+                        if dictionary_entries.get(point.title)
+                        else None
+                    ),
                 },
                 active=True,
             )

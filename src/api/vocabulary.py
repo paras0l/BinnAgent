@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field, field_validator
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -11,6 +11,7 @@ from src.api.deps import get_db_session
 from src.memory.vocabulary_store import VocabularyStore
 from src.models.learner import Learner
 from src.models.vocabulary import VocabularyItem, VocabularyItemSource
+from src.vocabulary.learning import canonical_vocabulary_key
 
 router = APIRouter(prefix="/api/learners/{learner_id}/vocabulary", tags=["vocabulary"])
 
@@ -55,6 +56,22 @@ class VocabularyListItemResponse(BaseModel):
     meaning: str | None = None
     last_reviewed_at: str | None = None
     next_review_at: str | None = None
+    sources: list[dict[str, Any]] = Field(default_factory=list)
+
+
+class VocabularyDetailResponse(BaseModel):
+    id: uuid.UUID
+    word: str
+    phonetic: str | None = None
+    phonetic_uk: str | None = None
+    phonetic_us: str | None = None
+    entry_kind: str
+    meanings: list[dict[str, Any]] = Field(default_factory=list)
+    dictionary_senses: list[dict[str, Any]] = Field(default_factory=list)
+    word_forms: dict[str, list[str]] = Field(default_factory=dict)
+    dictionary_tags: list[str] = Field(default_factory=list)
+    examples: list[Any] = Field(default_factory=list)
+    dictionary_provider: str | None = None
     sources: list[dict[str, Any]] = Field(default_factory=list)
 
 
@@ -166,6 +183,57 @@ async def list_vocabulary(
         )
         for item in items
     ]
+
+
+@router.get("/detail", response_model=VocabularyDetailResponse)
+async def vocabulary_detail(
+    learner_id: uuid.UUID,
+    term: str = Query(min_length=1, max_length=255),
+    db: AsyncSession = Depends(get_db_session),
+) -> VocabularyDetailResponse:
+    await _ensure_learner_exists(db, learner_id)
+    canonical = canonical_vocabulary_key(term)
+    result = await db.execute(
+        select(VocabularyItem).where(
+            VocabularyItem.learner_id == learner_id,
+            VocabularyItem.canonical_key == canonical,
+        )
+    )
+    item = result.scalar_one_or_none()
+    if item is None:
+        raise HTTPException(status_code=404, detail="Vocabulary item not found")
+    source_result = await db.execute(
+        select(VocabularyItemSource).where(
+            VocabularyItemSource.learner_id == learner_id,
+            VocabularyItemSource.vocabulary_item_id == item.id,
+            VocabularyItemSource.active.is_(True),
+        )
+    )
+    sources = [
+        {
+            "type": source.source_type,
+            "label": source.display_label,
+            "context": source.context_snapshot or {},
+        }
+        for source in source_result.scalars().all()
+    ]
+    return VocabularyDetailResponse(
+        id=item.id,
+        word=item.word,
+        phonetic=item.phonetic,
+        phonetic_uk=item.phonetic_uk,
+        phonetic_us=item.phonetic_us,
+        entry_kind=item.entry_kind,
+        meanings=item.meanings if isinstance(item.meanings, list) else [],
+        dictionary_senses=(
+            item.dictionary_senses if isinstance(item.dictionary_senses, list) else []
+        ),
+        word_forms=item.word_forms if isinstance(item.word_forms, dict) else {},
+        dictionary_tags=item.dictionary_tags if isinstance(item.dictionary_tags, list) else [],
+        examples=item.examples if isinstance(item.examples, list) else [],
+        dictionary_provider=item.dictionary_provider,
+        sources=sources,
+    )
 
 
 @router.post("/add", response_model=WordResponse)

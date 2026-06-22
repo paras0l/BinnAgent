@@ -32,13 +32,7 @@ class ParsedVocabularyEntry:
     unit_title: str
     expression: str
     canonical_expression: str
-    phonetic: str | None
-    meaning: str
-    lesson_page: str
-    pdf_page: int
-    entry_kind: str
-    part_of_speech: str | None
-    confidence: float
+    unit_order: int
 
 
 @dataclass(frozen=True)
@@ -411,29 +405,15 @@ def _canonical_expression(value: str) -> str:
     return re.sub(r"\s+", " ", value).strip(" .-/")
 
 
-def _entry_kind(expression: str) -> str:
-    if len(expression) <= 8 and expression.replace(".", "").isupper():
-        return "abbreviation"
-    if " " in expression or "/" in expression:
-        return "phrase"
-    if expression[:1].isupper():
-        return "proper_noun"
-    return "word"
-
-
 def _parse_vocabulary_chunk(
     unit_title: str,
-    pdf_page: int,
     chunk: str,
-    lesson_page: str,
+    unit_order: int,
 ) -> ParsedVocabularyEntry | None:
     normalized = " ".join(chunk.split())
     phonetic_match = PHONETIC_PATTERN.match(normalized)
-    phonetic: str | None = None
     if phonetic_match:
         expression = _normalize_expression(phonetic_match.group("expression"))
-        phonetic = phonetic_match.group("phonetic").strip()
-        rest = phonetic_match.group("rest").strip()
     else:
         pos_match = PART_OF_SPEECH_PATTERN.search(normalized)
         cjk_match = re.search(r"[\u3400-\u9fff]", normalized)
@@ -441,25 +421,14 @@ def _parse_vocabulary_chunk(
             pos_match.start() if pos_match else cjk_match.start() if cjk_match else len(normalized)
         )
         expression = _normalize_expression(normalized[:split_at])
-        rest = normalized[split_at:].strip()
     canonical = _canonical_expression(expression)
     if not canonical or not re.search(r"[a-z]", canonical) or len(expression) > 100:
         return None
-    part_of_speech_match = PART_OF_SPEECH_PATTERN.search(rest)
-    part_of_speech = part_of_speech_match.group(0) if part_of_speech_match else None
-    meaning = PART_OF_SPEECH_PATTERN.sub("", rest, count=1).strip(" ;；")
-    confidence = 0.98 if phonetic and meaning else 0.92 if meaning else 0.72
     return ParsedVocabularyEntry(
         unit_title=unit_title,
         expression=expression,
         canonical_expression=canonical,
-        phonetic=phonetic,
-        meaning=meaning or "教材词表收录词汇",
-        lesson_page=lesson_page,
-        pdf_page=pdf_page,
-        entry_kind=_entry_kind(expression),
-        part_of_speech=part_of_speech,
-        confidence=confidence,
+        unit_order=unit_order,
     )
 
 
@@ -469,6 +438,7 @@ def _parse_unit_vocabulary(reader: PdfReader) -> tuple[ParsedVocabularyEntry, ..
     current_unit: str | None = None
     buffer: list[str] = []
     entries: list[ParsedVocabularyEntry] = []
+    unit_orders: dict[str, int] = {}
     ignored_lines = {"Page PB", VOCABULARY_HEADING, "9594", "9796", "9998", "101100", "103102"}
 
     for pdf_page, page in enumerate(reader.pages, start=1):
@@ -495,6 +465,7 @@ def _parse_unit_vocabulary(reader: PdfReader) -> tuple[ParsedVocabularyEntry, ..
             if unit_match:
                 buffer.clear()
                 current_unit = _normalize_unit_title(line)
+                unit_orders.setdefault(current_unit, 0)
                 continue
             if current_unit is None:
                 continue
@@ -503,14 +474,13 @@ def _parse_unit_vocabulary(reader: PdfReader) -> tuple[ParsedVocabularyEntry, ..
             page_ref_match = VOCABULARY_PAGE_REF_PATTERN.search(combined)
             if not page_ref_match:
                 continue
+            next_order = unit_orders[current_unit] + 1
             entry = _parse_vocabulary_chunk(
-                current_unit,
-                pdf_page,
-                combined[: page_ref_match.start()],
-                page_ref_match.group(1),
+                current_unit, combined[: page_ref_match.start()], next_order
             )
             if entry is not None:
                 entries.append(entry)
+                unit_orders[current_unit] = next_order
             buffer.clear()
     return tuple(entries)
 
@@ -828,23 +798,16 @@ async def process_uploaded_textbook(db: AsyncSession, source: KnowledgeSource) -
                 canonical_key=f"vocabulary.{slug}.{str(source.id)[:8]}.{node.ordinal}",
                 type="vocabulary",
                 title=entry.expression,
-                summary=entry.meaning,
-                source_page=f"P.{entry.lesson_page}",
+                summary=f"{entry.unit_title} 单元词表第 {entry.unit_order} 个词条。",
+                source_page="Words and Expressions",
                 difficulty=0.2,
                 status="draft",
                 content={
-                    "origin": "unit_wordlist_parser",
+                    "origin": "unit_wordlist_sequence_parser",
                     "role": "unit_wordlist",
                     "lemma": entry.canonical_expression,
-                    "entry_kind": entry.entry_kind,
-                    "part_of_speech": entry.part_of_speech,
-                    "phonetic": entry.phonetic,
-                    "definitions_zh": [entry.meaning],
-                    "examples": [],
-                    "lesson_printed_page": entry.lesson_page,
-                    "evidence_pdf_page": entry.pdf_page,
-                    "parser_confidence": entry.confidence,
-                    "requires_review": entry.confidence < 0.85,
+                    "unit_order": entry.unit_order,
+                    "dictionary_status": "pending",
                 },
             )
         )
@@ -859,6 +822,8 @@ async def process_uploaded_textbook(db: AsyncSession, source: KnowledgeSource) -
         "stage": "validated",
         "text_char_count": parsed.text_char_count,
         "parser": "pypdf+grade7-appendices-v3",
+        "vocabulary_parser": "unit-sequence-v1",
+        "dictionary_enrichment": "free_dictionary_api+mymemory",
         "vocabulary_entry_count": len(vocabulary_entries),
         "notes_section_count": len(notes),
         "pronunciation_section_count": len(pronunciation),
