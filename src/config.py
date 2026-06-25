@@ -20,6 +20,14 @@ class Settings(BaseSettings):
     redis_url: str = "redis://localhost:6379/0"
     knowledge_upload_dir: str = "var/knowledge/uploads"
     knowledge_max_upload_bytes: int = 52_428_800
+    knowledge_chunk_size: int = 900
+    knowledge_chunk_overlap: int = 150
+    knowledge_embedding_dimensions: int = 768
+    langfuse_enabled: bool = False
+    langfuse_public_key: str | None = None
+    langfuse_secret_key: str | None = None
+    langfuse_base_url: str = "http://localhost:3100"
+    langfuse_environment: str = "development"
     debug: bool = False
 
 

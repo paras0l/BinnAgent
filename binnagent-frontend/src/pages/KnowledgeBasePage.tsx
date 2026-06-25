@@ -2,6 +2,7 @@ import { AlertCircle, ChevronLeft, LoaderCircle, Search } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { CurriculumRail } from '@/components/knowledge/CurriculumRail'
 import { DailyLessonCard } from '@/components/knowledge/DailyLessonCard'
+import { ExerciseSessionDialog } from '@/components/knowledge/ExerciseSessionDialog'
 import { KnowledgeContextPanel } from '@/components/knowledge/KnowledgeContextPanel'
 import { KnowledgeList, type KnowledgeFilter } from '@/components/knowledge/KnowledgeList'
 import { LessonSessionDialog } from '@/components/knowledge/LessonSessionDialog'
@@ -9,6 +10,8 @@ import { UploadTextbookDialog } from '@/components/knowledge/UploadTextbookDialo
 import { useToast } from '@/hooks/useToast'
 import { GrammarPage } from '@/pages/GrammarPage'
 import type {
+  ExerciseAnswerResult,
+  ExerciseSession,
   KnowledgeAttemptResult,
   KnowledgeBaseOverview,
   KnowledgeLessonCompleteResult,
@@ -38,6 +41,8 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice }
   const [isStartingLesson, setIsStartingLesson] = useState(false)
   const [unitVocabulary, setUnitVocabulary] = useState<UnitVocabularySummary | null>(null)
   const [grammarTopic, setGrammarTopic] = useState<string | null>(null)
+  const [exerciseSession, setExerciseSession] = useState<ExerciseSession | null>(null)
+  const [isStartingExercise, setIsStartingExercise] = useState(false)
 
   const loadOverview = useCallback(async (nodeId?: string | null) => {
     setIsLoading(true)
@@ -167,6 +172,37 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice }
     }
   }
 
+  const handleStartExercise = async () => {
+    setIsStartingExercise(true)
+    try {
+      const response = await fetch(
+        `/api/learners/${learner.id}/knowledge-base/units/${overview?.current_unit.id}/exercises`,
+        { method: 'POST' },
+      )
+      if (!response.ok) throw new Error('本单元练习暂时无法开始。')
+      const session = await response.json() as ExerciseSession
+      if (!session.questions.length) throw new Error('本单元还没有可用练习题。')
+      setExerciseSession(session)
+    } catch (exerciseError) {
+      showToast(exerciseError instanceof Error ? exerciseError.message : '本单元练习暂时无法开始。', { variant: 'error' })
+    } finally {
+      setIsStartingExercise(false)
+    }
+  }
+
+  const handleExerciseAnswer = async (questionId: string, answer: string) => {
+    const response = await fetch(
+      `/api/learners/${learner.id}/knowledge-base/exercises/${questionId}/attempts`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ answer }),
+      },
+    )
+    if (!response.ok) throw new Error('答案提交失败，请重试。')
+    return await response.json() as ExerciseAnswerResult
+  }
+
   if (isLoading && !overview) {
     return (
       <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center bg-white text-sm text-slate-500">
@@ -253,9 +289,13 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice }
               <span>待复习 {activeUnitVocabulary?.due ?? '—'}</span>
               <span>已掌握 {activeUnitVocabulary?.mastered ?? '—'}</span>
             </div>
-            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            <div className="mt-3 grid gap-3 sm:grid-cols-3">
               <button type="button" onClick={() => onStartVocabularyPractice('review', overview.current_unit.id, `七上 · ${overview.current_unit.title}`)} className="rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm font-black text-indigo-700 transition hover:border-indigo-300">学习本单元词汇</button>
               <button type="button" onClick={() => onStartVocabularyPractice('spelling', overview.current_unit.id, `七上 · ${overview.current_unit.title}`)} className="rounded-xl bg-indigo-600 px-4 py-3 text-sm font-black text-white transition hover:bg-indigo-700">练习本单元拼写</button>
+              <button type="button" disabled={isStartingExercise} onClick={() => void handleStartExercise()} className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-black text-white transition hover:bg-emerald-700 disabled:opacity-60">
+                {isStartingExercise ? <LoaderCircle className="size-4 animate-spin" /> : null}
+                教材练习题
+              </button>
             </div>
           </div>
 
@@ -279,6 +319,12 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice }
         }}
         onAttempt={handleAttempt}
         onComplete={handleCompleteLesson}
+      />
+      <ExerciseSessionDialog
+        key={exerciseSession?.curriculum_node_id ?? 'closed-exercise'}
+        session={exerciseSession}
+        onClose={() => setExerciseSession(null)}
+        onSubmit={handleExerciseAnswer}
       />
       </div>
     </div>

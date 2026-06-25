@@ -52,6 +52,8 @@ class TestStartSession:
         mock_session.add.assert_called_once()
         assert mock_session.commit.await_count >= 1
         mock_ainvoke.assert_awaited_once()
+        graph_config = mock_ainvoke.await_args.kwargs["config"]
+        assert graph_config["configurable"]["thread_id"]
 
     @pytest.mark.asyncio
     @patch("src.api.sessions.daily_lesson_graph.ainvoke")

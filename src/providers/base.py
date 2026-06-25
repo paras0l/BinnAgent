@@ -31,10 +31,27 @@ class ChatStreamChunk:
     finish_reason: str | None = None
 
 
+@dataclass
+class EmbedRequest:
+    texts: list[str]
+    preferred_provider: str = "ollama"
+    preferred_model: str | None = None
+
+
+@dataclass
+class EmbedResponse:
+    provider: str
+    model: str
+    embeddings: list[list[float]]
+    latency_ms: int = 0
+
+
 @runtime_checkable
 class ModelClient(Protocol):
     async def chat(self, request: ChatRequest) -> ChatResponse: ...
 
     async def stream_chat(self, request: ChatRequest) -> AsyncIterator[ChatStreamChunk]: ...
+
+    async def embed(self, request: EmbedRequest) -> EmbedResponse: ...
 
     async def health_check(self) -> dict[str, Any]: ...

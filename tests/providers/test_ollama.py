@@ -3,7 +3,7 @@ from unittest.mock import AsyncMock, MagicMock
 import httpx
 import pytest
 
-from src.providers.base import ChatRequest
+from src.providers.base import ChatRequest, EmbedRequest
 from src.providers.ollama import OllamaClient
 
 
@@ -77,6 +77,25 @@ async def test_chat_returns_response(ollama_client: OllamaClient) -> None:
     assert call_kwargs["json"]["model"] == "test-model:latest"
     assert call_kwargs["json"]["messages"] == [{"role": "user", "content": "Say hello"}]
     assert call_kwargs["json"]["stream"] is False
+
+
+@pytest.mark.asyncio
+async def test_embed_returns_batch_vectors(ollama_client: OllamaClient) -> None:
+    mock_client = MagicMock(spec=httpx.AsyncClient)
+    mock_client.post = AsyncMock(
+        return_value=_mock_response(json_data={"embeddings": [[0.1, 0.2], [0.3, 0.4]]})
+    )
+    ollama_client._client = mock_client
+
+    response = await ollama_client.embed(EmbedRequest(texts=["first", "second"]))
+
+    assert response.model == "test-embedding:latest"
+    assert response.embeddings == [[0.1, 0.2], [0.3, 0.4]]
+    assert mock_client.post.call_args.args == ("/api/embed",)
+    assert mock_client.post.call_args.kwargs["json"] == {
+        "model": "test-embedding:latest",
+        "input": ["first", "second"],
+    }
 
 
 @pytest.mark.asyncio

@@ -17,6 +17,7 @@ from src.api.sessions import router as sessions_router
 from src.api.vocabulary import router as vocabulary_router
 from src.api.vocabulary_learning import router as vocabulary_learning_router
 from src.cache import close_redis
+from src.observability import shutdown_observability
 from src.providers.router import router as model_router
 
 
@@ -27,6 +28,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     finally:
         await close_redis()
         await model_router.close()
+        shutdown_observability()
 
 
 app = FastAPI(

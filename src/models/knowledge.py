@@ -2,6 +2,7 @@ import uuid
 from datetime import datetime
 from typing import Optional
 
+from pgvector.sqlalchemy import Vector
 from sqlalchemy import (
     DateTime,
     Float,
@@ -101,6 +102,94 @@ class KnowledgePoint(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     difficulty: Mapped[float] = mapped_column(Float, nullable=False, default=0.2)
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="published")
     content: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True, default=dict)
+
+
+class KnowledgeChunk(UUIDPrimaryKeyMixin, TimestampMixin, Base):
+    __tablename__ = "knowledge_chunks"
+    __table_args__ = (
+        UniqueConstraint("source_id", "chunk_index", name="uq_knowledge_chunk_source_index"),
+    )
+
+    source_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("knowledge_sources.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    curriculum_node_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("curriculum_nodes.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    page_number: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
+    chunk_index: Mapped[int] = mapped_column(Integer, nullable=False)
+    content: Mapped[str] = mapped_column(Text, nullable=False)
+    char_count: Mapped[int] = mapped_column(Integer, nullable=False)
+    embedding_model: Mapped[Optional[str]] = mapped_column(String(150), nullable=True)
+    embedding: Mapped[Optional[list[float]]] = mapped_column(Vector(768), nullable=True)
+    metadata_: Mapped[Optional[dict]] = mapped_column(
+        "metadata", JSONB, nullable=True, default=dict
+    )
+
+
+class ExerciseQuestion(UUIDPrimaryKeyMixin, TimestampMixin, Base):
+    __tablename__ = "exercise_questions"
+
+    source_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("knowledge_sources.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    curriculum_node_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("curriculum_nodes.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    knowledge_point_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("knowledge_points.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    question_type: Mapped[str] = mapped_column(String(30), nullable=False)
+    stem: Mapped[str] = mapped_column(Text, nullable=False)
+    options: Mapped[Optional[list[str]]] = mapped_column(JSONB, nullable=True, default=list)
+    answer: Mapped[str] = mapped_column(Text, nullable=False)
+    explanation: Mapped[str] = mapped_column(Text, nullable=False)
+    difficulty: Mapped[float] = mapped_column(Float, nullable=False, default=0.3)
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default="published")
+    metadata_: Mapped[Optional[dict]] = mapped_column(
+        "metadata", JSONB, nullable=True, default=dict
+    )
+
+
+class ExerciseAttempt(UUIDPrimaryKeyMixin, TimestampMixin, Base):
+    __tablename__ = "exercise_attempts"
+
+    learner_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("learners.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    question_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("exercise_questions.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    session_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("learning_sessions.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    submitted_answer: Mapped[str] = mapped_column(Text, nullable=False)
+    correct: Mapped[bool] = mapped_column(nullable=False)
+    response_time_ms: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
 
 
 class LearnerKnowledgeState(UUIDPrimaryKeyMixin, TimestampMixin, Base):

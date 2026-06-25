@@ -135,7 +135,8 @@
 
 ## 5. Tracing
 
-建议接入 LangSmith 或 OpenTelemetry。
+当前实现接入 Langfuse Python SDK v4，并保留本地业务事件表。未配置密钥时 tracing
+自动关闭，不影响 Ollama、本地教材解析和练习流程。
 
 每次 run 记录：
 
@@ -148,6 +149,17 @@
 - tool calls。
 - memory reads/writes。
 - feedback result。
+
+已覆盖的 observation：
+
+- `ollama-chat` / `ollama-chat-stream`
+- `ollama-embed`
+- `textbook-rag-index`
+- `textbook-rag-retrieval`
+- `daily-lesson-graph`，并通过 Langfuse `CallbackHandler` 展开 LangGraph 节点调用。
+
+Graph trace 传播 `learner_id`、学习 `session_id` 和 LangGraph `thread_id`，并带有
+`langgraph`、`ollama`、`local-model` 标签。
 
 ## 6. 事件埋点
 

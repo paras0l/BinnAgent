@@ -40,6 +40,11 @@ services:
       BINN_OLLAMA_EMBEDDING_MODEL: ${BINN_OLLAMA_EMBEDDING_MODEL:-nomic-embed-text:latest}
       BINN_REDIS_URL: redis://redis:6379/0
       BINN_KNOWLEDGE_UPLOAD_DIR: /app/var/knowledge/uploads
+      BINN_LANGFUSE_ENABLED: ${BINN_LANGFUSE_ENABLED:-false}
+      BINN_LANGFUSE_PUBLIC_KEY: ${BINN_LANGFUSE_PUBLIC_KEY:-}
+      BINN_LANGFUSE_SECRET_KEY: ${BINN_LANGFUSE_SECRET_KEY:-}
+      BINN_LANGFUSE_BASE_URL: ${BINN_LANGFUSE_DOCKER_BASE_URL:-http://host.docker.internal:3100}
+      BINN_LANGFUSE_ENVIRONMENT: ${BINN_LANGFUSE_ENVIRONMENT:-development}
     volumes:
       - knowledge_data:/app/var/knowledge
     depends_on:

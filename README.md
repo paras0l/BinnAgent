@@ -28,6 +28,17 @@ ollama pull nomic-embed-text:latest
 
 访问 http://localhost:8000/docs 查看 API 文档。
 
+### 本地 Langfuse（按需开启）
+
+```bash
+./scripts/langfuse.sh setup
+./scripts/langfuse.sh start
+./scripts/langfuse.sh credentials
+```
+
+Langfuse UI 使用 http://localhost:3100，避免与前端 3000 端口冲突。M2/16GB 同时运行
+本地 Ollama 与 Langfuse 时内存较紧，压力测试前可执行 `./scripts/langfuse.sh stop`。
+
 ### 本地开发
 
 ```bash
@@ -73,6 +84,7 @@ npm run dev
 - [09. Model Provider & Ollama](docs/architecture/09-model-provider-and-ollama.md)
 - [10. Knowledge Base](docs/architecture/10-knowledge-base.md)
 - [11. Vocabulary Learning](docs/architecture/11-vocabulary-learning.md)
+- [12. Textbook RAG, Langfuse & Exercises](docs/architecture/12-rag-observability-exercises.md)
 
 ### 前端文档
 

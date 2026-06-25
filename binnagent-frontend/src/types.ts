@@ -126,6 +126,25 @@ export interface KnowledgeLessonCompleteResult {
   all_completed: boolean
 }
 
+export interface ExerciseSession {
+  curriculum_node_id: string
+  title: string
+  questions: Array<{
+    id: string
+    question_type: 'multiple_choice'
+    stem: string
+    options: string[]
+    difficulty: number
+  }>
+}
+
+export interface ExerciseAnswerResult {
+  question_id: string
+  correct: boolean
+  answer: string
+  explanation: string
+}
+
 export interface UnitVocabularySummary {
   unit_id: string
   total: number

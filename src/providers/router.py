@@ -1,6 +1,12 @@
 from typing import Any, AsyncIterator
 
-from src.providers.base import ChatRequest, ChatResponse, ChatStreamChunk
+from src.providers.base import (
+    ChatRequest,
+    ChatResponse,
+    ChatStreamChunk,
+    EmbedRequest,
+    EmbedResponse,
+)
 from src.providers.ollama import OllamaClient
 
 
@@ -22,6 +28,10 @@ class ModelRouter:
         client = self._get_or_create_client(request.preferred_provider)
         async for chunk in client.stream_chat(request):
             yield chunk
+
+    async def embed(self, request: EmbedRequest) -> EmbedResponse:
+        client = self._get_or_create_client(request.preferred_provider)
+        return await client.embed(request)
 
     def _get_or_create_client(self, provider: str) -> OllamaClient:
         client = self._clients.get(provider)

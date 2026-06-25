@@ -8,7 +8,10 @@ from pypdf import PdfReader
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.models.knowledge import CurriculumNode, KnowledgePoint, KnowledgeSource
+from src.config import settings
+from src.knowledge.rag import build_chunks
+from src.models.knowledge import CurriculumNode, KnowledgeChunk, KnowledgePoint, KnowledgeSource
+from src.providers.router import router as model_router
 
 UNIT_PATTERN = re.compile(r"(?im)^\s*((?:Starter\s+)?Unit\s+\d+)\s*$\s*^\s*([^\n]{3,80})\s*$")
 
@@ -744,6 +747,7 @@ async def process_uploaded_textbook(db: AsyncSession, source: KnowledgeSource) -
     pronunciation = (
         await asyncio.to_thread(lambda: _parse_pronunciation(reader)) if is_grade7_upper else ()
     )
+    page_texts = [page.extract_text() or "" for page in reader.pages]
     used_toc_fallback = False
     if not parsed.units and "七年级下册" in source.filename:
         parsed = ParsedTextbook(
@@ -754,6 +758,7 @@ async def process_uploaded_textbook(db: AsyncSession, source: KnowledgeSource) -
         used_toc_fallback = True
 
     await db.execute(delete(KnowledgePoint).where(KnowledgePoint.source_id == source.id))
+    await db.execute(delete(KnowledgeChunk).where(KnowledgeChunk.source_id == source.id))
     await db.execute(delete(CurriculumNode).where(CurriculumNode.source_id == source.id))
 
     nodes: list[CurriculumNode] = []
@@ -813,6 +818,7 @@ async def process_uploaded_textbook(db: AsyncSession, source: KnowledgeSource) -
         )
     for point in knowledge_points:
         db.add(point)
+    chunk_count = await build_chunks(db, source, page_texts, nodes, model_router)
 
     source.page_count = parsed.page_count
     source.unit_count = len(nodes)
@@ -828,6 +834,8 @@ async def process_uploaded_textbook(db: AsyncSession, source: KnowledgeSource) -
         "notes_section_count": len(notes),
         "pronunciation_section_count": len(pronunciation),
         "grammar_reference_count": len(GRADE7_UPPER_GRAMMAR_TOPICS) if is_grade7_upper else 0,
+        "rag_chunk_count": chunk_count,
+        "rag_embedding_model": settings.ollama_embedding_model,
         "toc_fallback": used_toc_fallback,
         "warning": None if nodes else "未识别到目录结构，需要人工校对",
     }

@@ -10,6 +10,8 @@ from src.config import settings
 from src.main import app
 from src.models.knowledge import (
     CurriculumNode,
+    ExerciseAttempt,
+    ExerciseQuestion,
     KnowledgeLearningEvent,
     KnowledgePoint,
     KnowledgeSource,
@@ -300,3 +302,51 @@ def test_knowledge_migration_creates_source_graph_and_memory_tables() -> None:
     ]:
         assert table in migration
     assert "英语 七年级上册" in migration
+
+
+@pytest.mark.asyncio
+async def test_start_unit_exercises_generates_questions(client, knowledge_session):
+    learner_id = uuid.uuid4()
+    source = _source()
+    node = _node(source.id)
+    point = _point(source.id, node.id)
+    knowledge_session.execute = AsyncMock(
+        side_effect=[_one(learner_id), _one(node), _many([]), _many([point])]
+    )
+
+    response = await client.post(
+        f"/api/learners/{learner_id}/knowledge-base/units/{node.id}/exercises"
+    )
+
+    assert response.status_code == 200
+    assert point.title in response.json()["questions"][0]["options"]
+    assert any(isinstance(item, ExerciseQuestion) for item in knowledge_session.added_objects)
+
+
+@pytest.mark.asyncio
+async def test_submit_exercise_attempt_records_result(client, knowledge_session):
+    learner_id = uuid.uuid4()
+    source = _source()
+    node = _node(source.id)
+    point = _point(source.id, node.id)
+    question = ExerciseQuestion(
+        source_id=source.id,
+        curriculum_node_id=node.id,
+        knowledge_point_id=point.id,
+        question_type="multiple_choice",
+        stem="Which answer is correct?",
+        options=[point.title, "Other"],
+        answer=point.title,
+        explanation=point.summary,
+    )
+    question.id = uuid.uuid4()
+    knowledge_session.execute = AsyncMock(side_effect=[_one(learner_id), _one(question)])
+
+    response = await client.post(
+        f"/api/learners/{learner_id}/knowledge-base/exercises/{question.id}/attempts",
+        json={"answer": point.title},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["correct"] is True
+    assert any(isinstance(item, ExerciseAttempt) for item in knowledge_session.added_objects)

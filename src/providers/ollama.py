@@ -5,7 +5,15 @@ from typing import Any, AsyncIterator
 import httpx
 
 from src.config import settings
-from src.providers.base import ChatRequest, ChatResponse, ChatStreamChunk, ModelClient
+from src.observability import observe
+from src.providers.base import (
+    ChatRequest,
+    ChatResponse,
+    ChatStreamChunk,
+    EmbedRequest,
+    EmbedResponse,
+    ModelClient,
+)
 
 
 class OllamaClient(ModelClient):
@@ -36,55 +44,113 @@ class OllamaClient(ModelClient):
     async def chat(self, request: ChatRequest) -> ChatResponse:
         payload = self._chat_payload(request, stream=False)
 
-        start = time.monotonic()
-        response = await self.client.post("/api/chat", json=payload)
-        response.raise_for_status()
-        elapsed = int((time.monotonic() - start) * 1000)
+        with observe(
+            "ollama-chat",
+            as_type="generation",
+            input={"task_type": request.task_type, "messages": request.messages},
+            metadata={"model": payload["model"], "provider": "ollama"},
+        ) as generation:
+            start = time.monotonic()
+            response = await self.client.post("/api/chat", json=payload)
+            response.raise_for_status()
+            elapsed = int((time.monotonic() - start) * 1000)
 
-        data = response.json()
-        content = data.get("message", {}).get("content", "")
-        finish_reason = data.get("done_reason", "stop")
+            data = response.json()
+            content = data.get("message", {}).get("content", "")
+            finish_reason = data.get("done_reason", "stop")
 
-        usage: dict[str, Any] = {}
-        if "prompt_eval_count" in data:
-            usage["input_tokens"] = data["prompt_eval_count"]
-        if "eval_count" in data:
-            usage["output_tokens"] = data["eval_count"]
+            usage: dict[str, Any] = {}
+            if "prompt_eval_count" in data:
+                usage["input_tokens"] = data["prompt_eval_count"]
+            if "eval_count" in data:
+                usage["output_tokens"] = data["eval_count"]
 
-        structured: dict[str, Any] | None = None
-        if request.response_schema:
-            try:
-                structured = json.loads(content)
-            except (json.JSONDecodeError, TypeError):
-                structured = None
+            structured: dict[str, Any] | None = None
+            if request.response_schema:
+                try:
+                    structured = json.loads(content)
+                except (json.JSONDecodeError, TypeError):
+                    structured = None
 
-        return ChatResponse(
-            provider="ollama",
-            model=payload["model"],
-            content=content,
-            structured=structured,
-            latency_ms=elapsed,
-            usage=usage,
-            finish_reason=finish_reason,
-        )
+            result = ChatResponse(
+                provider="ollama",
+                model=payload["model"],
+                content=content,
+                structured=structured,
+                latency_ms=elapsed,
+                usage=usage,
+                finish_reason=finish_reason,
+            )
+            if generation is not None:
+                generation.update(
+                    output=content,
+                    usage_details={
+                        "input": usage.get("input_tokens", 0),
+                        "output": usage.get("output_tokens", 0),
+                    },
+                )
+            return result
 
     async def stream_chat(self, request: ChatRequest) -> AsyncIterator[ChatStreamChunk]:
         payload = self._chat_payload(request, stream=True)
+        with observe(
+            "ollama-chat-stream",
+            as_type="generation",
+            input={"task_type": request.task_type, "messages": request.messages},
+            metadata={"model": payload["model"], "provider": "ollama"},
+        ) as generation:
+            output: list[str] = []
+            async with self.client.stream("POST", "/api/chat", json=payload) as response:
+                response.raise_for_status()
+                async for line in response.aiter_lines():
+                    if not line:
+                        continue
+                    data = json.loads(line)
+                    content = data.get("message", {}).get("content", "")
+                    if content:
+                        output.append(content)
+                        yield ChatStreamChunk(content=content)
+                    if data.get("done"):
+                        if generation is not None:
+                            generation.update(
+                                output="".join(output),
+                                usage_details={
+                                    "input": data.get("prompt_eval_count", 0),
+                                    "output": data.get("eval_count", 0),
+                                },
+                            )
+                        yield ChatStreamChunk(
+                            finish_reason=data.get("done_reason", data.get("finish_reason", "stop"))
+                        )
+                        break
 
-        async with self.client.stream("POST", "/api/chat", json=payload) as response:
+    async def embed(self, request: EmbedRequest) -> EmbedResponse:
+        model = request.preferred_model or self.embedding_model
+        with observe(
+            "ollama-embed",
+            as_type="embedding",
+            input={"text_count": len(request.texts), "char_count": sum(map(len, request.texts))},
+            metadata={"model": model, "provider": "ollama"},
+        ) as generation:
+            start = time.monotonic()
+            response = await self.client.post(
+                "/api/embed",
+                json={"model": model, "input": request.texts},
+            )
             response.raise_for_status()
-            async for line in response.aiter_lines():
-                if not line:
-                    continue
-                data = json.loads(line)
-                content = data.get("message", {}).get("content", "")
-                if content:
-                    yield ChatStreamChunk(content=content)
-                if data.get("done"):
-                    yield ChatStreamChunk(
-                        finish_reason=data.get("done_reason", data.get("finish_reason", "stop"))
-                    )
-                    break
+            data = response.json()
+            embeddings = data.get("embeddings")
+            if not isinstance(embeddings, list) or len(embeddings) != len(request.texts):
+                raise ValueError("Ollama returned an invalid embedding response")
+            result = EmbedResponse(
+                provider="ollama",
+                model=model,
+                embeddings=embeddings,
+                latency_ms=int((time.monotonic() - start) * 1000),
+            )
+            if generation is not None:
+                generation.update(output={"embedding_count": len(embeddings)})
+            return result
 
     def _chat_payload(self, request: ChatRequest, *, stream: bool) -> dict[str, Any]:
         payload: dict[str, Any] = {

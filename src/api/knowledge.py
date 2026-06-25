@@ -11,9 +11,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.api.deps import get_db_session
 from src.config import settings
+from src.knowledge.exercises import ensure_unit_exercises
 from src.knowledge.processor import process_uploaded_textbook
+from src.knowledge.rag import retrieve_chunks
 from src.models.knowledge import (
     CurriculumNode,
+    ExerciseAttempt,
+    ExerciseQuestion,
     KnowledgeLearningEvent,
     KnowledgePoint,
     KnowledgeSource,
@@ -22,6 +26,7 @@ from src.models.knowledge import (
 from src.models.learner import Learner
 from src.models.session import LearningSession, LearningTask
 from src.models.vocabulary import ReviewSchedule, VocabularyItem
+from src.providers.router import router as model_router
 from src.vocabulary.learning import canonical_vocabulary_key, enroll_unit_vocabulary
 
 router = APIRouter(tags=["knowledge-base"])
@@ -80,6 +85,19 @@ class IngestResponse(BaseModel):
     unit_count: int
     knowledge_count: int
     message: str
+
+
+class ExerciseAnswerRequest(BaseModel):
+    answer: str = Field(min_length=1, max_length=1000)
+    session_id: uuid.UUID | None = None
+    response_time_ms: int | None = Field(default=None, ge=0, le=3_600_000)
+
+
+class ExerciseAnswerResponse(BaseModel):
+    question_id: uuid.UUID
+    correct: bool
+    answer: str
+    explanation: str
 
 
 async def _ensure_learner(db: AsyncSession, learner_id: uuid.UUID) -> None:
@@ -685,4 +703,131 @@ async def ingest_knowledge_source(
         unit_count=source.unit_count,
         knowledge_count=source.knowledge_count,
         message="教材解析完成，知识草稿等待审核发布。",
+    )
+
+
+@router.get("/api/knowledge/search")
+async def search_knowledge_chunks(
+    learner_id: uuid.UUID,
+    query: str = Query(min_length=2, max_length=500),
+    source_id: uuid.UUID | None = None,
+    curriculum_node_id: uuid.UUID | None = None,
+    limit: int = Query(default=5, ge=1, le=20),
+    db: AsyncSession = Depends(get_db_session),
+) -> dict[str, Any]:
+    await _ensure_learner(db, learner_id)
+    chunks = await retrieve_chunks(
+        db,
+        model_router,
+        query=query,
+        source_id=source_id,
+        curriculum_node_id=curriculum_node_id,
+        limit=limit,
+    )
+    return {
+        "query": query,
+        "results": [
+            {
+                "chunk_id": str(chunk.chunk_id),
+                "source_id": str(chunk.source_id),
+                "curriculum_node_id": (
+                    str(chunk.curriculum_node_id) if chunk.curriculum_node_id else None
+                ),
+                "page_number": chunk.page_number,
+                "content": chunk.content,
+                "score": round(chunk.score, 4),
+            }
+            for chunk in chunks
+        ],
+    }
+
+
+@router.post("/api/learners/{learner_id}/knowledge-base/units/{curriculum_node_id}/exercises")
+async def start_unit_exercises(
+    learner_id: uuid.UUID,
+    curriculum_node_id: uuid.UUID,
+    limit: int = Query(default=5, ge=1, le=10),
+    db: AsyncSession = Depends(get_db_session),
+) -> dict[str, Any]:
+    await _ensure_learner(db, learner_id)
+    node_result = await db.execute(
+        select(CurriculumNode).where(CurriculumNode.id == curriculum_node_id)
+    )
+    node = node_result.scalar_one_or_none()
+    if node is None:
+        raise HTTPException(status_code=404, detail="Curriculum node not found")
+    questions = await ensure_unit_exercises(
+        db,
+        source_id=node.source_id,
+        curriculum_node_id=node.id,
+    )
+    return {
+        "curriculum_node_id": str(node.id),
+        "title": f"{node.title} 练习",
+        "questions": [
+            {
+                "id": str(question.id),
+                "question_type": question.question_type,
+                "stem": question.stem,
+                "options": question.options or [],
+                "difficulty": question.difficulty,
+            }
+            for question in questions[:limit]
+        ],
+    }
+
+
+@router.post(
+    "/api/learners/{learner_id}/knowledge-base/exercises/{question_id}/attempts",
+    response_model=ExerciseAnswerResponse,
+)
+async def submit_exercise_attempt(
+    learner_id: uuid.UUID,
+    question_id: uuid.UUID,
+    body: ExerciseAnswerRequest,
+    db: AsyncSession = Depends(get_db_session),
+) -> ExerciseAnswerResponse:
+    await _ensure_learner(db, learner_id)
+    result = await db.execute(
+        select(ExerciseQuestion).where(
+            ExerciseQuestion.id == question_id,
+            ExerciseQuestion.status == "published",
+        )
+    )
+    question = result.scalar_one_or_none()
+    if question is None:
+        raise HTTPException(status_code=404, detail="Exercise question not found")
+    correct = body.answer.strip().casefold() == question.answer.strip().casefold()
+    db.add(
+        ExerciseAttempt(
+            learner_id=learner_id,
+            question_id=question.id,
+            session_id=body.session_id,
+            submitted_answer=body.answer.strip(),
+            correct=correct,
+            response_time_ms=body.response_time_ms,
+        )
+    )
+    if question.knowledge_point_id:
+        now = datetime.now(timezone.utc)
+        db.add(
+            KnowledgeLearningEvent(
+                learner_id=learner_id,
+                session_id=body.session_id,
+                event_type="exercise_answered",
+                knowledge_point_id=question.knowledge_point_id,
+                payload={
+                    "question_id": str(question.id),
+                    "correct": correct,
+                    "response_time_ms": body.response_time_ms,
+                },
+                occurred_at=now,
+            )
+        )
+    await db.flush()
+    return ExerciseAnswerResponse(
+        question_id=question.id,
+        correct=correct,
+        answer=question.answer,
+        explanation=question.explanation,
     )

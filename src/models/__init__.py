@@ -3,6 +3,9 @@ from src.models.error_pattern import ErrorPattern
 from src.models.explore import ExploreFeaturePreference
 from src.models.knowledge import (
     CurriculumNode,
+    ExerciseAttempt,
+    ExerciseQuestion,
+    KnowledgeChunk,
     KnowledgeLearningEvent,
     KnowledgePoint,
     KnowledgeSource,
@@ -39,6 +42,9 @@ __all__ = [
     "LearnerProfile",
     "LearningSession",
     "CurriculumNode",
+    "ExerciseAttempt",
+    "ExerciseQuestion",
+    "KnowledgeChunk",
     "KnowledgeLearningEvent",
     "KnowledgePoint",
     "KnowledgeSource",

@@ -1,18 +1,19 @@
+import logging
 import uuid
 from datetime import datetime, timezone
-import logging
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.api.deps import get_db_session, get_model_router
 from src.agents.vocabulary_agent import VocabularyAgentService, should_trigger_vocabulary_agent
+from src.api.deps import get_db_session, get_model_router
 from src.graph.main_graph import daily_lesson_graph
 from src.memory.extraction import MemoryExtractionService
 from src.models.learner import Learner
 from src.models.session import LearningSession
+from src.observability import observe_langgraph_run
 from src.providers.router import ModelRouter
 
 router = APIRouter(prefix="/api/sessions", tags=["sessions"])
@@ -70,7 +71,14 @@ async def start_session(
     }
 
     try:
-        result = await daily_lesson_graph.ainvoke(initial_state)
+        with observe_langgraph_run(
+            name="daily-lesson-graph",
+            user_id=str(learner_id),
+            session_id=str(session.id),
+            thread_id=initial_state["thread_id"],
+            input={"message": req.user_message, "target_exam": "CET6"},
+        ) as graph_config:
+            result = await daily_lesson_graph.ainvoke(initial_state, config=graph_config)
     except Exception as exc:
         session.status = "failed"
         session.completed_at = datetime.now(timezone.utc)
