@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -11,6 +11,7 @@ from src.api.deps import get_db_session
 from src.memory.vocabulary_store import VocabularyStore
 from src.models.learner import Learner
 from src.models.vocabulary import VocabularyItem, VocabularyItemSource
+from src.tools.vocabulary_detail_html import extract_vocabulary_detail_html
 from src.vocabulary.learning import canonical_vocabulary_key
 
 router = APIRouter(prefix="/api/learners/{learner_id}/vocabulary", tags=["vocabulary"])
@@ -31,6 +32,19 @@ class AddWordRequest(BaseModel):
         return stripped
 
 
+class UpsertDetailHtmlRequest(BaseModel):
+    term: str = Field(min_length=1, max_length=255)
+    html: str = Field(min_length=1, max_length=80_000)
+
+    @field_validator("term")
+    @classmethod
+    def term_must_not_be_blank(cls, value: str) -> str:
+        stripped = value.strip()
+        if not stripped:
+            raise ValueError("Term must not be blank")
+        return stripped
+
+
 class ReviewWordRequest(BaseModel):
     word_id: uuid.UUID
     correct: bool
@@ -44,6 +58,15 @@ class WordResponse(BaseModel):
     status: str
     confidence: float
     next_review_at: str | None = None
+
+
+class UpsertDetailHtmlResponse(BaseModel):
+    id: uuid.UUID
+    word: str
+    created: bool
+    phonetic: str | None = None
+    meanings_count: int
+    examples_count: int
 
 
 class VocabularyListItemResponse(BaseModel):
@@ -65,6 +88,9 @@ class VocabularyDetailResponse(BaseModel):
     phonetic: str | None = None
     phonetic_uk: str | None = None
     phonetic_us: str | None = None
+    audio_url: str | None = None
+    audio_uk: str | None = None
+    audio_us: str | None = None
     entry_kind: str
     meanings: list[dict[str, Any]] = Field(default_factory=list)
     dictionary_senses: list[dict[str, Any]] = Field(default_factory=list)
@@ -223,6 +249,9 @@ async def vocabulary_detail(
         phonetic=item.phonetic,
         phonetic_uk=item.phonetic_uk,
         phonetic_us=item.phonetic_us,
+        audio_url=item.audio_url,
+        audio_uk=item.audio_uk,
+        audio_us=item.audio_us,
         entry_kind=item.entry_kind,
         meanings=item.meanings if isinstance(item.meanings, list) else [],
         dictionary_senses=(
@@ -267,6 +296,85 @@ async def add_word(
         else str(item.next_review_at)
         if item.next_review_at
         else None,
+    )
+
+
+@router.post("/detail-html", response_model=UpsertDetailHtmlResponse)
+async def upsert_vocabulary_detail_html(
+    learner_id: uuid.UUID,
+    req: UpsertDetailHtmlRequest,
+    db: AsyncSession = Depends(get_db_session),
+) -> UpsertDetailHtmlResponse:
+    await _ensure_learner_exists(db, learner_id)
+    canonical = canonical_vocabulary_key(req.term)
+    if not canonical:
+        raise HTTPException(status_code=422, detail="Invalid vocabulary term")
+    extracted = await extract_vocabulary_detail_html(req.term, req.html)
+    result = await db.execute(
+        select(VocabularyItem).where(
+            VocabularyItem.learner_id == learner_id,
+            VocabularyItem.canonical_key == canonical,
+        )
+    )
+    item = result.scalar_one_or_none()
+    created = item is None
+    if item is None:
+        item = VocabularyItem(
+            learner_id=learner_id,
+            word=req.term.strip(),
+            canonical_key=canonical,
+            entry_kind="phrase" if " " in canonical else "word",
+            preferred_accent="auto",
+            level="custom",
+            source_ref="vocabulary_detail_html",
+            status="learning",
+            confidence=0.0,
+            review_count=0,
+            next_review_at=datetime.now(timezone.utc),
+        )
+        db.add(item)
+    item.word = req.term.strip()
+    item.phonetic = extracted.phonetic
+    item.meanings = extracted.meanings
+    item.dictionary_senses = extracted.dictionary_senses
+    item.collocations = extracted.collocations
+    item.examples = extracted.examples
+    item.dictionary_provider = extracted.provider
+    item.dictionary_enriched_at = datetime.now(timezone.utc)
+    await db.flush()
+
+    source_result = await db.execute(
+        select(VocabularyItemSource).where(
+            VocabularyItemSource.learner_id == learner_id,
+            VocabularyItemSource.vocabulary_item_id == item.id,
+            VocabularyItemSource.source_type == "vocabulary_detail_html",
+        )
+    )
+    source = source_result.scalar_one_or_none()
+    if source is None:
+        source = VocabularyItemSource(
+            learner_id=learner_id,
+            vocabulary_item_id=item.id,
+            source_type="vocabulary_detail_html",
+            source_id=canonical,
+            display_label="词汇详解 HTML",
+            context_snapshot={},
+            active=True,
+        )
+        db.add(source)
+    source.context_snapshot = {
+        "dictionary_provider": item.dictionary_provider,
+        "html_length": len(req.html),
+    }
+    await db.commit()
+    await db.refresh(item)
+    return UpsertDetailHtmlResponse(
+        id=item.id,
+        word=item.word,
+        created=created,
+        phonetic=item.phonetic,
+        meanings_count=len(item.meanings or []),
+        examples_count=len(item.examples or []),
     )
 
 

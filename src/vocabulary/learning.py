@@ -111,6 +111,9 @@ async def enroll_unit_vocabulary(
                 phonetic=dictionary_entry.phonetic if dictionary_entry else None,
                 phonetic_uk=dictionary_entry.phonetic_uk if dictionary_entry else None,
                 phonetic_us=dictionary_entry.phonetic_us if dictionary_entry else None,
+                audio_url=dictionary_entry.audio_url if dictionary_entry else None,
+                audio_uk=dictionary_entry.audio_uk if dictionary_entry else None,
+                audio_us=dictionary_entry.audio_us if dictionary_entry else None,
                 level="grade-7",
                 meanings=dictionary_entry.meanings if dictionary_entry else [],
                 dictionary_senses=(
@@ -141,6 +144,9 @@ async def enroll_unit_vocabulary(
                 item.phonetic = dictionary_entry.phonetic
                 item.phonetic_uk = dictionary_entry.phonetic_uk
                 item.phonetic_us = dictionary_entry.phonetic_us
+                item.audio_url = dictionary_entry.audio_url
+                item.audio_uk = dictionary_entry.audio_uk
+                item.audio_us = dictionary_entry.audio_us
                 item.meanings = dictionary_entry.meanings
                 item.dictionary_senses = dictionary_entry.dictionary_senses
                 item.word_forms = dictionary_entry.word_forms

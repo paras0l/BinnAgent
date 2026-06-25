@@ -5,7 +5,13 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from src.api import deps
+from src.models.vocabulary import VocabularyItem, VocabularyItemSource
 from src.main import app
+from src.tools.vocabulary_detail_html import (
+    DetailHtmlExtraction,
+    fallback_extract_vocabulary_detail_html,
+    html_to_text_blocks,
+)
 
 
 @pytest.fixture
@@ -231,6 +237,155 @@ class TestAddWord:
 
         assert response.status_code == 422
         assert response.json()["detail"] == "Invalid vocabulary word"
+
+
+class TestVocabularyDetailHtml:
+    def test_extract_vocabulary_detail_html(self):
+        blocks = html_to_text_blocks(
+            """
+            <article>
+              <h1>sustain /səˈsteɪn/</h1>
+              <h2>核心义项</h2>
+              <p>核心义项：维持；支撑；承受。</p>
+              <h2>常用搭配</h2>
+              <p>搭配：sustain growth, sustain an injury</p>
+              <ul>
+                <li>We need to sustain growth. 我们需要维持增长。</li>
+              </ul>
+              <script>alert(1)</script>
+            </article>
+            """,
+        )
+        extracted = fallback_extract_vocabulary_detail_html("sustain", blocks)
+
+        assert extracted.phonetic == "/səˈsteɪn/"
+        assert extracted.meanings[0]["definition_zh"]
+        assert extracted.examples[0]["en"] == "We need to sustain growth."
+        assert "sustain growth" in extracted.collocations[0]
+
+    @pytest.mark.asyncio
+    async def test_detail_html_updates_existing_word(self, client, mock_session):
+        learner_id = uuid.uuid4()
+        item_id = uuid.uuid4()
+        learner_result = MagicMock()
+        learner_result.scalar_one_or_none.return_value = learner_id
+
+        item = MagicMock()
+        item.id = item_id
+        item.word = "old"
+        item.canonical_key = "sustain"
+        item.meanings = []
+        item.examples = []
+
+        item_result = MagicMock()
+        item_result.scalar_one_or_none.return_value = item
+        source_result = MagicMock()
+        source_result.scalar_one_or_none.return_value = None
+        mock_session.execute.side_effect = [learner_result, item_result, source_result]
+        mock_session.add = MagicMock()
+
+        with patch(
+            "src.api.vocabulary.extract_vocabulary_detail_html",
+            AsyncMock(
+                return_value=DetailHtmlExtraction(
+                    phonetic="/səˈsteɪn/",
+                    meanings=[
+                        {
+                            "part_of_speech": "v.",
+                            "definition": "to keep something going",
+                            "definition_zh": "维持",
+                        }
+                    ],
+                    dictionary_senses=[
+                        {"part_of_speech": "v.", "meanings_zh": ["维持"]}
+                    ],
+                    examples=[{"en": "We sustain growth.", "zh": "我们维持增长。"}],
+                    collocations=["sustain growth"],
+                    provider="vocabulary_detail_html+test",
+                )
+            ),
+        ):
+            response = await client.post(
+                f"/api/learners/{learner_id}/vocabulary/detail-html",
+                json={
+                    "term": "sustain",
+                    "html": "<p>sustain /səˈsteɪn/ 核心义项：维持。</p>"
+                    "<p>We sustain growth. 我们维持增长。</p>",
+                },
+            )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["created"] is False
+        assert data["id"] == str(item_id)
+        assert item.word == "sustain"
+        assert item.phonetic == "/səˈsteɪn/"
+        assert item.dictionary_provider == "vocabulary_detail_html+test"
+        assert item.examples
+        added_source = next(
+            value for value in mock_session.add.call_args_list
+            if isinstance(value.args[0], VocabularyItemSource)
+        ).args[0]
+        assert added_source.source_type == "vocabulary_detail_html"
+        mock_session.commit.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_detail_html_creates_missing_word(self, client, mock_session):
+        learner_id = uuid.uuid4()
+        item_id = uuid.uuid4()
+        learner_result = MagicMock()
+        learner_result.scalar_one_or_none.return_value = learner_id
+        item_result = MagicMock()
+        item_result.scalar_one_or_none.return_value = None
+        source_result = MagicMock()
+        source_result.scalar_one_or_none.return_value = None
+        mock_session.execute.side_effect = [learner_result, item_result, source_result]
+        added: list[object] = []
+        mock_session.add = MagicMock(side_effect=added.append)
+
+        async def flush() -> None:
+            for value in added:
+                if isinstance(value, VocabularyItem) and value.id is None:
+                    value.id = item_id
+
+        mock_session.flush = AsyncMock(side_effect=flush)
+
+        with patch(
+            "src.api.vocabulary.extract_vocabulary_detail_html",
+            AsyncMock(
+                return_value=DetailHtmlExtraction(
+                    meanings=[
+                        {
+                            "part_of_speech": "phrase",
+                            "definition": "to continue",
+                            "definition_zh": "继续",
+                        }
+                    ],
+                    dictionary_senses=[
+                        {"part_of_speech": "phrase", "meanings_zh": ["继续"]}
+                    ],
+                    examples=[{"en": "We carry on.", "zh": "我们继续。"}],
+                    provider="vocabulary_detail_html+test",
+                )
+            ),
+        ):
+            response = await client.post(
+                f"/api/learners/{learner_id}/vocabulary/detail-html",
+                json={
+                    "term": "carry on",
+                    "html": "<p>核心义项：继续。</p><p>We carry on. 我们继续。</p>",
+                },
+            )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["created"] is True
+        assert data["id"] == str(item_id)
+        item = next(value for value in added if isinstance(value, VocabularyItem))
+        assert item.word == "carry on"
+        assert item.canonical_key == "carry on"
+        assert item.entry_kind == "phrase"
+        assert item.dictionary_provider == "vocabulary_detail_html+test"
 
 
 class TestGetDueReviews:

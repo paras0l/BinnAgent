@@ -63,9 +63,12 @@ async def test_enrollment_enriches_sequence_point_with_free_dictionary(monkeypat
             }
         ],
         examples=["Hello, Alice!"],
-        provider="free_dictionary_api+mymemory",
+        provider="free_dictionary_api",
         phonetic_uk="həˈləʊ",
         phonetic_us="həˈloʊ",
+        audio_url="https://api.dictionaryapi.dev/media/pronunciations/en/hello-uk.mp3",
+        audio_uk="https://api.dictionaryapi.dev/media/pronunciations/en/hello-uk.mp3",
+        audio_us="https://api.dictionaryapi.dev/media/pronunciations/en/hello-us.mp3",
         dictionary_senses=[
             {"part_of_speech": "int.", "meanings_zh": ["你好"]}
         ],
@@ -95,6 +98,7 @@ async def test_enrollment_enriches_sequence_point_with_free_dictionary(monkeypat
     assert item.phonetic == "/həˈləʊ/"
     assert item.phonetic_uk == "həˈləʊ"
     assert item.phonetic_us == "həˈloʊ"
+    assert item.audio_uk and item.audio_uk.endswith("hello-uk.mp3")
     assert item.dictionary_senses[0]["meanings_zh"] == ["你好"]
     assert item.word_forms["word_pl"] == ["hellos"]
     assert item.meanings[0]["definition_zh"] == "问候语。"
@@ -102,4 +106,7 @@ async def test_enrollment_enriches_sequence_point_with_free_dictionary(monkeypat
     assert item.dictionary_provider == dictionary_entry.provider
     assert item.dictionary_enriched_at is not None
     assert item_source.context_snapshot["unit_order"] == 1
-    assert item_source.context_snapshot["dictionary_provider"] == dictionary_entry.provider
+    assert (
+        item_source.context_snapshot["dictionary_provider"]
+        == dictionary_entry.provider
+    )

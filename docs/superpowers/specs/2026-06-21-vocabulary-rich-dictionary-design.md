@@ -2,13 +2,13 @@
 
 ## Goal
 
-The vocabulary workflow should use the Baidu Dictionary Edition API as the authoritative source for UK/US phonetics, Chinese senses grouped by part of speech, word forms, and level tags. Existing bilingual `definition` / `definition_zh` rows remain available for deeper reading.
+The vocabulary workflow should use Free Dictionary API as the source for pronunciation and audio assets, and use the local model enrichment prompt as the source for Chinese senses grouped by part of speech, word forms, tags, examples, and collocations. Existing bilingual `definition` / `definition_zh` rows remain available for deeper reading.
 
 ## Data model
 
 - `phonetic_uk`, `phonetic_us`: accent-specific IPA.
 - `dictionary_senses`: Chinese meanings grouped by part of speech.
-- `word_forms`: Baidu `exchange` values such as plural, third-person singular, present participle, past tense, and past participle.
+- `word_forms`: local-model extracted values such as plural, third-person singular, present participle, past tense, and past participle.
 - `dictionary_tags`: core vocabulary labels such as CET4 or 高考.
 - `meanings`: retained bilingual English definition and Chinese translation rows.
 - `examples`: retained dictionary examples.
