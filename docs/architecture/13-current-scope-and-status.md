@@ -26,7 +26,7 @@
 | FastAPI API | 已实现 | learners、chat、memory、dashboard、knowledge、vocabulary、grammar 等 routers | 统一 current learner 认证授权 |
 | React 前端 | 部分实现 | 多页面学习入口、SSE chat、知识库和词汇练习 | 今日学习路径、恢复提示、RAG 调试模式 |
 | LangGraph daily lesson | 部分实现 | 线性 daily lesson graph 和主要节点 | checkpoint、interrupt、answer_required、resume |
-| Memory | 部分实现 | Profile、Vocabulary、Error Pattern、Learning Progress 基础数据 | Memory Curator、导出/删除、情绪记忆开关 |
+| Memory | 部分实现 | 统一 memory event/operation、MemoryWriter/Retriever/Curator、ErrorPattern governance、WritingPhraseMastery、Memory Center、导出/删除/禁用/我已改善、重置计划、情绪/节奏 opt-in、低置信上下文开关、memory_context log、hit-rate 指标、作文批改历史弱点对比 | 更完整 debug dashboard 图表、更多 regression eval |
 | Vocabulary Learning | 部分实现 | 单元 enroll、用户可编辑个人词卡、new/review/spelling session、attempt、错因记录、mastery vector、发音 URL | 薄弱原因总结、题型推荐、更多表达迁移题 |
 | Knowledge Base / RAG | 部分实现 | PDF 解析、chunk、embedding、文本 fallback、8 题混合练习流、hint/retry/rubric 反馈 | hybrid retrieval、golden query set、前端证据面板、练习 session 总结 |
 | Model Provider | 部分实现 | Ollama chat/stream/embed/health，结构化 JSON repair retry | task policy、local_only 强约束、持久化 model_call_logs |
@@ -45,6 +45,7 @@
 | #7 教材练习题升级 | `ExerciseBlueprint` 生成 8 道场景化混合题；支持 `choice_context`、`fill_blank`、`dialogue_complete`、`error_fix`；新增 linter、rubric grader、hint/retry 反馈；前端改为一屏一题练习流；答题事件写入 score、error_type、next_review_signal | 独立 exercise session 表、结束复盘卡、根据 learner mastery 动态选题、micro writing/roleplay |
 | #11 词汇模块升级 | 新增 `VocabularyUserOverride`、`VocabularyMistake`、`VocabularyMasteryVector`；词汇详情和练习流读取用户覆盖层；新词学习/今日复习入口分离；用户例句优先参与填空上下文；隐藏释义不进入返回 payload；错因可修正/删除 | 更丰富的题型生成、Dashboard 弱项聚合、roleplay/micro writing 生产题 |
 | #12 好句收藏馆 | 新增 `writing_phrases`、练习和 attempt 数据表；提供 CRUD/import/exercises/attempts API；探索页接入好句收藏馆前端工作台 | P2 模型辅助编辑、P3 到期复习/mastery、P4 作文批改和翻译练习自动推荐 |
+| #14 Memory Core | 新增 `learning_memory_events`、`memory_operations`、`writing_phrase_masteries`、`memory_context_logs`、`learner_memory_settings`；实现 writer/retriever/curator/explainer/manager；词汇、知识、写作句式、chat/session、作文批改、LangGraph 写入或读取统一 memory；前端新增“我的学习记忆”页面；支持查看 evidence、编辑、删除、禁用、我已改善、导出、手动整理、重置计划、情绪/节奏开关、低置信上下文开关；summary 增加 recent events 和 active weaknesses；metrics 增加 retrieval、hit-rate、used-in-prompt、stale | 更完整 memory debug dashboard 图表、长期 regression eval 扩展 |
 
 ## 可运行能力
 

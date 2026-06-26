@@ -102,3 +102,19 @@ def test_vocabulary_personal_card_migration_adds_override_mastery_and_mistakes()
     assert "production" in migration
     assert "reason" in migration
     assert "priority" in migration
+
+
+def test_learning_memory_migration_adds_events_operations_and_governance() -> None:
+    migration = Path(
+        "alembic/versions/85d6e7f8a9b0_add_learning_memory_events.py"
+    ).read_text()
+
+    assert "learning_memory_events" in migration
+    assert "memory_operations" in migration
+    assert "writing_phrase_masteries" in migration
+    assert "memory_context_logs" in migration
+    assert "learner_memory_settings" in migration
+    assert "emotion_rhythm_enabled" in migration
+    assert "status" in migration
+    assert "confidence" in migration
+    assert "ix_learning_memory_events_learner_skill" in migration

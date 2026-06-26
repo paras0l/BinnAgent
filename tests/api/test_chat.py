@@ -15,6 +15,12 @@ from src.providers.base import ChatStreamChunk
 from src.providers.router import ModelRouter
 
 
+def _empty_many():
+    result = MagicMock()
+    result.scalars.return_value.all.return_value = []
+    return result
+
+
 @pytest.fixture
 def mock_model_router():
     router = AsyncMock(spec=ModelRouter)
@@ -221,7 +227,13 @@ class TestChatSend:
         max_result = MagicMock()
         max_result.scalar_one_or_none.return_value = 2
         mock_session.execute = AsyncMock(
-            side_effect=[learner_result, thread_result, history_result, max_result]
+            side_effect=[
+                learner_result,
+                thread_result,
+                history_result,
+                *[_empty_many() for _ in range(8)],
+                max_result,
+            ]
         )
         mock_model_router.chat = AsyncMock(
             return_value=ModelChatResponse(provider="ollama", model="gemma4:e2b", content="继续讲。")
@@ -339,7 +351,13 @@ class TestChatSend:
         max_result = MagicMock()
         max_result.scalar_one_or_none.return_value = 0
         mock_session.execute = AsyncMock(
-            side_effect=[learner_result, thread_result, history_result, max_result]
+            side_effect=[
+                learner_result,
+                thread_result,
+                history_result,
+                *[_empty_many() for _ in range(8)],
+                max_result,
+            ]
         )
         monkeypatch.setattr(chat_api, "_run_vocabulary_agent_background", fake_background)
         mock_model_router.chat = AsyncMock(

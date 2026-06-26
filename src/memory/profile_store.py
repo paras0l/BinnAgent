@@ -28,10 +28,13 @@ class ProfileStore:
         }
 
     async def update_weak_skills(self, learner_id: uuid.UUID, skills: list[str]) -> None:
+        await self.update_weak_skills_no_commit(learner_id, skills)
+        await self.db.commit()
+
+    async def update_weak_skills_no_commit(self, learner_id: uuid.UUID, skills: list[str]) -> None:
         result = await self.db.execute(
             select(LearnerProfile).where(LearnerProfile.learner_id == learner_id)
         )
         profile = result.scalar_one_or_none()
         if profile:
             profile.weak_skills = skills
-            await self.db.commit()

@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 from typing import Optional
 
-from sqlalchemy import DateTime, ForeignKey, SmallInteger, String, Text
+from sqlalchemy import DateTime, Float, ForeignKey, SmallInteger, String, Text
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -20,12 +20,20 @@ class ErrorPattern(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         index=True,
     )
     skill: Mapped[str] = mapped_column(String(50), nullable=False)
+    subskill: Mapped[Optional[str]] = mapped_column(String(80), nullable=True)
     pattern: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     frequency: Mapped[int] = mapped_column(SmallInteger, nullable=False, default=1)
     severity: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
+    confidence: Mapped[float] = mapped_column(Float, nullable=False, default=0.5)
+    status: Mapped[str] = mapped_column(String(30), nullable=False, default="active")
     evidence_refs: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True, default=list)
     recommended_drill: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    last_intervention: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    intervention_effectiveness: Mapped[Optional[dict]] = mapped_column(
+        JSONB, nullable=True, default=dict
+    )
+    first_seen_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     last_seen_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
 
     def __repr__(self) -> str:

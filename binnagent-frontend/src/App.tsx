@@ -5,6 +5,7 @@ import { DashboardPage } from './pages/DashboardPage'
 import { ExplorePage } from './pages/ExplorePage'
 import { GrammarPage } from './pages/GrammarPage'
 import { LoginPage } from './pages/LoginPage'
+import { MemoryCenterPage } from './pages/MemoryCenterPage'
 import { PronunciationPage } from './pages/PronunciationPage'
 import { VocabularyPracticePage, type VocabularyPracticeMode } from './pages/VocabularyPracticePage'
 import { useToast } from './hooks/useToast'
@@ -156,6 +157,8 @@ function App() {
           <PronunciationPage learner={currentLearner} />
         ) : activeTab === 'grammar' ? (
           <GrammarPage learner={currentLearner} onBack={() => handleTabChange('explore')} />
+        ) : activeTab === 'memory' ? (
+          <MemoryCenterPage learner={currentLearner} />
         ) : (
           learningCenterView === 'daily-learning' ? (
             <Suspense fallback={<div className="flex min-h-[calc(100vh-4rem)] items-center justify-center text-sm text-muted-foreground">正在打开每日学习...</div>}>

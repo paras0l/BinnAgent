@@ -13,6 +13,13 @@ from src.models.knowledge import (
 )
 from src.models.learner import Learner, LearnerProfile
 from src.models.learning_progress import LearningProgressItem
+from src.models.memory import (
+    LearnerMemorySettings,
+    LearningMemoryEvent,
+    MemoryContextLog,
+    MemoryOperation,
+    WritingPhraseMastery,
+)
 from src.models.runtime import (
     AgentEvent,
     AgentRun,
@@ -57,8 +64,12 @@ __all__ = [
     "KnowledgePoint",
     "KnowledgeSource",
     "LearnerKnowledgeState",
+    "LearnerMemorySettings",
     "LearningProgressItem",
+    "LearningMemoryEvent",
     "LearningTask",
+    "MemoryContextLog",
+    "MemoryOperation",
     "ModelCallLog",
     "ReviewSchedule",
     "TimestampMixin",
@@ -74,4 +85,5 @@ __all__ = [
     "WritingPhrase",
     "WritingPhraseAttempt",
     "WritingPhraseExercise",
+    "WritingPhraseMastery",
 ]

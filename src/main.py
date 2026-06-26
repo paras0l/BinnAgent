@@ -6,6 +6,7 @@ from fastapi import FastAPI
 from src.api.chat import router as chat_router
 from src.api.conversations import router as conversations_router
 from src.api.dashboard import router as dashboard_router
+from src.api.essay_review import router as essay_review_router
 from src.api.explore import router as explore_router
 from src.api.grammar import router as grammar_router
 from src.api.health import router as health_router
@@ -43,6 +44,7 @@ app.include_router(learners_router)
 app.include_router(conversations_router)
 app.include_router(dashboard_router)
 app.include_router(explore_router)
+app.include_router(essay_review_router)
 app.include_router(grammar_router)
 app.include_router(learning_progress_router)
 app.include_router(memory_router)

@@ -14,16 +14,34 @@ Memory System 是英语学习陪伴系统的核心壁垒。
 - 学习节奏和情绪。
 - 复习计划。
 
-## 2. Memory 分层
+## 2. 当前落地状态
+
+截至 2026-06-26，Memory 已从“局部统计 + chat 摘要”升级为统一学习记忆底座的第一版：
+
+- 新增 `learning_memory_events` 统一事件流，镜像 chat、词汇 attempt、知识练习、写作句式保存/练习等关键行为。
+- 新增 `memory_operations`，记录用户编辑、删除、禁用、纠正、标记已改善、导出等治理操作。
+- 新增 `MemoryWriter`、`MemoryRetriever`、`MemoryCurator`、`MemoryExplainer`、`MemoryManager`。
+- `ErrorPattern` 增强为带 `confidence`、`status`、`subskill`、`first_seen_at`、干预记录和 evidence 的可治理长期记忆。
+- 新增 `WritingPhraseMastery`，把写作句式资源和掌握状态分离。
+- 新增 `MemoryContextLog`，记录每次 retriever 加载和排除的记忆项。
+- 新增 `LearnerMemorySettings`，把情绪/节奏记忆、推断偏好、低置信记忆入上下文做成用户可控开关。
+- `/api/learners/{learner_id}/memory/center` 提供“我的学习记忆”页面数据；支持整理、导出、编辑、删除、禁用、我已改善、重置学习计划。
+- Chat、daily lesson、vocabulary practice、writing phrasebook、LangGraph review scheduling 已接入 `MemoryRetriever`。
+
+## 3. Memory 分层
 
 | 层级 | 范围 | 内容 | 技术 |
 |---|---|---|---|
-| Working Context | 单次 LLM 调用 | 当前任务所需最小上下文 | prompt context |
-| Session Memory | 单次课程 | 当前材料、答案、反馈、中间状态 | LangGraph state |
-| Thread Memory | 一段对话 | 多轮对话和课程连续状态 | checkpointer |
-| Long-term Memory | 跨会话 | 学习画像、错词错因、复习计划 | store + DB + vector |
+| L0 Working Context | 单次 LLM 调用 | 当前任务所需最小上下文、Top-K 弱点和 episode | `MemoryRetriever` + prompt context |
+| L1 Thread / Session Episode | 一段对话或课程 | 对话摘要、session summary、反馈和下一步 | `AgentThread`、`LearningSession` |
+| L2 Raw Learning Event | 跨模块学习行为 | 统一事件流、source/evidence、confidence | `learning_memory_events` |
+| L3 Skill State Memory | 技能掌握状态 | 词汇 mastery、知识点 state、句式 mastery | 局部 state 表 + curator |
+| L4 Semantic Learner Profile | 稳定画像 | 目标、时间预算、兴趣、弱项 | `LearnerProfile` |
+| L5 Pattern & Strategy Memory | 错误模式和教学策略 | error pattern、recommended drill、干预效果 | `ErrorPattern` |
+| L6 Resource / Knowledge Vault | 学习资产 | 教材、词卡、句式、题目、RAG chunks | resource tables |
+| L7 Curator & Governance | 治理 | 合并、降噪、用户删除/纠正、导出 | `MemoryCurator` + operations |
 
-## 3. Memory 类型
+## 4. Memory 类型
 
 ### 3.1 Learner Profile Memory
 
@@ -143,7 +161,26 @@ Memory System 是英语学习陪伴系统的核心壁垒。
 - 不贴人格标签。
 - 只用于调整学习任务难度和语气。
 
-## 4. Namespace 设计
+## 5. 统一事件层
+
+`learning_memory_events` 是所有学习行为的统一索引层。第一版不搬迁旧表，而是把关键行为镜像进事件流：
+
+- `chat_learning_turn`
+- `chat_error_observed`
+- `vocabulary_attempted`
+- `vocabulary_mistake_recorded`
+- `knowledge_point_practiced`
+- `knowledge_exercise_answered`
+- `writing_phrase_saved`
+- `writing_phrase_attempted`
+- `user_corrected_memory`
+- `user_deleted_memory`
+- `user_disabled_memory`
+- `user_marked_memory_improved`
+
+每条事件至少包含 learner、event_type、skill、source_type/source_id、payload、confidence、visibility、created_by、occurred_at。
+
+## 6. Namespace 设计
 
 ```text
 ("learner", user_id, "profile")
@@ -161,7 +198,7 @@ Memory System 是英语学习陪伴系统的核心壁垒。
 ("tenant", tenant_id, "learner", user_id, "vocabulary")
 ```
 
-## 5. Memory 写入策略
+## 7. Memory 写入策略
 
 ### 5.1 Hot Path 写入
 
@@ -194,7 +231,7 @@ Memory candidate 必须满足：
 - 不只是闲聊。
 - 不包含不应长期存储的隐私。
 
-## 6. Memory Curator
+## 8. Memory Curator
 
 Memory Curator 是后台 Agent 或任务，负责维护记忆质量。
 
@@ -206,7 +243,7 @@ Memory Curator 是后台 Agent 或任务，负责维护记忆质量。
 - 冲突处理：用户已掌握后降低旧弱点权重。
 - 遗忘：过期、无用或用户要求删除的记忆清理。
 
-## 7. 复习调度
+## 9. 复习调度
 
 ### 7.1 默认周期
 
@@ -231,7 +268,7 @@ Memory Curator 是后台 Agent 或任务，负责维护记忆质量。
 - 高频考试词：保留周期抽查。
 - 多次错误：换训练形式。
 
-## 8. Memory 读取策略
+## 10. Memory 读取策略
 
 每次 session 只读取必要 Memory：
 
@@ -243,7 +280,15 @@ Memory Curator 是后台 Agent 或任务，负责维护记忆质量。
 
 避免把所有历史塞进 prompt。
 
-## 9. 隐私和可控性
+已接入场景：
+
+- Chat：读取 thread summary、相关弱点、最近事件，并记录 memory_context。
+- 今日学习路径：读取知识点状态和活跃弱点生成推荐理由。
+- 词汇练习：读取 vocabulary mastery/mistake，解释为什么安排当前任务。
+- 写作好句：读取 writing error pattern 和 phrase mastery，生成推荐理由。
+- LangGraph schedule_review：从 retriever 生成 review_items。
+
+## 11. 隐私和可控性
 
 用户应能：
 
@@ -258,3 +303,13 @@ Memory Curator 是后台 Agent 或任务，负责维护记忆质量。
 - 长期保存无关聊天。
 - 使用羞辱性标签。
 - 把低置信推断当事实。
+
+当前前端已有“我的学习记忆”页面，支持查看 evidence、置信度、影响范围，并执行编辑、删除、不再使用、我已改善、导出和手动整理。
+
+同时提供：
+
+- 情绪 / 节奏记忆开关，默认关闭。
+- 推断偏好记忆开关。
+- 低置信记忆入上下文开关，默认关闭。
+- 学习计划重置入口，重置未完成 task/session 并写入 operation audit。
+- memory metrics：write count、retrieval count、hit rate、used-in-prompt count、user deleted count、stale count。

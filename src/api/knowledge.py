@@ -16,6 +16,10 @@ from src.config import settings
 from src.knowledge.exercises import ensure_unit_exercises
 from src.knowledge.processor import process_uploaded_textbook
 from src.knowledge.rag import retrieve_chunks
+from src.memory.schemas import MemoryEventInput
+from src.memory.explainer import MemoryExplainer
+from src.memory.retriever import MemoryRetriever
+from src.memory.writer import MemoryWriter
 from src.models.knowledge import (
     CurriculumNode,
     ExerciseAttempt,
@@ -261,6 +265,17 @@ async def knowledge_base_overview(
                 "estimated_minutes": node.estimated_minutes or 20,
             }
         )
+    memory_items = []
+    try:
+        memory_context = await MemoryRetriever(db).retrieve_context(
+            learner_id=learner_id,
+            reason="daily_lesson",
+            skill="knowledge",
+            limit=4,
+        )
+        memory_items = memory_context.loaded_items
+    except Exception:
+        memory_items = []
 
     return {
         "source": {
@@ -319,7 +334,10 @@ async def knowledge_base_overview(
             for point in points
         ],
         "path": path,
-        "recommendation_reason": f"已根据教材顺序和完成记录，为你推荐 {recommended_node.title}。",
+        "recommendation_reason": MemoryExplainer().recommendation_reason(
+            memory_items,
+            f"已根据教材顺序和完成记录，为你推荐 {recommended_node.title}。",
+        ),
     }
 
 
@@ -548,6 +566,29 @@ async def record_knowledge_attempt(
                 "mastery_before": previous_mastery,
                 "mastery_after": mastery,
             },
+            occurred_at=now,
+        )
+    )
+    await MemoryWriter(db).record_event(
+        MemoryEventInput(
+            learner_id=learner_id,
+            event_type="knowledge_point_practiced",
+            skill="knowledge",
+            subskill=point.type,
+            source_type="knowledge_point",
+            source_id=str(point.id),
+            session_id=body.session_id,
+            payload={
+                "knowledge_point_id": str(point.id),
+                "title": point.title,
+                "point_type": point.type,
+                "correct": body.correct,
+                "mastery_before": previous_mastery,
+                "mastery_after": mastery,
+                "hint_count": body.hint_count,
+                "response_time_ms": body.response_time_ms,
+            },
+            confidence=0.95,
             occurred_at=now,
         )
     )
@@ -866,6 +907,32 @@ async def submit_exercise_attempt(
                     "response_time_ms": body.response_time_ms,
                     "next_review_signal": grading["next_review_signal"],
                 },
+                occurred_at=now,
+            )
+        )
+        await MemoryWriter(db).record_event(
+            MemoryEventInput(
+                learner_id=learner_id,
+                event_type="knowledge_exercise_answered",
+                skill="knowledge",
+                subskill=question.question_type,
+                source_type="exercise_attempt",
+                source_id=str(question.id),
+                session_id=body.session_id,
+                payload={
+                    "question_id": str(question.id),
+                    "knowledge_point_id": str(question.knowledge_point_id),
+                    "question_type": question.question_type,
+                    "correct": correct,
+                    "score": grading["score"],
+                    "passed": grading["passed"],
+                    "error_type": grading["error_type"],
+                    "hint_used": body.hint_used,
+                    "attempt_index": body.attempt_index,
+                    "response_time_ms": body.response_time_ms,
+                    "next_review_signal": grading["next_review_signal"],
+                },
+                confidence=0.95,
                 occurred_at=now,
             )
         )

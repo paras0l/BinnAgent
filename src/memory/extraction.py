@@ -7,6 +7,8 @@ from typing import Any
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.memory.error_store import ErrorStore
+from src.memory.schemas import MemoryEventInput
+from src.memory.writer import MemoryWriter
 from src.models.session import LearningSession
 
 
@@ -83,23 +85,59 @@ class MemoryExtractionService:
                     evidence_ref=source_ref,
                     commit=False,
                 )
+                await MemoryWriter(self.db).record_event(
+                    MemoryEventInput(
+                        learner_id=learner_id,
+                        event_type="chat_error_observed",
+                        skill=skill,
+                        source_type="conversation_message",
+                        source_id=str(assistant_message_id or thread_id) if (assistant_message_id or thread_id) else None,
+                        thread_id=thread_id,
+                        payload={
+                            "pattern": pattern,
+                            "description": description,
+                            "summary": _summarize_chat_learning(user_message, active_skill),
+                        },
+                        confidence=0.72,
+                        created_by="system",
+                    )
+                )
                 error_count += 1
 
         session_created = False
         if _is_learning_activity(user_message, assistant_reply, active_skill):
+            summary = _summarize_chat_learning(user_message, active_skill)
             session = LearningSession(
                 learner_id=learner_id,
                 thread_id=str(thread_id) if thread_id else None,
                 session_type="chat_learning",
                 active_skill=active_skill,
-                today_goal=_summarize_chat_learning(user_message, active_skill),
+                today_goal=summary,
                 status="completed",
                 started_at=datetime.now(timezone.utc),
                 completed_at=datetime.now(timezone.utc),
-                summary=_summarize_chat_learning(user_message, active_skill),
+                summary=summary,
             )
             self.db.add(session)
             await self.db.flush()
+            await MemoryWriter(self.db).record_event(
+                MemoryEventInput(
+                    learner_id=learner_id,
+                    event_type="chat_learning_turn",
+                    skill=active_skill,
+                    source_type="conversation_message",
+                    source_id=str(assistant_message_id or thread_id) if (assistant_message_id or thread_id) else None,
+                    thread_id=thread_id,
+                    session_id=session.id,
+                    payload={
+                        "summary": summary,
+                        "episode_type": "chat_learning",
+                        "user_message_preview": user_message[:160],
+                    },
+                    confidence=0.8,
+                    created_by="system",
+                )
+            )
             session_created = True
 
         return MemoryExtractionResult(error_count=error_count, session_created=session_created)
@@ -134,6 +172,41 @@ class MemoryExtractionService:
                     commit=False,
                 )
                 error_count += 1
+                await MemoryWriter(self.db).record_event(
+                    MemoryEventInput(
+                        learner_id=learner_id,
+                        event_type="chat_error_observed",
+                        skill=skill,
+                        source_type="session",
+                        source_id=str(session_id),
+                        session_id=session_id,
+                        payload={
+                            "pattern": pattern,
+                            "description": description,
+                            "issues": feedback.get("key_issues", []),
+                        },
+                        confidence=0.76,
+                        created_by="system",
+                    )
+                )
+
+        await MemoryWriter(self.db).record_event(
+            MemoryEventInput(
+                learner_id=learner_id,
+                event_type="chat_learning_turn",
+                skill=active_skill,
+                source_type="session",
+                source_id=str(session_id),
+                session_id=session_id,
+                payload={
+                    "summary": result.get("today_goal") or f"{active_skill} session",
+                    "episode_type": result.get("session_type") or "daily_lesson",
+                    "feedback_summary": feedback.get("summary"),
+                },
+                confidence=0.82,
+                created_by="system",
+            )
+        )
 
         return MemoryExtractionResult(error_count=error_count)
 

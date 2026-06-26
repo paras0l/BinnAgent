@@ -22,6 +22,8 @@ from src.agents.skills import AgentSkill, apply_skill_to_metadata, resolve_effec
 from src.config import settings
 from src.db import async_session_factory
 from src.memory.extraction import MemoryExtractionService
+from src.memory.retriever import MemoryRetriever
+from src.memory.schemas import MemoryContext
 from src.models.learner import Learner
 from src.models.runtime import AgentThread, ConversationMessage
 from src.providers.base import ChatRequest as ModelChatRequest
@@ -141,6 +143,7 @@ def _model_request(
     history: list[ConversationMessage],
     *,
     skill: AgentSkill | None = None,
+    memory_context: MemoryContext | None = None,
     max_tokens: int | None = None,
     continuation_text: str | None = None,
 ) -> ModelChatRequest:
@@ -160,6 +163,10 @@ def _model_request(
                 "content": f"此前对话摘要：\n{summary.strip()}",
             }
         )
+    if memory_context is not None:
+        prompt_text = memory_context.prompt_text()
+        if prompt_text:
+            messages.append({"role": "system", "content": prompt_text})
 
     messages.extend({"role": message.role, "content": message.content} for message in history)
     if continuation_text:
@@ -216,8 +223,11 @@ async def _complete_non_streaming(
     history: list[ConversationMessage],
     model_router: ModelRouter,
     skill: AgentSkill | None,
+    memory_context: MemoryContext | None,
 ) -> tuple[str, str, int]:
-    response = await model_router.chat(_model_request(req, thread, history, skill=skill))
+    response = await model_router.chat(
+        _model_request(req, thread, history, skill=skill, memory_context=memory_context)
+    )
     reply_parts = [response.content]
     finish_reason = response.finish_reason
     continuation_count = 0
@@ -230,6 +240,7 @@ async def _complete_non_streaming(
                 thread,
                 history,
                 skill=skill,
+                memory_context=memory_context,
                 continuation_text="".join(reply_parts),
             )
         )
@@ -301,6 +312,7 @@ async def _persist_stream_assistant_message(
     assistant_reply: str,
     model_router: ModelRouter,
     skill: AgentSkill | None,
+    memory_context: MemoryContext | None,
 ) -> ConversationMessage:
     async with async_session_factory() as db:
         try:
@@ -325,7 +337,7 @@ async def _persist_stream_assistant_message(
                     thread_id=thread.id,
                 ),
                 skill_focus=_skill_focus_value(skill, req),
-                metadata_={},
+                metadata_={"memory_context": _memory_context_metadata(memory_context)},
             )
             db.add(assistant_message)
             await db.flush()
@@ -366,6 +378,13 @@ async def chat_send(
     if skill is not None:
         thread.metadata_ = apply_skill_to_metadata(thread.metadata_, skill)
     history = await _conversation_history(req, db, thread)
+    memory_context = await _retrieve_memory_context_safely(
+        db,
+        learner_id=req.learner_id,
+        reason="chat",
+        skill_focus=_skill_focus_value(skill, req),
+        thread_id=thread.id,
+    )
 
     user_message = ConversationMessage(
         learner_id=req.learner_id,
@@ -378,14 +397,14 @@ async def chat_send(
             thread_id=thread.id,
         ),
         skill_focus=_skill_focus_value(skill, req),
-        metadata_={},
+        metadata_={"memory_context": _memory_context_metadata(memory_context)},
     )
     db.add(user_message)
     await db.flush()
 
     try:
         reply, finish_reason, continuation_count = await _complete_non_streaming(
-            req, thread, history, model_router, skill
+            req, thread, history, model_router, skill, memory_context
         )
     except httpx.HTTPError:
         raise HTTPException(status_code=503, detail="Ollama service unavailable")
@@ -487,6 +506,38 @@ def _should_trigger_vocabulary_agent(skill: AgentSkill | None) -> bool:
     return skill is not None and skill.agent_name == VOCABULARY_AGENT_NAME
 
 
+def _memory_context_metadata(memory_context: MemoryContext | None) -> dict[str, Any]:
+    if memory_context is None:
+        return {"loaded_items": [], "excluded_items": [], "retrieval_reason": "unknown"}
+    return {
+        "loaded_items": [item.id for item in memory_context.loaded_items],
+        "excluded_items": memory_context.excluded_items,
+        "retrieval_reason": memory_context.retrieval_reason,
+        "token_cost": len(memory_context.prompt_text()),
+    }
+
+
+async def _retrieve_memory_context_safely(
+    db: AsyncSession,
+    *,
+    learner_id: uuid.UUID,
+    reason: str,
+    skill_focus: str | None,
+    thread_id: uuid.UUID,
+) -> MemoryContext:
+    try:
+        return await MemoryRetriever(db).retrieve_context(
+            learner_id=learner_id,
+            reason=reason,
+            skill=skill_focus,
+            thread_id=thread_id,
+            limit=6,
+        )
+    except Exception:
+        logger.exception("Failed to retrieve chat memory context")
+        return MemoryContext(loaded_items=[], excluded_items=[], retrieval_reason=reason)
+
+
 def _skill_event(
     status: str,
     *,
@@ -545,6 +596,13 @@ async def chat_stream(
     if skill is not None:
         thread.metadata_ = apply_skill_to_metadata(thread.metadata_, skill)
     history = await _conversation_history(req, db, thread)
+    memory_context = await _retrieve_memory_context_safely(
+        db,
+        learner_id=req.learner_id,
+        reason="chat_stream",
+        skill_focus=_skill_focus_value(skill, req),
+        thread_id=thread.id,
+    )
 
     user_message = ConversationMessage(
         learner_id=req.learner_id,
@@ -586,6 +644,7 @@ async def chat_stream(
                     thread,
                     history,
                     skill=skill,
+                    memory_context=memory_context,
                     continuation_text="".join(chunks) if continuation_count > 0 else None,
                 )
                 async for raw_chunk in model_router.stream_chat(request):
@@ -626,6 +685,7 @@ async def chat_stream(
                 assistant_reply=reply,
                 model_router=model_router,
                 skill=skill,
+                memory_context=memory_context,
             )
         except Exception:
             yield _sse_event("error", {"detail": "Failed to persist conversation memory"})

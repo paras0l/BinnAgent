@@ -86,12 +86,13 @@ npm run dev
 - [11. Vocabulary Learning](docs/architecture/11-vocabulary-learning.md)
 - [12. Textbook RAG, Langfuse & Exercises](docs/architecture/12-rag-observability-exercises.md)
 - [13. Current Scope and Status](docs/architecture/13-current-scope-and-status.md)
+- [Memory Architecture v2](docs/memory-architecture-v2.md)
 
 ## 当前实现状态
 
 | 能力 | 状态 |
 |------|------|
-| Chat / Memory / Dashboard | 部分实现 |
+| Chat / Memory / Dashboard | 部分实现，Memory v2 统一事件、Curator、Retriever 和可控记忆中心已落地 |
 | 七年级教材 Knowledge Base / RAG / Exercises | 部分实现 |
 | Vocabulary Personal Cards / Practice / Spelling | 部分实现 |
 | Writing Phrasebook | 基础版已实现 |

@@ -8,6 +8,7 @@ export type AppTab =
   | 'chat'
   | 'explore'
   | 'dashboard'
+  | 'memory'
   | 'pronunciation'
   | 'grammar'
 
@@ -230,6 +231,43 @@ export interface MemorySummary {
     active_skill?: string | null
     completed_at?: string | null
   }>
+  recent_events?: Array<{
+    id: string
+    event_type: string
+    skill: string
+    source_type: string
+    source_id?: string | null
+    confidence: number
+    occurred_at: string
+    summary: string
+  }>
+  active_weaknesses?: string[]
+}
+
+export interface MemoryCardItem {
+  id: string
+  type: string
+  title: string
+  content: string
+  skill: string
+  confidence: number
+  status?: string | null
+  evidence: string[]
+  impact: string
+  updated_at?: string | null
+  editable: boolean
+}
+
+export interface MemoryCenter {
+  learner: Learner
+  cards: MemoryCardItem[]
+  recommendation_reason: string
+  metrics: Record<string, number>
+  settings: {
+    emotion_rhythm_enabled: boolean
+    inferred_preferences_enabled: boolean
+    low_confidence_memory_enabled: boolean
+  }
 }
 
 export interface DashboardSummary {

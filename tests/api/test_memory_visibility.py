@@ -7,12 +7,15 @@ import pytest
 from src.api import deps
 from src.main import app
 from src.models.learner import Learner
+from src.models.memory import LearnerMemorySettings, MemoryOperation
 from src.models.runtime import AgentThread, ConversationMessage
+from src.models.session import LearningSession, LearningTask
 
 
 @pytest.fixture
 def mock_session():
     session = AsyncMock()
+    session.add = MagicMock()
     session.flush = AsyncMock()
     app.dependency_overrides[deps.get_db_session] = lambda: session
     yield session
@@ -184,6 +187,8 @@ class TestMemorySummary:
                 _count(0),
                 _many([]),
                 _many([]),
+                _many([]),
+                _many([]),
             ]
         )
 
@@ -224,6 +229,8 @@ class TestMemorySummary:
                 _count(8),
                 _many([]),
                 _many([]),
+                _many([]),
+                _many([]),
             ]
         )
 
@@ -236,3 +243,61 @@ class TestMemorySummary:
             "pronunciation_learned": 5,
             "pronunciation_opened": 8,
         }
+
+    @pytest.mark.asyncio
+    async def test_memory_settings_can_disable_emotion_rhythm(self, client, mock_session):
+        learner_id = uuid.uuid4()
+        learner = Learner(nickname="Alice")
+        learner.id = learner_id
+        settings = LearnerMemorySettings(
+            learner_id=learner_id,
+            emotion_rhythm_enabled=True,
+            inferred_preferences_enabled=True,
+            low_confidence_memory_enabled=False,
+        )
+        settings.id = uuid.uuid4()
+        mock_session.execute = AsyncMock(side_effect=[_one(learner), _one(settings)])
+
+        response = await client.patch(
+            f"/api/learners/{learner_id}/memory/settings",
+            json={"emotion_rhythm_enabled": False},
+        )
+
+        assert response.status_code == 200
+        assert response.json()["emotion_rhythm_enabled"] is False
+        assert settings.emotion_rhythm_enabled is False
+        added_operations = [
+            call.args[0]
+            for call in mock_session.add.call_args_list
+            if isinstance(call.args[0], MemoryOperation)
+        ]
+        assert added_operations
+        assert added_operations[0].target_type == "memory_settings"
+
+    @pytest.mark.asyncio
+    async def test_reset_learning_plan_marks_open_tasks_and_sessions(self, client, mock_session):
+        learner_id = uuid.uuid4()
+        learner = Learner(nickname="Alice")
+        learner.id = learner_id
+        task = LearningTask(
+            learner_id=learner_id,
+            task_type="textbook_knowledge",
+            skill="knowledge",
+            title="Unit 1",
+            status="pending",
+        )
+        session = LearningSession(
+            learner_id=learner_id,
+            session_type="daily_lesson",
+            status="active",
+        )
+        mock_session.execute = AsyncMock(
+            side_effect=[_one(learner), _many([task]), _many([session])]
+        )
+
+        response = await client.post(f"/api/learners/{learner_id}/memory/reset-plan")
+
+        assert response.status_code == 200
+        assert response.json() == {"reset_task_count": 1, "reset_session_count": 1}
+        assert task.status == "reset"
+        assert session.status == "reset"

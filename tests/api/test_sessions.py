@@ -49,7 +49,7 @@ class TestStartSession:
         assert data["active_skill"] == "vocabulary"
         assert data["today_goal"] == "Learn 20 new CET-6 words"
         assert "id" in data
-        mock_session.add.assert_called_once()
+        assert mock_session.add.call_count >= 1
         assert mock_session.commit.await_count >= 1
         mock_ainvoke.assert_awaited_once()
         graph_config = mock_ainvoke.await_args.kwargs["config"]

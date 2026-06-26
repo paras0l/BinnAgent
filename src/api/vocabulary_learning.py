@@ -9,6 +9,10 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.api.deps import get_db_session
+from src.memory.explainer import MemoryExplainer
+from src.memory.retriever import MemoryRetriever
+from src.memory.schemas import MemoryEventInput
+from src.memory.writer import MemoryWriter
 from src.models.knowledge import CurriculumNode, KnowledgePoint
 from src.models.learner import Learner
 from src.models.vocabulary import (
@@ -440,6 +444,17 @@ async def next_practice_task(
     assets = await lookup_pronunciations(
         item.word, session.accent if session.accent != "auto" else "uk"
     )
+    memory_items = []
+    try:
+        memory_context = await MemoryRetriever(db).retrieve_context(
+            learner_id=learner_id,
+            reason="vocabulary_practice",
+            skill="vocabulary",
+            limit=3,
+        )
+        memory_items = memory_context.loaded_items
+    except Exception:
+        memory_items = []
     effective_word = override.display_form_override if override and override.display_form_override else item.word
     meanings = _visible_meanings(item, override)
     examples = _effective_examples(item, override)
@@ -480,6 +495,10 @@ async def next_practice_task(
         "context_with_blank": _blank_example_from_text(item, first_example),
         "sources": sources,
         "part_of_speech": _part_of_speech(item),
+        "recommendation_reason": MemoryExplainer().recommendation_reason(
+            memory_items,
+            "根据复习到期时间、掌握度和最近练习记录安排这道词汇任务。",
+        ),
     }
     if session.mode in {"new", "review"}:
         payload.update(
@@ -584,6 +603,49 @@ async def submit_practice_attempt(
             hint_count=body.hint_count,
             replay_count=body.replay_count,
         )
+        await MemoryWriter(db).record_event(
+            MemoryEventInput(
+                learner_id=learner_id,
+                event_type="vocabulary_attempted",
+                skill="vocabulary",
+                subskill=session.mode,
+                source_type="vocabulary_attempt",
+                source_id=str(existing.id),
+                payload={
+                    "vocabulary_item_id": str(item.id),
+                    "word": item.word,
+                    "drill_type": existing.drill_type,
+                    "result": existing.result,
+                    "score": existing.score,
+                    "error_type": existing.error_type,
+                    "hint_count": existing.hint_count,
+                    "replay_count": existing.replay_count,
+                    "response_time_ms": existing.response_time_ms,
+                    "practice_session_id": str(session.id),
+                },
+                confidence=0.95,
+                occurred_at=existing.occurred_at,
+            )
+        )
+        if existing.result in {"incorrect", "revealed"}:
+            await MemoryWriter(db).record_event(
+                MemoryEventInput(
+                    learner_id=learner_id,
+                    event_type="vocabulary_mistake_recorded",
+                    skill="vocabulary",
+                    subskill=existing.drill_type,
+                    source_type="vocabulary_attempt",
+                    source_id=str(existing.id),
+                    payload={
+                        "vocabulary_item_id": str(item.id),
+                        "word": item.word,
+                        "result": existing.result,
+                        "error_type": existing.error_type or "needs_practice",
+                    },
+                    confidence=0.9,
+                    occurred_at=existing.occurred_at,
+                )
+            )
     override = await _override_for_item(db, learner_id, item.id)
     meanings = _visible_meanings(item, override)
     examples = _effective_examples(item, override)

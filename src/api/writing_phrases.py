@@ -9,6 +9,11 @@ from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.api.deps import get_db_session
+from src.memory.curator import MemoryCurator
+from src.memory.explainer import MemoryExplainer
+from src.memory.retriever import MemoryRetriever
+from src.memory.schemas import MemoryEventInput
+from src.memory.writer import MemoryWriter
 from src.models.learner import Learner
 from src.models.writing_phrase import (
     WritingPhrase,
@@ -190,6 +195,11 @@ class AttemptResponse(BaseModel):
     feedback: str | None = None
     response_time_ms: int | None = None
     occurred_at: datetime
+
+
+class PhraseRecommendationResponse(BaseModel):
+    recommendation_reason: str
+    memory_items: list[dict[str, Any]]
 
 
 async def _ensure_learner(db: AsyncSession, learner_id: uuid.UUID) -> None:
@@ -404,6 +414,40 @@ async def list_writing_phrases(
     return [_phrase_response(phrase) for phrase in result.scalars().all()]
 
 
+@router.get("/recommendations", response_model=PhraseRecommendationResponse)
+async def writing_phrase_recommendations(
+    learner_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db_session),
+) -> PhraseRecommendationResponse:
+    await _ensure_learner(db, learner_id)
+    try:
+        context = await MemoryRetriever(db).retrieve_context(
+            learner_id=learner_id,
+            reason="writing_phrasebook",
+            skill="writing",
+            limit=5,
+        )
+        memory_items = context.loaded_items
+    except Exception:
+        memory_items = []
+    return PhraseRecommendationResponse(
+        recommendation_reason=MemoryExplainer().recommendation_reason(
+            memory_items,
+            "根据收藏句式、最近句式练习和写作弱点推荐下一组表达。",
+        ),
+        memory_items=[
+            {
+                "id": item.id,
+                "type": item.type,
+                "summary": item.summary,
+                "confidence": item.confidence,
+                "evidence": item.evidence_refs,
+            }
+            for item in memory_items
+        ],
+    )
+
+
 @router.post("", response_model=WritingPhraseResponse, status_code=status.HTTP_201_CREATED)
 async def create_writing_phrase(
     learner_id: uuid.UUID,
@@ -435,6 +479,25 @@ async def create_writing_phrase(
     )
     db.add(phrase)
     await db.flush()
+    await MemoryWriter(db).record_event(
+        MemoryEventInput(
+            learner_id=learner_id,
+            event_type="writing_phrase_saved",
+            skill="writing",
+            subskill=body.tags[0] if body.tags else body.usage_position,
+            source_type="writing_phrase",
+            source_id=str(phrase.id),
+            payload={
+                "phrase_id": str(phrase.id),
+                "text": phrase.text,
+                "tags": phrase.tags,
+                "usage_scene": phrase.usage_scene,
+                "review_enabled": phrase.review_enabled,
+            },
+            confidence=1.0,
+            created_by="user",
+        )
+    )
     await db.refresh(phrase)
     return _phrase_response(phrase)
 
@@ -480,6 +543,31 @@ async def update_writing_phrase(
     for key, value in updates.items():
         setattr(phrase, key, value)
     await db.flush()
+    await MemoryWriter(db).record_user_control_event(
+        learner_id=learner_id,
+        operation_type="edit",
+        target_type="writing_phrase",
+        target_id=phrase.id,
+        before={},
+        after={
+            "skill": "writing",
+            "phrase_id": str(phrase.id),
+            "updated_fields": sorted(updates.keys()),
+        },
+    )
+    await MemoryWriter(db).record_event(
+        MemoryEventInput(
+            learner_id=learner_id,
+            event_type="writing_phrase_updated",
+            skill="writing",
+            subskill=phrase.tags[0] if phrase.tags else phrase.usage_position,
+            source_type="writing_phrase",
+            source_id=str(phrase.id),
+            payload={"phrase_id": str(phrase.id), "updated_fields": sorted(updates.keys())},
+            confidence=1.0,
+            created_by="user",
+        )
+    )
     await db.refresh(phrase)
     return _phrase_response(phrase)
 
@@ -492,6 +580,26 @@ async def delete_writing_phrase(
 ) -> None:
     await _ensure_learner(db, learner_id)
     phrase = await _get_phrase(db, learner_id, phrase_id)
+    await MemoryWriter(db).record_user_control_event(
+        learner_id=learner_id,
+        operation_type="delete",
+        target_type="writing_phrase",
+        target_id=phrase.id,
+        before={"skill": "writing", "phrase_id": str(phrase.id), "text": phrase.text},
+        reason="User deleted writing phrase",
+    )
+    await MemoryWriter(db).record_event(
+        MemoryEventInput(
+            learner_id=learner_id,
+            event_type="writing_phrase_deleted",
+            skill="writing",
+            source_type="writing_phrase",
+            source_id=str(phrase.id),
+            payload={"phrase_id": str(phrase.id), "text": phrase.text},
+            confidence=1.0,
+            created_by="user",
+        )
+    )
     await db.delete(phrase)
     await db.flush()
 
@@ -581,6 +689,33 @@ async def record_phrase_attempt(
     )
     db.add(attempt)
     await db.flush()
+    await MemoryWriter(db).record_event(
+        MemoryEventInput(
+            learner_id=learner_id,
+            event_type="writing_phrase_attempted",
+            skill="writing",
+            subskill=phrase.tags[0] if phrase.tags else phrase.usage_position,
+            source_type="writing_phrase_attempt",
+            source_id=str(attempt.id),
+            payload={
+                "phrase_id": str(phrase.id),
+                "exercise_id": str(attempt.exercise_id) if attempt.exercise_id else None,
+                "exercise_type": attempt.exercise_type,
+                "correct": attempt.is_correct,
+                "score": attempt.score,
+                "feedback": attempt.feedback,
+                "tags": phrase.tags,
+                "error_type": None if attempt.is_correct else "needs_practice",
+                "response_time_ms": attempt.response_time_ms,
+            },
+            confidence=0.95,
+            occurred_at=attempt.occurred_at,
+        )
+    )
+    try:
+        await MemoryCurator(db).curate_learner(learner_id)
+    except Exception:
+        pass
     await db.refresh(attempt)
     return AttemptResponse(
         id=attempt.id,
