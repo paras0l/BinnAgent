@@ -111,5 +111,6 @@ npm run build
 ## 设计规范
 
 - 主规范：[Web Frontend Design Spec](superpowers/specs/2026-06-12-web-frontend-design.md)
+- 项目级设计标准：[Frontend Design System](frontend-design-system.md)
 - 拼写训练规范：[Spelling Training UI/UX](superpowers/specs/2026-06-19-spelling-training-uiux.md)
 - 富词典规范：[Vocabulary Rich Dictionary Design](superpowers/specs/2026-06-21-vocabulary-rich-dictionary-design.md)
