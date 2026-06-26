@@ -32,6 +32,7 @@
 | Prompt & Parsing Governance | 部分实现 | Prompt Registry MVP、prompt render API、核心 prompt 模板、写作导入 JSON-first extraction、教材 manifest/profile/parser report | 更多 prompt eval、词汇/语法 schema-first 回填、人工校对工作台 |
 | Model Provider | 部分实现 | Ollama chat/stream/embed/health，结构化 JSON repair retry | task policy、local_only 强约束、持久化 model_call_logs |
 | Observability | 部分实现 | Langfuse observation 和运行时表 | run_id 贯通 graph/model/tool/memory，Dashboard 可视化 |
+| Evaluation / Simulation | 部分实现 | `src/simulation` 提供 deterministic learner persona、behavior policy、scenario runner、assertion engine 和结构化 simulation report；已覆盖 smoke、vocabulary agent deposit、vocabulary practice adaptation、daily graph 基线 | 扩展教材知识练习、写作好句闭环、Memory regression、LLM-assisted learner 和 dashboard |
 | CI | 已实现 | GitHub Actions 覆盖 backend lint/test、frontend lint/build、migration 文本检查 | Alembic 在线迁移检查和端到端 smoke |
 | Writing Phrasebook | 基础版已实现 | 探索页写作入口、句式 CRUD、外部模型结果提取、候选收藏、识别/填空/替换练习和 attempt 记录 | 模型辅助编辑、精细 mastery、作文批改与翻译练习深度联动 |
 
@@ -47,6 +48,7 @@
 | #11 词汇模块升级 | 新增 `VocabularyUserOverride`、`VocabularyMistake`、`VocabularyMasteryVector`；词汇详情和练习流读取用户覆盖层；新词学习/今日复习入口分离；用户例句优先参与填空上下文；隐藏释义不进入返回 payload；错因可修正/删除 | 更丰富的题型生成、Dashboard 弱项聚合、roleplay/micro writing 生产题 |
 | #12 好句收藏馆 | 新增 `writing_phrases`、练习和 attempt 数据表；提供 CRUD/import/exercises/attempts API；探索页接入好句收藏馆前端工作台 | P2 模型辅助编辑、P3 到期复习/mastery、P4 作文批改和翻译练习自动推荐 |
 | #14 Memory Core | 新增 `learning_memory_events`、`memory_operations`、`writing_phrase_masteries`、`memory_context_logs`、`learner_memory_settings`；实现 writer/retriever/curator/explainer/manager；词汇、知识、写作句式、chat/session、作文批改、LangGraph 写入或读取统一 memory；前端新增“我的学习记忆”页面；支持查看 evidence、编辑、删除、禁用、我已改善、导出、手动整理、重置计划、情绪/节奏开关、低置信上下文开关；summary 增加 recent events 和 active weaknesses；metrics 增加 retrieval、hit-rate、used-in-prompt、stale | 更完整 memory debug dashboard 图表、长期 regression eval 扩展 |
+| #15 Learner Simulation Agent | 新增 `src/simulation/`、`tests/simulation/` 和 `scripts/run_learner_simulation.py`；至少 5 个内置 persona；3 个 deterministic scenario 覆盖 smoke journey、Vocabulary Agent 沉淀、词汇练习 adaptation；runner 通过 API 调用系统并直接调用 daily lesson graph；每次运行生成结构化 report | 教材知识练习、写作好句、Memory 可控性 regression、LLM-assisted 模式和 simulation dashboard |
 | #16 教材解析质量止血 | 新增 `books/manifest.yaml`、parser profile、parser quality report；词汇条目增加 `raw_line`、`confidence`、`warnings` 和 `requires_review`；ingest metadata 写入 manifest/profile/report | layout-aware extractor、低置信人工校对队列和前端工作台 |
 | #17 Schema-first 回填 | 新增 `src/extraction`，写作好句导入优先 JSON schema，保留 regex fallback 且返回 `parse_mode`、`warnings`、`confidence`；新增 golden-style tests | 词汇字段回传和语法微课 machine_data 的完整保存链路 |
 | #18 Prompt Registry | 新增 `src/prompts`、版本化 markdown 模板、schema/model policy 绑定、`/api/prompts/{prompt_id}/render`；迁移 chat、vocabulary agent、grammar prompt、writing phrase prompt；新增 prompt eval fixtures | 更完整 observability 持久化、prompt evaluator、更多 P2 prompt 迁移 |

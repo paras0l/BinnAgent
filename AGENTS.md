@@ -91,6 +91,22 @@ rg "Ollama|Memory|MCP|RAG" docs src tests
 find docs/architecture -maxdepth 1 -type f | sort
 ```
 
+High-frequency command fixes:
+
+```bash
+# Local macOS may map python/python3 to interpreters without project deps.
+.venv/bin/python -m pytest tests/simulation -q
+.venv/bin/ruff check src/simulation tests/simulation scripts/run_learner_simulation.py
+
+# Run deterministic learner simulation through the repo wrapper.
+./scripts/run_learner_simulation.sh --persona grade7_low_vocab --scenario smoke_learning_journey
+./scripts/run_learner_simulation.sh --test
+```
+
+- Prefer `.venv/bin/python -m pytest ...` over bare `python -m pytest` or `python3 -m pytest` in this repo.
+- Prefer `.venv/bin/ruff ...` when checking local edits; the global `ruff` may be absent or a different version.
+- Use `./scripts/run_learner_simulation.sh` for simulation runs so the correct interpreter is selected automatically.
+
 ## Coding Style & Naming Conventions
 
 Markdown documents should use clear numbered prefixes for architecture modules. Keep headings descriptive and avoid overly long sections.

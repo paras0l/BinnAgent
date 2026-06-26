@@ -98,6 +98,7 @@ npm run dev
 | Writing Phrasebook | 基础版已实现 |
 | Prompt Registry / Schema-first Import / Parser Quality | 基础治理已实现 |
 | LangGraph daily lesson | 基础线性实现 |
+| Learner Simulation Agent | Deterministic MVP 已实现 |
 | CET reading / writing / weekly report | 设计中 |
 | CI backend lint/test + frontend lint/build | 已实现 |
 
