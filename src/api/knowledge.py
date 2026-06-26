@@ -1,4 +1,5 @@
 import hashlib
+import json
 import uuid
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -10,6 +11,7 @@ from sqlalchemy import and_, case, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.api.deps import get_db_session
+from src.knowledge.exercise_grader import answer_to_text, grade_exercise_answer
 from src.config import settings
 from src.knowledge.exercises import ensure_unit_exercises
 from src.knowledge.processor import process_uploaded_textbook
@@ -88,16 +90,26 @@ class IngestResponse(BaseModel):
 
 
 class ExerciseAnswerRequest(BaseModel):
-    answer: str = Field(min_length=1, max_length=1000)
+    answer: str | dict[str, Any]
     session_id: uuid.UUID | None = None
     response_time_ms: int | None = Field(default=None, ge=0, le=3_600_000)
+    hint_used: int = Field(default=0, ge=0, le=10)
+    attempt_index: int = Field(default=0, ge=0, le=10)
 
 
 class ExerciseAnswerResponse(BaseModel):
     question_id: uuid.UUID
     correct: bool
+    score: float
+    passed: bool
     answer: str
     explanation: str
+    feedback: str
+    hint: str | None = None
+    can_retry: bool
+    error_type: str | None = None
+    next_review_signal: str
+    rubric: dict[str, Any]
 
 
 async def _ensure_learner(db: AsyncSession, learner_id: uuid.UUID) -> None:
@@ -766,7 +778,7 @@ async def search_knowledge_chunks(
 async def start_unit_exercises(
     learner_id: uuid.UUID,
     curriculum_node_id: uuid.UUID,
-    limit: int = Query(default=5, ge=1, le=10),
+    limit: int = Query(default=8, ge=1, le=12),
     db: AsyncSession = Depends(get_db_session),
 ) -> dict[str, Any]:
     await _ensure_learner(db, learner_id)
@@ -791,6 +803,7 @@ async def start_unit_exercises(
                 "stem": question.stem,
                 "options": question.options or [],
                 "difficulty": question.difficulty,
+                "metadata": question.metadata_ or {},
             }
             for question in questions[:limit]
         ],
@@ -817,13 +830,18 @@ async def submit_exercise_attempt(
     question = result.scalar_one_or_none()
     if question is None:
         raise HTTPException(status_code=404, detail="Exercise question not found")
-    correct = body.answer.strip().casefold() == question.answer.strip().casefold()
+    submitted_answer = answer_to_text(body.answer)
+    if not submitted_answer:
+        raise HTTPException(status_code=422, detail="Answer cannot be empty")
+    grading = grade_exercise_answer(question, body.answer, attempt_index=body.attempt_index)
+    correct = bool(grading["correct"])
+    stored_answer = body.answer if isinstance(body.answer, str) else json.dumps(body.answer, ensure_ascii=False)
     db.add(
         ExerciseAttempt(
             learner_id=learner_id,
             question_id=question.id,
             session_id=body.session_id,
-            submitted_answer=body.answer.strip(),
+            submitted_answer=stored_answer.strip(),
             correct=correct,
             response_time_ms=body.response_time_ms,
         )
@@ -838,8 +856,15 @@ async def submit_exercise_attempt(
                 knowledge_point_id=question.knowledge_point_id,
                 payload={
                     "question_id": str(question.id),
+                    "question_type": question.question_type,
                     "correct": correct,
+                    "score": grading["score"],
+                    "passed": grading["passed"],
+                    "error_type": grading["error_type"],
+                    "hint_used": body.hint_used,
+                    "attempt_index": body.attempt_index,
                     "response_time_ms": body.response_time_ms,
+                    "next_review_signal": grading["next_review_signal"],
                 },
                 occurred_at=now,
             )
@@ -848,6 +873,14 @@ async def submit_exercise_attempt(
     return ExerciseAnswerResponse(
         question_id=question.id,
         correct=correct,
+        score=grading["score"],
+        passed=grading["passed"],
         answer=question.answer,
         explanation=question.explanation,
+        feedback=grading["feedback"],
+        hint=grading["hint"],
+        can_retry=grading["can_retry"],
+        error_type=grading["error_type"],
+        next_review_signal=grading["next_review_signal"],
+        rubric=grading["rubric"],
     )

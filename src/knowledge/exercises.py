@@ -1,16 +1,12 @@
-import random
 import uuid
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.knowledge.exercise_blueprints import build_exercise_blueprints
+from src.knowledge.exercise_generator import build_question
+from src.knowledge.exercise_linter import lint_exercise_set
 from src.models.knowledge import ExerciseQuestion, KnowledgePoint
-
-
-def _distractors(point: KnowledgePoint, peers: list[KnowledgePoint]) -> list[str]:
-    values = [peer.title for peer in peers if peer.id != point.id and peer.title != point.title]
-    values.extend(["以上都不正确", "需要结合更多上下文判断"])
-    return values[:3]
 
 
 async def ensure_unit_exercises(
@@ -38,28 +34,24 @@ async def ensure_unit_exercises(
             KnowledgePoint.status.in_(("published", "draft")),
         )
         .order_by(KnowledgePoint.created_at)
-        .limit(8)
+        .limit(12)
     )
     points = list(point_result.scalars().all())
-    questions: list[ExerciseQuestion] = []
-    for point in points[:5]:
-        distractors = _distractors(point, points)
-        options = [point.title, *distractors]
-        random.Random(str(point.id)).shuffle(options)
-        question = ExerciseQuestion(
+    blueprints = build_exercise_blueprints(points, target_count=8)
+    questions = [
+        build_question(
+            blueprint,
             source_id=source_id,
             curriculum_node_id=curriculum_node_id,
-            knowledge_point_id=point.id,
-            question_type="multiple_choice",
-            stem=f"下列哪一项最符合这个教材知识点：{point.summary}",
-            options=options,
-            answer=point.title,
-            explanation=f"教材知识点「{point.title}」：{point.summary}",
-            difficulty=point.difficulty,
-            status="published",
-            metadata_={"generator": "knowledge-point-template-v1"},
+            peers=points,
         )
+        for blueprint in blueprints
+    ]
+    lint_errors = lint_exercise_set(questions)
+    if lint_errors:
+        raise ValueError(f"Generated exercise set failed quality checks: {', '.join(lint_errors)}")
+
+    for question in questions:
         db.add(question)
-        questions.append(question)
     await db.flush()
     return questions

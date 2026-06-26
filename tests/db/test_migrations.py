@@ -87,3 +87,18 @@ def test_knowledge_source_sha256_migration_scopes_duplicates_to_owner() -> None:
     assert "knowledge_sources_sha256_key" in migration
     assert "uq_knowledge_sources_owner_sha256" in migration
     assert '["owner_learner_id", "sha256"]' in migration
+
+
+def test_vocabulary_personal_card_migration_adds_override_mastery_and_mistakes() -> None:
+    migration = Path(
+        "alembic/versions/74c5d6e7f8a9_add_vocabulary_personal_cards.py"
+    ).read_text()
+
+    assert "vocabulary_user_overrides" in migration
+    assert "vocabulary_mastery_vectors" in migration
+    assert "vocabulary_mistakes" in migration
+    assert "hidden_meaning_ids" in migration
+    assert "recognition" in migration
+    assert "production" in migration
+    assert "reason" in migration
+    assert "priority" in migration

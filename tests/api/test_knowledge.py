@@ -353,7 +353,16 @@ async def test_start_unit_exercises_generates_questions(client, knowledge_sessio
     )
 
     assert response.status_code == 200
-    assert point.title in response.json()["questions"][0]["options"]
+    payload = response.json()
+    assert len(payload["questions"]) == 8
+    assert {item["question_type"] for item in payload["questions"]} == {
+        "choice_context",
+        "fill_blank",
+        "dialogue_complete",
+        "error_fix",
+    }
+    assert point.title in payload["questions"][0]["options"]
+    assert payload["questions"][0]["metadata"]["scenario"]
     assert any(isinstance(item, ExerciseQuestion) for item in knowledge_session.added_objects)
 
 
@@ -383,4 +392,51 @@ async def test_submit_exercise_attempt_records_result(client, knowledge_session)
 
     assert response.status_code == 200
     assert response.json()["correct"] is True
+    assert response.json()["score"] == 1.0
     assert any(isinstance(item, ExerciseAttempt) for item in knowledge_session.added_objects)
+
+
+@pytest.mark.asyncio
+async def test_submit_exercise_attempt_returns_feedback_and_review_signal(client, knowledge_session):
+    learner_id = uuid.uuid4()
+    source = _source()
+    node = _node(source.id)
+    point = _point(source.id, node.id)
+    question = ExerciseQuestion(
+        source_id=source.id,
+        curriculum_node_id=node.id,
+        knowledge_point_id=point.id,
+        question_type="fill_blank",
+        stem="B: ______",
+        options=[],
+        answer="Good morning!",
+        explanation="Use the greeting in context.",
+        metadata_={
+            "interaction": {"type": "fill_blank", "input_mode": "text", "allow_retry": True},
+            "rubric": {
+                "target_expression": "Good morning!",
+                "acceptable_answers": ["Good morning!"],
+                "error_types": ["missing_target_expression"],
+                "hint": "Use the morning greeting.",
+            },
+        },
+    )
+    question.id = uuid.uuid4()
+    knowledge_session.execute = AsyncMock(side_effect=[_one(learner_id), _one(question)])
+
+    response = await client.post(
+        f"/api/learners/{learner_id}/knowledge-base/exercises/{question.id}/attempts",
+        json={"answer": "Hello", "attempt_index": 0, "hint_used": 0},
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["correct"] is False
+    assert payload["can_retry"] is True
+    assert payload["hint"] == "Use the morning greeting."
+    assert payload["next_review_signal"] == "urgent"
+    event = next(
+        item for item in knowledge_session.added_objects if isinstance(item, KnowledgeLearningEvent)
+    )
+    assert event.payload["error_type"] == "missing_target_expression"
+    assert event.payload["next_review_signal"] == "urgent"

@@ -81,18 +81,28 @@ traces 并关闭 tracing。查看本地管理员账号：
 
 ## 3. 教材练习题
 
-`exercise_questions` 保存题干、选项、答案、解析和关联知识点；
+`exercise_questions` 保存题干、选项、答案、解析、题型和关联知识点；
+`metadata` 保存 interaction、scenario、rubric、source evidence 和 estimated seconds。
 `exercise_attempts` 保存学习者答案、正确性、耗时和课程 session。
 
-首次请求某单元练习时，根据该单元知识点生成并持久化最多 5 道选择题，后续复用：
+首次请求某单元练习时，根据该单元知识点生成并持久化 8 道场景化混合题，后续复用：
+
+- `choice_context`：带语境的选择题。
+- `fill_blank`：填空题。
+- `dialogue_complete`：补全对话。
+- `error_fix`：找错并修改。
+
+生成链路为 `ExerciseBlueprint -> question generator -> linter -> published`。linter 会检查题干是否模板化、是否包含场景、是否有 rubric、题型是否至少 4 类、主动输入是否达到 30%、是否连续 3 道同题型。
 
 ```text
 POST /api/learners/{learner_id}/knowledge-base/units/{node_id}/exercises
 POST /api/learners/{learner_id}/knowledge-base/exercises/{question_id}/attempts
 ```
 
-提交答案后返回正确答案与解析，并写入 `knowledge_learning_events`，事件类型为
-`exercise_answered`，便于后续掌握度与复习策略消费。
+提交答案后返回 score、passed、feedback、hint、can_retry、error_type 和
+next_review_signal。主观输入使用 rubric 判分，不只做 exact match。答题结果写入
+`knowledge_learning_events`，事件类型为 `exercise_answered`，payload 包含
+question_type、score、error_type、hint_used、attempt_index 和 next_review_signal，便于后续掌握度与复习策略消费。
 
 ## 4. 部署
 

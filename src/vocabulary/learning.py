@@ -13,7 +13,10 @@ from src.models.vocabulary import (
     VocabularyAttempt,
     VocabularyItem,
     VocabularyItemSource,
+    VocabularyMasteryVector,
+    VocabularyMistake,
     VocabularyPracticeSession,
+    VocabularyUserOverride,
 )
 from src.tools.free_dictionary import lookup_free_dictionary_batch
 
@@ -33,9 +36,14 @@ def source_label(source: KnowledgeSource, node: CurriculumNode) -> str:
 
 
 def _entry_kind(expression: str) -> str:
+    if any(mark in expression for mark in ("?", "!", "...")):
+        return "sentence_pattern"
     if len(expression) <= 8 and expression.replace(".", "").isupper():
         return "abbreviation"
     if " " in expression or "/" in expression:
+        lower = expression.casefold()
+        if lower.startswith(("be ", "look ", "make ", "take ", "get ", "have ")):
+            return "collocation"
         return "phrase"
     if expression[:1].isupper():
         return "proper_noun"
@@ -191,6 +199,8 @@ async def enroll_unit_vocabulary(
                 source_type="textbook_unit",
                 source_id=str(point.id),
                 source_version_id=str(source.id),
+                reason="current_unit_core_word",
+                priority=0.8,
                 curriculum_node_id=node.id,
                 display_label=label,
                 context_snapshot={
@@ -268,6 +278,79 @@ def spelling_feedback(answer: str, correct: str) -> tuple[str | None, list[dict[
     return "substitution", diff, f"这里应该是 {first['correct']}，不是 {first['answer']}。"
 
 
+MASTERY_DIMENSIONS = (
+    "recognition",
+    "recall",
+    "spelling",
+    "listening",
+    "context_use",
+    "production",
+)
+
+
+def default_mastery_vector(confidence: float = 0.0) -> dict[str, float]:
+    value = round(max(0.0, min(1.0, confidence)), 3)
+    return {dimension: value for dimension in MASTERY_DIMENSIONS}
+
+
+def mastery_to_dict(mastery: VocabularyMasteryVector | None, confidence: float = 0.0) -> dict[str, float]:
+    if mastery is None:
+        return default_mastery_vector(confidence)
+    return {
+        "recognition": mastery.recognition if mastery.recognition is not None else confidence,
+        "recall": mastery.recall if mastery.recall is not None else confidence,
+        "spelling": mastery.spelling if mastery.spelling is not None else confidence,
+        "listening": mastery.listening if mastery.listening is not None else confidence,
+        "context_use": mastery.context_use if mastery.context_use is not None else confidence,
+        "production": mastery.production if mastery.production is not None else confidence,
+    }
+
+
+def dimensions_for_drill(drill_type: str, result: str) -> tuple[str, ...]:
+    if drill_type == "spelling":
+        return ("spelling", "listening")
+    if drill_type in {"new", "new_learning"}:
+        return ("recognition", "context_use")
+    if drill_type == "context":
+        return ("context_use", "recall")
+    if result == "revealed":
+        return ("recognition",)
+    return ("recognition", "recall")
+
+
+async def ensure_mastery_vector(
+    db: AsyncSession, item: VocabularyItem
+) -> VocabularyMasteryVector:
+    result = await db.execute(
+        select(VocabularyMasteryVector).where(
+            VocabularyMasteryVector.learner_id == item.learner_id,
+            VocabularyMasteryVector.vocabulary_item_id == item.id,
+        )
+    )
+    mastery = result.scalar_one_or_none()
+    if mastery is not None:
+        return mastery
+    base = default_mastery_vector(item.confidence)
+    mastery = VocabularyMasteryVector(
+        learner_id=item.learner_id,
+        vocabulary_item_id=item.id,
+        **base,
+    )
+    db.add(mastery)
+    await db.flush()
+    return mastery
+
+
+def _adjust_mastery_value(value: float, *, result: str, score: float, hint_count: int) -> float:
+    if result == "correct":
+        gain = 0.16 * max(0.2, min(score, 1.0))
+        if hint_count:
+            gain *= 0.55
+        return round(min(1.0, value + gain), 3)
+    penalty = 0.12 if result == "incorrect" else 0.05
+    return round(max(0.0, value - penalty), 3)
+
+
 async def update_item_after_attempt(
     db: AsyncSession,
     item: VocabularyItem,
@@ -279,6 +362,7 @@ async def update_item_after_attempt(
 ) -> None:
     now = datetime.now(timezone.utc)
     before = item.confidence
+    mastery = await ensure_mastery_vector(db, item)
     item.review_count += 1
     item.last_reviewed_at = now
     if result == "correct":
@@ -294,6 +378,13 @@ async def update_item_after_attempt(
         item.confidence = max(0.0, item.confidence - (0.12 if result == "incorrect" else 0.04))
         item.status = "learning"
         item.next_review_at = now + timedelta(days=1)
+    for dimension in dimensions_for_drill(drill_type, result):
+        current = float(getattr(mastery, dimension))
+        setattr(
+            mastery,
+            dimension,
+            _adjust_mastery_value(current, result=result, score=score, hint_count=hint_count),
+        )
     db.add(
         ReviewSchedule(
             learner_id=item.learner_id,
@@ -364,4 +455,27 @@ async def record_attempt(
     if result == "revealed":
         session.revealed_count += 1
     await db.flush()
+    if result == "incorrect":
+        db.add(
+            VocabularyMistake(
+                learner_id=session.learner_id,
+                vocabulary_item_id=item.id,
+                attempt_id=attempt.id,
+                mistake_type=error_type or drill_type,
+                note=None,
+                correction=item.word,
+                active=True,
+            )
+        )
+        await db.flush()
     return attempt
+
+
+async def excluded_item_ids(db: AsyncSession, learner_id: uuid.UUID) -> set[uuid.UUID]:
+    result = await db.execute(
+        select(VocabularyUserOverride.vocabulary_item_id).where(
+            VocabularyUserOverride.learner_id == learner_id,
+            VocabularyUserOverride.excluded_from_review.is_(True),
+        )
+    )
+    return set(result.scalars().all())

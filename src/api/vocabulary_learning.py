@@ -15,22 +15,30 @@ from src.models.vocabulary import (
     VocabularyAttempt,
     VocabularyItem,
     VocabularyItemSource,
+    VocabularyMasteryVector,
     VocabularyPracticeSession,
+    VocabularyUserOverride,
 )
 from src.tools.pronunciation import lookup_pronunciations
 from src.vocabulary.learning import (
     canonical_vocabulary_key,
     current_item_id,
     enroll_unit_vocabulary,
+    excluded_item_ids,
+    mastery_to_dict,
     record_attempt,
     spelling_feedback,
 )
 
 router = APIRouter(prefix="/api/learners/{learner_id}/vocabulary", tags=["vocabulary-learning"])
+learning_router = APIRouter(
+    prefix="/api/learners/{learner_id}/vocabulary-learning",
+    tags=["vocabulary-learning"],
+)
 
 
 class StartPracticeRequest(BaseModel):
-    mode: Literal["review", "spelling"]
+    mode: Literal["new", "review", "spelling"]
     prompt_mode: Literal["audio", "meaning", "context"] = "audio"
     accent: Literal["uk", "us", "auto"] = "uk"
     curriculum_node_id: uuid.UUID | None = None
@@ -94,10 +102,66 @@ async def _sources_for_item(
         {
             "type": source.source_type,
             "label": source.display_label,
+            "reason": source.reason,
+            "priority": source.priority,
             "context": source.context_snapshot or {},
         }
         for source in result.scalars().all()
     ]
+
+
+async def _override_for_item(
+    db: AsyncSession, learner_id: uuid.UUID, item_id: uuid.UUID
+) -> VocabularyUserOverride | None:
+    result = await db.execute(
+        select(VocabularyUserOverride).where(
+            VocabularyUserOverride.learner_id == learner_id,
+            VocabularyUserOverride.vocabulary_item_id == item_id,
+        )
+    )
+    return result.scalar_one_or_none()
+
+
+async def _mastery_for_item(
+    db: AsyncSession, learner_id: uuid.UUID, item_id: uuid.UUID
+) -> VocabularyMasteryVector | None:
+    result = await db.execute(
+        select(VocabularyMasteryVector).where(
+            VocabularyMasteryVector.learner_id == learner_id,
+            VocabularyMasteryVector.vocabulary_item_id == item_id,
+        )
+    )
+    return result.scalar_one_or_none()
+
+
+def _meaning_id(meaning: Any, index: int) -> str:
+    if isinstance(meaning, dict):
+        for key in ("id", "sense_id", "key"):
+            value = meaning.get(key)
+            if isinstance(value, str) and value:
+                return value
+    return str(index)
+
+
+def _visible_meanings(item: VocabularyItem, override: VocabularyUserOverride | None) -> list[Any]:
+    meanings = item.meanings if isinstance(item.meanings, list) else []
+    hidden = set(override.hidden_meaning_ids if override else [])
+    visible = [
+        meaning for index, meaning in enumerate(meanings)
+        if _meaning_id(meaning, index) not in hidden
+    ]
+    user_meanings = override.meaning_overrides if override and isinstance(override.meaning_overrides, list) else []
+    return [meaning for meaning in user_meanings if _is_active_override(meaning)] + visible
+
+
+def _is_active_override(value: Any) -> bool:
+    return not isinstance(value, dict) or value.get("active", True) is not False
+
+
+def _effective_examples(item: VocabularyItem, override: VocabularyUserOverride | None) -> list[Any]:
+    user_examples = override.user_examples if override and isinstance(override.user_examples, list) else []
+    system_examples = item.examples if isinstance(item.examples, list) else []
+    return user_examples + system_examples
 
 
 def _first_text(value: Any) -> str | None:
@@ -127,6 +191,12 @@ def _part_of_speech(item: VocabularyItem) -> str:
 
 def _blank_example(item: VocabularyItem) -> str | None:
     example = _first_text(item.examples)
+    if not example:
+        return None
+    return re.sub(re.escape(item.word), "___", example, count=1, flags=re.IGNORECASE)
+
+
+def _blank_example_from_text(item: VocabularyItem, example: str | None) -> str | None:
     if not example:
         return None
     return re.sub(re.escape(item.word), "___", example, count=1, flags=re.IGNORECASE)
@@ -239,6 +309,8 @@ async def start_practice_session(
     db: AsyncSession = Depends(get_db_session),
 ) -> StartPracticeResponse:
     await _ensure_learner(db, learner_id)
+    excluded_ids = await excluded_item_ids(db, learner_id)
+    now = datetime.now(timezone.utc)
     if body.curriculum_node_id:
         node_result = await db.execute(
             select(CurriculumNode).where(CurriculumNode.id == body.curriculum_node_id)
@@ -247,7 +319,7 @@ async def start_practice_session(
         if node is None:
             raise HTTPException(status_code=404, detail="Curriculum node not found")
         await enroll_unit_vocabulary(db, learner_id, node)
-        source_item_result = await db.execute(
+        query = (
             select(VocabularyItem)
             .join(
                 VocabularyItemSource, VocabularyItemSource.vocabulary_item_id == VocabularyItem.id
@@ -257,17 +329,37 @@ async def start_practice_session(
                 VocabularyItemSource.curriculum_node_id == body.curriculum_node_id,
                 VocabularyItemSource.active.is_(True),
             )
-            .order_by(
-                VocabularyItem.next_review_at.asc().nullsfirst(), VocabularyItem.created_at.asc()
+        )
+        if body.mode == "new":
+            query = query.where(VocabularyItem.review_count == 0)
+        elif body.mode in {"review", "spelling"}:
+            query = query.where(
+                VocabularyItem.status != "mastered",
+                VocabularyItem.next_review_at <= now,
             )
-            .limit(body.limit)
+        if excluded_ids:
+            query = query.where(VocabularyItem.id.not_in(excluded_ids))
+        source_item_result = await db.execute(
+            query.order_by(
+                VocabularyItem.review_count.asc(),
+                VocabularyItem.next_review_at.asc().nullsfirst(),
+                VocabularyItem.created_at.asc(),
+            ).limit(body.limit)
         )
         items = list(source_item_result.scalars().unique().all())
     else:
+        conditions = [VocabularyItem.learner_id == learner_id]
+        if body.mode == "new":
+            conditions.append(VocabularyItem.review_count == 0)
+        else:
+            conditions.extend([VocabularyItem.status != "mastered", VocabularyItem.next_review_at <= now])
+        if excluded_ids:
+            conditions.append(VocabularyItem.id.not_in(excluded_ids))
         item_result = await db.execute(
             select(VocabularyItem)
-            .where(VocabularyItem.learner_id == learner_id, VocabularyItem.status != "mastered")
+            .where(*conditions)
             .order_by(
+                VocabularyItem.review_count.asc(),
                 VocabularyItem.next_review_at.asc().nullsfirst(), VocabularyItem.created_at.asc()
             )
             .limit(body.limit)
@@ -301,6 +393,28 @@ async def start_practice_session(
     )
 
 
+@learning_router.post("/new-session", response_model=StartPracticeResponse, status_code=status.HTTP_201_CREATED)
+async def start_new_learning_session(
+    learner_id: uuid.UUID,
+    body: StartPracticeRequest,
+    db: AsyncSession = Depends(get_db_session),
+) -> StartPracticeResponse:
+    body.mode = "new"
+    body.prompt_mode = "context"
+    return await start_practice_session(learner_id, body, db)
+
+
+@learning_router.post("/review-session", response_model=StartPracticeResponse, status_code=status.HTTP_201_CREATED)
+async def start_review_learning_session(
+    learner_id: uuid.UUID,
+    body: StartPracticeRequest,
+    db: AsyncSession = Depends(get_db_session),
+) -> StartPracticeResponse:
+    body.mode = "review"
+    body.prompt_mode = "meaning"
+    return await start_practice_session(learner_id, body, db)
+
+
 @router.get("/sessions/{session_id}/next")
 async def next_practice_task(
     learner_id: uuid.UUID,
@@ -320,10 +434,16 @@ async def next_practice_task(
         )
     )
     item = item_result.scalar_one()
+    override = await _override_for_item(db, learner_id, item.id)
+    mastery = await _mastery_for_item(db, learner_id, item.id)
     sources = await _sources_for_item(db, learner_id, item.id)
     assets = await lookup_pronunciations(
         item.word, session.accent if session.accent != "auto" else "uk"
     )
+    effective_word = override.display_form_override if override and override.display_form_override else item.word
+    meanings = _visible_meanings(item, override)
+    examples = _effective_examples(item, override)
+    first_example = _first_text(examples)
     payload: dict[str, Any] = {
         "completed": False,
         "session_id": str(session.id),
@@ -339,24 +459,36 @@ async def next_practice_task(
         "audio_url": item.audio_url,
         "audio_uk": item.audio_uk,
         "audio_us": item.audio_us,
+        "word": effective_word if session.mode in {"new", "review"} else None,
+        "display_word": effective_word,
+        "entry_kind": item.entry_kind,
         "dictionary_senses": item.dictionary_senses or [],
         "word_forms": item.word_forms or {},
         "dictionary_tags": item.dictionary_tags or [],
-        "meanings": item.meanings or [],
-        "examples": item.examples or [],
+        "meanings": meanings,
+        "examples": examples,
+        "user_override": {
+            "display_form_override": override.display_form_override if override else None,
+            "user_understanding": override.user_understanding if override else None,
+            "user_notes": override.user_notes if override else None,
+            "review_preference": override.review_preference if override else "normal",
+            "manual_mastery": override.manual_mastery if override else None,
+        },
+        "mastery": mastery_to_dict(mastery, item.confidence),
         "pronunciations": [asset.__dict__ for asset in assets],
         "tts_text": item.word if all(asset.audio_url is None for asset in assets) else None,
-        "context_with_blank": _blank_example(item),
+        "context_with_blank": _blank_example_from_text(item, first_example),
         "sources": sources,
         "part_of_speech": _part_of_speech(item),
     }
-    if session.mode == "review":
+    if session.mode in {"new", "review"}:
         payload.update(
             {
-                "word": item.word,
-                "meaning": _first_text(item.meanings),
-                "example": _first_text(item.examples),
-                "entry_kind": item.entry_kind,
+                "word": effective_word,
+                "meaning": _first_text(meanings),
+                "example": first_example,
+                "show_answer_first": session.mode == "new",
+                "allow_reveal": True,
             }
         )
     return payload
@@ -376,9 +508,12 @@ async def get_practice_hint(
     result = await db.execute(select(VocabularyItem).where(VocabularyItem.id == item_id))
     item = result.scalar_one()
     if level == 1:
+        override = await _override_for_item(db, learner_id, item.id)
+        examples = _effective_examples(item, override)
+        meanings = _visible_meanings(item, override)
         return {
             "level": 1,
-            "hint": _blank_example(item) or _first_text(item.meanings) or "再听一次发音",
+            "hint": _blank_example_from_text(item, _first_text(examples)) or _first_text(meanings) or "再听一次发音",
         }
     if level == 2:
         return {"level": 2, "hint": f"首字母是 {item.word[:1]}，共 {len(item.word)} 个字符"}
@@ -432,7 +567,7 @@ async def submit_practice_attempt(
         result = "correct" if body.rating >= 3 else "incorrect"
         score = body.rating / 4
         error_type, diff = None, []
-        feedback = "已更新复习计划"
+        feedback = "已加入第一次复习计划" if session.mode == "new" else "已更新复习计划"
     if existing is None:
         existing = await record_attempt(
             db,
@@ -449,6 +584,9 @@ async def submit_practice_attempt(
             hint_count=body.hint_count,
             replay_count=body.replay_count,
         )
+    override = await _override_for_item(db, learner_id, item.id)
+    meanings = _visible_meanings(item, override)
+    examples = _effective_examples(item, override)
     return {
         "attempt_id": str(existing.id),
         "result": existing.result,
@@ -462,11 +600,11 @@ async def submit_practice_attempt(
         "dictionary_senses": item.dictionary_senses or [],
         "word_forms": item.word_forms or {},
         "dictionary_tags": item.dictionary_tags or [],
-        "meanings": item.meanings or [],
-        "examples": item.examples or [],
-        "meaning": _first_text(item.meanings),
+        "meanings": meanings,
+        "examples": examples,
+        "meaning": _first_text(meanings),
         "part_of_speech": _part_of_speech(item),
-        "example": _first_text(item.examples),
+        "example": _first_text(examples),
         "error_type": existing.error_type,
         "letter_diff": existing.letter_diff or [],
         "feedback_text": feedback,

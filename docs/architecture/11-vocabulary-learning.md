@@ -38,6 +38,18 @@
 
 ## 3. 领域边界
 
+### 3.0 当前实现状态
+
+截至 2026-06-26，代码已落地以下能力：
+
+- `VocabularyItem.entry_kind` 支持 `word`、`phrase`、`collocation`、`sentence_pattern`、`abbreviation`、`proper_noun`。
+- `VocabularyUserOverride` 保存用户覆盖层：展示名、用户释义、隐藏系统释义、我的理解、我的例句、搭配、笔记、发音偏好和复习偏好。
+- `VocabularyMasteryVector` 保存 `recognition`、`recall`、`spelling`、`listening`、`context_use`、`production` 六维掌握度；attempt 会按练习类型更新相关维度。
+- `VocabularyMistake` 保存可编辑/可删除错因；删除采用 inactive，后续专项复习不再读取该错因。
+- API 已提供 `GET /api/learners/{learner_id}/vocabulary/{item_id}`、`PATCH /override`、`PATCH/DELETE /mistakes/{mistake_id}`。
+- 新词学习与旧词复习入口已分离：`/vocabulary-learning/new-session` 和 `/review-session` 作为推荐入口，旧 `/vocabulary/sessions` 保持兼容。
+- 前端词汇练习页提供“认识新词 / 今日复习 / 听音拼写”，旧词复习默认隐藏答案；词汇详情页提供个人词卡轻量编辑。
+
 ### 3.1 三类对象
 
 | 对象 | 回答的问题 | 生命周期 |

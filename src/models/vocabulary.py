@@ -3,6 +3,7 @@ from datetime import datetime
 from typing import Optional
 
 from sqlalchemy import (
+    Boolean,
     DateTime,
     Float,
     ForeignKey,
@@ -96,6 +97,8 @@ class VocabularyItemSource(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     source_type: Mapped[str] = mapped_column(String(30), nullable=False)
     source_id: Mapped[str] = mapped_column(String(255), nullable=False)
     source_version_id: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    reason: Mapped[Optional[str]] = mapped_column(String(80), nullable=True)
+    priority: Mapped[float] = mapped_column(Float, nullable=False, default=0.5)
     curriculum_node_id: Mapped[Optional[uuid.UUID]] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("curriculum_nodes.id", ondelete="SET NULL"),
@@ -105,6 +108,104 @@ class VocabularyItemSource(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     display_label: Mapped[str] = mapped_column(String(120), nullable=False)
     context_snapshot: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True, default=dict)
     active: Mapped[bool] = mapped_column(nullable=False, default=True)
+
+
+class VocabularyUserOverride(UUIDPrimaryKeyMixin, TimestampMixin, Base):
+    __tablename__ = "vocabulary_user_overrides"
+    __table_args__ = (
+        UniqueConstraint(
+            "vocabulary_item_id",
+            "learner_id",
+            name="uq_vocabulary_override_item_learner",
+        ),
+        Index("ix_vocabulary_overrides_learner_item", "learner_id", "vocabulary_item_id"),
+    )
+
+    learner_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("learners.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    vocabulary_item_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("vocabulary_items.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    display_form_override: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    meaning_overrides: Mapped[list] = mapped_column(JSONB, nullable=False, default=list)
+    hidden_meaning_ids: Mapped[list] = mapped_column(JSONB, nullable=False, default=list)
+    user_understanding: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    user_examples: Mapped[list] = mapped_column(JSONB, nullable=False, default=list)
+    user_collocations: Mapped[list] = mapped_column(JSONB, nullable=False, default=list)
+    user_notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    preferred_accent: Mapped[str] = mapped_column(String(10), nullable=False, default="auto")
+    review_preference: Mapped[str] = mapped_column(String(30), nullable=False, default="normal")
+    excluded_from_review: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    manual_mastery: Mapped[Optional[str]] = mapped_column(String(30), nullable=True)
+
+
+class VocabularyMasteryVector(UUIDPrimaryKeyMixin, TimestampMixin, Base):
+    __tablename__ = "vocabulary_mastery_vectors"
+    __table_args__ = (
+        UniqueConstraint(
+            "vocabulary_item_id",
+            "learner_id",
+            name="uq_vocabulary_mastery_item_learner",
+        ),
+        Index("ix_vocabulary_mastery_learner_item", "learner_id", "vocabulary_item_id"),
+    )
+
+    learner_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("learners.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    vocabulary_item_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("vocabulary_items.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    recognition: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    recall: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    spelling: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    listening: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    context_use: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    production: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+
+
+class VocabularyMistake(UUIDPrimaryKeyMixin, TimestampMixin, Base):
+    __tablename__ = "vocabulary_mistakes"
+    __table_args__ = (
+        Index("ix_vocabulary_mistakes_learner_item", "learner_id", "vocabulary_item_id"),
+        Index("ix_vocabulary_mistakes_active", "learner_id", "active"),
+    )
+
+    learner_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("learners.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    vocabulary_item_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("vocabulary_items.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    attempt_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("vocabulary_attempts.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    mistake_type: Mapped[str] = mapped_column(String(30), nullable=False)
+    note: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    correction: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
 
 
 class VocabularyPracticeSession(UUIDPrimaryKeyMixin, TimestampMixin, Base):

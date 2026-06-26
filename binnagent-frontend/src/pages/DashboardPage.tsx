@@ -243,8 +243,9 @@ export function DashboardPage({ learner, onOpenDailyLearning, onStartVocabularyP
           </button>
         </div>
 
-        <section className="grid gap-3 sm:grid-cols-2">
-          <button type="button" onClick={() => onStartVocabularyPractice('review')} className="rounded-xl bg-indigo-600 px-5 py-4 text-left text-white shadow-lg shadow-indigo-100 transition hover:bg-indigo-700"><span className="block text-base font-black">开始沉浸式复习</span><span className="mt-1 block text-xs text-indigo-100">听发音、回忆词义，按掌握程度安排复习</span></button>
+        <section className="grid gap-3 lg:grid-cols-3">
+          <button type="button" onClick={() => onStartVocabularyPractice('new')} className="rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-left text-emerald-800 transition hover:border-emerald-300"><span className="block text-base font-black">认识新词</span><span className="mt-1 block text-xs text-emerald-700">先看发音、释义和例句，低压力建立印象</span></button>
+          <button type="button" onClick={() => onStartVocabularyPractice('review')} className="rounded-xl bg-indigo-600 px-5 py-4 text-left text-white shadow-lg shadow-indigo-100 transition hover:bg-indigo-700"><span className="block text-base font-black">今日复习</span><span className="mt-1 block text-xs text-indigo-100">默认隐藏答案，先主动回忆再评分</span></button>
           <button type="button" onClick={() => onStartVocabularyPractice('spelling')} className="rounded-xl border border-indigo-200 bg-indigo-50 px-5 py-4 text-left text-indigo-800 transition hover:border-indigo-300"><span className="block text-base font-black">拼写练习</span><span className="mt-1 block text-xs text-indigo-600">听音主动拼写，获得字母级反馈</span></button>
         </section>
 
@@ -522,7 +523,8 @@ function LearningCenterHome({
                 <span>{completedReviews} 个</span>
               </div>
               <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-                <button type="button" onClick={() => onStartVocabularyPractice('review')} className="flex-1 rounded-lg bg-indigo-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-indigo-700">开始复习</button>
+                <button type="button" onClick={() => onStartVocabularyPractice('new')} className="flex-1 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-700 transition hover:border-emerald-300">认识新词</button>
+                <button type="button" onClick={() => onStartVocabularyPractice('review')} className="flex-1 rounded-lg bg-indigo-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-indigo-700">今日复习</button>
                 <button type="button" onClick={() => onStartVocabularyPractice('spelling')} className="flex-1 rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm font-bold text-indigo-700 transition hover:border-indigo-300">拼写练习</button>
                 <button type="button" onClick={onOpenVocabulary} className="inline-flex items-center justify-center gap-1 px-4 py-3 text-sm font-bold text-indigo-600 transition hover:text-indigo-700">管理词汇本 <ArrowRight className="size-4" /></button>
               </div>

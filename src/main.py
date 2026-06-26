@@ -15,7 +15,7 @@ from src.api.learning_progress import router as learning_progress_router
 from src.api.memory import router as memory_router
 from src.api.sessions import router as sessions_router
 from src.api.vocabulary import router as vocabulary_router
-from src.api.vocabulary_learning import router as vocabulary_learning_router
+from src.api.vocabulary_learning import learning_router, router as vocabulary_learning_router
 from src.api.writing_phrases import router as writing_phrases_router
 from src.cache import close_redis
 from src.observability import shutdown_observability
@@ -50,6 +50,7 @@ app.include_router(knowledge_router)
 app.include_router(sessions_router)
 app.include_router(vocabulary_router)
 app.include_router(vocabulary_learning_router)
+app.include_router(learning_router)
 app.include_router(writing_phrases_router)
 app.include_router(chat_router)
 

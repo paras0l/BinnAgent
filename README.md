@@ -92,8 +92,8 @@ npm run dev
 | 能力 | 状态 |
 |------|------|
 | Chat / Memory / Dashboard | 部分实现 |
-| 七年级教材 Knowledge Base / RAG | 部分实现 |
-| Vocabulary Practice / Spelling | 部分实现 |
+| 七年级教材 Knowledge Base / RAG / Exercises | 部分实现 |
+| Vocabulary Personal Cards / Practice / Spelling | 部分实现 |
 | Writing Phrasebook | 基础版已实现 |
 | LangGraph daily lesson | 基础线性实现 |
 | CET reading / writing / weekly report | 设计中 |

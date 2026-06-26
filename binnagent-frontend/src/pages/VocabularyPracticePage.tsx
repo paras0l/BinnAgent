@@ -17,7 +17,7 @@ import {
 } from '@/components/vocabulary/RichVocabularyEntry'
 import { VocabularyDetailPage } from '@/pages/VocabularyDetailPage'
 
-export type VocabularyPracticeMode = 'review' | 'spelling'
+export type VocabularyPracticeMode = 'new' | 'review' | 'spelling'
 
 interface VocabularyPracticePageProps {
   learner: Learner
@@ -57,6 +57,8 @@ interface PracticeTask {
   dictionary_tags: string[]
   meanings: BilingualMeaning[]
   examples: Array<string | Record<string, unknown>>
+  mastery?: Record<string, number>
+  show_answer_first?: boolean
   pronunciations: Pronunciation[]
   tts_text?: string | null
   context_with_blank?: string | null
@@ -124,6 +126,7 @@ export function VocabularyPracticePage({
   const [inputWarning, setInputWarning] = useState<string | null>(null)
   const [availableTotal, setAvailableTotal] = useState<number | null>(null)
   const [detailTerm, setDetailTerm] = useState<string | null>(null)
+  const [isReviewRevealed, setIsReviewRevealed] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const startedAt = useRef(0)
   const compositionRef = useRef(false)
@@ -147,6 +150,7 @@ export function VocabularyPracticePage({
     setHint(null)
     setHintCount(0)
     setReplayCount(0)
+    setIsReviewRevealed(data.mode === 'new' || data.show_answer_first === true)
     setInputWarning(null)
     lastAutoSubmitted.current = ''
     startedAt.current = Date.now()
@@ -182,7 +186,7 @@ export function VocabularyPracticePage({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           mode,
-          prompt_mode: mode === 'spelling' ? 'audio' : 'meaning',
+          prompt_mode: mode === 'spelling' ? 'audio' : mode === 'new' ? 'context' : 'meaning',
           accent,
           curriculum_node_id: curriculumNodeId ?? null,
           limit: availableTotal ? Math.min(limit, availableTotal) : limit,
@@ -352,7 +356,7 @@ export function VocabularyPracticePage({
         if (feedback) void advance()
         else if (mode === 'spelling') void submitAttempt()
       }
-      if (mode === 'review' && !feedback && ['1', '2', '3', '4'].includes(event.key)) {
+      if ((mode === 'review' || mode === 'new') && isReviewRevealed && !feedback && ['1', '2', '3', '4'].includes(event.key)) {
         event.preventDefault()
         void submitAttempt({ rating: Number(event.key) })
       }
@@ -373,10 +377,11 @@ export function VocabularyPracticePage({
           <button onClick={onExit} className="inline-flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-indigo-600"><ArrowLeft className="size-4" />返回学习中心</button>
           <section className="mt-8 rounded-[28px] border border-slate-200 bg-white p-6 shadow-[0_20px_60px_rgba(30,41,59,0.08)] sm:p-10">
             <div className="flex size-14 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600">{mode === 'spelling' ? <Headphones className="size-7" /> : <BookOpen className="size-7" />}</div>
-            <h1 className="mt-5 text-3xl font-black text-slate-950">{mode === 'spelling' ? '拼写练习' : '沉浸式背单词'}</h1>
-            <p className="mt-2 text-sm leading-6 text-slate-500">每次只专注一个词，发音、回忆与反馈都在同一个安静空间里完成。</p>
+            <h1 className="mt-5 text-3xl font-black text-slate-950">{mode === 'new' ? '认识新词' : mode === 'spelling' ? '拼写练习' : '今日复习'}</h1>
+            <p className="mt-2 text-sm leading-6 text-slate-500">{mode === 'new' ? '先建立理解和第一印象，允许看提示和答案。' : mode === 'review' ? '默认隐藏答案，先主动回忆，再按真实熟悉度安排复习。' : '听音主动拼写，获得字母级反馈。'}</p>
             <SetupGroup label="练习方式">
-              <Choice selected={mode === 'review'} onClick={() => setMode('review')}>词义复习</Choice>
+              <Choice selected={mode === 'new'} onClick={() => setMode('new')}>认识新词</Choice>
+              <Choice selected={mode === 'review'} onClick={() => setMode('review')}>今日复习</Choice>
               <Choice selected={mode === 'spelling'} onClick={() => setMode('spelling')}>听音拼写</Choice>
             </SetupGroup>
             <SetupGroup label="词汇来源">
@@ -423,7 +428,7 @@ export function VocabularyPracticePage({
   }
 
   if (!task) return null
-  const learnMoreTerm = mode === 'review' ? task.word : feedback?.correct_answer
+  const learnMoreTerm = mode === 'review' || mode === 'new' ? task.word : feedback?.correct_answer
   const progress = ((task.current_index + 1) / task.total) * 100
   return (
     <div className="flex min-h-screen flex-col bg-[#fbfbfd] text-slate-950">
@@ -439,7 +444,7 @@ export function VocabularyPracticePage({
         <section className={`w-full ${mode === 'review' ? 'max-w-[1420px]' : 'max-w-[820px] text-center'}`}>
           {mode === 'spelling' ? <><p className="text-sm font-black uppercase tracking-[0.18em] text-indigo-600">{feedback ? (feedback.result === 'correct' ? '拼对了' : feedback.result === 'revealed' ? '先记住答案' : '差一点，再看看') : '听发音，拼出这个词'}</p><button onClick={() => void playAudio()} aria-label="播放发音" className={`mx-auto mt-7 flex size-24 items-center justify-center rounded-full bg-indigo-600 text-white shadow-[0_14px_36px_rgba(79,70,229,0.28)] transition hover:scale-[1.03] ${isPlaying ? 'ring-8 ring-indigo-100' : ''}`}><Volume2 className="size-10" /></button><p className="mt-3 text-xs font-bold text-slate-400">点击播放 · 空格键重播 · {accent === 'us' ? '美音' : '英音'}</p></> : null}
 
-          {mode === 'review' ? (
+          {(mode === 'review' || mode === 'new') && isReviewRevealed ? (
             <RichVocabularyEntry
               word={task.word ?? ''}
               phonetic={task.phonetic}
@@ -453,6 +458,18 @@ export function VocabularyPracticePage({
               activeAccent={accent}
               onPlayAccent={(nextAccent) => void playAudio(nextAccent)}
             />
+          ) : mode === 'review' ? (
+            <div className="mx-auto max-w-2xl rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-indigo-600">先主动回忆</p>
+              <h1 className="mt-5 text-5xl font-black text-slate-950">{task.word}</h1>
+              {task.phonetic ? <p className="mt-3 text-lg font-semibold text-slate-400">{task.phonetic}</p> : null}
+              <div className="mt-8 flex flex-wrap justify-center gap-3">
+                <button type="button" onClick={() => void playAudio()} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-black text-slate-700 hover:border-indigo-200"><Volume2 className="size-4" />播放发音</button>
+                <button type="button" onClick={() => void requestHint()} className="inline-flex items-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-2.5 text-sm font-black text-indigo-700 hover:border-indigo-300"><Lightbulb className="size-4" />给一点提示</button>
+                <button type="button" onClick={() => setIsReviewRevealed(true)} className="rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-black text-white hover:bg-indigo-700">显示答案</button>
+              </div>
+              {hint ? <p className="mx-auto mt-5 max-w-xl rounded-xl bg-indigo-50 px-4 py-3 text-sm font-semibold text-indigo-800">{hint}</p> : null}
+            </div>
           ) : feedback ? (
             <FeedbackPanel feedback={feedback} />
           ) : (
@@ -478,7 +495,7 @@ export function VocabularyPracticePage({
                 onClick={() => setDetailTerm(learnMoreTerm)}
                 className="inline-flex items-center gap-1 rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-xs font-black text-indigo-700 transition hover:border-indigo-400"
               >
-                了解更多 <BookOpen className="size-3.5" />
+                编辑词卡 <BookOpen className="size-3.5" />
               </button>
             ) : null}
           </div>
@@ -487,11 +504,15 @@ export function VocabularyPracticePage({
 
       <footer className="border-t border-slate-200 bg-white px-4 py-5 sm:px-8">
         <div className="mx-auto flex max-w-[1420px] flex-col-reverse items-stretch justify-between gap-3 sm:flex-row sm:items-center">
-          <span className="hidden text-xs font-semibold text-slate-400 sm:block">{feedback ? (feedback.result === 'revealed' ? '可以隐藏答案再拼一次' : 'Enter 进入下一词') : mode === 'spelling' ? '填满后自动检查，也可按 Enter' : '先判断熟悉程度，再查看释义'}</span>
+          <span className="hidden text-xs font-semibold text-slate-400 sm:block">{feedback ? (feedback.result === 'revealed' ? '可以隐藏答案再拼一次' : 'Enter 进入下一词') : mode === 'spelling' ? '填满后自动检查，也可按 Enter' : mode === 'review' && !isReviewRevealed ? '先回忆，再显示答案评分' : '可随时编辑词卡或添加例句'}</span>
           {feedback ? (
             <div className="flex gap-3 sm:ml-auto">{mode === 'spelling' && (feedback.can_retry || feedback.result === 'revealed') ? <button onClick={retrySpelling} className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 px-5 py-3 text-sm font-black text-slate-700"><RotateCcw className="size-4" />{feedback.result === 'revealed' ? '隐藏答案，继续拼写' : '再拼一次'}</button> : null}<button onClick={() => void advance()} disabled={isBusy} className="flex-1 rounded-xl bg-indigo-600 px-7 py-3 text-sm font-black text-white disabled:opacity-60">下一个</button></div>
-          ) : mode === 'review' ? (
+          ) : mode === 'review' || mode === 'new' ? (
+            isReviewRevealed ? (
             <div className="grid grid-cols-2 gap-2 sm:ml-auto sm:grid-cols-4"><RatingButton shortcut="1" label="忘记了" onClick={() => void submitAttempt({ rating: 1 })} /><RatingButton shortcut="2" label="有点模糊" onClick={() => void submitAttempt({ rating: 2 })} /><RatingButton shortcut="3" label="认识" primary onClick={() => void submitAttempt({ rating: 3 })} /><RatingButton shortcut="4" label="很熟" onClick={() => void submitAttempt({ rating: 4 })} /></div>
+            ) : (
+              <button onClick={() => setIsReviewRevealed(true)} className="rounded-xl bg-indigo-600 px-7 py-3 text-sm font-black text-white">显示答案</button>
+            )
           ) : <button onClick={() => void submitAttempt()} disabled={isBusy} className="rounded-xl bg-indigo-600 px-8 py-3 text-sm font-black text-white disabled:opacity-60">{isBusy ? '正在检查…' : '检查拼写'}</button>}
         </div>
       </footer>

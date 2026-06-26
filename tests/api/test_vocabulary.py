@@ -5,7 +5,13 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from src.api import deps
-from src.models.vocabulary import VocabularyItem, VocabularyItemSource
+from src.models.vocabulary import (
+    VocabularyItem,
+    VocabularyItemSource,
+    VocabularyMasteryVector,
+    VocabularyMistake,
+    VocabularyUserOverride,
+)
 from src.main import app
 from src.tools.vocabulary_detail_html import (
     DetailHtmlExtraction,
@@ -24,6 +30,18 @@ def mock_session():
     app.dependency_overrides[deps.get_db_session] = lambda: session
     yield session
     app.dependency_overrides.clear()
+
+
+def _result_one(value):
+    result = MagicMock()
+    result.scalar_one_or_none.return_value = value
+    return result
+
+
+def _result_many(values):
+    result = MagicMock()
+    result.scalars.return_value.all.return_value = values
+    return result
 
 
 class TestListVocabulary:
@@ -386,6 +404,116 @@ class TestVocabularyDetailHtml:
         assert item.canonical_key == "carry on"
         assert item.entry_kind == "phrase"
         assert item.dictionary_provider == "vocabulary_detail_html+test"
+
+
+class TestVocabularyPersonalCard:
+    @pytest.mark.asyncio
+    async def test_update_override_creates_personal_card_layer(self, client, mock_session):
+        learner_id = uuid.uuid4()
+        item_id = uuid.uuid4()
+        added: list[object] = []
+
+        item = VocabularyItem(
+            learner_id=learner_id,
+            word="morning",
+            canonical_key="morning",
+            entry_kind="word",
+            status="learning",
+            confidence=0.4,
+            review_count=1,
+            meanings=[
+                {"id": "m1", "definition_zh": "早晨；上午"},
+                {"id": "m2", "definition_zh": "晨报"},
+            ],
+            examples=[{"en": "Good morning, Helen."}],
+        )
+        item.id = item_id
+
+        async def execute_side_effect(*_args, **_kwargs):
+            execute_side_effect.calls += 1
+            if execute_side_effect.calls == 1:
+                return _result_one(learner_id)
+            if execute_side_effect.calls == 2:
+                return _result_one(item)
+            if execute_side_effect.calls == 3:
+                return _result_one(None)
+            if execute_side_effect.calls == 4:
+                override = next(value for value in added if isinstance(value, VocabularyUserOverride))
+                return _result_one(override)
+            if execute_side_effect.calls == 5:
+                return _result_one(None)
+            return _result_many([])
+
+        execute_side_effect.calls = 0
+        mock_session.execute = AsyncMock(side_effect=execute_side_effect)
+        mock_session.add = MagicMock(side_effect=added.append)
+
+        response = await client.patch(
+            f"/api/learners/{learner_id}/vocabulary/{item_id}/override",
+            json={
+                "display_form_override": "Good morning!",
+                "meaning_overrides": [{"text": "早上问候别人", "active": True}],
+                "hidden_meaning_ids": ["m2"],
+                "user_examples": ["Good morning, teacher."],
+                "user_notes": "早上见面用。",
+                "review_preference": "excluded",
+            },
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["word"] == "Good morning!"
+        assert data["meanings"] == [
+            {"text": "早上问候别人", "active": True},
+            {"id": "m1", "definition_zh": "早晨；上午"},
+        ]
+        assert data["examples"][0] == "Good morning, teacher."
+        assert data["user_override"]["excluded_from_review"] is True
+        mock_session.commit.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_delete_mistake_deactivates_it(self, client, mock_session):
+        learner_id = uuid.uuid4()
+        item_id = uuid.uuid4()
+        mistake_id = uuid.uuid4()
+        item = VocabularyItem(
+            learner_id=learner_id,
+            word="friend",
+            canonical_key="friend",
+            entry_kind="word",
+            status="learning",
+            confidence=0.2,
+            review_count=1,
+            meanings=[],
+            examples=[],
+        )
+        item.id = item_id
+        mistake = VocabularyMistake(
+            learner_id=learner_id,
+            vocabulary_item_id=item_id,
+            mistake_type="transposition",
+            active=True,
+        )
+        mistake.id = mistake_id
+
+        mock_session.execute.side_effect = [
+            _result_one(learner_id),
+            _result_one(item),
+            _result_one(mistake),
+            _result_one(None),
+            _result_one(VocabularyMasteryVector(learner_id=learner_id, vocabulary_item_id=item_id)),
+            _result_many([]),
+            _result_many([]),
+        ]
+
+        response = await client.delete(
+            f"/api/learners/{learner_id}/vocabulary/{item_id}/mistakes/{mistake_id}"
+        )
+
+        assert response.status_code == 200
+        assert mistake.active is False
+        assert response.json()["mistakes"] == []
+        mock_session.commit.assert_awaited_once()
 
 
 class TestGetDueReviews:

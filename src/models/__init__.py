@@ -27,7 +27,10 @@ from src.models.vocabulary import (
     VocabularyAttempt,
     VocabularyItem,
     VocabularyItemSource,
+    VocabularyMasteryVector,
+    VocabularyMistake,
     VocabularyPracticeSession,
+    VocabularyUserOverride,
 )
 from src.models.writing_phrase import (
     WritingPhrase,
@@ -63,8 +66,11 @@ __all__ = [
     "UUIDPrimaryKeyMixin",
     "VocabularyItem",
     "VocabularyItemSource",
+    "VocabularyMasteryVector",
+    "VocabularyMistake",
     "VocabularyPracticeSession",
     "VocabularyAttempt",
+    "VocabularyUserOverride",
     "WritingPhrase",
     "WritingPhraseAttempt",
     "WritingPhraseExercise",

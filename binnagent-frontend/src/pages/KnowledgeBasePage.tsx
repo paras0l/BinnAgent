@@ -190,13 +190,17 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice }
     }
   }
 
-  const handleExerciseAnswer = async (questionId: string, answer: string) => {
+  const handleExerciseAnswer = async (questionId: string, answer: string, meta?: { hintUsed?: number; attemptIndex?: number }) => {
     const response = await fetch(
       `/api/learners/${learner.id}/knowledge-base/exercises/${questionId}/attempts`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ answer }),
+        body: JSON.stringify({
+          answer,
+          hint_used: meta?.hintUsed ?? 0,
+          attempt_index: meta?.attemptIndex ?? 0,
+        }),
       },
     )
     if (!response.ok) throw new Error('答案提交失败，请重试。')
@@ -290,7 +294,7 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice }
               <span>已掌握 {activeUnitVocabulary?.mastered ?? '—'}</span>
             </div>
             <div className="mt-3 grid gap-3 sm:grid-cols-3">
-              <button type="button" onClick={() => onStartVocabularyPractice('review', overview.current_unit.id, `七上 · ${overview.current_unit.title}`)} className="rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm font-black text-indigo-700 transition hover:border-indigo-300">学习本单元词汇</button>
+              <button type="button" onClick={() => onStartVocabularyPractice('new', overview.current_unit.id, `七上 · ${overview.current_unit.title}`)} className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-black text-emerald-700 transition hover:border-emerald-300">认识本单元新词</button>
               <button type="button" onClick={() => onStartVocabularyPractice('spelling', overview.current_unit.id, `七上 · ${overview.current_unit.title}`)} className="rounded-xl bg-indigo-600 px-4 py-3 text-sm font-black text-white transition hover:bg-indigo-700">练习本单元拼写</button>
               <button type="button" disabled={isStartingExercise} onClick={() => void handleStartExercise()} className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-black text-white transition hover:bg-emerald-700 disabled:opacity-60">
                 {isStartingExercise ? <LoaderCircle className="size-4 animate-spin" /> : null}

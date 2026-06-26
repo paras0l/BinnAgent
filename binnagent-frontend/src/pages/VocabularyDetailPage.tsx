@@ -20,6 +20,19 @@ interface VocabularyDetailPageProps {
 
 const TARGET_URL = 'https://chat.deepseek.com/'
 
+interface PersonalCardDetail {
+  id: string
+  word: string
+  user_override: {
+    display_form_override?: string | null
+    user_understanding?: string | null
+    user_examples?: string[]
+    user_notes?: string | null
+    review_preference?: string
+  }
+  mistakes?: Array<{ id: string; mistake_type: string; note?: string | null; correction?: string | null }>
+}
+
 export function VocabularyDetailPage({
   learner,
   term,
@@ -56,6 +69,14 @@ export function VocabularyDetailPage({
     ? htmlState.value
     : localStorage.getItem(storageKey) ?? ''
   const [isCopied, setIsCopied] = useState(false)
+  const [cardDetail, setCardDetail] = useState<PersonalCardDetail | null>(null)
+  const [cardForm, setCardForm] = useState({
+    display_form_override: '',
+    user_understanding: '',
+    user_examples_text: '',
+    user_notes: '',
+    review_preference: 'normal',
+  })
   const safeHtml = useMemo(() => sanitizeHtml(html), [html])
   const canSaveToVocabulary = Boolean(learner && activeTerm.trim() && html.trim())
   const saveButtonLabel = !html.trim()
@@ -81,6 +102,35 @@ export function VocabularyDetailPage({
     window.addEventListener('message', handleReturnedHtml)
     return () => window.removeEventListener('message', handleReturnedHtml)
   }, [showToast, updateHtml])
+
+  useEffect(() => {
+    if (!learner || !activeTerm.trim()) {
+      return
+    }
+    const controller = new AbortController()
+    fetch(`/api/learners/${learner.id}/vocabulary/detail?term=${encodeURIComponent(activeTerm.trim())}`, {
+      signal: controller.signal,
+    })
+      .then((response) => response.ok ? response.json() as Promise<PersonalCardDetail> : null)
+      .then((detail) => {
+        if (!detail) {
+          setCardDetail(null)
+          return
+        }
+        setCardDetail(detail)
+        setCardForm({
+          display_form_override: detail.user_override.display_form_override ?? '',
+          user_understanding: detail.user_override.user_understanding ?? '',
+          user_examples_text: (detail.user_override.user_examples ?? []).join('\n'),
+          user_notes: detail.user_override.user_notes ?? '',
+          review_preference: detail.user_override.review_preference ?? 'normal',
+        })
+      })
+      .catch((error: unknown) => {
+        if (!(error instanceof DOMException && error.name === 'AbortError')) setCardDetail(null)
+      })
+    return () => controller.abort()
+  }, [activeTerm, learner])
 
   const copyPrompt = async () => {
     try {
@@ -140,12 +190,40 @@ export function VocabularyDetailPage({
       })
       if (!response.ok) throw new Error('保存失败')
       const result = await response.json() as { created: boolean; word: string }
+      const detailResponse = await fetch(`/api/learners/${learner.id}/vocabulary/detail?term=${encodeURIComponent(result.word)}`)
+      if (detailResponse.ok) setCardDetail(await detailResponse.json() as PersonalCardDetail)
       showToast(
         result.created ? `已将 ${result.word} 加入词库。` : `已更新 ${result.word} 的词库字段。`,
         { variant: 'success' },
       )
     } catch {
       showToast('加入词库失败，请稍后再试。', { variant: 'error' })
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  const savePersonalCard = async () => {
+    if (!learner || !cardDetail) return
+    setIsSaving(true)
+    try {
+      const response = await fetch(`/api/learners/${learner.id}/vocabulary/${cardDetail.id}/override`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          display_form_override: cardForm.display_form_override.trim() || null,
+          user_understanding: cardForm.user_understanding.trim() || null,
+          user_examples: cardForm.user_examples_text.split('\n').map((line) => line.trim()).filter(Boolean),
+          user_notes: cardForm.user_notes.trim() || null,
+          review_preference: cardForm.review_preference,
+        }),
+      })
+      if (!response.ok) throw new Error('保存失败')
+      const detail = await response.json() as PersonalCardDetail
+      setCardDetail(detail)
+      showToast('个人词卡已更新。', { variant: 'success' })
+    } catch {
+      showToast('保存个人词卡失败。', { variant: 'error' })
     } finally {
       setIsSaving(false)
     }
@@ -231,6 +309,36 @@ export function VocabularyDetailPage({
           </section>
 
           <aside className="space-y-5">
+            {cardDetail ? (
+              <section className="rounded-2xl border border-slate-200 bg-white p-5">
+                <h2 className="text-lg font-black">个人词卡</h2>
+                <p className="mt-1 text-sm text-slate-500">用户内容会影响后续复习和出题。</p>
+                <div className="mt-4 space-y-3">
+                  <Field label="展示名" value={cardForm.display_form_override} onChange={(value) => setCardForm((prev) => ({ ...prev, display_form_override: value }))} placeholder={cardDetail.word} />
+                  <Field label="我的理解" value={cardForm.user_understanding} onChange={(value) => setCardForm((prev) => ({ ...prev, user_understanding: value }))} textarea />
+                  <Field label="我的例句" value={cardForm.user_examples_text} onChange={(value) => setCardForm((prev) => ({ ...prev, user_examples_text: value }))} textarea placeholder="每行一个例句" />
+                  <Field label="个人笔记" value={cardForm.user_notes} onChange={(value) => setCardForm((prev) => ({ ...prev, user_notes: value }))} textarea />
+                  <label className="block text-sm font-bold text-slate-700">
+                    掌握状态
+                    <select value={cardForm.review_preference} onChange={(event) => setCardForm((prev) => ({ ...prev, review_preference: event.target.value }))} className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500">
+                      <option value="normal">正常复习</option>
+                      <option value="mastered">已掌握</option>
+                      <option value="too_easy">太简单</option>
+                      <option value="excluded">暂不复习</option>
+                      <option value="relearn">重新学习</option>
+                    </select>
+                  </label>
+                </div>
+                <button type="button" onClick={() => void savePersonalCard()} disabled={isSaving} className="mt-4 w-full rounded-xl bg-slate-900 px-3 py-2.5 text-sm font-bold text-white hover:bg-slate-800 disabled:opacity-60">保存个人词卡</button>
+                {cardDetail.mistakes?.length ? (
+                  <div className="mt-4 space-y-2">
+                    <p className="text-sm font-black text-slate-700">最近错因</p>
+                    {cardDetail.mistakes.map((mistake) => <p key={mistake.id} className="rounded-lg bg-orange-50 px-3 py-2 text-xs font-semibold text-orange-800">{mistake.note || mistake.correction || mistake.mistake_type}</p>)}
+                  </div>
+                ) : null}
+              </section>
+            ) : null}
+
             <section className="rounded-2xl border border-slate-200 bg-white p-5">
               <h2 className="text-lg font-black">生成词汇详解</h2>
               <p className="mt-1 text-sm text-slate-500">已将“{activeTerm || '待输入'}”写入专用 prompt。</p>
@@ -288,6 +396,31 @@ export function VocabularyDetailPage({
         </div>
       </div>
     </div>
+  )
+}
+
+function Field({
+  label,
+  value,
+  onChange,
+  placeholder,
+  textarea,
+}: {
+  label: string
+  value: string
+  onChange: (value: string) => void
+  placeholder?: string
+  textarea?: boolean
+}) {
+  return (
+    <label className="block text-sm font-bold text-slate-700">
+      {label}
+      {textarea ? (
+        <textarea value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} className="mt-1 min-h-20 w-full resize-y rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-indigo-500" />
+      ) : (
+        <input value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-indigo-500" />
+      )}
+    </label>
   )
 }
 

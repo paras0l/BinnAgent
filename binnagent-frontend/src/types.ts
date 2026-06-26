@@ -131,18 +131,42 @@ export interface ExerciseSession {
   title: string
   questions: Array<{
     id: string
-    question_type: 'multiple_choice'
+    question_type: 'choice_context' | 'fill_blank' | 'dialogue_complete' | 'error_fix' | 'multiple_choice'
     stem: string
     options: string[]
     difficulty: number
+    metadata?: {
+      interaction?: {
+        type?: string
+        input_mode?: 'choice' | 'text'
+        allow_retry?: boolean
+        hint_levels?: number
+      }
+      scenario?: {
+        name?: string
+        setting?: string
+        zh?: string
+      }
+      cognitive_level?: string
+      estimated_seconds?: number
+      rubric?: Record<string, unknown>
+    }
   }>
 }
 
 export interface ExerciseAnswerResult {
   question_id: string
   correct: boolean
+  score: number
+  passed: boolean
   answer: string
   explanation: string
+  feedback: string
+  hint?: string | null
+  can_retry: boolean
+  error_type?: string | null
+  next_review_signal: string
+  rubric: Record<string, unknown>
 }
 
 export interface UnitVocabularySummary {
