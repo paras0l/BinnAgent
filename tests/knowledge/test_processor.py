@@ -8,6 +8,8 @@ from src.knowledge.processor import (
     _parse_pronunciation,
     _parse_unit_vocabulary,
 )
+from src.knowledge.parser_profiles import find_book_manifest, profile_for_source
+from src.knowledge.parser_report import build_parser_report
 
 
 class _Page:
@@ -67,12 +69,9 @@ name /neɪm/ n. 名字；名称 p.1
         ("Unit 1", "name"),
     ]
     assert [item.unit_order for item in entries] == [1, 2, 1]
-    assert set(entries[0].__dict__) == {
-        "unit_title",
-        "expression",
-        "canonical_expression",
-        "unit_order",
-    }
+    assert entries[0].raw_line.startswith("morning")
+    assert entries[0].confidence >= 0.9
+    assert entries[1].raw_line == "Good morning! 早上好！"
 
 
 def test_vocabulary_expression_normalizes_pdf_text_layer_artifacts() -> None:
@@ -94,6 +93,46 @@ Unit 9
     entries = _parse_unit_vocabulary(reader)
 
     assert [entry.expression for entry in entries] == ["Tom", "You’re welcome.", "Thursday"]
+
+
+def test_book_manifest_and_profile_are_loaded_for_known_textbook() -> None:
+    manifest, profile = profile_for_source("七年级上册.pdf")
+
+    assert manifest is not None
+    assert manifest.id == "pep-grade7-upper-2024"
+    assert manifest.expected_unit_count == 12
+    assert profile is not None
+    assert profile.id == "pep_grade7_upper_v1"
+    assert "telephone number" in profile.expected_core_vocabulary
+    assert find_book_manifest("missing.pdf") is None
+
+
+def test_parser_quality_report_flags_dirty_tokens_and_low_confidence() -> None:
+    reader = _Reader(
+        [""] * 7
+        + [
+            """Words and Expressions in Each Unit
+Unit 1
+telephone number 电话号码 p.5
+"""
+        ]
+        + ["Vocabulary Index Page PB 9594"]
+    )
+    entries = _parse_unit_vocabulary(reader)
+    _, profile = profile_for_source("七年级上册.pdf")
+
+    report = build_parser_report(
+        profile=profile,
+        unit_count=1,
+        vocabulary_entries=entries,
+        page_texts=[page.extract_text() for page in reader.pages],
+    )
+
+    assert entries[0].raw_line == "telephone number 电话号码"
+    assert entries[0].confidence < 0.9
+    assert report.low_confidence_entries == 0
+    assert "Page PB" in report.dirty_tokens
+    assert report.warnings
 
 
 def test_grade7_upper_appendices_are_grouped_by_unit() -> None:

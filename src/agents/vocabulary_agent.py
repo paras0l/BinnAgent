@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.config import settings
 from src.memory.vocabulary_rules import normalize_vocabulary_word
 from src.memory.vocabulary_store import VocabularyStore
+from src.prompts import prompt_registry
 from src.providers.base import ChatRequest as ModelChatRequest
 from src.providers.router import ModelRouter
 
@@ -74,16 +75,11 @@ VOCABULARY_CARD_SCHEMA: dict[str, Any] = {
     "required": ["cards"],
 }
 
-VOCABULARY_AGENT_SYSTEM_PROMPT = """你是 BinnAgent 的 Vocabulary Agent，专门负责从英语学习对话中提取高质量词卡。
-
-硬性规则：
-- 只提取真实英文单词，不提取中文、短语、句子、寒暄、报错、说明标签或 markdown 标题。
-- 优先提取用户明确给出的词、assistant 明确讲解的 CET-4/CET-6 高频词。
-- 不确定就少提取，不要编造。
-- 每个词必须有音标 phonetic、中文释义 definition_zh、英文释义 definition_en、至少 1 个英文例句和中文翻译。
-- phonetic 优先使用 IPA 格式，例如 /sɪɡˈnɪfɪkənt/；不知道音标时不要返回该词。
-- confidence 表示“值得自动沉淀且字段可靠”的置信度，低于 0.75 的词也可以返回，但系统不会入库。
-- 严格输出符合 JSON schema 的 JSON，不要输出 markdown。"""
+VOCABULARY_AGENT_SYSTEM_PROMPT = prompt_registry.render(
+    prompt_id="vocabulary.agent.extract",
+    version="v1",
+    variables={},
+).prompt
 
 
 @dataclass(frozen=True)
@@ -153,10 +149,18 @@ class VocabularyAgentService:
         return VocabularyAgentResult(saved_count=saved_count, skipped_count=skipped_count)
 
     async def _extract_cards(self, *, user_message: str, assistant_reply: str) -> dict[str, Any]:
+        prompt = prompt_registry.render(
+            prompt_id="vocabulary.agent.extract",
+            version="v1",
+            variables={
+                "user_message": user_message,
+                "assistant_reply": assistant_reply,
+            },
+        )
         response = await self.model_router.chat(
             ModelChatRequest(
                 messages=[
-                    {"role": "system", "content": VOCABULARY_AGENT_SYSTEM_PROMPT},
+                    {"role": "system", "content": prompt.prompt},
                     {
                         "role": "user",
                         "content": (
@@ -171,6 +175,13 @@ class VocabularyAgentService:
                 max_tokens=1200,
                 response_schema=VOCABULARY_CARD_SCHEMA,
                 preferred_model=settings.ollama_utility_model,
+                metadata={
+                    "prompt_id": prompt.prompt_id,
+                    "prompt_version": prompt.version,
+                    "prompt_hash": prompt.prompt_hash,
+                    "input_hash": prompt.input_hash,
+                    "output_schema": prompt.output_schema,
+                },
             )
         )
         if response.structured is not None:

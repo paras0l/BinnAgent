@@ -225,6 +225,7 @@ export function WritingPhrasebookPage({ learner, onBack }: WritingPhrasebookPage
   const [importText, setImportText] = useState('')
   const [importTopic, setImportTopic] = useState('online learning')
   const [selectedPromptId, setSelectedPromptId] = useState(PROMPTS[0].id)
+  const [renderedImportPrompt, setRenderedImportPrompt] = useState<{ key: string; prompt: string } | null>(null)
   const [candidates, setCandidates] = useState<PhraseCandidate[]>([])
   const [selectedCandidates, setSelectedCandidates] = useState<Set<number>>(new Set())
   const [exercises, setExercises] = useState<PhraseExercise[]>([])
@@ -235,7 +236,12 @@ export function WritingPhrasebookPage({ learner, onBack }: WritingPhrasebookPage
     () => phrases.find((phrase) => phrase.id === selectedId) ?? null,
     [phrases, selectedId]
   )
-  const selectedPrompt = PROMPTS.find((prompt) => prompt.id === selectedPromptId) ?? PROMPTS[0]
+  const selectedPromptBase = PROMPTS.find((prompt) => prompt.id === selectedPromptId) ?? PROMPTS[0]
+  const promptKey = `${selectedPromptId}:${importTopic}`
+  const selectedPrompt = {
+    ...selectedPromptBase,
+    text: renderedImportPrompt?.key === promptKey ? renderedImportPrompt.prompt : selectedPromptBase.text,
+  }
 
   const stats = useMemo(
     () => ({
@@ -305,6 +311,36 @@ export function WritingPhrasebookPage({ learner, onBack }: WritingPhrasebookPage
     }, 0)
     return () => window.clearTimeout(timer)
   }, [selectedPhrase])
+
+  useEffect(() => {
+    let isMounted = true
+    const key = `${selectedPromptId}:${importTopic}`
+    fetch('/api/prompts/writing_phrase.import/render', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        version: 'v1',
+        variables: {
+          topic: importTopic,
+          task_type: selectedPromptId,
+        },
+      }),
+    })
+      .then((response) => {
+        if (!response.ok) throw new Error('Failed to render writing phrase prompt')
+        return response.json() as Promise<{ prompt: string }>
+      })
+      .then((data) => {
+        if (isMounted) setRenderedImportPrompt({ key, prompt: data.prompt })
+      })
+      .catch((err) => {
+        console.error('Writing prompt render error:', err)
+        if (isMounted) showToast('后端 Prompt Registry 暂时不可用，已使用本地兼容 prompt。', { variant: 'warning' })
+      })
+    return () => {
+      isMounted = false
+    }
+  }, [importTopic, selectedPromptId, showToast])
 
   const parseLines = (value: string) =>
     value

@@ -26,6 +26,7 @@ from src.memory.retriever import MemoryRetriever
 from src.memory.schemas import MemoryContext
 from src.models.learner import Learner
 from src.models.runtime import AgentThread, ConversationMessage
+from src.prompts import prompt_registry
 from src.providers.base import ChatRequest as ModelChatRequest
 from src.providers.router import ModelRouter
 
@@ -62,16 +63,11 @@ class ChatResponse(BaseModel):
     skill_events: list[dict[str, Any]] = Field(default_factory=list)
 
 
-TUTOR_SYSTEM_PROMPT = """你是BinnAgent，一位专业的英语学习AI助教。你的职责是帮助学员提高英语水平，特别是针对CET-4和CET-6考试。
-
-你的特点：
-- 用中文与学员交流，但会穿插英语例句和解释
-- 耐心、鼓励、专业
-- 能解释词汇、语法、阅读理解、写作技巧
-- 会根据学员水平调整难度
-- 主动提问检验学员理解程度
-
-请用简洁友好的方式回复学员的问题。如果学员问的是英语学习相关的问题，请用中英文结合的方式回答。"""
+TUTOR_SYSTEM_PROMPT = prompt_registry.render(
+    prompt_id="tutor.chat",
+    version="v1",
+    variables={},
+).prompt
 
 
 async def _get_or_create_thread(
@@ -186,12 +182,18 @@ def _model_request(
     else:
         messages.append({"role": "user", "content": req.message})
 
-    return ModelChatRequest(
+    model_request = ModelChatRequest(
         messages=messages,
         task_type="learning_chat",
         temperature=0.7,
         max_tokens=max_tokens or settings.chat_max_tokens,
     )
+    model_request.metadata = {
+        **(getattr(model_request, "metadata", None) or {}),
+        "prompt_id": "tutor.chat",
+        "prompt_version": "v1",
+    }
+    return model_request
 
 
 def _sse_event(event: str, data: dict) -> str:

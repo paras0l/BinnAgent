@@ -169,6 +169,40 @@ class TestWritingPhrases:
         assert candidate["text"] == "What is more noteworthy is that..."
         assert "强调重点" in candidate["tags"]
         assert candidate["examples"][0]["sentence"].startswith("What is more noteworthy")
+        assert candidate["parse_mode"] == "regex_fallback"
+        assert response.json()["parse_mode"] == "regex_fallback"
+
+    @pytest.mark.asyncio
+    async def test_import_extracts_candidates_from_json_schema(self, client, mock_session):
+        learner_id = uuid.uuid4()
+        mock_session.execute = AsyncMock(return_value=_one(learner_id))
+
+        response = await client.post(
+            f"/api/learners/{learner_id}/writing-phrases/import",
+            json={
+                "source": "external_model",
+                "topic": "online learning",
+                "raw_text": """
+{
+  "candidates": [
+    {
+      "text": "What is more noteworthy is that...",
+      "chinese_meaning": "更值得注意的是……",
+      "usage_position": "body",
+      "tags": ["强调重点"],
+      "examples": [{"sentence": "What is more noteworthy is that online learning requires self-discipline."}],
+      "quality_score": 0.9
+    }
+  ]
+}
+""",
+            },
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["parse_mode"] == "json_schema"
+        assert data["candidates"][0]["confidence"] == 0.9
 
     @pytest.mark.asyncio
     async def test_generate_exercises_and_record_attempt(self, client, mock_session):

@@ -1,0 +1,60 @@
+books:
+  - id: pep-grade7-upper-2024
+    filename: "七年级上册.pdf"
+    grade: "grade-7"
+    volume: "upper"
+    parser_profile: "pep_grade7_upper_v1"
+    page_offset:
+      pdf_to_printed: -23
+    expected:
+      unit_count: 12
+      min_vocabulary_count: 250
+    units:
+      - title: "Starter Unit 1"
+        subtitle: "Good morning!"
+        start_printed_page: 1
+        end_printed_page: 4
+      - title: "Starter Unit 2"
+        subtitle: "What's this in English?"
+        start_printed_page: 5
+        end_printed_page: 8
+      - title: "Starter Unit 3"
+        subtitle: "What color is it?"
+        start_printed_page: 9
+        end_printed_page: 12
+      - title: "Unit 1"
+        subtitle: "My name's Gina."
+        start_printed_page: 13
+        end_printed_page: 18
+      - title: "Unit 2"
+        subtitle: "This is my sister."
+        start_printed_page: 19
+        end_printed_page: 24
+      - title: "Unit 3"
+        subtitle: "Is this your pencil?"
+        start_printed_page: 25
+        end_printed_page: 30
+      - title: "Unit 4"
+        subtitle: "Where's my schoolbag?"
+        start_printed_page: 31
+        end_printed_page: 36
+      - title: "Unit 5"
+        subtitle: "Do you have a soccer ball?"
+        start_printed_page: 37
+        end_printed_page: 42
+      - title: "Unit 6"
+        subtitle: "Do you like bananas?"
+        start_printed_page: 43
+        end_printed_page: 48
+      - title: "Unit 7"
+        subtitle: "How much are these socks?"
+        start_printed_page: 49
+        end_printed_page: 54
+      - title: "Unit 8"
+        subtitle: "When is your birthday?"
+        start_printed_page: 55
+        end_printed_page: 60
+      - title: "Unit 9"
+        subtitle: "My favorite subject is science."
+        start_printed_page: 61
+        end_printed_page: 66

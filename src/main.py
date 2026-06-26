@@ -14,6 +14,7 @@ from src.api.knowledge import router as knowledge_router
 from src.api.learners import router as learners_router
 from src.api.learning_progress import router as learning_progress_router
 from src.api.memory import router as memory_router
+from src.api.prompts import router as prompts_router
 from src.api.sessions import router as sessions_router
 from src.api.vocabulary import router as vocabulary_router
 from src.api.vocabulary_learning import learning_router, router as vocabulary_learning_router
@@ -48,6 +49,7 @@ app.include_router(essay_review_router)
 app.include_router(grammar_router)
 app.include_router(learning_progress_router)
 app.include_router(memory_router)
+app.include_router(prompts_router)
 app.include_router(knowledge_router)
 app.include_router(sessions_router)
 app.include_router(vocabulary_router)

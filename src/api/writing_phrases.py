@@ -9,6 +9,7 @@ from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.api.deps import get_db_session
+from src.extraction import extract_writing_phrase_candidates
 from src.memory.curator import MemoryCurator
 from src.memory.explainer import MemoryExplainer
 from src.memory.retriever import MemoryRetriever
@@ -144,10 +145,16 @@ class WritingPhraseCandidate(BaseModel):
     mistakes: list[str] = Field(default_factory=list)
     quality_score: float = Field(default=0.7, ge=0, le=1)
     warnings: list[str] = Field(default_factory=list)
+    parse_mode: str = "regex_fallback"
+    confidence: float = Field(default=0.7, ge=0, le=1)
 
 
 class ImportWritingPhrasesResponse(BaseModel):
     candidates: list[WritingPhraseCandidate]
+    parse_mode: str = "regex_fallback"
+    warnings: list[str] = Field(default_factory=list)
+    repair_used: bool = False
+    confidence: float = Field(default=0.7, ge=0, le=1)
 
 
 class ExerciseResponse(BaseModel):
@@ -304,43 +311,31 @@ def _infer_tags(block: str, topic: str | None) -> list[str]:
     return cleaned[:6]
 
 
-def _parse_candidates(raw_text: str, topic: str | None) -> list[WritingPhraseCandidate]:
-    candidates: list[WritingPhraseCandidate] = []
-    for block in _split_import_blocks(raw_text):
-        text = _field(block, ("英文句式", "句式", "原句", "表达", "可替换模板"))
-        if not text:
-            first_line = block.splitlines()[0].strip(" -*")
-            if re.search(r"[A-Za-z]{3,}", first_line):
-                text = first_line
-        if not text or len(text) < 6:
-            continue
-        example = _field(block, ("例句", "CET 写作例句", "一个新的 CET 写作例句"))
-        examples = [{"sentence": example}] if example else []
-        notes = []
-        note = _field(block, ("使用注意事项", "注意事项"))
-        if note:
-            notes.append(note)
-        mistake = _field(block, ("常见错误", "常见误用"))
-        mistakes = [mistake] if mistake else []
-        warnings = []
-        if "不建议收藏" in block or "不推荐" in block:
-            warnings.append("外部模型标注为不建议收藏，请谨慎保存。")
-        score = 0.86 if examples and notes else 0.72
-        candidates.append(
+def _parse_candidates(raw_text: str, topic: str | None) -> ImportWritingPhrasesResponse:
+    result = extract_writing_phrase_candidates(raw_text, topic)
+    return ImportWritingPhrasesResponse(
+        candidates=[
             WritingPhraseCandidate(
-                text=text,
-                chinese_meaning=_field(block, ("中文含义", "含义")),
-                usage_scene=_field(block, ("适用场景", "使用场景")),
-                usage_position=_field(block, ("适合放在开头/主体/结尾哪个位置", "适用位置", "使用位置")),
-                tags=_infer_tags(block, topic),
-                examples=examples,
-                usage_notes=notes,
-                mistakes=mistakes,
-                quality_score=score,
-                warnings=warnings,
+                text=candidate.text,
+                chinese_meaning=candidate.chinese_meaning,
+                usage_scene=candidate.usage_scene,
+                usage_position=candidate.usage_position,
+                tags=candidate.tags,
+                examples=candidate.examples,
+                usage_notes=candidate.usage_notes,
+                mistakes=candidate.mistakes,
+                quality_score=candidate.quality_score,
+                warnings=candidate.warnings,
+                parse_mode=candidate.parse_mode,
+                confidence=candidate.confidence,
             )
-        )
-    return candidates[:20]
+            for candidate in result.candidates
+        ],
+        parse_mode=result.parse_mode,
+        warnings=result.warnings,
+        repair_used=result.repair_used,
+        confidence=result.confidence,
+    )
 
 
 def _blank_answer(text: str) -> str:
@@ -509,7 +504,7 @@ async def import_writing_phrases(
     db: AsyncSession = Depends(get_db_session),
 ) -> ImportWritingPhrasesResponse:
     await _ensure_learner(db, learner_id)
-    return ImportWritingPhrasesResponse(candidates=_parse_candidates(body.raw_text, body.topic))
+    return _parse_candidates(body.raw_text, body.topic)
 
 
 @router.get("/{phrase_id}", response_model=WritingPhraseResponse)

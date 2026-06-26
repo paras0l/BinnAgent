@@ -54,7 +54,7 @@ const DEFAULT_TARGETS: GrammarTarget[] = [
 ]
 
 const STORAGE_KEY = 'binnGrammarMicroLesson'
-const PROMPT_VERSION = 'grammar-micro-v1'
+const PROMPT_VERSION = 'v1'
 const EXTENSION_PATH = '/Users/binge/Documents/BinnAgent/browser-extension/grammar-autofill'
 
 type CacheStatus = 'idle' | 'loading' | 'hit' | 'miss' | 'saving' | 'saved' | 'error' | 'bypassed'
@@ -129,17 +129,18 @@ export function GrammarPage({ learner, onBack, backLabel = '返回探索', initi
   const [isCopied, setIsCopied] = useState(false)
   const [isExtensionPathCopied, setIsExtensionPathCopied] = useState(false)
   const [isImmersiveReading, setIsImmersiveReading] = useState(false)
+  const [renderedPrompt, setRenderedPrompt] = useState<{ topicId: string; prompt: string; prompt_hash: string; version: string } | null>(null)
 
   const selectedTopic = useMemo(
     () => topicOptions.find((topic) => topic.id === selectedTopicId) ?? topicOptions[0],
     [selectedTopicId, topicOptions]
   )
 
-  const prompt = useMemo(() => buildGrammarPrompt(selectedTopic), [selectedTopic])
-  const promptHash = useMemo(
-    () => stableHash(`${PROMPT_VERSION}:${selectedTopic.id}:${prompt}`),
-    [prompt, selectedTopic.id]
-  )
+  const fallbackPrompt = useMemo(() => buildGrammarPrompt(selectedTopic), [selectedTopic])
+  const activeRenderedPrompt = renderedPrompt?.topicId === selectedTopic.id ? renderedPrompt : null
+  const prompt = activeRenderedPrompt?.prompt ?? fallbackPrompt
+  const promptVersion = activeRenderedPrompt?.version ?? PROMPT_VERSION
+  const promptHash = activeRenderedPrompt?.prompt_hash ?? stableHash(`${promptVersion}:${selectedTopic.id}:${prompt}`)
   const currentHtml = htmlByTopicId[selectedTopic.id] ?? ''
   const currentProgress = progressByTopicId[selectedTopic.id]
   const currentCacheStatus = cacheStatusByTopicId[selectedTopic.id] ?? 'idle'
@@ -185,7 +186,7 @@ export function GrammarPage({ learner, onBack, backLabel = '返回探索', initi
   )
 
   const saveGrammarHtmlToCache = useCallback(
-    async (topicId: string, html: string, hash: string) => {
+    async (topicId: string, html: string, hash: string, version: string) => {
       setCacheStatusByTopicId((current) => ({ ...current, [topicId]: 'saving' }))
       try {
         const response = await fetch(
@@ -196,7 +197,7 @@ export function GrammarPage({ learner, onBack, backLabel = '返回探索', initi
             body: JSON.stringify({
               html,
               prompt_hash: hash,
-              prompt_version: PROMPT_VERSION,
+              prompt_version: version,
               source: 'frontend',
             }),
           }
@@ -251,6 +252,38 @@ export function GrammarPage({ learner, onBack, backLabel = '返回探索', initi
   }, [persistGrammarProgress, selectedTopic])
 
   useEffect(() => {
+    let isMounted = true
+    const topicId = selectedTopic.id
+    fetch('/api/prompts/grammar.micro_lesson.structured/render', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        version: PROMPT_VERSION,
+        variables: {
+          topic_title: selectedTopic.title,
+          short_description: selectedTopic.shortDescription,
+          tags: selectedTopic.tags,
+          learner_background: 'CET 四六级备考，喜欢中英结合、规则清楚、例句实用。',
+        },
+      }),
+    })
+      .then((response) => {
+        if (!response.ok) throw new Error('Failed to render grammar prompt')
+        return response.json() as Promise<{ prompt: string; prompt_hash: string; version: string }>
+      })
+      .then((data) => {
+        if (isMounted) setRenderedPrompt({ ...data, topicId })
+      })
+      .catch((err) => {
+        console.error('Grammar prompt render error:', err)
+        if (isMounted) showToast('后端 Prompt Registry 暂时不可用，已使用本地兼容 prompt。', { variant: 'warning' })
+      })
+    return () => {
+      isMounted = false
+    }
+  }, [selectedTopic, showToast])
+
+  useEffect(() => {
     if (currentHtml.trim()) return
     if (bypassedCacheTopicIds.includes(selectedTopic.id)) {
       return
@@ -263,7 +296,7 @@ export function GrammarPage({ learner, onBack, backLabel = '返回探索', initi
     }, 0)
     fetch(
       `/api/learners/${learner.id}/grammar/topics/${encodeURIComponent(topicId)}/html-cache?` +
-        new URLSearchParams({ prompt_hash: promptHash, prompt_version: PROMPT_VERSION }).toString()
+        new URLSearchParams({ prompt_hash: promptHash, prompt_version: promptVersion }).toString()
     )
       .then((response) => {
         if (!response.ok) throw new Error('Failed to load grammar cache')
@@ -293,16 +326,16 @@ export function GrammarPage({ learner, onBack, backLabel = '返回探索', initi
       isMounted = false
       window.clearTimeout(loadingTimer)
     }
-  }, [bypassedCacheTopicIds, currentHtml, learner.id, promptHash, selectedTopic.id, showToast])
+  }, [bypassedCacheTopicIds, currentHtml, learner.id, promptHash, promptVersion, selectedTopic.id, showToast])
 
   useEffect(() => {
     const html = currentHtml.trim()
     if (!html) return
     const timer = window.setTimeout(() => {
-      void saveGrammarHtmlToCache(selectedTopic.id, html, promptHash)
+      void saveGrammarHtmlToCache(selectedTopic.id, html, promptHash, promptVersion)
     }, 900)
     return () => window.clearTimeout(timer)
-  }, [currentHtml, promptHash, saveGrammarHtmlToCache, selectedTopic.id])
+  }, [currentHtml, promptHash, promptVersion, saveGrammarHtmlToCache, selectedTopic.id])
 
   useEffect(() => {
     const handleReturnedHtml = (event: MessageEvent) => {

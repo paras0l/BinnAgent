@@ -8,6 +8,8 @@ from pypdf import PdfReader
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.knowledge.parser_profiles import profile_for_source
+from src.knowledge.parser_report import build_parser_report
 from src.knowledge.rag import build_chunks
 from src.models.knowledge import CurriculumNode, KnowledgeChunk, KnowledgePoint, KnowledgeSource
 from src.providers.router import router as model_router
@@ -35,6 +37,9 @@ class ParsedVocabularyEntry:
     expression: str
     canonical_expression: str
     unit_order: int
+    raw_line: str
+    confidence: float
+    warnings: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -426,11 +431,22 @@ def _parse_vocabulary_chunk(
     canonical = _canonical_expression(expression)
     if not canonical or not re.search(r"[a-z]", canonical) or len(expression) > 100:
         return None
+    warnings: list[str] = []
+    confidence = 0.92
+    if not phonetic_match:
+        confidence -= 0.12
+        warnings.append("missing_phonetic")
+    if re.search(r"\b(?:Page PB|9594|101100)\b", normalized):
+        confidence -= 0.35
+        warnings.append("dirty_pdf_token")
     return ParsedVocabularyEntry(
         unit_title=unit_title,
         expression=expression,
         canonical_expression=canonical,
         unit_order=unit_order,
+        raw_line=normalized,
+        confidence=max(0, confidence),
+        warnings=tuple(warnings),
     )
 
 
@@ -736,6 +752,7 @@ async def process_uploaded_textbook(db: AsyncSession, source: KnowledgeSource) -
     if not source.object_key:
         raise ValueError("Knowledge source has no stored PDF")
     path = Path(source.object_key)
+    manifest, parser_profile = profile_for_source(source.filename)
     parsed = await asyncio.to_thread(_parse_pdf, path)
     reader = PdfReader(path)
     vocabulary_entries = await asyncio.to_thread(lambda: _parse_unit_vocabulary(reader))
@@ -752,6 +769,16 @@ async def process_uploaded_textbook(db: AsyncSession, source: KnowledgeSource) -
         parsed = ParsedTextbook(
             page_count=parsed.page_count,
             units=PEP_GRADE7_LOWER_UNITS,
+            text_char_count=parsed.text_char_count,
+        )
+        used_toc_fallback = True
+    if not parsed.units and manifest and manifest.unit_titles:
+        parsed = ParsedTextbook(
+            page_count=parsed.page_count,
+            units=tuple(
+                ParsedUnit(title=title, subtitle="", page_number=index)
+                for index, title in enumerate(manifest.unit_titles, start=1)
+            ),
             text_char_count=parsed.text_char_count,
         )
         used_toc_fallback = True
@@ -811,6 +838,10 @@ async def process_uploaded_textbook(db: AsyncSession, source: KnowledgeSource) -
                     "role": "unit_wordlist",
                     "lemma": entry.canonical_expression,
                     "unit_order": entry.unit_order,
+                    "raw_line": entry.raw_line,
+                    "confidence": entry.confidence,
+                    "warnings": list(entry.warnings),
+                    "requires_review": entry.confidence < 0.75 or bool(entry.warnings),
                     "dictionary_status": "pending",
                 },
             )
@@ -819,6 +850,12 @@ async def process_uploaded_textbook(db: AsyncSession, source: KnowledgeSource) -
         db.add(point)
     chunk_count = await build_chunks(db, source, page_texts, nodes, model_router)
     rag_metadata = source.metadata_ or {}
+    parser_report = build_parser_report(
+        profile=parser_profile,
+        unit_count=len(nodes),
+        vocabulary_entries=vocabulary_entries,
+        page_texts=page_texts,
+    )
 
     source.page_count = parsed.page_count
     source.unit_count = len(nodes)
@@ -834,16 +871,20 @@ async def process_uploaded_textbook(db: AsyncSession, source: KnowledgeSource) -
         **rag_metadata,
         "stage": "validated",
         "text_char_count": parsed.text_char_count,
-        "parser": "pypdf+grade7-appendices-v3",
-        "vocabulary_parser": "unit-sequence-v1",
+        "book_manifest_id": manifest.id if manifest else None,
+        "parser_profile": parser_profile.id if parser_profile else None,
+        "parser": "pypdf+manifest-profile-v1",
+        "vocabulary_parser": "unit-sequence-with-evidence-v1",
         "dictionary_enrichment": "free_dictionary_api+mymemory",
         "vocabulary_entry_count": len(vocabulary_entries),
+        "low_confidence_vocabulary_count": parser_report.low_confidence_entries,
         "notes_section_count": len(notes),
         "pronunciation_section_count": len(pronunciation),
         "grammar_reference_count": len(GRADE7_UPPER_GRAMMAR_TOPICS) if is_grade7_upper else 0,
         "rag_chunk_count": chunk_count,
         "toc_fallback": used_toc_fallback,
-        "warning": None if nodes else "未识别到目录结构，需要人工校对",
+        "parser_report": parser_report.to_dict(),
+        "warning": "; ".join(parser_report.warnings) if parser_report.warnings else None,
     }
     await db.flush()
     return parsed

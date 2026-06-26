@@ -1,0 +1,1 @@
+{"case_id":"vocabulary_word_should_keep","input":{"user_message":"讲一下 significant","assistant_reply":"significant 表示重要的。"},"expected":{"must_include":["significant"]}}
