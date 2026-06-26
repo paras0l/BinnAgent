@@ -539,7 +539,7 @@ export function WritingPhrasebookPage({ learner, onBack }: WritingPhrasebookPage
 
       <FeatureHero
         eyebrow="Writing Phrasebook"
-        title="写作好句收藏馆"
+        title="好句收藏馆"
         description="把可迁移表达沉淀成自己的写作资产：先理解何时使用，再编辑完善、加入复习，并通过练习真正用出来。"
         stats={[
           { label: '总句式', value: stats.total },

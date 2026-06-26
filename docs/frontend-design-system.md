@@ -124,7 +124,7 @@ binnagent-frontend/src/components/ui/FilterChip.tsx
 
 ## Writing Phrasebook Reference
 
-写作好句收藏馆是当前标准的首个落地页面：
+好句收藏馆是当前标准的首个落地页面：
 
 - 使用 `PageShell`、`FeatureHero`、`WorkspaceTabs`、`SurfaceCard`、`FilterChip`。
 - 从三栏常驻布局改为 Hero + Tabs + 双栏工作区。

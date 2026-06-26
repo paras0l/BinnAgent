@@ -44,7 +44,7 @@
 | #5 下一阶段增强 | RAG search 返回 mode/embedding/chunk/source 信息；model structured output repair retry；CI | vocabulary 多维掌握度、observability dashboard、eval dataset |
 | #7 教材练习题升级 | `ExerciseBlueprint` 生成 8 道场景化混合题；支持 `choice_context`、`fill_blank`、`dialogue_complete`、`error_fix`；新增 linter、rubric grader、hint/retry 反馈；前端改为一屏一题练习流；答题事件写入 score、error_type、next_review_signal | 独立 exercise session 表、结束复盘卡、根据 learner mastery 动态选题、micro writing/roleplay |
 | #11 词汇模块升级 | 新增 `VocabularyUserOverride`、`VocabularyMistake`、`VocabularyMasteryVector`；词汇详情和练习流读取用户覆盖层；新词学习/今日复习入口分离；用户例句优先参与填空上下文；隐藏释义不进入返回 payload；错因可修正/删除 | 更丰富的题型生成、Dashboard 弱项聚合、roleplay/micro writing 生产题 |
-| #12 写作好句收藏馆 | 新增 `writing_phrases`、练习和 attempt 数据表；提供 CRUD/import/exercises/attempts API；探索页接入写作好句收藏馆前端工作台 | P2 模型辅助编辑、P3 到期复习/mastery、P4 作文批改和翻译练习自动推荐 |
+| #12 好句收藏馆 | 新增 `writing_phrases`、练习和 attempt 数据表；提供 CRUD/import/exercises/attempts API；探索页接入好句收藏馆前端工作台 | P2 模型辅助编辑、P3 到期复习/mastery、P4 作文批改和翻译练习自动推荐 |
 
 ## 可运行能力
 

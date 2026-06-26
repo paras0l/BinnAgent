@@ -134,7 +134,7 @@ const FEATURES: ExploreFeature[] = [
   {
     id: 'writing-phrasebook',
     category: 'writing',
-    title: '写作好句收藏馆',
+    title: '好句收藏馆',
     description: '收藏常用句式、固定搭配、递进表达和作文高分句，并通过练习真正掌握。',
     whenToUse: '想积累作文表达、替换低级连接词、整理外部模型生成的好句时使用。',
     outcome: '形成可编辑的个人句式资产库，并通过填空、替换、造句等练习检测掌握情况。',
@@ -353,7 +353,7 @@ export function ExplorePage({
     if (feature.action === 'chat' && feature.prompt) {
       if (feature.id === 'essay-review') {
         onDraftPrompt(
-          `${feature.prompt}\n\n如果作文中多次出现 First / Second / Third 或低级连接词，请推荐我进入“写作好句收藏馆”沉淀可替换句式。`,
+          `${feature.prompt}\n\n如果作文中多次出现 First / Second / Third 或低级连接词，请推荐我进入“好句收藏馆”沉淀可替换句式。`,
           null
         )
       } else {
