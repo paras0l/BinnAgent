@@ -24,6 +24,8 @@
 | [09-model-provider-and-ollama.md](./09-model-provider-and-ollama.md) | 本地 LLM 优先策略、Ollama 默认接入、模型路由与降级 |
 | [10-knowledge-base.md](./10-knowledge-base.md) | 教材上传、知识抽取与归并、学习路径、每日课程和 Memory 闭环 |
 | [11-vocabulary-learning.md](./11-vocabulary-learning.md) | 教材单元词表解析、单元注入、来源标签、沉浸式背词、发音与拼写预留 |
+| [12-rag-observability-exercises.md](./12-rag-observability-exercises.md) | 教材 RAG、Langfuse 观测和练习题闭环 |
+| [13-current-scope-and-status.md](./13-current-scope-and-status.md) | 当前实现状态、产品线边界和 issue 落地表 |
 
 ## 阅读顺序
 

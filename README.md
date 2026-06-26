@@ -85,6 +85,18 @@ npm run dev
 - [10. Knowledge Base](docs/architecture/10-knowledge-base.md)
 - [11. Vocabulary Learning](docs/architecture/11-vocabulary-learning.md)
 - [12. Textbook RAG, Langfuse & Exercises](docs/architecture/12-rag-observability-exercises.md)
+- [13. Current Scope and Status](docs/architecture/13-current-scope-and-status.md)
+
+## 当前实现状态
+
+| 能力 | 状态 |
+|------|------|
+| Chat / Memory / Dashboard | 部分实现 |
+| 七年级教材 Knowledge Base / RAG | 部分实现 |
+| Vocabulary Practice / Spelling | 部分实现 |
+| LangGraph daily lesson | 基础线性实现 |
+| CET reading / writing / weekly report | 设计中 |
+| CI backend lint/test + frontend lint/build | 已实现 |
 
 ### 前端文档
 

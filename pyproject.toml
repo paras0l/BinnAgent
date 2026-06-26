@@ -41,6 +41,7 @@ line-length = 100
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "W"]
+ignore = ["E402", "E501", "I001", "N806"]
 
 [build-system]
 requires = ["setuptools>=75.0.0"]

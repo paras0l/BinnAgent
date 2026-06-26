@@ -2,7 +2,17 @@ import uuid
 from datetime import datetime
 from typing import Optional
 
-from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, SmallInteger, String, Text
+from sqlalchemy import (
+    Boolean,
+    DateTime,
+    Float,
+    ForeignKey,
+    Integer,
+    SmallInteger,
+    String,
+    Text,
+    UniqueConstraint,
+)
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -30,6 +40,9 @@ class AgentThread(UUIDPrimaryKeyMixin, TimestampMixin, Base):
 
 class ConversationMessage(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     __tablename__ = "conversation_messages"
+    __table_args__ = (
+        UniqueConstraint("thread_id", "sequence", name="uq_conversation_messages_thread_sequence"),
+    )
 
     learner_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),

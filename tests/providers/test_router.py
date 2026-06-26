@@ -2,6 +2,7 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
+from src.providers.base import ChatRequest, ChatResponse
 from src.providers.router import ModelRouter
 
 
@@ -31,3 +32,33 @@ async def test_close_closes_registered_clients() -> None:
 
     mock_client.close.assert_awaited_once()
     assert router.get("ollama") is None
+
+
+@pytest.mark.asyncio
+async def test_chat_repairs_invalid_structured_json() -> None:
+    router = ModelRouter()
+    mock_client = AsyncMock()
+    mock_client.chat = AsyncMock(
+        side_effect=[
+            ChatResponse(provider="ollama", model="test", content="not json", structured=None),
+            ChatResponse(
+                provider="ollama",
+                model="test",
+                content='{"ok": true}',
+                structured={"ok": True},
+            ),
+        ]
+    )
+    router.register("ollama", mock_client)
+
+    response = await router.chat(
+        ChatRequest(
+            messages=[{"role": "user", "content": "return json"}],
+            response_schema={"type": "object"},
+        )
+    )
+
+    assert response.structured == {"ok": True}
+    assert response.usage["retry_count"] == 1
+    repair_request = mock_client.chat.await_args_list[1].args[0]
+    assert repair_request.task_type.endswith(".json_repair")

@@ -44,6 +44,9 @@ async def test_build_chunks_keeps_text_when_embedding_is_unavailable() -> None:
     assert isinstance(chunk, KnowledgeChunk)
     assert chunk.curriculum_node_id == node.id
     assert chunk.embedding is None
+    assert source.metadata_["rag_embedding_total"] == 1
+    assert source.metadata_["rag_embedding_failed"] == 1
+    assert source.metadata_["rag_index_status"] == "index_failed"
 
 
 @pytest.mark.asyncio
@@ -54,11 +57,21 @@ async def test_retrieve_chunks_uses_vector_similarity() -> None:
         chunk_index=0,
         content="Present progressive describes an action happening now.",
         char_count=55,
+        embedding_model="nomic-embed-text:latest",
     )
     chunk.id = uuid.uuid4()
+    source = KnowledgeSource(
+        title="book",
+        filename="七年级英语.pdf",
+        grade="grade-7",
+        sha256="b" * 64,
+        file_size=10,
+        metadata_={"chunk_version": "pypdf-page-v1", "source_version": "seed-v1"},
+    )
+    source.id = chunk.source_id
     db = AsyncMock()
     result = MagicMock()
-    result.all.return_value = [(chunk, 0.2)]
+    result.all.return_value = [(chunk, source, 0.2)]
     db.execute = AsyncMock(return_value=result)
     router = MagicMock()
     router.embed = AsyncMock(
@@ -73,3 +86,6 @@ async def test_retrieve_chunks_uses_vector_similarity() -> None:
 
     assert matches[0].chunk_id == chunk.id
     assert matches[0].score == pytest.approx(0.8)
+    assert matches[0].retrieval_mode == "vector"
+    assert matches[0].embedding_model == "nomic-embed-text:latest"
+    assert matches[0].chunk_version == "pypdf-page-v1"

@@ -291,6 +291,40 @@ async def test_upload_stores_grade7_pdf(client, knowledge_session, tmp_path, mon
     assert Path(created.object_key).exists()
 
 
+@pytest.mark.asyncio
+async def test_upload_does_not_reuse_private_duplicate_from_other_learner(
+    client, knowledge_session, tmp_path, monkeypatch
+):
+    learner_id = uuid.uuid4()
+    other_learner_id = uuid.uuid4()
+    duplicate = KnowledgeSource(
+        owner_learner_id=other_learner_id,
+        title="七年级英语补充",
+        filename="七年级英语补充.pdf",
+        grade="grade-7",
+        status="uploaded",
+        visibility="private",
+        sha256="b" * 64,
+        file_size=10,
+    )
+    duplicate.id = uuid.uuid4()
+    knowledge_session.execute = AsyncMock(side_effect=[_one(learner_id), _one(None)])
+    monkeypatch.setattr(settings, "knowledge_upload_dir", str(tmp_path))
+
+    response = await client.post(
+        f"/api/knowledge/sources/uploads?learner_id={learner_id}&filename=七年级英语补充.pdf",
+        content=b"%PDF-1.7 same private file",
+        headers={"Content-Type": "application/pdf"},
+    )
+
+    assert response.status_code == 201
+    created = next(
+        item for item in knowledge_session.added_objects if isinstance(item, KnowledgeSource)
+    )
+    assert created.owner_learner_id == learner_id
+    assert created.id != duplicate.id
+
+
 def test_knowledge_migration_creates_source_graph_and_memory_tables() -> None:
     migration = Path("alembic/versions/b2c3d4e5f6a7_add_grade7_knowledge_base.py").read_text()
     for table in [

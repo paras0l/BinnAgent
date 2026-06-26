@@ -22,6 +22,9 @@ from src.models.base import TimestampMixin, UUIDPrimaryKeyMixin
 
 class KnowledgeSource(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     __tablename__ = "knowledge_sources"
+    __table_args__ = (
+        UniqueConstraint("owner_learner_id", "sha256", name="uq_knowledge_sources_owner_sha256"),
+    )
 
     owner_learner_id: Mapped[Optional[uuid.UUID]] = mapped_column(
         UUID(as_uuid=True),
@@ -38,7 +41,7 @@ class KnowledgeSource(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     status: Mapped[str] = mapped_column(String(30), nullable=False, default="uploaded")
     visibility: Mapped[str] = mapped_column(String(20), nullable=False, default="private")
     object_key: Mapped[Optional[str]] = mapped_column(String(1000), nullable=True)
-    sha256: Mapped[str] = mapped_column(String(64), nullable=False, unique=True)
+    sha256: Mapped[str] = mapped_column(String(64), nullable=False)
     file_size: Mapped[int] = mapped_column(Integer, nullable=False)
     page_count: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     unit_count: Mapped[int] = mapped_column(SmallInteger, nullable=False, default=0)

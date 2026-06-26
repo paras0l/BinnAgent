@@ -77,3 +77,13 @@ def test_learning_progress_migration_persists_grammar_and_pronunciation_memory()
     assert "is_favorite" in migration
     assert "learned_at" in migration
     assert "metadata" in migration
+
+
+def test_knowledge_source_sha256_migration_scopes_duplicates_to_owner() -> None:
+    migration = Path(
+        "alembic/versions/52a3b4c5d6e7_scope_knowledge_source_sha256_to_owner.py"
+    ).read_text()
+
+    assert "knowledge_sources_sha256_key" in migration
+    assert "uq_knowledge_sources_owner_sha256" in migration
+    assert '["owner_learner_id", "sha256"]' in migration

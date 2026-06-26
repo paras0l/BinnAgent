@@ -8,7 +8,6 @@ from pypdf import PdfReader
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.config import settings
 from src.knowledge.rag import build_chunks
 from src.models.knowledge import CurriculumNode, KnowledgeChunk, KnowledgePoint, KnowledgeSource
 from src.providers.router import router as model_router
@@ -819,12 +818,20 @@ async def process_uploaded_textbook(db: AsyncSession, source: KnowledgeSource) -
     for point in knowledge_points:
         db.add(point)
     chunk_count = await build_chunks(db, source, page_texts, nodes, model_router)
+    rag_metadata = source.metadata_ or {}
 
     source.page_count = parsed.page_count
     source.unit_count = len(nodes)
     source.knowledge_count = len(knowledge_points)
-    source.status = "review_required"
+    source.status = (
+        "index_failed"
+        if rag_metadata.get("rag_index_status") == "index_failed"
+        else "partial_indexed"
+        if rag_metadata.get("rag_index_status") == "partial_indexed"
+        else "review_required"
+    )
     source.metadata_ = {
+        **rag_metadata,
         "stage": "validated",
         "text_char_count": parsed.text_char_count,
         "parser": "pypdf+grade7-appendices-v3",
@@ -835,7 +842,6 @@ async def process_uploaded_textbook(db: AsyncSession, source: KnowledgeSource) -
         "pronunciation_section_count": len(pronunciation),
         "grammar_reference_count": len(GRADE7_UPPER_GRAMMAR_TOPICS) if is_grade7_upper else 0,
         "rag_chunk_count": chunk_count,
-        "rag_embedding_model": settings.ollama_embedding_model,
         "toc_fallback": used_toc_fallback,
         "warning": None if nodes else "未识别到目录结构，需要人工校对",
     }

@@ -27,15 +27,34 @@ export function VocabularyDetailPage({
   backLabel = '返回词汇练习',
 }: VocabularyDetailPageProps) {
   const { showToast } = useToast()
-  const [termInput, setTermInput] = useState(term.trim())
-  const [activeTerm, setActiveTerm] = useState(term.trim())
+  const normalizedTerm = term.trim()
+  const [termState, setTermState] = useState(() => ({
+    sourceTerm: normalizedTerm,
+    input: normalizedTerm,
+    active: normalizedTerm,
+  }))
+  const effectiveTermState = termState.sourceTerm === normalizedTerm
+    ? termState
+    : {
+        sourceTerm: normalizedTerm,
+        input: normalizedTerm,
+        active: normalizedTerm,
+      }
+  const termInput = effectiveTermState.input
+  const activeTerm = effectiveTermState.active
   const [isSaving, setIsSaving] = useState(false)
   const prompt = useMemo(() => buildVocabularyPrompt(activeTerm), [activeTerm])
   const storageKey = useMemo(
     () => `binnVocabularyDetail:${activeTerm.trim().toLocaleLowerCase()}`,
     [activeTerm],
   )
-  const [html, setHtml] = useState(() => localStorage.getItem(storageKey) ?? '')
+  const [htmlState, setHtmlState] = useState(() => ({
+    storageKey,
+    value: localStorage.getItem(storageKey) ?? '',
+  }))
+  const html = htmlState.storageKey === storageKey
+    ? htmlState.value
+    : localStorage.getItem(storageKey) ?? ''
   const [isCopied, setIsCopied] = useState(false)
   const safeHtml = useMemo(() => sanitizeHtml(html), [html])
   const canSaveToVocabulary = Boolean(learner && activeTerm.trim() && html.trim())
@@ -45,18 +64,8 @@ export function VocabularyDetailPage({
       ? '正在加入词库…'
       : '加入词库 / 更新字段'
 
-  useEffect(() => {
-    const nextTerm = term.trim()
-    setTermInput(nextTerm)
-    setActiveTerm(nextTerm)
-  }, [term])
-
-  useEffect(() => {
-    setHtml(localStorage.getItem(storageKey) ?? '')
-  }, [storageKey])
-
   const updateHtml = useCallback((value: string) => {
-    setHtml(value)
+    setHtmlState({ storageKey, value })
     if (value.trim()) localStorage.setItem(storageKey, value)
     else localStorage.removeItem(storageKey)
   }, [storageKey])
@@ -102,7 +111,11 @@ export function VocabularyDetailPage({
       showToast('先输入一个要详解的词。', { variant: 'warning' })
       return
     }
-    setActiveTerm(nextTerm)
+    setTermState({
+      sourceTerm: normalizedTerm,
+      input: nextTerm,
+      active: nextTerm,
+    })
   }
 
   const addToVocabulary = async () => {
@@ -154,7 +167,11 @@ export function VocabularyDetailPage({
           <div className="mt-3 flex flex-col gap-3 sm:flex-row">
             <input
               value={termInput}
-              onChange={(event) => setTermInput(event.target.value)}
+              onChange={(event) => setTermState({
+                sourceTerm: normalizedTerm,
+                input: event.target.value,
+                active: activeTerm,
+              })}
               onKeyDown={(event) => {
                 if (event.key === 'Enter') applyTermInput()
               }}

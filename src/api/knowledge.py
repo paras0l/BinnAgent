@@ -624,7 +624,13 @@ async def upload_knowledge_source(
 
     digest = hashlib.sha256(data).hexdigest()
     duplicate_result = await db.execute(
-        select(KnowledgeSource).where(KnowledgeSource.sha256 == digest)
+        select(KnowledgeSource).where(
+            KnowledgeSource.sha256 == digest,
+            or_(
+                KnowledgeSource.owner_learner_id == learner_id,
+                KnowledgeSource.visibility == "public",
+            ),
+        )
     )
     duplicate = duplicate_result.scalar_one_or_none()
     if duplicate is not None:
@@ -724,8 +730,18 @@ async def search_knowledge_chunks(
         curriculum_node_id=curriculum_node_id,
         limit=limit,
     )
+    mode = chunks[0].retrieval_mode if chunks else "fallback"
     return {
         "query": query,
+        "mode": mode,
+        "retrieval": {
+            "mode": mode,
+            "embedding_model": (
+                chunks[0].embedding_model if chunks else settings.ollama_embedding_model
+            ),
+            "chunk_version": chunks[0].chunk_version if chunks else None,
+            "source_version": chunks[0].source_version if chunks else None,
+        },
         "results": [
             {
                 "chunk_id": str(chunk.chunk_id),
@@ -736,6 +752,10 @@ async def search_knowledge_chunks(
                 "page_number": chunk.page_number,
                 "content": chunk.content,
                 "score": round(chunk.score, 4),
+                "mode": chunk.retrieval_mode,
+                "embedding_model": chunk.embedding_model,
+                "chunk_version": chunk.chunk_version,
+                "source_version": chunk.source_version,
             }
             for chunk in chunks
         ],
