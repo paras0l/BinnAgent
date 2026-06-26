@@ -94,6 +94,7 @@ npm run dev
 | Chat / Memory / Dashboard | 部分实现 |
 | 七年级教材 Knowledge Base / RAG | 部分实现 |
 | Vocabulary Practice / Spelling | 部分实现 |
+| Writing Phrasebook | 基础版已实现 |
 | LangGraph daily lesson | 基础线性实现 |
 | CET reading / writing / weekly report | 设计中 |
 | CI backend lint/test + frontend lint/build | 已实现 |

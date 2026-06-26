@@ -32,6 +32,7 @@
 | Model Provider | 部分实现 | Ollama chat/stream/embed/health，结构化 JSON repair retry | task policy、local_only 强约束、持久化 model_call_logs |
 | Observability | 部分实现 | Langfuse observation 和运行时表 | run_id 贯通 graph/model/tool/memory，Dashboard 可视化 |
 | CI | 已实现 | GitHub Actions 覆盖 backend lint/test、frontend lint/build、migration 文本检查 | Alembic 在线迁移检查和端到端 smoke |
+| Writing Phrasebook | 基础版已实现 | 探索页写作入口、句式 CRUD、外部模型结果提取、候选收藏、识别/填空/替换练习和 attempt 记录 | 模型辅助编辑、精细 mastery、作文批改与翻译练习深度联动 |
 
 ## Issue 对应落地
 
@@ -41,6 +42,7 @@
 | #3 文档一致性 | 更新 `AGENTS.md`、`docs/web-frontend.md`、README 状态摘要和本文档 | 持续给主要架构文档补状态标签 |
 | #4 MVP 缺口 | 新增当前 scope/status 表，明确 CET 与七年级教材线边界 | daily lesson answer_required/resume、reading/writing/weekly report |
 | #5 下一阶段增强 | RAG search 返回 mode/embedding/chunk/source 信息；model structured output repair retry；CI | vocabulary 多维掌握度、observability dashboard、eval dataset |
+| #12 写作好句收藏馆 | 新增 `writing_phrases`、练习和 attempt 数据表；提供 CRUD/import/exercises/attempts API；探索页接入写作好句收藏馆前端工作台 | P2 模型辅助编辑、P3 到期复习/mastery、P4 作文批改和翻译练习自动推荐 |
 
 ## 可运行能力
 

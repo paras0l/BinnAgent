@@ -29,6 +29,11 @@ from src.models.vocabulary import (
     VocabularyItemSource,
     VocabularyPracticeSession,
 )
+from src.models.writing_phrase import (
+    WritingPhrase,
+    WritingPhraseAttempt,
+    WritingPhraseExercise,
+)
 
 __all__ = [
     "AgentEvent",
@@ -60,4 +65,7 @@ __all__ = [
     "VocabularyItemSource",
     "VocabularyPracticeSession",
     "VocabularyAttempt",
+    "WritingPhrase",
+    "WritingPhraseAttempt",
+    "WritingPhraseExercise",
 ]

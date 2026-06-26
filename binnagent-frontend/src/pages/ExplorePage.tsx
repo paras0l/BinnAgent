@@ -17,6 +17,7 @@ import type { AppTab, ExplorePreference, Learner } from '@/types'
 import { useToast } from '@/hooks/useToast'
 import { GrammarPage } from '@/pages/GrammarPage'
 import { VocabularyDetailPage } from '@/pages/VocabularyDetailPage'
+import { WritingPhrasebookPage } from '@/pages/WritingPhrasebookPage'
 
 type FeatureCategory = 'all' | 'listening' | 'speaking' | 'reading' | 'writing' | 'vocabulary' | 'grammar' | 'exam'
 type FeatureStatus = 'ready' | 'todo'
@@ -40,7 +41,7 @@ interface ExploreFeature {
   status: FeatureStatus
   action: FeatureAction
   prompt?: string
-  toolTarget?: 'dashboard' | 'pronunciation' | 'grammar'
+  toolTarget?: 'dashboard' | 'pronunciation' | 'grammar' | 'writing-phrasebook'
 }
 
 const CATEGORIES: Array<{ id: FeatureCategory; label: string }> = [
@@ -129,6 +130,17 @@ const FEATURES: ExploreFeature[] = [
     status: 'ready',
     action: 'chat',
     prompt: '请作为 CET-4/CET-6 写作老师批改我的作文。请按结构、语法、词汇、内容四项反馈，并提炼我的主要错因。作文如下：\n\n',
+  },
+  {
+    id: 'writing-phrasebook',
+    category: 'writing',
+    title: '写作好句收藏馆',
+    description: '收藏常用句式、固定搭配、递进表达和作文高分句，并通过练习真正掌握。',
+    whenToUse: '想积累作文表达、替换低级连接词、整理外部模型生成的好句时使用。',
+    outcome: '形成可编辑的个人句式资产库，并通过填空、替换、造句等练习检测掌握情况。',
+    status: 'ready',
+    action: 'tool',
+    toolTarget: 'writing-phrasebook',
   },
   {
     id: 'grammar-explain',
@@ -230,6 +242,7 @@ export function ExplorePage({
   const [isLoading, setIsLoading] = useState(true)
   const [isVocabularyDetailOpen, setIsVocabularyDetailOpen] = useState(false)
   const [isGrammarOpen, setIsGrammarOpen] = useState(false)
+  const [isWritingPhrasebookOpen, setIsWritingPhrasebookOpen] = useState(false)
 
   const loadPreferences = useCallback(async () => {
     setIsLoading(true)
@@ -338,7 +351,14 @@ export function ExplorePage({
     }
 
     if (feature.action === 'chat' && feature.prompt) {
-      onDraftPrompt(feature.prompt, feature.category === 'vocabulary' ? 'vocabulary_deposit' : null)
+      if (feature.id === 'essay-review') {
+        onDraftPrompt(
+          `${feature.prompt}\n\n如果作文中多次出现 First / Second / Third 或低级连接词，请推荐我进入“写作好句收藏馆”沉淀可替换句式。`,
+          null
+        )
+      } else {
+        onDraftPrompt(feature.prompt, feature.category === 'vocabulary' ? 'vocabulary_deposit' : null)
+      }
       onTabChange('chat')
       return
     }
@@ -351,6 +371,10 @@ export function ExplorePage({
     if (feature.action === 'tool' && feature.toolTarget) {
       if (feature.toolTarget === 'grammar') {
         setIsGrammarOpen(true)
+        return
+      }
+      if (feature.toolTarget === 'writing-phrasebook') {
+        setIsWritingPhrasebookOpen(true)
         return
       }
       onTabChange(feature.toolTarget)
@@ -371,6 +395,10 @@ export function ExplorePage({
 
   if (isGrammarOpen) {
     return <GrammarPage learner={learner} onBack={() => setIsGrammarOpen(false)} />
+  }
+
+  if (isWritingPhrasebookOpen) {
+    return <WritingPhrasebookPage learner={learner} onBack={() => setIsWritingPhrasebookOpen(false)} />
   }
 
   return (
