@@ -1,6 +1,6 @@
 # 13. Current Scope and Status
 
-> 更新时间：2026-06-26  
+> 更新时间：2026-06-27
 > 目的：把当前实现、部分实现和仍处于设计中的内容显性化，避免把架构目标误读成已落地功能。
 
 ## 状态图例
@@ -26,7 +26,7 @@
 | FastAPI API | 已实现 | learners、chat、memory、dashboard、knowledge、vocabulary、grammar 等 routers | 统一 current learner 认证授权 |
 | React 前端 | 部分实现 | 多页面学习入口、SSE chat、知识库和词汇练习 | 今日学习路径、恢复提示、RAG 调试模式 |
 | LangGraph daily lesson | 部分实现 | 线性 daily lesson graph 和主要节点 | checkpoint、interrupt、answer_required、resume |
-| Memory | 部分实现 | 统一 memory event/operation、MemoryWriter/Retriever/Curator、ErrorPattern governance、WritingPhraseMastery、Memory Center、导出/删除/禁用/我已改善、重置计划、情绪/节奏 opt-in、低置信上下文开关、memory_context log、hit-rate 指标、作文批改历史弱点对比 | 更完整 debug dashboard 图表、更多 regression eval |
+| Memory | 部分实现 | 4 层学习记忆架构 + HindSight-inspired Retain/Recall/Reflect 口径已落地；统一 memory event/operation、LearningEpisode、LearnerModelMemory、TeachingStrategyMemory、MemoryWriter/Retriever/Curator、显式 L1-L4 layer metadata、ErrorPattern governance、WritingPhraseMastery、Memory Center、导出/删除/禁用/我已改善、重置计划、情绪/节奏 opt-in、低置信上下文开关、memory_context log、hit-rate 指标、作文批改历史弱点对比 | 更完整 debug dashboard 图表、更多 regression eval、更多 session 类型反思规则 |
 | Vocabulary Learning | 部分实现 | 单元 enroll、用户可编辑个人词卡、new/review/spelling session、attempt、错因记录、mastery vector、发音 URL | 薄弱原因总结、题型推荐、更多表达迁移题 |
 | Knowledge Base / RAG | 部分实现 | PDF 解析、chunk、embedding、文本 fallback、8 题混合练习流、hint/retry/rubric 反馈 | hybrid retrieval、golden query set、前端证据面板、练习 session 总结 |
 | Prompt & Parsing Governance | 部分实现 | Prompt Registry MVP、prompt render API、核心 prompt 模板、写作导入 JSON-first extraction、教材 manifest/profile/parser report | 更多 prompt eval、词汇/语法 schema-first 回填、人工校对工作台 |
@@ -48,6 +48,7 @@
 | #11 词汇模块升级 | 新增 `VocabularyUserOverride`、`VocabularyMistake`、`VocabularyMasteryVector`；词汇详情和练习流读取用户覆盖层；新词学习/今日复习入口分离；用户例句优先参与填空上下文；隐藏释义不进入返回 payload；错因可修正/删除 | 更丰富的题型生成、Dashboard 弱项聚合、roleplay/micro writing 生产题 |
 | #12 好句收藏馆 | 新增 `writing_phrases`、练习和 attempt 数据表；提供 CRUD/import/exercises/attempts API；探索页接入好句收藏馆前端工作台 | P2 模型辅助编辑、P3 到期复习/mastery、P4 作文批改和翻译练习自动推荐 |
 | #14 Memory Core | 新增 `learning_memory_events`、`memory_operations`、`writing_phrase_masteries`、`memory_context_logs`、`learner_memory_settings`；实现 writer/retriever/curator/explainer/manager；词汇、知识、写作句式、chat/session、作文批改、LangGraph 写入或读取统一 memory；前端新增“我的学习记忆”页面；支持查看 evidence、编辑、删除、禁用、我已改善、导出、手动整理、重置计划、情绪/节奏开关、低置信上下文开关；summary 增加 recent events 和 active weaknesses；metrics 增加 retrieval、hit-rate、used-in-prompt、stale | 更完整 memory debug dashboard 图表、长期 regression eval 扩展 |
+| #19 HindSight-inspired Memory | 明确 Memory v2 采用 Retain / Recall / Reflect / Explain / Control；新增 `learning_episodes`、`learner_model_memories`、`teaching_strategy_memories`；`record_event()` 自动补 `evidence_ref`；`MemoryCurator.reflect()` 可从事件生成 episode、learner model、teaching strategy；`MemoryRetriever.for_chat/for_daily_plan/for_vocabulary_practice/for_knowledge_exercise/for_essay_review/for_writing_phrasebook/for_memory_explanation` 已实现；Chat、词汇、教材、作文、写作句式入口使用场景化 recall；用户删除/禁用 learner model 或 strategy 后后续 recall 排除；Memory Center 展示新卡片和指标 | 扩展更多 episode 模板、resolved 状态自动化、teaching strategy 效果评估和 dashboard 可视化 |
 | #15 Learner Simulation Agent | 新增 `src/simulation/`、`tests/simulation/` 和 `scripts/run_learner_simulation.py`；至少 5 个内置 persona；3 个 deterministic scenario 覆盖 smoke journey、Vocabulary Agent 沉淀、词汇练习 adaptation；runner 通过 API 调用系统并直接调用 daily lesson graph；每次运行生成结构化 report | 教材知识练习、写作好句、Memory 可控性 regression、LLM-assisted 模式和 simulation dashboard |
 | #16 教材解析质量止血 | 新增 `books/manifest.yaml`、parser profile、parser quality report；词汇条目增加 `raw_line`、`confidence`、`warnings` 和 `requires_review`；ingest metadata 写入 manifest/profile/report | layout-aware extractor、低置信人工校对队列和前端工作台 |
 | #17 Schema-first 回填 | 新增 `src/extraction`，写作好句导入优先 JSON schema，保留 regex fallback 且返回 `parse_mode`、`warnings`、`confidence`；新增 golden-style tests | 词汇字段回传和语法微课 machine_data 的完整保存链路 |

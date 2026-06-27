@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.api.deps import get_db_session
 from src.memory.curator import MemoryCurator
 from src.memory.explainer import MemoryExplainer
+from src.memory.layers import MemoryLayer
 from src.memory.retriever import MemoryRetriever
 from src.memory.writer import MemoryWriter
 from src.models.error_pattern import ErrorPattern
@@ -16,9 +17,12 @@ from src.models.learner import Learner
 from src.models.learning_progress import LearningProgressItem
 from src.models.memory import (
     LearnerMemorySettings,
+    LearnerModelMemory,
+    LearningEpisode,
     LearningMemoryEvent,
     MemoryContextLog,
     MemoryOperation,
+    TeachingStrategyMemory,
     WritingPhraseMastery,
 )
 from src.models.runtime import AgentThread, ConversationMessage
@@ -91,6 +95,7 @@ class MemorySummaryResponse(BaseModel):
 class MemoryCard(BaseModel):
     id: str
     type: str
+    layer: str
     title: str
     content: str
     skill: str
@@ -124,6 +129,12 @@ class MemoryControlResponse(BaseModel):
 
 class MemoryCurateResponse(BaseModel):
     event_count: int
+    episode_count: int = 0
+    learner_model_count: int = 0
+    teaching_strategy_count: int = 0
+    reflection_layer: str | None = None
+    read_layers: list[str] = Field(default_factory=list)
+    updated_layers: list[str] = Field(default_factory=list)
     active_weaknesses: list[str]
 
 
@@ -538,6 +549,7 @@ async def _memory_cards(db: AsyncSession, learner_id: uuid.UUID) -> list[MemoryC
             MemoryCard(
                 id=f"error_pattern:{pattern.id}",
                 type="error_pattern",
+                layer=MemoryLayer.LEARNER_MODEL.value,
                 title=pattern.pattern,
                 content=pattern.description or pattern.pattern,
                 skill=pattern.skill,
@@ -548,6 +560,78 @@ async def _memory_cards(db: AsyncSession, learner_id: uuid.UUID) -> list[MemoryC
                 else [],
                 impact=f"影响 {pattern.recommended_drill or 'targeted_practice'} 推荐",
                 updated_at=pattern.updated_at,
+            )
+        )
+
+    model_result = await db.execute(
+        select(LearnerModelMemory)
+        .where(LearnerModelMemory.learner_id == learner_id, LearnerModelMemory.status != "deleted")
+        .order_by(LearnerModelMemory.updated_at.desc())
+        .limit(20)
+    )
+    for model in model_result.scalars().all():
+        cards.append(
+            MemoryCard(
+                id=f"learner_model_memory:{model.id}",
+                type="learner_model_memory",
+                layer=MemoryLayer.LEARNER_MODEL.value,
+                title=model.claim_key,
+                content=model.claim,
+                skill=model.skill,
+                confidence=float(model.confidence or 0.5),
+                status=model.status,
+                evidence=[str(item) for item in (model.evidence_refs or [])[:5]],
+                impact=f"影响 {model.model_type} 推荐和解释",
+                updated_at=model.updated_at,
+            )
+        )
+
+    strategy_result = await db.execute(
+        select(TeachingStrategyMemory)
+        .where(
+            TeachingStrategyMemory.learner_id == learner_id,
+            TeachingStrategyMemory.status != "deleted",
+        )
+        .order_by(TeachingStrategyMemory.updated_at.desc())
+        .limit(20)
+    )
+    for strategy in strategy_result.scalars().all():
+        cards.append(
+            MemoryCard(
+                id=f"teaching_strategy_memory:{strategy.id}",
+                type="teaching_strategy_memory",
+                layer=MemoryLayer.LEARNER_MODEL.value,
+                title=strategy.strategy,
+                content=strategy.effect_summary,
+                skill=strategy.skill,
+                confidence=float(strategy.confidence or 0.5),
+                status=strategy.status,
+                evidence=[str(item) for item in (strategy.evidence_refs or [])[:5]],
+                impact="影响 Chat、Daily Lesson 和练习反馈方式",
+                updated_at=strategy.updated_at,
+            )
+        )
+
+    episode_result = await db.execute(
+        select(LearningEpisode)
+        .where(LearningEpisode.learner_id == learner_id)
+        .order_by(LearningEpisode.updated_at.desc())
+        .limit(20)
+    )
+    for episode in episode_result.scalars().all():
+        cards.append(
+            MemoryCard(
+                id=f"learning_episode:{episode.id}",
+                type="learning_episode",
+                layer=MemoryLayer.EVIDENCE.value,
+                title=episode.episode_type,
+                content=episode.summary,
+                skill=episode.skill,
+                confidence=float(episode.confidence or 0.5),
+                status=None,
+                evidence=[str(item) for item in (episode.source_event_ids or [])[:5]],
+                impact=episode.next_action or "影响下一次学习任务推荐",
+                updated_at=episode.updated_at,
             )
         )
 
@@ -563,6 +647,7 @@ async def _memory_cards(db: AsyncSession, learner_id: uuid.UUID) -> list[MemoryC
             MemoryCard(
                 id=f"writing_phrase_mastery:{mastery.id}",
                 type="writing_phrase_mastery",
+                layer=MemoryLayer.LEARNER_MODEL.value,
                 title="写作句式掌握",
                 content=phrase.text,
                 skill="writing",
@@ -588,6 +673,7 @@ async def _memory_cards(db: AsyncSession, learner_id: uuid.UUID) -> list[MemoryC
             MemoryCard(
                 id=f"learning_memory_event:{event.id}",
                 type="learning_memory_event",
+                layer=MemoryLayer.EVIDENCE.value,
                 title=event.event_type.replace("_", " "),
                 content=_event_summary(event),
                 skill=event.skill,
@@ -609,6 +695,17 @@ async def _memory_metrics(db: AsyncSession, learner_id: uuid.UUID) -> dict[str, 
     )
     operation_count = await db.execute(
         select(func.count()).select_from(MemoryOperation).where(MemoryOperation.learner_id == learner_id)
+    )
+    episode_count = await db.execute(
+        select(func.count()).select_from(LearningEpisode).where(LearningEpisode.learner_id == learner_id)
+    )
+    learner_model_count = await db.execute(
+        select(func.count()).select_from(LearnerModelMemory).where(LearnerModelMemory.learner_id == learner_id)
+    )
+    strategy_count = await db.execute(
+        select(func.count()).select_from(TeachingStrategyMemory).where(
+            TeachingStrategyMemory.learner_id == learner_id
+        )
     )
     retrieval_count = await db.execute(
         select(func.count()).select_from(MemoryContextLog).where(MemoryContextLog.learner_id == learner_id)
@@ -642,6 +739,9 @@ async def _memory_metrics(db: AsyncSession, learner_id: uuid.UUID) -> dict[str, 
         "memory_hit_rate": int((used_total / retrieval_total) * 100) if retrieval_total else 0,
         "memory_used_in_prompt_count": used_total,
         "memory_operation_count": int(operation_count.scalar_one() or 0),
+        "learning_episode_count": int(episode_count.scalar_one() or 0),
+        "learner_model_memory_count": int(learner_model_count.scalar_one() or 0),
+        "teaching_strategy_memory_count": int(strategy_count.scalar_one() or 0),
         "memory_user_deleted_count": deleted_total,
         "memory_stale_count": int(stale_count.scalar_one() or 0),
         "memory_conflict_count": 0,
@@ -743,6 +843,55 @@ async def _apply_memory_control(
             "recommended_drill": mastery.recommended_drill,
         }
         return before, after, mastery.status
+
+    if target_type == "learner_model_memory":
+        model = await _get_target(db, LearnerModelMemory, learner_id, target_id)
+        before = {
+            "skill": model.skill,
+            "claim_key": model.claim_key,
+            "claim": model.claim,
+            "status": model.status,
+        }
+        if operation in {"delete", "disable"}:
+            model.status = "dismissed"
+        elif operation == "mark_improved":
+            model.status = "improving"
+            model.confidence = min(model.confidence or 0.5, 0.6)
+        elif operation in {"edit", "correct"} and content:
+            model.claim = content
+            model.status = "active"
+            model.confidence = 1.0
+        after = {
+            "skill": model.skill,
+            "claim_key": model.claim_key,
+            "claim": model.claim,
+            "status": model.status,
+        }
+        return before, after, model.status
+
+    if target_type == "teaching_strategy_memory":
+        strategy = await _get_target(db, TeachingStrategyMemory, learner_id, target_id)
+        before = {
+            "skill": strategy.skill,
+            "strategy": strategy.strategy,
+            "effect_summary": strategy.effect_summary,
+            "status": strategy.status,
+        }
+        if operation in {"delete", "disable"}:
+            strategy.status = "dismissed"
+        elif operation == "mark_improved":
+            strategy.confidence = min(1.0, max(strategy.confidence or 0.5, 0.85))
+        elif operation in {"edit", "correct"} and content:
+            strategy.effect_summary = content
+            strategy.confidence = 1.0
+            strategy.status = "active"
+        after = {
+            "skill": strategy.skill,
+            "strategy": strategy.strategy,
+            "effect_summary": strategy.effect_summary,
+            "status": strategy.status,
+        }
+        return before, after, strategy.status
 
     raise HTTPException(status_code=404, detail="Memory target type not found")
 

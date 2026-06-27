@@ -513,6 +513,8 @@ def _memory_context_metadata(memory_context: MemoryContext | None) -> dict[str, 
         return {"loaded_items": [], "excluded_items": [], "retrieval_reason": "unknown"}
     return {
         "loaded_items": [item.id for item in memory_context.loaded_items],
+        "loaded_item_layers": [item.layer for item in memory_context.loaded_items],
+        "context_layer": memory_context.layer,
         "excluded_items": memory_context.excluded_items,
         "retrieval_reason": memory_context.retrieval_reason,
         "token_cost": len(memory_context.prompt_text()),
@@ -528,9 +530,8 @@ async def _retrieve_memory_context_safely(
     thread_id: uuid.UUID,
 ) -> MemoryContext:
     try:
-        return await MemoryRetriever(db).retrieve_context(
+        return await MemoryRetriever(db).for_chat(
             learner_id=learner_id,
-            reason=reason,
             skill=skill_focus,
             thread_id=thread_id,
             limit=6,

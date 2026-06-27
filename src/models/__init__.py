@@ -15,9 +15,12 @@ from src.models.learner import Learner, LearnerProfile
 from src.models.learning_progress import LearningProgressItem
 from src.models.memory import (
     LearnerMemorySettings,
+    LearnerModelMemory,
+    LearningEpisode,
     LearningMemoryEvent,
     MemoryContextLog,
     MemoryOperation,
+    TeachingStrategyMemory,
     WritingPhraseMastery,
 )
 from src.models.runtime import (
@@ -65,6 +68,8 @@ __all__ = [
     "KnowledgeSource",
     "LearnerKnowledgeState",
     "LearnerMemorySettings",
+    "LearnerModelMemory",
+    "LearningEpisode",
     "LearningProgressItem",
     "LearningMemoryEvent",
     "LearningTask",
@@ -74,6 +79,7 @@ __all__ = [
     "ReviewSchedule",
     "TimestampMixin",
     "ToolCall",
+    "TeachingStrategyMemory",
     "UUIDPrimaryKeyMixin",
     "VocabularyItem",
     "VocabularyItemSource",

@@ -198,7 +198,92 @@ updated_at
 (learner_id, severity)
 ```
 
-### 3.8 materials
+### 3.8 learning_memory_events
+
+统一 Retain 事件流。所有跨模块学习行为都应写入这里，作为后续 Reflect 的证据层。
+
+```text
+id
+learner_id
+event_type
+skill
+subskill
+source_type
+source_id
+thread_id
+session_id
+payload jsonb  # 包含 evidence_ref
+confidence
+visibility
+created_by
+occurred_at
+created_at
+updated_at
+```
+
+### 3.9 learning_episodes
+
+Reflect 后的学习经历层，描述一次 session 或一组同类事件中“怎么学会 / 哪里反复错 / 下一步做什么”。
+
+```text
+id
+learner_id
+session_id
+reflection_key
+episode_type
+skill
+subskill
+summary
+observed_patterns jsonb
+effective_feedback jsonb
+next_action
+source_event_ids jsonb
+confidence
+created_at
+updated_at
+```
+
+### 3.10 learner_model_memories
+
+Reflect 后的长期学习者模型，服务 Recall 和可解释推荐。
+
+```text
+id
+learner_id
+model_type
+skill
+subskill
+claim_key
+claim
+confidence
+status  # active / improving / resolved / dismissed
+evidence_refs jsonb
+last_reflected_at
+created_at
+updated_at
+```
+
+### 3.11 teaching_strategy_memories
+
+记录对该学习者有效的教学策略，例如 hint_then_retry、teach_transition_by_replacement。
+
+```text
+id
+learner_id
+strategy
+skill
+subskill
+when_to_use
+steps jsonb
+effect_summary
+confidence
+evidence_refs jsonb
+status
+created_at
+updated_at
+```
+
+### 3.12 materials
 
 ```text
 id
@@ -216,7 +301,7 @@ embedding vector
 created_at
 ```
 
-### 3.9 question_attempts
+### 3.13 question_attempts
 
 ```text
 id
@@ -234,7 +319,7 @@ feedback jsonb
 created_at
 ```
 
-### 3.10 writing_submissions
+### 3.14 writing_submissions
 
 ```text
 id
@@ -251,7 +336,7 @@ created_at
 updated_at
 ```
 
-### 3.11 speaking_submissions
+### 3.15 speaking_submissions
 
 ```text
 id

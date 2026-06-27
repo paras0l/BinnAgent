@@ -3,6 +3,8 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any
 
+from src.memory.layers import MemoryLayer
+
 
 @dataclass(frozen=True)
 class MemoryEventInput:
@@ -40,6 +42,7 @@ class RetrievedMemoryItem:
     skill: str
     summary: str
     confidence: float
+    layer: str
     evidence_refs: list[str] = field(default_factory=list)
     reason: str | None = None
     payload: dict[str, Any] = field(default_factory=dict)
@@ -50,6 +53,7 @@ class MemoryContext:
     loaded_items: list[RetrievedMemoryItem]
     excluded_items: list[str] = field(default_factory=list)
     retrieval_reason: str = "general"
+    layer: str = MemoryLayer.CONTEXT.value
 
     def prompt_text(self) -> str:
         if not self.loaded_items:
@@ -58,7 +62,7 @@ class MemoryContext:
         for item in self.loaded_items:
             evidence = f" 证据：{', '.join(item.evidence_refs[:2])}" if item.evidence_refs else ""
             lines.append(
-                f"- [{item.skill}] {item.summary} "
+                f"- [{item.layer}/{item.skill}] {item.summary} "
                 f"(confidence={item.confidence:.2f}).{evidence}".strip()
             )
         return "\n".join(lines)

@@ -267,10 +267,8 @@ async def knowledge_base_overview(
         )
     memory_items = []
     try:
-        memory_context = await MemoryRetriever(db).retrieve_context(
+        memory_context = await MemoryRetriever(db).for_knowledge_exercise(
             learner_id=learner_id,
-            reason="daily_lesson",
-            skill="knowledge",
             limit=4,
         )
         memory_items = memory_context.loaded_items

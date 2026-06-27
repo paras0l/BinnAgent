@@ -231,7 +231,7 @@ class TestChatSend:
                 learner_result,
                 thread_result,
                 history_result,
-                *[_empty_many() for _ in range(8)],
+                *[_empty_many() for _ in range(11)],
                 max_result,
             ]
         )

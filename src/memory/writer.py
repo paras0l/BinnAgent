@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.memory.layers import MemoryLayer
 from src.memory.policies import clamp_confidence, clean_payload, normalize_skill
 from src.memory.schemas import MemoryEventInput, MemoryOperationInput
 from src.models.memory import LearningMemoryEvent, MemoryOperation
@@ -15,6 +16,11 @@ class MemoryWriter:
         self.db = db
 
     async def record_event(self, event: MemoryEventInput, *, commit: bool = False) -> LearningMemoryEvent:
+        payload = clean_payload(event.payload)
+        if "evidence_ref" not in payload:
+            source = event.source_type.strip() or "system"
+            payload["evidence_ref"] = f"{source}:{event.source_id}" if event.source_id else source
+        payload.setdefault("memory_layer", MemoryLayer.EVIDENCE.value)
         row = LearningMemoryEvent(
             learner_id=event.learner_id,
             event_type=event.event_type.strip(),
@@ -24,7 +30,7 @@ class MemoryWriter:
             source_id=str(event.source_id) if event.source_id else None,
             thread_id=event.thread_id,
             session_id=event.session_id,
-            payload=clean_payload(event.payload),
+            payload=payload,
             confidence=clamp_confidence(event.confidence),
             visibility=event.visibility,
             created_by=event.created_by,
@@ -83,6 +89,7 @@ class MemoryWriter:
             "correct": "user_corrected_memory",
             "disable": "user_disabled_memory",
             "mark_improved": "user_marked_memory_improved",
+            "mark_mastered": "user_marked_mastered",
             "reset_plan": "user_reset_learning_plan",
         }.get(operation_type, "user_corrected_memory")
         event = await self.record_event(
@@ -95,6 +102,7 @@ class MemoryWriter:
                 payload={
                     "operation_id": str(operation.id),
                     "operation_type": operation_type,
+                    "governance_layer": MemoryLayer.GOVERNANCE.value,
                     "before": before or {},
                     "after": after or {},
                     "reason": reason,

@@ -8,7 +8,7 @@ BinnAgent is now a runnable FastAPI + LangGraph/Ollama + React project with arch
   - `api/`: FastAPI routers.
   - `graph/`: LangGraph daily lesson runtime.
   - `knowledge/`: textbook parsing, RAG, exercises.
-  - `memory/`: learner memory extraction and stores.
+  - `memory/`: Retain / Recall / Reflect memory runtime.
   - `models/`: SQLAlchemy models.
   - `providers/`: Ollama/model routing.
   - `tools/`: dictionary, SRS, pronunciation, scoring helpers.
@@ -61,8 +61,8 @@ python3 -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
 alembic upgrade head
 uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
-python -m pytest tests/ -v
-ruff check .
+.venv/bin/python -m pytest tests/ -v
+.venv/bin/ruff check .
 ```
 
 Frontend:
@@ -91,14 +91,14 @@ rg "Ollama|Memory|MCP|RAG" docs src tests
 find docs/architecture -maxdepth 1 -type f | sort
 ```
 
-High-frequency command fixes:
+High-frequency commands:
 
 ```bash
-# Local macOS may map python/python3 to interpreters without project deps.
+.venv/bin/python -m pytest tests/memory -q
 .venv/bin/python -m pytest tests/simulation -q
+.venv/bin/ruff check src tests
 .venv/bin/ruff check src/simulation tests/simulation scripts/run_learner_simulation.py
 
-# Run deterministic learner simulation through the repo wrapper.
 ./scripts/run_learner_simulation.sh --persona grade7_low_vocab --scenario smoke_learning_journey
 ./scripts/run_learner_simulation.sh --test
 ```
@@ -106,6 +106,7 @@ High-frequency command fixes:
 - Prefer `.venv/bin/python -m pytest ...` over bare `python -m pytest` or `python3 -m pytest` in this repo.
 - Prefer `.venv/bin/ruff ...` when checking local edits; the global `ruff` may be absent or a different version.
 - Use `./scripts/run_learner_simulation.sh` for simulation runs so the correct interpreter is selected automatically.
+- Memory v2 uses `MemoryWriter.record_event()` for Retain, `MemoryRetriever.for_*()` for scene-scoped Recall, and `MemoryCurator.reflect()` for Episode / Learner Model / Teaching Strategy updates.
 
 ## Coding Style & Naming Conventions
 

@@ -446,10 +446,8 @@ async def next_practice_task(
     )
     memory_items = []
     try:
-        memory_context = await MemoryRetriever(db).retrieve_context(
+        memory_context = await MemoryRetriever(db).for_vocabulary_practice(
             learner_id=learner_id,
-            reason="vocabulary_practice",
-            skill="vocabulary",
             limit=3,
         )
         memory_items = memory_context.loaded_items

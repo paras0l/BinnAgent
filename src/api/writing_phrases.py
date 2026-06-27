@@ -416,10 +416,8 @@ async def writing_phrase_recommendations(
 ) -> PhraseRecommendationResponse:
     await _ensure_learner(db, learner_id)
     try:
-        context = await MemoryRetriever(db).retrieve_context(
+        context = await MemoryRetriever(db).for_writing_phrasebook(
             learner_id=learner_id,
-            reason="writing_phrasebook",
-            skill="writing",
             limit=5,
         )
         memory_items = context.loaded_items

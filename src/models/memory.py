@@ -48,6 +48,95 @@ class LearningMemoryEvent(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     occurred_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
 
+class LearningEpisode(UUIDPrimaryKeyMixin, TimestampMixin, Base):
+    __tablename__ = "learning_episodes"
+    __table_args__ = (
+        UniqueConstraint("learner_id", "reflection_key", name="uq_learning_episode_reflection_key"),
+        Index("ix_learning_episodes_learner_created", "learner_id", "created_at"),
+        Index("ix_learning_episodes_learner_skill", "learner_id", "skill", "subskill"),
+    )
+
+    learner_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("learners.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    session_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("learning_sessions.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    reflection_key: Mapped[str] = mapped_column(String(255), nullable=False)
+    episode_type: Mapped[str] = mapped_column(String(80), nullable=False, index=True)
+    skill: Mapped[str] = mapped_column(String(50), nullable=False, default="general")
+    subskill: Mapped[Optional[str]] = mapped_column(String(80), nullable=True)
+    summary: Mapped[str] = mapped_column(Text, nullable=False)
+    observed_patterns: Mapped[list] = mapped_column(JSONB, nullable=False, default=list)
+    effective_feedback: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
+    next_action: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    source_event_ids: Mapped[list] = mapped_column(JSONB, nullable=False, default=list)
+    confidence: Mapped[float] = mapped_column(Float, nullable=False, default=0.6)
+
+
+class LearnerModelMemory(UUIDPrimaryKeyMixin, TimestampMixin, Base):
+    __tablename__ = "learner_model_memories"
+    __table_args__ = (
+        UniqueConstraint(
+            "learner_id",
+            "model_type",
+            "skill",
+            "subskill",
+            "claim_key",
+            name="uq_learner_model_memory_claim",
+        ),
+        Index("ix_learner_model_memories_learner_status", "learner_id", "status"),
+        Index("ix_learner_model_memories_learner_skill", "learner_id", "skill", "subskill"),
+    )
+
+    learner_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("learners.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    model_type: Mapped[str] = mapped_column(String(80), nullable=False, default="skill_profile")
+    skill: Mapped[str] = mapped_column(String(50), nullable=False, default="general")
+    subskill: Mapped[Optional[str]] = mapped_column(String(80), nullable=True)
+    claim_key: Mapped[str] = mapped_column(String(160), nullable=False)
+    claim: Mapped[str] = mapped_column(Text, nullable=False)
+    confidence: Mapped[float] = mapped_column(Float, nullable=False, default=0.6)
+    status: Mapped[str] = mapped_column(String(30), nullable=False, default="active")
+    evidence_refs: Mapped[list] = mapped_column(JSONB, nullable=False, default=list)
+    last_reflected_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+
+class TeachingStrategyMemory(UUIDPrimaryKeyMixin, TimestampMixin, Base):
+    __tablename__ = "teaching_strategy_memories"
+    __table_args__ = (
+        UniqueConstraint("learner_id", "strategy", "skill", name="uq_teaching_strategy_memory"),
+        Index("ix_teaching_strategy_memories_learner_status", "learner_id", "status"),
+        Index("ix_teaching_strategy_memories_learner_skill", "learner_id", "skill", "subskill"),
+    )
+
+    learner_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("learners.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    strategy: Mapped[str] = mapped_column(String(120), nullable=False)
+    skill: Mapped[str] = mapped_column(String(50), nullable=False, default="general")
+    subskill: Mapped[Optional[str]] = mapped_column(String(80), nullable=True)
+    when_to_use: Mapped[str] = mapped_column(Text, nullable=False)
+    steps: Mapped[list] = mapped_column(JSONB, nullable=False, default=list)
+    effect_summary: Mapped[str] = mapped_column(Text, nullable=False)
+    confidence: Mapped[float] = mapped_column(Float, nullable=False, default=0.6)
+    evidence_refs: Mapped[list] = mapped_column(JSONB, nullable=False, default=list)
+    status: Mapped[str] = mapped_column(String(30), nullable=False, default="active")
+
+
 class MemoryOperation(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     __tablename__ = "memory_operations"
     __table_args__ = (

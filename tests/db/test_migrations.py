@@ -118,3 +118,18 @@ def test_learning_memory_migration_adds_events_operations_and_governance() -> No
     assert "status" in migration
     assert "confidence" in migration
     assert "ix_learning_memory_events_learner_skill" in migration
+
+
+def test_reflective_memory_migration_adds_episode_model_and_strategy_tables() -> None:
+    migration = Path(
+        "alembic/versions/b6c7d8e9f0a1_add_reflective_memory_models.py"
+    ).read_text()
+
+    assert "learning_episodes" in migration
+    assert "learner_model_memories" in migration
+    assert "teaching_strategy_memories" in migration
+    assert "source_event_ids" in migration
+    assert "last_reflected_at" in migration
+    assert "uq_learning_episode_reflection_key" in migration
+    assert "uq_learner_model_memory_claim" in migration
+    assert "uq_teaching_strategy_memory" in migration

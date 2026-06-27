@@ -16,11 +16,16 @@ Memory System 是英语学习陪伴系统的核心壁垒。
 
 ## 2. 当前落地状态
 
-截至 2026-06-26，Memory 已从“局部统计 + chat 摘要”升级为统一学习记忆底座的第一版：
+截至 2026-06-27，Memory 已从“局部统计 + chat 摘要”升级为 HindSight-inspired 的学习记忆底座。正式架构口径是 **4 层学习记忆架构 + Retain / Recall / Reflect / Explain / Control 操作模型**。BinnAgent 不接入 HindSight 服务，而是在自研数据库中落地这套动作口径：
 
 - 新增 `learning_memory_events` 统一事件流，镜像 chat、词汇 attempt、知识练习、写作句式保存/练习等关键行为。
+- 新增 `learning_episodes`，把 session 或同类事件整理为带 observed patterns、effective feedback、next action、source_event_ids 的学习经历。
+- 新增 `learner_model_memories`，保存 active / improving / resolved / dismissed 的长期学习者模型。
+- 新增 `teaching_strategy_memories`，记录 hint、retry、replacement 等反馈方式对该用户是否有效。
 - 新增 `memory_operations`，记录用户编辑、删除、禁用、纠正、标记已改善、导出等治理操作。
 - 新增 `MemoryWriter`、`MemoryRetriever`、`MemoryCurator`、`MemoryExplainer`、`MemoryManager`。
+- 新增 `src/memory/layers.py`，在 Retain payload、Recall items、L1 context、Memory Center cards 和 retrieval logs 中显式标注 L1-L4。
+- `MemoryWriter.record_event()` 是 Retain 入口；`MemoryRetriever.for_*()` 是场景化 Recall；`MemoryCurator.reflect()` 是 Reflect 入口。
 - `ErrorPattern` 增强为带 `confidence`、`status`、`subskill`、`first_seen_at`、干预记录和 evidence 的可治理长期记忆。
 - 新增 `WritingPhraseMastery`，把写作句式资源和掌握状态分离。
 - 新增 `MemoryContextLog`，记录每次 retriever 加载和排除的记忆项。
@@ -32,14 +37,16 @@ Memory System 是英语学习陪伴系统的核心壁垒。
 
 | 层级 | 范围 | 内容 | 技术 |
 |---|---|---|---|
-| L0 Working Context | 单次 LLM 调用 | 当前任务所需最小上下文、Top-K 弱点和 episode | `MemoryRetriever` + prompt context |
-| L1 Thread / Session Episode | 一段对话或课程 | 对话摘要、session summary、反馈和下一步 | `AgentThread`、`LearningSession` |
-| L2 Raw Learning Event | 跨模块学习行为 | 统一事件流、source/evidence、confidence | `learning_memory_events` |
-| L3 Skill State Memory | 技能掌握状态 | 词汇 mastery、知识点 state、句式 mastery | 局部 state 表 + curator |
-| L4 Semantic Learner Profile | 稳定画像 | 目标、时间预算、兴趣、弱项 | `LearnerProfile` |
-| L5 Pattern & Strategy Memory | 错误模式和教学策略 | error pattern、recommended drill、干预效果 | `ErrorPattern` |
-| L6 Resource / Knowledge Vault | 学习资产 | 教材、词卡、句式、题目、RAG chunks | resource tables |
-| L7 Curator & Governance | 治理 | 合并、降噪、用户删除/纠正、导出 | `MemoryCurator` + operations |
+| L1 Context Memory | 当前上下文层 | thread summary、recent messages、current task、current material、skill_focus、retrieved memory context | `MemoryRetriever` + prompt context |
+| L2 Evidence Memory | 证据与经历层 | events、episodes、attempts、essay feedback、user operations、evidence refs | `learning_memory_events`、`learning_episodes`、`memory_operations` |
+| L3 Learner Model Memory | 学习者模型层 | mastery vectors、knowledge states、writing phrase mastery、error patterns、learner profile、active weaknesses、teaching strategies | `VocabularyMasteryVector`、`LearnerKnowledgeState`、`WritingPhraseMastery`、`ErrorPattern`、`LearnerModelMemory`、`TeachingStrategyMemory` |
+| L4 Governance & Reflection Memory | 治理与反思层 | 整理、反思、解释、策略、用户控制、审计 | `MemoryCurator`、`MemoryExplainer`、`MemoryOperation`、policies、audit logs |
+
+Learning Resources / Learning Episodes / Learner Models 只作为解释性概念使用，不再作为正式“三层架构”：
+
+- Learning Resources 是业务资源数据，例如教材、词汇卡、写作好句、语法微课、练习题；它们不作为 Memory 层，只被 Memory 引用。
+- Learning Episodes 归入 L2 Evidence Memory。
+- Learner Models 归入 L3 Learner Model Memory。
 
 ## 4. Memory 类型
 
@@ -180,7 +187,43 @@ Memory System 是英语学习陪伴系统的核心壁垒。
 
 每条事件至少包含 learner、event_type、skill、source_type/source_id、payload、confidence、visibility、created_by、occurred_at。
 
-## 6. Namespace 设计
+`MemoryWriter` 会为事件 payload 补充 `evidence_ref` 和 `memory_layer=L2_evidence`。低置信推断先作为 evidence 保留，不直接写成长期 learner model 事实。
+
+## 6. Retain / Recall / Reflect / Explain / Control
+
+| 动作 | 当前实现 | 职责 |
+|---|---|---|
+| Retain | `MemoryWriter.record_event()` | 记录学习证据和用户治理操作 |
+| Recall | `MemoryRetriever.for_chat()` 等场景方法 | 为当前任务召回少量最相关记忆 |
+| Reflect | `MemoryCurator.reflect()` | 生成 episode、learner model、teaching strategy，并更新弱项 |
+| Explain | `MemoryExplainer` + Memory Center | 给出推荐原因和证据引用 |
+| Control | `memory_operations` + Memory API | 支持用户编辑、删除、禁用、否认或标记改善 |
+
+它们与 4 层架构的关系：
+
+- Retain：将学习行为写入 L2 Evidence Memory。
+- Recall：从 L2 Evidence Memory 和 L3 Learner Model Memory 召回当前任务相关信息，注入 L1 Context Memory。
+- Reflect：由 L4 Governance & Reflection Memory 执行，基于 L2 证据更新 L3 Learner Model Memory。
+- Explain：由 L4 根据 L2 evidence refs 解释 L3 结论和推荐原因。
+- Control：由 L4 处理用户编辑、删除、否认、禁用和导出。
+
+运行时约束：
+
+- `MemoryContext.layer` 必须是 `L1_context`。
+- `RetrievedMemoryItem.layer` 必须是 `L2_evidence` 或 `L3_learner_model`。
+- `MemoryContextLog.loaded_items` 记录 `id`、`type`、`layer`、`skill`，便于审计 Recall 的来源层级。
+- 用户控制事件写入 L2 evidence，同时 payload 标注 `governance_layer=L4_governance_reflection`。
+
+场景化 Recall 已覆盖：
+
+- Chat。
+- Daily plan / knowledge exercise。
+- Vocabulary practice。
+- Essay review。
+- Writing phrasebook。
+- Memory explanation。
+
+## 7. Namespace 设计
 
 ```text
 ("learner", user_id, "profile")
@@ -198,9 +241,9 @@ Memory System 是英语学习陪伴系统的核心壁垒。
 ("tenant", tenant_id, "learner", user_id, "vocabulary")
 ```
 
-## 7. Memory 写入策略
+## 8. Memory 写入策略
 
-### 5.1 Hot Path 写入
+### 8.1 Hot Path 写入
 
 立即写入：
 
@@ -211,7 +254,7 @@ Memory System 是英语学习陪伴系统的核心壁垒。
 - 今日完成状态。
 - 下次复习时间。
 
-### 5.2 Background 写入
+### 8.2 Background 写入
 
 异步处理：
 
@@ -221,7 +264,7 @@ Memory System 是英语学习陪伴系统的核心壁垒。
 - 材料兴趣建模。
 - 复习效果统计。
 
-### 5.3 写入过滤
+### 8.3 写入过滤
 
 Memory candidate 必须满足：
 
@@ -231,7 +274,7 @@ Memory candidate 必须满足：
 - 不只是闲聊。
 - 不包含不应长期存储的隐私。
 
-## 8. Memory Curator
+## 9. Memory Curator
 
 Memory Curator 是后台 Agent 或任务，负责维护记忆质量。
 
@@ -240,12 +283,15 @@ Memory Curator 是后台 Agent 或任务，负责维护记忆质量。
 - 去重：合并同义错词、重复错误模式。
 - 降噪：偶发错误不升级为长期弱点。
 - 合并：多个孤立错误归并为错误模式。
+- 反思：把 session 或练习事件生成 `LearningEpisode`。
+- 建模：把重复模式沉淀为 `LearnerModelMemory`。
+- 策略：记录 hint / retry / replacement 等教学策略是否有效。
 - 冲突处理：用户已掌握后降低旧弱点权重。
 - 遗忘：过期、无用或用户要求删除的记忆清理。
 
-## 9. 复习调度
+## 10. 复习调度
 
-### 7.1 默认周期
+### 10.1 默认周期
 
 参考艾宾浩斯记忆曲线：
 

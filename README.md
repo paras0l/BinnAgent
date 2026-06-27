@@ -92,7 +92,7 @@ npm run dev
 
 | 能力 | 状态 |
 |------|------|
-| Chat / Memory / Dashboard | 部分实现，Memory v2 统一事件、Curator、Retriever 和可控记忆中心已落地 |
+| Chat / Memory / Dashboard | 部分实现，Memory v2 已落地 Retain / Recall / Reflect、LearningEpisode、LearnerModelMemory、TeachingStrategyMemory 和可控记忆中心 |
 | 七年级教材 Knowledge Base / RAG / Exercises | 部分实现 |
 | Vocabulary Personal Cards / Practice / Spelling | 部分实现 |
 | Writing Phrasebook | 基础版已实现 |

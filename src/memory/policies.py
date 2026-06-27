@@ -16,9 +16,12 @@ EVENT_TYPES = {
     "writing_phrase_attempted",
     "essay_submitted",
     "essay_feedback_received",
+    "grammar_topic_opened",
+    "chat_tutoring_completed",
     "user_corrected_memory",
     "user_deleted_memory",
     "user_disabled_memory",
+    "user_marked_mastered",
     "user_marked_memory_improved",
     "user_reset_learning_plan",
 }

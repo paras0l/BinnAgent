@@ -42,10 +42,8 @@ async def review_essay(
     if learner_result.scalar_one_or_none() is None:
         raise HTTPException(status_code=404, detail="Learner not found")
 
-    context = await MemoryRetriever(db).retrieve_context(
+    context = await MemoryRetriever(db).for_essay_review(
         learner_id=learner_id,
-        reason="essay_review",
-        skill="writing",
         limit=6,
     )
     historical_weaknesses = [
@@ -124,6 +122,8 @@ async def review_essay(
         improvement_notes=_improvement_notes(result.key_issues, historical_weaknesses),
         memory_context={
             "loaded_items": [item.id for item in context.loaded_items],
+            "loaded_item_layers": [item.layer for item in context.loaded_items],
+            "context_layer": context.layer,
             "excluded_items": context.excluded_items,
             "retrieval_reason": context.retrieval_reason,
         },
