@@ -26,7 +26,9 @@ import type { GrammarHtmlCacheResponse, Learner, LearningProgressItem } from '@/
 import { useToast } from '@/hooks/useToast'
 import { FeatureHero } from '@/components/layout/FeatureHero'
 import { PageShell } from '@/components/layout/PageShell'
+import { WorkspaceTabs, type WorkspaceTab } from '@/components/layout/WorkspaceTabs'
 import { Button } from '@/components/ui/Button'
+import { SurfaceCard } from '@/components/ui/SurfaceCard'
 
 type CategoryFilter = 'all' | GrammarCategory
 
@@ -61,6 +63,14 @@ const PROMPT_VERSION = 'v1'
 const EXTENSION_PATH = '/Users/binge/Documents/BinnAgent/browser-extension/grammar-autofill'
 
 type CacheStatus = 'idle' | 'loading' | 'hit' | 'miss' | 'saving' | 'saved' | 'error' | 'bypassed'
+type GrammarWorkspace = 'topics' | 'generate' | 'preview' | 'settings'
+
+const GRAMMAR_WORKSPACE_TABS: WorkspaceTab<GrammarWorkspace>[] = [
+  { id: 'topics', label: '知识点', description: '选择微知识点', icon: <Search className="h-4 w-4" /> },
+  { id: 'generate', label: '生成指令', description: '复制并跳转', icon: <ExternalLink className="h-4 w-4" /> },
+  { id: 'preview', label: '预览回填', description: '粘贴 HTML', icon: <FileInput className="h-4 w-4" /> },
+  { id: 'settings', label: '目标设置', description: '网站和扩展', icon: <Puzzle className="h-4 w-4" /> },
+]
 
 const BASE_IFRAME_STYLE = `
   <style>
@@ -132,6 +142,7 @@ export function GrammarPage({ learner, onBack, backLabel = '返回探索', initi
   const [isCopied, setIsCopied] = useState(false)
   const [isExtensionPathCopied, setIsExtensionPathCopied] = useState(false)
   const [isImmersiveReading, setIsImmersiveReading] = useState(false)
+  const [workspace, setWorkspace] = useState<GrammarWorkspace>('topics')
   const [renderedPrompt, setRenderedPrompt] = useState<{ topicId: string; prompt: string; prompt_hash: string; version: string } | null>(null)
 
   const selectedTopic = useMemo(
@@ -346,6 +357,7 @@ export function GrammarPage({ learner, onBack, backLabel = '返回探索', initi
       const data = event.data as { type?: string; html?: string }
       if (data?.type !== 'BINN_GRAMMAR_HTML_RETURNED' || typeof data.html !== 'string') return
       setTopicHtml(selectedTopic.id, extractHtmlFragment(data.html))
+      setWorkspace('preview')
       showToast('已从浏览器扩展接收 HTML，预览区已更新。', { variant: 'success' })
     }
     window.addEventListener('message', handleReturnedHtml)
@@ -375,10 +387,6 @@ export function GrammarPage({ learner, onBack, backLabel = '返回探索', initi
   const selectedTarget = targets.find((target) => target.id === targetId) ?? targets[0] ?? DEFAULT_TARGETS[0]
   const safeHtml = useMemo(() => sanitizeHtml(extractHtmlFragment(currentHtml)), [currentHtml])
   const iframeSrcDoc = `${BASE_IFRAME_STYLE}<body>${safeHtml || emptyPreviewMarkup(selectedTopic.title)}</body>`
-  const immersiveSrcDoc = useMemo(
-    () => buildImmersiveSrcDoc(extractHtmlFragment(currentHtml), selectedTopic.title),
-    [currentHtml, selectedTopic.title]
-  )
 
   const copyPrompt = async () => {
     try {
@@ -484,8 +492,10 @@ export function GrammarPage({ learner, onBack, backLabel = '返回探索', initi
         }
       />
 
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_420px]">
-        <section className="flex min-h-[620px] flex-col rounded-xl border bg-card p-5">
+      <WorkspaceTabs tabs={GRAMMAR_WORKSPACE_TABS} activeTab={workspace} onChange={setWorkspace} />
+
+      {workspace === 'topics' && (
+        <SurfaceCard className="min-h-[620px]">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <h2 className="text-lg font-semibold text-foreground">知识点库</h2>
@@ -519,7 +529,10 @@ export function GrammarPage({ learner, onBack, backLabel = '返回探索', initi
               <button
                 key={topic.id}
                 type="button"
-                onClick={() => setSelectedTopicId(topic.id)}
+                onClick={() => {
+                  setSelectedTopicId(topic.id)
+                  setWorkspace('generate')
+                }}
                 className={`min-h-[142px] rounded-lg border p-4 text-left transition-colors ${
                   selectedTopic.id === topic.id
                     ? 'border-primary bg-primary/10'
@@ -550,10 +563,12 @@ export function GrammarPage({ learner, onBack, backLabel = '返回探索', initi
               </button>
             ))}
           </div>
-        </section>
+        </SurfaceCard>
+      )}
 
-        <aside className="flex flex-col gap-5">
-          <section className="rounded-xl border bg-card p-5">
+      {workspace === 'generate' && (
+        <div className="grid gap-5 xl:grid-cols-[420px_minmax(0,1fr)]">
+          <SurfaceCard>
             <h2 className="text-lg font-semibold text-foreground">生成链路</h2>
             <p className="mt-1 text-sm text-muted-foreground">先复制 prompt，再跳转到目标 AI 网站。</p>
 
@@ -619,6 +634,62 @@ export function GrammarPage({ learner, onBack, backLabel = '返回探索', initi
                   </option>
                 ))}
               </select>
+              <Button variant="ghost" onClick={() => setWorkspace('settings')}>管理</Button>
+            </div>
+
+            <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+              <button
+                type="button"
+                onClick={() => void copyPrompt()}
+                className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted"
+              >
+                {isCopied ? <Check className="h-4 w-4 text-success" /> : <Clipboard className="h-4 w-4" />}
+                {isCopied ? '已复制' : '复制指令'}
+              </button>
+              <button
+                type="button"
+                onClick={() => void launchTarget()}
+                className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg bg-primary px-3 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+              >
+                <ExternalLink className="h-4 w-4" />
+                复制并跳转
+              </button>
+            </div>
+          </SurfaceCard>
+
+          <SurfaceCard>
+            <h2 className="text-lg font-semibold text-foreground">Prompt 预览</h2>
+            <textarea
+              readOnly
+              value={prompt}
+              className="mt-3 h-[460px] w-full resize-none rounded-lg border bg-background p-3 text-xs leading-relaxed text-foreground outline-none"
+            />
+          </SurfaceCard>
+        </div>
+      )}
+
+      {workspace === 'settings' && (
+        <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_420px]">
+          <SurfaceCard>
+            <h2 className="text-lg font-semibold text-foreground">目标网站</h2>
+            <p className="mt-1 text-sm text-muted-foreground">管理复制 prompt 后跳转的 AI 网站。</p>
+
+            <label className="mt-4 block text-sm font-medium text-foreground" htmlFor="grammar-target-settings">
+              当前目标
+            </label>
+            <div className="mt-2 flex gap-2">
+              <select
+                id="grammar-target-settings"
+                value={selectedTarget.id}
+                onChange={(event) => setTargetId(event.target.value)}
+                className="min-w-0 flex-1 rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+              >
+                {targets.map((target) => (
+                  <option key={target.id} value={target.id}>
+                    {target.label}
+                  </option>
+                ))}
+              </select>
               <button
                 type="button"
                 onClick={() => removeTarget(selectedTarget.id)}
@@ -629,7 +700,7 @@ export function GrammarPage({ learner, onBack, backLabel = '返回探索', initi
               </button>
             </div>
 
-            <div className="mt-3 grid grid-cols-[1fr_1fr_auto] gap-2">
+            <div className="mt-4 grid grid-cols-[1fr_1fr_auto] gap-2">
               <input
                 value={newTargetLabel}
                 onChange={(event) => setNewTargetLabel(event.target.value)}
@@ -651,37 +722,9 @@ export function GrammarPage({ learner, onBack, backLabel = '返回探索', initi
                 <Plus className="h-4 w-4" />
               </button>
             </div>
+          </SurfaceCard>
 
-            <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-              <button
-                type="button"
-                onClick={() => void copyPrompt()}
-                className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted"
-              >
-                {isCopied ? <Check className="h-4 w-4 text-success" /> : <Clipboard className="h-4 w-4" />}
-                {isCopied ? '已复制' : '复制指令'}
-              </button>
-              <button
-                type="button"
-                onClick={() => void launchTarget()}
-                className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg bg-primary px-3 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-              >
-                <ExternalLink className="h-4 w-4" />
-                复制并跳转
-              </button>
-            </div>
-          </section>
-
-          <section className="rounded-xl border bg-card p-5">
-            <h2 className="text-lg font-semibold text-foreground">Prompt 预览</h2>
-            <textarea
-              readOnly
-              value={prompt}
-              className="mt-3 h-64 w-full resize-none rounded-lg border bg-background p-3 text-xs leading-relaxed text-foreground outline-none"
-            />
-          </section>
-
-          <section className="rounded-xl border bg-card p-5">
+          <SurfaceCard>
             <div className="flex items-center gap-2">
               <Puzzle className="h-5 w-5 text-primary" />
               <h2 className="text-lg font-semibold text-foreground">安装自动填充扩展</h2>
@@ -709,12 +752,13 @@ export function GrammarPage({ learner, onBack, backLabel = '返回探索', initi
             <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
               DeepSeek 的 HTML 代码区通常有复制按钮：先复制代码块，再点扩展的“发送回 BinnAgent”。如果代码块是完整 HTML 文档，扩展会保留 head/style/body。没装扩展也能用：手动粘贴 prompt，AI 输出 HTML 后再粘贴回左侧 HTML 输入区。
             </p>
-          </section>
-        </aside>
-      </div>
+          </SurfaceCard>
+        </div>
+      )}
 
-      <section className="grid gap-5 xl:grid-cols-[420px_minmax(0,1fr)]">
-        <div className="rounded-xl border bg-card p-5">
+      {workspace === 'preview' && (
+        <section className="grid gap-5 xl:grid-cols-[420px_minmax(0,1fr)]">
+        <SurfaceCard>
           <div className="flex items-center justify-between gap-3">
             <div>
               <h2 className="text-lg font-semibold text-foreground">HTML 输入</h2>
@@ -736,9 +780,9 @@ export function GrammarPage({ learner, onBack, backLabel = '返回探索', initi
             className="mt-4 h-[460px] w-full resize-none rounded-lg border bg-background p-3 font-mono text-xs leading-relaxed text-foreground outline-none focus:border-primary"
             placeholder="把 AI 返回的 HTML 片段粘贴到这里，或使用浏览器扩展发送回 BinnAgent。"
           />
-        </div>
+        </SurfaceCard>
 
-        <div className="rounded-xl border bg-card p-5">
+        <SurfaceCard>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <div className="flex items-center gap-2">
@@ -764,29 +808,33 @@ export function GrammarPage({ learner, onBack, backLabel = '返回探索', initi
             srcDoc={iframeSrcDoc}
             className="mt-4 h-[520px] w-full rounded-lg border bg-white"
           />
-        </div>
-      </section>
+        </SurfaceCard>
+        </section>
+      )}
 
       {isImmersiveReading && (
-        <div className="fixed inset-0 z-[80] bg-white">
-          <div className="pointer-events-none absolute left-4 right-4 top-4 z-[90] flex items-start justify-between gap-3">
-            <div className="pointer-events-auto rounded-lg border bg-background/95 px-3 py-2 shadow-lg backdrop-blur">
-              <p className="max-w-[60vw] truncate text-sm font-semibold text-foreground">{selectedTopic.title}</p>
-              <p className="text-xs text-muted-foreground">原样沉浸式阅读，按 Esc 可退出</p>
+        <div className="fixed inset-0 z-[80] flex flex-col bg-white">
+          <div className="shrink-0 border-b border-border bg-background px-4 py-3 shadow-sm sm:px-6">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold text-foreground">{selectedTopic.title}</p>
+                <p className="text-xs text-muted-foreground">沉浸式阅读，按 Esc 退出</p>
+              </div>
+              <Button
+                variant="secondary"
+                onClick={() => setIsImmersiveReading(false)}
+                className="shrink-0"
+              >
+                <X className="h-4 w-4" />
+                退出阅读
+              </Button>
             </div>
-            <button
-              type="button"
-              onClick={() => setIsImmersiveReading(false)}
-              className="pointer-events-auto inline-flex items-center gap-2 rounded-lg border bg-background/95 px-3 py-2 text-sm font-medium text-foreground shadow-lg backdrop-blur transition-colors hover:bg-muted"
-            >
-              <X className="h-4 w-4" />
-              退出
-            </button>
           </div>
           <iframe
             title={`${selectedTopic.title} 沉浸式阅读`}
-            srcDoc={immersiveSrcDoc}
-            className="h-screen w-screen border-0 bg-white"
+            srcDoc={iframeSrcDoc}
+            sandbox=""
+            className="min-h-0 flex-1 border-0 bg-white"
           />
         </div>
       )}
@@ -947,15 +995,6 @@ function sanitizeHtml(value: string) {
     }
   })
   return doc.body.innerHTML
-}
-
-function buildImmersiveSrcDoc(value: string, topicTitle: string) {
-  const html = value.trim()
-  if (!html) {
-    return `<!doctype html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>${escapeHtml(topicTitle)}</title></head><body>${emptyPreviewMarkup(topicTitle)}</body></html>`
-  }
-  if (/<!doctype html/i.test(html) || /<html[\s>]/i.test(html)) return html
-  return `<!doctype html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>${escapeHtml(topicTitle)}</title></head><body>${html}</body></html>`
 }
 
 function emptyPreviewMarkup(topicTitle: string) {

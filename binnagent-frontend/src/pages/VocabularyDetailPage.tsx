@@ -5,15 +5,20 @@ import {
   Clipboard,
   ExternalLink,
   FileInput,
+  Maximize2,
   RefreshCw,
+  X,
 } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useToast } from '@/hooks/useToast'
 import type { Learner } from '@/types'
 import { FeatureHero } from '@/components/layout/FeatureHero'
 import { PageShell } from '@/components/layout/PageShell'
+import { WorkspaceTabs, type WorkspaceTab } from '@/components/layout/WorkspaceTabs'
 import { Button } from '@/components/ui/Button'
+import { EmptyState } from '@/components/ui/EmptyState'
 import { FormField } from '@/components/ui/FormField'
+import { SurfaceCard } from '@/components/ui/SurfaceCard'
 
 interface VocabularyDetailPageProps {
   learner?: Learner
@@ -23,6 +28,14 @@ interface VocabularyDetailPageProps {
 }
 
 const TARGET_URL = 'https://chat.deepseek.com/'
+type VocabularyDetailWorkspace = 'term' | 'generate' | 'return' | 'card'
+
+const WORKSPACE_TABS: WorkspaceTab<VocabularyDetailWorkspace>[] = [
+  { id: 'term', label: '词条输入', description: '选择目标词', icon: <BookOpen className="size-4" /> },
+  { id: 'generate', label: '生成指令', description: 'Prompt 与跳转', icon: <ExternalLink className="size-4" /> },
+  { id: 'return', label: '回填预览', description: 'HTML 与阅读', icon: <FileInput className="size-4" /> },
+  { id: 'card', label: '词卡沉淀', description: '保存与编辑', icon: <Check className="size-4" /> },
+]
 
 interface PersonalCardDetail {
   id: string
@@ -73,6 +86,8 @@ export function VocabularyDetailPage({
     ? htmlState.value
     : localStorage.getItem(storageKey) ?? ''
   const [isCopied, setIsCopied] = useState(false)
+  const [isImmersiveReading, setIsImmersiveReading] = useState(false)
+  const [workspace, setWorkspace] = useState<VocabularyDetailWorkspace>('term')
   const [cardDetail, setCardDetail] = useState<PersonalCardDetail | null>(null)
   const [cardForm, setCardForm] = useState({
     display_form_override: '',
@@ -101,11 +116,21 @@ export function VocabularyDetailPage({
       const data = event.data as { type?: string; html?: string }
       if (data.type !== 'BINN_GRAMMAR_HTML_RETURNED' || typeof data.html !== 'string') return
       updateHtml(data.html)
+      setWorkspace('return')
       showToast('已接收词汇详解 HTML。', { variant: 'success' })
     }
     window.addEventListener('message', handleReturnedHtml)
     return () => window.removeEventListener('message', handleReturnedHtml)
   }, [showToast, updateHtml])
+
+  useEffect(() => {
+    if (!isImmersiveReading) return
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setIsImmersiveReading(false)
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [isImmersiveReading])
 
   useEffect(() => {
     if (!learner || !activeTerm.trim()) {
@@ -170,6 +195,7 @@ export function VocabularyDetailPage({
       input: nextTerm,
       active: nextTerm,
     })
+    setWorkspace('generate')
   }
 
   const addToVocabulary = async () => {
@@ -252,82 +278,185 @@ export function VocabularyDetailPage({
           }
         />
 
-        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <div className="mt-3 flex flex-col gap-3 sm:flex-row">
-            <input
-              value={termInput}
-              onChange={(event) => setTermState({
-                sourceTerm: normalizedTerm,
-                input: event.target.value,
-                active: activeTerm,
-              })}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter') applyTermInput()
-              }}
-              className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-white px-4 py-3 text-2xl font-black tracking-tight text-slate-950 outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 sm:text-4xl"
-              placeholder="输入要详解的单词或词组"
-              aria-label="词汇详解词条"
-            />
-            <Button onClick={applyTermInput} className="rounded-xl px-5 py-3">
-              生成指令
-            </Button>
-          </div>
-          <p className="mt-2 text-sm text-slate-500">
-            聚焦一个单词或词组，理解词义层次、搭配、语境和易错用法。
-          </p>
-        </section>
+        <WorkspaceTabs tabs={WORKSPACE_TABS} activeTab={workspace} onChange={setWorkspace} />
 
-        <div className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,1fr)_420px]">
-          <section className="rounded-2xl border border-slate-200 bg-white p-5">
-            <div className="flex items-center justify-between gap-3">
-              <div>
+        {workspace === 'term' && (
+          <section className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
+            <SurfaceCard>
+              <FormField
+                label="目标词条"
+                description="支持单词、词组，也可以输入句子中的目标词。"
+                value={termInput}
+                onChange={(event) => setTermState({
+                  sourceTerm: normalizedTerm,
+                  input: event.target.value,
+                  active: activeTerm,
+                })}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter') applyTermInput()
+                }}
+                placeholder="significant / look up / take off"
+              />
+              <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+                <Button onClick={applyTermInput}>应用 / 生成指令</Button>
+                <Button variant="secondary" onClick={() => setWorkspace('return')}>查看回填预览</Button>
+              </div>
+            </SurfaceCard>
+
+            <SurfaceCard>
+              <h2 className="text-base font-black text-slate-950">当前状态</h2>
+              <div className="mt-4 grid gap-3 text-sm">
+                <StatusLine label="当前词条" value={activeTerm || '待输入'} />
+                <StatusLine label="词卡状态" value={cardDetail ? '已存在' : '未保存'} tone={cardDetail ? 'success' : 'warning'} />
+                <StatusLine label="HTML 回填" value={html.trim() ? '已回填' : '待回填'} tone={html.trim() ? 'success' : 'warning'} />
+                <StatusLine label="目标网站" value="DeepSeek" />
+              </div>
+            </SurfaceCard>
+          </section>
+        )}
+
+        {workspace === 'generate' && (
+          <section className="grid gap-5 xl:grid-cols-[360px_minmax(0,1fr)]">
+            <SurfaceCard>
+              <h2 className="text-lg font-black text-slate-950">生成词汇详解</h2>
+              <p className="mt-1 text-sm leading-6 text-slate-500">已将“{activeTerm || '待输入'}”写入专用 prompt。</p>
+              <div className="mt-5 grid gap-2">
+                <Button onClick={() => void launchTarget()} className="justify-center">
+                  <ExternalLink className="size-4" />复制并跳转
+                </Button>
+                <Button variant="secondary" onClick={() => void copyPrompt()} className="justify-center">
+                  {isCopied ? <Check className="size-4 text-emerald-600" /> : <Clipboard className="size-4" />}
+                  {isCopied ? '已复制' : '复制指令'}
+                </Button>
+                <Button variant="ghost" onClick={() => setWorkspace('return')} className="justify-center">
+                  已有 HTML，去回填
+                </Button>
+              </div>
+            </SurfaceCard>
+
+            <SurfaceCard>
+              <h2 className="text-lg font-black text-slate-950">Prompt 预览</h2>
+              <textarea
+                readOnly
+                value={prompt}
+                className="mt-3 h-64 w-full resize-none rounded-xl border bg-slate-50 p-3 text-xs leading-relaxed outline-none"
+              />
+            </SurfaceCard>
+          </section>
+        )}
+
+        {workspace === 'return' && (
+          <section className="grid gap-5 xl:grid-cols-[420px_minmax(0,1fr)]">
+            <SurfaceCard>
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <h2 className="text-lg font-black text-slate-950">HTML 输入</h2>
+                  <p className="mt-1 text-sm text-slate-500">扩展回传或手动粘贴 AI 输出的 HTML。</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => updateHtml('')}
+                  className="rounded-lg border p-2 text-slate-500 hover:bg-slate-50"
+                  title="清空内容"
+                >
+                  <RefreshCw className="size-4" />
+                </button>
+              </div>
+              <textarea
+                value={html}
+                onChange={(event) => updateHtml(event.target.value)}
+                placeholder="粘贴 AI 返回的 HTML 片段..."
+                className="mt-4 h-[calc(100vh-330px)] min-h-[420px] w-full resize-none rounded-xl border p-3 font-mono text-xs leading-relaxed outline-none focus:border-indigo-500"
+              />
+            </SurfaceCard>
+
+            <SurfaceCard>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-2">
                   <FileInput className="size-5 text-indigo-600" />
-                  <h2 className="text-lg font-black">详解阅读区</h2>
+                  <h2 className="text-lg font-black text-slate-950">阅读预览</h2>
                 </div>
-                <p className="mt-1 text-sm text-slate-500">粘贴 AI 返回的 HTML 后即可阅读。</p>
+                <Button
+                  variant="secondary"
+                  onClick={() => setIsImmersiveReading(true)}
+                  disabled={!safeHtml}
+                  className="w-full sm:w-auto"
+                  title={safeHtml ? '打开沉浸式阅读' : '先回填 HTML 后阅读'}
+                >
+                  <Maximize2 className="size-4" />
+                  沉浸阅读
+                </Button>
               </div>
-              <button
-                type="button"
-                onClick={() => updateHtml('')}
-                className="rounded-lg border p-2 text-slate-500 hover:bg-slate-50"
-                title="清空内容"
+              <div className="mt-4 h-[calc(100vh-330px)] min-h-[420px] overflow-hidden rounded-xl border border-slate-200 bg-white">
+                {safeHtml ? (
+                  <iframe
+                    title={`${activeTerm} 词汇详解`}
+                    srcDoc={detailDocument(safeHtml)}
+                    sandbox=""
+                    className="h-full w-full"
+                  />
+                ) : (
+                  <div className="flex h-full items-center justify-center p-4">
+                    <EmptyState
+                      icon={<BookOpen className="size-5" />}
+                      title="等待 HTML 回填"
+                      description="复制生成指令后，将 AI 返回的 HTML 粘贴到左侧，这里会立即显示安全预览。"
+                      action={<Button variant="secondary" onClick={() => setWorkspace('generate')}>去复制指令</Button>}
+                    />
+                  </div>
+                )}
+              </div>
+            </SurfaceCard>
+          </section>
+        )}
+
+        {workspace === 'card' && (
+          <section className="grid gap-5 xl:grid-cols-[360px_minmax(0,1fr)]">
+            <SurfaceCard>
+              <h2 className="text-lg font-black text-slate-950">加入词库 / 更新字段</h2>
+              <p className="mt-1 text-sm leading-6 text-slate-500">保存前需要先回填 HTML，系统会从详解中提取词义、例句和词典字段。</p>
+              <Button
+                onClick={() => void addToVocabulary()}
+                disabled={isSaving || !canSaveToVocabulary}
+                className="mt-4 w-full justify-center"
+                title={html.trim() ? '把当前词汇详解 HTML 提取并写入词库' : '先在回填预览中粘贴 AI 返回内容'}
               >
-                <RefreshCw className="size-4" />
-              </button>
-            </div>
-            <div className="mt-4 min-h-[560px] overflow-hidden rounded-xl border border-slate-200 bg-white">
-              {safeHtml ? (
-                <iframe
-                  title={`${activeTerm} 词汇详解`}
-                  srcDoc={detailDocument(safeHtml)}
-                  sandbox=""
-                  className="h-[640px] w-full"
-                />
-              ) : (
-                <div className="flex min-h-[560px] flex-col items-center justify-center px-6 text-center text-slate-400">
-                  <BookOpen className="size-10 text-indigo-200" />
-                  <p className="mt-4 text-sm font-bold">
-                    复制右侧指令生成详解，再把 HTML 粘贴回来。
-                  </p>
+                {saveButtonLabel}
+              </Button>
+              {!cardDetail && (
+                <div className="mt-4">
+                  <EmptyState
+                    icon={<BookOpen className="size-5" />}
+                    title="还没有个人词卡"
+                    description="先在回填预览中粘贴 HTML，再加入词库。保存成功后就能编辑我的理解、例句和复习偏好。"
+                    action={
+                      <Button
+                        variant="secondary"
+                        onClick={() => {
+                          if (html.trim()) {
+                            void addToVocabulary()
+                            return
+                          }
+                          setWorkspace('return')
+                        }}
+                      >
+                        {html.trim() ? '加入词库' : '去回填 HTML'}
+                      </Button>
+                    }
+                  />
                 </div>
               )}
-            </div>
-          </section>
+            </SurfaceCard>
 
-          <aside className="space-y-5">
             {cardDetail ? (
-              <section className="rounded-2xl border border-slate-200 bg-white p-5">
-                <h2 className="text-lg font-black">个人词卡</h2>
+              <SurfaceCard>
+                <h2 className="text-lg font-black text-slate-950">个人词卡编辑</h2>
                 <p className="mt-1 text-sm text-slate-500">用户内容会影响后续复习和出题。</p>
-                <div className="mt-4 space-y-3">
+                <div className="mt-4 grid gap-4 lg:grid-cols-2">
                   <Field label="展示名" value={cardForm.display_form_override} onChange={(value) => setCardForm((prev) => ({ ...prev, display_form_override: value }))} placeholder={cardDetail.word} />
-                  <Field label="我的理解" value={cardForm.user_understanding} onChange={(value) => setCardForm((prev) => ({ ...prev, user_understanding: value }))} textarea />
-                  <Field label="我的例句" value={cardForm.user_examples_text} onChange={(value) => setCardForm((prev) => ({ ...prev, user_examples_text: value }))} textarea placeholder="每行一个例句" />
-                  <Field label="个人笔记" value={cardForm.user_notes} onChange={(value) => setCardForm((prev) => ({ ...prev, user_notes: value }))} textarea />
                   <label className="block text-sm font-bold text-slate-700">
-                    掌握状态
-                    <select value={cardForm.review_preference} onChange={(event) => setCardForm((prev) => ({ ...prev, review_preference: event.target.value }))} className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500">
+                    掌握状态 / 复习偏好
+                    <select value={cardForm.review_preference} onChange={(event) => setCardForm((prev) => ({ ...prev, review_preference: event.target.value }))} className="mt-1.5 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500">
                       <option value="normal">正常复习</option>
                       <option value="mastered">已掌握</option>
                       <option value="too_easy">太简单</option>
@@ -335,72 +464,50 @@ export function VocabularyDetailPage({
                       <option value="relearn">重新学习</option>
                     </select>
                   </label>
+                  <Field label="我的理解" value={cardForm.user_understanding} onChange={(value) => setCardForm((prev) => ({ ...prev, user_understanding: value }))} textarea />
+                  <Field label="我的例句" value={cardForm.user_examples_text} onChange={(value) => setCardForm((prev) => ({ ...prev, user_examples_text: value }))} textarea placeholder="每行一个例句" />
+                  <Field label="个人笔记" value={cardForm.user_notes} onChange={(value) => setCardForm((prev) => ({ ...prev, user_notes: value }))} textarea />
+                  {cardDetail.mistakes?.length ? (
+                    <div>
+                      <p className="text-sm font-black text-slate-700">最近错因</p>
+                      <div className="mt-2 grid gap-2">
+                        {cardDetail.mistakes.slice(0, 3).map((mistake) => <p key={mistake.id} className="rounded-lg bg-orange-50 px-3 py-2 text-xs font-semibold text-orange-800">{mistake.note || mistake.correction || mistake.mistake_type}</p>)}
+                      </div>
+                    </div>
+                  ) : null}
                 </div>
-                <button type="button" onClick={() => void savePersonalCard()} disabled={isSaving} className="mt-4 w-full rounded-xl bg-slate-900 px-3 py-2.5 text-sm font-bold text-white hover:bg-slate-800 disabled:opacity-60">保存个人词卡</button>
-                {cardDetail.mistakes?.length ? (
-                  <div className="mt-4 space-y-2">
-                    <p className="text-sm font-black text-slate-700">最近错因</p>
-                    {cardDetail.mistakes.map((mistake) => <p key={mistake.id} className="rounded-lg bg-orange-50 px-3 py-2 text-xs font-semibold text-orange-800">{mistake.note || mistake.correction || mistake.mistake_type}</p>)}
-                  </div>
-                ) : null}
-              </section>
+                <Button onClick={() => void savePersonalCard()} disabled={isSaving} className="mt-4 justify-center">保存个人词卡</Button>
+              </SurfaceCard>
             ) : null}
+          </section>
+        )}
 
-            <section className="rounded-2xl border border-slate-200 bg-white p-5">
-              <h2 className="text-lg font-black">生成词汇详解</h2>
-              <p className="mt-1 text-sm text-slate-500">已将“{activeTerm || '待输入'}”写入专用 prompt。</p>
-              <div className="mt-4 grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => void copyPrompt()}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl border px-3 py-2.5 text-sm font-bold hover:bg-slate-50"
+        {isImmersiveReading && safeHtml && (
+          <div className="fixed inset-0 z-[80] flex flex-col bg-white">
+            <div className="shrink-0 border-b border-slate-200 bg-white px-4 py-3 shadow-sm sm:px-6">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-black text-slate-950">{activeTerm || '词汇详解'}</p>
+                  <p className="text-xs text-slate-500">沉浸式阅读，按 Esc 退出</p>
+                </div>
+                <Button
+                  variant="secondary"
+                  onClick={() => setIsImmersiveReading(false)}
+                  className="shrink-0"
                 >
-                  {isCopied ? <Check className="size-4 text-emerald-600" /> : <Clipboard className="size-4" />}
-                  {isCopied ? '已复制' : '复制指令'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => void launchTarget()}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-3 py-2.5 text-sm font-bold text-white hover:bg-indigo-700"
-                >
-                  <ExternalLink className="size-4" />复制并跳转
-                </button>
+                  <X className="size-4" />
+                  退出阅读
+                </Button>
               </div>
-              <button
-                type="button"
-                onClick={() => void addToVocabulary()}
-                disabled={isSaving || !canSaveToVocabulary}
-                className="mt-3 w-full rounded-xl bg-emerald-600 px-3 py-2.5 text-sm font-bold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-emerald-300"
-                title={
-                  html.trim()
-                    ? '把当前词汇详解 HTML 提取并写入词库'
-                    : '先在 HTML 输入区粘贴 AI 返回内容'
-                }
-              >
-                {saveButtonLabel}
-              </button>
-            </section>
-
-            <section className="rounded-2xl border border-slate-200 bg-white p-5">
-              <h2 className="text-lg font-black">Prompt 预览</h2>
-              <textarea
-                readOnly
-                value={prompt}
-                className="mt-3 h-72 w-full resize-none rounded-xl border bg-slate-50 p-3 text-xs leading-relaxed outline-none"
-              />
-            </section>
-
-            <section className="rounded-2xl border border-slate-200 bg-white p-5">
-              <h2 className="text-lg font-black">HTML 输入</h2>
-              <textarea
-                value={html}
-                onChange={(event) => updateHtml(event.target.value)}
-                placeholder="粘贴 AI 返回的 HTML 片段…"
-                className="mt-3 h-64 w-full resize-none rounded-xl border p-3 font-mono text-xs leading-relaxed outline-none focus:border-indigo-500"
-              />
-            </section>
-          </aside>
-        </div>
+            </div>
+            <iframe
+              title={`${activeTerm} 沉浸式阅读`}
+              srcDoc={detailDocument(safeHtml)}
+              sandbox=""
+              className="min-h-0 flex-1 border-0 bg-white"
+            />
+          </div>
+        )}
     </PageShell>
   )
 }
@@ -422,6 +529,20 @@ function Field({
     textarea
       ? <FormField as="textarea" label={label} value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} />
       : <FormField label={label} value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} />
+  )
+}
+
+function StatusLine({ label, value, tone = 'default' }: { label: string; value: string; tone?: 'default' | 'success' | 'warning' }) {
+  const toneClass = tone === 'success'
+    ? 'bg-emerald-50 text-emerald-700'
+    : tone === 'warning'
+      ? 'bg-amber-50 text-amber-700'
+      : 'bg-slate-100 text-slate-700'
+  return (
+    <div className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 px-3 py-2">
+      <span className="text-slate-500">{label}</span>
+      <span className={`rounded-md px-2 py-1 text-xs font-black ${toneClass}`}>{value}</span>
+    </div>
   )
 }
 
