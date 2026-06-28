@@ -1,6 +1,6 @@
 # 13. Current Scope and Status
 
-> 更新时间：2026-06-27
+> 更新时间：2026-06-28
 > 目的：把当前实现、部分实现和仍处于设计中的内容显性化，避免把架构目标误读成已落地功能。
 
 ## 状态图例
@@ -24,7 +24,7 @@
 | 模块 | 状态 | 当前能力 | 下一步 |
 |---|---|---|---|
 | FastAPI API | 已实现 | learners、chat、memory、dashboard、knowledge、vocabulary、grammar 等 routers | 统一 current learner 认证授权 |
-| React 前端 | 部分实现 | 多页面学习入口、SSE chat、知识库和词汇练习 | 今日学习路径、恢复提示、RAG 调试模式 |
+| React 前端 | 部分实现 | 多页面学习入口、SSE chat、知识库和词汇练习；Issue #20 UI/UX 统一标准首轮落地，新增统一 Button/FormField/StatusBanner/ConfirmDialog/ReasonCard/EvidencePanel，主导航固定为 AI对话 / 探索 / 学习中心 / 记忆 | 更深入的数据驱动推荐、恢复提示、RAG 调试模式、更多页面内 drawer 化编辑 |
 | LangGraph daily lesson | 部分实现 | 线性 daily lesson graph 和主要节点 | checkpoint、interrupt、answer_required、resume |
 | Memory | 部分实现 | 4 层学习记忆架构 + HindSight-inspired Retain/Recall/Reflect 口径已落地；统一 memory event/operation、LearningEpisode、LearnerModelMemory、TeachingStrategyMemory、MemoryWriter/Retriever/Curator、显式 L1-L4 layer metadata、ErrorPattern governance、WritingPhraseMastery、Memory Center、导出/删除/禁用/我已改善、重置计划、情绪/节奏 opt-in、低置信上下文开关、memory_context log、hit-rate 指标、作文批改历史弱点对比 | 更完整 debug dashboard 图表、更多 regression eval、更多 session 类型反思规则 |
 | Vocabulary Learning | 部分实现 | 单元 enroll、用户可编辑个人词卡、new/review/spelling session、attempt、错因记录、mastery vector、发音 URL | 薄弱原因总结、题型推荐、更多表达迁移题 |
@@ -53,6 +53,7 @@
 | #16 教材解析质量止血 | 新增 `books/manifest.yaml`、parser profile、parser quality report；词汇条目增加 `raw_line`、`confidence`、`warnings` 和 `requires_review`；ingest metadata 写入 manifest/profile/report | layout-aware extractor、低置信人工校对队列和前端工作台 |
 | #17 Schema-first 回填 | 新增 `src/extraction`，写作好句导入优先 JSON schema，保留 regex fallback 且返回 `parse_mode`、`warnings`、`confidence`；新增 golden-style tests | 词汇字段回传和语法微课 machine_data 的完整保存链路 |
 | #18 Prompt Registry | 新增 `src/prompts`、版本化 markdown 模板、schema/model policy 绑定、`/api/prompts/{prompt_id}/render`；迁移 chat、vocabulary agent、grammar prompt、writing phrase prompt；新增 prompt eval fixtures | 更完整 observability 持久化、prompt evaluator、更多 P2 prompt 迁移 |
+| #20 UI/UX 统一标准 | 阅读 issue 正文与评论，更新 `docs/frontend-design-system.md`、`docs/web-frontend.md`、README 和本文档；新增统一 UI 原语；逐页覆盖 AppShell/Header、Chat、Explore、Dashboard、Memory、Writing Phrasebook、Grammar、Vocabulary Detail、Pronunciation、KnowledgeBase、VocabularyPractice、Dashboard 词汇工作区和 Login；学习中心升级为今日学习驾驶舱；推荐原因和证据表达开始统一 | 更深层组件拆分、KnowledgeBase 解析校对 workspace、更多编辑态 Drawer 化、视觉回归截图 |
 
 ## 可运行能力
 

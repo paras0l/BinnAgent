@@ -4,12 +4,18 @@ import {
   CheckCircle2,
   Download,
   Pencil,
-  RefreshCw,
   RotateCcw,
-  ShieldCheck,
   Sparkles,
   Trash2,
 } from 'lucide-react'
+import { FeatureHero } from '@/components/layout/FeatureHero'
+import { PageShell } from '@/components/layout/PageShell'
+import { Button } from '@/components/ui/Button'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
+import { LoadingState } from '@/components/ui/LoadingState'
+import { SurfaceCard } from '@/components/ui/SurfaceCard'
+import { EvidencePanel } from '@/components/learning/EvidencePanel'
+import { ReasonCard } from '@/components/learning/ReasonCard'
 import type { Learner, MemoryCardItem, MemoryCenter } from '@/types'
 import { useToast } from '@/hooks/useToast'
 
@@ -25,6 +31,7 @@ export function MemoryCenterPage({ learner }: MemoryCenterPageProps) {
   const [editingCard, setEditingCard] = useState<MemoryCardItem | null>(null)
   const [editText, setEditText] = useState('')
   const [busyId, setBusyId] = useState<string | null>(null)
+  const [isResetDialogOpen, setIsResetDialogOpen] = useState(false)
 
   const loadMemory = useCallback(async () => {
     setIsLoading(true)
@@ -115,8 +122,6 @@ export function MemoryCenterPage({ learner }: MemoryCenterPageProps) {
   }
 
   const handleResetPlan = async () => {
-    const shouldReset = window.confirm('确定重置当前学习计划吗？未完成任务会被标记为已重置。')
-    if (!shouldReset) return
     setBusyId('reset-plan')
     try {
       const response = await fetch(`/api/learners/${learner.id}/memory/reset-plan`, { method: 'POST' })
@@ -128,6 +133,7 @@ export function MemoryCenterPage({ learner }: MemoryCenterPageProps) {
       showToast('重置计划失败，请稍后重试。', { variant: 'error' })
     } finally {
       setBusyId(null)
+      setIsResetDialogOpen(false)
     }
   }
 
@@ -162,50 +168,38 @@ export function MemoryCenterPage({ learner }: MemoryCenterPageProps) {
   }
 
   if (isLoading && !memory) {
-    return (
-      <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center bg-[#f7f8fa] text-sm text-slate-500">
-        <RefreshCw className="mr-2 size-4 animate-spin" />
-        正在读取学习记忆...
-      </div>
-    )
+    return <LoadingState title="正在读取学习记忆" description="正在加载长期记忆、推荐原因、证据和控制设置..." />
   }
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-[#f7f8fa] px-4 py-7 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-[1180px] space-y-5">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <div className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">
-              <ShieldCheck className="size-3.5" />
-              用户可控
-            </div>
-            <h1 className="mt-3 text-3xl font-black tracking-tight text-slate-950">我的学习记忆</h1>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-              查看 BinnAgent 记住了什么、证据来自哪里，以及这些记忆如何影响下一步推荐。
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <button type="button" onClick={handleCurate} className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 shadow-sm transition hover:border-emerald-300 hover:text-emerald-700 disabled:opacity-60" disabled={busyId === 'curate'}>
+    <PageShell>
+        <FeatureHero
+          eyebrow="Memory Control"
+          title="我的学习记忆"
+          description="查看 BinnAgent 记住了什么、证据来自哪里，以及这些记忆如何影响下一步推荐。"
+          stats={[
+            { label: '记忆事件', value: memory?.metrics.memory_write_count ?? 0 },
+            { label: '用户操作', value: memory?.metrics.memory_operation_count ?? 0 },
+            { label: '删除记录', value: memory?.metrics.memory_user_deleted_count ?? 0, tone: 'warning' },
+            { label: '检索命中率', value: `${memory?.metrics.memory_hit_rate ?? 0}%`, tone: 'primary' },
+          ]}
+          actions={
+            <>
+            <Button variant="secondary" onClick={handleCurate} disabled={busyId === 'curate'}>
               <Sparkles className="size-4" />
               整理记忆
-            </button>
-            <button type="button" onClick={handleExport} className="inline-flex items-center gap-2 rounded-lg bg-slate-950 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-slate-800 disabled:opacity-60" disabled={busyId === 'export'}>
+            </Button>
+            <Button onClick={handleExport} disabled={busyId === 'export'}>
               <Download className="size-4" />
               导出
-            </button>
-            <button type="button" onClick={handleResetPlan} className="inline-flex items-center gap-2 rounded-lg border border-rose-200 bg-white px-4 py-2.5 text-sm font-bold text-rose-600 shadow-sm transition hover:bg-rose-50 disabled:opacity-60" disabled={busyId === 'reset-plan'}>
+            </Button>
+            <Button variant="danger" onClick={() => setIsResetDialogOpen(true)} disabled={busyId === 'reset-plan'}>
               <RotateCcw className="size-4" />
               重置计划
-            </button>
-          </div>
-        </div>
-
-        <section className="grid gap-3 md:grid-cols-4">
-          <Metric label="记忆事件" value={memory?.metrics.memory_write_count ?? 0} />
-          <Metric label="用户操作" value={memory?.metrics.memory_operation_count ?? 0} />
-          <Metric label="删除记录" value={memory?.metrics.memory_user_deleted_count ?? 0} />
-          <Metric label="检索命中率" value={memory?.metrics.memory_hit_rate ?? 0} suffix="%" />
-        </section>
+            </Button>
+            </>
+          }
+        />
 
         <section className="grid gap-3 md:grid-cols-3">
           <SettingSwitch
@@ -231,17 +225,12 @@ export function MemoryCenterPage({ learner }: MemoryCenterPageProps) {
           />
         </section>
 
-        <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-          <div className="flex items-start gap-3">
-            <Sparkles className="mt-0.5 size-5 text-emerald-600" />
-            <div>
-              <h2 className="text-base font-black text-slate-950">今天为什么推荐这些任务</h2>
-              <p className="mt-1 text-sm leading-6 text-slate-600">
-                {memory?.recommendation_reason ?? '正在建立可解释推荐。'}
-              </p>
-            </div>
-          </div>
-        </section>
+        <ReasonCard
+          title="今天为什么推荐这些任务"
+          reason={memory?.recommendation_reason ?? '正在建立可解释推荐。'}
+          evidence={(memory?.cards ?? []).slice(0, 3).map((card) => card.title)}
+          outcome="你可以编辑、删除、不再使用或标记已改善，后续推荐会排除被禁用的记忆。"
+        />
 
         <div className="flex gap-2 overflow-x-auto pb-1">
           {skills.map((skill) => (
@@ -282,7 +271,16 @@ export function MemoryCenterPage({ learner }: MemoryCenterPageProps) {
             当前筛选下还没有可展示的学习记忆。
           </div>
         )}
-      </div>
+      <ConfirmDialog
+        open={isResetDialogOpen}
+        title="重置当前学习计划？"
+        description="未完成任务会被标记为已重置，后续推荐会重新根据你的记忆和练习记录安排。"
+        confirmLabel="重置计划"
+        danger
+        isBusy={busyId === 'reset-plan'}
+        onCancel={() => setIsResetDialogOpen(false)}
+        onConfirm={() => void handleResetPlan()}
+      />
 
       {editingCard && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4">
@@ -304,7 +302,7 @@ export function MemoryCenterPage({ learner }: MemoryCenterPageProps) {
           </div>
         </div>
       )}
-    </div>
+    </PageShell>
   )
 }
 
@@ -324,7 +322,7 @@ function MemoryCard({
   onImproved: () => void
 }) {
   return (
-    <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+    <SurfaceCard>
       <div className="flex items-start justify-between gap-3">
         <div>
           <div className="text-xs font-bold uppercase tracking-wide text-slate-400">{card.skill}</div>
@@ -335,11 +333,8 @@ function MemoryCard({
         </span>
       </div>
       <p className="mt-3 text-sm leading-6 text-slate-700">{card.content}</p>
-      <div className="mt-4 rounded-lg bg-slate-50 p-3">
-        <div className="text-xs font-bold text-slate-500">来源证据</div>
-        <div className="mt-1 space-y-1 text-xs text-slate-600">
-          {card.evidence.length > 0 ? card.evidence.map((item) => <div key={item}>{item}</div>) : <div>暂无证据链接</div>}
-        </div>
+      <div className="mt-4">
+        <EvidencePanel items={card.evidence} />
       </div>
       <p className="mt-3 text-xs font-semibold text-emerald-700">{card.impact}</p>
       <div className="mt-4 flex flex-wrap gap-2">
@@ -348,7 +343,7 @@ function MemoryCard({
         <IconAction label="不再使用" icon={<ArchiveX className="size-4" />} onClick={onDisable} disabled={busy} />
         <IconAction label="删除" icon={<Trash2 className="size-4" />} onClick={onDelete} disabled={busy} danger />
       </div>
-    </article>
+    </SurfaceCard>
   )
 }
 
@@ -379,15 +374,6 @@ function IconAction({
       {icon}
       {label}
     </button>
-  )
-}
-
-function Metric({ label, value, suffix = '' }: { label: string; value: number; suffix?: string }) {
-  return (
-    <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-      <div className="text-xs font-bold text-slate-400">{label}</div>
-      <div className="mt-2 text-2xl font-black text-slate-950">{value}{suffix}</div>
-    </div>
   )
 }
 

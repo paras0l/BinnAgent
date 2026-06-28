@@ -126,6 +126,7 @@ Frontend:
 - Keep components aligned with existing `pages/`, `components/`, and `hooks/` layout.
 - Use `lucide-react` for icons.
 - Keep operational screens dense, readable, and task-focused.
+- UI/UX 统一标准遵循 `docs/frontend-design-system.md`：主导航固定为 `AI对话 / 探索 / 学习中心 / 记忆`，标准功能页优先使用 `PageShell`、`FeatureHero`、`SurfaceCard`、`Button`、`FormField`、`StatusBanner`、`ReasonCard`、`EvidencePanel`，复杂功能必须拆 workspace，学习推荐必须说明原因，AI/外部生成内容保存前必须可确认、可编辑、可追溯。
 
 ## Testing Guidelines
 

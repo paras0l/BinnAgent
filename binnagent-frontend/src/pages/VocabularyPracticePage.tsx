@@ -242,12 +242,12 @@ export function VocabularyPracticePage({
   }, [accent, feedback, task])
 
   const submitAttempt = async (options?: { reveal?: boolean; rating?: number; answerOverride?: string }) => {
-    if (!task || !sessionId || isBusy) return
+    if (!task || !sessionId || isBusy) return null
     const submittedAnswer = options?.answerOverride ?? answer
     if (mode === 'spelling' && !options?.reveal && !submittedAnswer.trim()) {
       setError('先试着拼一下。')
       inputRef.current?.focus()
-      return
+      return null
     }
     setIsBusy(true)
     setError(null)
@@ -267,9 +267,12 @@ export function VocabularyPracticePage({
         }),
       })
       if (!response.ok) throw new Error('学习记录保存失败，请重试。')
-      setFeedback(await response.json() as AttemptFeedback)
+      const nextFeedback = await response.json() as AttemptFeedback
+      setFeedback(nextFeedback)
+      return nextFeedback
     } catch (attemptError) {
       setError(attemptError instanceof Error ? attemptError.message : '提交失败。')
+      return null
     } finally {
       setIsBusy(false)
     }
@@ -333,6 +336,11 @@ export function VocabularyPracticePage({
     }
   }
 
+  const rateAndAdvance = async (rating: 1 | 2 | 3 | 4) => {
+    const attempt = await submitAttempt({ rating })
+    if (attempt) await advance()
+  }
+
   const requestHint = async () => {
     if (!sessionId || hintCount >= 3) return
     const nextLevel = hintCount + 1
@@ -358,7 +366,7 @@ export function VocabularyPracticePage({
       }
       if ((mode === 'review' || mode === 'new') && isReviewRevealed && !feedback && ['1', '2', '3', '4'].includes(event.key)) {
         event.preventDefault()
-        void submitAttempt({ rating: Number(event.key) })
+        void rateAndAdvance(Number(event.key) as 1 | 2 | 3 | 4)
       }
       if (event.key === 'Escape') onExit()
     }
@@ -431,87 +439,98 @@ export function VocabularyPracticePage({
   const learnMoreTerm = mode === 'review' || mode === 'new' ? task.word : feedback?.correct_answer
   const progress = ((task.current_index + 1) / task.total) * 100
   return (
-    <div className="flex min-h-screen flex-col bg-[#fbfbfd] text-slate-950">
-      <header className="border-b border-slate-200 bg-white px-4 py-4 sm:px-8">
+    <div className="flex h-dvh flex-col overflow-hidden bg-[#fbfbfd] text-slate-950">
+      <header className="shrink-0 border-b border-slate-200 bg-white px-4 py-3 sm:px-8">
         <div className="mx-auto flex max-w-[1420px] items-center gap-5">
           <button onClick={onExit} className="inline-flex shrink-0 items-center gap-2 text-sm font-bold text-slate-500 hover:text-indigo-600"><ArrowLeft className="size-4" />退出练习</button>
           <div className="mx-auto flex w-full max-w-xl items-center gap-3"><div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-indigo-600 transition-all" style={{ width: `${progress}%` }} /></div><span className="text-xs font-black text-slate-500">{task.current_index + 1} / {task.total}</span></div>
-          <span className="hidden shrink-0 text-sm font-bold text-slate-600 sm:inline">{task.sources[0]?.label ?? sourceLabel ?? '我的词汇本'}</span>
+          <span className="hidden shrink-0 text-sm font-bold text-slate-600 sm:inline">
+            {mode === 'new' ? '新词学习' : mode === 'review' ? '今日复习' : '拼写练习'} · {task.sources[0]?.label ?? sourceLabel ?? '我的词汇本'}
+          </span>
         </div>
       </header>
 
-      <main className={`flex flex-1 justify-center px-4 ${mode === 'review' ? 'py-4 sm:px-6 sm:py-5' : 'items-center py-10 sm:py-14'}`}>
-        <section className={`w-full ${mode === 'review' ? 'max-w-[1420px]' : 'max-w-[820px] text-center'}`}>
-          {mode === 'spelling' ? <><p className="text-sm font-black uppercase tracking-[0.18em] text-indigo-600">{feedback ? (feedback.result === 'correct' ? '拼对了' : feedback.result === 'revealed' ? '先记住答案' : '差一点，再看看') : '听发音，拼出这个词'}</p><button onClick={() => void playAudio()} aria-label="播放发音" className={`mx-auto mt-7 flex size-24 items-center justify-center rounded-full bg-indigo-600 text-white shadow-[0_14px_36px_rgba(79,70,229,0.28)] transition hover:scale-[1.03] ${isPlaying ? 'ring-8 ring-indigo-100' : ''}`}><Volume2 className="size-10" /></button><p className="mt-3 text-xs font-bold text-slate-400">点击播放 · 空格键重播 · {accent === 'us' ? '美音' : '英音'}</p></> : null}
+      <main className="min-h-0 flex-1 overflow-hidden px-4 py-3 sm:px-6 sm:py-4">
+        <section className="mx-auto grid h-full w-full max-w-[1420px] grid-rows-[minmax(0,1fr)_auto] gap-3 lg:grid-cols-[minmax(0,1fr)_320px] lg:grid-rows-1">
+          <section className="flex min-h-0 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <div className="shrink-0 border-b border-slate-100 px-4 py-3 sm:px-5">
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-indigo-600">主任务区</p>
+            </div>
+            <div className={`min-h-0 flex-1 overflow-y-auto p-4 sm:p-5 ${mode === 'review' && isReviewRevealed ? '' : 'flex items-center justify-center text-center'}`}>
+              <div className="w-full">
+                {mode === 'spelling' ? <><p className="text-sm font-black uppercase tracking-[0.18em] text-indigo-600">{feedback ? (feedback.result === 'correct' ? '拼对了' : feedback.result === 'revealed' ? '先记住答案' : '差一点，再看看') : '听发音，拼出这个词'}</p><button onClick={() => void playAudio()} aria-label="播放发音" className={`mx-auto mt-5 flex size-20 items-center justify-center rounded-full bg-indigo-600 text-white shadow-[0_14px_36px_rgba(79,70,229,0.28)] transition hover:scale-[1.03] sm:size-24 ${isPlaying ? 'ring-8 ring-indigo-100' : ''}`}><Volume2 className="size-9 sm:size-10" /></button><p className="mt-3 text-xs font-bold text-slate-400">点击播放 · 空格键重播 · {accent === 'us' ? '美音' : '英音'}</p></> : null}
 
-          {(mode === 'review' || mode === 'new') && isReviewRevealed ? (
-            <RichVocabularyEntry
-              word={task.word ?? ''}
-              phonetic={task.phonetic}
-              phoneticUk={task.phonetic_uk}
-              phoneticUs={task.phonetic_us}
-              senses={task.dictionary_senses}
-              meanings={task.meanings}
-              examples={task.examples}
-              wordForms={task.word_forms}
-              tags={task.dictionary_tags}
-              activeAccent={accent}
-              onPlayAccent={(nextAccent) => void playAudio(nextAccent)}
-            />
-          ) : mode === 'review' ? (
-            <div className="mx-auto max-w-2xl rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm">
-              <p className="text-xs font-black uppercase tracking-[0.18em] text-indigo-600">先主动回忆</p>
-              <h1 className="mt-5 text-5xl font-black text-slate-950">{task.word}</h1>
-              {task.phonetic ? <p className="mt-3 text-lg font-semibold text-slate-400">{task.phonetic}</p> : null}
-              <div className="mt-8 flex flex-wrap justify-center gap-3">
-                <button type="button" onClick={() => void playAudio()} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-black text-slate-700 hover:border-indigo-200"><Volume2 className="size-4" />播放发音</button>
-                <button type="button" onClick={() => void requestHint()} className="inline-flex items-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-2.5 text-sm font-black text-indigo-700 hover:border-indigo-300"><Lightbulb className="size-4" />给一点提示</button>
-                <button type="button" onClick={() => setIsReviewRevealed(true)} className="rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-black text-white hover:bg-indigo-700">显示答案</button>
+                {(mode === 'review' || mode === 'new') && isReviewRevealed ? (
+                  <RichVocabularyEntry
+                    word={task.word ?? ''}
+                    phonetic={task.phonetic}
+                    phoneticUk={task.phonetic_uk}
+                    phoneticUs={task.phonetic_us}
+                    senses={task.dictionary_senses}
+                    meanings={task.meanings}
+                    examples={task.examples}
+                    wordForms={task.word_forms}
+                    tags={task.dictionary_tags}
+                    activeAccent={accent}
+                    onPlayAccent={(nextAccent) => void playAudio(nextAccent)}
+                  />
+                ) : mode === 'review' ? (
+                  <div className="mx-auto max-w-2xl">
+                    <p className="text-xs font-black uppercase tracking-[0.18em] text-indigo-600">先主动回忆</p>
+                    <h1 className="mt-4 text-4xl font-black text-slate-950 sm:text-5xl">{task.word}</h1>
+                    {task.phonetic ? <p className="mt-3 text-lg font-semibold text-slate-400">{task.phonetic}</p> : null}
+                    <div className="mt-6 flex flex-wrap justify-center gap-3">
+                      <button type="button" onClick={() => void playAudio()} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-black text-slate-700 hover:border-indigo-200"><Volume2 className="size-4" />播放发音</button>
+                      <button type="button" onClick={() => setIsReviewRevealed(true)} className="rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-black text-white hover:bg-indigo-700">显示答案</button>
+                    </div>
+                    {hint ? <p className="mx-auto mt-5 max-w-xl rounded-xl bg-indigo-50 px-4 py-3 text-sm font-semibold text-indigo-800">{hint}</p> : null}
+                  </div>
+                ) : feedback ? (
+                  <FeedbackPanel feedback={feedback} />
+                ) : (
+                  <div className="mx-auto max-w-2xl">
+                    <label className="relative block cursor-text" onClick={() => inputRef.current?.focus()}>
+                      <input ref={inputRef} value={answer} onChange={(event) => handleAnswerChange(event.target.value)} onCompositionStart={() => { compositionRef.current = true; setIsComposing(true); setInputWarning('正在使用输入法，请切换到英文输入后再提交。') }} onCompositionEnd={(event) => { compositionRef.current = false; setIsComposing(false); handleAnswerChange(event.currentTarget.value) }} lang="en" inputMode="text" autoCapitalize="none" autoCorrect="off" autoComplete="off" spellCheck={false} className="absolute inset-0 h-full w-full cursor-text opacity-0" aria-label="拼写答案" />
+                      <div className="flex min-h-16 flex-wrap items-end justify-center gap-2" aria-hidden="true">
+                        {Array.from({ length: Math.max(task.answer_length, answer.length) }, (_, index) => <span key={index} className={`flex h-14 min-w-10 items-center justify-center border-b-2 text-3xl font-black ${answer[index] ? 'border-indigo-500 text-slate-950' : 'border-slate-300 text-transparent'}`}>{answer[index] ?? '·'}</span>)}
+                      </div>
+                    </label>
+                    {error ? <p className="mt-4 text-sm font-bold text-amber-700">{error}</p> : null}
+                    <p className={`mt-4 text-xs font-bold ${inputWarning ? 'text-orange-600' : 'text-slate-400'}`}>{inputWarning ?? '请使用英文键盘输入；填满字母后会自动检查。'}</p>
+                    {hint ? <p className="mx-auto mt-5 max-w-xl rounded-xl bg-indigo-50 px-4 py-3 text-sm font-semibold text-indigo-800">{hint}</p> : null}
+                  </div>
+                )}
               </div>
-              {hint ? <p className="mx-auto mt-5 max-w-xl rounded-xl bg-indigo-50 px-4 py-3 text-sm font-semibold text-indigo-800">{hint}</p> : null}
             </div>
-          ) : feedback ? (
-            <FeedbackPanel feedback={feedback} />
-          ) : (
-            <div className="mx-auto mt-10 max-w-2xl">
-              <label className="relative block cursor-text" onClick={() => inputRef.current?.focus()}>
-                <input ref={inputRef} value={answer} onChange={(event) => handleAnswerChange(event.target.value)} onCompositionStart={() => { compositionRef.current = true; setIsComposing(true); setInputWarning('正在使用输入法，请切换到英文输入后再提交。') }} onCompositionEnd={(event) => { compositionRef.current = false; setIsComposing(false); handleAnswerChange(event.currentTarget.value) }} lang="en" inputMode="text" autoCapitalize="none" autoCorrect="off" autoComplete="off" spellCheck={false} className="absolute inset-0 h-full w-full cursor-text opacity-0" aria-label="拼写答案" />
-                <div className="flex min-h-16 flex-wrap items-end justify-center gap-2" aria-hidden="true">
-                  {Array.from({ length: Math.max(task.answer_length, answer.length) }, (_, index) => <span key={index} className={`flex h-14 min-w-10 items-center justify-center border-b-2 text-3xl font-black ${answer[index] ? 'border-indigo-500 text-slate-950' : 'border-slate-300 text-transparent'}`}>{answer[index] ?? '·'}</span>)}
-                </div>
-              </label>
-              {error ? <p className="mt-4 text-sm font-bold text-amber-700">{error}</p> : null}
-              <p className={`mt-4 text-xs font-bold ${inputWarning ? 'text-orange-600' : 'text-slate-400'}`}>{inputWarning ?? '请使用英文键盘输入；填满字母后会自动检查。'}</p>
-              <div className="mt-8 flex flex-wrap items-center justify-center gap-4 text-sm font-bold"><button onClick={() => void requestHint()} disabled={hintCount >= 3} className="inline-flex items-center gap-2 text-indigo-600 disabled:text-slate-300"><Lightbulb className="size-4" />{hintCount ? `再给一点提示 ${hintCount}/3` : '给我一个提示'}</button><span className="text-slate-300">|</span><button onClick={() => void submitAttempt({ reveal: true })} className="text-slate-500 hover:text-slate-800">不认识，先看答案</button></div>
-              {hint ? <p className="mx-auto mt-5 max-w-xl rounded-xl bg-indigo-50 px-4 py-3 text-sm font-semibold text-indigo-800">{hint}</p> : null}
-            </div>
-          )}
+          </section>
 
-          <div className={`${mode === 'review' ? 'mt-3 justify-end' : 'mt-10 justify-center'} flex flex-wrap items-center gap-3`}>
-            <p className="text-xs font-semibold text-slate-400">来自 {task.sources[0]?.label ?? sourceLabel ?? '我的词汇本'}</p>
-            {learnMoreTerm ? (
-              <button
-                type="button"
-                onClick={() => setDetailTerm(learnMoreTerm)}
-                className="inline-flex items-center gap-1 rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-xs font-black text-indigo-700 transition hover:border-indigo-400"
-              >
-                编辑词卡 <BookOpen className="size-3.5" />
-              </button>
-            ) : null}
-          </div>
+          <TaskSupportPanel
+            feedback={feedback}
+            hintCount={hintCount}
+            isReviewRevealed={isReviewRevealed}
+            learnMoreTerm={learnMoreTerm}
+            mode={mode}
+            sourceLabel={task.sources[0]?.label ?? sourceLabel ?? '我的词汇本'}
+            onEditTerm={() => learnMoreTerm && setDetailTerm(learnMoreTerm)}
+            onHint={() => void requestHint()}
+            onReveal={() => {
+              if (mode === 'review' && !isReviewRevealed) setIsReviewRevealed(true)
+              else void submitAttempt({ reveal: true })
+            }}
+          />
         </section>
       </main>
 
-      <footer className="border-t border-slate-200 bg-white px-4 py-5 sm:px-8">
+      <footer className="shrink-0 border-t border-slate-200 bg-white px-4 py-3 shadow-[0_-10px_30px_rgba(15,23,42,0.04)] sm:px-8">
         <div className="mx-auto flex max-w-[1420px] flex-col-reverse items-stretch justify-between gap-3 sm:flex-row sm:items-center">
-          <span className="hidden text-xs font-semibold text-slate-400 sm:block">{feedback ? (feedback.result === 'revealed' ? '可以隐藏答案再拼一次' : 'Enter 进入下一词') : mode === 'spelling' ? '填满后自动检查，也可按 Enter' : mode === 'review' && !isReviewRevealed ? '先回忆，再显示答案评分' : '可随时编辑词卡或添加例句'}</span>
+          <span className={`text-xs font-semibold ${error ? 'block text-rose-600' : 'hidden text-slate-400 sm:block'}`}>{error ?? (feedback ? (feedback.result === 'revealed' ? '可以隐藏答案再拼一次' : 'Enter 进入下一词') : mode === 'spelling' ? '填满后自动检查，也可按 Enter' : mode === 'review' && !isReviewRevealed ? '先回忆，再显示答案评分' : '评分后自动进入下一词')}</span>
           {feedback ? (
             <div className="flex gap-3 sm:ml-auto">{mode === 'spelling' && (feedback.can_retry || feedback.result === 'revealed') ? <button onClick={retrySpelling} className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 px-5 py-3 text-sm font-black text-slate-700"><RotateCcw className="size-4" />{feedback.result === 'revealed' ? '隐藏答案，继续拼写' : '再拼一次'}</button> : null}<button onClick={() => void advance()} disabled={isBusy} className="flex-1 rounded-xl bg-indigo-600 px-7 py-3 text-sm font-black text-white disabled:opacity-60">下一个</button></div>
           ) : mode === 'review' || mode === 'new' ? (
             isReviewRevealed ? (
-            <div className="grid grid-cols-2 gap-2 sm:ml-auto sm:grid-cols-4"><RatingButton shortcut="1" label="忘记了" onClick={() => void submitAttempt({ rating: 1 })} /><RatingButton shortcut="2" label="有点模糊" onClick={() => void submitAttempt({ rating: 2 })} /><RatingButton shortcut="3" label="认识" primary onClick={() => void submitAttempt({ rating: 3 })} /><RatingButton shortcut="4" label="很熟" onClick={() => void submitAttempt({ rating: 4 })} /></div>
+            <div className="grid grid-cols-2 gap-2 sm:ml-auto sm:grid-cols-4"><RatingButton shortcut="1" label="忘记了" disabled={isBusy} onClick={() => void rateAndAdvance(1)} /><RatingButton shortcut="2" label="有点模糊" disabled={isBusy} onClick={() => void rateAndAdvance(2)} /><RatingButton shortcut="3" label="认识" primary disabled={isBusy} onClick={() => void rateAndAdvance(3)} /><RatingButton shortcut="4" label="很熟" disabled={isBusy} onClick={() => void rateAndAdvance(4)} /></div>
             ) : (
-              <button onClick={() => setIsReviewRevealed(true)} className="rounded-xl bg-indigo-600 px-7 py-3 text-sm font-black text-white">显示答案</button>
+              <button onClick={() => setIsReviewRevealed(true)} disabled={isBusy} className="rounded-xl bg-indigo-600 px-7 py-3 text-sm font-black text-white disabled:opacity-60">显示答案</button>
             )
           ) : <button onClick={() => void submitAttempt()} disabled={isBusy} className="rounded-xl bg-indigo-600 px-8 py-3 text-sm font-black text-white disabled:opacity-60">{isBusy ? '正在检查…' : '检查拼写'}</button>}
         </div>
@@ -528,9 +547,91 @@ function Choice({ selected, onClick, children }: { selected: boolean; onClick: (
   return <button type="button" onClick={onClick} className={`rounded-xl border px-4 py-2.5 text-sm font-bold transition ${selected ? 'border-indigo-500 bg-indigo-50 text-indigo-700' : 'border-slate-200 bg-white text-slate-600 hover:border-indigo-200'}`}>{children}</button>
 }
 
+function TaskSupportPanel({
+  feedback,
+  hintCount,
+  isReviewRevealed,
+  learnMoreTerm,
+  mode,
+  sourceLabel,
+  onEditTerm,
+  onHint,
+  onReveal,
+}: {
+  feedback: AttemptFeedback | null
+  hintCount: number
+  isReviewRevealed: boolean
+  learnMoreTerm?: string | null
+  mode: VocabularyPracticeMode
+  sourceLabel: string
+  onEditTerm: () => void
+  onHint: () => void
+  onReveal: () => void
+}) {
+  const modeLabel = mode === 'new' ? '新词学习' : mode === 'review' ? '今日复习' : '拼写练习'
+  const guidance = feedback
+    ? feedback.result === 'correct'
+      ? '看完反馈后，直接进入下一词。'
+      : '先看差异和例句，再决定重试或进入下一词。'
+    : mode === 'spelling'
+      ? '听音后输入拼写。填满字母会自动检查，也可以用底部按钮提交。'
+      : isReviewRevealed
+        ? '根据真实熟悉度评分，系统会据此安排下次复习。'
+        : '先主动回忆，再显示答案评分。'
+  const canRevealAnswer = !feedback && (mode === 'spelling' || !isReviewRevealed)
+
+  return (
+    <aside className="flex min-h-0 flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+      <div>
+        <p className="text-xs font-black uppercase tracking-[0.18em] text-indigo-600">学习辅助区</p>
+        <h2 className="mt-2 text-lg font-black text-slate-950">{modeLabel}</h2>
+        <p className="mt-2 text-sm leading-6 text-slate-500">{guidance}</p>
+      </div>
+
+      <div className="rounded-xl bg-slate-50 p-3">
+        <p className="text-xs font-bold text-slate-500">词汇来源</p>
+        <p className="mt-1 text-sm font-black text-slate-800">{sourceLabel}</p>
+      </div>
+
+      <div className="grid gap-2">
+        {!feedback && (
+          <button
+            type="button"
+            onClick={onHint}
+            disabled={hintCount >= 3}
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-2.5 text-sm font-black text-indigo-700 transition hover:border-indigo-300 disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-300"
+          >
+            <Lightbulb className="size-4" />
+            {hintCount ? `再给一点提示 ${hintCount}/3` : '给我一个提示'}
+          </button>
+        )}
+        {canRevealAnswer && (
+          <button
+            type="button"
+            onClick={onReveal}
+            className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-black text-slate-600 transition hover:bg-slate-50 hover:text-slate-900"
+          >
+            {mode === 'spelling' ? '不认识，先看答案' : '显示答案'}
+          </button>
+        )}
+        {learnMoreTerm && (
+          <button
+            type="button"
+            onClick={onEditTerm}
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-indigo-200 bg-white px-4 py-2.5 text-sm font-black text-indigo-700 transition hover:border-indigo-400"
+          >
+            编辑词卡 <BookOpen className="size-4" />
+          </button>
+        )}
+      </div>
+
+    </aside>
+  )
+}
+
 function FeedbackPanel({ feedback }: { feedback: AttemptFeedback }) {
   const success = feedback.result === 'correct'
-  return <div className="relative mx-auto mt-9 max-w-2xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">{success ? <Celebration /> : null}<div className="flex flex-wrap justify-center gap-1 font-mono text-4xl font-black">{feedback.letter_diff.length ? feedback.letter_diff.map((letter, index) => <span key={index} className={letter.status === 'match' ? 'text-emerald-600' : 'text-orange-500'}>{letter.correct ?? letter.answer}</span>) : <span className={success ? 'text-emerald-600' : 'text-slate-950'}>{feedback.correct_answer}</span>}</div>{feedback.phonetic ? <p className="mt-3 text-slate-400">{feedback.phonetic}</p> : null}<p className={`mt-5 text-base font-black ${success ? 'text-emerald-700' : 'text-orange-700'}`}>{feedback.feedback_text}</p><div className="mt-4"><span className="rounded-md bg-slate-100 px-2 py-1 text-xs font-black text-slate-500">{feedback.part_of_speech}</span>{feedback.meaning ? <span className="ml-2 text-sm text-slate-600">{feedback.meaning}</span> : null}</div>{feedback.example ? <p className="mt-2 text-sm text-slate-400">{feedback.example}</p> : null}</div>
+  return <div className="relative mx-auto max-w-2xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">{success ? <Celebration /> : null}<div className="flex flex-wrap justify-center gap-1 font-mono text-4xl font-black">{feedback.letter_diff.length ? feedback.letter_diff.map((letter, index) => <span key={index} className={letter.status === 'match' ? 'text-emerald-600' : 'text-orange-500'}>{letter.correct ?? letter.answer}</span>) : <span className={success ? 'text-emerald-600' : 'text-slate-950'}>{feedback.correct_answer}</span>}</div>{feedback.phonetic ? <p className="mt-3 text-slate-400">{feedback.phonetic}</p> : null}<p className={`mt-5 text-base font-black ${success ? 'text-emerald-700' : 'text-orange-700'}`}>{feedback.feedback_text}</p><div className="mt-4"><span className="rounded-md bg-slate-100 px-2 py-1 text-xs font-black text-slate-500">{feedback.part_of_speech}</span>{feedback.meaning ? <span className="ml-2 text-sm text-slate-600">{feedback.meaning}</span> : null}</div>{feedback.example ? <p className="mt-2 text-sm text-slate-400">{feedback.example}</p> : null}</div>
 }
 
 function Celebration() {
@@ -541,6 +642,6 @@ function SummaryMetric({ label, value }: { label: string; value: number }) {
   return <div className="rounded-xl bg-slate-50 px-3 py-4"><strong className="text-2xl font-black text-slate-950">{value}</strong><p className="mt-1 text-xs font-bold text-slate-500">{label}</p></div>
 }
 
-function RatingButton({ label, shortcut, primary, onClick }: { label: string; shortcut: string; primary?: boolean; onClick: () => void }) {
-  return <button onClick={onClick} className={`min-w-28 rounded-xl border px-4 py-2.5 text-sm font-black transition ${primary ? 'border-amber-500 bg-amber-50 text-amber-800' : 'border-slate-200 bg-white text-slate-700 hover:border-indigo-300'}`}><span className="block">{label}</span><span className="mt-0.5 block text-[10px] font-semibold opacity-55">{shortcut} 键</span></button>
+function RatingButton({ label, shortcut, primary, disabled, onClick }: { label: string; shortcut: string; primary?: boolean; disabled?: boolean; onClick: () => void }) {
+  return <button type="button" onClick={onClick} disabled={disabled} className={`min-w-28 rounded-xl border px-4 py-2.5 text-sm font-black transition disabled:cursor-wait disabled:opacity-60 ${primary ? 'border-amber-500 bg-amber-50 text-amber-800' : 'border-slate-200 bg-white text-slate-700 hover:border-indigo-300'}`}><span className="block">{label}</span><span className="mt-0.5 block text-[10px] font-semibold opacity-55">{shortcut} 键</span></button>
 }

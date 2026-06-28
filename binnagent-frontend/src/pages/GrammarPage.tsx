@@ -24,6 +24,9 @@ import {
 } from '@/data/grammarTopics'
 import type { GrammarHtmlCacheResponse, Learner, LearningProgressItem } from '@/types'
 import { useToast } from '@/hooks/useToast'
+import { FeatureHero } from '@/components/layout/FeatureHero'
+import { PageShell } from '@/components/layout/PageShell'
+import { Button } from '@/components/ui/Button'
 
 type CategoryFilter = 'all' | GrammarCategory
 
@@ -462,29 +465,24 @@ export function GrammarPage({ learner, onBack, backLabel = '返回探索', initi
   }
 
   return (
-    <div className="mx-auto flex max-w-7xl flex-col gap-5 p-6">
-      <section className="rounded-xl border bg-card p-5">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div>
-            <button
-              type="button"
-              onClick={onBack}
-              className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-            >
+    <PageShell>
+      <FeatureHero
+        eyebrow="Grammar Workspace"
+        title="语法微知识点"
+        description="按选择知识点、生成指令、回填预览、练习沉淀四个工作区组织外部 AI 生成链路。HTML 回填不会直接当作事实，先预览再沉淀。"
+        stats={[
+          { label: '知识点', value: topicOptions.length },
+          { label: '已缓存', value: Object.keys(htmlByTopicId).length, tone: 'success' },
+          { label: '目标网站', value: targets.length },
+          { label: '当前分类', value: category === 'all' ? '全部' : GRAMMAR_CATEGORY_LABELS[category] },
+        ]}
+        actions={
+          <Button variant="secondary" onClick={onBack}>
               <ArrowLeft className="h-4 w-4" />
               {backLabel}
-            </button>
-            <p className="mt-4 text-sm font-semibold text-primary">语法微知识点</p>
-            <h1 className="mt-1 text-2xl font-bold text-foreground">选择一个小语法点，让外部 AI 生成精讲 HTML</h1>
-            <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
-              每次只学一个具体规则，prompt 会限制篇幅和输出结构，适合 5-8 分钟读完并做两道小练习。
-            </p>
-          </div>
-          <div className="rounded-lg border bg-background px-4 py-3 text-sm text-muted-foreground">
-            当前学习者：<span className="font-medium text-foreground">{learner.nickname}</span>
-          </div>
-        </div>
-      </section>
+          </Button>
+        }
+      />
 
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_420px]">
         <section className="flex min-h-[620px] flex-col rounded-xl border bg-card p-5">
@@ -792,7 +790,7 @@ export function GrammarPage({ learner, onBack, backLabel = '返回探索', initi
           />
         </div>
       )}
-    </div>
+    </PageShell>
   )
 }
 

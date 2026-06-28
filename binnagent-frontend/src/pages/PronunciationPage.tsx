@@ -16,6 +16,10 @@ import {
 } from 'lucide-react'
 import { useToast } from '@/hooks/useToast'
 import type { Learner, LearningProgressItem } from '@/types'
+import { FeatureHero } from '@/components/layout/FeatureHero'
+import { PageShell } from '@/components/layout/PageShell'
+import { Button } from '@/components/ui/Button'
+import { FilterChip } from '@/components/ui/FilterChip'
 
 type PhonemeCategory = 'monophthong' | 'diphthong' | 'consonant'
 type CategoryFilter = 'all' | PhonemeCategory
@@ -670,27 +674,27 @@ export function PronunciationPage({ learner }: PronunciationPageProps) {
   }
 
   return (
-    <div className="mx-auto flex max-w-7xl flex-col gap-6 p-4 sm:p-6">
-      <section className="overflow-hidden rounded-xl border bg-card">
-        <div className="grid gap-5 p-5 lg:grid-cols-[1fr_auto] lg:items-center">
-          <div>
-            <div className="flex items-center gap-2 text-primary">
-              <Mic2 className="h-5 w-5" />
-              <span className="text-sm font-semibold">音标训练</span>
-            </div>
-            <h1 className="mt-2 text-2xl font-bold text-foreground">用图像联想记住 48 个常见音标</h1>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
-              先用卡片建立声音和画面的连接，再进入详情跟读目标音素。每天完成 5 个，口语底盘会一点点稳起来。
-            </p>
-          </div>
-          <div className="grid grid-cols-3 gap-2 text-center sm:min-w-96">
-            <StatTile label="音标总数" value={PHONEMES.length} />
-            <StatTile label="已练习" value={completedCount} />
-            <StatTile label="已打开" value={openedCount} />
-          </div>
-        </div>
+    <PageShell>
+      <FeatureHero
+        eyebrow="Pronunciation Workspace"
+        title="发音训练"
+        description="按音标卡片、跟读训练、易混音和训练记录组织发音技能。先用图像建立声音连接，再进入详情练目标音素。"
+        stats={[
+          { label: '音标总数', value: PHONEMES.length },
+          { label: '已练习', value: completedCount, tone: 'success' },
+          { label: '已打开', value: openedCount, tone: 'primary' },
+          { label: '今日建议', value: '5 个' },
+        ]}
+        actions={
+          <>
+            <Button onClick={practiceToday}><Flame className="h-4 w-4" />今日 5 个</Button>
+            <Button variant="secondary" onClick={randomPractice}><Dice5 className="h-4 w-4" />随机练</Button>
+          </>
+        }
+      />
 
-        <div className="grid gap-3 border-t bg-muted/30 p-4 md:grid-cols-[1fr_auto_auto] md:items-center">
+      <section className="overflow-hidden rounded-xl border bg-card">
+        <div className="grid gap-3 bg-muted/30 p-4 md:grid-cols-[1fr_auto] md:items-center">
           <div className="relative">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <input
@@ -702,34 +706,14 @@ export function PronunciationPage({ learner }: PronunciationPageProps) {
           </div>
           <div className="flex gap-2 overflow-x-auto pb-1 md:pb-0">
             {FILTERS.map((item) => (
-              <button
+              <FilterChip
                 key={item.id}
                 onClick={() => setFilter(item.id)}
-                className={`shrink-0 rounded-lg border px-3 py-2 text-sm transition-colors ${
-                  filter === item.id
-                    ? 'border-primary bg-primary/10 font-medium text-primary'
-                    : 'text-muted-foreground hover:bg-background hover:text-foreground'
-                }`}
+                active={filter === item.id}
               >
                 {item.label}
-              </button>
+              </FilterChip>
             ))}
-          </div>
-          <div className="flex gap-2">
-            <button
-              onClick={practiceToday}
-              className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg bg-primary px-3 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 md:flex-none"
-            >
-              <Flame className="h-4 w-4" />
-              今日 5 个
-            </button>
-            <button
-              onClick={randomPractice}
-              className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-background md:flex-none"
-            >
-              <Dice5 className="h-4 w-4" />
-              随机练
-            </button>
           </div>
         </div>
       </section>
@@ -800,16 +784,7 @@ export function PronunciationPage({ learner }: PronunciationPageProps) {
           </aside>
         )}
       </div>
-    </div>
-  )
-}
-
-function StatTile({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="rounded-lg border bg-background p-3">
-      <p className="text-2xl font-bold text-foreground">{value}</p>
-      <p className="mt-1 text-xs text-muted-foreground">{label}</p>
-    </div>
+    </PageShell>
   )
 }
 

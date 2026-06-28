@@ -96,6 +96,7 @@ npm run dev
 | 七年级教材 Knowledge Base / RAG / Exercises | 部分实现 |
 | Vocabulary Personal Cards / Practice / Spelling | 部分实现 |
 | Writing Phrasebook | 基础版已实现 |
+| Frontend UI/UX 统一标准 | Issue #20 首轮整改已落地，主导航固定为 AI对话 / 探索 / 学习中心 / 记忆，基础组件和 0-12 页面口径已统一 |
 | Prompt Registry / Schema-first Import / Parser Quality | 基础治理已实现 |
 | LangGraph daily lesson | 基础线性实现 |
 | Learner Simulation Agent | Deterministic MVP 已实现 |
@@ -105,6 +106,7 @@ npm run dev
 ### 前端文档
 
 - [Web Frontend](docs/web-frontend.md) — React 前端设计与实现
+- [Frontend Design System](docs/frontend-design-system.md) — Issue #20 UI/UX 统一标准与页面整改清单
 - [Web Frontend Design Spec](docs/superpowers/specs/2026-06-12-web-frontend-design.md) — 详细设计规范
 - [Spelling Training UI/UX](docs/superpowers/specs/2026-06-19-spelling-training-uiux.md) — 拼写训练流程、界面状态与交互规范
 

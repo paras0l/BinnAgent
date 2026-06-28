@@ -13,6 +13,12 @@ import {
   Timer,
   Wrench,
 } from 'lucide-react'
+import { FeatureHero } from '@/components/layout/FeatureHero'
+import { PageShell } from '@/components/layout/PageShell'
+import { Button } from '@/components/ui/Button'
+import { FilterChip } from '@/components/ui/FilterChip'
+import { SurfaceCard } from '@/components/ui/SurfaceCard'
+import { ReasonCard } from '@/components/learning/ReasonCard'
 import type { AppTab, ExplorePreference, Learner } from '@/types'
 import { useToast } from '@/hooks/useToast'
 import { GrammarPage } from '@/pages/GrammarPage'
@@ -294,6 +300,10 @@ export function ExplorePage({
   }, [category, preferenceMap, query])
 
   const favorites = visibleFeatures.filter((feature) => preferenceMap.get(feature.id)?.is_favorite)
+  const recommendedFeatures = useMemo(() => {
+    const preferred = FEATURES.filter((feature) => ['writing-phrasebook', 'vocab-review', 'grammar-explain'].includes(feature.id))
+    return preferred.filter((feature) => category === 'all' || feature.category === category).slice(0, 3)
+  }, [category])
 
   const updatePreference = async (
     feature: ExploreFeature,
@@ -402,19 +412,18 @@ export function ExplorePage({
   }
 
   return (
-    <div className="mx-auto flex max-w-7xl flex-col gap-6 p-6">
-      <section className="rounded-xl border bg-card p-5">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <div className="flex items-center gap-2 text-primary">
-              <Sparkles className="h-5 w-5" />
-              <span className="text-sm font-semibold">探索</span>
-            </div>
-            <h1 className="mt-2 text-2xl font-bold text-foreground">选择一个学习技能入口</h1>
-            <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-              按场景选择功能。可用功能会进入真实学习流程，复杂能力会明确标记待开发。
-            </p>
-          </div>
+    <PageShell>
+      <FeatureHero
+        eyebrow="Explore"
+        title="探索专项技能"
+        description="这里不是今日主线，而是专项训练工具箱。按场景选择工具，可用功能进入真实学习流程，待开发能力会明确标记。"
+        stats={[
+          { label: '可用入口', value: FEATURES.filter((feature) => feature.status === 'ready').length, tone: 'success' },
+          { label: '待开发', value: FEATURES.filter((feature) => feature.status === 'todo').length, tone: 'warning' },
+          { label: '已收藏', value: favorites.length, tone: 'primary' },
+          { label: '分类', value: CATEGORIES.length - 1 },
+        ]}
+        actions={
           <div className="relative w-full lg:w-80">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <input
@@ -424,21 +433,35 @@ export function ExplorePage({
               placeholder="搜索作文、阅读、词汇..."
             />
           </div>
-        </div>
+        }
+      />
 
-        <div className="mt-5 flex gap-2 overflow-x-auto pb-1">
+      <SurfaceCard>
+        <div className="flex gap-2 overflow-x-auto pb-1">
           {CATEGORIES.map((item) => (
-            <button
+            <FilterChip
               key={item.id}
               onClick={() => setCategory(item.id)}
-              className={`shrink-0 rounded-lg border px-3 py-2 text-sm transition-colors ${
-                category === item.id
-                  ? 'border-primary bg-primary/10 font-medium text-primary'
-                  : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-              }`}
+              active={category === item.id}
             >
               {item.label}
-            </button>
+            </FilterChip>
+          ))}
+        </div>
+      </SurfaceCard>
+
+      <section>
+        <h2 className="mb-3 text-sm font-semibold text-foreground">最近适合你</h2>
+        <div className="grid gap-4 md:grid-cols-3">
+          {recommendedFeatures.map((feature) => (
+            <ReasonCard
+              key={`recommended-${feature.id}`}
+              title={feature.title}
+              reason={feature.whenToUse}
+              evidence={[feature.category === 'vocabulary' ? '词汇复习是学习中心的高频任务' : feature.category === 'writing' ? '写作表达适合沉淀成可练习资产' : '语法微知识点适合短时间集中学透']}
+              outcome={feature.outcome}
+              action={<Button variant="secondary" onClick={() => void handleLaunch(feature)} disabled={isLocked}>进入工具</Button>}
+            />
           ))}
         </div>
       </section>
@@ -479,7 +502,7 @@ export function ExplorePage({
         </div>
       </section>
 
-    </div>
+    </PageShell>
   )
 }
 
@@ -500,7 +523,7 @@ function FeatureCard({
 }) {
   const isTodo = feature.status === 'todo'
   return (
-    <article className="flex min-h-[260px] flex-col rounded-xl border bg-card p-4">
+    <article className="flex min-h-[290px] flex-col rounded-[13px] border border-slate-200 bg-white p-4 shadow-[0_4px_14px_rgba(15,23,42,0.05)]">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-2">
           <div className="flex size-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
@@ -538,18 +561,14 @@ function FeatureCard({
           {isTodo ? <Clock3 className="h-3 w-3" /> : <CheckCircle2 className="h-3 w-3" />}
           {isTodo ? '功能待开发' : '可体验'}
         </span>
-        <button
+        <Button
           onClick={onLaunch}
           disabled={isLocked}
-          className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-            isTodo
-              ? 'border text-muted-foreground hover:bg-muted'
-              : 'bg-primary text-primary-foreground hover:bg-primary/90'
-          } disabled:cursor-not-allowed disabled:opacity-50`}
+          variant={isTodo ? 'secondary' : 'primary'}
           title={isLocked ? '回答生成中，请先等待完成或取消' : isTodo ? '查看说明' : '开始'}
         >
           {isTodo ? '查看说明' : '开始'}
-        </button>
+        </Button>
       </div>
     </article>
   )

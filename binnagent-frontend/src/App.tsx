@@ -1,19 +1,52 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
 import { Header } from './components/layout/Header'
-import { ChatPage } from './pages/ChatPage'
-import { DashboardPage } from './pages/DashboardPage'
-import { ExplorePage } from './pages/ExplorePage'
-import { GrammarPage } from './pages/GrammarPage'
-import { LoginPage } from './pages/LoginPage'
-import { MemoryCenterPage } from './pages/MemoryCenterPage'
-import { PronunciationPage } from './pages/PronunciationPage'
-import { VocabularyPracticePage, type VocabularyPracticeMode } from './pages/VocabularyPracticePage'
 import { useToast } from './hooks/useToast'
+import type { VocabularyPracticeMode } from './pages/VocabularyPracticePage'
 import type { AppTab, Learner } from './types'
+
+const ChatPage = lazy(() =>
+  import('./pages/ChatPage').then((module) => ({ default: module.ChatPage }))
+)
+
+const DashboardPage = lazy(() =>
+  import('./pages/DashboardPage').then((module) => ({ default: module.DashboardPage }))
+)
+
+const ExplorePage = lazy(() =>
+  import('./pages/ExplorePage').then((module) => ({ default: module.ExplorePage }))
+)
+
+const GrammarPage = lazy(() =>
+  import('./pages/GrammarPage').then((module) => ({ default: module.GrammarPage }))
+)
 
 const KnowledgeBasePage = lazy(() =>
   import('./pages/KnowledgeBasePage').then((module) => ({ default: module.KnowledgeBasePage }))
 )
+
+const LoginPage = lazy(() =>
+  import('./pages/LoginPage').then((module) => ({ default: module.LoginPage }))
+)
+
+const MemoryCenterPage = lazy(() =>
+  import('./pages/MemoryCenterPage').then((module) => ({ default: module.MemoryCenterPage }))
+)
+
+const PronunciationPage = lazy(() =>
+  import('./pages/PronunciationPage').then((module) => ({ default: module.PronunciationPage }))
+)
+
+const VocabularyPracticePage = lazy(() =>
+  import('./pages/VocabularyPracticePage').then((module) => ({ default: module.VocabularyPracticePage }))
+)
+
+function PageLoadingFallback({ label = '正在打开学习空间...' }: { label?: string }) {
+  return (
+    <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center text-sm text-muted-foreground">
+      {label}
+    </div>
+  )
+}
 
 function App() {
   const { showToast } = useToast()
@@ -106,18 +139,24 @@ function App() {
   }
 
   if (!currentLearner) {
-    return <LoginPage onLogin={setCurrentLearner} />
+    return (
+      <Suspense fallback={<PageLoadingFallback />}>
+        <LoginPage onLogin={setCurrentLearner} />
+      </Suspense>
+    )
   }
 
   if (activeTab === 'dashboard' && learningCenterView === 'vocabulary-practice') {
     return (
-      <VocabularyPracticePage
-        learner={currentLearner}
-        initialMode={practiceMode}
-        curriculumNodeId={practiceNodeId}
-        sourceLabel={practiceSourceLabel}
-        onExit={() => setLearningCenterView(practiceNodeId ? 'daily-learning' : 'home')}
-      />
+      <Suspense fallback={<PageLoadingFallback label="正在打开词汇练习..." />}>
+        <VocabularyPracticePage
+          learner={currentLearner}
+          initialMode={practiceMode}
+          curriculumNodeId={practiceNodeId}
+          sourceLabel={practiceSourceLabel}
+          onExit={() => setLearningCenterView(practiceNodeId ? 'daily-learning' : 'home')}
+        />
+      </Suspense>
     )
   }
 
@@ -131,51 +170,52 @@ function App() {
         onTabChange={handleTabChange}
       />
       <main className="pt-16">
-        {activeTab === 'chat' ? (
-          <ChatPage
-            learner={currentLearner}
-            draft={chatDraft}
-            onDraftChange={setChatDraft}
-            skillFocus={chatSkillFocus}
-            onSkillFocusChange={setChatSkillFocus}
-            onGeneratingChange={setIsChatGenerating}
-            onLockedAction={() => {
-              showToast('回答生成中，请先等待完成或点击取消。', { variant: 'warning' })
-            }}
-          />
-        ) : activeTab === 'explore' ? (
-          <ExplorePage
-            learner={currentLearner}
-            isLocked={isChatGenerating}
-            onLockedAction={() => {
-              showToast('回答生成中，请先等待完成或点击取消。', { variant: 'warning' })
-            }}
-            onTabChange={handleTabChange}
-            onDraftPrompt={handleDraftPrompt}
-          />
-        ) : activeTab === 'pronunciation' ? (
-          <PronunciationPage learner={currentLearner} />
-        ) : activeTab === 'grammar' ? (
-          <GrammarPage learner={currentLearner} onBack={() => handleTabChange('explore')} />
-        ) : activeTab === 'memory' ? (
-          <MemoryCenterPage learner={currentLearner} />
-        ) : (
-          learningCenterView === 'daily-learning' ? (
-            <Suspense fallback={<div className="flex min-h-[calc(100vh-4rem)] items-center justify-center text-sm text-muted-foreground">正在打开每日学习...</div>}>
+        <Suspense fallback={<PageLoadingFallback />}>
+          {activeTab === 'chat' ? (
+            <ChatPage
+              learner={currentLearner}
+              draft={chatDraft}
+              onDraftChange={setChatDraft}
+              skillFocus={chatSkillFocus}
+              onSkillFocusChange={setChatSkillFocus}
+              onGeneratingChange={setIsChatGenerating}
+              onLockedAction={() => {
+                showToast('回答生成中，请先等待完成或点击取消。', { variant: 'warning' })
+              }}
+            />
+          ) : activeTab === 'explore' ? (
+            <ExplorePage
+              learner={currentLearner}
+              isLocked={isChatGenerating}
+              onLockedAction={() => {
+                showToast('回答生成中，请先等待完成或点击取消。', { variant: 'warning' })
+              }}
+              onTabChange={handleTabChange}
+              onDraftPrompt={handleDraftPrompt}
+            />
+          ) : activeTab === 'pronunciation' ? (
+            <PronunciationPage learner={currentLearner} />
+          ) : activeTab === 'grammar' ? (
+            <GrammarPage learner={currentLearner} onBack={() => handleTabChange('explore')} />
+          ) : activeTab === 'memory' ? (
+            <MemoryCenterPage learner={currentLearner} />
+          ) : (
+            learningCenterView === 'daily-learning' ? (
               <KnowledgeBasePage
                 learner={currentLearner}
                 onBack={() => setLearningCenterView('home')}
                 onStartVocabularyPractice={openVocabularyPractice}
               />
-            </Suspense>
-          ) : (
-            <DashboardPage
-              learner={currentLearner}
-              onOpenDailyLearning={() => setLearningCenterView('daily-learning')}
-              onStartVocabularyPractice={(mode) => openVocabularyPractice(mode)}
-            />
+            ) : (
+              <DashboardPage
+                learner={currentLearner}
+                onOpenDailyLearning={() => setLearningCenterView('daily-learning')}
+                onStartVocabularyPractice={(mode) => openVocabularyPractice(mode)}
+              />
+            )
           )
-        )}
+          }
+        </Suspense>
       </main>
     </div>
   )

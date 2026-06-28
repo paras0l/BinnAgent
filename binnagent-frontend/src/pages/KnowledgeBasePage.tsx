@@ -7,6 +7,7 @@ import { KnowledgeContextPanel } from '@/components/knowledge/KnowledgeContextPa
 import { KnowledgeList, type KnowledgeFilter } from '@/components/knowledge/KnowledgeList'
 import { LessonSessionDialog } from '@/components/knowledge/LessonSessionDialog'
 import { UploadTextbookDialog } from '@/components/knowledge/UploadTextbookDialog'
+import { StatusBanner } from '@/components/ui/StatusBanner'
 import { useToast } from '@/hooks/useToast'
 import { GrammarPage } from '@/pages/GrammarPage'
 import type {
@@ -267,6 +268,12 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice }
         <div className="mx-auto max-w-4xl">
           <h1 className="text-3xl font-black tracking-tight text-slate-950">七年级英语 · 每日学习</h1>
           <p className="mt-2 text-sm text-slate-500">沿着课本顺序学习，也可以从知识点自由探索。</p>
+
+          <div className="mt-5">
+            <StatusBanner title="教材学习工作台" tone="info">
+              教材结构、单元学习、练习任务和解析证据保持在同一个全宽工作台中；右侧面板用于展示来源、解析状态和推荐原因。
+            </StatusBanner>
+          </div>
 
           <label className="mt-6 flex h-12 items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 shadow-[0_1px_2px_rgba(15,23,42,0.02)] focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-100">
             <Search className="size-5 shrink-0 text-slate-400" />

@@ -7,6 +7,8 @@ import { TypingIndicator } from './TypingIndicator'
 import { WelcomeScreen } from './WelcomeScreen'
 import { ConversationSidebar } from './ConversationSidebar'
 import { MemoryPanel } from './MemoryPanel'
+import { Button } from '@/components/ui/Button'
+import { StatusBanner } from '@/components/ui/StatusBanner'
 
 interface ChatContainerProps {
   learnerId: string
@@ -164,22 +166,22 @@ export function ChatContainer({
 
         <div className="border-t p-4">
           {(currentSkillId || skillStatus) && (
-            <div className="mb-3 flex flex-col gap-2 rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 text-sm text-primary sm:flex-row sm:items-center sm:justify-between">
-              <span>
-                {skillStatus ||
-                  `${currentSkillName || 'Agent Skill'} 已启用：本会话会持续沉淀高质量词卡。`}
-              </span>
-              {currentSkillId && (
-                <button
-                  type="button"
+            <StatusBanner
+              title={currentSkillId ? 'Agent Skill 已启用' : '对话状态'}
+              action={currentSkillId && (
+                <Button
+                  variant="secondary"
                   onClick={handleExitSkill}
                   disabled={isLoading}
-                  className="self-start rounded-md border border-primary/30 px-2 py-1 text-xs font-medium transition-colors hover:bg-primary/10 disabled:cursor-not-allowed disabled:opacity-50 sm:self-auto"
+                  className="px-2 py-1 text-xs"
                 >
                   退出 Skill
-                </button>
+                </Button>
               )}
-            </div>
+            >
+                {skillStatus ||
+                  `${currentSkillName || 'Agent Skill'} 已启用：本会话会持续沉淀高质量词卡。`}
+            </StatusBanner>
           )}
           <ChatInput
             onSend={handleSendMessage}

@@ -10,6 +10,10 @@ import {
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useToast } from '@/hooks/useToast'
 import type { Learner } from '@/types'
+import { FeatureHero } from '@/components/layout/FeatureHero'
+import { PageShell } from '@/components/layout/PageShell'
+import { Button } from '@/components/ui/Button'
+import { FormField } from '@/components/ui/FormField'
 
 interface VocabularyDetailPageProps {
   learner?: Learner
@@ -230,18 +234,25 @@ export function VocabularyDetailPage({
   }
 
   return (
-    <div className="min-h-screen bg-[#f7f8fc] px-4 py-8 sm:px-6">
-      <div className="mx-auto max-w-7xl">
-        <button
-          type="button"
-          onClick={onBack}
-          className="inline-flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-indigo-600"
-        >
-          <ArrowLeft className="size-4" />{backLabel}
-        </button>
+    <PageShell>
+        <FeatureHero
+          eyebrow="Vocabulary Detail"
+          title="词汇详解"
+          description="输入单词、词组或句子里的目标词，生成结构化详解；保存前可编辑个人理解、例句和复习偏好。"
+          stats={[
+            { label: '当前词条', value: activeTerm || '待输入', tone: activeTerm ? 'primary' : 'default' },
+            { label: '词卡状态', value: cardDetail ? '已存在' : '未保存', tone: cardDetail ? 'success' : 'warning' },
+            { label: 'HTML 回填', value: html.trim() ? '已回填' : '待回填', tone: html.trim() ? 'success' : 'warning' },
+            { label: '目标网站', value: 'DeepSeek' },
+          ]}
+          actions={
+            <Button variant="secondary" onClick={onBack}>
+              <ArrowLeft className="size-4" />{backLabel}
+            </Button>
+          }
+        />
 
-        <header className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <p className="text-sm font-black text-indigo-600">词汇详解</p>
+        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <div className="mt-3 flex flex-col gap-3 sm:flex-row">
             <input
               value={termInput}
@@ -257,18 +268,14 @@ export function VocabularyDetailPage({
               placeholder="输入要详解的单词或词组"
               aria-label="词汇详解词条"
             />
-            <button
-              type="button"
-              onClick={applyTermInput}
-              className="rounded-xl bg-slate-900 px-5 py-3 text-sm font-black text-white hover:bg-slate-800"
-            >
+            <Button onClick={applyTermInput} className="rounded-xl px-5 py-3">
               生成指令
-            </button>
+            </Button>
           </div>
           <p className="mt-2 text-sm text-slate-500">
             聚焦一个单词或词组，理解词义层次、搭配、语境和易错用法。
           </p>
-        </header>
+        </section>
 
         <div className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,1fr)_420px]">
           <section className="rounded-2xl border border-slate-200 bg-white p-5">
@@ -394,8 +401,7 @@ export function VocabularyDetailPage({
             </section>
           </aside>
         </div>
-      </div>
-    </div>
+    </PageShell>
   )
 }
 
@@ -413,14 +419,9 @@ function Field({
   textarea?: boolean
 }) {
   return (
-    <label className="block text-sm font-bold text-slate-700">
-      {label}
-      {textarea ? (
-        <textarea value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} className="mt-1 min-h-20 w-full resize-y rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-indigo-500" />
-      ) : (
-        <input value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-indigo-500" />
-      )}
-    </label>
+    textarea
+      ? <FormField as="textarea" label={label} value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} />
+      : <FormField label={label} value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} />
   )
 }
 

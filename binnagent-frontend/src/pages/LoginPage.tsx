@@ -3,6 +3,9 @@ import type { FormEvent } from 'react'
 import { Bot, Loader2 } from 'lucide-react'
 import type { Learner } from '@/types'
 import { useToast } from '@/hooks/useToast'
+import { Button } from '@/components/ui/Button'
+import { FormField } from '@/components/ui/FormField'
+import { SurfaceCard } from '@/components/ui/SurfaceCard'
 
 interface LoginPageProps {
   onLogin: (learner: Learner) => void
@@ -50,8 +53,31 @@ export function LoginPage({ onLogin }: LoginPageProps) {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-background px-6 py-10">
-      <div className="w-full max-w-md rounded-xl border bg-card p-6 shadow-sm">
+    <main className="min-h-screen bg-[#f6f7f9] px-6 py-10">
+      <div className="mx-auto grid min-h-[calc(100vh-5rem)] w-full max-w-[1180px] items-center gap-6 lg:grid-cols-[1fr_440px]">
+        <section>
+          <div className="flex items-center gap-3">
+            <div className="flex size-12 items-center justify-center rounded-[13px] bg-primary/10 text-primary">
+              <Bot className="h-6 w-6" />
+            </div>
+            <div>
+              <p className="text-sm font-black uppercase tracking-wide text-primary">BinnAgent</p>
+              <h1 className="mt-2 text-4xl font-black tracking-tight text-slate-950">创建你的英语学习空间</h1>
+            </div>
+          </div>
+          <p className="mt-5 max-w-2xl text-sm leading-6 text-slate-600">
+            围绕词汇、教材、写作和学习记忆持续练习。进入后系统会根据你的练习记录安排复习、解释推荐原因，并允许你控制长期记忆。
+          </p>
+          <div className="mt-6 grid gap-3 sm:grid-cols-2">
+            {['今日学习路径', '词汇复习计划', '写作表达资产', '可控学习记忆'].map((item) => (
+              <div key={item} className="rounded-[13px] border border-slate-200 bg-white p-4 text-sm font-bold text-slate-700 shadow-[0_4px_14px_rgba(15,23,42,0.05)]">
+                {item}
+              </div>
+            ))}
+          </div>
+        </section>
+
+      <SurfaceCard className="w-full">
         <div className="mb-6 flex items-center gap-3">
           <div className="flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
             <Bot className="h-5 w-5" />
@@ -63,38 +89,34 @@ export function LoginPage({ onLogin }: LoginPageProps) {
         </div>
 
         <form className="space-y-4" onSubmit={handleSubmit}>
-          <label className="block">
-            <span className="mb-1 block text-sm font-medium text-foreground">昵称</span>
-            <input
-              value={nickname}
-              onChange={(event) => setNickname(event.target.value)}
-              className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none transition-colors focus:border-primary"
-              placeholder="例如：Alex"
-              maxLength={100}
-            />
-          </label>
+          <FormField
+            label="昵称"
+            value={nickname}
+            onChange={(event) => setNickname(event.target.value)}
+            placeholder="例如：Alex"
+            maxLength={100}
+          />
 
-          <label className="block">
-            <span className="mb-1 block text-sm font-medium text-foreground">邮箱（可选）</span>
-            <input
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none transition-colors focus:border-primary"
-              placeholder="用于在下次打开时恢复学习记录"
-              type="email"
-              maxLength={255}
-            />
-          </label>
+          <FormField
+            label="邮箱（可选）"
+            description="用于在下次打开时恢复学习记录。"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            placeholder="alex@example.com"
+            type="email"
+            maxLength={255}
+          />
 
-          <button
+          <Button
             type="submit"
             disabled={isSubmitting}
-            className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
+            className="w-full"
           >
             {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
-            进入学习
-          </button>
+            进入学习空间
+          </Button>
         </form>
+      </SurfaceCard>
       </div>
     </main>
   )
