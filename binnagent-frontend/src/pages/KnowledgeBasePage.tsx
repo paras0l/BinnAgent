@@ -270,8 +270,8 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice }
           <p className="mt-2 text-sm text-slate-500">沿着课本顺序学习，也可以从知识点自由探索。</p>
 
           <div className="mt-5">
-            <StatusBanner title="教材学习工作台" tone="info">
-              教材结构、单元学习、练习任务和解析证据保持在同一个全宽工作台中；右侧面板用于展示来源、解析状态和推荐原因。
+            <StatusBanner title="今日教材学习" tone="info">
+              先完成当前单元的小目标；练习结果会用于安排后续复习。
             </StatusBanner>
           </div>
 

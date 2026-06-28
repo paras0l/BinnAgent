@@ -416,7 +416,7 @@ export function ExplorePage({
       <FeatureHero
         eyebrow="Explore"
         title="探索专项技能"
-        description="这里不是今日主线，而是专项训练工具箱。按场景选择工具，可用功能进入真实学习流程，待开发能力会明确标记。"
+        description="选择一个想加强的场景，进入对应练习；暂未开放的能力会清楚标记。"
         stats={[
           { label: '可用入口', value: FEATURES.filter((feature) => feature.status === 'ready').length, tone: 'success' },
           { label: '待开发', value: FEATURES.filter((feature) => feature.status === 'todo').length, tone: 'warning' },

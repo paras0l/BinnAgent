@@ -469,7 +469,7 @@ export function GrammarPage({ learner, onBack, backLabel = '返回探索', initi
       <FeatureHero
         eyebrow="Grammar Workspace"
         title="语法微知识点"
-        description="按选择知识点、生成指令、回填预览、练习沉淀四个工作区组织外部 AI 生成链路。HTML 回填不会直接当作事实，先预览再沉淀。"
+        description="选择一个小知识点，生成可读讲解并完成配套练习；保存前先预览内容。"
         stats={[
           { label: '知识点', value: topicOptions.length },
           { label: '已缓存', value: Object.keys(htmlByTopicId).length, tone: 'success' },

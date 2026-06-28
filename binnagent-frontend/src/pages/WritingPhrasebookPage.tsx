@@ -861,7 +861,7 @@ function PhraseDetailPanel({
       <SurfaceCard className="flex min-h-[520px] flex-col items-center justify-center text-center">
         <BookMarked className="h-10 w-10 text-slate-300" />
         <h2 className="mt-4 text-lg font-semibold text-slate-950">选择一句好句开始学习</h2>
-        <p className="mt-2 max-w-sm text-sm leading-6 text-slate-500">左侧列表负责快速识别，右侧详情会集中展示“何时用、何时不用、例句和误用”。</p>
+        <p className="mt-2 max-w-sm text-sm leading-6 text-slate-500">先挑一句你想掌握的表达，查看用法、例句和常见误用。</p>
       </SurfaceCard>
     )
   }

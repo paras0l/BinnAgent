@@ -678,7 +678,7 @@ export function PronunciationPage({ learner }: PronunciationPageProps) {
       <FeatureHero
         eyebrow="Pronunciation Workspace"
         title="发音训练"
-        description="按音标卡片、跟读训练、易混音和训练记录组织发音技能。先用图像建立声音连接，再进入详情练目标音素。"
+        description="先听目标音，再跟读对比；每天练 5 个音标就能稳定推进。"
         stats={[
           { label: '音标总数', value: PHONEMES.length },
           { label: '已练习', value: completedCount, tone: 'success' },

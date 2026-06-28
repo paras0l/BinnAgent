@@ -216,7 +216,7 @@ export function DashboardPage({ learner, onOpenDailyLearning, onStartVocabularyP
       <FeatureHero
         eyebrow="Vocabulary Workspace"
         title="背单词"
-        description="按新词学习、今日复习、词汇本和错因掌握组织词汇资产，避免把管理信息挤进练习流。"
+        description="先处理到期复习，再补充新词；每次评分都会更新下一次复习时间。"
         actions={
           <>
             <Button variant="secondary" onClick={() => setActiveWorkspace('home')}><ArrowLeft className="size-4" />返回学习中心</Button>

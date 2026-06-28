@@ -454,7 +454,7 @@ export function VocabularyPracticePage({
         <section className="mx-auto grid h-full w-full max-w-[1420px] grid-rows-[minmax(0,1fr)_auto] gap-3 lg:grid-cols-[minmax(0,1fr)_320px] lg:grid-rows-1">
           <section className="flex min-h-0 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
             <div className="shrink-0 border-b border-slate-100 px-4 py-3 sm:px-5">
-              <p className="text-xs font-black uppercase tracking-[0.18em] text-indigo-600">主任务区</p>
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-indigo-600">当前任务</p>
             </div>
             <div className={`min-h-0 flex-1 overflow-y-auto p-4 sm:p-5 ${mode === 'review' && isReviewRevealed ? '' : 'flex items-center justify-center text-center'}`}>
               <div className="w-full">
@@ -583,7 +583,7 @@ function TaskSupportPanel({
   return (
     <aside className="flex min-h-0 flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
       <div>
-        <p className="text-xs font-black uppercase tracking-[0.18em] text-indigo-600">学习辅助区</p>
+        <p className="text-xs font-black uppercase tracking-[0.18em] text-indigo-600">学习提示</p>
         <h2 className="mt-2 text-lg font-black text-slate-950">{modeLabel}</h2>
         <p className="mt-2 text-sm leading-6 text-slate-500">{guidance}</p>
       </div>
