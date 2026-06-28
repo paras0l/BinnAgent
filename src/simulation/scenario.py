@@ -53,7 +53,7 @@ class SimulationReport:
                     "name": step.name,
                     "status": step.status,
                     "evidence": step.evidence,
-                    "output": step.output,
+                    "output": _json_safe(step.output),
                     "failures": step.failures,
                 }
                 for step in self.steps
@@ -61,3 +61,25 @@ class SimulationReport:
             "metrics": self.metrics,
             "failures": self.failures,
         }
+
+
+def _json_safe(value: Any) -> Any:
+    if value is None or isinstance(value, str | int | float | bool):
+        return value
+    if isinstance(value, uuid.UUID):
+        return str(value)
+    if isinstance(value, datetime):
+        return value.isoformat()
+    if isinstance(value, dict):
+        return {str(key): _json_safe(item) for key, item in value.items()}
+    if isinstance(value, list | tuple | set):
+        return [_json_safe(item) for item in value]
+
+    content = getattr(value, "content", None)
+    if content is not None:
+        return {
+            "type": value.__class__.__name__,
+            "content": _json_safe(content),
+        }
+
+    return str(value)
