@@ -1,10 +1,9 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   ArrowLeft,
   ArrowRight,
   BookOpen,
   CalendarDays,
-  CheckCircle2,
   Clock3,
   Plus,
   RefreshCw,
@@ -398,11 +397,6 @@ function LearningCenterHome({
   const todayPercent = toPercent(summary.today_goal.completed, summary.today_goal.total)
   const dueCount = summary.stats.today_reviews
   const completedReviews = summary.stats.today_completed_reviews
-  const heatmapValues = summary.daily_activity.length === 14
-    ? summary.daily_activity.map((item) => item.count)
-    : Array.from({ length: 14 }, () => 0)
-  const maxLearningAmount = Math.max(...heatmapValues, 1)
-
   const focusReasons = buildFocusReasons(summary)
 
   return (
@@ -411,111 +405,161 @@ function LearningCenterHome({
           eyebrow="Learning Center"
           title="学习中心"
           description={`${learnerName}，今天从一个明确任务开始，把知识真正学会。`}
-          stats={[
-            { label: '今日进度', value: `${summary.today_goal.completed}/${summary.today_goal.total}`, tone: todayPercent >= 100 ? 'success' : 'primary' },
-            { label: '待复习', value: dueCount, tone: dueCount > 0 ? 'warning' : 'success' },
-            { label: '连续学习', value: `${summary.stats.streak_days} 天` },
-            { label: '本周目标', value: `${summary.weekly_goal.completed}/${summary.weekly_goal.total}` },
-          ]}
+          actions={
+            <>
+              <Button onClick={onOpenDailyLearning}>查看今日任务 <ArrowRight className="size-4" /></Button>
+              <Button variant="secondary" onClick={() => onStartVocabularyPractice('review')}>词汇复习</Button>
+            </>
+          }
         />
 
-        <TodayFocusCard
-          reasons={focusReasons}
-          dueCount={dueCount}
-          completedReviews={completedReviews}
-          onOpenDailyLearning={onOpenDailyLearning}
-          onStartVocabularyReview={() => onStartVocabularyPractice('review')}
-        />
+        <section className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">
+          <div className="grid gap-5">
+            <TodayFocusCard
+              reasons={focusReasons}
+              onOpenDailyLearning={onOpenDailyLearning}
+              onStartVocabularyReview={() => onStartVocabularyPractice('review')}
+            />
+            <ReviewQueueCard
+              dueCount={dueCount}
+              completedReviews={completedReviews}
+              firstReviewWord={summary.review_items[0]?.word}
+              onOpenVocabulary={onOpenVocabulary}
+              onReview={() => onStartVocabularyPractice('review')}
+              onSpelling={() => onStartVocabularyPractice('spelling')}
+            />
+          </div>
 
-        <section className="grid gap-5 lg:grid-cols-[1.05fr_0.95fr]">
-          <ContinueLearningCard
-            todayPercent={todayPercent}
-            summary={summary}
-            onOpenDailyLearning={onOpenDailyLearning}
-          />
-          <ReviewQueueCard
-            dueCount={dueCount}
-            completedReviews={completedReviews}
-            firstReviewWord={summary.review_items[0]?.word}
-            onOpenVocabulary={onOpenVocabulary}
-            onReview={() => onStartVocabularyPractice('review')}
-            onSpelling={() => onStartVocabularyPractice('spelling')}
-          />
+          <aside className="grid gap-4">
+            <LearningProgressPanel
+              summary={summary}
+              todayPercent={todayPercent}
+              onOpenDailyLearning={onOpenDailyLearning}
+            />
+            <LearningCalendarPanel summary={summary} />
+            <QuickStartPanel
+              onOpenDailyLearning={onOpenDailyLearning}
+              onOpenVocabulary={onOpenVocabulary}
+              onStartVocabularyPractice={onStartVocabularyPractice}
+            />
+          </aside>
         </section>
-
-        <SkillProgressGrid
-          summary={summary}
-          onOpenDailyLearning={onOpenDailyLearning}
-          onOpenVocabulary={onOpenVocabulary}
-          onStartVocabularyPractice={onStartVocabularyPractice}
-        />
 
         <MemoryReasonSection summary={summary} reasons={focusReasons} />
-
-        <section className="grid gap-4 pb-8 lg:grid-cols-[1fr_0.8fr_0.8fr]">
-          <DataPanel title="今日进度" icon={CheckCircle2}>
-            <div className="mt-7 flex items-end gap-2">
-              <strong className="text-4xl font-black leading-none text-slate-950">
-                {summary.today_goal.completed}
-              </strong>
-              <span className="pb-0.5 text-xl font-bold text-slate-400">/ {summary.today_goal.total} 项</span>
-            </div>
-            <p className="mt-3 text-sm text-slate-500">{summary.today_goal.label}</p>
-            <ProgressBar value={todayPercent} className="mt-4" />
-            <p className="mt-3 text-xs font-semibold text-slate-500">
-              {todayPercent >= 100 ? '今日目标已完成' : `还差 ${Math.max(summary.today_goal.total - summary.today_goal.completed, 0)} 项完成今日目标`}
-            </p>
-          </DataPanel>
-
-          <DataPanel title="学习日历" icon={CalendarDays}>
-            <div className="mt-4 flex items-baseline gap-2 text-slate-600">
-              <span className="text-sm">连续</span>
-              <strong className="text-3xl font-black text-slate-950">{summary.stats.streak_days}</strong>
-              <span className="text-sm">天</span>
-            </div>
-            <div className="mt-5 grid grid-cols-7 gap-2" aria-label="最近两周每日学习量">
-              {heatmapValues.map((amount, index) => {
-                const intensity = amount === 0 ? 0 : 0.14 + (amount / maxLearningAmount) * 0.86
-                return (
-                  <div
-                    key={`${index}-${amount}`}
-                    className="aspect-square rounded-[4px] bg-slate-100"
-                    style={amount === 0 ? undefined : { backgroundColor: `rgb(99 102 241 / ${intensity.toFixed(2)})` }}
-                    title={`学习量 ${amount}`}
-                    aria-label={`第 ${index + 1} 天，学习量 ${amount}`}
-                  />
-                )
-              })}
-            </div>
-            <div className="mt-3 flex items-center justify-between text-[11px] font-semibold text-slate-400">
-              <span>两周前</span>
-              <span>颜色越深，学习量越大</span>
-              <span>今天</span>
-            </div>
-          </DataPanel>
-
-          <DataPanel title="复习概览" icon={Clock3}>
-            <div className="mt-10 grid grid-cols-3 divide-x divide-slate-200 text-center">
-              <Metric label="待复习" value={dueCount} />
-              <Metric label="正确率" value={`${summary.stats.accuracy}%`} />
-              <Metric label="词汇" value={summary.stats.total_vocab} />
-            </div>
-          </DataPanel>
-        </section>
     </PageShell>
+  )
+}
+
+function LearningProgressPanel({
+  summary,
+  todayPercent,
+  onOpenDailyLearning,
+}: {
+  summary: DashboardSummary
+  todayPercent: number
+  onOpenDailyLearning: () => void
+}) {
+  return (
+    <SurfaceCard>
+      <div className="flex items-center gap-2">
+        <Target className="size-4 text-primary" />
+        <h2 className="text-base font-black text-slate-950">今日进度</h2>
+      </div>
+      <button
+        type="button"
+        onClick={onOpenDailyLearning}
+        className="mt-4 w-full rounded-xl border border-indigo-100 bg-indigo-50 px-4 py-4 text-left transition hover:border-indigo-300 hover:bg-indigo-100/70"
+      >
+        <div className="flex items-end justify-between gap-3">
+          <span className="text-sm font-bold text-indigo-700">{summary.today_goal.label}</span>
+          <strong className="text-3xl font-black leading-none text-indigo-900">
+            {summary.today_goal.completed}/{summary.today_goal.total}
+          </strong>
+        </div>
+        <ProgressBar value={todayPercent} className="mt-4 bg-indigo-100" />
+        <p className="mt-3 text-xs font-semibold text-indigo-700">
+          {todayPercent >= 100 ? '今日任务已完成，点击查看记录。' : '点击查看今天具体要完成的教材任务。'}
+        </p>
+      </button>
+      <div className="mt-3 rounded-xl border border-slate-200 px-4 py-3">
+        <div className="flex items-center justify-between text-sm">
+          <span className="font-bold text-slate-600">{summary.weekly_goal.label}</span>
+          <span className="font-black text-slate-950">{summary.weekly_goal.completed}/{summary.weekly_goal.total}</span>
+        </div>
+        <ProgressBar value={toPercent(summary.weekly_goal.completed, summary.weekly_goal.total)} className="mt-3" />
+      </div>
+    </SurfaceCard>
+  )
+}
+
+function LearningCalendarPanel({ summary }: { summary: DashboardSummary }) {
+  const activity = summary.daily_activity.length > 0 ? summary.daily_activity : []
+  const maxLearningAmount = Math.max(...activity.map((item) => item.count), 1)
+
+  return (
+    <SurfaceCard>
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <CalendarDays className="size-4 text-primary" />
+          <h2 className="text-base font-black text-slate-950">学习日历</h2>
+        </div>
+        <div className="text-right">
+          <p className="text-xs font-semibold text-slate-500">连续学习</p>
+          <p className="text-lg font-black text-slate-950">{summary.stats.streak_days} 天</p>
+        </div>
+      </div>
+
+      <div className="mt-5 grid grid-cols-7 gap-2" aria-label="最近两周每日学习量">
+        {activity.map((item) => {
+          const intensity = item.count === 0 ? 0 : 0.14 + (item.count / maxLearningAmount) * 0.86
+          const label = `${formatActivityDate(item.date)}，学习量 ${item.count}`
+          return (
+            <div
+              key={item.date}
+              className="aspect-square rounded-[4px] bg-slate-100 ring-1 ring-inset ring-slate-200/70 transition hover:scale-110 hover:ring-indigo-300"
+              style={item.count === 0 ? undefined : { backgroundColor: `rgb(99 102 241 / ${intensity.toFixed(2)})` }}
+              title={label}
+              aria-label={label}
+            />
+          )
+        })}
+      </div>
+      <div className="mt-3 flex items-center justify-between text-[11px] font-semibold text-slate-400">
+        <span>{activity[0] ? formatMonthDay(activity[0].date) : '两周前'}</span>
+        <span>颜色越深，学习越多</span>
+        <span>{activity.at(-1) ? formatMonthDay(activity.at(-1)!.date) : '今天'}</span>
+      </div>
+    </SurfaceCard>
+  )
+}
+
+function QuickStartPanel({
+  onOpenDailyLearning,
+  onOpenVocabulary,
+  onStartVocabularyPractice,
+}: {
+  onOpenDailyLearning: () => void
+  onOpenVocabulary: () => void
+  onStartVocabularyPractice: (mode: VocabularyPracticeMode) => void
+}) {
+  return (
+    <SurfaceCard>
+      <h2 className="text-base font-black text-slate-950">快速开始</h2>
+      <div className="mt-4 grid gap-2">
+        <Button className="w-full justify-between" onClick={onOpenDailyLearning}>继续教材 <ArrowRight className="size-4" /></Button>
+        <Button variant="secondary" className="w-full justify-between" onClick={() => onStartVocabularyPractice('review')}>今日复习 <ArrowRight className="size-4" /></Button>
+        <Button variant="ghost" className="w-full justify-between" onClick={onOpenVocabulary}>词汇本 <ArrowRight className="size-4" /></Button>
+      </div>
+    </SurfaceCard>
   )
 }
 
 function TodayFocusCard({
   reasons,
-  dueCount,
-  completedReviews,
   onOpenDailyLearning,
   onStartVocabularyReview,
 }: {
   reasons: string[]
-  dueCount: number
-  completedReviews: number
   onOpenDailyLearning: () => void
   onStartVocabularyReview: () => void
 }) {
@@ -541,46 +585,11 @@ function TodayFocusCard({
             </div>
           </div>
         </div>
-        <div className="w-full shrink-0 rounded-lg border border-slate-200 bg-white p-4 lg:w-64">
-          <div className="grid grid-cols-2 gap-3 text-center">
-            <div>
-              <p className="text-xs font-semibold text-slate-500">待复习</p>
-              <p className="mt-1 text-2xl font-black text-slate-950">{dueCount}</p>
-            </div>
-            <div>
-              <p className="text-xs font-semibold text-slate-500">已完成</p>
-              <p className="mt-1 text-2xl font-black text-emerald-600">{completedReviews}</p>
-            </div>
-          </div>
+        <div className="w-full shrink-0 rounded-lg border border-slate-200 bg-white p-4 lg:w-56">
+          <p className="text-sm font-bold leading-6 text-slate-600">先进入今日任务查看具体练习，再按需要单独处理词汇复习。</p>
           <Button className="mt-4 w-full" onClick={onOpenDailyLearning}>开始今日学习</Button>
           <Button variant="secondary" className="mt-2 w-full" onClick={onStartVocabularyReview}>只做词汇复习</Button>
         </div>
-      </div>
-    </SurfaceCard>
-  )
-}
-
-function ContinueLearningCard({ todayPercent, summary, onOpenDailyLearning }: { todayPercent: number; summary: DashboardSummary; onOpenDailyLearning: () => void }) {
-  return (
-    <SurfaceCard>
-      <div className="flex items-start gap-4">
-        <div className="flex size-12 shrink-0 items-center justify-center rounded-xl border border-indigo-200 bg-indigo-50 text-indigo-600">
-          <BookOpen className="size-6" strokeWidth={1.8} />
-        </div>
-        <div>
-          <h3 className="text-xl font-black text-slate-950">继续教材学习</h3>
-          <p className="mt-1 text-sm leading-6 text-slate-500">Starter Unit 1 · Good morning!</p>
-        </div>
-      </div>
-      <ProgressBar value={todayPercent} className="mt-5" />
-      <div className="mt-2 flex justify-between text-xs font-semibold text-slate-500">
-        <span>学习进度 {todayPercent}%</span>
-        <span>{summary.today_goal.completed} / {summary.today_goal.total} 节已完成</span>
-      </div>
-      <p className="mt-4 text-sm leading-6 text-slate-600">下一步：回到教材语境，完成问候表达和核心词汇练习。</p>
-      <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-        <Button onClick={onOpenDailyLearning}>继续学习</Button>
-        <Button variant="ghost" onClick={onOpenDailyLearning}>选择教材 <ArrowRight className="size-4" /></Button>
       </div>
     </SurfaceCard>
   )
@@ -608,28 +617,6 @@ function ReviewQueueCard({ dueCount, completedReviews, firstReviewWord, onOpenVo
         <Button variant="secondary" onClick={onSpelling}>拼写练习</Button>
         <Button variant="ghost" onClick={onOpenVocabulary}>词汇本</Button>
       </div>
-    </SurfaceCard>
-  )
-}
-
-function SkillProgressGrid({ summary, onOpenDailyLearning, onOpenVocabulary, onStartVocabularyPractice }: { summary: DashboardSummary; onOpenDailyLearning: () => void; onOpenVocabulary: () => void; onStartVocabularyPractice: (mode: VocabularyPracticeMode) => void }) {
-  return (
-    <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-      <SkillProgressCard title="词汇" status={`${summary.stats.today_reviews} 个待复习`} nextAction="先做今日复习，再处理拼写不稳定词。" actionLabel="开始" onAction={() => onStartVocabularyPractice('review')} />
-      <SkillProgressCard title="教材知识" status={`${summary.today_goal.completed}/${summary.today_goal.total} 项`} nextAction="继续 Starter Unit 1 的材料和练习。" actionLabel="继续" onAction={onOpenDailyLearning} />
-      <SkillProgressCard title="写作表达" status="表达资产待练习" nextAction="去好句收藏馆沉淀递进、转折和总结表达。" actionLabel="管理" onAction={onOpenVocabulary} />
-      <SkillProgressCard title="语法" status={summary.error_patterns.length > 0 ? `${summary.error_patterns.length} 类薄弱点` : '暂无明显薄弱点'} nextAction="从推荐原因里选择一个小知识点练习。" actionLabel="查看" onAction={onOpenDailyLearning} />
-    </section>
-  )
-}
-
-function SkillProgressCard({ title, status, nextAction, actionLabel, onAction }: { title: string; status: string; nextAction: string; actionLabel: string; onAction: () => void }) {
-  return (
-    <SurfaceCard>
-      <h3 className="text-base font-black text-slate-950">{title}</h3>
-      <p className="mt-2 text-sm font-semibold text-primary">{status}</p>
-      <p className="mt-2 min-h-12 text-sm leading-6 text-slate-500">{nextAction}</p>
-      <Button variant="secondary" className="mt-4 w-full" onClick={onAction}>{actionLabel}</Button>
     </SurfaceCard>
   )
 }
@@ -671,18 +658,6 @@ function buildFocusReasons(summary: DashboardSummary) {
   return reasons.length > 0 ? reasons : ['今天没有明显积压任务，可以用一节 10 分钟教材练习建立学习节奏。']
 }
 
-function DataPanel({ title, icon: Icon, children }: { title: string; icon: typeof CalendarDays; children: ReactNode }) {
-  return (
-    <article className="min-h-[228px] w-full rounded-[13px] border border-slate-200 bg-white px-4 pb-2 pt-4 shadow-[0_4px_14px_rgba(15,23,42,0.06)]">
-      <div className="flex items-center gap-2">
-        <Icon className="size-[18px] text-indigo-600" strokeWidth={1.9} />
-        <h2 className="font-black text-slate-900">{title}</h2>
-      </div>
-      {children}
-    </article>
-  )
-}
-
 function Metric({ label, value }: { label: string; value: string | number }) {
   return <div className="px-2"><p className="text-xs font-semibold text-slate-500">{label}</p><p className="mt-4 text-2xl font-black text-slate-950">{value}</p></div>
 }
@@ -693,6 +668,21 @@ function ProgressBar({ value, className = '' }: { value: number; className?: str
 
 function toPercent(completed: number, total: number) {
   return total > 0 ? Math.round((completed / total) * 100) : 0
+}
+
+function formatActivityDate(date: string) {
+  return new Date(`${date}T00:00:00`).toLocaleDateString('zh-CN', {
+    month: 'long',
+    day: 'numeric',
+    weekday: 'short',
+  })
+}
+
+function formatMonthDay(date: string) {
+  return new Date(`${date}T00:00:00`).toLocaleDateString('zh-CN', {
+    month: 'numeric',
+    day: 'numeric',
+  })
 }
 
 
