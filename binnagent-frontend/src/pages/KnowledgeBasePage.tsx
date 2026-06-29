@@ -53,6 +53,7 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice }
   const [filter, setFilter] = useState<KnowledgeFilter>('all')
   const [workspace, setWorkspace] = useState<KnowledgeWorkspace>('unit')
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null)
+  const [selectedSourceId, setSelectedSourceId] = useState<string | null>(null)
   const [selectedReviewId, setSelectedReviewId] = useState<string | null>(null)
   const [isUploadOpen, setIsUploadOpen] = useState(false)
   const [confirmReviewItem, setConfirmReviewItem] = useState<KnowledgeReviewItem | null>(null)
@@ -64,16 +65,20 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice }
   const [exerciseSession, setExerciseSession] = useState<ExerciseSession | null>(null)
   const [isStartingExercise, setIsStartingExercise] = useState(false)
 
-  const loadOverview = useCallback(async (nodeId?: string | null) => {
+  const loadOverview = useCallback(async (sourceId?: string | null, nodeId?: string | null) => {
     setIsLoading(true)
     setError(null)
     try {
-      const query = nodeId ? `?node_id=${encodeURIComponent(nodeId)}` : ''
+      const params = new URLSearchParams()
+      if (sourceId) params.set('source_id', sourceId)
+      if (nodeId) params.set('node_id', nodeId)
+      const query = params.toString() ? `?${params.toString()}` : ''
       const response = await fetch(`/api/learners/${learner.id}/knowledge-base${query}`)
       if (!response.ok) throw new Error('知识库暂时无法加载。')
       const data = await response.json() as KnowledgeBaseOverview
       setOverview(data)
       setSelectedNodeId(data.current_node_id)
+      setSelectedSourceId(data.source.id)
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : '知识库暂时无法加载。')
     } finally {
@@ -138,7 +143,8 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice }
     }
     const ingestResult = await ingestResponse.json() as { message: string }
     showToast(ingestResult.message, { variant: 'success', duration: 6000 })
-    await loadOverview()
+    setSelectedSourceId(result.source_id)
+    await loadOverview(result.source_id)
   }
 
   const handleStartLesson = async () => {
@@ -160,7 +166,16 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice }
   const handleSelectNode = (nodeId: string) => {
     if (nodeId === selectedNodeId) return
     setSelectedNodeId(nodeId)
-    void loadOverview(nodeId)
+    void loadOverview(selectedSourceId ?? overview?.source.id, nodeId)
+  }
+
+  const handleSelectSource = (sourceId: string) => {
+    if (sourceId === selectedSourceId) return
+    setSelectedSourceId(sourceId)
+    setSelectedNodeId(null)
+    setSelectedReviewId(null)
+    setUnitVocabulary(null)
+    void loadOverview(sourceId)
   }
 
   const handleAttempt = async (knowledgePointId: string, correct: boolean) => {
@@ -190,10 +205,10 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice }
     setLessonSession(null)
     if (result.next_node_id) {
       showToast(`本单元已完成，接下来学习「${result.next_unit_title}」。`, { variant: 'success', duration: 6000 })
-      await loadOverview(result.next_node_id)
+      await loadOverview(selectedSourceId ?? overview?.source.id, result.next_node_id)
     } else {
       showToast('恭喜，你已经完成本册全部课程！', { variant: 'success', duration: 6000 })
-      await loadOverview()
+      await loadOverview(selectedSourceId ?? overview?.source.id)
     }
   }
 
@@ -247,7 +262,7 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice }
       if (!response.ok) throw new Error('校对结果保存失败，请重试。')
       showToast(action === 'ignore' ? '已忽略该解析项。' : '已确认解析项并进入教材知识库。', { variant: 'success' })
       setConfirmReviewItem(null)
-      await loadOverview(selectedNodeId)
+      await loadOverview(selectedSourceId ?? overview?.source.id, selectedNodeId)
     } catch (reviewError) {
       showToast(reviewError instanceof Error ? reviewError.message : '校对结果保存失败，请重试。', { variant: 'error' })
     } finally {
@@ -271,13 +286,14 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice }
           <AlertCircle className="mx-auto size-8 text-amber-500" />
           <h1 className="mt-4 text-xl font-extrabold text-slate-950">知识库暂时不可用</h1>
           <p className="mt-2 text-sm text-slate-500">{error}</p>
-          <button type="button" onClick={() => void loadOverview()} className="mt-5 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-bold text-white">重新加载</button>
+          <button type="button" onClick={() => void loadOverview(selectedSourceId)} className="mt-5 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-bold text-white">重新加载</button>
         </div>
       </div>
     )
   }
 
   const activeUnitVocabulary = unitVocabulary?.unit_id === overview.current_unit.id ? unitVocabulary : null
+  const currentSourceLabel = `${overview.source.title} · ${overview.current_unit.title}`
 
   if (grammarTopic) {
     return (
@@ -307,7 +323,11 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice }
       <CurriculumRail
         nodes={overview.curriculum}
         currentNodeId={selectedNodeId ?? overview.current_node_id}
+        sourceTitle={overview.source.title}
+        sources={overview.sources}
+        currentSourceId={overview.source.id}
         progress={overview.source.progress}
+        onSourceChange={handleSelectSource}
         onSelect={handleSelectNode}
         onManage={() => setIsUploadOpen(true)}
       />
@@ -316,7 +336,7 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice }
         <div className="mx-auto max-w-4xl">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-black tracking-tight text-slate-950">七年级英语教材工作台</h1>
+              <h1 className="text-3xl font-black tracking-tight text-slate-950">英语教材工作台</h1>
               <p className="mt-2 text-sm text-slate-500">教材结构、单元学习、练习任务和解析校对在这里形成闭环。</p>
             </div>
             <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-right shadow-sm">
@@ -391,8 +411,8 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice }
                 <span>已掌握 {activeUnitVocabulary?.mastered ?? '—'}</span>
               </div>
               <div className="mt-3 grid gap-3 sm:grid-cols-3">
-                <button type="button" onClick={() => onStartVocabularyPractice('new', overview.current_unit.id, `七上 · ${overview.current_unit.title}`)} className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-black text-emerald-700 transition hover:border-emerald-300">认识本单元新词</button>
-                <button type="button" onClick={() => onStartVocabularyPractice('spelling', overview.current_unit.id, `七上 · ${overview.current_unit.title}`)} className="rounded-xl bg-indigo-600 px-4 py-3 text-sm font-black text-white transition hover:bg-indigo-700">练习本单元拼写</button>
+                <button type="button" onClick={() => onStartVocabularyPractice('new', overview.current_unit.id, currentSourceLabel)} className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-black text-emerald-700 transition hover:border-emerald-300">认识本单元新词</button>
+                <button type="button" onClick={() => onStartVocabularyPractice('spelling', overview.current_unit.id, currentSourceLabel)} className="rounded-xl bg-indigo-600 px-4 py-3 text-sm font-black text-white transition hover:bg-indigo-700">练习本单元拼写</button>
                 <button type="button" disabled={isStartingExercise} onClick={() => void handleStartExercise()} className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-black text-white transition hover:bg-emerald-700 disabled:opacity-60">
                   {isStartingExercise ? <LoaderCircle className="size-4 animate-spin" /> : null}
                   教材练习题
@@ -412,7 +432,7 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice }
               overview={overview}
               isStartingExercise={isStartingExercise}
               onStartExercise={() => void handleStartExercise()}
-              onStartSpelling={() => onStartVocabularyPractice('spelling', overview.current_unit.id, `七上 · ${overview.current_unit.title}`)}
+              onStartSpelling={() => onStartVocabularyPractice('spelling', overview.current_unit.id, currentSourceLabel)}
             />
           ) : null}
 
@@ -451,7 +471,7 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice }
         session={lessonSession}
         onClose={() => {
           setLessonSession(null)
-          void loadOverview()
+          void loadOverview(selectedSourceId ?? overview.source.id)
         }}
         onAttempt={handleAttempt}
         onComplete={handleCompleteLesson}

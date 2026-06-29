@@ -28,9 +28,13 @@ def canonical_vocabulary_key(value: str) -> str:
 
 
 def source_label(source: KnowledgeSource, node: CurriculumNode) -> str:
-    volume = (
-        "七上" if source.volume == "upper" else "七下" if source.volume == "lower" else "七年级"
-    )
+    grade_label = {
+        "grade-7": "七年级",
+        "grade-8": "八年级",
+        "grade-9": "九年级",
+    }.get(source.grade, source.title)
+    volume_label = "上" if source.volume == "upper" else "下" if source.volume == "lower" else ""
+    volume = f"{grade_label}{volume_label}"
     unit = node.title.replace("Starter Unit", "SU").replace("Unit", "U").replace(" ", "")
     return f"{volume} · {unit}"
 
@@ -122,7 +126,7 @@ async def enroll_unit_vocabulary(
                 audio_url=dictionary_entry.audio_url if dictionary_entry else None,
                 audio_uk=dictionary_entry.audio_uk if dictionary_entry else None,
                 audio_us=dictionary_entry.audio_us if dictionary_entry else None,
-                level="grade-7",
+                level=source.grade,
                 meanings=dictionary_entry.meanings if dictionary_entry else [],
                 dictionary_senses=(
                     dictionary_entry.dictionary_senses if dictionary_entry else []

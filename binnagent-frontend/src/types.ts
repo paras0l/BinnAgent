@@ -87,8 +87,11 @@ export interface KnowledgeBaseOverview {
   source: {
     id: string
     title: string
+    filename: string
     publisher: string
     edition: string
+    grade: string
+    volume?: string | null
     status: 'draft' | 'processing' | 'review_required' | 'published' | 'failed' | 'partial_indexed' | 'index_failed'
     unit_count: number
     knowledge_count: number
@@ -96,6 +99,21 @@ export interface KnowledgeBaseOverview {
     requires_review?: boolean
     page_count?: number | null
   }
+  sources: Array<{
+    id: string
+    title: string
+    filename: string
+    publisher: string
+    edition: string
+    grade: string
+    volume?: string | null
+    status: 'draft' | 'processing' | 'review_required' | 'published' | 'failed' | 'partial_indexed' | 'index_failed'
+    unit_count: number
+    knowledge_count: number
+    progress: number
+    requires_review?: boolean
+    page_count?: number | null
+  }>
   curriculum: CurriculumNode[]
   current_node_id: string
   current_unit: {

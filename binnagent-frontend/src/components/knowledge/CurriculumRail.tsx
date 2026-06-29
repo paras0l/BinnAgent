@@ -1,10 +1,14 @@
 import { BookMarked, Check, Circle } from 'lucide-react'
-import type { CurriculumNode } from '@/types'
+import type { CurriculumNode, KnowledgeBaseOverview } from '@/types'
 
 interface CurriculumRailProps {
   nodes: CurriculumNode[]
   currentNodeId: string
+  sourceTitle: string
+  sources: KnowledgeBaseOverview['sources']
+  currentSourceId: string
   progress: number
+  onSourceChange: (sourceId: string) => void
   onSelect: (nodeId: string) => void
   onManage: () => void
 }
@@ -12,14 +16,34 @@ interface CurriculumRailProps {
 export function CurriculumRail({
   nodes,
   currentNodeId,
+  sourceTitle,
+  sources,
+  currentSourceId,
   progress,
+  onSourceChange,
   onSelect,
   onManage,
 }: CurriculumRailProps) {
   return (
     <aside className="knowledge-rail flex min-h-[calc(100vh-4rem)] flex-col border-r border-slate-200 bg-white px-5 py-7">
       <div>
-        <h2 className="text-lg font-extrabold tracking-tight text-slate-950">七年级上册</h2>
+        <h2 className="text-lg font-extrabold tracking-tight text-slate-950">{sourceTitle}</h2>
+        {sources.length > 1 ? (
+          <label className="mt-4 block">
+            <span className="text-xs font-bold text-slate-500">切换教材</span>
+            <select
+              value={currentSourceId}
+              onChange={(event) => onSourceChange(event.target.value)}
+              className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-800 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+            >
+              {sources.map((source) => (
+                <option key={source.id} value={source.id}>
+                  {source.title}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : null}
         <div className="mt-4 flex items-center justify-between text-sm text-slate-500">
           <span>进度</span>
           <span className="font-semibold text-slate-700">{Math.round(progress * 100)}%</span>

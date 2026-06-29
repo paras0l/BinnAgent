@@ -3,6 +3,7 @@ import uuid
 from src.knowledge.processor import (
     GRADE7_UPPER_GRAMMAR_TOPICS,
     PEP_GRADE7_LOWER_UNITS,
+    _known_lower_vocabulary_entries,
     _known_knowledge,
     _parse_notes_on_the_text,
     _parse_pronunciation,
@@ -44,6 +45,16 @@ def test_known_grade7_unit_generates_traceable_draft_knowledge() -> None:
     assert point.status == "draft"
     assert point.content["origin"] == "verified_toc_fallback"
     assert point.content["requires_review"] is True
+
+
+def test_known_lower_vocabulary_fallback_requires_review() -> None:
+    entries = _known_lower_vocabulary_entries()
+
+    assert len(entries) >= 90
+    assert entries[0].unit_title == "Unit 1"
+    assert entries[0].expression == "guitar"
+    assert entries[0].confidence == 0.7
+    assert entries[0].warnings == ("fallback_vocabulary",)
 
 
 def test_unit_wordlist_parser_keeps_only_unit_expression_and_order() -> None:
@@ -105,6 +116,38 @@ def test_book_manifest_and_profile_are_loaded_for_known_textbook() -> None:
     assert profile.id == "pep_grade7_upper_v1"
     assert "telephone number" in profile.expected_core_vocabulary
     assert find_book_manifest("missing.pdf") is None
+
+    lower_manifest, lower_profile = profile_for_source("七年级下册.pdf")
+    assert lower_manifest is not None
+    assert lower_manifest.id == "pep-grade7-lower-2024"
+    assert lower_manifest.expected_unit_count == 12
+    assert lower_profile is not None
+    assert lower_profile.id == "pep_grade7_lower_v1"
+    assert "guitar" in lower_profile.expected_core_vocabulary
+
+
+def test_lower_wordlist_parser_accepts_generic_words_heading() -> None:
+    reader = _Reader(
+        [""] * 5
+        + [
+            """Words and Expressions
+Unit 1
+guitar /ɡɪˈtɑː(r)/ n. 吉他 p.1
+chess /tʃes/ n. 国际象棋 p.1
+Unit 2
+usually /ˈjuːʒuəli/ adv. 通常地 p.7
+"""
+        ]
+        + ["Vocabulary Index"]
+    )
+
+    entries = _parse_unit_vocabulary(reader)
+
+    assert [(item.unit_title, item.expression) for item in entries] == [
+        ("Unit 1", "guitar"),
+        ("Unit 1", "chess"),
+        ("Unit 2", "usually"),
+    ]
 
 
 def test_parser_quality_report_flags_dirty_tokens_and_low_confidence() -> None:

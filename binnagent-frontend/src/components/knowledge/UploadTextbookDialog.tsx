@@ -17,7 +17,7 @@ export function UploadTextbookDialog({ open, onClose, onUpload }: UploadTextbook
 
   const handleSubmit = async () => {
     if (!file) {
-      setError('请选择七年级英语 PDF 教材。')
+      setError('请选择英语 PDF 教材。')
       return
     }
     setIsUploading(true)
@@ -44,8 +44,8 @@ export function UploadTextbookDialog({ open, onClose, onUpload }: UploadTextbook
       >
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h2 id="upload-title" className="text-xl font-extrabold text-slate-950">上传七年级教材</h2>
-            <p className="mt-1 text-sm leading-6 text-slate-500">目前仅处理七年级英语 PDF。上传后系统会识别目录并生成知识草稿。</p>
+            <h2 id="upload-title" className="text-xl font-extrabold text-slate-950">上传英语教材</h2>
+            <p className="mt-1 text-sm leading-6 text-slate-500">支持七到九年级英语 PDF，未知教材会先生成通用目录和校对队列。</p>
           </div>
           <button type="button" onClick={onClose} className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700" aria-label="关闭">
             <X className="size-5" />

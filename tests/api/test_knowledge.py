@@ -116,6 +116,7 @@ async def test_overview_returns_ordered_curriculum_and_knowledge(client, knowled
     knowledge_session.execute = AsyncMock(
         side_effect=[
             _one(learner_id),
+            _many([source]),
             _one(source),
             _many(nodes),
             _many([]),
@@ -130,6 +131,7 @@ async def test_overview_returns_ordered_curriculum_and_knowledge(client, knowled
     assert response.status_code == 200
     data = response.json()
     assert data["source"]["title"] == "英语 七年级上册"
+    assert data["sources"][0]["id"] == str(source.id)
     assert [item["ordinal"] for item in data["curriculum"]] == [1, 2]
     assert data["knowledge_points"][0]["title"] == "Good morning!"
     assert data["daily_lesson"]["estimated_minutes"] == 20
@@ -148,6 +150,7 @@ async def test_overview_switches_content_to_requested_curriculum_node(client, kn
     knowledge_session.execute = AsyncMock(
         side_effect=[
             _one(learner_id),
+            _many([source]),
             _one(source),
             _many(nodes),
             _many([]),
@@ -163,6 +166,43 @@ async def test_overview_switches_content_to_requested_curriculum_node(client, kn
     assert response.json()["current_node_id"] == str(nodes[1].id)
     assert response.json()["current_unit"]["title"] == "Starter Unit 2"
     assert response.json()["knowledge_points"][0]["title"] == "What's this in English?"
+
+
+@pytest.mark.asyncio
+async def test_overview_can_select_source_id(client, knowledge_session):
+    learner_id = uuid.uuid4()
+    upper = _source()
+    lower = _source()
+    lower.title = "英语 七年级下册"
+    lower.filename = "七年级下册.pdf"
+    lower.volume = "lower"
+    lower.id = uuid.uuid4()
+    nodes = [_node(lower.id, 1)]
+    nodes[0].title = "Unit 1"
+    nodes[0].subtitle = "Can you play the guitar?"
+    point = _point(lower.id, nodes[0].id)
+    knowledge_session.execute = AsyncMock(
+        side_effect=[
+            _one(learner_id),
+            _many([lower, upper]),
+            _one(lower),
+            _many(nodes),
+            _many([]),
+            _many([point]),
+            _many([]),
+            _many([]),
+        ]
+    )
+
+    response = await client.get(
+        f"/api/learners/{learner_id}/knowledge-base?source_id={lower.id}"
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["source"]["id"] == str(lower.id)
+    assert data["source"]["volume"] == "lower"
+    assert [item["title"] for item in data["sources"]] == ["英语 七年级下册", "英语 七年级上册"]
 
 
 @pytest.mark.asyncio
@@ -204,6 +244,7 @@ async def test_overview_exposes_parser_review_queue(client, knowledge_session):
     knowledge_session.execute = AsyncMock(
         side_effect=[
             _one(learner_id),
+            _many([source]),
             _one(source),
             _many(nodes),
             _many([]),
@@ -361,9 +402,10 @@ async def test_attempt_updates_mastery_and_writes_memory_events(client, knowledg
 
 
 @pytest.mark.asyncio
-async def test_upload_rejects_non_grade7_filename(client, knowledge_session):
+async def test_upload_accepts_grade8_filename(client, knowledge_session, tmp_path, monkeypatch):
     learner_id = uuid.uuid4()
-    knowledge_session.execute = AsyncMock(return_value=_one(learner_id))
+    knowledge_session.execute = AsyncMock(side_effect=[_one(learner_id), _one(None)])
+    monkeypatch.setattr(settings, "knowledge_upload_dir", str(tmp_path))
 
     response = await client.post(
         f"/api/knowledge/sources/uploads?learner_id={learner_id}&filename=八年级英语.pdf",
@@ -371,8 +413,11 @@ async def test_upload_rejects_non_grade7_filename(client, knowledge_session):
         headers={"Content-Type": "application/pdf"},
     )
 
-    assert response.status_code == 422
-    assert "七年级" in response.json()["detail"]
+    assert response.status_code == 201
+    created = next(
+        item for item in knowledge_session.added_objects if isinstance(item, KnowledgeSource)
+    )
+    assert created.grade == "grade-8"
 
 
 @pytest.mark.asyncio

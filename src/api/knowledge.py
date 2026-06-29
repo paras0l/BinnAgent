@@ -177,6 +177,31 @@ def _review_item_payload(point: KnowledgePoint) -> dict[str, Any]:
     }
 
 
+def _source_payload(
+    source: KnowledgeSource,
+    *,
+    progress: float = 0.0,
+    requires_review: bool | None = None,
+) -> dict[str, Any]:
+    return {
+        "id": str(source.id),
+        "title": source.title,
+        "filename": source.filename,
+        "publisher": source.publisher or "人民教育出版社（PEP）",
+        "edition": source.edition or "人教版",
+        "grade": source.grade,
+        "volume": source.volume,
+        "status": source.status,
+        "unit_count": source.unit_count,
+        "knowledge_count": source.knowledge_count,
+        "progress": progress,
+        "requires_review": source.status == "review_required"
+        if requires_review is None
+        else requires_review,
+        "page_count": source.page_count,
+    }
+
+
 async def _ensure_learner(db: AsyncSession, learner_id: uuid.UUID) -> None:
     result = await db.execute(select(Learner.id).where(Learner.id == learner_id))
     if result.scalar_one_or_none() is None:
@@ -236,22 +261,41 @@ def _unit_point_order():
 @router.get("/api/learners/{learner_id}/knowledge-base")
 async def knowledge_base_overview(
     learner_id: uuid.UUID,
+    source_id: uuid.UUID | None = Query(default=None),
     node_id: uuid.UUID | None = Query(default=None),
     db: AsyncSession = Depends(get_db_session),
 ) -> dict[str, Any]:
     await _ensure_learner(db, learner_id)
+    source_filter = and_(
+        KnowledgeSource.status.in_(["published", "review_required", "partial_indexed"]),
+        or_(
+            KnowledgeSource.owner_learner_id == learner_id,
+            KnowledgeSource.visibility == "public",
+        ),
+    )
+    source_list_result = await db.execute(
+        select(KnowledgeSource)
+        .where(source_filter)
+        .order_by(KnowledgeSource.created_at.desc().nullslast(), KnowledgeSource.title.asc())
+    )
+    available_sources = list(source_list_result.scalars().all())
+    if source_id is not None:
+        source = next((item for item in available_sources if item.id == source_id), None)
+        if source is None:
+            raise HTTPException(status_code=404, detail="Knowledge source not found")
+    else:
+        source = available_sources[0] if available_sources else None
+    if source is None:
+        raise HTTPException(status_code=404, detail="Published textbook not found")
+
     source_result = await db.execute(
         select(KnowledgeSource)
         .where(
-            KnowledgeSource.grade == "grade-7",
-            KnowledgeSource.status.in_(["published", "review_required", "partial_indexed"]),
+            KnowledgeSource.id == source.id,
         )
-        .order_by(KnowledgeSource.volume.asc(), KnowledgeSource.created_at.asc())
         .limit(1)
     )
-    source = source_result.scalar_one_or_none()
-    if source is None:
-        raise HTTPException(status_code=404, detail="Published Grade 7 textbook not found")
+    source = source_result.scalar_one_or_none() or source
 
     node_result = await db.execute(
         select(CurriculumNode)
@@ -353,18 +397,15 @@ async def knowledge_base_overview(
         memory_items = []
 
     return {
-        "source": {
-            "id": str(source.id),
-            "title": source.title,
-            "publisher": source.publisher or "人民教育出版社（PEP）",
-            "edition": source.edition or "人教版",
-            "status": source.status,
-            "unit_count": source.unit_count,
-            "knowledge_count": source.knowledge_count,
-            "progress": progress,
-            "requires_review": source.status == "review_required" or bool(review_points),
-            "page_count": source.page_count,
-        },
+        "source": _source_payload(
+            source,
+            progress=progress,
+            requires_review=source.status == "review_required" or bool(review_points),
+        ),
+        "sources": [
+            _source_payload(item, requires_review=item.status == "review_required")
+            for item in available_sources
+        ],
         "curriculum": [
             {
                 "id": str(node.id),
@@ -781,7 +822,7 @@ async def record_knowledge_attempt(
                     canonical_key=canonical_vocabulary_key(point.title),
                     entry_kind=(point.content or {}).get("entry_kind") or "word",
                     preferred_accent="auto",
-                    level="grade-7",
+                    level=(point.content or {}).get("grade") or "unknown",
                     meanings=[point.summary],
                     source_ref=f"knowledge:{point.id}",
                     status="learning",
@@ -803,9 +844,26 @@ async def record_knowledge_attempt(
     )
 
 
-def _is_grade7_filename(filename: str) -> bool:
+def _infer_grade(filename: str) -> str:
     normalized = filename.casefold().replace("_", "-")
-    return any(token in normalized for token in ("七年级", "7年级", "grade-7", "grade7"))
+    grade_tokens = (
+        ("grade-7", ("七年级", "7年级", "七上", "七下", "grade-7", "grade7")),
+        ("grade-8", ("八年级", "8年级", "八上", "八下", "grade-8", "grade8")),
+        ("grade-9", ("九年级", "9年级", "九上", "九下", "grade-9", "grade9")),
+    )
+    for grade, tokens in grade_tokens:
+        if any(token in normalized for token in tokens):
+            return grade
+    return "unknown"
+
+
+def _infer_volume(filename: str) -> str | None:
+    normalized = filename.casefold()
+    if any(token in normalized for token in ("下册", "七下", "八下", "九下", "lower")):
+        return "lower"
+    if any(token in normalized for token in ("上册", "七上", "八上", "九上", "upper")):
+        return "upper"
+    return None
 
 
 @router.post(
@@ -823,8 +881,6 @@ async def upload_knowledge_source(
     safe_filename = Path(filename).name
     if not safe_filename.lower().endswith(".pdf"):
         raise HTTPException(status_code=415, detail="仅支持 PDF 教材")
-    if not _is_grade7_filename(safe_filename):
-        raise HTTPException(status_code=422, detail="当前仅支持七年级教材，请检查文件名")
     if request.headers.get("content-type", "").split(";", 1)[0].strip() != "application/pdf":
         raise HTTPException(status_code=415, detail="Content-Type 必须为 application/pdf")
 
@@ -863,8 +919,8 @@ async def upload_knowledge_source(
         filename=safe_filename,
         publisher=None,
         edition=None,
-        grade="grade-7",
-        volume="lower" if "下册" in safe_filename else "upper" if "上册" in safe_filename else None,
+        grade=_infer_grade(safe_filename),
+        volume=_infer_volume(safe_filename),
         status="uploaded",
         visibility="private",
         object_key=str(destination),

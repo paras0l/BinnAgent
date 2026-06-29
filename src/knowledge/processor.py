@@ -51,6 +51,10 @@ class ParsedAppendixSection:
 
 
 VOCABULARY_HEADING = "Words and Expressions in Each Unit"
+VOCABULARY_HEADINGS = (
+    "Words and Expressions in Each Unit",
+    "Words and Expressions",
+)
 VOCABULARY_INDEX_HEADING = "Vocabulary Index"
 VOCABULARY_UNIT_PATTERN = re.compile(r"^(Starter\s+Unit|Unit)\s+(\d+)\s*$", re.IGNORECASE)
 VOCABULARY_PAGE_REF_PATTERN = re.compile(r"\s+p\.(S?\d+(?:[–-]S?\d+)?)\s*$", re.IGNORECASE)
@@ -288,6 +292,21 @@ PEP_GRADE7_LOWER_KNOWLEDGE: dict[str, tuple[str, str, str, str]] = {
     ),
 }
 
+PEP_GRADE7_LOWER_VOCABULARY: dict[str, tuple[str, ...]] = {
+    "Unit 1": ("guitar", "sing", "swim", "dance", "draw", "chess", "speak", "join"),
+    "Unit 2": ("up", "dress", "brush", "tooth", "shower", "usually", "forty", "never"),
+    "Unit 3": ("train", "bus", "subway", "ride", "bike", "sixty", "seventy", "minute"),
+    "Unit 4": ("rule", "arrive", "hallway", "fight", "sorry", "outside", "wear", "important"),
+    "Unit 5": ("panda", "zoo", "tiger", "elephant", "koala", "lion", "giraffe", "animal"),
+    "Unit 6": ("newspaper", "use", "soup", "wash", "movie", "just", "house", "drink"),
+    "Unit 7": ("rain", "windy", "cloudy", "sunny", "snow", "weather", "cook", "bad"),
+    "Unit 8": ("post", "office", "police", "hotel", "restaurant", "bank", "hospital", "street"),
+    "Unit 9": ("curly", "straight", "tall", "medium", "height", "thin", "heavy", "tonight"),
+    "Unit 10": ("noodle", "mutton", "beef", "cabbage", "potato", "special", "would", "large"),
+    "Unit 11": ("milk", "cow", "horse", "feed", "farmer", "quite", "anything", "grow"),
+    "Unit 12": ("camp", "lake", "beach", "badminton", "sheep", "visitor", "tired", "stay"),
+}
+
 PEP_GRADE7_UPPER_KNOWLEDGE: dict[str, tuple[str, str, str, str]] = {
     "Starter Unit 2": (
         "pattern.whats-this-english",
@@ -451,18 +470,18 @@ def _parse_vocabulary_chunk(
 
 
 def _parse_unit_vocabulary(reader: PdfReader) -> tuple[ParsedVocabularyEntry, ...]:
-    start_threshold = int(len(reader.pages) * 0.7)
+    start_threshold = int(len(reader.pages) * 0.55)
     in_vocabulary_section = False
     current_unit: str | None = None
     buffer: list[str] = []
     entries: list[ParsedVocabularyEntry] = []
     unit_orders: dict[str, int] = {}
-    ignored_lines = {"Page PB", VOCABULARY_HEADING, "9594", "9796", "9998", "101100", "103102"}
+    ignored_lines = {"Page PB", *VOCABULARY_HEADINGS, "9594", "9796", "9998", "101100", "103102"}
 
     for pdf_page, page in enumerate(reader.pages, start=1):
         text = page.extract_text() or ""
         if not in_vocabulary_section:
-            if pdf_page < start_threshold or VOCABULARY_HEADING not in text:
+            if pdf_page < start_threshold or not any(heading in text for heading in VOCABULARY_HEADINGS):
                 continue
             in_vocabulary_section = True
         if VOCABULARY_INDEX_HEADING in text:
@@ -476,7 +495,7 @@ def _parse_unit_vocabulary(reader: PdfReader) -> tuple[ParsedVocabularyEntry, ..
                 or line.isdigit()
                 or line.startswith("（注：")
                 or line.startswith("在英式发音")
-                or line.startswith(VOCABULARY_HEADING)
+                or any(line.startswith(heading) for heading in VOCABULARY_HEADINGS)
             ):
                 continue
             unit_match = VOCABULARY_UNIT_PATTERN.fullmatch(line)
@@ -500,6 +519,24 @@ def _parse_unit_vocabulary(reader: PdfReader) -> tuple[ParsedVocabularyEntry, ..
                 entries.append(entry)
                 unit_orders[current_unit] = next_order
             buffer.clear()
+    return tuple(entries)
+
+
+def _known_lower_vocabulary_entries() -> tuple[ParsedVocabularyEntry, ...]:
+    entries: list[ParsedVocabularyEntry] = []
+    for unit_title, words in PEP_GRADE7_LOWER_VOCABULARY.items():
+        for index, word in enumerate(words, start=1):
+            entries.append(
+                ParsedVocabularyEntry(
+                    unit_title=unit_title,
+                    expression=word,
+                    canonical_expression=_canonical_expression(word),
+                    unit_order=index,
+                    raw_line=f"{unit_title} fallback vocabulary: {word}",
+                    confidence=0.7,
+                    warnings=("fallback_vocabulary",),
+                )
+            )
     return tuple(entries)
 
 
@@ -752,11 +789,18 @@ async def process_uploaded_textbook(db: AsyncSession, source: KnowledgeSource) -
     if not source.object_key:
         raise ValueError("Knowledge source has no stored PDF")
     path = Path(source.object_key)
+    if not path.exists() and path.is_absolute() and path.parts[:2] == ("/", "app"):
+        local_path = Path(*path.parts[2:])
+        if local_path.exists():
+            path = local_path
     manifest, parser_profile = profile_for_source(source.filename)
     parsed = await asyncio.to_thread(_parse_pdf, path)
     reader = PdfReader(path)
     vocabulary_entries = await asyncio.to_thread(lambda: _parse_unit_vocabulary(reader))
     is_grade7_upper = "七年级上册" in source.filename
+    is_grade7_lower = "七年级下册" in source.filename
+    if not vocabulary_entries and is_grade7_lower:
+        vocabulary_entries = _known_lower_vocabulary_entries()
     notes = (
         await asyncio.to_thread(lambda: _parse_notes_on_the_text(reader)) if is_grade7_upper else ()
     )
@@ -765,7 +809,7 @@ async def process_uploaded_textbook(db: AsyncSession, source: KnowledgeSource) -
     )
     page_texts = [page.extract_text() or "" for page in reader.pages]
     used_toc_fallback = False
-    if not parsed.units and "七年级下册" in source.filename:
+    if not parsed.units and is_grade7_lower:
         parsed = ParsedTextbook(
             page_count=parsed.page_count,
             units=PEP_GRADE7_LOWER_UNITS,
@@ -779,6 +823,13 @@ async def process_uploaded_textbook(db: AsyncSession, source: KnowledgeSource) -
                 ParsedUnit(title=title, subtitle="", page_number=index)
                 for index, title in enumerate(manifest.unit_titles, start=1)
             ),
+            text_char_count=parsed.text_char_count,
+        )
+        used_toc_fallback = True
+    if not parsed.units:
+        parsed = ParsedTextbook(
+            page_count=parsed.page_count,
+            units=(ParsedUnit(title="全册材料", subtitle=source.title, page_number=1),),
             text_char_count=parsed.text_char_count,
         )
         used_toc_fallback = True
@@ -836,6 +887,7 @@ async def process_uploaded_textbook(db: AsyncSession, source: KnowledgeSource) -
                 content={
                     "origin": "unit_wordlist_sequence_parser",
                     "role": "unit_wordlist",
+                    "grade": source.grade,
                     "lemma": entry.canonical_expression,
                     "unit_order": entry.unit_order,
                     "raw_line": entry.raw_line,
