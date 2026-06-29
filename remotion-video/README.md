@@ -44,7 +44,7 @@
 
 ```bash
 npm install
-npm run dev
+npm run dev #启动remotion studio or npx remotion studio --port 3088
 npm run lint
 npx remotion still SubjunctiveMoodLesson --frame=900 --scale=0.25 --output=out/frame-900.png
 npx remotion still PassiveVoiceLesson --frame=900 --scale=0.25 --output=out/passive-frame-900.png
