@@ -65,7 +65,7 @@ AI对话 / 探索 / 学习中心 / 记忆
 - `ChatContainer` 的 Skill 状态使用 `StatusBanner`。
 - `MemoryCenterPage` 使用 `FeatureHero`、`ReasonCard`、`EvidencePanel` 和 `ConfirmDialog` 表达可解释、可控制记忆。
 - `GrammarPage`、`PronunciationPage`、`VocabularyDetailPage`、`LoginPage` 接入统一外壳和表单/按钮标准。
-- `KnowledgeBasePage` 明确保留全宽教材工作台，统一展示教材结构、单元学习、练习任务和解析证据职责。
+- `KnowledgeBasePage` 保留全宽教材工作台，并拆成“教材结构 / 单元学习 / 练习任务 / 解析校对”四个 workspace；解析校对展示 `requires_review`、warnings、parser/ingest 证据、来源页码和低置信词条，可确认、修改发布或忽略。
 - `VocabularyPracticePage` 保持沉浸式一屏一任务，并在顶部明确模式和来源；练习阶段按主任务区、学习辅助区和底部操作区组织，底部操作栏固定可见，中间内容内部滚动，避免用户上下翻动才能评分或进入下一题。
 - `WritingPhrasebookPage` 继续作为专项资产库页面，保留 `PageShell`、`FeatureHero`、`WorkspaceTabs` 的既有较好实现，但不作为全局模板。
 

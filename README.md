@@ -93,10 +93,10 @@ npm run dev
 | 能力 | 状态 |
 |------|------|
 | Chat / Memory / Dashboard | 部分实现，Memory v2 已落地 Retain / Recall / Reflect、LearningEpisode、LearnerModelMemory、TeachingStrategyMemory 和可控记忆中心 |
-| 七年级教材 Knowledge Base / RAG / Exercises | 部分实现 |
+| 七年级教材 Knowledge Base / RAG / Exercises | 部分实现，已支持教材解析证据展示和低置信词条人工校对入口 |
 | Vocabulary Personal Cards / Practice / Spelling | 部分实现 |
 | Writing Phrasebook | 基础版已实现 |
-| Frontend UI/UX 统一标准 | Issue #20 首轮整改已落地，主导航固定为 AI对话 / 探索 / 学习中心 / 记忆，基础组件和 0-12 页面口径已统一 |
+| Frontend UI/UX 统一标准 | Issue #20 首轮整改已落地，主导航固定为 AI对话 / 探索 / 学习中心 / 记忆，基础组件和 0-12 页面口径已统一；KnowledgeBase 已升级为教材解析校对工作台 |
 | Prompt Registry / Schema-first Import / Parser Quality | 基础治理已实现 |
 | LangGraph daily lesson | 基础线性实现 |
 | Learner Simulation Agent | Deterministic MVP 已实现 |

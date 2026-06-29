@@ -39,7 +39,41 @@ export interface KnowledgePointSummary {
   summary: string
   source_page: string
   unit_order?: number | null
+  requires_review?: boolean
+  warnings?: string[]
+  confidence?: number | null
+  raw_line?: string | null
+  evidence?: string[]
   mastery: number
+}
+
+export interface KnowledgeReviewItem {
+  id: string
+  title: string
+  type: KnowledgeType
+  summary: string
+  source_page: string
+  unit_order?: number | null
+  raw_line?: string | null
+  confidence?: number | null
+  warnings: string[]
+  requires_review: boolean
+  parser?: string | null
+  status: 'draft' | 'published' | 'ignored' | string
+  evidence: string[]
+}
+
+export interface KnowledgeParserEvidence {
+  parser?: string | null
+  parser_profile?: string | null
+  book_manifest_id?: string | null
+  vocabulary_parser?: string | null
+  dictionary_enrichment?: string | null
+  rag_chunk_count: number
+  text_char_count: number
+  toc_fallback: boolean
+  warnings: string[]
+  report: Record<string, unknown>
 }
 
 export interface DailyLessonPart {
@@ -55,10 +89,12 @@ export interface KnowledgeBaseOverview {
     title: string
     publisher: string
     edition: string
-    status: 'draft' | 'processing' | 'review_required' | 'published' | 'failed'
+    status: 'draft' | 'processing' | 'review_required' | 'published' | 'failed' | 'partial_indexed' | 'index_failed'
     unit_count: number
     knowledge_count: number
     progress: number
+    requires_review?: boolean
+    page_count?: number | null
   }
   curriculum: CurriculumNode[]
   current_node_id: string
@@ -75,6 +111,14 @@ export interface KnowledgeBaseOverview {
     parts: DailyLessonPart[]
   }
   knowledge_points: KnowledgePointSummary[]
+  review: {
+    requires_review: boolean
+    pending_count: number
+    low_confidence_count: number
+    warning_count: number
+    items: KnowledgeReviewItem[]
+  }
+  parser_evidence: KnowledgeParserEvidence
   path: Array<{
     id: string
     ordinal: number

@@ -39,6 +39,7 @@ Issue #20 覆盖页面清单：
 - 复杂功能拆成 `WorkspaceTabs` 或同等工作区。
 - 学习推荐必须展示原因，优先使用 `ReasonCard`。
 - 证据、来源、解析状态优先使用 `EvidencePanel` 或同等结构。
+- `KnowledgeBasePage` 必须保持真实教材工作台：四个工作区为教材结构、单元学习、练习任务、解析校对；解析校对必须展示 `requires_review`、warnings、parser/ingest 证据、来源页码和低置信词条确认入口。
 - 删除、清空、否认长期记忆必须使用 `ConfirmDialog` 或同等二次确认。
 - 空状态必须给出下一步动作。
 - AI 或外部模型生成内容保存前必须可确认、可编辑、可追溯。

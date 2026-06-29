@@ -121,6 +121,7 @@ async def test_overview_returns_ordered_curriculum_and_knowledge(client, knowled
             _many([]),
             _many([point]),
             _many([]),
+            _many([]),
         ]
     )
 
@@ -133,6 +134,8 @@ async def test_overview_returns_ordered_curriculum_and_knowledge(client, knowled
     assert data["knowledge_points"][0]["title"] == "Good morning!"
     assert data["daily_lesson"]["estimated_minutes"] == 20
     assert data["path"][0]["status"] == "current"
+    assert data["review"]["pending_count"] == 0
+    assert "parser_evidence" in data
 
 
 @pytest.mark.asyncio
@@ -150,6 +153,7 @@ async def test_overview_switches_content_to_requested_curriculum_node(client, kn
             _many([]),
             _many([point]),
             _many([]),
+            _many([]),
         ]
     )
 
@@ -159,6 +163,107 @@ async def test_overview_switches_content_to_requested_curriculum_node(client, kn
     assert response.json()["current_node_id"] == str(nodes[1].id)
     assert response.json()["current_unit"]["title"] == "Starter Unit 2"
     assert response.json()["knowledge_points"][0]["title"] == "What's this in English?"
+
+
+@pytest.mark.asyncio
+async def test_overview_exposes_parser_review_queue(client, knowledge_session):
+    learner_id = uuid.uuid4()
+    source = _source()
+    source.status = "review_required"
+    source.metadata_ = {
+        "parser": "pypdf+manifest-profile-v1",
+        "parser_profile": "pep-grade7-upper-v1",
+        "vocabulary_parser": "unit-sequence-with-evidence-v1",
+        "rag_chunk_count": 12,
+        "parser_report": {
+            "warnings": ["1 vocabulary entries require review."],
+            "low_confidence_entries": 1,
+        },
+    }
+    nodes = [_node(source.id, 1)]
+    point = _point(source.id, nodes[0].id)
+    review_point = KnowledgePoint(
+        source_id=source.id,
+        curriculum_node_id=nodes[0].id,
+        canonical_key="vocabulary.telephone",
+        type="vocabulary",
+        title="telephone",
+        summary="Starter Unit 1 单元词表第 3 个词条。",
+        source_page="Words and Expressions",
+        status="draft",
+        content={
+            "origin": "unit_wordlist_sequence_parser",
+            "unit_order": 3,
+            "raw_line": "telephone /ˈtelɪfəʊn/",
+            "confidence": 0.62,
+            "warnings": ["missing_phonetic"],
+            "requires_review": True,
+        },
+    )
+    review_point.id = uuid.uuid4()
+    knowledge_session.execute = AsyncMock(
+        side_effect=[
+            _one(learner_id),
+            _one(source),
+            _many(nodes),
+            _many([]),
+            _many([point]),
+            _many([review_point]),
+            _many([]),
+        ]
+    )
+
+    response = await client.get(f"/api/learners/{learner_id}/knowledge-base")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["source"]["requires_review"] is True
+    assert data["review"]["pending_count"] == 1
+    assert data["review"]["items"][0]["raw_line"] == "telephone /ˈtelɪfəʊn/"
+    assert data["review"]["items"][0]["confidence"] == 0.62
+    assert data["parser_evidence"]["parser"] == "pypdf+manifest-profile-v1"
+    assert data["parser_evidence"]["warnings"] == ["1 vocabulary entries require review."]
+
+
+@pytest.mark.asyncio
+async def test_review_knowledge_point_confirms_and_publishes(client, knowledge_session):
+    learner_id = uuid.uuid4()
+    source = _source()
+    point = KnowledgePoint(
+        source_id=source.id,
+        curriculum_node_id=uuid.uuid4(),
+        canonical_key="vocabulary.telephone",
+        type="vocabulary",
+        title="telephone",
+        summary="待校对词条。",
+        source_page="Words and Expressions",
+        status="draft",
+        content={"requires_review": True, "confidence": 0.62},
+    )
+    point.id = uuid.uuid4()
+    source.status = "review_required"
+    knowledge_session.execute = AsyncMock(
+        side_effect=[_one(learner_id), _one(point), _scalar(0), _one(source)]
+    )
+
+    response = await client.patch(
+        f"/api/learners/{learner_id}/knowledge-base/review-items/{point.id}",
+        json={
+            "action": "update",
+            "title": "telephone",
+            "summary": "电话；电话机。",
+            "source_page": "P.104",
+            "note": "按词汇表页码修正。",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json()["requires_review"] is False
+    assert point.status == "published"
+    assert point.summary == "电话；电话机。"
+    assert point.source_page == "P.104"
+    assert point.content["review_decision"] == "updated"
+    assert source.status == "published"
 
 
 @pytest.mark.asyncio

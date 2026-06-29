@@ -116,6 +116,67 @@ class ExerciseAnswerResponse(BaseModel):
     rubric: dict[str, Any]
 
 
+class KnowledgeReviewRequest(BaseModel):
+    action: Literal["confirm", "update", "ignore"]
+    title: str | None = Field(default=None, min_length=1, max_length=255)
+    summary: str | None = Field(default=None, min_length=1, max_length=1000)
+    source_page: str | None = Field(default=None, min_length=1, max_length=30)
+    note: str | None = Field(default=None, max_length=500)
+
+
+class KnowledgeReviewResponse(BaseModel):
+    knowledge_point_id: uuid.UUID
+    action: str
+    status: str
+    requires_review: bool
+
+
+def _source_parser_payload(source: KnowledgeSource) -> dict[str, Any]:
+    metadata = source.metadata_ or {}
+    parser_report = metadata.get("parser_report") or {}
+    warnings = parser_report.get("warnings") or []
+    if metadata.get("warning") and metadata["warning"] not in warnings:
+        warnings = [*warnings, metadata["warning"]]
+    return {
+        "parser": metadata.get("parser"),
+        "parser_profile": metadata.get("parser_profile"),
+        "book_manifest_id": metadata.get("book_manifest_id"),
+        "vocabulary_parser": metadata.get("vocabulary_parser"),
+        "dictionary_enrichment": metadata.get("dictionary_enrichment"),
+        "rag_chunk_count": metadata.get("rag_chunk_count", 0),
+        "text_char_count": metadata.get("text_char_count", 0),
+        "toc_fallback": bool(metadata.get("toc_fallback", False)),
+        "warnings": warnings,
+        "report": parser_report,
+    }
+
+
+def _review_item_payload(point: KnowledgePoint) -> dict[str, Any]:
+    content = point.content or {}
+    evidence = [
+        f"来源页码：{point.source_page}",
+        f"解析器：{content.get('origin', 'unknown')}",
+    ]
+    if content.get("raw_line"):
+        evidence.append(f"原始行：{content['raw_line']}")
+    warnings = content.get("warnings") or []
+    return {
+        "id": str(point.id),
+        "title": point.title,
+        "type": point.type,
+        "summary": point.summary,
+        "source_page": point.source_page,
+        "unit_order": content.get("unit_order"),
+        "raw_line": content.get("raw_line"),
+        "confidence": content.get("confidence"),
+        "warnings": warnings,
+        "requires_review": bool(content.get("requires_review", False)),
+        "parser": content.get("origin"),
+        "status": point.status,
+        "evidence": evidence,
+    }
+
+
 async def _ensure_learner(db: AsyncSession, learner_id: uuid.UUID) -> None:
     result = await db.execute(select(Learner.id).where(Learner.id == learner_id))
     if result.scalar_one_or_none() is None:
@@ -181,7 +242,10 @@ async def knowledge_base_overview(
     await _ensure_learner(db, learner_id)
     source_result = await db.execute(
         select(KnowledgeSource)
-        .where(KnowledgeSource.grade == "grade-7", KnowledgeSource.status == "published")
+        .where(
+            KnowledgeSource.grade == "grade-7",
+            KnowledgeSource.status.in_(["published", "review_required", "partial_indexed"]),
+        )
         .order_by(KnowledgeSource.volume.asc(), KnowledgeSource.created_at.asc())
         .limit(1)
     )
@@ -232,6 +296,19 @@ async def knowledge_base_overview(
         .order_by(*_unit_point_order())
     )
     points = list(point_result.scalars().all())
+    review_result = await db.execute(
+        select(KnowledgePoint)
+        .where(
+            _unit_point_filter(display_node),
+            KnowledgePoint.content["requires_review"].as_boolean().is_(True),
+            KnowledgePoint.status.in_(["draft", "published"]),
+        )
+        .order_by(
+            KnowledgePoint.content["confidence"].as_float().asc().nullsfirst(),
+            *(_unit_point_order()),
+        )
+    )
+    review_points = list(review_result.scalars().all())
     point_ids = [point.id for point in points]
     states: dict[uuid.UUID, LearnerKnowledgeState] = {}
     if point_ids:
@@ -285,6 +362,8 @@ async def knowledge_base_overview(
             "unit_count": source.unit_count,
             "knowledge_count": source.knowledge_count,
             "progress": progress,
+            "requires_review": source.status == "review_required" or bool(review_points),
+            "page_count": source.page_count,
         },
         "curriculum": [
             {
@@ -327,16 +406,98 @@ async def knowledge_base_overview(
                 "summary": point.summary,
                 "source_page": point.source_page,
                 "unit_order": (point.content or {}).get("unit_order"),
+                "requires_review": bool((point.content or {}).get("requires_review", False)),
+                "warnings": (point.content or {}).get("warnings", []),
+                "confidence": (point.content or {}).get("confidence"),
+                "raw_line": (point.content or {}).get("raw_line"),
+                "evidence": [
+                    f"来源页码：{point.source_page}",
+                    f"解析器：{(point.content or {}).get('origin', 'unknown')}",
+                ],
                 "mastery": states.get(point.id).mastery_score if point.id in states else 0.0,
             }
             for point in points
         ],
+        "review": {
+            "requires_review": source.status == "review_required" or bool(review_points),
+            "pending_count": len(review_points),
+            "low_confidence_count": sum(
+                1 for point in review_points if ((point.content or {}).get("confidence") or 1) < 0.75
+            ),
+            "warning_count": sum(1 for point in review_points if (point.content or {}).get("warnings")),
+            "items": [_review_item_payload(point) for point in review_points],
+        },
+        "parser_evidence": _source_parser_payload(source),
         "path": path,
         "recommendation_reason": MemoryExplainer().recommendation_reason(
             memory_items,
             f"已根据教材顺序和完成记录，为你推荐 {recommended_node.title}。",
         ),
     }
+
+
+@router.patch(
+    "/api/learners/{learner_id}/knowledge-base/review-items/{knowledge_point_id}",
+    response_model=KnowledgeReviewResponse,
+)
+async def review_knowledge_point(
+    learner_id: uuid.UUID,
+    knowledge_point_id: uuid.UUID,
+    body: KnowledgeReviewRequest,
+    db: AsyncSession = Depends(get_db_session),
+) -> KnowledgeReviewResponse:
+    await _ensure_learner(db, learner_id)
+    point_result = await db.execute(
+        select(KnowledgePoint).where(KnowledgePoint.id == knowledge_point_id)
+    )
+    point = point_result.scalar_one_or_none()
+    if point is None:
+        raise HTTPException(status_code=404, detail="Knowledge point not found")
+
+    content = dict(point.content or {})
+    if body.action == "ignore":
+        point.status = "ignored"
+        content["requires_review"] = False
+        content["review_decision"] = "ignored"
+    else:
+        if body.title is not None:
+            point.title = body.title.strip()
+        if body.summary is not None:
+            point.summary = body.summary.strip()
+        if body.source_page is not None:
+            point.source_page = body.source_page.strip()
+        point.status = "published"
+        content["requires_review"] = False
+        content["review_decision"] = "updated" if body.action == "update" else "confirmed"
+
+    if body.note:
+        content["review_note"] = body.note.strip()
+    content["reviewed_at"] = datetime.now(timezone.utc).isoformat()
+    content["reviewed_by_learner_id"] = str(learner_id)
+    point.content = content
+    await db.flush()
+    remaining_result = await db.execute(
+        select(func.count())
+        .select_from(KnowledgePoint)
+        .where(
+            KnowledgePoint.source_id == point.source_id,
+            KnowledgePoint.content["requires_review"].as_boolean().is_(True),
+            KnowledgePoint.status.in_(["draft", "published"]),
+        )
+    )
+    if int(remaining_result.scalar_one() or 0) == 0:
+        source_result = await db.execute(
+            select(KnowledgeSource).where(KnowledgeSource.id == point.source_id)
+        )
+        source = source_result.scalar_one_or_none()
+        if source is not None and source.status == "review_required":
+            source.status = "published"
+    return KnowledgeReviewResponse(
+        knowledge_point_id=point.id,
+        action=body.action,
+        status=point.status,
+        requires_review=bool(content.get("requires_review", False)),
+    )
 
 
 @router.post(

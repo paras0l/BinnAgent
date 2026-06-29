@@ -1,6 +1,6 @@
 # 13. Current Scope and Status
 
-> 更新时间：2026-06-28
+> 更新时间：2026-06-29
 > 目的：把当前实现、部分实现和仍处于设计中的内容显性化，避免把架构目标误读成已落地功能。
 
 ## 状态图例
@@ -24,12 +24,12 @@
 | 模块 | 状态 | 当前能力 | 下一步 |
 |---|---|---|---|
 | FastAPI API | 已实现 | learners、chat、memory、dashboard、knowledge、vocabulary、grammar 等 routers | 统一 current learner 认证授权 |
-| React 前端 | 部分实现 | 多页面学习入口、SSE chat、知识库和词汇练习；Issue #20 UI/UX 统一标准首轮落地，新增统一 Button/FormField/StatusBanner/ConfirmDialog/ReasonCard/EvidencePanel，主导航固定为 AI对话 / 探索 / 学习中心 / 记忆 | 更深入的数据驱动推荐、恢复提示、RAG 调试模式、更多页面内 drawer 化编辑 |
+| React 前端 | 部分实现 | 多页面学习入口、SSE chat、知识库和词汇练习；Issue #20 UI/UX 统一标准首轮落地，新增统一 Button/FormField/StatusBanner/ConfirmDialog/ReasonCard/EvidencePanel，主导航固定为 AI对话 / 探索 / 学习中心 / 记忆；KnowledgeBase 已升级为教材结构 / 单元学习 / 练习任务 / 解析校对工作台 | 更深入的数据驱动推荐、恢复提示、RAG 调试模式、更多页面内 drawer 化编辑 |
 | LangGraph daily lesson | 部分实现 | 线性 daily lesson graph 和主要节点 | checkpoint、interrupt、answer_required、resume |
 | Memory | 部分实现 | 4 层学习记忆架构 + HindSight-inspired Retain/Recall/Reflect 口径已落地；统一 memory event/operation、LearningEpisode、LearnerModelMemory、TeachingStrategyMemory、MemoryWriter/Retriever/Curator、显式 L1-L4 layer metadata、ErrorPattern governance、WritingPhraseMastery、Memory Center、导出/删除/禁用/我已改善、重置计划、情绪/节奏 opt-in、低置信上下文开关、memory_context log、hit-rate 指标、作文批改历史弱点对比 | 更完整 debug dashboard 图表、更多 regression eval、更多 session 类型反思规则 |
 | Vocabulary Learning | 部分实现 | 单元 enroll、用户可编辑个人词卡、new/review/spelling session、attempt、错因记录、mastery vector、发音 URL | 薄弱原因总结、题型推荐、更多表达迁移题 |
-| Knowledge Base / RAG | 部分实现 | PDF 解析、chunk、embedding、文本 fallback、8 题混合练习流、hint/retry/rubric 反馈 | hybrid retrieval、golden query set、前端证据面板、练习 session 总结 |
-| Prompt & Parsing Governance | 部分实现 | Prompt Registry MVP、prompt render API、核心 prompt 模板、写作导入 JSON-first extraction、教材 manifest/profile/parser report | 更多 prompt eval、词汇/语法 schema-first 回填、人工校对工作台 |
+| Knowledge Base / RAG | 部分实现 | PDF 解析、chunk、embedding、文本 fallback、8 题混合练习流、hint/retry/rubric 反馈；overview 返回 parser/ingest 证据、review queue、来源页码和低置信词条 | hybrid retrieval、golden query set、练习 session 总结 |
+| Prompt & Parsing Governance | 部分实现 | Prompt Registry MVP、prompt render API、核心 prompt 模板、写作导入 JSON-first extraction、教材 manifest/profile/parser report；教材低置信词条支持确认、修改发布和忽略 | 更多 prompt eval、词汇/语法 schema-first 回填、更细的审计历史 |
 | Model Provider | 部分实现 | Ollama chat/stream/embed/health，结构化 JSON repair retry | task policy、local_only 强约束、持久化 model_call_logs |
 | Observability | 部分实现 | Langfuse observation 和运行时表 | run_id 贯通 graph/model/tool/memory，Dashboard 可视化 |
 | Evaluation / Simulation | 部分实现 | `src/simulation` 提供 deterministic learner persona、behavior policy、scenario runner、assertion engine 和结构化 simulation report；已覆盖 smoke、vocabulary agent deposit、vocabulary practice adaptation、daily graph 基线 | 扩展教材知识练习、写作好句闭环、Memory regression、LLM-assisted learner 和 dashboard |
@@ -50,10 +50,10 @@
 | #14 Memory Core | 新增 `learning_memory_events`、`memory_operations`、`writing_phrase_masteries`、`memory_context_logs`、`learner_memory_settings`；实现 writer/retriever/curator/explainer/manager；词汇、知识、写作句式、chat/session、作文批改、LangGraph 写入或读取统一 memory；前端新增“我的学习记忆”页面；支持查看 evidence、编辑、删除、禁用、我已改善、导出、手动整理、重置计划、情绪/节奏开关、低置信上下文开关；summary 增加 recent events 和 active weaknesses；metrics 增加 retrieval、hit-rate、used-in-prompt、stale | 更完整 memory debug dashboard 图表、长期 regression eval 扩展 |
 | #19 HindSight-inspired Memory | 明确 Memory v2 采用 Retain / Recall / Reflect / Explain / Control；新增 `learning_episodes`、`learner_model_memories`、`teaching_strategy_memories`；`record_event()` 自动补 `evidence_ref`；`MemoryCurator.reflect()` 可从事件生成 episode、learner model、teaching strategy；`MemoryRetriever.for_chat/for_daily_plan/for_vocabulary_practice/for_knowledge_exercise/for_essay_review/for_writing_phrasebook/for_memory_explanation` 已实现；Chat、词汇、教材、作文、写作句式入口使用场景化 recall；用户删除/禁用 learner model 或 strategy 后后续 recall 排除；Memory Center 展示新卡片和指标 | 扩展更多 episode 模板、resolved 状态自动化、teaching strategy 效果评估和 dashboard 可视化 |
 | #15 Learner Simulation Agent | 新增 `src/simulation/`、`tests/simulation/` 和 `scripts/run_learner_simulation.py`；至少 5 个内置 persona；3 个 deterministic scenario 覆盖 smoke journey、Vocabulary Agent 沉淀、词汇练习 adaptation；runner 通过 API 调用系统并直接调用 daily lesson graph；每次运行生成结构化 report | 教材知识练习、写作好句、Memory 可控性 regression、LLM-assisted 模式和 simulation dashboard |
-| #16 教材解析质量止血 | 新增 `books/manifest.yaml`、parser profile、parser quality report；词汇条目增加 `raw_line`、`confidence`、`warnings` 和 `requires_review`；ingest metadata 写入 manifest/profile/report | layout-aware extractor、低置信人工校对队列和前端工作台 |
+| #16 教材解析质量止血 | 新增 `books/manifest.yaml`、parser profile、parser quality report；词汇条目增加 `raw_line`、`confidence`、`warnings` 和 `requires_review`；ingest metadata 写入 manifest/profile/report；KnowledgeBase overview 暴露 review queue/parser evidence，前端可确认、修改发布或忽略低置信词条 | layout-aware extractor、批量校对、校对审计历史 |
 | #17 Schema-first 回填 | 新增 `src/extraction`，写作好句导入优先 JSON schema，保留 regex fallback 且返回 `parse_mode`、`warnings`、`confidence`；新增 golden-style tests | 词汇字段回传和语法微课 machine_data 的完整保存链路 |
 | #18 Prompt Registry | 新增 `src/prompts`、版本化 markdown 模板、schema/model policy 绑定、`/api/prompts/{prompt_id}/render`；迁移 chat、vocabulary agent、grammar prompt、writing phrase prompt；新增 prompt eval fixtures | 更完整 observability 持久化、prompt evaluator、更多 P2 prompt 迁移 |
-| #20 UI/UX 统一标准 | 阅读 issue 正文与评论，更新 `docs/frontend-design-system.md`、`docs/web-frontend.md`、README 和本文档；新增统一 UI 原语；逐页覆盖 AppShell/Header、Chat、Explore、Dashboard、Memory、Writing Phrasebook、Grammar、Vocabulary Detail、Pronunciation、KnowledgeBase、VocabularyPractice、Dashboard 词汇工作区和 Login；学习中心升级为今日学习驾驶舱；推荐原因和证据表达开始统一 | 更深层组件拆分、KnowledgeBase 解析校对 workspace、更多编辑态 Drawer 化、视觉回归截图 |
+| #20 UI/UX 统一标准 | 阅读 issue 正文与评论，更新 `docs/frontend-design-system.md`、`docs/web-frontend.md`、README 和本文档；新增统一 UI 原语；逐页覆盖 AppShell/Header、Chat、Explore、Dashboard、Memory、Writing Phrasebook、Grammar、Vocabulary Detail、Pronunciation、KnowledgeBase、VocabularyPractice、Dashboard 词汇工作区和 Login；学习中心升级为今日学习驾驶舱；KnowledgeBase 解析校对 workspace 已落成，推荐原因和证据表达开始统一 | 更深层组件拆分、更多编辑态 Drawer 化、视觉回归截图 |
 
 ## 可运行能力
 

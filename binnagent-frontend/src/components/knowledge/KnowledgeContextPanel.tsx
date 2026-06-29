@@ -1,12 +1,15 @@
-import { BookOpen, CheckCircle2, Info, Layers3, UploadCloud } from 'lucide-react'
-import type { KnowledgeBaseOverview } from '@/types'
+import { AlertTriangle, BookOpen, CheckCircle2, Info, Layers3, UploadCloud } from 'lucide-react'
+import { EvidencePanel } from '@/components/learning/EvidencePanel'
+import { ReasonCard } from '@/components/learning/ReasonCard'
+import type { KnowledgeBaseOverview, KnowledgeReviewItem } from '@/types'
 
 interface KnowledgeContextPanelProps {
   overview: KnowledgeBaseOverview
+  selectedReviewItem?: KnowledgeReviewItem | null
   onUpload: () => void
 }
 
-export function KnowledgeContextPanel({ overview, onUpload }: KnowledgeContextPanelProps) {
+export function KnowledgeContextPanel({ overview, selectedReviewItem, onUpload }: KnowledgeContextPanelProps) {
   const { source } = overview
   return (
     <aside className="knowledge-context space-y-5 border-l border-slate-200 bg-slate-50/40 px-5 py-7">
@@ -30,6 +33,10 @@ export function KnowledgeContextPanel({ overview, onUpload }: KnowledgeContextPa
         <div className="mt-5 grid grid-cols-2 gap-3 border-t border-slate-100 pt-4 text-sm text-slate-600">
           <span className="flex items-center gap-2"><BookOpen className="size-4" />{source.unit_count} 个单元</span>
           <span className="flex items-center gap-2"><Layers3 className="size-4" />{source.knowledge_count} 个知识点</span>
+          <span className="flex items-center gap-2">页数 {source.page_count ?? '—'}</span>
+          <span className={`flex items-center gap-2 ${overview.review.requires_review ? 'text-amber-700' : 'text-emerald-700'}`}>
+            <AlertTriangle className="size-4" />待校对 {overview.review.pending_count}
+          </span>
         </div>
         <button
           type="button"
@@ -40,6 +47,32 @@ export function KnowledgeContextPanel({ overview, onUpload }: KnowledgeContextPa
           上传七年级教材
         </button>
       </section>
+
+      <section className="rounded-2xl border border-slate-200 bg-white p-5">
+        <h2 className="text-base font-extrabold text-slate-950">解析证据</h2>
+        <div className="mt-4 grid gap-2 text-xs leading-5 text-slate-600">
+          <p><span className="font-bold text-slate-800">Parser：</span>{overview.parser_evidence.parser ?? '未记录'}</p>
+          <p><span className="font-bold text-slate-800">Profile：</span>{overview.parser_evidence.parser_profile ?? '未记录'}</p>
+          <p><span className="font-bold text-slate-800">Ingest：</span>{overview.parser_evidence.vocabulary_parser ?? '未记录'}</p>
+          <p><span className="font-bold text-slate-800">RAG chunks：</span>{overview.parser_evidence.rag_chunk_count}</p>
+        </div>
+        <div className="mt-4">
+          <EvidencePanel
+            title="Parser warnings"
+            items={overview.parser_evidence.warnings}
+            emptyText="暂无 parser warning"
+          />
+        </div>
+      </section>
+
+      {selectedReviewItem ? (
+        <ReasonCard
+          title="当前校对项"
+          reason={`${selectedReviewItem.title} 需要人工确认后才能进入正式学习材料。`}
+          evidence={selectedReviewItem.evidence}
+          outcome={selectedReviewItem.confidence == null ? undefined : `置信度 ${Math.round(selectedReviewItem.confidence * 100)}%`}
+        />
+      ) : null}
 
       <section className="rounded-2xl border border-slate-200 bg-white p-5">
         <h2 className="text-base font-extrabold text-slate-950">学习路径</h2>
