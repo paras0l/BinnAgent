@@ -1,7 +1,7 @@
 {
-  "name": "grammar-remotion-video",
+  "name": "remotion-video",
   "version": "1.0.0",
-  "description": "My Remotion video",
+  "description": "Remotion teaching video compositions for BinnAgent",
   "repository": {},
   "license": "UNLICENSED",
   "private": true,

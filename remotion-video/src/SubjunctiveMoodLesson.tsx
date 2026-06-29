@@ -639,7 +639,7 @@ const SceneSequence: React.FC<{
   );
 };
 
-export const GrammarMoodLesson: React.FC = () => (
+export const SubjunctiveMoodLesson: React.FC = () => (
   <>
     <SceneSequence name="title">
       <TitleScene />
