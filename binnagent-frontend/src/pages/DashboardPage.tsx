@@ -26,6 +26,7 @@ import { SurfaceCard } from '@/components/ui/SurfaceCard'
 import type { DashboardSummary, Learner, VocabularyListItem } from '@/types'
 import { useToast } from '@/hooks/useToast'
 import type { VocabularyPracticeMode } from '@/pages/VocabularyPracticePage'
+import { VocabularyPracticePage } from '@/pages/VocabularyPracticePage'
 
 interface DashboardPageProps {
   learner: Learner
@@ -50,6 +51,7 @@ export function DashboardPage({ learner, onOpenDailyLearning, onStartVocabularyP
   const [newPhonetic, setNewPhonetic] = useState('')
   const [newMeaning, setNewMeaning] = useState('')
   const [activeWorkspace, setActiveWorkspace] = useState<'home' | 'vocabulary'>('home')
+  const [detailItemId, setDetailItemId] = useState<string | null>(null)
 
   const loadDashboard = useCallback(async () => {
     setIsLoading(true)
@@ -183,6 +185,19 @@ export function DashboardPage({ learner, onOpenDailyLearning, onStartVocabularyP
     }
   }
 
+  if (detailItemId) {
+    return (
+      <VocabularyPracticePage
+        learner={learner}
+        initialMode="new"
+        readonlyItemId={detailItemId}
+        readonlyBackLabel="返回词汇本"
+        sourceLabel="我的词汇本"
+        onExit={() => setDetailItemId(null)}
+      />
+    )
+  }
+
   if (isLoading && !summary) {
     return <LoadingState title="正在加载学习中心" description="正在读取今日目标、复习队列和最近记忆..." />
   }
@@ -291,6 +306,7 @@ export function DashboardPage({ learner, onOpenDailyLearning, onStartVocabularyP
                     item={item}
                     isDeleting={deletingWordId === item.id}
                     onDelete={setWordPendingDelete}
+                    onOpen={(selected) => setDetailItemId(selected.id)}
                   />
                 ))}
               </div>
@@ -643,16 +659,30 @@ function VocabularyListRow({
   item,
   isDeleting,
   onDelete,
+  onOpen,
 }: {
   item: VocabularyListItem
   isDeleting: boolean
   onDelete: (item: VocabularyListItem) => void
+  onOpen: (item: VocabularyListItem) => void
 }) {
   const statusText = getVocabularyStatusText(item.status)
   const confidencePercent = Math.round(item.confidence * 100)
 
   return (
-    <article className="rounded-lg border bg-background p-4">
+    <article
+      role="button"
+      tabIndex={0}
+      onClick={() => onOpen(item)}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault()
+          onOpen(item)
+        }
+      }}
+      className="cursor-pointer rounded-lg border bg-background p-4 text-left transition hover:border-primary/40 hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+      aria-label={`查看 ${item.word} 详情`}
+    >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
@@ -675,7 +705,10 @@ function VocabularyListRow({
           </span>
           <button
             type="button"
-            onClick={() => onDelete(item)}
+            onClick={(event) => {
+              event.stopPropagation()
+              onDelete(item)
+            }}
             disabled={isDeleting}
             className="inline-flex size-8 items-center justify-center rounded-lg border text-muted-foreground transition-colors hover:border-error/40 hover:bg-error/5 hover:text-error disabled:cursor-not-allowed disabled:opacity-50"
             aria-label={`删除 ${item.word}`}

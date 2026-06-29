@@ -25,6 +25,7 @@ interface VocabularyDetailPageProps {
   term: string
   onBack: () => void
   backLabel?: string
+  onVocabularyChanged?: () => void
 }
 
 const TARGET_URL = 'https://chat.deepseek.com/'
@@ -55,6 +56,7 @@ export function VocabularyDetailPage({
   term,
   onBack,
   backLabel = '返回词汇练习',
+  onVocabularyChanged,
 }: VocabularyDetailPageProps) {
   const { showToast } = useToast()
   const normalizedTerm = term.trim()
@@ -222,6 +224,7 @@ export function VocabularyDetailPage({
       const result = await response.json() as { created: boolean; word: string }
       const detailResponse = await fetch(`/api/learners/${learner.id}/vocabulary/detail?term=${encodeURIComponent(result.word)}`)
       if (detailResponse.ok) setCardDetail(await detailResponse.json() as PersonalCardDetail)
+      onVocabularyChanged?.()
       showToast(
         result.created ? `已将 ${result.word} 加入词库。` : `已更新 ${result.word} 的词库字段。`,
         { variant: 'success' },
@@ -251,6 +254,7 @@ export function VocabularyDetailPage({
       if (!response.ok) throw new Error('保存失败')
       const detail = await response.json() as PersonalCardDetail
       setCardDetail(detail)
+      onVocabularyChanged?.()
       showToast('个人词卡已更新。', { variant: 'success' })
     } catch {
       showToast('保存个人词卡失败。', { variant: 'error' })

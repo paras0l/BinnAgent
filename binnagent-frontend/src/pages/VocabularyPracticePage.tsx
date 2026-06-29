@@ -24,6 +24,8 @@ interface VocabularyPracticePageProps {
   initialMode: VocabularyPracticeMode
   curriculumNodeId?: string | null
   sourceLabel?: string | null
+  readonlyItemId?: string | null
+  readonlyBackLabel?: string
   onExit: () => void
 }
 
@@ -96,6 +98,24 @@ interface SessionSummary {
   due_next: number
 }
 
+interface VocabularyItemDetail {
+  id: string
+  word: string
+  phonetic?: string | null
+  phonetic_uk?: string | null
+  phonetic_us?: string | null
+  audio_url?: string | null
+  audio_uk?: string | null
+  audio_us?: string | null
+  dictionary_senses: DictionarySense[]
+  word_forms: Record<string, string[]>
+  dictionary_tags: string[]
+  meanings: BilingualMeaning[]
+  examples: Array<string | Record<string, unknown>>
+  sources: SourceTag[]
+  mastery?: Record<string, number>
+}
+
 const counts = [5, 10, 15]
 const ENGLISH_SPELLING_PATTERN = /^[A-Za-z' -]*$/
 
@@ -104,6 +124,8 @@ export function VocabularyPracticePage({
   initialMode,
   curriculumNodeId,
   sourceLabel,
+  readonlyItemId,
+  readonlyBackLabel = '返回',
   onExit,
 }: VocabularyPracticePageProps) {
   const [mode, setMode] = useState<VocabularyPracticeMode>(initialMode)
@@ -126,6 +148,8 @@ export function VocabularyPracticePage({
   const [inputWarning, setInputWarning] = useState<string | null>(null)
   const [availableTotal, setAvailableTotal] = useState<number | null>(null)
   const [detailTerm, setDetailTerm] = useState<string | null>(null)
+  const [shouldRefreshAfterDetail, setShouldRefreshAfterDetail] = useState(false)
+  const [readonlyDetail, setReadonlyDetail] = useState<VocabularyItemDetail | null>(null)
   const [isReviewRevealed, setIsReviewRevealed] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const startedAt = useRef(0)
@@ -134,6 +158,19 @@ export function VocabularyPracticePage({
   const lastAutoSubmitted = useRef('')
 
   const api = `/api/learners/${learner.id}/vocabulary`
+
+  const loadAvailableTotal = useCallback((signal?: AbortSignal) => {
+    const url = curriculumNodeId ? `${api}/units/${curriculumNodeId}/summary` : api
+    return fetch(url, { signal })
+      .then((response) => response.ok ? response.json() as Promise<{ total: number } | Array<{ status: string }>> : null)
+      .then((data) => {
+        if (Array.isArray(data)) setAvailableTotal(data.filter((item) => item.status !== 'mastered').length)
+        else setAvailableTotal(data?.total ?? null)
+      })
+      .catch((fetchError: unknown) => {
+        if (!(fetchError instanceof DOMException && fetchError.name === 'AbortError')) setAvailableTotal(null)
+      })
+  }, [api, curriculumNodeId])
 
   const loadTask = useCallback(async (id: string) => {
     const response = await fetch(`${api}/sessions/${id}/next`)
@@ -159,19 +196,28 @@ export function VocabularyPracticePage({
   }, [api])
 
   useEffect(() => {
+    if (readonlyItemId) return
     const controller = new AbortController()
-    const url = curriculumNodeId ? `${api}/units/${curriculumNodeId}/summary` : api
-    fetch(url, { signal: controller.signal })
-      .then((response) => response.ok ? response.json() as Promise<{ total: number } | Array<{ status: string }>> : null)
-      .then((data) => {
-        if (Array.isArray(data)) setAvailableTotal(data.filter((item) => item.status !== 'mastered').length)
-        else setAvailableTotal(data?.total ?? null)
+    void loadAvailableTotal(controller.signal)
+    return () => controller.abort()
+  }, [loadAvailableTotal, readonlyItemId])
+
+  useEffect(() => {
+    if (!readonlyItemId) return
+    const controller = new AbortController()
+    fetch(`${api}/${readonlyItemId}`, { signal: controller.signal })
+      .then((response) => {
+        if (!response.ok) throw new Error('词条暂时无法加载。')
+        return response.json() as Promise<VocabularyItemDetail>
       })
+      .then((detail) => setReadonlyDetail(detail))
       .catch((fetchError: unknown) => {
-        if (!(fetchError instanceof DOMException && fetchError.name === 'AbortError')) setAvailableTotal(null)
+        if (!(fetchError instanceof DOMException && fetchError.name === 'AbortError')) {
+          setError(fetchError instanceof Error ? fetchError.message : '词条暂时无法加载。')
+        }
       })
     return () => controller.abort()
-  }, [api, curriculumNodeId])
+  }, [api, readonlyItemId])
 
   useEffect(() => () => {
     if (autoJudgeTimer.current !== null) window.clearTimeout(autoJudgeTimer.current)
@@ -354,6 +400,10 @@ export function VocabularyPracticePage({
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (detailTerm) return
+      if (readonlyItemId) {
+        if (event.key === 'Escape') onExit()
+        return
+      }
       if (phase !== 'practice') return
       if (event.code === 'Space' && document.activeElement !== inputRef.current) {
         event.preventDefault()
@@ -374,8 +424,34 @@ export function VocabularyPracticePage({
     return () => window.removeEventListener('keydown', onKeyDown)
   })
 
+  if (readonlyItemId) {
+    return (
+      <ReadonlyVocabularyDetail
+        detail={readonlyDetail}
+        error={error}
+        isLoading={readonlyDetail?.id !== readonlyItemId && !error}
+        sourceLabel={sourceLabel ?? '我的词汇本'}
+        backLabel={readonlyBackLabel}
+        onBack={onExit}
+      />
+    )
+  }
+
   if (detailTerm) {
-    return <VocabularyDetailPage learner={learner} term={detailTerm} onBack={() => setDetailTerm(null)} />
+    return (
+      <VocabularyDetailPage
+        learner={learner}
+        term={detailTerm}
+        onBack={() => {
+          setDetailTerm(null)
+          if (!shouldRefreshAfterDetail) return
+          setShouldRefreshAfterDetail(false)
+          void loadAvailableTotal()
+          if (sessionId) void loadTask(sessionId)
+        }}
+        onVocabularyChanged={() => setShouldRefreshAfterDetail(true)}
+      />
+    )
   }
 
   if (phase === 'setup') {
@@ -541,6 +617,129 @@ export function VocabularyPracticePage({
 
 function SetupGroup({ label, children }: { label: string; children: React.ReactNode }) {
   return <div className="mt-7"><p className="mb-3 text-sm font-black text-slate-800">{label}</p><div className="flex flex-wrap gap-2">{children}</div></div>
+}
+
+function ReadonlyVocabularyDetail({
+  backLabel,
+  detail,
+  error,
+  isLoading,
+  onBack,
+  sourceLabel,
+}: {
+  backLabel: string
+  detail: VocabularyItemDetail | null
+  error: string | null
+  isLoading: boolean
+  onBack: () => void
+  sourceLabel: string
+}) {
+  const [accent, setAccent] = useState<'uk' | 'us' | 'auto'>('uk')
+  const [isPlaying, setIsPlaying] = useState(false)
+
+  const playDetailAudio = async (nextAccent: 'uk' | 'us') => {
+    if (!detail) return
+    setAccent(nextAccent)
+    const audioUrl = nextAccent === 'uk'
+      ? detail.audio_uk ?? detail.audio_url
+      : detail.audio_us ?? detail.audio_url
+    setIsPlaying(true)
+    try {
+      if (audioUrl) {
+        const audio = new Audio(audioUrl)
+        audio.playbackRate = 0.9
+        audio.onended = () => setIsPlaying(false)
+        audio.onerror = () => setIsPlaying(false)
+        await audio.play()
+      } else if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel()
+        const utterance = new SpeechSynthesisUtterance(detail.word)
+        utterance.lang = nextAccent === 'us' ? 'en-US' : 'en-GB'
+        utterance.rate = 0.86
+        utterance.onend = () => setIsPlaying(false)
+        window.speechSynthesis.speak(utterance)
+      } else {
+        setIsPlaying(false)
+      }
+    } catch {
+      setIsPlaying(false)
+    }
+  }
+
+  return (
+    <div className="flex h-dvh flex-col overflow-hidden bg-[#fbfbfd] text-slate-950">
+      <header className="shrink-0 border-b border-slate-200 bg-white px-4 py-3 sm:px-8">
+        <div className="mx-auto flex max-w-[1420px] items-center justify-between gap-4">
+          <button onClick={onBack} className="inline-flex shrink-0 items-center gap-2 text-sm font-bold text-slate-500 hover:text-indigo-600">
+            <ArrowLeft className="size-4" />{backLabel}
+          </button>
+          <span className="truncate text-sm font-bold text-slate-600">
+            单词详情 · {detail?.sources[0]?.label ?? sourceLabel}
+          </span>
+        </div>
+      </header>
+
+      <main className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-6 sm:py-6">
+        <section className="mx-auto grid w-full max-w-[1420px] gap-3 lg:grid-cols-[minmax(0,1fr)_320px]">
+          <div className="min-w-0">
+            {isLoading ? (
+              <div className="flex min-h-[420px] items-center justify-center rounded-2xl border border-slate-200 bg-white text-sm font-bold text-slate-500 shadow-sm">
+                <LoaderCircle className="mr-2 size-5 animate-spin text-indigo-600" />正在加载单词详情…
+              </div>
+            ) : detail ? (
+              <RichVocabularyEntry
+                word={detail.word}
+                phonetic={detail.phonetic}
+                phoneticUk={detail.phonetic_uk}
+                phoneticUs={detail.phonetic_us}
+                senses={detail.dictionary_senses}
+                meanings={detail.meanings}
+                examples={detail.examples}
+                wordForms={detail.word_forms}
+                tags={detail.dictionary_tags}
+                activeAccent={accent}
+                onPlayAccent={(nextAccent) => void playDetailAudio(nextAccent)}
+              />
+            ) : (
+              <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-sm font-semibold text-amber-800">
+                {error ?? '词条暂时无法加载。'}
+              </div>
+            )}
+          </div>
+
+          <aside className="flex min-h-0 flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-indigo-600">词汇本</p>
+              <h2 className="mt-2 text-lg font-black text-slate-950">单词详情</h2>
+              <p className="mt-2 text-sm leading-6 text-slate-500">
+                查看释义、例句、词形和发音；这里不会记录练习进度，也不会改变熟练度。
+              </p>
+            </div>
+            <div className="rounded-xl bg-slate-50 p-3">
+              <p className="text-xs font-bold text-slate-500">词汇来源</p>
+              <p className="mt-1 text-sm font-black text-slate-800">{detail?.sources[0]?.label ?? sourceLabel}</p>
+            </div>
+            {detail?.mastery ? (
+              <div className="rounded-xl bg-slate-50 p-3">
+                <p className="text-xs font-bold text-slate-500">掌握度</p>
+                <p className="mt-1 text-sm font-black text-slate-800">{Math.round((detail.mastery.overall ?? 0) * 100)}%</p>
+              </div>
+            ) : null}
+            {detail ? (
+              <button
+                type="button"
+                onClick={() => void playDetailAudio(accent === 'us' ? 'us' : 'uk')}
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-2.5 text-sm font-black text-indigo-700 transition hover:border-indigo-300"
+              >
+                {isPlaying ? <LoaderCircle className="size-4 animate-spin" /> : <Volume2 className="size-4" />}
+                播放发音
+              </button>
+            ) : null}
+          </aside>
+        </section>
+      </main>
+    </div>
+  )
 }
 
 function Choice({ selected, onClick, children }: { selected: boolean; onClick: () => void; children: React.ReactNode }) {
