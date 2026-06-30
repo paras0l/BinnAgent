@@ -36,6 +36,28 @@ export interface ReadingSentenceHint {
   text: string
 }
 
+export interface ReadingTitleSuggestionResponse {
+  is_complete: boolean
+  suggested_title?: string | null
+  reason: string
+  word_count: number
+  sentence_count: number
+}
+
+export interface ReadingMaterialHistoryItem {
+  id: string
+  learner_id: string
+  title?: string | null
+  text: string
+  level: ReadingLevel
+  goal: ReadingTrainingGoal
+  word_count: number
+  sentence_count: number
+  source: string
+  created_at: string
+  updated_at: string
+}
+
 export const READING_LEVEL_LABELS: Record<ReadingLevel, string> = {
   junior: '初中',
   cet4: 'CET-4',

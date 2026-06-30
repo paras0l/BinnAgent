@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   ArrowLeft,
   BookOpenCheck,
@@ -7,10 +7,13 @@ import {
   ExternalLink,
   FileText,
   Gauge,
+  History,
   Highlighter,
   Layers3,
   ListChecks,
   PencilLine,
+  RotateCw,
+  Save,
   SearchCheck,
   Timer,
 } from 'lucide-react'
@@ -35,8 +38,10 @@ import {
   type ReadingKeywordCandidate,
   type ReadingLevel,
   type ReadingMaterial,
+  type ReadingMaterialHistoryItem,
   type ReadingSentence,
   type ReadingSentenceHint,
+  type ReadingTitleSuggestionResponse,
   type ReadingTrainingGoal,
   type ReadingWorkspace,
 } from '@/data/readingWorkshop'
@@ -60,6 +65,11 @@ interface IntensiveNotes {
   phraseNotes: string
   evidenceNote: string
 }
+
+type TitleMode = 'empty' | 'auto' | 'user'
+type TitleSuggestionStatus = 'idle' | 'checking' | 'suggested' | 'incomplete' | 'error'
+type MaterialHistoryStatus = 'idle' | 'loading' | 'ready' | 'error'
+type MaterialSaveStatus = 'idle' | 'saving' | 'saved' | 'error'
 
 const SAMPLE_TEXT = `Many students believe that reading faster simply means moving their eyes quickly across a page. However, effective readers do more than race through words. They first notice the title, predict the topic, and look for sentences that show the writer's main point. When a sentence becomes difficult, they slow down, find the main verb, and separate extra information from the core meaning.`
 
@@ -97,6 +107,12 @@ export function ReadingWorkshopPage({ learner, onBack }: ReadingWorkshopPageProp
   const [material, setMaterial] = useState<ReadingMaterial>(EMPTY_MATERIAL)
   const [extensiveNotes, setExtensiveNotes] = useState<ExtensiveNotes>(EMPTY_EXTENSIVE_NOTES)
   const [intensiveNotes, setIntensiveNotes] = useState<IntensiveNotes>(EMPTY_INTENSIVE_NOTES)
+  const [titleMode, setTitleMode] = useState<TitleMode>('empty')
+  const [titleSuggestionStatus, setTitleSuggestionStatus] = useState<TitleSuggestionStatus>('idle')
+  const [autoTitleSourceText, setAutoTitleSourceText] = useState('')
+  const [materialHistory, setMaterialHistory] = useState<ReadingMaterialHistoryItem[]>([])
+  const [historyStatus, setHistoryStatus] = useState<MaterialHistoryStatus>('idle')
+  const [saveStatus, setSaveStatus] = useState<MaterialSaveStatus>('idle')
   const [selectedSentenceId, setSelectedSentenceId] = useState<string | null>(null)
   const [visitedSentenceIds, setVisitedSentenceIds] = useState<string[]>([])
   const [selectedGrammarOptionIds, setSelectedGrammarOptionIds] = useState<string[]>([])
@@ -131,12 +147,114 @@ export function ReadingWorkshopPage({ learner, onBack }: ReadingWorkshopPageProp
   )
   const canUseMaterial = material.text.trim().length > 0
 
+  const loadMaterialHistory = useCallback(async () => {
+    setHistoryStatus('loading')
+    try {
+      const response = await fetch(`/api/learners/${learner.id}/reading-workshop/materials`)
+      if (!response.ok) throw new Error('Failed to load reading material history')
+      const data = (await response.json()) as ReadingMaterialHistoryItem[]
+      setMaterialHistory(data)
+      setHistoryStatus('ready')
+    } catch (error) {
+      console.error('Reading material history load error:', error)
+      setHistoryStatus('error')
+    }
+  }, [learner.id])
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => void loadMaterialHistory(), 0)
+    return () => window.clearTimeout(timer)
+  }, [loadMaterialHistory])
+
+  const saveCurrentMaterial = useCallback(async () => {
+    const text = material.text.trim()
+    if (!text) return null
+
+    setSaveStatus('saving')
+    try {
+      const response = await fetch(`/api/learners/${learner.id}/reading-workshop/materials`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: material.title.trim() || null,
+          text,
+          level: material.level,
+          goal: material.goal,
+        }),
+      })
+      if (!response.ok) throw new Error('Failed to save reading material')
+      const saved = (await response.json()) as ReadingMaterialHistoryItem
+      setMaterialHistory((current) => [
+        saved,
+        ...current.filter((item) => item.id !== saved.id),
+      ].slice(0, 20))
+      setSaveStatus('saved')
+      return saved
+    } catch (error) {
+      console.error('Reading material save error:', error)
+      setSaveStatus('error')
+      return null
+    }
+  }, [learner.id, material.goal, material.level, material.text, material.title])
+
+  useEffect(() => {
+    const text = material.text.trim()
+    if (titleMode === 'user') return
+    if (!text) return
+    if (titleMode === 'auto' && autoTitleSourceText === text) return
+
+    const controller = new AbortController()
+    const timer = window.setTimeout(() => {
+      setTitleSuggestionStatus('checking')
+      fetch('/api/reading-workshop/title-suggestion', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text }),
+        signal: controller.signal,
+      })
+        .then((response) => {
+          if (!response.ok) throw new Error('Failed to suggest reading title')
+          return response.json() as Promise<ReadingTitleSuggestionResponse>
+        })
+        .then((data) => {
+          if (!data.is_complete || !data.suggested_title) {
+            if (titleMode === 'auto') {
+              setMaterial((current) => ({ ...current, title: '' }))
+              setTitleMode('empty')
+              setAutoTitleSourceText('')
+            }
+            setTitleSuggestionStatus('incomplete')
+            return
+          }
+          setMaterial((current) => ({ ...current, title: data.suggested_title ?? current.title }))
+          setTitleMode('auto')
+          setAutoTitleSourceText(text)
+          setTitleSuggestionStatus('suggested')
+        })
+        .catch((error) => {
+          if (error instanceof DOMException && error.name === 'AbortError') return
+          console.error('Reading title suggestion error:', error)
+          setTitleSuggestionStatus('error')
+        })
+    }, 700)
+
+    return () => {
+      window.clearTimeout(timer)
+      controller.abort()
+    }
+  }, [autoTitleSourceText, material.text, titleMode])
+
   const openWorkspace = (nextWorkspace: ReadingWorkspace) => {
     if (nextWorkspace === 'intensive' && sentences[0] && !selectedSentenceId) {
       setSelectedSentenceId(sentences[0].id)
       setVisitedSentenceIds((current) => uniqueList([...current, sentences[0].id]))
     }
     setWorkspace(nextWorkspace)
+  }
+
+  const startTraining = (nextWorkspace: ReadingWorkspace) => {
+    void saveCurrentMaterial()
+    openWorkspace(nextWorkspace)
   }
 
   const loadSampleMaterial = () => {
@@ -146,8 +264,49 @@ export function ReadingWorkshopPage({ learner, onBack }: ReadingWorkshopPageProp
       level: 'general',
       goal: 'mixed',
     })
+    setTitleMode('auto')
+    setTitleSuggestionStatus('suggested')
+    setAutoTitleSourceText(SAMPLE_TEXT)
     setSelectedSentenceId('reading-sentence-1')
     setVisitedSentenceIds(['reading-sentence-1'])
+    setWorkspace('input')
+  }
+
+  const updateTitle = (title: string) => {
+    setTitleMode('user')
+    setSaveStatus('idle')
+    setMaterial((current) => ({ ...current, title }))
+  }
+
+  const updateText = (text: string) => {
+    setSaveStatus('idle')
+    if (!text.trim() && titleMode !== 'user') {
+      setTitleMode('empty')
+      setAutoTitleSourceText('')
+      setTitleSuggestionStatus('idle')
+      setMaterial((current) => ({ ...current, title: '', text }))
+      return
+    }
+    setMaterial((current) => ({ ...current, text }))
+  }
+
+  const restoreMaterial = (item: ReadingMaterialHistoryItem) => {
+    setMaterial({
+      title: item.title ?? '',
+      text: item.text,
+      level: item.level,
+      goal: item.goal,
+    })
+    setTitleMode(item.title ? 'user' : 'empty')
+    setTitleSuggestionStatus(item.title ? 'suggested' : 'idle')
+    setAutoTitleSourceText(item.title ? item.text : '')
+    setSaveStatus('idle')
+    setExtensiveNotes(EMPTY_EXTENSIVE_NOTES)
+    setIntensiveNotes(EMPTY_INTENSIVE_NOTES)
+    setSelectedSentenceId(null)
+    setVisitedSentenceIds([])
+    setSelectedGrammarOptionIds([])
+    setOpenedGrammarTopics([])
     setWorkspace('input')
   }
 
@@ -211,11 +370,24 @@ export function ReadingWorkshopPage({ learner, onBack }: ReadingWorkshopPageProp
           material={material}
           canUseMaterial={canUseMaterial}
           onLoadSample={loadSampleMaterial}
-          onOpenWorkspace={openWorkspace}
-          onTitleChange={(title) => setMaterial((current) => ({ ...current, title }))}
-          onTextChange={(text) => setMaterial((current) => ({ ...current, text }))}
-          onLevelChange={(level) => setMaterial((current) => ({ ...current, level }))}
-          onGoalChange={(goal) => setMaterial((current) => ({ ...current, goal }))}
+          onRefreshHistory={loadMaterialHistory}
+          onRestoreHistory={restoreMaterial}
+          onSaveMaterial={() => void saveCurrentMaterial()}
+          onStartTraining={startTraining}
+          onTitleChange={updateTitle}
+          onTextChange={updateText}
+          onLevelChange={(level) => {
+            setSaveStatus('idle')
+            setMaterial((current) => ({ ...current, level }))
+          }}
+          onGoalChange={(goal) => {
+            setSaveStatus('idle')
+            setMaterial((current) => ({ ...current, goal }))
+          }}
+          historyItems={materialHistory}
+          historyStatus={historyStatus}
+          saveStatus={saveStatus}
+          titleSuggestionStatus={titleSuggestionStatus}
         />
       )}
 
@@ -274,19 +446,47 @@ function InputWorkspace({
   onGoalChange,
   onLevelChange,
   onLoadSample,
-  onOpenWorkspace,
+  onRefreshHistory,
+  onRestoreHistory,
+  onSaveMaterial,
+  onStartTraining,
   onTextChange,
   onTitleChange,
+  historyItems,
+  historyStatus,
+  saveStatus,
+  titleSuggestionStatus,
 }: {
   material: ReadingMaterial
   canUseMaterial: boolean
+  historyItems: ReadingMaterialHistoryItem[]
+  historyStatus: MaterialHistoryStatus
   onGoalChange: (goal: ReadingTrainingGoal) => void
   onLevelChange: (level: ReadingLevel) => void
   onLoadSample: () => void
-  onOpenWorkspace: (workspace: ReadingWorkspace) => void
+  onRefreshHistory: () => void
+  onRestoreHistory: (item: ReadingMaterialHistoryItem) => void
+  onSaveMaterial: () => void
+  onStartTraining: (workspace: ReadingWorkspace) => void
   onTextChange: (text: string) => void
   onTitleChange: (title: string) => void
+  saveStatus: MaterialSaveStatus
+  titleSuggestionStatus: TitleSuggestionStatus
 }) {
+  const titleDescription = {
+    idle: '可选；粘贴完整材料后会自动建议标题，仍可手动修改。',
+    checking: '正在根据材料建议标题，仍可手动填写。',
+    suggested: '已自动建议标题，仍可手动修改。',
+    incomplete: '可选；材料完整后会自动建议标题。',
+    error: '自动标题暂时不可用，仍可手动填写。',
+  } satisfies Record<TitleSuggestionStatus, string>
+  const saveStatusLabel = {
+    idle: '保存材料',
+    saving: '正在保存',
+    saved: '已保存',
+    error: '保存失败',
+  } satisfies Record<MaterialSaveStatus, string>
+
   return (
     <section className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
       <SurfaceCard>
@@ -297,7 +497,7 @@ function InputWorkspace({
         <div className="mt-5 grid gap-4 md:grid-cols-2">
           <FormField
             label="标题"
-            description="可选，用来在复盘里识别这次材料。"
+            description={titleDescription[titleSuggestionStatus]}
             value={material.title}
             onChange={(event) => onTitleChange(event.target.value)}
             placeholder="例如 The Future of Libraries"
@@ -331,7 +531,6 @@ function InputWorkspace({
           <FormField
             as="textarea"
             label="英文材料"
-            description="粘贴一段英文即可，第一版先在本地工作区处理，不写入后端。"
             value={material.text}
             onChange={(event) => onTextChange(event.target.value)}
             placeholder="Paste an English paragraph here..."
@@ -339,9 +538,17 @@ function InputWorkspace({
           />
         </div>
         <div className="mt-5 flex flex-wrap gap-3">
-          <Button disabled={!canUseMaterial} onClick={() => onOpenWorkspace(material.goal === 'intensive' ? 'intensive' : 'extensive')}>
+          <Button disabled={!canUseMaterial} onClick={() => onStartTraining(material.goal === 'intensive' ? 'intensive' : 'extensive')}>
             <BookOpenCheck className="h-4 w-4" />
             开始训练
+          </Button>
+          <Button
+            variant="secondary"
+            disabled={!canUseMaterial || saveStatus === 'saving'}
+            onClick={onSaveMaterial}
+          >
+            {saveStatus === 'saved' ? <CheckCircle2 className="h-4 w-4" /> : <Save className="h-4 w-4" />}
+            {saveStatusLabel[saveStatus]}
           </Button>
           <Button variant="secondary" onClick={onLoadSample}>
             <PencilLine className="h-4 w-4" />
@@ -364,6 +571,45 @@ function InputWorkspace({
         </div>
         <div className="mt-5 rounded-lg border border-primary/20 bg-primary/5 p-4 text-sm leading-6 text-primary">
           精读和泛读处理同一篇材料，但训练目标不同：泛读少看细节，精读少求速度。
+        </div>
+
+        <div className="mt-5 border-t border-slate-200 pt-5">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <History className="h-5 w-5 text-primary" />
+              <h2 className="text-lg font-black text-slate-950">材料历史</h2>
+            </div>
+            <button
+              className="rounded-lg p-2 text-slate-500 transition hover:bg-slate-100 hover:text-primary"
+              onClick={onRefreshHistory}
+              title="刷新历史记录"
+            >
+              <RotateCw className="h-4 w-4" />
+            </button>
+          </div>
+          <div className="mt-4 max-h-[420px] space-y-3 overflow-y-auto pr-1">
+            {historyStatus === 'loading' ? (
+              <p className="rounded-lg border border-dashed border-slate-200 p-3 text-sm text-muted-foreground">
+                正在加载历史材料...
+              </p>
+            ) : historyStatus === 'error' ? (
+              <p className="rounded-lg border border-dashed border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">
+                历史材料暂时无法加载。
+              </p>
+            ) : historyItems.length > 0 ? (
+              historyItems.map((item) => (
+                <HistoryItem
+                  key={item.id}
+                  item={item}
+                  onRestore={() => onRestoreHistory(item)}
+                />
+              ))
+            ) : (
+              <p className="rounded-lg border border-dashed border-slate-200 p-3 text-sm leading-6 text-muted-foreground">
+                还没有历史材料。开始训练或点击保存后会出现在这里。
+              </p>
+            )}
+          </div>
         </div>
       </SurfaceCard>
     </section>
@@ -806,6 +1052,40 @@ function MetricTile({ label, value }: { label: string; value: string | number })
   )
 }
 
+function HistoryItem({ item, onRestore }: { item: ReadingMaterialHistoryItem; onRestore: () => void }) {
+  const title = item.title?.trim() || '未命名阅读材料'
+  const preview = item.text.length > 118 ? `${item.text.slice(0, 118)}...` : item.text
+
+  return (
+    <div className="rounded-lg border border-slate-200 bg-white p-3">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="truncate text-sm font-black text-slate-950">{title}</p>
+          <p className="mt-1 text-xs text-slate-500">{formatHistoryTime(item.updated_at)}</p>
+        </div>
+        <Button className="shrink-0 px-3 py-2 text-xs" variant="secondary" onClick={onRestore}>
+          恢复
+        </Button>
+      </div>
+      <p className="mt-2 line-clamp-3 text-sm leading-6 text-slate-500">{preview}</p>
+      <div className="mt-3 flex flex-wrap gap-2">
+        <span className="rounded-md bg-slate-100 px-2 py-1 text-xs font-bold text-slate-600">
+          {item.word_count} 词
+        </span>
+        <span className="rounded-md bg-slate-100 px-2 py-1 text-xs font-bold text-slate-600">
+          {item.sentence_count} 句
+        </span>
+        <span className="rounded-md bg-primary/10 px-2 py-1 text-xs font-bold text-primary">
+          {READING_LEVEL_LABELS[item.level]}
+        </span>
+        <span className="rounded-md bg-success/10 px-2 py-1 text-xs font-bold text-success">
+          {READING_GOAL_LABELS[item.goal]}
+        </span>
+      </div>
+    </div>
+  )
+}
+
 function ModeStep({ title, text }: { title: string; text: string }) {
   return (
     <div className="rounded-lg border border-slate-200 p-3">
@@ -813,6 +1093,17 @@ function ModeStep({ title, text }: { title: string; text: string }) {
       <p className="mt-1 text-sm leading-6 text-slate-500">{text}</p>
     </div>
   )
+}
+
+function formatHistoryTime(value: string) {
+  const time = new Date(value)
+  if (Number.isNaN(time.getTime())) return '时间未知'
+  return time.toLocaleString('zh-CN', {
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
 }
 
 function ReviewBlock({ title, items }: { title: string; items: Array<[string, string]> }) {

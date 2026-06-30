@@ -76,6 +76,8 @@ TUTOR_SYSTEM_PROMPT = prompt_registry.render(
 async def _get_or_create_thread(
     req: ChatRequest,
     db: AsyncSession,
+    *,
+    persist_new: bool = True,
 ) -> AgentThread:
     learner_result = await db.execute(select(Learner.id).where(Learner.id == req.learner_id))
     if learner_result.scalar_one_or_none() is None:
@@ -98,8 +100,11 @@ async def _get_or_create_thread(
         status="active",
         metadata_={"source": "chat"},
     )
-    db.add(thread)
-    await db.flush()
+    if persist_new:
+        db.add(thread)
+        await db.flush()
+    else:
+        thread.id = uuid.uuid4()
     return thread
 
 
@@ -309,10 +314,140 @@ async def _maybe_update_thread_summary(
     await db.flush()
 
 
-async def _persist_stream_assistant_message(
+async def _maybe_update_thread_summary_safely(
+    *,
+    db: AsyncSession,
+    req: ChatRequest,
+    thread: AgentThread,
+    history: list[ConversationMessage],
+    assistant_reply: str,
+    model_router: ModelRouter,
+) -> None:
+    try:
+        await _maybe_update_thread_summary(
+            db=db,
+            req=req,
+            thread=thread,
+            history=history,
+            assistant_reply=assistant_reply,
+            model_router=model_router,
+        )
+    except Exception:
+        logger.exception("Failed to update chat thread summary")
+
+
+async def _thread_for_message_write(
+    *,
+    db: AsyncSession,
+    req: ChatRequest,
+    thread: AgentThread,
+    skill: AgentSkill | None,
+) -> AgentThread:
+    if req.thread_id is not None:
+        result = await db.execute(
+            select(AgentThread)
+            .where(
+                AgentThread.id == thread.id,
+                AgentThread.learner_id == req.learner_id,
+            )
+            .with_for_update()
+        )
+        locked_thread = result.scalar_one_or_none()
+        if locked_thread is None:
+            raise HTTPException(status_code=404, detail="Conversation thread not found")
+        if skill is not None:
+            locked_thread.metadata_ = apply_skill_to_metadata(locked_thread.metadata_, skill)
+        return locked_thread
+
+    if thread.id is None:
+        thread.id = uuid.uuid4()
+    if skill is not None:
+        thread.metadata_ = apply_skill_to_metadata(thread.metadata_, skill)
+    db.add(thread)
+    await db.flush()
+    return thread
+
+
+async def _persist_chat_messages(
+    *,
+    db: AsyncSession,
+    req: ChatRequest,
+    thread: AgentThread,
+    assistant_reply: str,
+    skill: AgentSkill | None,
+    user_metadata: dict[str, Any],
+    assistant_metadata: dict[str, Any],
+) -> tuple[AgentThread, ConversationMessage, ConversationMessage]:
+    writable_thread = await _thread_for_message_write(
+        db=db,
+        req=req,
+        thread=thread,
+        skill=skill,
+    )
+    next_sequence = await _next_message_sequence(
+        db,
+        learner_id=req.learner_id,
+        thread_id=writable_thread.id,
+    )
+
+    user_message = ConversationMessage(
+        learner_id=req.learner_id,
+        thread_id=writable_thread.id,
+        role="user",
+        content=req.message,
+        sequence=next_sequence,
+        skill_focus=_skill_focus_value(skill, req),
+        metadata_=user_metadata,
+    )
+    assistant_message = ConversationMessage(
+        learner_id=req.learner_id,
+        thread_id=writable_thread.id,
+        role="assistant",
+        content=assistant_reply,
+        sequence=next_sequence + 1,
+        skill_focus=_skill_focus_value(skill, req),
+        metadata_=assistant_metadata,
+    )
+    db.add(user_message)
+    db.add(assistant_message)
+    _touch_thread(writable_thread, req.message)
+    await db.flush()
+    return writable_thread, user_message, assistant_message
+
+
+async def _persist_chat_side_effects(
+    *,
+    db: AsyncSession,
+    req: ChatRequest,
+    thread: AgentThread,
+    history: list[ConversationMessage],
+    assistant_reply: str,
+    assistant_message_id: uuid.UUID | None,
+    model_router: ModelRouter,
+    skill: AgentSkill | None,
+) -> None:
+    await _capture_chat_memory_safely(
+        db=db,
+        req=req,
+        thread_id=thread.id,
+        assistant_reply=assistant_reply,
+        assistant_message_id=assistant_message_id,
+        skill=skill,
+    )
+    await _maybe_update_thread_summary_safely(
+        db=db,
+        req=req,
+        thread=thread,
+        history=history,
+        assistant_reply=assistant_reply,
+        model_router=model_router,
+    )
+
+
+async def _persist_stream_chat_turn(
     *,
     req: ChatRequest,
-    thread_id: uuid.UUID,
+    thread: AgentThread,
     history: list[ConversationMessage],
     assistant_reply: str,
     model_router: ModelRouter,
@@ -321,50 +456,32 @@ async def _persist_stream_assistant_message(
 ) -> ConversationMessage:
     async with async_session_factory() as db:
         try:
-            thread_result = await db.execute(
-                select(AgentThread).where(
-                    AgentThread.id == thread_id,
-                    AgentThread.learner_id == req.learner_id,
-                )
-            )
-            thread = thread_result.scalar_one_or_none()
-            if thread is None:
-                raise ValueError("Conversation thread not found")
-
-            assistant_message = ConversationMessage(
-                learner_id=req.learner_id,
-                thread_id=thread.id,
-                role="assistant",
-                content=assistant_reply,
-                sequence=await _next_message_sequence(
-                    db,
-                    learner_id=req.learner_id,
-                    thread_id=thread.id,
-                ),
-                skill_focus=_skill_focus_value(skill, req),
-                metadata_={"memory_context": _memory_context_metadata(memory_context)},
-            )
-            db.add(assistant_message)
-            await db.flush()
-            await _capture_chat_memory_safely(
-                db=db,
-                req=req,
-                thread_id=thread.id,
-                assistant_reply=assistant_reply,
-                assistant_message_id=assistant_message.id,
-                skill=skill,
-            )
-            _touch_thread(thread, req.message)
-            await _maybe_update_thread_summary(
+            writable_thread, _, assistant_message = await _persist_chat_messages(
                 db=db,
                 req=req,
                 thread=thread,
-                history=history,
                 assistant_reply=assistant_reply,
-                model_router=model_router,
+                skill=skill,
+                user_metadata={},
+                assistant_metadata={"memory_context": _memory_context_metadata(memory_context)},
             )
             await db.commit()
             await db.refresh(assistant_message)
+            try:
+                await _persist_chat_side_effects(
+                    db=db,
+                    req=req,
+                    thread=writable_thread,
+                    history=history,
+                    assistant_reply=assistant_reply,
+                    assistant_message_id=assistant_message.id,
+                    model_router=model_router,
+                    skill=skill,
+                )
+                await db.commit()
+            except Exception:
+                await db.rollback()
+                logger.exception("Failed to finalize streamed chat side effects")
             return assistant_message
         except Exception:
             await db.rollback()
@@ -378,79 +495,58 @@ async def chat_send(
     db: AsyncSession = Depends(get_db_session),
     model_router: ModelRouter = Depends(get_model_router),
 ) -> ChatResponse:
-    thread = await _get_or_create_thread(req, db)
+    thread = await _get_or_create_thread(req, db, persist_new=False)
     skill = _resolve_skill(req, thread)
-    if skill is not None:
-        thread.metadata_ = apply_skill_to_metadata(thread.metadata_, skill)
     history = await _conversation_history(req, db, thread)
     memory_context = await _retrieve_memory_context_safely(
         db,
         learner_id=req.learner_id,
         reason="chat",
         skill_focus=_skill_focus_value(skill, req),
-        thread_id=thread.id,
+        thread_id=thread.id if req.thread_id else None,
     )
-
-    user_message = ConversationMessage(
-        learner_id=req.learner_id,
-        thread_id=thread.id,
-        role="user",
-        content=req.message,
-        sequence=await _next_message_sequence(
-            db,
-            learner_id=req.learner_id,
-            thread_id=thread.id,
-        ),
-        skill_focus=_skill_focus_value(skill, req),
-        metadata_={"memory_context": _memory_context_metadata(memory_context)},
-    )
-    db.add(user_message)
-    await db.flush()
 
     try:
         reply, finish_reason, continuation_count = await _complete_non_streaming(
             req, thread, history, model_router, skill, memory_context
         )
     except httpx.HTTPError:
+        await db.rollback()
         raise HTTPException(status_code=503, detail="Ollama service unavailable")
 
-    assistant_message = ConversationMessage(
-        learner_id=req.learner_id,
-        thread_id=thread.id,
-        role="assistant",
-        content=reply,
-        sequence=user_message.sequence + 1,
-        skill_focus=_skill_focus_value(skill, req),
-        metadata_={},
-    )
-    db.add(assistant_message)
-    await db.flush()
-    await _capture_chat_memory_safely(
+    writable_thread, _, assistant_message = await _persist_chat_messages(
         db=db,
         req=req,
-        thread_id=thread.id,
         assistant_reply=reply,
-        assistant_message_id=assistant_message.id,
         skill=skill,
-    )
-    _touch_thread(thread, req.message)
-    await _maybe_update_thread_summary(
-        db=db,
-        req=req,
         thread=thread,
-        history=history,
-        assistant_reply=reply,
-        model_router=model_router,
+        user_metadata={"memory_context": _memory_context_metadata(memory_context)},
+        assistant_metadata={},
     )
     await db.commit()
     await db.refresh(assistant_message)
+    try:
+        await _persist_chat_side_effects(
+            db=db,
+            req=req,
+            thread=writable_thread,
+            history=history,
+            assistant_reply=reply,
+            assistant_message_id=assistant_message.id,
+            model_router=model_router,
+            skill=skill,
+        )
+        await db.commit()
+    except Exception:
+        await db.rollback()
+        logger.exception("Failed to finalize chat side effects")
     skill_events: list[dict[str, Any]] = []
     if _should_trigger_vocabulary_agent(skill):
         skill_events.append(_skill_event("started", skill=skill))
         background_tasks.add_task(
             _run_vocabulary_agent_background,
             req=req,
-            thread_id=thread.id,
+            thread_id=writable_thread.id,
             assistant_reply=reply,
             assistant_message_id=assistant_message.id,
             model_router=model_router,
@@ -459,7 +555,7 @@ async def chat_send(
     return ChatResponse(
         reply=reply,
         response=reply,
-        thread_id=thread.id,
+        thread_id=writable_thread.id,
         message_id=assistant_message.id,
         finish_reason=finish_reason,
         continuation_count=continuation_count,
@@ -530,7 +626,7 @@ async def _retrieve_memory_context_safely(
     learner_id: uuid.UUID,
     reason: str,
     skill_focus: str | None,
-    thread_id: uuid.UUID,
+    thread_id: uuid.UUID | None,
 ) -> MemoryContext:
     try:
         context = await MemoryRetriever(db).for_chat(
@@ -718,37 +814,18 @@ async def chat_stream(
     db: AsyncSession = Depends(get_db_session),
     model_router: ModelRouter = Depends(get_model_router),
 ) -> StreamingResponse:
-    thread = await _get_or_create_thread(req, db)
+    thread = await _get_or_create_thread(req, db, persist_new=False)
     skill = _resolve_skill(req, thread)
-    if skill is not None:
-        thread.metadata_ = apply_skill_to_metadata(thread.metadata_, skill)
     history = await _conversation_history(req, db, thread)
     memory_context = await _retrieve_memory_context_safely(
         db,
         learner_id=req.learner_id,
         reason="chat_stream",
         skill_focus=_skill_focus_value(skill, req),
-        thread_id=thread.id,
+        thread_id=thread.id if req.thread_id else None,
     )
-
-    user_message = ConversationMessage(
-        learner_id=req.learner_id,
-        thread_id=thread.id,
-        role="user",
-        content=req.message,
-        sequence=await _next_message_sequence(
-            db,
-            learner_id=req.learner_id,
-            thread_id=thread.id,
-        ),
-        skill_focus=_skill_focus_value(skill, req),
-        metadata_={},
-    )
-    db.add(user_message)
-    await db.flush()
-    _touch_thread(thread, req.message)
     await db.commit()
-    thread_id = thread.id
+    is_existing_thread = req.thread_id is not None
 
     async def event_stream() -> AsyncIterator[str]:
         chunks: list[str] = []
@@ -757,7 +834,7 @@ async def chat_stream(
         yield _sse_event(
             "meta",
             {
-                "thread_id": str(thread_id),
+                "thread_id": str(thread.id) if is_existing_thread else None,
                 "skill_id": skill.id if skill else None,
                 "skill_name": skill.name if skill else None,
                 "skill_focus": _skill_focus_value(skill, req),
@@ -805,9 +882,9 @@ async def chat_stream(
 
         reply = "".join(chunks) or "抱歉，我暂时无法回复。"
         try:
-            assistant_message = await _persist_stream_assistant_message(
+            assistant_message = await _persist_stream_chat_turn(
                 req=req,
-                thread_id=thread_id,
+                thread=thread,
                 history=history,
                 assistant_reply=reply,
                 model_router=model_router,
@@ -821,7 +898,7 @@ async def chat_stream(
         yield _sse_event(
             "done",
             {
-                "thread_id": str(thread_id),
+                "thread_id": str(assistant_message.thread_id),
                 "message_id": str(assistant_message.id),
                 "reply": reply,
                 "finish_reason": finish_reason,
@@ -835,7 +912,7 @@ async def chat_stream(
             yield _sse_event("skill", _skill_event("started", skill=skill))
             result = await _run_vocabulary_agent_background(
                 req=req,
-                thread_id=thread_id,
+                thread_id=assistant_message.thread_id,
                 assistant_reply=reply,
                 assistant_message_id=assistant_message.id,
                 model_router=model_router,

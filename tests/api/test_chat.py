@@ -102,7 +102,7 @@ def mock_stream_persist_session(monkeypatch, mock_session):
     async def _execute(stmt):
         if "max(conversation_messages.sequence)" in str(stmt):
             result = MagicMock()
-            result.scalar_one_or_none.return_value = 1
+            result.scalar_one_or_none.return_value = 0
             return result
         thread = next(obj for obj in mock_session.added_objects if isinstance(obj, AgentThread))
         result = MagicMock()
@@ -132,6 +132,47 @@ def mock_stream_persist_session(monkeypatch, mock_session):
 
 
 class TestChatSend:
+    @pytest.mark.asyncio
+    async def test_persist_chat_messages_locks_existing_thread_before_sequence(self):
+        learner_id = uuid.uuid4()
+        thread_id = uuid.uuid4()
+        thread = AgentThread(learner_id=learner_id)
+        thread.id = thread_id
+        db = AsyncMock()
+        added_objects = []
+        db.add = MagicMock(side_effect=added_objects.append)
+        db.flush = AsyncMock()
+        lock_result = MagicMock()
+        lock_result.scalar_one_or_none.return_value = thread
+        max_result = MagicMock()
+        max_result.scalar_one_or_none.return_value = 4
+        db.execute = AsyncMock(side_effect=[lock_result, max_result])
+        req = chat_api.ChatRequest(
+            learner_id=learner_id,
+            thread_id=thread_id,
+            message="继续讲",
+        )
+
+        _, user_message, assistant_message = await chat_api._persist_chat_messages(
+            db=db,
+            req=req,
+            thread=thread,
+            assistant_reply="好的",
+            skill=None,
+            user_metadata={},
+            assistant_metadata={},
+        )
+
+        statements = [str(call.args[0]) for call in db.execute.await_args_list]
+        assert "FOR UPDATE" in statements[0]
+        assert "max(conversation_messages.sequence)" in statements[1]
+        assert [obj.role for obj in added_objects if isinstance(obj, ConversationMessage)] == [
+            "user",
+            "assistant",
+        ]
+        assert user_message.sequence == 5
+        assert assistant_message.sequence == 6
+
     @pytest.mark.asyncio
     async def test_chat_send_returns_reply_and_response_alias(
         self, client, mock_model_router, mock_session
@@ -213,6 +254,11 @@ class TestChatSend:
 
         assert response.status_code == 503
         assert response.json()["detail"] == "Ollama service unavailable"
+        messages = [
+            obj for obj in mock_session.added_objects if isinstance(obj, ConversationMessage)
+        ]
+        assert messages == []
+        mock_session.rollback.assert_awaited()
 
     @pytest.mark.asyncio
     async def test_chat_send_includes_thread_summary_and_recent_history(
@@ -242,6 +288,8 @@ class TestChatSend:
         thread_result.scalar_one_or_none.return_value = thread
         history_result = MagicMock()
         history_result.scalars.return_value.all.return_value = [history_assistant, history_user]
+        lock_result = MagicMock()
+        lock_result.scalar_one_or_none.return_value = thread
         max_result = MagicMock()
         max_result.scalar_one_or_none.return_value = 2
         mock_session.execute = AsyncMock(
@@ -250,6 +298,7 @@ class TestChatSend:
                 thread_result,
                 history_result,
                 *[_empty_many() for _ in range(11)],
+                lock_result,
                 max_result,
             ]
         )
@@ -274,6 +323,7 @@ class TestChatSend:
         assert "什么是定语从句？" in contents
         assert "定语从句用来修饰名词。" in contents
         assert contents[-1] == "继续"
+        assert any("FOR UPDATE" in str(call.args[0]) for call in mock_session.execute.await_args_list)
 
     @pytest.mark.asyncio
     async def test_chat_send_auto_continues_length_finish_once(
@@ -367,17 +417,30 @@ class TestChatSend:
         thread_result.scalar_one_or_none.return_value = thread
         history_result = MagicMock()
         history_result.scalars.return_value.all.return_value = []
+        lock_result = MagicMock()
+        lock_result.scalar_one_or_none.return_value = thread
         max_result = MagicMock()
         max_result.scalar_one_or_none.return_value = 0
-        mock_session.execute = AsyncMock(
-            side_effect=[
-                learner_result,
-                thread_result,
-                history_result,
-                *[_empty_many() for _ in range(8)],
-                max_result,
-            ]
-        )
+        empty_result = MagicMock()
+        empty_result.scalar_one_or_none.return_value = None
+        empty_result.scalars.return_value.all.return_value = []
+        empty_result.all.return_value = []
+
+        async def _execute(stmt):
+            statement = str(stmt)
+            if "max(conversation_messages.sequence)" in statement:
+                return max_result
+            if "agent_threads" in statement and "FOR UPDATE" in statement:
+                return lock_result
+            if "agent_threads" in statement:
+                return thread_result
+            if "conversation_messages" in statement:
+                return history_result
+            if "learners" in statement:
+                return learner_result
+            return empty_result
+
+        mock_session.execute = AsyncMock(side_effect=_execute)
         monkeypatch.setattr(chat_api, "_learning_snapshot_item", AsyncMock(return_value=None))
         monkeypatch.setattr(chat_api, "_run_vocabulary_agent_background", fake_background)
         mock_model_router.chat = AsyncMock(
@@ -514,14 +577,15 @@ class TestChatStream:
             for obj in mock_stream_persist_session.added_objects
             if isinstance(obj, ConversationMessage)
         ]
-        assert [message.role for message in request_messages] == ["user"]
-        assert [message.role for message in persisted_messages] == ["assistant"]
-        assert request_messages[0].content == "开始练习"
-        assert persisted_messages[0].content == "你好，我们开始练习。"
+        assert request_messages == []
+        assert [message.role for message in persisted_messages] == ["user", "assistant"]
+        assert [message.sequence for message in persisted_messages] == [1, 2]
+        assert persisted_messages[0].content == "开始练习"
+        assert persisted_messages[1].content == "你好，我们开始练习。"
 
     @pytest.mark.asyncio
     async def test_chat_stream_model_http_error_returns_error_event_without_assistant_message(
-        self, client, mock_model_router, mock_session
+        self, client, mock_model_router, mock_session, mock_stream_persist_session
     ):
         async def stream_chat(request):
             raise httpx.ConnectError("secret host detail")
@@ -542,7 +606,13 @@ class TestChatStream:
         messages = [
             obj for obj in mock_session.added_objects if isinstance(obj, ConversationMessage)
         ]
-        assert [message.role for message in messages] == ["user"]
+        persisted_messages = [
+            obj
+            for obj in mock_stream_persist_session.added_objects
+            if isinstance(obj, ConversationMessage)
+        ]
+        assert messages == []
+        assert persisted_messages == []
 
     @pytest.mark.asyncio
     async def test_chat_stream_auto_continues_length_finish(
