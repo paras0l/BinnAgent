@@ -27,8 +27,10 @@ import { useToast } from '@/hooks/useToast'
 import { FeatureHero } from '@/components/layout/FeatureHero'
 import { PageShell } from '@/components/layout/PageShell'
 import { WorkspaceTabs, type WorkspaceTab } from '@/components/layout/WorkspaceTabs'
+import { ExerciseBlock } from '@/components/exercise/ExerciseBlock'
 import { Button } from '@/components/ui/Button'
 import { SurfaceCard } from '@/components/ui/SurfaceCard'
+import type { ExerciseTarget } from '@/types/exercises'
 
 type CategoryFilter = 'all' | GrammarCategory
 
@@ -158,6 +160,11 @@ export function GrammarPage({ learner, onBack, backLabel = '返回探索', initi
   const currentHtml = htmlByTopicId[selectedTopic.id] ?? ''
   const currentProgress = progressByTopicId[selectedTopic.id]
   const currentCacheStatus = cacheStatusByTopicId[selectedTopic.id] ?? 'idle'
+  const grammarExerciseTarget = useMemo<ExerciseTarget>(() => ({
+    type: 'grammar_topic',
+    id: selectedTopic.id,
+    label: selectedTopic.title,
+  }), [selectedTopic.id, selectedTopic.title])
 
   const setTopicHtml = useCallback((topicId: string, nextHtml: string) => {
     setHtmlByTopicId((current) => ({ ...current, [topicId]: nextHtml }))
@@ -567,105 +574,108 @@ export function GrammarPage({ learner, onBack, backLabel = '返回探索', initi
       )}
 
       {workspace === 'generate' && (
-        <div className="grid gap-5 xl:grid-cols-[420px_minmax(0,1fr)]">
-          <SurfaceCard>
-            <h2 className="text-lg font-semibold text-foreground">生成链路</h2>
-            <p className="mt-1 text-sm text-muted-foreground">先复制 prompt，再跳转到目标 AI 网站。</p>
+        <>
+          <div className="grid gap-5 xl:grid-cols-[420px_minmax(0,1fr)]">
+            <SurfaceCard>
+              <h2 className="text-lg font-semibold text-foreground">生成链路</h2>
+              <p className="mt-1 text-sm text-muted-foreground">先复制 prompt，再跳转到目标 AI 网站。</p>
 
-            <div className="mt-4 rounded-lg border bg-background p-3">
-              <p className="text-xs font-medium text-muted-foreground">当前知识点</p>
-              <div className="mt-1 flex items-center justify-between gap-3">
-                <p className="text-base font-semibold text-foreground">{selectedTopic.title}</p>
-                <span className="rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground">
-                  打开 {currentProgress?.opened_count ?? 0} 次
-                </span>
+              <div className="mt-4 rounded-lg border bg-background p-3">
+                <p className="text-xs font-medium text-muted-foreground">当前知识点</p>
+                <div className="mt-1 flex items-center justify-between gap-3">
+                  <p className="text-base font-semibold text-foreground">{selectedTopic.title}</p>
+                  <span className="rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground">
+                    打开 {currentProgress?.opened_count ?? 0} 次
+                  </span>
+                </div>
+                <p className="mt-2 text-sm text-muted-foreground">{selectedTopic.shortDescription}</p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      void persistGrammarProgress(selectedTopic, {
+                        is_favorite: !currentProgress?.is_favorite,
+                      })
+                    }
+                    className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-medium text-foreground transition-colors hover:bg-muted"
+                  >
+                    {currentProgress?.is_favorite ? (
+                      <Star className="h-4 w-4 fill-warning text-warning" />
+                    ) : (
+                      <StarOff className="h-4 w-4" />
+                    )}
+                    {currentProgress?.is_favorite ? '取消喜爱' : '喜爱'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void persistGrammarProgress(selectedTopic, { mark_learned: true })}
+                    className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-60"
+                    disabled={currentProgress?.status === 'learned'}
+                  >
+                    <CheckCircle2 className="h-4 w-4 text-success" />
+                    {currentProgress?.status === 'learned' ? '已学习' : '标记已学习'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={regenerateCurrentTopic}
+                    className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-medium text-foreground transition-colors hover:bg-muted"
+                  >
+                    <RefreshCw className="h-4 w-4" />
+                    重新生成
+                  </button>
+                </div>
               </div>
-              <p className="mt-2 text-sm text-muted-foreground">{selectedTopic.shortDescription}</p>
-              <div className="mt-3 flex flex-wrap gap-2">
+
+              <label className="mt-4 block text-sm font-medium text-foreground" htmlFor="grammar-target">
+                跳转网站
+              </label>
+              <div className="mt-2 flex gap-2">
+                <select
+                  id="grammar-target"
+                  value={selectedTarget.id}
+                  onChange={(event) => setTargetId(event.target.value)}
+                  className="min-w-0 flex-1 rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+                >
+                  {targets.map((target) => (
+                    <option key={target.id} value={target.id}>
+                      {target.label}
+                    </option>
+                  ))}
+                </select>
+                <Button variant="ghost" onClick={() => setWorkspace('settings')}>管理</Button>
+              </div>
+
+              <div className="mt-4 flex flex-col gap-2 sm:flex-row">
                 <button
                   type="button"
-                  onClick={() =>
-                    void persistGrammarProgress(selectedTopic, {
-                      is_favorite: !currentProgress?.is_favorite,
-                    })
-                  }
-                  className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-medium text-foreground transition-colors hover:bg-muted"
+                  onClick={() => void copyPrompt()}
+                  className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted"
                 >
-                  {currentProgress?.is_favorite ? (
-                    <Star className="h-4 w-4 fill-warning text-warning" />
-                  ) : (
-                    <StarOff className="h-4 w-4" />
-                  )}
-                  {currentProgress?.is_favorite ? '取消喜爱' : '喜爱'}
+                  {isCopied ? <Check className="h-4 w-4 text-success" /> : <Clipboard className="h-4 w-4" />}
+                  {isCopied ? '已复制' : '复制指令'}
                 </button>
                 <button
                   type="button"
-                  onClick={() => void persistGrammarProgress(selectedTopic, { mark_learned: true })}
-                  className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-60"
-                  disabled={currentProgress?.status === 'learned'}
+                  onClick={() => void launchTarget()}
+                  className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg bg-primary px-3 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
                 >
-                  <CheckCircle2 className="h-4 w-4 text-success" />
-                  {currentProgress?.status === 'learned' ? '已学习' : '标记已学习'}
-                </button>
-                <button
-                  type="button"
-                  onClick={regenerateCurrentTopic}
-                  className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-medium text-foreground transition-colors hover:bg-muted"
-                >
-                  <RefreshCw className="h-4 w-4" />
-                  重新生成
+                  <ExternalLink className="h-4 w-4" />
+                  复制并跳转
                 </button>
               </div>
-            </div>
+            </SurfaceCard>
 
-            <label className="mt-4 block text-sm font-medium text-foreground" htmlFor="grammar-target">
-              跳转网站
-            </label>
-            <div className="mt-2 flex gap-2">
-              <select
-                id="grammar-target"
-                value={selectedTarget.id}
-                onChange={(event) => setTargetId(event.target.value)}
-                className="min-w-0 flex-1 rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
-              >
-                {targets.map((target) => (
-                  <option key={target.id} value={target.id}>
-                    {target.label}
-                  </option>
-                ))}
-              </select>
-              <Button variant="ghost" onClick={() => setWorkspace('settings')}>管理</Button>
-            </div>
-
-            <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-              <button
-                type="button"
-                onClick={() => void copyPrompt()}
-                className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted"
-              >
-                {isCopied ? <Check className="h-4 w-4 text-success" /> : <Clipboard className="h-4 w-4" />}
-                {isCopied ? '已复制' : '复制指令'}
-              </button>
-              <button
-                type="button"
-                onClick={() => void launchTarget()}
-                className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg bg-primary px-3 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-              >
-                <ExternalLink className="h-4 w-4" />
-                复制并跳转
-              </button>
-            </div>
-          </SurfaceCard>
-
-          <SurfaceCard>
-            <h2 className="text-lg font-semibold text-foreground">Prompt 预览</h2>
-            <textarea
-              readOnly
-              value={prompt}
-              className="mt-3 h-[460px] w-full resize-none rounded-lg border bg-background p-3 text-xs leading-relaxed text-foreground outline-none"
-            />
-          </SurfaceCard>
-        </div>
+            <SurfaceCard>
+              <h2 className="text-lg font-semibold text-foreground">Prompt 预览</h2>
+              <textarea
+                readOnly
+                value={prompt}
+                className="mt-3 h-[460px] w-full resize-none rounded-lg border bg-background p-3 text-xs leading-relaxed text-foreground outline-none"
+              />
+            </SurfaceCard>
+          </div>
+          <ExerciseBlock target={grammarExerciseTarget} limit={3} />
+        </>
       )}
 
       {workspace === 'settings' && (

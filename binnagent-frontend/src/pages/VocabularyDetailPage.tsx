@@ -15,16 +15,22 @@ import type { Learner } from '@/types'
 import { FeatureHero } from '@/components/layout/FeatureHero'
 import { PageShell } from '@/components/layout/PageShell'
 import { WorkspaceTabs, type WorkspaceTab } from '@/components/layout/WorkspaceTabs'
+import { ExerciseBlock } from '@/components/exercise/ExerciseBlock'
 import { Button } from '@/components/ui/Button'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { FormField } from '@/components/ui/FormField'
 import { SurfaceCard } from '@/components/ui/SurfaceCard'
+import {
+  CORE_VOCABULARY_EXERCISE_TARGET,
+  normalizeExerciseTargetId,
+} from '@/services/exerciseRepository'
 import {
   MORPHOLOGY_KIND_LABELS,
   formatMorphologyForNote,
   inferWordPartAnalysis,
 } from '@/data/wordParts'
 import type { WordPartAnalysis } from '@/types'
+import type { ExerciseTarget } from '@/types/exercises'
 
 interface VocabularyDetailPageProps {
   learner?: Learner
@@ -124,6 +130,15 @@ export function VocabularyDetailPage({
     : isSaving
       ? '正在加入词库…'
       : '加入词库 / 更新字段'
+  const vocabularyExerciseTarget = useMemo<ExerciseTarget>(() => {
+    const targetTerm = activeTerm.trim()
+    if (!targetTerm) return CORE_VOCABULARY_EXERCISE_TARGET
+    return {
+      type: 'vocabulary_item',
+      id: normalizeExerciseTargetId(targetTerm),
+      label: targetTerm,
+    }
+  }, [activeTerm])
 
   const updateHtml = useCallback((value: string) => {
     setHtmlState({ storageKey, value })
@@ -452,94 +467,97 @@ export function VocabularyDetailPage({
         )}
 
         {workspace === 'card' && (
-          <section className="grid gap-5 xl:grid-cols-[360px_minmax(0,1fr)]">
-            <SurfaceCard>
-              <h2 className="text-lg font-black text-slate-950">加入词库 / 更新字段</h2>
-              <p className="mt-1 text-sm leading-6 text-slate-500">保存前需要先回填 HTML，系统会从详解中提取词义、例句和词典字段。</p>
-              <Button
-                onClick={() => void addToVocabulary()}
-                disabled={isSaving || !canSaveToVocabulary}
-                className="mt-4 w-full justify-center"
-                title={html.trim() ? '把当前词汇详解 HTML 提取并写入词库' : '先在回填预览中粘贴 AI 返回内容'}
-              >
-                {saveButtonLabel}
-              </Button>
-              {!cardDetail && (
-                <div className="mt-4">
-                  <EmptyState
-                    icon={<BookOpen className="size-5" />}
-                    title="还没有个人词卡"
-                    description="先在回填预览中粘贴 HTML，再加入词库。保存成功后就能编辑我的理解、例句和复习偏好。"
-                    action={
-                      <Button
-                        variant="secondary"
-                        onClick={() => {
-                          if (html.trim()) {
-                            void addToVocabulary()
-                            return
-                          }
-                          setWorkspace('return')
-                        }}
-                      >
-                        {html.trim() ? '加入词库' : '去回填 HTML'}
-                      </Button>
-                    }
-                  />
-                </div>
-              )}
-            </SurfaceCard>
-
-            {cardDetail ? (
+          <>
+            <section className="grid gap-5 xl:grid-cols-[360px_minmax(0,1fr)]">
               <SurfaceCard>
-                <h2 className="text-lg font-black text-slate-950">个人词卡编辑</h2>
-                <p className="mt-1 text-sm text-slate-500">用户内容会影响后续复习和出题。</p>
-                <div className="mt-4 grid gap-4 lg:grid-cols-2">
-                  <Field label="展示名" value={cardForm.display_form_override} onChange={(value) => setCardForm((prev) => ({ ...prev, display_form_override: value }))} placeholder={cardDetail.word} />
-                  <label className="block text-sm font-bold text-slate-700">
-                    掌握状态 / 复习偏好
-                    <select value={cardForm.review_preference} onChange={(event) => setCardForm((prev) => ({ ...prev, review_preference: event.target.value }))} className="mt-1.5 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500">
-                      <option value="normal">正常复习</option>
-                      <option value="mastered">已掌握</option>
-                      <option value="too_easy">太简单</option>
-                      <option value="excluded">暂不复习</option>
-                      <option value="relearn">重新学习</option>
-                    </select>
-                  </label>
-                  <Field label="我的理解" value={cardForm.user_understanding} onChange={(value) => setCardForm((prev) => ({ ...prev, user_understanding: value }))} textarea />
-                  <Field label="我的例句" value={cardForm.user_examples_text} onChange={(value) => setCardForm((prev) => ({ ...prev, user_examples_text: value }))} textarea placeholder="每行一个例句" />
-                  <Field label="个人笔记" value={cardForm.user_notes} onChange={(value) => setCardForm((prev) => ({ ...prev, user_notes: value }))} textarea />
-                  <div className="lg:col-span-2">
-                    <label className="block text-sm font-bold text-slate-700">
-                      构词分析 / 词根词缀
-                      <textarea
-                        value={morphologyDraft}
-                        onChange={(event) => setMorphologyDraftState({
-                          source: inferredMorphologyText,
-                          value: event.target.value,
-                        })}
-                        className="mt-1.5 min-h-36 w-full resize-y rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm leading-6 outline-none focus:border-indigo-500"
-                        placeholder="pre- = before / 预先&#10;view = 看&#10;preview = 预先看 -> 预览"
-                      />
-                    </label>
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      <Button variant="secondary" onClick={syncMorphologyToNotes}>
-                        写入个人笔记
-                      </Button>
-                    </div>
+                <h2 className="text-lg font-black text-slate-950">加入词库 / 更新字段</h2>
+                <p className="mt-1 text-sm leading-6 text-slate-500">保存前需要先回填 HTML，系统会从详解中提取词义、例句和词典字段。</p>
+                <Button
+                  onClick={() => void addToVocabulary()}
+                  disabled={isSaving || !canSaveToVocabulary}
+                  className="mt-4 w-full justify-center"
+                  title={html.trim() ? '把当前词汇详解 HTML 提取并写入词库' : '先在回填预览中粘贴 AI 返回内容'}
+                >
+                  {saveButtonLabel}
+                </Button>
+                {!cardDetail && (
+                  <div className="mt-4">
+                    <EmptyState
+                      icon={<BookOpen className="size-5" />}
+                      title="还没有个人词卡"
+                      description="先在回填预览中粘贴 HTML，再加入词库。保存成功后就能编辑我的理解、例句和复习偏好。"
+                      action={
+                        <Button
+                          variant="secondary"
+                          onClick={() => {
+                            if (html.trim()) {
+                              void addToVocabulary()
+                              return
+                            }
+                            setWorkspace('return')
+                          }}
+                        >
+                          {html.trim() ? '加入词库' : '去回填 HTML'}
+                        </Button>
+                      }
+                    />
                   </div>
-                  {cardDetail.mistakes?.length ? (
-                    <div>
-                      <p className="text-sm font-black text-slate-700">最近错因</p>
-                      <div className="mt-2 grid gap-2">
-                        {cardDetail.mistakes.slice(0, 3).map((mistake) => <p key={mistake.id} className="rounded-lg bg-orange-50 px-3 py-2 text-xs font-semibold text-orange-800">{mistake.note || mistake.correction || mistake.mistake_type}</p>)}
+                )}
+              </SurfaceCard>
+
+              {cardDetail ? (
+                <SurfaceCard>
+                  <h2 className="text-lg font-black text-slate-950">个人词卡编辑</h2>
+                  <p className="mt-1 text-sm text-slate-500">用户内容会影响后续复习和出题。</p>
+                  <div className="mt-4 grid gap-4 lg:grid-cols-2">
+                    <Field label="展示名" value={cardForm.display_form_override} onChange={(value) => setCardForm((prev) => ({ ...prev, display_form_override: value }))} placeholder={cardDetail.word} />
+                    <label className="block text-sm font-bold text-slate-700">
+                      掌握状态 / 复习偏好
+                      <select value={cardForm.review_preference} onChange={(event) => setCardForm((prev) => ({ ...prev, review_preference: event.target.value }))} className="mt-1.5 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500">
+                        <option value="normal">正常复习</option>
+                        <option value="mastered">已掌握</option>
+                        <option value="too_easy">太简单</option>
+                        <option value="excluded">暂不复习</option>
+                        <option value="relearn">重新学习</option>
+                      </select>
+                    </label>
+                    <Field label="我的理解" value={cardForm.user_understanding} onChange={(value) => setCardForm((prev) => ({ ...prev, user_understanding: value }))} textarea />
+                    <Field label="我的例句" value={cardForm.user_examples_text} onChange={(value) => setCardForm((prev) => ({ ...prev, user_examples_text: value }))} textarea placeholder="每行一个例句" />
+                    <Field label="个人笔记" value={cardForm.user_notes} onChange={(value) => setCardForm((prev) => ({ ...prev, user_notes: value }))} textarea />
+                    <div className="lg:col-span-2">
+                      <label className="block text-sm font-bold text-slate-700">
+                        构词分析 / 词根词缀
+                        <textarea
+                          value={morphologyDraft}
+                          onChange={(event) => setMorphologyDraftState({
+                            source: inferredMorphologyText,
+                            value: event.target.value,
+                          })}
+                          className="mt-1.5 min-h-36 w-full resize-y rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm leading-6 outline-none focus:border-indigo-500"
+                          placeholder="pre- = before / 预先&#10;view = 看&#10;preview = 预先看 -> 预览"
+                        />
+                      </label>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        <Button variant="secondary" onClick={syncMorphologyToNotes}>
+                          写入个人笔记
+                        </Button>
                       </div>
                     </div>
-                  ) : null}
-                </div>
-                <Button onClick={() => void savePersonalCard()} disabled={isSaving} className="mt-4 justify-center">保存个人词卡</Button>
-              </SurfaceCard>
-            ) : null}
-          </section>
+                    {cardDetail.mistakes?.length ? (
+                      <div>
+                        <p className="text-sm font-black text-slate-700">最近错因</p>
+                        <div className="mt-2 grid gap-2">
+                          {cardDetail.mistakes.slice(0, 3).map((mistake) => <p key={mistake.id} className="rounded-lg bg-orange-50 px-3 py-2 text-xs font-semibold text-orange-800">{mistake.note || mistake.correction || mistake.mistake_type}</p>)}
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
+                  <Button onClick={() => void savePersonalCard()} disabled={isSaving} className="mt-4 justify-center">保存个人词卡</Button>
+                </SurfaceCard>
+              ) : null}
+            </section>
+            <ExerciseBlock target={vocabularyExerciseTarget} limit={3} />
+          </>
         )}
 
         {isImmersiveReading && safeHtml && (
