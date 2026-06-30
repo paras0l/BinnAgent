@@ -22,6 +22,7 @@ import { ReasonCard } from '@/components/learning/ReasonCard'
 import type { AppTab, ExplorePreference, Learner } from '@/types'
 import { useToast } from '@/hooks/useToast'
 import { GrammarPage } from '@/pages/GrammarPage'
+import { ReadingWorkshopPage } from '@/pages/ReadingWorkshopPage'
 import { VocabularyDetailPage } from '@/pages/VocabularyDetailPage'
 import { WordPartsPage } from '@/pages/WordPartsPage'
 import { WritingPhrasebookPage } from '@/pages/WritingPhrasebookPage'
@@ -48,7 +49,7 @@ interface ExploreFeature {
   status: FeatureStatus
   action: FeatureAction
   prompt?: string
-  toolTarget?: 'dashboard' | 'pronunciation' | 'grammar' | 'writing-phrasebook' | 'word-parts'
+  toolTarget?: 'dashboard' | 'pronunciation' | 'grammar' | 'writing-phrasebook' | 'word-parts' | 'reading-workshop'
 }
 
 const CATEGORIES: Array<{ id: FeatureCategory; label: string }> = [
@@ -137,6 +138,17 @@ const FEATURES: ExploreFeature[] = [
     status: 'ready',
     action: 'chat',
     prompt: '请作为 CET-6 阅读教练，给我一题转折定位题。先出题和选项，等我作答后再逐步讲解依据句、干扰项和错因。',
+  },
+  {
+    id: 'reading-intensive-extensive',
+    category: 'reading',
+    title: '精读与泛读',
+    description: '同一篇材料，精读看结构，泛读抓主旨。',
+    whenToUse: '想提升阅读能力，而不是只做题；需要既能快速抓主旨，也能慢下来读懂难句时使用。',
+    outcome: '获得主旨理解、段落功能、难句拆解、语法点提示，并能跳转到语法微知识点继续学习。',
+    status: 'ready',
+    action: 'tool',
+    toolTarget: 'reading-workshop',
   },
   {
     id: 'essay-review',
@@ -260,6 +272,7 @@ export function ExplorePage({
   const [isLoading, setIsLoading] = useState(true)
   const [isVocabularyDetailOpen, setIsVocabularyDetailOpen] = useState(false)
   const [isGrammarOpen, setIsGrammarOpen] = useState(false)
+  const [isReadingWorkshopOpen, setIsReadingWorkshopOpen] = useState(false)
   const [isWritingPhrasebookOpen, setIsWritingPhrasebookOpen] = useState(false)
   const [isWordPartsOpen, setIsWordPartsOpen] = useState(false)
 
@@ -396,6 +409,10 @@ export function ExplorePage({
         setIsGrammarOpen(true)
         return
       }
+      if (feature.toolTarget === 'reading-workshop') {
+        setIsReadingWorkshopOpen(true)
+        return
+      }
       if (feature.toolTarget === 'writing-phrasebook') {
         setIsWritingPhrasebookOpen(true)
         return
@@ -422,6 +439,10 @@ export function ExplorePage({
 
   if (isGrammarOpen) {
     return <GrammarPage learner={learner} onBack={() => setIsGrammarOpen(false)} />
+  }
+
+  if (isReadingWorkshopOpen) {
+    return <ReadingWorkshopPage learner={learner} onBack={() => setIsReadingWorkshopOpen(false)} />
   }
 
   if (isWritingPhrasebookOpen) {
