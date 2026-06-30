@@ -12,6 +12,12 @@ export type AppTab =
   | 'pronunciation'
   | 'grammar'
 
+export type PronunciationWorkspace =
+  | 'phonetic'
+  | 'shadowing'
+  | 'minimal-pairs'
+  | 'records'
+
 export type KnowledgeType =
   | 'vocabulary'
   | 'grammar'

@@ -2,7 +2,7 @@ import { lazy, Suspense, useEffect, useState } from 'react'
 import { Header } from './components/layout/Header'
 import { useToast } from './hooks/useToast'
 import type { VocabularyPracticeMode } from './pages/VocabularyPracticePage'
-import type { AppTab, Learner } from './types'
+import type { AppTab, Learner, PronunciationWorkspace } from './types'
 
 const ChatPage = lazy(() =>
   import('./pages/ChatPage').then((module) => ({ default: module.ChatPage }))
@@ -55,6 +55,7 @@ function App() {
   const [practiceMode, setPracticeMode] = useState<VocabularyPracticeMode>('review')
   const [practiceNodeId, setPracticeNodeId] = useState<string | null>(null)
   const [practiceSourceLabel, setPracticeSourceLabel] = useState<string | null>(null)
+  const [pronunciationWorkspace, setPronunciationWorkspace] = useState<PronunciationWorkspace>('phonetic')
   const [chatDraft, setChatDraft] = useState('')
   const [chatSkillFocus, setChatSkillFocus] = useState<string | null>(null)
   const [isChatGenerating, setIsChatGenerating] = useState(false)
@@ -130,6 +131,11 @@ function App() {
     setLearningCenterView('vocabulary-practice')
   }
 
+  const openPronunciationWorkspace = (workspace: PronunciationWorkspace) => {
+    setPronunciationWorkspace(workspace)
+    handleTabChange('pronunciation')
+  }
+
   if (isRestoringLearner) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background text-sm text-muted-foreground">
@@ -192,9 +198,14 @@ function App() {
               }}
               onTabChange={handleTabChange}
               onDraftPrompt={handleDraftPrompt}
+              onOpenPronunciationWorkspace={openPronunciationWorkspace}
             />
           ) : activeTab === 'pronunciation' ? (
-            <PronunciationPage learner={currentLearner} />
+            <PronunciationPage
+              key={pronunciationWorkspace}
+              learner={currentLearner}
+              initialWorkspace={pronunciationWorkspace}
+            />
           ) : activeTab === 'grammar' ? (
             <GrammarPage learner={currentLearner} onBack={() => handleTabChange('explore')} />
           ) : activeTab === 'memory' ? (

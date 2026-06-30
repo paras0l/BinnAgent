@@ -19,7 +19,7 @@ import { Button } from '@/components/ui/Button'
 import { FilterChip } from '@/components/ui/FilterChip'
 import { SurfaceCard } from '@/components/ui/SurfaceCard'
 import { ReasonCard } from '@/components/learning/ReasonCard'
-import type { AppTab, ExplorePreference, Learner } from '@/types'
+import type { AppTab, ExplorePreference, Learner, PronunciationWorkspace } from '@/types'
 import { useToast } from '@/hooks/useToast'
 import { GrammarPage } from '@/pages/GrammarPage'
 import { ReadingWorkshopPage } from '@/pages/ReadingWorkshopPage'
@@ -37,6 +37,7 @@ interface ExplorePageProps {
   onLockedAction?: () => void
   onTabChange: (tab: AppTab) => void
   onDraftPrompt: (prompt: string, skillFocus?: string | null) => void
+  onOpenPronunciationWorkspace: (workspace: PronunciationWorkspace) => void
 }
 
 interface ExploreFeature {
@@ -50,6 +51,7 @@ interface ExploreFeature {
   action: FeatureAction
   prompt?: string
   toolTarget?: 'dashboard' | 'pronunciation' | 'grammar' | 'writing-phrasebook' | 'word-parts' | 'reading-workshop'
+  pronunciationWorkspace?: PronunciationWorkspace
 }
 
 const CATEGORIES: Array<{ id: FeatureCategory; label: string }> = [
@@ -215,6 +217,19 @@ const FEATURES: ExploreFeature[] = [
     status: 'ready',
     action: 'tool',
     toolTarget: 'pronunciation',
+    pronunciationWorkspace: 'phonetic',
+  },
+  {
+    id: 'shadowing-practice',
+    category: 'speaking',
+    title: '影子跟读训练',
+    description: '听一句，跟一句，模仿真实表达的节奏、重音和语调。',
+    whenToUse: '句子会读但不自然、语调平、停顿生硬，想模仿更地道表达时使用。',
+    outcome: '获得分块跟读稿、重音提示、语调提示和可复习的口语训练记录。',
+    status: 'ready',
+    action: 'tool',
+    toolTarget: 'pronunciation',
+    pronunciationWorkspace: 'shadowing',
   },
   {
     id: 'listening-intensive',
@@ -264,6 +279,7 @@ export function ExplorePage({
   onLockedAction,
   onTabChange,
   onDraftPrompt,
+  onOpenPronunciationWorkspace,
 }: ExplorePageProps) {
   const { showToast } = useToast()
   const [preferences, setPreferences] = useState<ExplorePreference[]>([])
@@ -419,6 +435,10 @@ export function ExplorePage({
       }
       if (feature.toolTarget === 'word-parts') {
         setIsWordPartsOpen(true)
+        return
+      }
+      if (feature.toolTarget === 'pronunciation') {
+        onOpenPronunciationWorkspace(feature.pronunciationWorkspace ?? 'phonetic')
         return
       }
       onTabChange(feature.toolTarget)

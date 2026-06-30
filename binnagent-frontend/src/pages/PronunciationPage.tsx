@@ -2,11 +2,17 @@ import { useEffect, useMemo, useState } from 'react'
 import {
   ArrowLeft,
   ArrowRight,
+  BookOpen,
   CheckCircle2,
+  ClipboardCheck,
   Dice5,
+  Eye,
+  EyeOff,
   Flame,
   Headphones,
+  ListChecks,
   Mic2,
+  Repeat2,
   Search,
   Sparkles,
   Volume2,
@@ -15,17 +21,26 @@ import {
   Zap,
 } from 'lucide-react'
 import { useToast } from '@/hooks/useToast'
-import type { Learner, LearningProgressItem } from '@/types'
+import type { Learner, LearningProgressItem, PronunciationWorkspace } from '@/types'
+import {
+  SHADOWING_ITEMS,
+  SHADOWING_RATING_LABELS,
+  type ShadowingItem,
+  type ShadowingSelfRating,
+} from '@/data/shadowingItems'
 import { FeatureHero } from '@/components/layout/FeatureHero'
 import { PageShell } from '@/components/layout/PageShell'
+import { WorkspaceTabs, type WorkspaceTab } from '@/components/layout/WorkspaceTabs'
 import { Button } from '@/components/ui/Button'
 import { FilterChip } from '@/components/ui/FilterChip'
+import { SurfaceCard } from '@/components/ui/SurfaceCard'
 
 type PhonemeCategory = 'monophthong' | 'diphthong' | 'consonant'
 type CategoryFilter = 'all' | PhonemeCategory
 
 interface PronunciationPageProps {
   learner: Learner
+  initialWorkspace?: PronunciationWorkspace
 }
 
 interface PracticeExample {
@@ -57,9 +72,23 @@ interface ProgressState {
   recent: string[]
 }
 
+interface ShadowingPracticeRecord {
+  practiceCount: number
+  lastPracticedAt: string | null
+  rating: ShadowingSelfRating | null
+}
+
+type ShadowingPracticeState = Record<string, ShadowingPracticeRecord>
+
 type HighlightTarget = { kind: 'main' } | { kind: 'practice'; word: string } | null
 
 const STORAGE_VERSION = 'v1'
+
+const EMPTY_SHADOWING_RECORD: ShadowingPracticeRecord = {
+  practiceCount: 0,
+  lastPracticedAt: null,
+  rating: null,
+}
 
 const CATEGORY_META: Record<PhonemeCategory, { label: string; shortLabel: string; tone: string }> = {
   monophthong: {
@@ -457,6 +486,33 @@ const FILTERS: Array<{ id: CategoryFilter; label: string }> = [
   { id: 'consonant', label: '辅音' },
 ]
 
+const WORKSPACE_TABS: WorkspaceTab<PronunciationWorkspace>[] = [
+  {
+    id: 'phonetic',
+    label: '音标训练',
+    icon: <BookOpen className="h-4 w-4" />,
+    description: '图像联想',
+  },
+  {
+    id: 'shadowing',
+    label: '影子跟读',
+    icon: <Repeat2 className="h-4 w-4" />,
+    description: '节奏语调',
+  },
+  {
+    id: 'minimal-pairs',
+    label: '最小对立音',
+    icon: <ListChecks className="h-4 w-4" />,
+    description: '占位',
+  },
+  {
+    id: 'records',
+    label: '训练记录',
+    icon: <ClipboardCheck className="h-4 w-4" />,
+    description: '占位',
+  },
+]
+
 const SKILL_SECTIONS = [
   {
     id: 'connected-speech',
@@ -508,6 +564,54 @@ function loadProgress(storageKey: string): ProgressState {
   }
 }
 
+function isShadowingSelfRating(value: unknown): value is ShadowingSelfRating {
+  return value === 'smooth' || value === 'okay' || value === 'needs-practice'
+}
+
+function loadShadowingRecords(storageKey: string): ShadowingPracticeState {
+  try {
+    const raw = localStorage.getItem(storageKey)
+    if (!raw) return {}
+    const parsed = JSON.parse(raw) as Record<string, Partial<ShadowingPracticeRecord>>
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {}
+
+    return Object.fromEntries(
+      Object.entries(parsed).flatMap(([itemId, record]) => {
+        if (!record || typeof record !== 'object') return []
+        const practiceCount = Number(record.practiceCount)
+        return [
+          [
+            itemId,
+            {
+              practiceCount: Number.isFinite(practiceCount) && practiceCount > 0 ? practiceCount : 0,
+              lastPracticedAt: typeof record.lastPracticedAt === 'string' ? record.lastPracticedAt : null,
+              rating: isShadowingSelfRating(record.rating) ? record.rating : null,
+            },
+          ],
+        ]
+      })
+    )
+  } catch {
+    return {}
+  }
+}
+
+function getShadowingRecord(records: ShadowingPracticeState, itemId: string) {
+  return records[itemId] ?? EMPTY_SHADOWING_RECORD
+}
+
+function formatShadowingPracticeTime(value: string | null) {
+  if (!value) return '尚未练习'
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return '时间未知'
+  return date.toLocaleString('zh-CN', {
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
 function uniqueList(items: string[]) {
   return Array.from(new Set(items))
 }
@@ -532,18 +636,37 @@ function progressFromBackend(items: LearningProgressItem[]): ProgressState {
   }
 }
 
-export function PronunciationPage({ learner }: PronunciationPageProps) {
+export function PronunciationPage({ learner, initialWorkspace = 'phonetic' }: PronunciationPageProps) {
   const { showToast } = useToast()
   const storageKey = `binnPronunciation:${STORAGE_VERSION}:${learner.id}`
+  const shadowingStorageKey = `binnShadowingPractice:${STORAGE_VERSION}:${learner.id}`
+  const [workspace, setWorkspace] = useState<PronunciationWorkspace>(initialWorkspace)
   const [filter, setFilter] = useState<CategoryFilter>('all')
   const [query, setQuery] = useState('')
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [progress, setProgress] = useState<ProgressState>(() => loadProgress(storageKey))
   const [activeHighlight, setActiveHighlight] = useState<HighlightTarget>(null)
+  const [shadowingSelectedId, setShadowingSelectedId] = useState(() => SHADOWING_ITEMS[0]?.id ?? '')
+  const [areShadowingHintsVisible, setAreShadowingHintsVisible] = useState(true)
+  const [shadowingRecords, setShadowingRecords] = useState<ShadowingPracticeState>(() =>
+    loadShadowingRecords(shadowingStorageKey)
+  )
 
   useEffect(() => {
-    localStorage.setItem(storageKey, JSON.stringify(progress))
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(progress))
+    } catch {
+      // Local progress is a convenience cache; sync can continue without it.
+    }
   }, [progress, storageKey])
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(shadowingStorageKey, JSON.stringify(shadowingRecords))
+    } catch {
+      // Shadowing records are intentionally local-only for the first version.
+    }
+  }, [shadowingRecords, shadowingStorageKey])
 
   useEffect(() => {
     let isMounted = true
@@ -673,118 +796,449 @@ export function PronunciationPage({ learner }: PronunciationPageProps) {
     rememberOpened(next)
   }
 
+  const shadowingRecordValues = useMemo(() => Object.values(shadowingRecords), [shadowingRecords])
+  const practicedShadowingCount = shadowingRecordValues.filter((record) => record.practiceCount > 0).length
+  const shadowingPracticeTotal = shadowingRecordValues.reduce((total, record) => total + record.practiceCount, 0)
+  const selectedShadowingIndex = Math.max(
+    SHADOWING_ITEMS.findIndex((item) => item.id === shadowingSelectedId),
+    0
+  )
+  const selectedShadowing = SHADOWING_ITEMS[selectedShadowingIndex]
+  const selectedShadowingRecord = getShadowingRecord(shadowingRecords, selectedShadowing.id)
+
+  const goToShadowingOffset = (offset: number) => {
+    setShadowingSelectedId((currentId) => {
+      const currentIndex = SHADOWING_ITEMS.findIndex((item) => item.id === currentId)
+      const baseIndex = currentIndex >= 0 ? currentIndex : 0
+      const nextIndex = (baseIndex + offset + SHADOWING_ITEMS.length) % SHADOWING_ITEMS.length
+      return SHADOWING_ITEMS[nextIndex].id
+    })
+  }
+
+  const rateShadowing = (rating: ShadowingSelfRating) => {
+    const practicedAt = new Date().toISOString()
+    setShadowingRecords((current) => {
+      const previous = getShadowingRecord(current, selectedShadowing.id)
+      return {
+        ...current,
+        [selectedShadowing.id]: {
+          practiceCount: previous.practiceCount + 1,
+          lastPracticedAt: practicedAt,
+          rating,
+        },
+      }
+    })
+    showToast(`已记录「${SHADOWING_RATING_LABELS[rating]}」。`, { variant: 'success' })
+  }
+
+  const heroStats = workspace === 'shadowing'
+    ? [
+        { label: '跟读句子', value: SHADOWING_ITEMS.length },
+        { label: '已自评', value: practicedShadowingCount, tone: 'success' as const },
+        { label: '练习次数', value: shadowingPracticeTotal, tone: 'primary' as const },
+        { label: '当前句', value: `${selectedShadowingIndex + 1}/${SHADOWING_ITEMS.length}` },
+      ]
+    : [
+        { label: '音标总数', value: PHONEMES.length },
+        { label: '已练习', value: completedCount, tone: 'success' as const },
+        { label: '已打开', value: openedCount, tone: 'primary' as const },
+        { label: '今日建议', value: '5 个' },
+      ]
+
+  const heroActions = workspace === 'phonetic'
+    ? (
+        <>
+          <Button onClick={practiceToday}><Flame className="h-4 w-4" />今日 5 个</Button>
+          <Button variant="secondary" onClick={randomPractice}><Dice5 className="h-4 w-4" />随机练</Button>
+        </>
+      )
+    : workspace === 'shadowing'
+      ? (
+          <>
+            <Button variant="secondary" onClick={() => setAreShadowingHintsVisible((current) => !current)}>
+              {areShadowingHintsVisible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              {areShadowingHintsVisible ? '隐藏提示' : '显示提示'}
+            </Button>
+            <Button onClick={() => goToShadowingOffset(1)}><ArrowRight className="h-4 w-4" />下一句</Button>
+          </>
+        )
+      : null
+
   return (
     <PageShell>
       <FeatureHero
         eyebrow="Pronunciation Workspace"
         title="发音训练"
-        description="先听目标音，再跟读对比；每天练 5 个音标就能稳定推进。"
-        stats={[
-          { label: '音标总数', value: PHONEMES.length },
-          { label: '已练习', value: completedCount, tone: 'success' },
-          { label: '已打开', value: openedCount, tone: 'primary' },
-          { label: '今日建议', value: '5 个' },
-        ]}
-        actions={
-          <>
-            <Button onClick={practiceToday}><Flame className="h-4 w-4" />今日 5 个</Button>
-            <Button variant="secondary" onClick={randomPractice}><Dice5 className="h-4 w-4" />随机练</Button>
-          </>
-        }
+        description="从音标图像联想到影子跟读，把发音、节奏、重音和语调练成可复习的日常记录。"
+        stats={heroStats}
+        actions={heroActions}
       />
 
-      <section className="overflow-hidden rounded-xl border bg-card">
-        <div className="grid gap-3 bg-muted/30 p-4 md:grid-cols-[1fr_auto] md:items-center">
-          <div className="relative">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <input
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              className="w-full rounded-lg border bg-background py-2 pl-9 pr-3 text-sm outline-none transition-colors focus:border-primary"
-              placeholder="搜索 /iː/、cat、猫..."
-            />
-          </div>
-          <div className="flex gap-2 overflow-x-auto pb-1 md:pb-0">
-            {FILTERS.map((item) => (
-              <FilterChip
-                key={item.id}
-                onClick={() => setFilter(item.id)}
-                active={filter === item.id}
-              >
-                {item.label}
-              </FilterChip>
-            ))}
-          </div>
-        </div>
-      </section>
+      <WorkspaceTabs tabs={WORKSPACE_TABS} activeTab={workspace} onChange={setWorkspace} />
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_420px]">
-        <section className="space-y-4">
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-6">
-            {visiblePhonemes.map((item) => (
+      {workspace === 'phonetic' ? (
+        <>
+          <SurfaceCard className="overflow-hidden p-0">
+            <div className="grid gap-3 bg-muted/30 p-4 md:grid-cols-[1fr_auto] md:items-center">
+              <div className="relative">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <input
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                  className="w-full rounded-lg border bg-background py-2 pl-9 pr-3 text-sm outline-none transition-colors focus:border-primary"
+                  placeholder="搜索 /iː/、cat、猫..."
+                />
+              </div>
+              <div className="flex gap-2 overflow-x-auto pb-1 md:pb-0">
+                {FILTERS.map((item) => (
+                  <FilterChip
+                    key={item.id}
+                    onClick={() => setFilter(item.id)}
+                    active={filter === item.id}
+                  >
+                    {item.label}
+                  </FilterChip>
+                ))}
+              </div>
+            </div>
+          </SurfaceCard>
+
+          <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_420px]">
+            <section className="space-y-4">
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-6">
+                {visiblePhonemes.map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => rememberOpened(item)}
+                    className={`group flex min-h-40 flex-col rounded-xl border bg-card p-4 text-left transition-all hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-sm ${
+                      selected?.id === item.id ? 'border-primary ring-2 ring-primary/15' : ''
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <span className="text-4xl leading-none" aria-hidden="true">
+                        {item.visual}
+                      </span>
+                      {progress.completed.includes(item.id) ? (
+                        <CheckCircle2 className="h-5 w-5 shrink-0 text-success" />
+                      ) : (
+                        <span className={`rounded-md border px-2 py-1 text-xs ${CATEGORY_META[item.category].tone}`}>
+                          {CATEGORY_META[item.category].shortLabel}
+                        </span>
+                      )}
+                    </div>
+                    <div className="mt-auto">
+                      <p className="text-2xl font-bold text-foreground">{item.symbol}</p>
+                      <p className="mt-1 text-sm font-semibold text-foreground">{item.word}</p>
+                      <p className="mt-1 text-xs font-medium text-primary">{item.wordPhonetic}</p>
+                      <p className="mt-1 text-xs text-muted-foreground">{item.meaning}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+
+              {visiblePhonemes.length === 0 && (
+                <div className="rounded-xl border bg-card p-8 text-center text-sm text-muted-foreground">
+                  没有找到匹配的音标，换个关键词试试。
+                </div>
+              )}
+
+              <PronunciationSkillSections onSpeak={handleSpeak} />
+            </section>
+
+            {selected ? (
+              <PhonemeDetailPanel
+                activeHighlight={activeHighlight}
+                isCompleted={progress.completed.includes(selected.id)}
+                phoneme={selected}
+                onClose={() => setSelectedId(null)}
+                onComplete={completeSelected}
+                onNext={() => goToOffset(1)}
+                onPrevious={() => goToOffset(-1)}
+                onSpeak={() => handleSpeak(selected.word, { kind: 'main' })}
+                onSpeakPractice={(example) => handleSpeak(example.word, { kind: 'practice', word: example.word })}
+              />
+            ) : (
+              <aside className="hidden self-start rounded-xl border bg-card p-5 shadow-sm xl:block">
+                <div className="flex size-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                  <Mic2 className="h-6 w-6" />
+                </div>
+                <h2 className="mt-4 text-lg font-bold text-foreground">点击一张音标卡片开始</h2>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                  详情里会显示例词、画面联想、播放按钮、音素高亮、发音要点和跟读练习。
+                </p>
+              </aside>
+            )}
+          </div>
+        </>
+      ) : workspace === 'shadowing' ? (
+        <ShadowingWorkspace
+          areHintsVisible={areShadowingHintsVisible}
+          items={SHADOWING_ITEMS}
+          records={shadowingRecords}
+          selectedIndex={selectedShadowingIndex}
+          selectedItem={selectedShadowing}
+          selectedRecord={selectedShadowingRecord}
+          onPrevious={() => goToShadowingOffset(-1)}
+          onNext={() => goToShadowingOffset(1)}
+          onRate={rateShadowing}
+          onSelectItem={setShadowingSelectedId}
+          onToggleHints={() => setAreShadowingHintsVisible((current) => !current)}
+        />
+      ) : (
+        <WorkspacePlaceholder
+          workspace={workspace}
+          title={workspace === 'minimal-pairs' ? '最小对立音训练待接入' : '训练记录中心待接入'}
+          description={
+            workspace === 'minimal-pairs'
+              ? '后续会把 /iː/ 与 /ɪ/、/æ/ 与 /e/ 这类易混音做成对比训练。'
+              : '后续会统一汇总音标、跟读和口语练习记录；当前 shadowing 记录已在跟读工作区内可见。'
+          }
+        />
+      )}
+    </PageShell>
+  )
+}
+
+function ShadowingWorkspace({
+  areHintsVisible,
+  items,
+  records,
+  selectedIndex,
+  selectedItem,
+  selectedRecord,
+  onPrevious,
+  onNext,
+  onRate,
+  onSelectItem,
+  onToggleHints,
+}: {
+  areHintsVisible: boolean
+  items: ShadowingItem[]
+  records: ShadowingPracticeState
+  selectedIndex: number
+  selectedItem: ShadowingItem
+  selectedRecord: ShadowingPracticeRecord
+  onPrevious: () => void
+  onNext: () => void
+  onRate: (rating: ShadowingSelfRating) => void
+  onSelectItem: (itemId: string) => void
+  onToggleHints: () => void
+}) {
+  const ratingOptions: ShadowingSelfRating[] = ['smooth', 'okay', 'needs-practice']
+  const recentRecords = items
+    .map((item) => ({ item, record: getShadowingRecord(records, item.id) }))
+    .filter(({ record }) => record.practiceCount > 0)
+    .sort((a, b) => Date.parse(b.record.lastPracticedAt ?? '') - Date.parse(a.record.lastPracticedAt ?? ''))
+    .slice(0, 5)
+
+  return (
+    <div className="grid gap-5 xl:grid-cols-[360px_minmax(0,1fr)]">
+      <SurfaceCard className="space-y-4 self-start xl:sticky xl:top-20">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wide text-primary">Shadowing List</p>
+          <h2 className="mt-1 text-lg font-black text-foreground">句子列表</h2>
+          <p className="mt-1 text-sm leading-6 text-muted-foreground">
+            选择一句，先看分块，再按原句节奏开口跟读。
+          </p>
+        </div>
+
+        <div className="max-h-[360px] space-y-2 overflow-y-auto pr-1 xl:max-h-[620px]">
+          {items.map((item, index) => {
+            const record = getShadowingRecord(records, item.id)
+            const isSelected = item.id === selectedItem.id
+            return (
               <button
                 key={item.id}
-                onClick={() => rememberOpened(item)}
-                className={`group flex min-h-40 flex-col rounded-xl border bg-card p-4 text-left transition-all hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-sm ${
-                  selected?.id === item.id ? 'border-primary ring-2 ring-primary/15' : ''
+                onClick={() => onSelectItem(item.id)}
+                className={`w-full rounded-xl border p-3 text-left transition-colors ${
+                  isSelected
+                    ? 'border-primary bg-primary/5 ring-2 ring-primary/10'
+                    : 'border-slate-200 bg-white hover:border-primary/40 hover:bg-slate-50'
                 }`}
               >
-                <div className="flex items-start justify-between gap-2">
-                  <span className="text-4xl leading-none" aria-hidden="true">
-                    {item.visual}
+                <div className="flex items-start justify-between gap-3">
+                  <p className="text-xs font-semibold text-primary">#{index + 1}</p>
+                  <span className="rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600">
+                    {record.practiceCount > 0 ? `${record.practiceCount} 次` : '未练'}
                   </span>
-                  {progress.completed.includes(item.id) ? (
-                    <CheckCircle2 className="h-5 w-5 shrink-0 text-success" />
-                  ) : (
-                    <span className={`rounded-md border px-2 py-1 text-xs ${CATEGORY_META[item.category].tone}`}>
-                      {CATEGORY_META[item.category].shortLabel}
-                    </span>
-                  )}
                 </div>
-                <div className="mt-auto">
-                  <p className="text-2xl font-bold text-foreground">{item.symbol}</p>
-                  <p className="mt-1 text-sm font-semibold text-foreground">{item.word}</p>
-                  <p className="mt-1 text-xs font-medium text-primary">{item.wordPhonetic}</p>
-                  <p className="mt-1 text-xs text-muted-foreground">{item.meaning}</p>
-                </div>
+                <p className="mt-2 text-sm font-bold leading-5 text-foreground">{item.sentence}</p>
+                <p className="mt-1 text-xs leading-5 text-muted-foreground">{item.meaning}</p>
+                {record.rating && (
+                  <p className="mt-2 text-xs font-semibold text-success">
+                    最近自评：{SHADOWING_RATING_LABELS[record.rating]}
+                  </p>
+                )}
               </button>
-            ))}
+            )
+          })}
+        </div>
+      </SurfaceCard>
+
+      <section className="space-y-5">
+        <SurfaceCard className="space-y-5">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-primary">
+                Sentence {selectedIndex + 1} / {items.length}
+              </p>
+              <h2 className="mt-1 text-2xl font-black leading-tight text-foreground">{selectedItem.sentence}</h2>
+              <p className="mt-2 text-base leading-7 text-muted-foreground">{selectedItem.meaning}</p>
+            </div>
+            <div className="flex shrink-0 gap-2">
+              <Button variant="secondary" onClick={onPrevious} className="px-3">
+                <ArrowLeft className="h-4 w-4" />
+                上一句
+              </Button>
+              <Button variant="secondary" onClick={onNext} className="px-3">
+                下一句
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
 
-          {visiblePhonemes.length === 0 && (
-            <div className="rounded-xl border bg-card p-8 text-center text-sm text-muted-foreground">
-              没有找到匹配的音标，换个关键词试试。
+          <div className="grid gap-3 sm:grid-cols-3">
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+              <p className="text-xs font-semibold text-slate-500">练习次数</p>
+              <p className="mt-1 text-2xl font-black text-foreground">{selectedRecord.practiceCount}</p>
+            </div>
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+              <p className="text-xs font-semibold text-slate-500">最近练习</p>
+              <p className="mt-1 text-sm font-bold leading-6 text-foreground">
+                {formatShadowingPracticeTime(selectedRecord.lastPracticedAt)}
+              </p>
+            </div>
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+              <p className="text-xs font-semibold text-slate-500">最近自评</p>
+              <p className="mt-1 text-sm font-bold leading-6 text-foreground">
+                {selectedRecord.rating ? SHADOWING_RATING_LABELS[selectedRecord.rating] : '尚未自评'}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-3">
+            <div>
+              <p className="text-sm font-bold text-foreground">跟读提示</p>
+              <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                先按分块慢读，再贴近原句速度复读两遍。
+              </p>
+            </div>
+            <Button variant="secondary" onClick={onToggleHints}>
+              {areHintsVisible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              {areHintsVisible ? '隐藏提示' : '显示提示'}
+            </Button>
+          </div>
+
+          {areHintsVisible ? (
+            <div className="grid gap-4 lg:grid-cols-2">
+              <div className="rounded-xl border border-slate-200 p-4">
+                <p className="text-sm font-bold text-foreground">分块朗读</p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {selectedItem.chunks.map((chunk) => (
+                    <span key={chunk} className="rounded-lg bg-primary/10 px-3 py-2 text-sm font-bold text-primary">
+                      {chunk}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-slate-200 p-4">
+                <p className="text-sm font-bold text-foreground">重音词</p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {selectedItem.stressWords.map((word) => (
+                    <span key={word} className="rounded-lg bg-warning/10 px-3 py-2 text-sm font-bold text-warning">
+                      {word}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              <InfoBlock title="语调提示" text={selectedItem.intonation} />
+              <InfoBlock title="练习建议" text={selectedItem.practiceTip} />
+            </div>
+          ) : (
+            <div className="rounded-xl border border-dashed border-slate-300 p-5 text-center text-sm text-muted-foreground">
+              提示已隐藏。现在只看英文原句，试着按记忆完成一遍跟读。
             </div>
           )}
 
-          <PronunciationSkillSections onSpeak={handleSpeak} />
-        </section>
-
-        {selected ? (
-          <PhonemeDetailPanel
-            activeHighlight={activeHighlight}
-            isCompleted={progress.completed.includes(selected.id)}
-            phoneme={selected}
-            onClose={() => setSelectedId(null)}
-            onComplete={completeSelected}
-            onNext={() => goToOffset(1)}
-            onPrevious={() => goToOffset(-1)}
-            onSpeak={() => handleSpeak(selected.word, { kind: 'main' })}
-            onSpeakPractice={(example) => handleSpeak(example.word, { kind: 'practice', word: example.word })}
-          />
-        ) : (
-          <aside className="hidden self-start rounded-xl border bg-card p-5 shadow-sm xl:block">
-            <div className="flex size-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
-              <Mic2 className="h-6 w-6" />
+          <div className="space-y-3 border-t pt-4">
+            <div>
+              <p className="text-sm font-bold text-foreground">自评记录</p>
+              <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                每次自评都会累计练习次数，并刷新最近练习时间。
+              </p>
             </div>
-            <h2 className="mt-4 text-lg font-bold text-foreground">点击一张音标卡片开始</h2>
-            <p className="mt-2 text-sm leading-6 text-muted-foreground">
-              详情里会显示例词、画面联想、播放按钮、音素高亮、发音要点和跟读练习。
-            </p>
-          </aside>
-        )}
+            <div className="flex flex-col gap-2 sm:flex-row">
+              {ratingOptions.map((rating) => (
+                <Button
+                  key={rating}
+                  variant={selectedRecord.rating === rating ? 'primary' : 'secondary'}
+                  onClick={() => onRate(rating)}
+                  className="w-full sm:w-auto"
+                >
+                  <CheckCircle2 className="h-4 w-4" />
+                  {SHADOWING_RATING_LABELS[rating]}
+                </Button>
+              ))}
+            </div>
+          </div>
+        </SurfaceCard>
+
+        <SurfaceCard className="space-y-4">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-primary">Local Records</p>
+              <h2 className="mt-1 text-lg font-black text-foreground">最近练习记录</h2>
+            </div>
+            <span className="rounded-md bg-success/10 px-2 py-1 text-xs font-semibold text-success">
+              本地保存
+            </span>
+          </div>
+
+          {recentRecords.length > 0 ? (
+            <div className="divide-y rounded-xl border border-slate-200">
+              {recentRecords.map(({ item, record }) => (
+                <div key={`recent-${item.id}`} className="grid gap-2 p-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-bold text-foreground">{item.sentence}</p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {formatShadowingPracticeTime(record.lastPracticedAt)} · {record.practiceCount} 次
+                    </p>
+                  </div>
+                  <span className="text-xs font-semibold text-primary">
+                    {record.rating ? SHADOWING_RATING_LABELS[record.rating] : '未自评'}
+                  </span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-xl border border-dashed border-slate-300 p-6 text-center text-sm text-muted-foreground">
+              还没有记录。选择一个自评结果后，这里会显示最近练习句子。
+            </div>
+          )}
+        </SurfaceCard>
+      </section>
+    </div>
+  )
+}
+
+function WorkspacePlaceholder({
+  description,
+  title,
+}: {
+  workspace: PronunciationWorkspace
+  description: string
+  title: string
+}) {
+  return (
+    <SurfaceCard className="flex min-h-[360px] flex-col items-center justify-center text-center">
+      <div className="flex size-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
+        <Mic2 className="h-6 w-6" />
       </div>
-    </PageShell>
+      <h2 className="mt-4 text-xl font-black text-foreground">{title}</h2>
+      <p className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground">{description}</p>
+    </SurfaceCard>
   )
 }
 
