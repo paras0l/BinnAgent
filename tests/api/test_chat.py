@@ -21,6 +21,24 @@ def _empty_many():
     return result
 
 
+def _count_result(value: int):
+    result = MagicMock()
+    result.scalar_one.return_value = value
+    return result
+
+
+def _rows_result(rows):
+    result = MagicMock()
+    result.all.return_value = rows
+    return result
+
+
+def _scalars_result(values):
+    result = MagicMock()
+    result.scalars.return_value.all.return_value = values
+    return result
+
+
 @pytest.fixture
 def mock_model_router():
     router = AsyncMock(spec=ModelRouter)
@@ -198,7 +216,7 @@ class TestChatSend:
 
     @pytest.mark.asyncio
     async def test_chat_send_includes_thread_summary_and_recent_history(
-        self, client, mock_model_router, mock_session
+        self, client, mock_model_router, mock_session, monkeypatch
     ):
         thread_id = uuid.uuid4()
         thread = AgentThread(learner_id=mock_session.learner_id, metadata_={"summary": "讨论过长难句。"})
@@ -235,6 +253,7 @@ class TestChatSend:
                 max_result,
             ]
         )
+        monkeypatch.setattr(chat_api, "_learning_snapshot_item", AsyncMock(return_value=None))
         mock_model_router.chat = AsyncMock(
             return_value=ModelChatResponse(provider="ollama", model="gemma4:e2b", content="继续讲。")
         )
@@ -359,6 +378,7 @@ class TestChatSend:
                 max_result,
             ]
         )
+        monkeypatch.setattr(chat_api, "_learning_snapshot_item", AsyncMock(return_value=None))
         monkeypatch.setattr(chat_api, "_run_vocabulary_agent_background", fake_background)
         mock_model_router.chat = AsyncMock(
             return_value=ModelChatResponse(provider="ollama", model="gemma4:e2b", content="OK")
@@ -383,6 +403,82 @@ class TestChatSend:
             obj for obj in mock_session.added_objects if isinstance(obj, ConversationMessage)
         ]
         assert {message.skill_focus for message in messages} == {"vocabulary_deposit"}
+
+
+class TestChatLearningSnapshot:
+    @pytest.mark.asyncio
+    async def test_learning_snapshot_summarizes_structured_progress(self):
+        db = AsyncMock()
+        grammar_item = MagicMock()
+        grammar_item.title = "一般现在时"
+        db.execute = AsyncMock(
+            side_effect=[
+                _count_result(24),
+                _count_result(6),
+                _rows_result([(MagicMock(), "weather"), (MagicMock(), "usually"), (MagicMock(), "weather")]),
+                _count_result(3),
+                _scalars_result([grammar_item]),
+            ]
+        )
+
+        item = await chat_api._learning_snapshot_item(db, learner_id=uuid.uuid4())
+
+        assert item is not None
+        assert item.type == "learning_snapshot"
+        assert item.payload["total_vocab"] == 24
+        assert item.payload["mastered_vocab"] == 6
+        assert item.payload["recent_vocabulary_attempt_count"] == 3
+        assert item.payload["recent_words"] == ["weather", "usually"]
+        assert item.payload["grammar_learned"] == 3
+        assert item.payload["recent_grammar_titles"] == ["一般现在时"]
+        assert "词汇库共 24 个词" in item.summary
+        assert "已学语法 3 个" in item.summary
+
+    @pytest.mark.asyncio
+    async def test_chat_memory_context_prepends_learning_snapshot(self, monkeypatch):
+        learner_id = uuid.uuid4()
+        snapshot = chat_api.RetrievedMemoryItem(
+            id="learning_snapshot:current",
+            type="learning_snapshot",
+            skill="general",
+            summary="学习快照：词汇库共 2 个词。已学语法 1 个：一般现在时。",
+            confidence=1.0,
+            layer="context",
+        )
+        older_item = chat_api.RetrievedMemoryItem(
+            id="learning_memory_event:old",
+            type="learning_event",
+            skill="general",
+            summary="旧记忆",
+            confidence=0.8,
+            layer="evidence",
+        )
+
+        class FakeRetriever:
+            def __init__(self, db):
+                self.db = db
+
+            async def for_chat(self, **kwargs):
+                return chat_api.MemoryContext(
+                    loaded_items=[older_item],
+                    retrieval_reason="chat",
+                )
+
+        monkeypatch.setattr(chat_api, "MemoryRetriever", FakeRetriever)
+        monkeypatch.setattr(chat_api, "_learning_snapshot_item", AsyncMock(return_value=snapshot))
+
+        context = await chat_api._retrieve_memory_context_safely(
+            AsyncMock(),
+            learner_id=learner_id,
+            reason="chat",
+            skill_focus=None,
+            thread_id=uuid.uuid4(),
+        )
+
+        assert [item.id for item in context.loaded_items] == [
+            "learning_snapshot:current",
+            "learning_memory_event:old",
+        ]
 
 
 class TestChatStream:

@@ -23,6 +23,7 @@ import type { AppTab, ExplorePreference, Learner } from '@/types'
 import { useToast } from '@/hooks/useToast'
 import { GrammarPage } from '@/pages/GrammarPage'
 import { VocabularyDetailPage } from '@/pages/VocabularyDetailPage'
+import { WordPartsPage } from '@/pages/WordPartsPage'
 import { WritingPhrasebookPage } from '@/pages/WritingPhrasebookPage'
 
 type FeatureCategory = 'all' | 'listening' | 'speaking' | 'reading' | 'writing' | 'vocabulary' | 'grammar' | 'exam'
@@ -47,7 +48,7 @@ interface ExploreFeature {
   status: FeatureStatus
   action: FeatureAction
   prompt?: string
-  toolTarget?: 'dashboard' | 'pronunciation' | 'grammar' | 'writing-phrasebook'
+  toolTarget?: 'dashboard' | 'pronunciation' | 'grammar' | 'writing-phrasebook' | 'word-parts'
 }
 
 const CATEGORIES: Array<{ id: FeatureCategory; label: string }> = [
@@ -92,6 +93,17 @@ const FEATURES: ExploreFeature[] = [
     outcome: '获得包含核心义项、搭配、分级例句、易混辨析和练习的 HTML 详解。',
     status: 'ready',
     action: 'vocabulary-detail',
+  },
+  {
+    id: 'word-roots-affixes',
+    category: 'vocabulary',
+    title: '词根与词缀',
+    description: '学习常见词根、前缀和后缀，掌握用构词法理解新词的方法。',
+    whenToUse: '背单词总是靠中文意思硬记，或遇到新词想根据词形先猜含义时使用。',
+    outcome: '建立常见词根词缀库，并在词汇详解和单词训练中看到拆词线索。',
+    status: 'ready',
+    action: 'tool',
+    toolTarget: 'word-parts',
   },
   {
     id: 'add-vocabulary',
@@ -249,6 +261,7 @@ export function ExplorePage({
   const [isVocabularyDetailOpen, setIsVocabularyDetailOpen] = useState(false)
   const [isGrammarOpen, setIsGrammarOpen] = useState(false)
   const [isWritingPhrasebookOpen, setIsWritingPhrasebookOpen] = useState(false)
+  const [isWordPartsOpen, setIsWordPartsOpen] = useState(false)
 
   const loadPreferences = useCallback(async () => {
     setIsLoading(true)
@@ -301,7 +314,7 @@ export function ExplorePage({
 
   const favorites = visibleFeatures.filter((feature) => preferenceMap.get(feature.id)?.is_favorite)
   const recommendedFeatures = useMemo(() => {
-    const preferred = FEATURES.filter((feature) => ['writing-phrasebook', 'vocab-review', 'grammar-explain'].includes(feature.id))
+    const preferred = FEATURES.filter((feature) => ['word-roots-affixes', 'writing-phrasebook', 'vocab-review'].includes(feature.id))
     return preferred.filter((feature) => category === 'all' || feature.category === category).slice(0, 3)
   }, [category])
 
@@ -387,6 +400,10 @@ export function ExplorePage({
         setIsWritingPhrasebookOpen(true)
         return
       }
+      if (feature.toolTarget === 'word-parts') {
+        setIsWordPartsOpen(true)
+        return
+      }
       onTabChange(feature.toolTarget)
       return
     }
@@ -409,6 +426,10 @@ export function ExplorePage({
 
   if (isWritingPhrasebookOpen) {
     return <WritingPhrasebookPage learner={learner} onBack={() => setIsWritingPhrasebookOpen(false)} />
+  }
+
+  if (isWordPartsOpen) {
+    return <WordPartsPage onBack={() => setIsWordPartsOpen(false)} />
   }
 
   return (

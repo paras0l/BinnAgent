@@ -22,10 +22,13 @@ from src.agents.skills import AgentSkill, apply_skill_to_metadata, resolve_effec
 from src.config import settings
 from src.db import async_session_factory
 from src.memory.extraction import MemoryExtractionService
+from src.memory.layers import MemoryLayer
 from src.memory.retriever import MemoryRetriever
-from src.memory.schemas import MemoryContext
+from src.memory.schemas import MemoryContext, RetrievedMemoryItem
+from src.models.learning_progress import LearningProgressItem
 from src.models.learner import Learner
 from src.models.runtime import AgentThread, ConversationMessage
+from src.models.vocabulary import VocabularyAttempt, VocabularyItem
 from src.prompts import prompt_registry
 from src.providers.base import ChatRequest as ModelChatRequest
 from src.providers.router import ModelRouter
@@ -530,15 +533,136 @@ async def _retrieve_memory_context_safely(
     thread_id: uuid.UUID,
 ) -> MemoryContext:
     try:
-        return await MemoryRetriever(db).for_chat(
+        context = await MemoryRetriever(db).for_chat(
             learner_id=learner_id,
             skill=skill_focus,
             thread_id=thread_id,
             limit=6,
         )
+        try:
+            snapshot = await _learning_snapshot_item(db, learner_id=learner_id)
+        except Exception:
+            logger.exception("Failed to retrieve chat learning snapshot")
+            snapshot = None
+        if snapshot is not None:
+            return MemoryContext(
+                loaded_items=[snapshot, *context.loaded_items],
+                excluded_items=context.excluded_items,
+                retrieval_reason=context.retrieval_reason,
+                layer=context.layer,
+            )
+        return context
     except Exception:
         logger.exception("Failed to retrieve chat memory context")
         return MemoryContext(loaded_items=[], excluded_items=[], retrieval_reason=reason)
+
+
+async def _learning_snapshot_item(
+    db: AsyncSession,
+    *,
+    learner_id: uuid.UUID,
+) -> RetrievedMemoryItem | None:
+    total_vocab_result = await db.execute(
+        select(func.count()).select_from(VocabularyItem).where(VocabularyItem.learner_id == learner_id)
+    )
+    mastered_vocab_result = await db.execute(
+        select(func.count())
+        .select_from(VocabularyItem)
+        .where(VocabularyItem.learner_id == learner_id, VocabularyItem.status == "mastered")
+    )
+    recent_attempt_result = await db.execute(
+        select(VocabularyAttempt, VocabularyItem.word)
+        .join(VocabularyItem, VocabularyItem.id == VocabularyAttempt.vocabulary_item_id)
+        .where(VocabularyAttempt.learner_id == learner_id)
+        .order_by(VocabularyAttempt.occurred_at.desc())
+        .limit(12)
+    )
+    grammar_count_result = await db.execute(
+        select(func.count())
+        .select_from(LearningProgressItem)
+        .where(
+            LearningProgressItem.learner_id == learner_id,
+            LearningProgressItem.skill == "grammar",
+            LearningProgressItem.status == "learned",
+        )
+    )
+    grammar_result = await db.execute(
+        select(LearningProgressItem)
+        .where(
+            LearningProgressItem.learner_id == learner_id,
+            LearningProgressItem.skill == "grammar",
+            LearningProgressItem.status == "learned",
+        )
+        .order_by(
+            LearningProgressItem.learned_at.desc().nullslast(),
+            LearningProgressItem.updated_at.desc(),
+        )
+        .limit(12)
+    )
+
+    total_vocab = int(total_vocab_result.scalar_one() or 0)
+    mastered_vocab = int(mastered_vocab_result.scalar_one() or 0)
+    grammar_count = int(grammar_count_result.scalar_one() or 0)
+    recent_attempts = recent_attempt_result.all()
+    recent_words = _unique_texts(str(word) for _, word in recent_attempts if word)
+    grammar_titles = _unique_texts(
+        item.title for item in grammar_result.scalars().all() if item.title
+    )
+
+    if total_vocab == 0 and grammar_count == 0 and not recent_words:
+        return None
+
+    parts = [f"学习快照：词汇库共 {total_vocab} 个词，已掌握 {mastered_vocab} 个。"]
+    if recent_attempts:
+        parts.append(
+            f"最近词汇练习 {len(recent_attempts)} 次，涉及 {len(recent_words)} 个词："
+            f"{_join_preview(recent_words)}。"
+        )
+    if grammar_count:
+        parts.append(f"已学语法 {grammar_count} 个：{_join_preview(grammar_titles)}。")
+    parts.append("回答用户学习盘点问题时，优先使用这些结构化数字；如果只列出部分项目，要说明这是最近/前若干条记录。")
+
+    return RetrievedMemoryItem(
+        id="learning_snapshot:current",
+        type="learning_snapshot",
+        skill="general",
+        summary=" ".join(parts),
+        confidence=1.0,
+        layer=MemoryLayer.CONTEXT.value,
+        reason="structured_learning_progress",
+        payload={
+            "total_vocab": total_vocab,
+            "mastered_vocab": mastered_vocab,
+            "recent_vocabulary_attempt_count": len(recent_attempts),
+            "recent_words": recent_words,
+            "grammar_learned": grammar_count,
+            "recent_grammar_titles": grammar_titles,
+        },
+    )
+
+
+def _unique_texts(values: Any) -> list[str]:
+    seen: set[str] = set()
+    items: list[str] = []
+    for value in values:
+        text = str(value).strip()
+        if not text:
+            continue
+        key = text.casefold()
+        if key in seen:
+            continue
+        seen.add(key)
+        items.append(text)
+    return items
+
+
+def _join_preview(values: list[str], *, limit: int = 12) -> str:
+    if not values:
+        return "暂无明细"
+    preview = "、".join(values[:limit])
+    if len(values) > limit:
+        preview += f"等 {len(values)} 项"
+    return preview
 
 
 def _skill_event(

@@ -20,6 +20,54 @@ export type KnowledgeType =
   | 'pronunciation'
   | 'text_note'
 
+export type WordPartKind = 'prefix' | 'root' | 'suffix'
+
+export type MorphologyPartKind = WordPartKind | 'base' | 'connector'
+
+export type WordPartLevel = 'junior' | 'cet4' | 'cet6' | 'common'
+
+export interface WordPartExample {
+  word: string
+  breakdown: string
+  meaning: string
+}
+
+export interface WordPart {
+  id: string
+  kind: WordPartKind
+  form: string
+  meaning: string
+  simpleExplanation: string
+  examples: WordPartExample[]
+  tags: string[]
+  level: WordPartLevel
+  aliases?: string[]
+}
+
+export interface WordPartAnalysisPart {
+  form: string
+  kind: MorphologyPartKind
+  meaning: string
+  explanation?: string | null
+  confidence?: number | null
+}
+
+export interface WordPartAnalysis {
+  parts: WordPartAnalysisPart[]
+  summary: string
+  caution?: string | null
+  related_word_part_ids?: string[]
+}
+
+export type WordPartProgressStatus = 'new' | 'learning' | 'familiar' | 'mastered'
+
+export interface WordPartProgress {
+  wordPartId: string
+  status: WordPartProgressStatus
+  practicedCount: number
+  lastPracticedAt: string
+}
+
 export interface CurriculumNode {
   id: string
   parent_id?: string | null

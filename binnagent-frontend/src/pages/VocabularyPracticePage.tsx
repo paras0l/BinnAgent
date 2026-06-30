@@ -8,14 +8,19 @@ import {
   RotateCcw,
   Volume2,
 } from 'lucide-react'
-import { useCallback, useEffect, useRef, useState } from 'react'
-import type { Learner } from '@/types'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import type { Learner, WordPartAnalysis } from '@/types'
 import {
   RichVocabularyEntry,
   type BilingualMeaning,
   type DictionarySense,
 } from '@/components/vocabulary/RichVocabularyEntry'
 import { VocabularyDetailPage } from '@/pages/VocabularyDetailPage'
+import {
+  MORPHOLOGY_KIND_LABELS,
+  inferWordPartAnalysis,
+  spellingSafeMorphologyParts,
+} from '@/data/wordParts'
 
 export type VocabularyPracticeMode = 'new' | 'review' | 'spelling'
 
@@ -65,9 +70,11 @@ interface PracticeTask {
   tts_text?: string | null
   context_with_blank?: string | null
   sources: SourceTag[]
+  display_word?: string | null
   word?: string
   meaning?: string | null
   example?: string | null
+  morphology?: WordPartAnalysis | null
 }
 
 interface AttemptFeedback {
@@ -87,6 +94,7 @@ interface AttemptFeedback {
   feedback_text: string
   letter_diff: Array<{ answer?: string | null; correct?: string | null; status: string }>
   can_retry: boolean
+  morphology?: WordPartAnalysis | null
 }
 
 interface SessionSummary {
@@ -114,6 +122,7 @@ interface VocabularyItemDetail {
   examples: Array<string | Record<string, unknown>>
   sources: SourceTag[]
   mastery?: Record<string, number>
+  morphology?: WordPartAnalysis | null
 }
 
 const counts = [5, 10, 15]
@@ -151,6 +160,7 @@ export function VocabularyPracticePage({
   const [shouldRefreshAfterDetail, setShouldRefreshAfterDetail] = useState(false)
   const [readonlyDetail, setReadonlyDetail] = useState<VocabularyItemDetail | null>(null)
   const [isReviewRevealed, setIsReviewRevealed] = useState(false)
+  const [isMorphologyHintVisible, setIsMorphologyHintVisible] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const startedAt = useRef(0)
   const compositionRef = useRef(false)
@@ -188,6 +198,7 @@ export function VocabularyPracticePage({
     setHintCount(0)
     setReplayCount(0)
     setIsReviewRevealed(data.mode === 'new' || data.show_answer_first === true)
+    setIsMorphologyHintVisible(false)
     setInputWarning(null)
     lastAutoSubmitted.current = ''
     startedAt.current = Date.now()
@@ -512,6 +523,7 @@ export function VocabularyPracticePage({
   }
 
   if (!task) return null
+  const taskMorphology = task.morphology ?? inferWordPartAnalysis(task.word ?? task.display_word ?? feedback?.correct_answer)
   const learnMoreTerm = mode === 'review' || mode === 'new' ? task.word : feedback?.correct_answer
   const progress = ((task.current_index + 1) / task.total) * 100
   return (
@@ -549,6 +561,8 @@ export function VocabularyPracticePage({
                     tags={task.dictionary_tags}
                     activeAccent={accent}
                     onPlayAccent={(nextAccent) => void playAudio(nextAccent)}
+                    morphology={taskMorphology}
+                    morphologyDefaultOpen={mode === 'new'}
                   />
                 ) : mode === 'review' ? (
                   <div className="mx-auto max-w-2xl">
@@ -585,10 +599,13 @@ export function VocabularyPracticePage({
             hintCount={hintCount}
             isReviewRevealed={isReviewRevealed}
             learnMoreTerm={learnMoreTerm}
+            morphology={taskMorphology}
+            isMorphologyHintVisible={isMorphologyHintVisible}
             mode={mode}
             sourceLabel={task.sources[0]?.label ?? sourceLabel ?? '我的词汇本'}
             onEditTerm={() => learnMoreTerm && setDetailTerm(learnMoreTerm)}
             onHint={() => void requestHint()}
+            onToggleMorphologyHint={() => setIsMorphologyHintVisible((value) => !value)}
             onReveal={() => {
               if (mode === 'review' && !isReviewRevealed) setIsReviewRevealed(true)
               else void submitAttempt({ reveal: true })
@@ -636,6 +653,7 @@ function ReadonlyVocabularyDetail({
 }) {
   const [accent, setAccent] = useState<'uk' | 'us' | 'auto'>('uk')
   const [isPlaying, setIsPlaying] = useState(false)
+  const morphology = useMemo(() => detail?.morphology ?? inferWordPartAnalysis(detail?.word), [detail])
 
   const playDetailAudio = async (nextAccent: 'uk' | 'us') => {
     if (!detail) return
@@ -699,6 +717,8 @@ function ReadonlyVocabularyDetail({
                 tags={detail.dictionary_tags}
                 activeAccent={accent}
                 onPlayAccent={(nextAccent) => void playDetailAudio(nextAccent)}
+                morphology={morphology}
+                morphologyDefaultOpen
               />
             ) : (
               <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-sm font-semibold text-amber-800">
@@ -750,21 +770,27 @@ function TaskSupportPanel({
   feedback,
   hintCount,
   isReviewRevealed,
+  isMorphologyHintVisible,
   learnMoreTerm,
   mode,
+  morphology,
   sourceLabel,
   onEditTerm,
   onHint,
+  onToggleMorphologyHint,
   onReveal,
 }: {
   feedback: AttemptFeedback | null
   hintCount: number
   isReviewRevealed: boolean
+  isMorphologyHintVisible: boolean
   learnMoreTerm?: string | null
+  morphology: WordPartAnalysis | null
   mode: VocabularyPracticeMode
   sourceLabel: string
   onEditTerm: () => void
   onHint: () => void
+  onToggleMorphologyHint: () => void
   onReveal: () => void
 }) {
   const modeLabel = mode === 'new' ? '新词学习' : mode === 'review' ? '今日复习' : '拼写练习'
@@ -778,6 +804,10 @@ function TaskSupportPanel({
         ? '根据真实熟悉度评分，系统会据此安排下次复习。'
         : '先主动回忆，再显示答案评分。'
   const canRevealAnswer = !feedback && (mode === 'spelling' || !isReviewRevealed)
+  const spellingHints = spellingSafeMorphologyParts(morphology)
+  const canShowMorphologyHint = !feedback && mode !== 'new' && Boolean(
+    mode === 'spelling' ? spellingHints.length : morphology,
+  )
 
   return (
     <aside className="flex min-h-0 flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
@@ -824,7 +854,51 @@ function TaskSupportPanel({
         )}
       </div>
 
+      {canShowMorphologyHint ? (
+        <div className="rounded-xl border border-indigo-100 bg-indigo-50/70 p-3">
+          <button
+            type="button"
+            onClick={onToggleMorphologyHint}
+            className="flex w-full items-center justify-between gap-3 text-left text-sm font-black text-indigo-800"
+          >
+            <span>{mode === 'spelling' ? '前后缀提示' : '构词提示'}</span>
+            <span className="text-xs font-semibold text-indigo-500">{isMorphologyHintVisible ? '收起' : '显示'}</span>
+          </button>
+          {isMorphologyHintVisible ? (
+            <MorphologyPracticeHint mode={mode} morphology={morphology} />
+          ) : null}
+        </div>
+      ) : null}
     </aside>
+  )
+}
+
+function MorphologyPracticeHint({
+  mode,
+  morphology,
+}: {
+  mode: VocabularyPracticeMode
+  morphology: WordPartAnalysis | null
+}) {
+  if (!morphology) return null
+  const parts = mode === 'spelling'
+    ? spellingSafeMorphologyParts(morphology)
+    : morphology.parts.slice(0, 1)
+  if (parts.length === 0) return null
+  return (
+    <div className="mt-3 grid gap-2">
+      {parts.map((item, index) => (
+        <div key={`${item.form}-${item.kind}-${index}`} className="rounded-lg bg-white px-3 py-2">
+          <p className="text-xs font-bold text-slate-400">{MORPHOLOGY_KIND_LABELS[item.kind]}</p>
+          <p className="mt-1 text-sm font-black text-slate-800">
+            {item.form} <span className="font-semibold text-slate-500">表示 {item.meaning}</span>
+          </p>
+        </div>
+      ))}
+      {mode === 'review' ? (
+        <p className="text-xs font-semibold leading-5 text-indigo-800/75">先用这一条线索回忆大意，确认答案后再看完整拆解。</p>
+      ) : null}
+    </div>
   )
 }
 

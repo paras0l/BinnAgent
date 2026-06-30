@@ -63,6 +63,7 @@ python -m pytest tests/ -v
 cd binnagent-frontend
 npm install
 npm run dev
+npm run test
 ```
 
 前端运行在 http://localhost:3000，自动代理 API 请求到后端。
@@ -94,7 +95,7 @@ npm run dev
 |------|------|
 | Chat / Memory / Dashboard | 部分实现，Memory v2 已落地 Retain / Recall / Reflect、LearningEpisode、LearnerModelMemory、TeachingStrategyMemory 和可控记忆中心 |
 | 教材 Knowledge Base / RAG / Exercises | 部分实现，已支持多教材切换、七年级上/下册解析、八/九年级上传 fallback、解析证据展示和低置信词条人工校对入口 |
-| Vocabulary Personal Cards / Practice / Spelling | 部分实现 |
+| Vocabulary Personal Cards / Practice / Spelling / Word Parts | 部分实现，已新增“词根与词缀”探索入口、四工作区学习页、内置词根词缀库、拆词练习和 morphology 前端展示/降级 |
 | Writing Phrasebook | 基础版已实现 |
 | Frontend UI/UX 统一标准 | Issue #20 首轮整改已落地，主导航固定为 AI对话 / 探索 / 学习中心 / 记忆，基础组件和 0-12 页面口径已统一；KnowledgeBase 已升级为教材解析校对工作台 |
 | Prompt Registry / Schema-first Import / Parser Quality | 基础治理已实现 |

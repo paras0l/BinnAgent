@@ -19,6 +19,12 @@ import { Button } from '@/components/ui/Button'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { FormField } from '@/components/ui/FormField'
 import { SurfaceCard } from '@/components/ui/SurfaceCard'
+import {
+  MORPHOLOGY_KIND_LABELS,
+  formatMorphologyForNote,
+  inferWordPartAnalysis,
+} from '@/data/wordParts'
+import type { WordPartAnalysis } from '@/types'
 
 interface VocabularyDetailPageProps {
   learner?: Learner
@@ -48,6 +54,7 @@ interface PersonalCardDetail {
     user_notes?: string | null
     review_preference?: string
   }
+  morphology?: WordPartAnalysis | null
   mistakes?: Array<{ id: string; mistake_type: string; note?: string | null; correction?: string | null }>
 }
 
@@ -91,6 +98,11 @@ export function VocabularyDetailPage({
   const [isImmersiveReading, setIsImmersiveReading] = useState(false)
   const [workspace, setWorkspace] = useState<VocabularyDetailWorkspace>('term')
   const [cardDetail, setCardDetail] = useState<PersonalCardDetail | null>(null)
+  const activeMorphology = useMemo(
+    () => cardDetail?.morphology ?? inferWordPartAnalysis(activeTerm),
+    [activeTerm, cardDetail?.morphology],
+  )
+  const inferredMorphologyText = useMemo(() => formatMorphologyForNote(activeMorphology), [activeMorphology])
   const [cardForm, setCardForm] = useState({
     display_form_override: '',
     user_understanding: '',
@@ -98,6 +110,13 @@ export function VocabularyDetailPage({
     user_notes: '',
     review_preference: 'normal',
   })
+  const [morphologyDraftState, setMorphologyDraftState] = useState(() => ({
+    source: inferredMorphologyText,
+    value: inferredMorphologyText,
+  }))
+  const morphologyDraft = morphologyDraftState.source === inferredMorphologyText
+    ? morphologyDraftState.value
+    : inferredMorphologyText
   const safeHtml = useMemo(() => sanitizeHtml(html), [html])
   const canSaveToVocabulary = Boolean(learner && activeTerm.trim() && html.trim())
   const saveButtonLabel = !html.trim()
@@ -263,6 +282,22 @@ export function VocabularyDetailPage({
     }
   }
 
+  const syncMorphologyToNotes = () => {
+    const note = morphologyDraft.trim()
+    if (!note) {
+      showToast('当前没有可写入的构词分析。', { variant: 'warning' })
+      return
+    }
+    setCardForm((prev) => {
+      if (prev.user_notes.includes(note)) return prev
+      return {
+        ...prev,
+        user_notes: [prev.user_notes.trim(), note].filter(Boolean).join('\n\n'),
+      }
+    })
+    showToast('构词分析已写入个人笔记。', { variant: 'success' })
+  }
+
   return (
     <PageShell>
         <FeatureHero
@@ -273,6 +308,7 @@ export function VocabularyDetailPage({
             { label: '当前词条', value: activeTerm || '待输入', tone: activeTerm ? 'primary' : 'default' },
             { label: '词卡状态', value: cardDetail ? '已存在' : '未保存', tone: cardDetail ? 'success' : 'warning' },
             { label: 'HTML 回填', value: html.trim() ? '已回填' : '待回填', tone: html.trim() ? 'success' : 'warning' },
+            { label: '构词分析', value: activeMorphology ? '可展示' : '待补充', tone: activeMorphology ? 'success' : 'warning' },
             { label: '目标网站', value: 'DeepSeek' },
           ]}
           actions={
@@ -315,6 +351,7 @@ export function VocabularyDetailPage({
                 <StatusLine label="HTML 回填" value={html.trim() ? '已回填' : '待回填'} tone={html.trim() ? 'success' : 'warning'} />
                 <StatusLine label="目标网站" value="DeepSeek" />
               </div>
+              <MorphologySummaryCard morphology={activeMorphology} compact />
             </SurfaceCard>
           </section>
         )}
@@ -471,6 +508,25 @@ export function VocabularyDetailPage({
                   <Field label="我的理解" value={cardForm.user_understanding} onChange={(value) => setCardForm((prev) => ({ ...prev, user_understanding: value }))} textarea />
                   <Field label="我的例句" value={cardForm.user_examples_text} onChange={(value) => setCardForm((prev) => ({ ...prev, user_examples_text: value }))} textarea placeholder="每行一个例句" />
                   <Field label="个人笔记" value={cardForm.user_notes} onChange={(value) => setCardForm((prev) => ({ ...prev, user_notes: value }))} textarea />
+                  <div className="lg:col-span-2">
+                    <label className="block text-sm font-bold text-slate-700">
+                      构词分析 / 词根词缀
+                      <textarea
+                        value={morphologyDraft}
+                        onChange={(event) => setMorphologyDraftState({
+                          source: inferredMorphologyText,
+                          value: event.target.value,
+                        })}
+                        className="mt-1.5 min-h-36 w-full resize-y rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm leading-6 outline-none focus:border-indigo-500"
+                        placeholder="pre- = before / 预先&#10;view = 看&#10;preview = 预先看 -> 预览"
+                      />
+                    </label>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      <Button variant="secondary" onClick={syncMorphologyToNotes}>
+                        写入个人笔记
+                      </Button>
+                    </div>
+                  </div>
                   {cardDetail.mistakes?.length ? (
                     <div>
                       <p className="text-sm font-black text-slate-700">最近错因</p>
@@ -516,6 +572,43 @@ export function VocabularyDetailPage({
   )
 }
 
+function MorphologySummaryCard({
+  morphology,
+  compact = false,
+}: {
+  morphology: WordPartAnalysis | null
+  compact?: boolean
+}) {
+  return (
+    <div className={`${compact ? 'mt-5 border-t border-slate-200 pt-4' : ''}`}>
+      <h3 className="text-sm font-black text-slate-900">构词分析 / 词根词缀</h3>
+      {morphology ? (
+        <div className="mt-3 grid gap-2">
+          {morphology.parts.map((item, index) => (
+            <div key={`${item.form}-${item.kind}-${index}`} className="rounded-lg bg-slate-50 px-3 py-2">
+              <p className="text-sm font-black text-slate-800">
+                {item.form}
+                <span className="ml-2 text-xs font-semibold text-slate-400">{MORPHOLOGY_KIND_LABELS[item.kind]}</span>
+              </p>
+              <p className="mt-1 text-xs font-semibold leading-5 text-slate-500">{item.meaning}</p>
+            </div>
+          ))}
+          <p className="rounded-lg bg-indigo-50 px-3 py-2 text-xs font-semibold leading-5 text-indigo-800">
+            {morphology.summary}
+          </p>
+          {morphology.caution ? (
+            <p className="text-xs font-semibold leading-5 text-amber-700">{morphology.caution}</p>
+          ) : null}
+        </div>
+      ) : (
+        <p className="mt-2 rounded-lg bg-slate-50 px-3 py-2 text-sm leading-6 text-slate-500">
+          暂未匹配到内置词根词缀。可以先生成 HTML 详解，再在词卡沉淀里补充构词线索。
+        </p>
+      )}
+    </div>
+  )
+}
+
 function Field({
   label,
   value,
@@ -558,9 +651,10 @@ function buildVocabularyPrompt(term: string) {
 2. 内容控制在约 700-1000 中文字等量，适合 5-8 分钟阅读，讲清“怎么理解、怎么搭配、怎么在句子里使用”。
 3. 仅输出一个 HTML 片段，不要 Markdown 代码围栏，不要输出 HTML 之外的解释。
 4. HTML 必须包含：标题、音标与词性（词组则说明类型）、核心义项、构词或记忆线索、常用搭配、4-6 个分级例句及中文解释、近义词辨析或易混词、常见错误、2 道小练习及答案。
-5. 每个例句都必须包含“${term}”或其合理词形变化；明确标注正式/口语、及物/不及物、可数/不可数等关键限制（仅在适用时）。
-6. 如果是词组，重点说明整体含义、固定结构、可否拆分、宾语位置和常见变体；不要把它误当作单个词讲解。
-7. 不确定的词源或用法不要编造。禁止输出 <script>、外链资源、表单、iframe 或自动播放媒体。
+5. 如果适合拆词，必须输出一个可解析构词区域：<section data-binn-section="morphology">，其中每个部分使用 <li data-kind="prefix|root|suffix|base|connector" data-form="pre-" data-meaning="before / 预先">pre- = before / 预先</li>，并包含合成解释和注意事项；如果不适合拆词，要明确写“构词线索不明显，需以语境和词典为准”。
+6. 每个例句都必须包含“${term}”或其合理词形变化；明确标注正式/口语、及物/不及物、可数/不可数等关键限制（仅在适用时）。
+7. 如果是词组，重点说明整体含义、固定结构、可否拆分、宾语位置和常见变体；不要把它误当作单个词讲解。
+8. 不确定的词源或用法不要编造。禁止输出 <script>、外链资源、表单、iframe 或自动播放媒体。
 
 学习者背景：初中到 CET 四六级阶段，母语为中文，喜欢中英结合、结构清楚、例句实用。`
 }

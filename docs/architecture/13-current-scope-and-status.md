@@ -1,6 +1,6 @@
 # 13. Current Scope and Status
 
-> 更新时间：2026-06-29
+> 更新时间：2026-06-30
 > 目的：把当前实现、部分实现和仍处于设计中的内容显性化，避免把架构目标误读成已落地功能。
 
 ## 状态图例
@@ -24,10 +24,10 @@
 | 模块 | 状态 | 当前能力 | 下一步 |
 |---|---|---|---|
 | FastAPI API | 已实现 | learners、chat、memory、dashboard、knowledge、vocabulary、grammar 等 routers | 统一 current learner 认证授权 |
-| React 前端 | 部分实现 | 多页面学习入口、SSE chat、知识库和词汇练习；Issue #20 UI/UX 统一标准首轮落地，新增统一 Button/FormField/StatusBanner/ConfirmDialog/ReasonCard/EvidencePanel，主导航固定为 AI对话 / 探索 / 学习中心 / 记忆；KnowledgeBase 已升级为教材结构 / 单元学习 / 练习任务 / 解析校对工作台 | 更深入的数据驱动推荐、恢复提示、RAG 调试模式、更多页面内 drawer 化编辑 |
+| React 前端 | 部分实现 | 多页面学习入口、SSE chat、知识库和词汇练习；Issue #20 UI/UX 统一标准首轮落地，新增统一 Button/FormField/StatusBanner/ConfirmDialog/ReasonCard/EvidencePanel，主导航固定为 AI对话 / 探索 / 学习中心 / 记忆；KnowledgeBase 已升级为教材结构 / 单元学习 / 练习任务 / 解析校对工作台；Explore 已接入“词根与词缀”工作区 | 更深入的数据驱动推荐、恢复提示、RAG 调试模式、更多页面内 drawer 化编辑 |
 | LangGraph daily lesson | 部分实现 | 线性 daily lesson graph 和主要节点 | checkpoint、interrupt、answer_required、resume |
 | Memory | 部分实现 | 4 层学习记忆架构 + HindSight-inspired Retain/Recall/Reflect 口径已落地；统一 memory event/operation、LearningEpisode、LearnerModelMemory、TeachingStrategyMemory、MemoryWriter/Retriever/Curator、显式 L1-L4 layer metadata、ErrorPattern governance、WritingPhraseMastery、Memory Center、导出/删除/禁用/我已改善、重置计划、情绪/节奏 opt-in、低置信上下文开关、memory_context log、hit-rate 指标、作文批改历史弱点对比 | 更完整 debug dashboard 图表、更多 regression eval、更多 session 类型反思规则 |
-| Vocabulary Learning | 部分实现 | 单元 enroll、用户可编辑个人词卡、new/review/spelling session、attempt、错因记录、mastery vector、发音 URL | 薄弱原因总结、题型推荐、更多表达迁移题 |
+| Vocabulary Learning | 部分实现 | 单元 enroll、用户可编辑个人词卡、new/review/spelling session、attempt、错因记录、mastery vector、发音 URL；前端新增词根词缀库、拆词练习、localStorage 掌握标记和 morphology 展示/降级 | morphology 后端持久化、LearningProgress/Memory 联动、薄弱原因总结、题型推荐、更多表达迁移题 |
 | Knowledge Base / RAG | 部分实现 | PDF 解析、chunk、embedding、文本 fallback、8 题混合练习流、hint/retry/rubric 反馈；overview 返回 sources、parser/ingest 证据、review queue、来源页码和低置信词条；前端可在多本教材之间切换 | hybrid retrieval、golden query set、练习 session 总结、更多年级 golden profile |
 | Prompt & Parsing Governance | 部分实现 | Prompt Registry MVP、prompt render API、核心 prompt 模板、写作导入 JSON-first extraction、教材 manifest/profile/parser report；教材低置信词条支持确认、修改发布和忽略 | 更多 prompt eval、词汇/语法 schema-first 回填、更细的审计历史 |
 | Model Provider | 部分实现 | Ollama chat/stream/embed/health，结构化 JSON repair retry | task policy、local_only 强约束、持久化 model_call_logs |
@@ -55,6 +55,7 @@
 | #17 Schema-first 回填 | 新增 `src/extraction`，写作好句导入优先 JSON schema，保留 regex fallback 且返回 `parse_mode`、`warnings`、`confidence`；新增 golden-style tests | 词汇字段回传和语法微课 machine_data 的完整保存链路 |
 | #18 Prompt Registry | 新增 `src/prompts`、版本化 markdown 模板、schema/model policy 绑定、`/api/prompts/{prompt_id}/render`；迁移 chat、vocabulary agent、grammar prompt、writing phrase prompt；新增 prompt eval fixtures | 更完整 observability 持久化、prompt evaluator、更多 P2 prompt 迁移 |
 | #20 UI/UX 统一标准 | 阅读 issue 正文与评论，更新 `docs/frontend-design-system.md`、`docs/web-frontend.md`、README 和本文档；新增统一 UI 原语；逐页覆盖 AppShell/Header、Chat、Explore、Dashboard、Memory、Writing Phrasebook、Grammar、Vocabulary Detail、Pronunciation、KnowledgeBase、VocabularyPractice、Dashboard 词汇工作区和 Login；学习中心升级为今日学习驾驶舱；KnowledgeBase 解析校对 workspace 已落成，推荐原因和证据表达开始统一 | 更深层组件拆分、更多编辑态 Drawer 化、视觉回归截图 |
+| #23 词根与词缀 | Explore 词汇分类新增“词根与词缀”入口；新增 `WordPartsPage`，包含方法入门 / 词根词缀库 / 拆词练习 / 我的掌握四个 workspace；内置 10 个前缀、10 个词根、10 个后缀和 8 张练习卡；`VocabularyDetailPage` prompt 增加可解析构词区域要求并提供 morphology fallback；`VocabularyPracticePage` 在 new/review/spelling 中按模式展示构词提示，拼写练习只显示前后缀安全提示；新增 Vitest 数据 helper 测试 | 后端 `morphology` 字段持久化、AI HTML 构词区域解析入库、LearningProgress/Memory 沉淀 |
 
 ## 可运行能力
 

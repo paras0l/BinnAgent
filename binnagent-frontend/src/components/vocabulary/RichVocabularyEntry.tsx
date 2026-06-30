@@ -1,4 +1,7 @@
+import { useState } from 'react'
 import { BookOpen, ChevronDown, Sparkles, Volume2 } from 'lucide-react'
+import { MORPHOLOGY_KIND_LABELS } from '@/data/wordParts'
+import type { WordPartAnalysis } from '@/types'
 
 export interface DictionarySense {
   part_of_speech: string
@@ -24,6 +27,8 @@ interface RichVocabularyEntryProps {
   activeAccent?: 'uk' | 'us' | 'auto'
   onPlayAccent?: (accent: 'uk' | 'us') => void
   compact?: boolean
+  morphology?: WordPartAnalysis | null
+  morphologyDefaultOpen?: boolean
 }
 
 const FORM_LABELS: Record<string, string> = {
@@ -49,7 +54,17 @@ export function RichVocabularyEntry({
   activeAccent = 'uk',
   onPlayAccent,
   compact = false,
+  morphology = null,
+  morphologyDefaultOpen = false,
 }: RichVocabularyEntryProps) {
+  const morphologyKey = morphology?.summary ?? ''
+  const [morphologyOpenState, setMorphologyOpenState] = useState(() => ({
+    key: morphologyKey,
+    isOpen: morphologyDefaultOpen,
+  }))
+  const isMorphologyOpen = morphologyOpenState.key === morphologyKey
+    ? morphologyOpenState.isOpen
+    : morphologyDefaultOpen
   const resolvedSenses = senses.length > 0
     ? senses
     : fallbackSenses(meanings)
@@ -137,6 +152,23 @@ export function RichVocabularyEntry({
             </div>
           </section>
         ) : null}
+
+        {morphology ? (
+          <section className="mt-5 border-t border-slate-200 pt-5">
+            <button
+              type="button"
+              onClick={() => setMorphologyOpenState({ key: morphologyKey, isOpen: !isMorphologyOpen })}
+              className="flex w-full items-center justify-between gap-3 text-left"
+            >
+              <span className="flex items-center gap-2 text-slate-800">
+                <Sparkles className="size-5 text-[#173f9f]" />
+                <span className="text-base font-black">构词线索</span>
+              </span>
+              <ChevronDown className={`size-4 text-slate-400 transition ${isMorphologyOpen ? 'rotate-180' : ''}`} />
+            </button>
+            {isMorphologyOpen ? <MorphologyBlock morphology={morphology} /> : null}
+          </section>
+        ) : null}
       </article>
 
       {!compact ? (
@@ -164,6 +196,34 @@ export function RichVocabularyEntry({
             </p>
           </div>
         </aside>
+      ) : null}
+    </div>
+  )
+}
+
+function MorphologyBlock({ morphology }: { morphology: WordPartAnalysis }) {
+  const lowConfidence = morphology.parts.some((item) => typeof item.confidence === 'number' && item.confidence < 0.7)
+  return (
+    <div className="mt-4 rounded-xl border border-indigo-100 bg-indigo-50/60 p-4">
+      <div className="grid gap-2 sm:grid-cols-2">
+        {morphology.parts.map((item, index) => (
+          <div key={`${item.form}-${item.kind}-${index}`} className="rounded-lg bg-white px-3 py-2">
+            <p className="text-sm font-black text-slate-900">
+              {item.form}
+              <span className="ml-2 rounded-md bg-slate-100 px-2 py-0.5 text-[11px] text-slate-500">
+                {MORPHOLOGY_KIND_LABELS[item.kind]}
+              </span>
+            </p>
+            <p className="mt-1 text-sm font-semibold leading-6 text-slate-600">{item.meaning}</p>
+            {item.explanation ? <p className="mt-1 text-xs leading-5 text-slate-400">{item.explanation}</p> : null}
+          </div>
+        ))}
+      </div>
+      <p className="mt-3 text-sm font-semibold leading-6 text-indigo-900">{morphology.summary}</p>
+      {morphology.caution || lowConfidence ? (
+        <p className="mt-2 text-xs font-semibold leading-5 text-amber-700">
+          {morphology.caution ?? '仅作辅助记忆，需结合例句验证。'}
+        </p>
       ) : null}
     </div>
   )
