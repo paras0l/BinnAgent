@@ -15,6 +15,7 @@ import {
 import { FeatureHero } from '@/components/layout/FeatureHero'
 import { PageShell } from '@/components/layout/PageShell'
 import { WorkspaceTabs, type WorkspaceTab } from '@/components/layout/WorkspaceTabs'
+import { ExerciseBlock } from '@/components/exercise/ExerciseBlock'
 import { Button } from '@/components/ui/Button'
 import { FilterChip } from '@/components/ui/FilterChip'
 import { SurfaceCard } from '@/components/ui/SurfaceCard'
@@ -31,6 +32,7 @@ import {
   type WordPartFilterLevel,
 } from '@/data/wordParts'
 import type { WordPart, WordPartProgress, WordPartProgressStatus } from '@/types'
+import type { ExerciseTarget } from '@/types/exercises'
 
 interface WordPartsPageProps {
   onBack: () => void
@@ -74,6 +76,14 @@ export function WordPartsPage({ onBack }: WordPartsPageProps) {
 
   const visibleParts = useMemo(() => searchWordParts(query, kind, level), [kind, level, query])
   const selectedPart = WORD_PARTS.find((item) => item.id === selectedPartId) ?? visibleParts[0] ?? WORD_PARTS[0]
+  const selectedPartExerciseTarget = useMemo<ExerciseTarget | null>(() => {
+    if (!selectedPart) return null
+    return {
+      type: 'word_part',
+      id: selectedPart.id,
+      label: selectedPart.form,
+    }
+  }, [selectedPart])
   const selectedExercise = WORD_PART_EXERCISES.find((item) => item.id === selectedExerciseId) ?? WORD_PART_EXERCISES[0]
   const selectedAnalysis = useMemo(() => inferWordPartAnalysis(selectedExercise?.word), [selectedExercise])
   const progressValues = Object.values(progress)
@@ -248,19 +258,25 @@ export function WordPartsPage({ onBack }: WordPartsPageProps) {
             </div>
           </SurfaceCard>
 
-          <SurfaceCard>
-            {selectedPart ? (
-              <PartDetail
-                part={selectedPart}
-                status={progress[selectedPart.id]?.status ?? 'new'}
-                onStatusChange={(status) => updatePartStatus(selectedPart.id, status)}
-              />
-            ) : (
-              <div className="rounded-xl bg-slate-50 p-4 text-sm font-semibold text-slate-500">
-                暂时没有匹配项。
-              </div>
-            )}
-          </SurfaceCard>
+          <div className="grid gap-5">
+            <SurfaceCard>
+              {selectedPart ? (
+                <PartDetail
+                  part={selectedPart}
+                  status={progress[selectedPart.id]?.status ?? 'new'}
+                  onStatusChange={(status) => updatePartStatus(selectedPart.id, status)}
+                />
+              ) : (
+                <div className="rounded-xl bg-slate-50 p-4 text-sm font-semibold text-slate-500">
+                  暂时没有匹配项。
+                </div>
+              )}
+            </SurfaceCard>
+
+            {selectedPartExerciseTarget ? (
+              <ExerciseBlock target={selectedPartExerciseTarget} limit={3} />
+            ) : null}
+          </div>
         </section>
       )}
 

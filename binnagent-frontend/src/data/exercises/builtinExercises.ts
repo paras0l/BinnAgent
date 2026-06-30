@@ -30,6 +30,36 @@ const lookUpTarget = {
   label: 'look up',
 } satisfies ExerciseTarget
 
+const prefixReTarget = {
+  type: 'word_part',
+  id: 'prefix-re',
+  label: 're-',
+} satisfies ExerciseTarget
+
+const prefixUnTarget = {
+  type: 'word_part',
+  id: 'prefix-un',
+  label: 'un-',
+} satisfies ExerciseTarget
+
+const prefixPreTarget = {
+  type: 'word_part',
+  id: 'prefix-pre',
+  label: 'pre-',
+} satisfies ExerciseTarget
+
+const suffixTionTarget = {
+  type: 'word_part',
+  id: 'suffix-tion',
+  label: '-tion',
+} satisfies ExerciseTarget
+
+const suffixFulTarget = {
+  type: 'word_part',
+  id: 'suffix-ful',
+  label: '-ful',
+} satisfies ExerciseTarget
+
 export const CORE_VOCABULARY_EXERCISE_TARGET = {
   type: 'vocabulary',
   id: 'core-vocabulary',
@@ -111,6 +141,61 @@ export const BUILTIN_EXERCISES: ExerciseItem[] = [
     ],
     correctAnswer: '记录核心义项、例句和容易混淆的用法',
     explanation: '词汇掌握需要语义、搭配和语境证据。只写中文意思很容易造成会认不会用。',
+    difficulty: 'easy',
+  },
+  {
+    id: 'word-part-prefix-re-choice-1',
+    target: prefixReTarget,
+    skill: 'vocabulary',
+    type: 'single_choice',
+    prompt: '在 review 这个词里，re- 最接近哪一层意思？',
+    options: ['again / back', 'not', 'before', 'full of'],
+    correctAnswer: 'again / back',
+    explanation: 're- 常表示 again 或 back。review 可以理解为“再看一遍”，所以有“复习、回顾、评论”的意思。',
+    difficulty: 'easy',
+  },
+  {
+    id: 'word-part-prefix-un-choice-1',
+    target: prefixUnTarget,
+    skill: 'vocabulary',
+    type: 'single_choice',
+    prompt: 'unhelpful 中的 un- 表示什么？',
+    options: ['not', 'again', 'before', 'a person who does something'],
+    correctAnswer: 'not',
+    explanation: 'un- 常表示 not / opposite of。unhelpful 就是“没有帮助的、不 helpful 的”。',
+    difficulty: 'easy',
+  },
+  {
+    id: 'word-part-prefix-pre-fill-1',
+    target: prefixPreTarget,
+    skill: 'vocabulary',
+    type: 'fill_blank',
+    prompt: '补全含义：pre- 通常表示 ___。',
+    correctAnswer: 'before',
+    acceptedAnswers: ['before', '预先', '在前', '之前'],
+    explanation: 'pre- 常提示 before / 预先，例如 preview 是“预先看”，predict 是“预先说出/预测”。',
+    difficulty: 'easy',
+  },
+  {
+    id: 'word-part-suffix-tion-choice-1',
+    target: suffixTionTarget,
+    skill: 'vocabulary',
+    type: 'single_choice',
+    prompt: '看到单词以 -tion 结尾时，最常见的词性提示是什么？',
+    options: ['名词', '动词', '副词', '介词'],
+    correctAnswer: '名词',
+    explanation: '-tion 常提示抽象名词或动作结果，例如 action、prediction、information。',
+    difficulty: 'easy',
+  },
+  {
+    id: 'word-part-suffix-ful-fill-1',
+    target: suffixFulTarget,
+    skill: 'vocabulary',
+    type: 'fill_blank',
+    prompt: '补全含义：-ful 常表示 full of / 具有……性质的，例如 careful 表示“___”。',
+    correctAnswer: '小心的',
+    acceptedAnswers: ['小心的', '仔细的', '充满小心的', 'careful'],
+    explanation: '-ful 常把名词或动词线索变成形容词，表示“充满……的、具有……性质的”。careful 就是“小心的、仔细的”。',
     difficulty: 'easy',
   },
 ]

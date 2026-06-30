@@ -26,6 +26,16 @@ describe('exerciseRepository', () => {
     expect(BUILTIN_EXERCISES.every((exercise) => exercise.target.type && exercise.target.id)).toBe(true)
   })
 
+  it('returns word part exercises by word_part target', () => {
+    const exercises = getExercisesForTarget({ type: 'word_part', id: 'prefix-re', label: 're-' })
+
+    expect(exercises).toHaveLength(1)
+    expect(exercises[0]?.target).toMatchObject({
+      type: 'word_part',
+      id: 'prefix-re',
+    })
+  })
+
   it('normalizes vocabulary terms to stable target ids', () => {
     expect(normalizeExerciseTargetId('Look up')).toBe('look-up')
     expect(normalizeExerciseTargetId('significant')).toBe('significant')

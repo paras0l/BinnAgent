@@ -135,7 +135,7 @@ function ExerciseBlockContent({ target, limit = 3, className = '' }: ExerciseBlo
               </span>
             </div>
             <p className="text-xs font-semibold text-slate-500">
-              {currentExercise.skill === 'grammar' ? '语法规则验收' : '词义与用法验收'}
+              {exerciseSkillLabel(currentExercise.skill)}
             </p>
           </div>
 
@@ -263,6 +263,12 @@ function ExerciseHeader({
 
 function exerciseTypeLabel(type: ExerciseItem['type']) {
   return type === 'single_choice' ? '单选题' : '填空题'
+}
+
+function exerciseSkillLabel(skill: ExerciseItem['skill']) {
+  if (skill === 'grammar') return '语法规则验收'
+  if (skill === 'reading') return '阅读理解验收'
+  return '词义与用法验收'
 }
 
 function optionClassName(

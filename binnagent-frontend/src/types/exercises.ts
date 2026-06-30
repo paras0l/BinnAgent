@@ -1,4 +1,9 @@
-export type ExerciseTargetType = 'grammar_topic' | 'vocabulary_item' | 'vocabulary'
+export type ExerciseTargetType =
+  | 'grammar_topic'
+  | 'vocabulary_item'
+  | 'vocabulary'
+  | 'word_part'
+  | 'reading_passage'
 
 export interface ExerciseTarget {
   type: ExerciseTargetType
@@ -6,7 +11,7 @@ export interface ExerciseTarget {
   label: string
 }
 
-export type ExerciseSkill = 'grammar' | 'vocabulary'
+export type ExerciseSkill = 'grammar' | 'vocabulary' | 'reading'
 
 export type ExerciseType = 'single_choice' | 'fill_blank'
 

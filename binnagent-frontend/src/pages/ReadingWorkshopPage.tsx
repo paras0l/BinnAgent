@@ -20,6 +20,7 @@ import {
 import { FeatureHero } from '@/components/layout/FeatureHero'
 import { PageShell } from '@/components/layout/PageShell'
 import { WorkspaceTabs, type WorkspaceTab } from '@/components/layout/WorkspaceTabs'
+import { ExerciseBlock } from '@/components/exercise/ExerciseBlock'
 import { Button } from '@/components/ui/Button'
 import { FormField } from '@/components/ui/FormField'
 import { SurfaceCard } from '@/components/ui/SurfaceCard'
@@ -46,6 +47,7 @@ import {
   type ReadingWorkspace,
 } from '@/data/readingWorkshop'
 import type { Learner } from '@/types'
+import type { ExerciseTarget } from '@/types/exercises'
 import { GrammarPage } from '@/pages/GrammarPage'
 
 interface ReadingWorkshopPageProps {
@@ -101,6 +103,12 @@ const WORKSPACE_TABS: WorkspaceTab<ReadingWorkspace>[] = [
   { id: 'intensive', label: '精读模式', description: '句子与语法', icon: <Highlighter className="h-4 w-4" /> },
   { id: 'review', label: '沉淀复盘', description: '本次记录', icon: <ClipboardList className="h-4 w-4" /> },
 ]
+
+const READING_GRAMMAR_EXERCISE_TARGET_IDS: Record<string, string> = {
+  主将从现: 'present-for-future',
+  'because 与 because of': 'because-because-of',
+  '定语从句中 which/that 的选择': 'which-that-relative',
+}
 
 export function ReadingWorkshopPage({ learner, onBack }: ReadingWorkshopPageProps) {
   const [workspace, setWorkspace] = useState<ReadingWorkspace>('input')
@@ -753,6 +761,10 @@ function IntensiveWorkspace({
     return <EmptyMaterialCard onOpenInput={() => onOpenWorkspace('input')} />
   }
 
+  const selectedGrammarOptions = READING_GRAMMAR_OPTIONS.filter((option) =>
+    selectedGrammarOptionIds.includes(option.id)
+  )
+
   return (
     <section className="grid gap-5 xl:grid-cols-[340px_minmax(0,1fr)]">
       <SurfaceCard>
@@ -847,6 +859,22 @@ function IntensiveWorkspace({
             ))}
           </div>
         </SurfaceCard>
+
+        {selectedGrammarOptions.length > 0 ? (
+          <div className="grid gap-3">
+            <div className="flex items-center gap-2 px-1">
+              <BookOpenCheck className="h-5 w-5 text-primary" />
+              <h2 className="text-lg font-black text-slate-950">做 3 道相关小练习</h2>
+            </div>
+            {selectedGrammarOptions.map((option) => (
+              <ExerciseBlock
+                key={option.id}
+                target={getGrammarExerciseTargetFromReadingOption(option)}
+                limit={3}
+              />
+            ))}
+          </div>
+        ) : null}
       </div>
     </section>
   )
@@ -1024,6 +1052,29 @@ function GrammarOptionCard({
       </Button>
     </div>
   )
+}
+
+function getGrammarExerciseTargetFromReadingOption(option: ReadingGrammarOption): ExerciseTarget {
+  return {
+    type: 'grammar_topic',
+    id: mapReadingGrammarOptionToExerciseTargetId(option),
+    label: option.grammarTopicTitle,
+  }
+}
+
+function mapReadingGrammarOptionToExerciseTargetId(option: ReadingGrammarOption) {
+  return READING_GRAMMAR_EXERCISE_TARGET_IDS[option.grammarTopicTitle] ?? normalizeReadingExerciseTargetId(option.id)
+}
+
+function normalizeReadingExerciseTargetId(value: string) {
+  const normalized = value
+    .trim()
+    .toLocaleLowerCase()
+    .replace(/['’]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+
+  return normalized || 'unknown-reading-grammar'
 }
 
 function EmptyMaterialCard({ onOpenInput }: { onOpenInput: () => void }) {
