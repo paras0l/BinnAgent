@@ -1,3 +1,5 @@
+import type { ExerciseItem } from './types/exercises'
+
 export interface Learner {
   id: string
   nickname: string
@@ -246,13 +248,11 @@ export interface KnowledgeLessonCompleteResult {
 export interface ExerciseSession {
   curriculum_node_id: string
   title: string
-  questions: Array<{
-    id: string
+  questions: Array<ExerciseItem & {
     question_type: 'choice_context' | 'fill_blank' | 'dialogue_complete' | 'error_fix' | 'multiple_choice'
     stem: string
     options: string[]
-    difficulty: number
-    metadata?: {
+    metadata?: ExerciseItem['metadata'] & {
       interaction?: {
         type?: string
         input_mode?: 'choice' | 'text'

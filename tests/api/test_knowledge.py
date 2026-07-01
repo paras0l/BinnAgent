@@ -511,9 +511,82 @@ async def test_start_unit_exercises_generates_questions(client, knowledge_sessio
         "dialogue_complete",
         "error_fix",
     }
-    assert point.title in payload["questions"][0]["options"]
-    assert payload["questions"][0]["metadata"]["scenario"]
+    first_question = payload["questions"][0]
+    assert first_question["target"] == {
+        "type": "curriculum_node",
+        "id": str(node.id),
+        "label": node.title,
+    }
+    assert first_question["source"] == {
+        "type": "curriculum",
+        "name": "knowledge_base",
+        "refId": first_question["id"],
+    }
+    assert first_question["prompt"] == first_question["stem"]
+    assert first_question["correctAnswer"]
+    assert point.title in first_question["options"]
+    assert first_question["metadata"]["scenario"]
     assert any(isinstance(item, ExerciseQuestion) for item in knowledge_session.added_objects)
+
+
+@pytest.mark.asyncio
+async def test_list_exercises_for_curriculum_target_returns_unified_items(client, knowledge_session):
+    learner_id = uuid.uuid4()
+    source = _source()
+    node = _node(source.id)
+    point = _point(source.id, node.id)
+    question = ExerciseQuestion(
+        source_id=source.id,
+        curriculum_node_id=node.id,
+        knowledge_point_id=point.id,
+        question_type="choice_context",
+        stem="Which answer is correct?",
+        options=[point.title, "Other"],
+        answer=point.title,
+        explanation=point.summary,
+        difficulty=0.3,
+        metadata_={"scenario": {"name": "Classroom"}},
+    )
+    question.id = uuid.uuid4()
+    knowledge_session.execute = AsyncMock(
+        side_effect=[_one(learner_id), _one(node), _many([question])]
+    )
+
+    response = await client.get(
+        f"/api/learners/{learner_id}/exercises",
+        params={"target_type": "curriculum_node", "target_id": str(node.id), "limit": 3},
+    )
+
+    assert response.status_code == 200
+    assert response.json() == [
+        {
+            "id": str(question.id),
+            "target": {
+                "type": "curriculum_node",
+                "id": str(node.id),
+                "label": node.title,
+            },
+            "skill": "vocabulary",
+            "type": "single_choice",
+            "prompt": question.stem,
+            "options": [point.title, "Other"],
+            "correctAnswer": point.title,
+            "acceptedAnswers": [],
+            "explanation": point.summary,
+            "difficulty": 0.3,
+            "source": {
+                "type": "curriculum",
+                "name": "knowledge_base",
+                "refId": str(question.id),
+            },
+            "metadata": {
+                "scenario": {"name": "Classroom"},
+                "knowledge_point_id": str(point.id),
+                "source_id": str(source.id),
+                "question_type": "choice_context",
+            },
+        }
+    ]
 
 
 @pytest.mark.asyncio

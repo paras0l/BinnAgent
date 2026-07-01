@@ -14,6 +14,20 @@ export interface ExerciseTarget {
   label: string
 }
 
+export type ExerciseSourceType =
+  | 'builtin'
+  | 'curriculum'
+  | 'generated'
+  | 'imported'
+  | 'manual'
+
+export interface ExerciseSource {
+  type: ExerciseSourceType
+  name?: string
+  refId?: string
+  path?: string
+}
+
 export type ExerciseSkill = 'grammar' | 'vocabulary' | 'reading'
 
 export type ExerciseType = 'single_choice' | 'fill_blank'
@@ -28,7 +42,9 @@ export interface ExerciseItem {
   correctAnswer: string
   acceptedAnswers?: string[]
   explanation: string
-  difficulty?: 'easy' | 'medium' | 'hard'
+  difficulty?: 'easy' | 'medium' | 'hard' | number
+  source: ExerciseSource
+  metadata?: Record<string, unknown>
 }
 
 export type ExerciseAttemptResult = 'correct' | 'incorrect'

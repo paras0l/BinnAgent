@@ -14,6 +14,7 @@ from src.api.deps import get_db_session
 from src.knowledge.exercise_grader import answer_to_text, grade_exercise_answer
 from src.config import settings
 from src.exercises import ExerciseAttemptService
+from src.exercises.item_mapper import exercise_question_to_item
 from src.knowledge.exercises import ensure_unit_exercises
 from src.knowledge.processor import process_uploaded_textbook
 from src.knowledge.rag import retrieve_chunks
@@ -1053,16 +1054,18 @@ async def start_unit_exercises(
         "curriculum_node_id": str(node.id),
         "title": f"{node.title} 练习",
         "questions": [
-            {
-                "id": str(question.id),
-                "question_type": question.question_type,
-                "stem": question.stem,
-                "options": question.options or [],
-                "difficulty": question.difficulty,
-                "metadata": question.metadata_ or {},
-            }
+            _exercise_question_payload(question, target_label=node.title)
             for question in questions[:limit]
         ],
+    }
+
+
+def _exercise_question_payload(question: ExerciseQuestion, *, target_label: str) -> dict[str, Any]:
+    item = exercise_question_to_item(question, target_label=target_label)
+    return {
+        **item,
+        "question_type": question.question_type,
+        "stem": question.stem,
     }
 
 

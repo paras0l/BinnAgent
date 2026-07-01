@@ -44,6 +44,21 @@ export function getExercisesForTarget(
   return matched.slice(0, Math.max(0, options.limit))
 }
 
+export async function fetchExercisesForTarget(
+  learnerId: string,
+  target: ExerciseTarget,
+  options: ExerciseQueryOptions = {},
+): Promise<ExerciseItem[]> {
+  const builtinExercises = getExercisesForTarget(target)
+  const backendExercises = target.type === 'curriculum_node'
+    ? await fetchBackendExercisesForTarget(learnerId, target, options)
+    : []
+  const exercises = mergeExercises(backendExercises, builtinExercises)
+
+  if (typeof options.limit !== 'number') return exercises
+  return exercises.slice(0, Math.max(0, options.limit))
+}
+
 export function normalizeExerciseTargetId(value: string) {
   const normalized = value
     .trim()
@@ -115,6 +130,33 @@ export async function fetchExerciseAttemptsForTarget(
   } catch (error) {
     console.warn('Unable to fetch exercise attempts from backend; using localStorage fallback.', error)
     return getExerciseAttemptsForTarget(target)
+  }
+}
+
+async function fetchBackendExercisesForTarget(
+  learnerId: string,
+  target: ExerciseTarget,
+  options: ExerciseQueryOptions,
+): Promise<ExerciseItem[]> {
+  try {
+    const params = new URLSearchParams({
+      target_type: target.type,
+      target_id: target.id,
+    })
+    if (typeof options.limit === 'number') {
+      params.set('limit', String(Math.max(1, options.limit)))
+    }
+    const response = await fetch(
+      `/api/learners/${encodeURIComponent(learnerId)}/exercises?${params.toString()}`,
+    )
+    if (!response.ok) {
+      throw new Error(`Exercises request failed with ${response.status}`)
+    }
+    const data = await response.json() as unknown
+    return Array.isArray(data) ? data.filter(isExerciseItem) : []
+  } catch (error) {
+    console.warn('Unable to fetch exercises from backend; using builtin fallback.', error)
+    return []
   }
 }
 
@@ -223,6 +265,56 @@ function isExerciseAttempt(value: unknown): value is ExerciseAttempt {
     Boolean(attempt.target) &&
     typeof attempt.target === 'object'
   )
+}
+
+function isExerciseItem(value: unknown): value is ExerciseItem {
+  if (!value || typeof value !== 'object') return false
+  const exercise = value as Partial<ExerciseItem>
+  return (
+    typeof exercise.id === 'string' &&
+    Boolean(exercise.target) &&
+    typeof exercise.target === 'object' &&
+    typeof exercise.target.type === 'string' &&
+    typeof exercise.target.id === 'string' &&
+    typeof exercise.target.label === 'string' &&
+    isExerciseSkill(exercise.skill) &&
+    isExerciseType(exercise.type) &&
+    typeof exercise.prompt === 'string' &&
+    typeof exercise.correctAnswer === 'string' &&
+    typeof exercise.explanation === 'string' &&
+    Boolean(exercise.source) &&
+    typeof exercise.source === 'object' &&
+    isExerciseSourceType(exercise.source.type)
+  )
+}
+
+function isExerciseSkill(value: unknown) {
+  return value === 'grammar' || value === 'vocabulary' || value === 'reading'
+}
+
+function isExerciseType(value: unknown) {
+  return value === 'single_choice' || value === 'fill_blank'
+}
+
+function isExerciseSourceType(value: unknown) {
+  return (
+    value === 'builtin' ||
+    value === 'curriculum' ||
+    value === 'generated' ||
+    value === 'imported' ||
+    value === 'manual'
+  )
+}
+
+function mergeExercises(primary: ExerciseItem[], secondary: ExerciseItem[]) {
+  const seen = new Set<string>()
+  const merged: ExerciseItem[] = []
+  for (const exercise of [...primary, ...secondary]) {
+    if (seen.has(exercise.id)) continue
+    seen.add(exercise.id)
+    merged.push(exercise)
+  }
+  return merged
 }
 
 function normalizeExerciseSummary(value: unknown, target: ExerciseTarget): ExerciseAttemptSummary {

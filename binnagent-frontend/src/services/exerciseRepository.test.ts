@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { BUILTIN_EXERCISES } from '@/data/exercises/builtinExercises'
 import type { ExerciseAttempt, ExerciseTarget } from '@/types/exercises'
 import {
+  fetchExercisesForTarget,
   fetchExerciseSummaryForTarget,
   getExerciseAttemptsForTarget,
   getExerciseSummaryForTarget,
@@ -44,6 +45,7 @@ describe('exerciseRepository', () => {
 
   it('keeps target metadata on every builtin exercise item', () => {
     expect(BUILTIN_EXERCISES.every((exercise) => exercise.target.type && exercise.target.id)).toBe(true)
+    expect(BUILTIN_EXERCISES.every((exercise) => exercise.source.type === 'builtin')).toBe(true)
   })
 
   it('returns word part exercises by word_part target', () => {
@@ -159,6 +161,47 @@ describe('exerciseRepository', () => {
     ])
 
     expect(getRecentExerciseAttempts(2).map((attempt) => attempt.id)).toEqual(['newer', 'middle'])
+  })
+
+  it('fetches curriculum exercises from backend through the unified ExerciseItem shape', async () => {
+    const curriculumTarget = {
+      type: 'curriculum_node',
+      id: '11111111-1111-1111-1111-111111111111',
+      label: 'Starter Unit 1',
+    } satisfies ExerciseTarget
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => [
+        {
+          id: '22222222-2222-2222-2222-222222222222',
+          target: curriculumTarget,
+          skill: 'vocabulary',
+          type: 'single_choice',
+          prompt: 'Which answer is correct?',
+          options: ['Good morning!', 'Other'],
+          correctAnswer: 'Good morning!',
+          acceptedAnswers: [],
+          explanation: 'Use the greeting in context.',
+          difficulty: 0.3,
+          source: {
+            type: 'curriculum',
+            name: 'knowledge_base',
+            refId: '22222222-2222-2222-2222-222222222222',
+          },
+          metadata: {
+            question_type: 'choice_context',
+          },
+        },
+      ],
+    }))
+
+    await expect(fetchExercisesForTarget('learner-1', curriculumTarget, { limit: 3 })).resolves.toMatchObject([
+      {
+        target: curriculumTarget,
+        source: { type: 'curriculum' },
+        prompt: 'Which answer is correct?',
+      },
+    ])
   })
 
   it('falls back to localStorage summary when backend summary is unavailable', async () => {

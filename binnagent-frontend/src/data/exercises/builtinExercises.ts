@@ -1,4 +1,16 @@
-import type { ExerciseItem, ExerciseTarget } from '@/types/exercises'
+import type { ExerciseItem, ExerciseSource, ExerciseTarget } from '@/types/exercises'
+
+const BUILTIN_EXERCISE_SOURCE = {
+  type: 'builtin',
+  name: 'BinnAgent built-in exercises',
+} satisfies ExerciseSource
+
+function builtinExercise(exercise: Omit<ExerciseItem, 'source'>): ExerciseItem {
+  return {
+    ...exercise,
+    source: BUILTIN_EXERCISE_SOURCE,
+  }
+}
 
 const presentForFutureTarget = {
   type: 'grammar_topic',
@@ -67,7 +79,7 @@ export const CORE_VOCABULARY_EXERCISE_TARGET = {
 } satisfies ExerciseTarget
 
 export const BUILTIN_EXERCISES: ExerciseItem[] = [
-  {
+  builtinExercise({
     id: 'grammar-present-for-future-choice-1',
     target: presentForFutureTarget,
     skill: 'grammar',
@@ -77,8 +89,9 @@ export const BUILTIN_EXERCISES: ExerciseItem[] = [
     correctAnswer: 'rains',
     explanation: '真实条件句里，主句用 will 表示将来，if 从句用一般现在时表示将来，所以选 rains。',
     difficulty: 'easy',
-  },
-  {
+    metadata: { topic: 'grammar' },
+  }),
+  builtinExercise({
     id: 'grammar-because-because-of-fill-1',
     target: becauseBecauseOfTarget,
     skill: 'grammar',
@@ -88,8 +101,9 @@ export const BUILTIN_EXERCISES: ExerciseItem[] = [
     acceptedAnswers: ['because of'],
     explanation: 'the heavy rain 是名词短语，前面要用介词短语 because of；because 后面接完整句子。',
     difficulty: 'easy',
-  },
-  {
+    metadata: { topic: 'grammar' },
+  }),
+  builtinExercise({
     id: 'grammar-which-that-choice-1',
     target: whichThatTarget,
     skill: 'grammar',
@@ -99,8 +113,9 @@ export const BUILTIN_EXERCISES: ExerciseItem[] = [
     correctAnswer: 'that',
     explanation: '先行词 the book 是物，且从句缺少主语；限制性定语从句里可用 that 或 which，这里选项中 that 最合适。',
     difficulty: 'medium',
-  },
-  {
+    metadata: { topic: 'grammar' },
+  }),
+  builtinExercise({
     id: 'vocab-significant-choice-1',
     target: significantTarget,
     skill: 'vocabulary',
@@ -115,8 +130,9 @@ export const BUILTIN_EXERCISES: ExerciseItem[] = [
     correctAnswer: 'The result was significant because it changed our plan.',
     explanation: 'significant 是形容词，表示“重要的、显著的”。第一句用它修饰 result，并说明影响很大。',
     difficulty: 'easy',
-  },
-  {
+    metadata: { topic: 'vocabulary' },
+  }),
+  builtinExercise({
     id: 'vocab-look-up-fill-1',
     target: lookUpTarget,
     skill: 'vocabulary',
@@ -126,8 +142,9 @@ export const BUILTIN_EXERCISES: ExerciseItem[] = [
     acceptedAnswers: ['look it up', 'look up'],
     explanation: 'look up 表示“查阅”。代词 it 作宾语时通常放在 look 和 up 中间：look it up。',
     difficulty: 'easy',
-  },
-  {
+    metadata: { topic: 'vocabulary' },
+  }),
+  builtinExercise({
     id: 'vocab-core-choice-1',
     target: CORE_VOCABULARY_EXERCISE_TARGET,
     skill: 'vocabulary',
@@ -142,8 +159,9 @@ export const BUILTIN_EXERCISES: ExerciseItem[] = [
     correctAnswer: '记录核心义项、例句和容易混淆的用法',
     explanation: '词汇掌握需要语义、搭配和语境证据。只写中文意思很容易造成会认不会用。',
     difficulty: 'easy',
-  },
-  {
+    metadata: { topic: 'vocabulary' },
+  }),
+  builtinExercise({
     id: 'word-part-prefix-re-choice-1',
     target: prefixReTarget,
     skill: 'vocabulary',
@@ -153,8 +171,9 @@ export const BUILTIN_EXERCISES: ExerciseItem[] = [
     correctAnswer: 'again / back',
     explanation: 're- 常表示 again 或 back。review 可以理解为“再看一遍”，所以有“复习、回顾、评论”的意思。',
     difficulty: 'easy',
-  },
-  {
+    metadata: { topic: 'word_parts' },
+  }),
+  builtinExercise({
     id: 'word-part-prefix-un-choice-1',
     target: prefixUnTarget,
     skill: 'vocabulary',
@@ -164,8 +183,9 @@ export const BUILTIN_EXERCISES: ExerciseItem[] = [
     correctAnswer: 'not',
     explanation: 'un- 常表示 not / opposite of。unhelpful 就是“没有帮助的、不 helpful 的”。',
     difficulty: 'easy',
-  },
-  {
+    metadata: { topic: 'word_parts' },
+  }),
+  builtinExercise({
     id: 'word-part-prefix-pre-fill-1',
     target: prefixPreTarget,
     skill: 'vocabulary',
@@ -175,8 +195,9 @@ export const BUILTIN_EXERCISES: ExerciseItem[] = [
     acceptedAnswers: ['before', '预先', '在前', '之前'],
     explanation: 'pre- 常提示 before / 预先，例如 preview 是“预先看”，predict 是“预先说出/预测”。',
     difficulty: 'easy',
-  },
-  {
+    metadata: { topic: 'word_parts' },
+  }),
+  builtinExercise({
     id: 'word-part-suffix-tion-choice-1',
     target: suffixTionTarget,
     skill: 'vocabulary',
@@ -186,8 +207,9 @@ export const BUILTIN_EXERCISES: ExerciseItem[] = [
     correctAnswer: '名词',
     explanation: '-tion 常提示抽象名词或动作结果，例如 action、prediction、information。',
     difficulty: 'easy',
-  },
-  {
+    metadata: { topic: 'word_parts' },
+  }),
+  builtinExercise({
     id: 'word-part-suffix-ful-fill-1',
     target: suffixFulTarget,
     skill: 'vocabulary',
@@ -197,5 +219,6 @@ export const BUILTIN_EXERCISES: ExerciseItem[] = [
     acceptedAnswers: ['小心的', '仔细的', '充满小心的', 'careful'],
     explanation: '-ful 常把名词或动词线索变成形容词，表示“充满……的、具有……性质的”。careful 就是“小心的、仔细的”。',
     difficulty: 'easy',
-  },
+    metadata: { topic: 'word_parts' },
+  }),
 ]
