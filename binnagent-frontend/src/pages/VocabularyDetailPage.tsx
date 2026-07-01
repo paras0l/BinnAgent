@@ -16,12 +16,15 @@ import { FeatureHero } from '@/components/layout/FeatureHero'
 import { PageShell } from '@/components/layout/PageShell'
 import { WorkspaceTabs, type WorkspaceTab } from '@/components/layout/WorkspaceTabs'
 import { ExerciseBlock } from '@/components/exercise/ExerciseBlock'
+import { ExerciseAttemptSummary } from '@/components/exercise/ExerciseAttemptSummary'
+import { ExerciseLearningSignal } from '@/components/exercise/ExerciseLearningSignal'
 import { Button } from '@/components/ui/Button'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { FormField } from '@/components/ui/FormField'
 import { SurfaceCard } from '@/components/ui/SurfaceCard'
 import {
   CORE_VOCABULARY_EXERCISE_TARGET,
+  getExercisesForTarget,
   normalizeExerciseTargetId,
 } from '@/services/exerciseRepository'
 import {
@@ -139,6 +142,12 @@ export function VocabularyDetailPage({
       label: targetTerm,
     }
   }, [activeTerm])
+  const vocabularyAttemptSummaryTarget = useMemo<ExerciseTarget>(() => {
+    if (vocabularyExerciseTarget.type !== 'vocabulary_item') return vocabularyExerciseTarget
+    return getExercisesForTarget(vocabularyExerciseTarget).length > 0
+      ? vocabularyExerciseTarget
+      : CORE_VOCABULARY_EXERCISE_TARGET
+  }, [vocabularyExerciseTarget])
 
   const updateHtml = useCallback((value: string) => {
     setHtmlState({ storageKey, value })
@@ -556,6 +565,18 @@ export function VocabularyDetailPage({
                 </SurfaceCard>
               ) : null}
             </section>
+            <ExerciseLearningSignal
+              target={vocabularyAttemptSummaryTarget}
+              messages={{
+                needs_review: '这个词还没有通过验收，建议保留在复习队列。',
+                unstable: '这个词还没有通过验收，建议保留在复习队列。',
+              }}
+              titles={{
+                needs_review: '保留复习',
+                unstable: '保留复习',
+              }}
+            />
+            <ExerciseAttemptSummary target={vocabularyAttemptSummaryTarget} />
             <ExerciseBlock target={vocabularyExerciseTarget} limit={3} />
           </>
         )}

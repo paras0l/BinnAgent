@@ -28,6 +28,8 @@ import { FeatureHero } from '@/components/layout/FeatureHero'
 import { PageShell } from '@/components/layout/PageShell'
 import { WorkspaceTabs, type WorkspaceTab } from '@/components/layout/WorkspaceTabs'
 import { ExerciseBlock } from '@/components/exercise/ExerciseBlock'
+import { ExerciseAttemptSummary } from '@/components/exercise/ExerciseAttemptSummary'
+import { ExerciseLearningSignal } from '@/components/exercise/ExerciseLearningSignal'
 import { Button } from '@/components/ui/Button'
 import { SurfaceCard } from '@/components/ui/SurfaceCard'
 import type { ExerciseTarget } from '@/types/exercises'
@@ -674,6 +676,18 @@ export function GrammarPage({ learner, onBack, backLabel = '返回探索', initi
               />
             </SurfaceCard>
           </div>
+          <ExerciseLearningSignal
+            target={grammarExerciseTarget}
+            messages={{
+              needs_review: '这个语法点练习结果还不稳定，建议先复习讲解再答一次。',
+              unstable: '这个语法点练习结果还不稳定，建议先复习讲解再答一次。',
+            }}
+            titles={{
+              needs_review: '建议复习',
+              unstable: '建议复习',
+            }}
+          />
+          <ExerciseAttemptSummary target={grammarExerciseTarget} />
           <ExerciseBlock target={grammarExerciseTarget} limit={3} />
         </>
       )}

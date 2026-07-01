@@ -1,12 +1,15 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { ArrowRight, BookOpenCheck, CheckCircle2, RotateCcw, XCircle } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { SurfaceCard } from '@/components/ui/SurfaceCard'
 import {
   CORE_VOCABULARY_EXERCISE_TARGET,
+  EXERCISE_ATTEMPTS_UPDATED_EVENT,
+  getExerciseSummaryForTarget,
   getExercisesForTarget,
   recordExerciseAttempt,
+  type ExerciseAttemptSummary,
 } from '@/services/exerciseRepository'
 import type { ExerciseAttempt, ExerciseItem, ExerciseTarget } from '@/types/exercises'
 
@@ -43,6 +46,19 @@ function ExerciseBlockContent({ target, limit = 3, className = '' }: ExerciseBlo
   const [currentIndex, setCurrentIndex] = useState(0)
   const [answersByExerciseId, setAnswersByExerciseId] = useState<Record<string, string>>({})
   const [feedbackByExerciseId, setFeedbackByExerciseId] = useState<Record<string, ExerciseFeedback>>({})
+  const [attemptSummary, setAttemptSummary] = useState<ExerciseAttemptSummary>(() =>
+    getExerciseSummaryForTarget(activeTarget)
+  )
+
+  useEffect(() => {
+    const refreshSummary = () => setAttemptSummary(getExerciseSummaryForTarget(activeTarget))
+    window.addEventListener(EXERCISE_ATTEMPTS_UPDATED_EVENT, refreshSummary)
+    window.addEventListener('storage', refreshSummary)
+    return () => {
+      window.removeEventListener(EXERCISE_ATTEMPTS_UPDATED_EVENT, refreshSummary)
+      window.removeEventListener('storage', refreshSummary)
+    }
+  }, [activeTarget])
 
   const currentExercise = exercises[currentIndex]
   const currentAnswer = currentExercise ? answersByExerciseId[currentExercise.id] ?? '' : ''
@@ -101,7 +117,13 @@ function ExerciseBlockContent({ target, limit = 3, className = '' }: ExerciseBlo
   if (exercises.length === 0) {
     return (
       <SurfaceCard className={className}>
-        <ExerciseHeader target={target} completedCount={0} totalCount={0} correctCount={0} />
+        <ExerciseHeader
+          target={target}
+          completedCount={0}
+          totalCount={0}
+          correctCount={0}
+          summary={attemptSummary}
+        />
         <div className="mt-5">
           <EmptyState
             icon={<BookOpenCheck className="size-5" />}
@@ -120,6 +142,7 @@ function ExerciseBlockContent({ target, limit = 3, className = '' }: ExerciseBlo
         completedCount={completedCount}
         totalCount={exercises.length}
         correctCount={correctCount}
+        summary={attemptSummary}
         fallbackLabel={isFallback ? target.label : undefined}
       />
 
@@ -225,12 +248,14 @@ function ExerciseHeader({
   completedCount,
   totalCount,
   correctCount,
+  summary,
   fallbackLabel,
 }: {
   target: ExerciseTarget
   completedCount: number
   totalCount: number
   correctCount: number
+  summary: ExerciseAttemptSummary
   fallbackLabel?: string
 }) {
   return (
@@ -243,6 +268,11 @@ function ExerciseHeader({
         <p className="mt-1 text-sm leading-6 text-slate-500">
           这组题在验收：<span className="font-black text-slate-700">{target.label}</span>
           {fallbackLabel ? `。当前词条“${fallbackLabel}”暂无专属题，先用通用词汇题验收基础用法。` : '。'}
+        </p>
+        <p className="mt-2 text-xs font-semibold text-slate-500">
+          {summary.total > 0
+            ? `累计练习 ${summary.total} 次 · 正确率 ${summary.accuracy}% · 最近一次：${resultLabel(summary.lastResult)}`
+            : '累计练习 0 次 · 完成一题后会生成学习证据'}
         </p>
       </div>
       {totalCount > 0 ? (
@@ -269,6 +299,12 @@ function exerciseSkillLabel(skill: ExerciseItem['skill']) {
   if (skill === 'grammar') return '语法规则验收'
   if (skill === 'reading') return '阅读理解验收'
   return '词义与用法验收'
+}
+
+function resultLabel(result: ExerciseAttemptSummary['lastResult']) {
+  if (result === 'correct') return '正确'
+  if (result === 'incorrect') return '错误'
+  return '暂无'
 }
 
 function optionClassName(

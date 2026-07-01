@@ -16,6 +16,8 @@ import { FeatureHero } from '@/components/layout/FeatureHero'
 import { PageShell } from '@/components/layout/PageShell'
 import { WorkspaceTabs, type WorkspaceTab } from '@/components/layout/WorkspaceTabs'
 import { ExerciseBlock } from '@/components/exercise/ExerciseBlock'
+import { ExerciseAttemptSummary } from '@/components/exercise/ExerciseAttemptSummary'
+import { ExerciseLearningSignal } from '@/components/exercise/ExerciseLearningSignal'
 import { Button } from '@/components/ui/Button'
 import { FilterChip } from '@/components/ui/FilterChip'
 import { SurfaceCard } from '@/components/ui/SurfaceCard'
@@ -274,7 +276,23 @@ export function WordPartsPage({ onBack }: WordPartsPageProps) {
             </SurfaceCard>
 
             {selectedPartExerciseTarget ? (
-              <ExerciseBlock target={selectedPartExerciseTarget} limit={3} />
+              <>
+                <ExerciseLearningSignal
+                  target={selectedPartExerciseTarget}
+                  messages={{
+                    mastered: '已具备掌握证据。',
+                    needs_review: '建议继续拆词练习。',
+                    unstable: '建议继续拆词练习。',
+                  }}
+                  titles={{
+                    mastered: '掌握证据',
+                    needs_review: '继续练习',
+                    unstable: '继续练习',
+                  }}
+                />
+                <ExerciseAttemptSummary target={selectedPartExerciseTarget} />
+                <ExerciseBlock target={selectedPartExerciseTarget} limit={3} />
+              </>
             ) : null}
           </div>
         </section>
