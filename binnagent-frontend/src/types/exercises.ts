@@ -42,7 +42,7 @@ export interface ExerciseItem {
   correctAnswer: string
   acceptedAnswers?: string[]
   explanation: string
-  difficulty?: 'easy' | 'medium' | 'hard' | number
+  difficulty?: 'easy' | 'medium' | 'hard'
   source: ExerciseSource
   metadata?: Record<string, unknown>
 }
@@ -59,4 +59,6 @@ export interface ExerciseAttempt {
   should_update_mastery: boolean
   should_create_error_pattern: boolean
   should_create_memory_evidence: boolean
+  metadata?: Record<string, unknown>
+  sourceContext?: Record<string, unknown>
 }

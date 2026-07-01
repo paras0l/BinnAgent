@@ -573,7 +573,7 @@ async def test_list_exercises_for_curriculum_target_returns_unified_items(client
             "correctAnswer": point.title,
             "acceptedAnswers": [],
             "explanation": point.summary,
-            "difficulty": 0.3,
+            "difficulty": "easy",
             "source": {
                 "type": "curriculum",
                 "name": "knowledge_base",

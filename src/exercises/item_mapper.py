@@ -38,7 +38,7 @@ def exercise_question_to_item(
         "correctAnswer": question.answer,
         "acceptedAnswers": _accepted_answers(rubric),
         "explanation": question.explanation,
-        "difficulty": question.difficulty,
+        "difficulty": map_difficulty(question.difficulty),
         "source": {
             "type": "curriculum",
             "name": "knowledge_base",
@@ -64,6 +64,14 @@ def map_question_type(question_type: str) -> ExerciseItemType:
     if question_type in ("choice_context", "multiple_choice"):
         return "single_choice"
     return "fill_blank"
+
+
+def map_difficulty(difficulty: float | None) -> Literal["easy", "medium", "hard"]:
+    if difficulty is None or difficulty < 0.4:
+        return "easy"
+    if difficulty < 0.75:
+        return "medium"
+    return "hard"
 
 
 def _accepted_answers(rubric: dict[str, Any]) -> list[str]:

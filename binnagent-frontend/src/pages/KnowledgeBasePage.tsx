@@ -16,7 +16,6 @@ import { StatusBanner } from '@/components/ui/StatusBanner'
 import { useToast } from '@/hooks/useToast'
 import { GrammarPage } from '@/pages/GrammarPage'
 import type {
-  ExerciseAnswerResult,
   ExerciseSession,
   KnowledgeAttemptResult,
   KnowledgeBaseOverview,
@@ -228,23 +227,6 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice }
     } finally {
       setIsStartingExercise(false)
     }
-  }
-
-  const handleExerciseAnswer = async (questionId: string, answer: string, meta?: { hintUsed?: number; attemptIndex?: number }) => {
-    const response = await fetch(
-      `/api/learners/${learner.id}/knowledge-base/exercises/${questionId}/attempts`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          answer,
-          hint_used: meta?.hintUsed ?? 0,
-          attempt_index: meta?.attemptIndex ?? 0,
-        }),
-      },
-    )
-    if (!response.ok) throw new Error('答案提交失败，请重试。')
-    return await response.json() as ExerciseAnswerResult
   }
 
   const handleReviewAction = async (
@@ -479,8 +461,8 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice }
       <ExerciseSessionDialog
         key={exerciseSession?.curriculum_node_id ?? 'closed-exercise'}
         session={exerciseSession}
+        learnerId={learner.id}
         onClose={() => setExerciseSession(null)}
-        onSubmit={handleExerciseAnswer}
       />
         </div>
       </div>

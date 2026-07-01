@@ -13,6 +13,23 @@ interface StoredExerciseAttempts {
   attempts: ExerciseAttempt[]
 }
 
+interface StoredExerciseItems {
+  version: 1
+  exercises: ExerciseItem[]
+}
+
+export interface GenerateExercisesRequest {
+  target: ExerciseTarget
+  count: number
+  exerciseTypes?: ExerciseItem['type'][]
+  context?: {
+    page?: string
+    explanation?: string
+    examples?: string[]
+    learnerLevel?: string
+  }
+}
+
 export interface ExerciseAttemptSummary {
   total: number
   correct: number
@@ -27,8 +44,10 @@ export interface ExerciseAttemptSummary {
 export type ExerciseLearningStatus = 'mastered' | 'needs_review' | 'unstable' | 'not_started'
 
 const ATTEMPTS_STORAGE_KEY = 'binnExerciseAttempts:v1'
+const EXERCISES_STORAGE_KEY = 'binnCustomExercises:v1'
 const MAX_STORED_ATTEMPTS = 120
 export const EXERCISE_ATTEMPTS_UPDATED_EVENT = 'binnExerciseAttemptsUpdated'
+export const EXERCISES_UPDATED_EVENT = 'binnExercisesUpdated'
 
 export { CORE_VOCABULARY_EXERCISE_TARGET }
 
@@ -36,7 +55,7 @@ export function getExercisesForTarget(
   target: ExerciseTarget,
   options: ExerciseQueryOptions = {},
 ): ExerciseItem[] {
-  const matched = BUILTIN_EXERCISES.filter(
+  const matched = [...BUILTIN_EXERCISES, ...readSavedExercises()].filter(
     (exercise) => exercise.target.type === target.type && exercise.target.id === target.id,
   )
 
@@ -57,6 +76,57 @@ export async function fetchExercisesForTarget(
 
   if (typeof options.limit !== 'number') return exercises
   return exercises.slice(0, Math.max(0, options.limit))
+}
+
+export async function generateExercisesForTarget(
+  learnerId: string,
+  request: GenerateExercisesRequest,
+): Promise<ExerciseItem[]> {
+  const response = await fetch(
+    `/api/learners/${encodeURIComponent(learnerId)}/exercises/generate`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(request),
+    },
+  )
+  if (!response.ok) {
+    throw new Error('AI 生成练习暂时不可用。')
+  }
+  const data = await response.json() as unknown
+  return Array.isArray(data) ? data.filter(isExerciseItem) : []
+}
+
+export function readSavedExercises(): ExerciseItem[] {
+  try {
+    const raw = localStorage.getItem(EXERCISES_STORAGE_KEY)
+    if (!raw) return []
+    const stored = JSON.parse(raw) as Partial<StoredExerciseItems>
+    return Array.isArray(stored.exercises) ? stored.exercises.filter(isExerciseItem) : []
+  } catch (error) {
+    console.warn('Unable to read saved exercises from localStorage.', error)
+    return []
+  }
+}
+
+export function saveExerciseItem(exercise: ExerciseItem) {
+  try {
+    const existing = readSavedExercises().filter((item) => item.id !== exercise.id)
+    const next: StoredExerciseItems = {
+      version: 1,
+      exercises: [exercise, ...existing],
+    }
+    localStorage.setItem(EXERCISES_STORAGE_KEY, JSON.stringify(next))
+    notifyExercisesUpdated(exercise)
+  } catch (error) {
+    console.warn('Unable to store exercise item in localStorage.', error)
+  }
+}
+
+export function saveExerciseItems(exercises: ExerciseItem[]) {
+  for (const exercise of exercises) {
+    saveExerciseItem(exercise)
+  }
 }
 
 export function normalizeExerciseTargetId(value: string) {
@@ -232,6 +302,11 @@ export function recordExerciseAttempt(attempt: ExerciseAttempt) {
 function notifyExerciseAttemptsUpdated(attempt: ExerciseAttempt) {
   if (typeof window === 'undefined') return
   window.dispatchEvent(new CustomEvent(EXERCISE_ATTEMPTS_UPDATED_EVENT, { detail: attempt }))
+}
+
+function notifyExercisesUpdated(exercise: ExerciseItem) {
+  if (typeof window === 'undefined') return
+  window.dispatchEvent(new CustomEvent(EXERCISES_UPDATED_EVENT, { detail: exercise }))
 }
 
 function isSameExerciseTarget(left: ExerciseTarget, right: ExerciseTarget) {

@@ -27,6 +27,7 @@ import { useToast } from '@/hooks/useToast'
 import { FeatureHero } from '@/components/layout/FeatureHero'
 import { PageShell } from '@/components/layout/PageShell'
 import { WorkspaceTabs, type WorkspaceTab } from '@/components/layout/WorkspaceTabs'
+import { AddExerciseForm } from '@/components/exercise/AddExerciseForm'
 import { ExerciseBlock } from '@/components/exercise/ExerciseBlock'
 import { ExerciseAttemptSummary } from '@/components/exercise/ExerciseAttemptSummary'
 import { ExerciseLearningSignal } from '@/components/exercise/ExerciseLearningSignal'
@@ -689,6 +690,16 @@ export function GrammarPage({ learner, onBack, backLabel = '返回探索', initi
             }}
           />
           <ExerciseAttemptSummary learnerId={learner.id} target={grammarExerciseTarget} />
+          <AddExerciseForm
+            learnerId={learner.id}
+            target={grammarExerciseTarget}
+            context={{
+              page: 'GrammarPage',
+              explanation: selectedTopic.shortDescription,
+              examples: selectedTopic.tags,
+              learnerLevel: selectedTopic.level,
+            }}
+          />
           <ExerciseBlock learnerId={learner.id} target={grammarExerciseTarget} limit={3} />
         </>
       )}

@@ -1,15 +1,17 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { BUILTIN_EXERCISES } from '@/data/exercises/builtinExercises'
-import type { ExerciseAttempt, ExerciseTarget } from '@/types/exercises'
+import type { ExerciseAttempt, ExerciseItem, ExerciseTarget } from '@/types/exercises'
 import {
   fetchExercisesForTarget,
   fetchExerciseSummaryForTarget,
+  generateExercisesForTarget,
   getExerciseAttemptsForTarget,
   getExerciseSummaryForTarget,
   getExercisesForTarget,
   getRecentExerciseAttempts,
   normalizeExerciseTargetId,
   saveExerciseAttempt,
+  saveExerciseItem,
 } from './exerciseRepository'
 
 const ATTEMPTS_STORAGE_KEY = 'binnExerciseAttempts:v1'
@@ -56,6 +58,31 @@ describe('exerciseRepository', () => {
       type: 'word_part',
       id: 'prefix-re',
     })
+  })
+
+  it('stores saved generated exercises and returns them with the target query', () => {
+    const exercise: ExerciseItem = {
+      id: 'generated-local-1',
+      target: grammarTarget,
+      skill: 'grammar',
+      type: 'fill_blank',
+      prompt: 'If it ____ tomorrow, we will stay home.',
+      options: [],
+      correctAnswer: 'rains',
+      acceptedAnswers: ['rains'],
+      explanation: 'if 引导真实条件句时，从句用一般现在时表示将来。',
+      difficulty: 'easy',
+      source: { type: 'generated', name: 'ai_generated' },
+      metadata: {
+        generatedBy: 'ai',
+        targetType: grammarTarget.type,
+        targetId: grammarTarget.id,
+      },
+    }
+
+    saveExerciseItem(exercise)
+
+    expect(getExercisesForTarget(grammarTarget).map((item) => item.id)).toContain('generated-local-1')
   })
 
   it('normalizes vocabulary terms to stable target ids', () => {
@@ -182,7 +209,7 @@ describe('exerciseRepository', () => {
           correctAnswer: 'Good morning!',
           acceptedAnswers: [],
           explanation: 'Use the greeting in context.',
-          difficulty: 0.3,
+          difficulty: 'easy',
           source: {
             type: 'curriculum',
             name: 'knowledge_base',
@@ -200,6 +227,44 @@ describe('exerciseRepository', () => {
         target: curriculumTarget,
         source: { type: 'curriculum' },
         prompt: 'Which answer is correct?',
+      },
+    ])
+  })
+
+  it('generates exercises through the backend and keeps the unified ExerciseItem shape', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => [
+        {
+          id: 'generated-backend-1',
+          target: grammarTarget,
+          skill: 'grammar',
+          type: 'single_choice',
+          prompt: 'Which sentence is correct?',
+          options: ['If it rains, I will stay home.', 'If it will rain, I stay home.'],
+          correctAnswer: 'If it rains, I will stay home.',
+          acceptedAnswers: [],
+          explanation: '真实条件句中 if 从句用一般现在时表示将来。',
+          difficulty: 'easy',
+          source: { type: 'generated', name: 'ai_generated' },
+          metadata: {
+            generatedBy: 'ai',
+            targetType: grammarTarget.type,
+            targetId: grammarTarget.id,
+          },
+        },
+      ],
+    }))
+
+    await expect(generateExercisesForTarget('learner-1', {
+      target: grammarTarget,
+      count: 1,
+      exerciseTypes: ['single_choice'],
+    })).resolves.toMatchObject([
+      {
+        id: 'generated-backend-1',
+        target: grammarTarget,
+        source: { type: 'generated' },
       },
     ])
   })

@@ -15,6 +15,7 @@ import type { Learner } from '@/types'
 import { FeatureHero } from '@/components/layout/FeatureHero'
 import { PageShell } from '@/components/layout/PageShell'
 import { WorkspaceTabs, type WorkspaceTab } from '@/components/layout/WorkspaceTabs'
+import { AddExerciseForm } from '@/components/exercise/AddExerciseForm'
 import { ExerciseBlock } from '@/components/exercise/ExerciseBlock'
 import { ExerciseAttemptSummary } from '@/components/exercise/ExerciseAttemptSummary'
 import { ExerciseLearningSignal } from '@/components/exercise/ExerciseLearningSignal'
@@ -578,6 +579,21 @@ export function VocabularyDetailPage({
               }}
             />
             <ExerciseAttemptSummary learnerId={learner?.id} target={vocabularyAttemptSummaryTarget} />
+            <AddExerciseForm
+              learnerId={learner?.id}
+              target={vocabularyExerciseTarget}
+              context={{
+                page: 'VocabularyDetailPage',
+                explanation: activeTerm.trim()
+                  ? `围绕词汇 ${activeTerm.trim()} 的词义、搭配和句中用法生成验收题。`
+                  : '围绕核心词汇能力生成验收题。',
+                examples: cardForm.user_examples_text
+                  .split('\n')
+                  .map((line) => line.trim())
+                  .filter(Boolean)
+                  .slice(0, 4),
+              }}
+            />
             <ExerciseBlock learnerId={learner?.id} target={vocabularyExerciseTarget} limit={3} />
           </>
         )}

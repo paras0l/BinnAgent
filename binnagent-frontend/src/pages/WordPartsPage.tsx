@@ -15,6 +15,7 @@ import {
 import { FeatureHero } from '@/components/layout/FeatureHero'
 import { PageShell } from '@/components/layout/PageShell'
 import { WorkspaceTabs, type WorkspaceTab } from '@/components/layout/WorkspaceTabs'
+import { AddExerciseForm } from '@/components/exercise/AddExerciseForm'
 import { ExerciseBlock } from '@/components/exercise/ExerciseBlock'
 import { ExerciseAttemptSummary } from '@/components/exercise/ExerciseAttemptSummary'
 import { ExerciseLearningSignal } from '@/components/exercise/ExerciseLearningSignal'
@@ -293,6 +294,19 @@ export function WordPartsPage({ learner, onBack }: WordPartsPageProps) {
                   }}
                 />
                 <ExerciseAttemptSummary learnerId={learner?.id} target={selectedPartExerciseTarget} />
+                <AddExerciseForm
+                  learnerId={learner?.id}
+                  target={selectedPartExerciseTarget}
+                  context={{
+                    page: 'WordPartsPage',
+                    explanation: selectedPart
+                      ? `${selectedPart.form}：${selectedPart.simpleExplanation}`
+                      : selectedPartExerciseTarget.label,
+                    examples: (selectedPart?.examples ?? []).map((example) => (
+                      `${example.word} = ${example.breakdown}，${example.meaning}`
+                    )),
+                  }}
+                />
                 <ExerciseBlock learnerId={learner?.id} target={selectedPartExerciseTarget} limit={3} />
               </>
             ) : null}
