@@ -543,7 +543,11 @@ async def test_submit_exercise_attempt_records_result(client, knowledge_session)
     assert response.status_code == 200
     assert response.json()["correct"] is True
     assert response.json()["score"] == 1.0
-    assert any(isinstance(item, ExerciseAttempt) for item in knowledge_session.added_objects)
+    attempt = next(item for item in knowledge_session.added_objects if isinstance(item, ExerciseAttempt))
+    assert attempt.exercise_id == str(question.id)
+    assert attempt.target_type == "curriculum_node"
+    assert attempt.target_id == str(question.curriculum_node_id)
+    assert attempt.result == "correct"
 
 
 @pytest.mark.asyncio

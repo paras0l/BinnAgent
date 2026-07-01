@@ -470,7 +470,7 @@ export function ExplorePage({
   }
 
   if (isWordPartsOpen) {
-    return <WordPartsPage onBack={() => setIsWordPartsOpen(false)} />
+    return <WordPartsPage learner={learner} onBack={() => setIsWordPartsOpen(false)} />
   }
 
   return (

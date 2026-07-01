@@ -6,9 +6,11 @@ import { SurfaceCard } from '@/components/ui/SurfaceCard'
 import {
   CORE_VOCABULARY_EXERCISE_TARGET,
   EXERCISE_ATTEMPTS_UPDATED_EVENT,
+  fetchExerciseSummaryForTarget,
   getExerciseSummaryForTarget,
   getExercisesForTarget,
   recordExerciseAttempt,
+  saveExerciseAttempt,
   type ExerciseAttemptSummary,
 } from '@/services/exerciseRepository'
 import type { ExerciseAttempt, ExerciseItem, ExerciseTarget } from '@/types/exercises'
@@ -17,6 +19,7 @@ interface ExerciseBlockProps {
   target: ExerciseTarget
   limit?: number
   className?: string
+  learnerId?: string
 }
 
 interface ExerciseFeedback {
@@ -24,12 +27,20 @@ interface ExerciseFeedback {
   correctAnswer: string
 }
 
-export function ExerciseBlock({ target, limit = 3, className = '' }: ExerciseBlockProps) {
-  const scopeKey = `${target.type}:${target.id}:${limit}`
-  return <ExerciseBlockContent key={scopeKey} target={target} limit={limit} className={className} />
+export function ExerciseBlock({ target, limit = 3, className = '', learnerId }: ExerciseBlockProps) {
+  const scopeKey = `${learnerId ?? 'local'}:${target.type}:${target.id}:${limit}`
+  return (
+    <ExerciseBlockContent
+      key={scopeKey}
+      target={target}
+      limit={limit}
+      className={className}
+      learnerId={learnerId}
+    />
+  )
 }
 
-function ExerciseBlockContent({ target, limit = 3, className = '' }: ExerciseBlockProps) {
+function ExerciseBlockContent({ target, limit = 3, className = '', learnerId }: ExerciseBlockProps) {
   const exactExercises = useMemo(
     () => getExercisesForTarget(target, { limit }),
     [limit, target],
@@ -46,19 +57,31 @@ function ExerciseBlockContent({ target, limit = 3, className = '' }: ExerciseBlo
   const [currentIndex, setCurrentIndex] = useState(0)
   const [answersByExerciseId, setAnswersByExerciseId] = useState<Record<string, string>>({})
   const [feedbackByExerciseId, setFeedbackByExerciseId] = useState<Record<string, ExerciseFeedback>>({})
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [attemptSummary, setAttemptSummary] = useState<ExerciseAttemptSummary>(() =>
     getExerciseSummaryForTarget(activeTarget)
   )
 
   useEffect(() => {
-    const refreshSummary = () => setAttemptSummary(getExerciseSummaryForTarget(activeTarget))
+    let isMounted = true
+    const refreshSummary = () => {
+      if (learnerId) {
+        void fetchExerciseSummaryForTarget(learnerId, activeTarget).then((summary) => {
+          if (isMounted) setAttemptSummary(summary)
+        })
+        return
+      }
+      setAttemptSummary(getExerciseSummaryForTarget(activeTarget))
+    }
+    refreshSummary()
     window.addEventListener(EXERCISE_ATTEMPTS_UPDATED_EVENT, refreshSummary)
     window.addEventListener('storage', refreshSummary)
     return () => {
+      isMounted = false
       window.removeEventListener(EXERCISE_ATTEMPTS_UPDATED_EVENT, refreshSummary)
       window.removeEventListener('storage', refreshSummary)
     }
-  }, [activeTarget])
+  }, [activeTarget, learnerId])
 
   const currentExercise = exercises[currentIndex]
   const currentAnswer = currentExercise ? answersByExerciseId[currentExercise.id] ?? '' : ''
@@ -70,8 +93,8 @@ function ExerciseBlockContent({ target, limit = 3, className = '' }: ExerciseBlo
     setAnswersByExerciseId((current) => ({ ...current, [exerciseId]: answer }))
   }
 
-  const submitAnswer = () => {
-    if (!currentExercise || currentFeedback || !currentAnswer.trim()) return
+  const submitAnswer = async () => {
+    if (!currentExercise || currentFeedback || !currentAnswer.trim() || isSubmitting) return
 
     const isCorrect = isExerciseAnswerCorrect(currentExercise, currentAnswer)
     const attempt: ExerciseAttempt = {
@@ -86,14 +109,23 @@ function ExerciseBlockContent({ target, limit = 3, className = '' }: ExerciseBlo
       should_create_memory_evidence: true,
     }
 
-    recordExerciseAttempt(attempt)
-    setFeedbackByExerciseId((current) => ({
-      ...current,
-      [currentExercise.id]: {
-        result: attempt.result,
-        correctAnswer: currentExercise.correctAnswer,
-      },
-    }))
+    setIsSubmitting(true)
+    try {
+      if (learnerId) {
+        await saveExerciseAttempt(learnerId, attempt)
+      } else {
+        recordExerciseAttempt(attempt)
+      }
+      setFeedbackByExerciseId((current) => ({
+        ...current,
+        [currentExercise.id]: {
+          result: attempt.result,
+          correctAnswer: currentExercise.correctAnswer,
+        },
+      }))
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const resetCurrentAnswer = () => {
@@ -216,8 +248,11 @@ function ExerciseBlockContent({ target, limit = 3, className = '' }: ExerciseBlo
 
           <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex flex-col gap-2 sm:flex-row">
-              <Button onClick={submitAnswer} disabled={!currentAnswer.trim() || Boolean(currentFeedback)}>
-                提交答案
+              <Button
+                onClick={() => void submitAnswer()}
+                disabled={!currentAnswer.trim() || Boolean(currentFeedback) || isSubmitting}
+              >
+                {isSubmitting ? '提交中' : '提交答案'}
               </Button>
               {currentFeedback ? (
                 <Button variant="secondary" onClick={resetCurrentAnswer}>

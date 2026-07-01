@@ -416,6 +416,7 @@ export function ReadingWorkshopPage({ learner, onBack }: ReadingWorkshopPageProp
         <IntensiveWorkspace
           canUseMaterial={canUseMaterial}
           focusHints={selectedSentenceHints}
+          learnerId={learner.id}
           notes={intensiveNotes}
           selectedGrammarOptionIds={selectedGrammarOptionIds}
           selectedSentence={selectedSentence}
@@ -731,6 +732,7 @@ function ExtensiveWorkspace({
 function IntensiveWorkspace({
   canUseMaterial,
   focusHints,
+  learnerId,
   notes,
   selectedGrammarOptionIds,
   selectedSentence,
@@ -745,6 +747,7 @@ function IntensiveWorkspace({
 }: {
   canUseMaterial: boolean
   focusHints: ReadingSentenceHint[]
+  learnerId: string
   notes: IntensiveNotes
   selectedGrammarOptionIds: string[]
   selectedSentence: ReadingSentence | null
@@ -869,6 +872,7 @@ function IntensiveWorkspace({
             {selectedGrammarOptions.map((option) => (
               <ExerciseBlock
                 key={option.id}
+                learnerId={learnerId}
                 target={getGrammarExerciseTargetFromReadingOption(option)}
                 limit={3}
               />

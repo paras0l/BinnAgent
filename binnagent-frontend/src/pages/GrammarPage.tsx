@@ -677,6 +677,7 @@ export function GrammarPage({ learner, onBack, backLabel = '返回探索', initi
             </SurfaceCard>
           </div>
           <ExerciseLearningSignal
+            learnerId={learner.id}
             target={grammarExerciseTarget}
             messages={{
               needs_review: '这个语法点练习结果还不稳定，建议先复习讲解再答一次。',
@@ -687,8 +688,8 @@ export function GrammarPage({ learner, onBack, backLabel = '返回探索', initi
               unstable: '建议复习',
             }}
           />
-          <ExerciseAttemptSummary target={grammarExerciseTarget} />
-          <ExerciseBlock target={grammarExerciseTarget} limit={3} />
+          <ExerciseAttemptSummary learnerId={learner.id} target={grammarExerciseTarget} />
+          <ExerciseBlock learnerId={learner.id} target={grammarExerciseTarget} limit={3} />
         </>
       )}
 

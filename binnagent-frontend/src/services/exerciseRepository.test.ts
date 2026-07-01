@@ -2,11 +2,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { BUILTIN_EXERCISES } from '@/data/exercises/builtinExercises'
 import type { ExerciseAttempt, ExerciseTarget } from '@/types/exercises'
 import {
+  fetchExerciseSummaryForTarget,
   getExerciseAttemptsForTarget,
   getExerciseSummaryForTarget,
   getExercisesForTarget,
   getRecentExerciseAttempts,
   normalizeExerciseTargetId,
+  saveExerciseAttempt,
 } from './exerciseRepository'
 
 const ATTEMPTS_STORAGE_KEY = 'binnExerciseAttempts:v1'
@@ -157,6 +159,33 @@ describe('exerciseRepository', () => {
     ])
 
     expect(getRecentExerciseAttempts(2).map((attempt) => attempt.id)).toEqual(['newer', 'middle'])
+  })
+
+  it('falls back to localStorage summary when backend summary is unavailable', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('offline')))
+    writeStoredAttempts([
+      makeAttempt('local-latest', grammarTarget, 'correct', '2026-06-30T10:03:00.000Z'),
+      makeAttempt('local-older', grammarTarget, 'incorrect', '2026-06-30T10:02:00.000Z'),
+    ])
+
+    await expect(fetchExerciseSummaryForTarget('learner-1', grammarTarget)).resolves.toMatchObject({
+      total: 2,
+      correct: 1,
+      accuracy: 50,
+      lastResult: 'correct',
+      learningStatus: 'unstable',
+    })
+  })
+
+  it('falls back to localStorage when backend save fails', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 503 }))
+    const attempt = makeAttempt('save-fallback', grammarTarget, 'incorrect', '2026-06-30T10:05:00.000Z')
+
+    await expect(saveExerciseAttempt('learner-1', attempt)).resolves.toMatchObject({
+      id: 'save-fallback',
+    })
+
+    expect(getExerciseAttemptsForTarget(grammarTarget).map((item) => item.id)).toEqual(['save-fallback'])
   })
 })
 

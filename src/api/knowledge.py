@@ -13,6 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.api.deps import get_db_session
 from src.knowledge.exercise_grader import answer_to_text, grade_exercise_answer
 from src.config import settings
+from src.exercises import ExerciseAttemptService
 from src.knowledge.exercises import ensure_unit_exercises
 from src.knowledge.processor import process_uploaded_textbook
 from src.knowledge.rag import retrieve_chunks
@@ -22,7 +23,6 @@ from src.memory.retriever import MemoryRetriever
 from src.memory.writer import MemoryWriter
 from src.models.knowledge import (
     CurriculumNode,
-    ExerciseAttempt,
     ExerciseQuestion,
     KnowledgeLearningEvent,
     KnowledgePoint,
@@ -1092,15 +1092,24 @@ async def submit_exercise_attempt(
     grading = grade_exercise_answer(question, body.answer, attempt_index=body.attempt_index)
     correct = bool(grading["correct"])
     stored_answer = body.answer if isinstance(body.answer, str) else json.dumps(body.answer, ensure_ascii=False)
-    db.add(
-        ExerciseAttempt(
-            learner_id=learner_id,
-            question_id=question.id,
-            session_id=body.session_id,
-            submitted_answer=stored_answer.strip(),
-            correct=correct,
-            response_time_ms=body.response_time_ms,
-        )
+    await ExerciseAttemptService(db).save_knowledge_question_attempt(
+        learner_id=learner_id,
+        question=question,
+        answer=stored_answer.strip(),
+        correct=correct,
+        session_id=body.session_id,
+        response_time_ms=body.response_time_ms,
+        metadata={
+            "score": grading["score"],
+            "passed": grading["passed"],
+            "error_type": grading["error_type"],
+            "hint_used": body.hint_used,
+            "attempt_index": body.attempt_index,
+            "next_review_signal": grading["next_review_signal"],
+        },
+        source_context={
+            "source_id": str(question.source_id),
+        },
     )
     if question.knowledge_point_id:
         now = datetime.now(timezone.utc)

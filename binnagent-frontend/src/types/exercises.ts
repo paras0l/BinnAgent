@@ -1,9 +1,12 @@
 export type ExerciseTargetType =
+  | 'curriculum_node'
   | 'grammar_topic'
   | 'vocabulary_item'
   | 'vocabulary'
   | 'word_part'
   | 'reading_passage'
+  | 'writing_phrase'
+  | 'pronunciation_item'
 
 export interface ExerciseTarget {
   type: ExerciseTargetType

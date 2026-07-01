@@ -133,3 +133,21 @@ def test_reflective_memory_migration_adds_episode_model_and_strategy_tables() ->
     assert "uq_learning_episode_reflection_key" in migration
     assert "uq_learner_model_memory_claim" in migration
     assert "uq_teaching_strategy_memory" in migration
+
+
+def test_exercise_attempts_migration_upgrades_existing_attempts_for_targets() -> None:
+    migration = Path(
+        "alembic/versions/d8e9f0a1b2c3_upgrade_exercise_attempts.py"
+    ).read_text()
+
+    assert "exercise_attempts" in migration
+    assert "question_id" in migration
+    assert "exercise_id" in migration
+    assert "target_type" in migration
+    assert "target_id" in migration
+    assert "target_label" in migration
+    assert "curriculum_node" in migration
+    assert "should_update_mastery" in migration
+    assert "should_create_error_pattern" in migration
+    assert "should_create_memory_evidence" in migration
+    assert "ix_exercise_attempts_learner_target_created" in migration

@@ -95,6 +95,79 @@ export function getExerciseSummaryForTarget(target: ExerciseTarget): ExerciseAtt
   }
 }
 
+export async function fetchExerciseAttemptsForTarget(
+  learnerId: string,
+  target: ExerciseTarget,
+): Promise<ExerciseAttempt[]> {
+  try {
+    const params = new URLSearchParams({
+      target_type: target.type,
+      target_id: target.id,
+    })
+    const response = await fetch(
+      `/api/learners/${encodeURIComponent(learnerId)}/exercise-attempts?${params.toString()}`,
+    )
+    if (!response.ok) {
+      throw new Error(`Exercise attempts request failed with ${response.status}`)
+    }
+    const data = await response.json() as unknown
+    return Array.isArray(data) ? data.filter(isExerciseAttempt) : []
+  } catch (error) {
+    console.warn('Unable to fetch exercise attempts from backend; using localStorage fallback.', error)
+    return getExerciseAttemptsForTarget(target)
+  }
+}
+
+export async function fetchExerciseSummaryForTarget(
+  learnerId: string,
+  target: ExerciseTarget,
+): Promise<ExerciseAttemptSummary> {
+  try {
+    const params = new URLSearchParams({
+      target_type: target.type,
+      target_id: target.id,
+    })
+    const response = await fetch(
+      `/api/learners/${encodeURIComponent(learnerId)}/exercise-attempts/summary?${params.toString()}`,
+    )
+    if (!response.ok) {
+      throw new Error(`Exercise summary request failed with ${response.status}`)
+    }
+    const data = await response.json() as unknown
+    return normalizeExerciseSummary(data, target)
+  } catch (error) {
+    console.warn('Unable to fetch exercise summary from backend; using localStorage fallback.', error)
+    return getExerciseSummaryForTarget(target)
+  }
+}
+
+export async function saveExerciseAttempt(
+  learnerId: string,
+  attempt: ExerciseAttempt,
+): Promise<ExerciseAttempt> {
+  try {
+    const response = await fetch(
+      `/api/learners/${encodeURIComponent(learnerId)}/exercise-attempts`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(attempt),
+      },
+    )
+    if (!response.ok) {
+      throw new Error(`Exercise attempt save failed with ${response.status}`)
+    }
+    const data = await response.json() as unknown
+    const savedAttempt = isExerciseAttempt(data) ? data : attempt
+    notifyExerciseAttemptsUpdated(savedAttempt)
+    return savedAttempt
+  } catch (error) {
+    console.warn('Unable to save exercise attempt to backend; using localStorage fallback.', error)
+    recordExerciseAttempt(attempt)
+    return attempt
+  }
+}
+
 export function getRecentExerciseAttempts(limit = 5): ExerciseAttempt[] {
   return readExerciseAttempts()
     .toSorted(compareAttemptDateDesc)
@@ -150,4 +223,59 @@ function isExerciseAttempt(value: unknown): value is ExerciseAttempt {
     Boolean(attempt.target) &&
     typeof attempt.target === 'object'
   )
+}
+
+function normalizeExerciseSummary(value: unknown, target: ExerciseTarget): ExerciseAttemptSummary {
+  if (!value || typeof value !== 'object') {
+    return getExerciseSummaryForTarget(target)
+  }
+  const summary = value as Record<string, unknown>
+  const total = numberValue(summary.total)
+  const correct = numberValue(summary.correct)
+  const incorrect = numberValue(summary.incorrect)
+  const accuracy = numberValue(summary.accuracy)
+  const lastResult = exerciseResultValue(summary.lastResult ?? summary.last_result)
+  const learningStatus = exerciseLearningStatusValue(
+    summary.learningStatus ?? summary.learning_status,
+    getExerciseLearningStatus(total, accuracy, lastResult),
+  )
+
+  return {
+    total,
+    correct,
+    incorrect,
+    accuracy,
+    lastAttemptAt: stringOrNull(summary.lastAttemptAt ?? summary.last_attempt_at),
+    lastResult,
+    needsReview: Boolean(summary.needsReview ?? summary.needs_review),
+    learningStatus,
+  }
+}
+
+function numberValue(value: unknown) {
+  return typeof value === 'number' && Number.isFinite(value) ? value : 0
+}
+
+function stringOrNull(value: unknown) {
+  return typeof value === 'string' ? value : null
+}
+
+function exerciseResultValue(value: unknown): ExerciseAttempt['result'] | null {
+  if (value === 'correct' || value === 'incorrect') return value
+  return null
+}
+
+function exerciseLearningStatusValue(
+  value: unknown,
+  fallback: ExerciseLearningStatus,
+): ExerciseLearningStatus {
+  if (
+    value === 'mastered' ||
+    value === 'needs_review' ||
+    value === 'unstable' ||
+    value === 'not_started'
+  ) {
+    return value
+  }
+  return fallback
 }

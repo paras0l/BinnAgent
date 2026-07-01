@@ -566,6 +566,7 @@ export function VocabularyDetailPage({
               ) : null}
             </section>
             <ExerciseLearningSignal
+              learnerId={learner?.id}
               target={vocabularyAttemptSummaryTarget}
               messages={{
                 needs_review: '这个词还没有通过验收，建议保留在复习队列。',
@@ -576,8 +577,8 @@ export function VocabularyDetailPage({
                 unstable: '保留复习',
               }}
             />
-            <ExerciseAttemptSummary target={vocabularyAttemptSummaryTarget} />
-            <ExerciseBlock target={vocabularyExerciseTarget} limit={3} />
+            <ExerciseAttemptSummary learnerId={learner?.id} target={vocabularyAttemptSummaryTarget} />
+            <ExerciseBlock learnerId={learner?.id} target={vocabularyExerciseTarget} limit={3} />
           </>
         )}
 

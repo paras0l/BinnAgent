@@ -3,6 +3,7 @@ import { BarChart3, CheckCircle2, Clock3, RotateCcw } from 'lucide-react'
 import { SurfaceCard } from '@/components/ui/SurfaceCard'
 import {
   EXERCISE_ATTEMPTS_UPDATED_EVENT,
+  fetchExerciseSummaryForTarget,
   getExerciseSummaryForTarget,
   type ExerciseAttemptSummary as ExerciseAttemptSummaryData,
 } from '@/services/exerciseRepository'
@@ -11,25 +12,44 @@ import type { ExerciseTarget } from '@/types/exercises'
 interface ExerciseAttemptSummaryProps {
   target: ExerciseTarget
   className?: string
+  learnerId?: string
 }
 
-export function ExerciseAttemptSummary({ target, className = '' }: ExerciseAttemptSummaryProps) {
-  const scopeKey = `${target.type}:${target.id}`
-  return <ExerciseAttemptSummaryContent key={scopeKey} target={target} className={className} />
+export function ExerciseAttemptSummary({ target, className = '', learnerId }: ExerciseAttemptSummaryProps) {
+  const scopeKey = `${learnerId ?? 'local'}:${target.type}:${target.id}`
+  return (
+    <ExerciseAttemptSummaryContent
+      key={scopeKey}
+      target={target}
+      className={className}
+      learnerId={learnerId}
+    />
+  )
 }
 
-function ExerciseAttemptSummaryContent({ target, className = '' }: ExerciseAttemptSummaryProps) {
+function ExerciseAttemptSummaryContent({ target, className = '', learnerId }: ExerciseAttemptSummaryProps) {
   const [summary, setSummary] = useState<ExerciseAttemptSummaryData>(() => getExerciseSummaryForTarget(target))
 
   useEffect(() => {
-    const refreshSummary = () => setSummary(getExerciseSummaryForTarget(target))
+    let isMounted = true
+    const refreshSummary = () => {
+      if (learnerId) {
+        void fetchExerciseSummaryForTarget(learnerId, target).then((nextSummary) => {
+          if (isMounted) setSummary(nextSummary)
+        })
+        return
+      }
+      setSummary(getExerciseSummaryForTarget(target))
+    }
+    refreshSummary()
     window.addEventListener(EXERCISE_ATTEMPTS_UPDATED_EVENT, refreshSummary)
     window.addEventListener('storage', refreshSummary)
     return () => {
+      isMounted = false
       window.removeEventListener(EXERCISE_ATTEMPTS_UPDATED_EVENT, refreshSummary)
       window.removeEventListener('storage', refreshSummary)
     }
-  }, [target])
+  }, [target, learnerId])
 
   return (
     <SurfaceCard className={className}>

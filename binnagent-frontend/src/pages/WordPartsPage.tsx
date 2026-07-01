@@ -33,10 +33,11 @@ import {
   type WordPartFilterKind,
   type WordPartFilterLevel,
 } from '@/data/wordParts'
-import type { WordPart, WordPartProgress, WordPartProgressStatus } from '@/types'
+import type { Learner, WordPart, WordPartProgress, WordPartProgressStatus } from '@/types'
 import type { ExerciseTarget } from '@/types/exercises'
 
 interface WordPartsPageProps {
+  learner?: Learner
   onBack: () => void
 }
 
@@ -61,7 +62,7 @@ const STATUS_LABELS: Record<WordPartProgressStatus, string> = {
   mastered: '已掌握',
 }
 
-export function WordPartsPage({ onBack }: WordPartsPageProps) {
+export function WordPartsPage({ learner, onBack }: WordPartsPageProps) {
   const [workspace, setWorkspace] = useState<WordPartsWorkspace>('method')
   const [query, setQuery] = useState('')
   const [kind, setKind] = useState<WordPartFilterKind>('all')
@@ -278,6 +279,7 @@ export function WordPartsPage({ onBack }: WordPartsPageProps) {
             {selectedPartExerciseTarget ? (
               <>
                 <ExerciseLearningSignal
+                  learnerId={learner?.id}
                   target={selectedPartExerciseTarget}
                   messages={{
                     mastered: '已具备掌握证据。',
@@ -290,8 +292,8 @@ export function WordPartsPage({ onBack }: WordPartsPageProps) {
                     unstable: '继续练习',
                   }}
                 />
-                <ExerciseAttemptSummary target={selectedPartExerciseTarget} />
-                <ExerciseBlock target={selectedPartExerciseTarget} limit={3} />
+                <ExerciseAttemptSummary learnerId={learner?.id} target={selectedPartExerciseTarget} />
+                <ExerciseBlock learnerId={learner?.id} target={selectedPartExerciseTarget} limit={3} />
               </>
             ) : null}
           </div>

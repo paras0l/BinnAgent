@@ -178,10 +178,10 @@ class ExerciseAttempt(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         nullable=False,
         index=True,
     )
-    question_id: Mapped[uuid.UUID] = mapped_column(
+    question_id: Mapped[Optional[uuid.UUID]] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("exercise_questions.id", ondelete="CASCADE"),
-        nullable=False,
+        nullable=True,
         index=True,
     )
     session_id: Mapped[Optional[uuid.UUID]] = mapped_column(
@@ -193,6 +193,22 @@ class ExerciseAttempt(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     submitted_answer: Mapped[str] = mapped_column(Text, nullable=False)
     correct: Mapped[bool] = mapped_column(nullable=False)
     response_time_ms: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    exercise_id: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
+    target_type: Mapped[str] = mapped_column(String(40), nullable=False, index=True)
+    target_id: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
+    target_label: Mapped[str] = mapped_column(String(255), nullable=False)
+    answer: Mapped[str] = mapped_column(Text, nullable=False)
+    result: Mapped[str] = mapped_column(String(20), nullable=False)
+    metadata_: Mapped[dict] = mapped_column(
+        "metadata",
+        JSONB,
+        nullable=False,
+        default=dict,
+    )
+    source_context: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
+    should_update_mastery: Mapped[bool] = mapped_column(nullable=False, default=True)
+    should_create_error_pattern: Mapped[bool] = mapped_column(nullable=False, default=False)
+    should_create_memory_evidence: Mapped[bool] = mapped_column(nullable=False, default=True)
 
 
 class LearnerKnowledgeState(UUIDPrimaryKeyMixin, TimestampMixin, Base):
