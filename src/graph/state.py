@@ -3,8 +3,10 @@ from typing import Any, TypedDict, Annotated
 from langgraph.graph.message import add_messages
 
 
-class LearningState(TypedDict, total=False):
+class LearningGraphState(TypedDict, total=False):
     user_id: str
+    learner_id: str
+    graph_run_id: str | None
     thread_id: str
     session_id: str
     target_exam: str | None
@@ -29,3 +31,9 @@ class LearningState(TypedDict, total=False):
     current_task_id: str | None
     resume_from: str | None
     checkpoint_status: str | None
+    feedback_ready: bool | None
+    verification_report: dict[str, Any] | None
+
+
+class LearningState(LearningGraphState, total=False):
+    checkpoint_id: str | None

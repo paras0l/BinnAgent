@@ -1,6 +1,6 @@
 import pytest
 
-from src.graph.main_graph import daily_lesson_graph
+from src.graph.main_graph import daily_lesson_graph, route_after_task
 
 
 class TestDailyLessonGraph:
@@ -72,3 +72,15 @@ class TestDailyLessonGraph:
         result = await daily_lesson_graph.ainvoke(initial_state)
 
         assert result["active_skill"] == "reading"
+
+
+def test_graph_route_after_task_interrupts_without_answer():
+    state = {"answer_required": True, "learner_answer": None}
+
+    assert route_after_task(state) == "interrupt"
+
+
+def test_graph_route_after_task_continues_with_answer():
+    state = {"answer_required": True, "learner_answer": {"answer": "A"}}
+
+    assert route_after_task(state) == "continue"

@@ -1,5 +1,5 @@
 from src.graph.llm import call_llm
-from src.graph.state import LearningState
+from src.graph.state import LearningGraphState as LearningState
 
 
 async def summarize_session(state: LearningState) -> dict:

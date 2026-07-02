@@ -1,4 +1,4 @@
-from src.graph.state import LearningState
+from src.graph.state import LearningGraphState as LearningState
 
 KEYWORD_MAP: dict[str, str] = {
     "单词": "vocabulary",

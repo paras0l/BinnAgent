@@ -1,4 +1,4 @@
-from src.graph.state import LearningState
+from src.graph.state import LearningGraphState as LearningState
 
 
 async def route_skill_agent(state: LearningState) -> dict:

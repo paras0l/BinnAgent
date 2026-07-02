@@ -98,10 +98,28 @@ interface VerificationReport {
   metadata?: Record<string, unknown>
 }
 
+interface LearningCheckpoint {
+  checkpoint_id: string
+  learner_id?: string
+  episode_id?: string
+  thread_id?: string | null
+  checkpoint_key?: string
+  status: string
+  resume_from?: string | null
+  answer_required?: boolean
+  required_input_schema?: Record<string, unknown> | null
+  prompt_payload?: Record<string, unknown> | null
+  state_snapshot?: Record<string, unknown> | null
+  created_at?: string | null
+  updated_at?: string | null
+  consumed_at?: string | null
+}
+
 interface EpisodeTrace {
   episode: RuntimeEpisode
   events: LearningEvent[]
   tool_calls: ToolCallRecord[]
+  checkpoint?: LearningCheckpoint | null
 }
 
 export function EpisodeDebugPage({ learner, episodeId }: EpisodeDebugPageProps) {
@@ -293,6 +311,29 @@ export function EpisodeDebugPage({ learner, episodeId }: EpisodeDebugPageProps) 
                 </div>
               ))}
             </div>
+          </SurfaceCard>
+
+          <SurfaceCard>
+            <SectionTitle icon={<Clock3 className="size-4" />} title="Checkpoint" />
+            {trace.checkpoint ? (
+              <div className="mt-4 space-y-3">
+                <KeyValue label="checkpoint_status" value={trace.checkpoint.status} />
+                <KeyValue label="checkpoint_id" value={trace.checkpoint.checkpoint_id} />
+                <KeyValue label="resume_from" value={trace.checkpoint.resume_from ?? 'none'} />
+                <KeyValue label="answer_required" value={String(Boolean(trace.checkpoint.answer_required))} />
+                <KeyValue label="created_at" value={formatDate(trace.checkpoint.created_at)} />
+                <KeyValue label="consumed_at" value={formatDate(trace.checkpoint.consumed_at)} />
+                <JsonBlock title="prompt_payload" value={trace.checkpoint.prompt_payload ?? {}} />
+                <details className="rounded-lg border border-slate-100 bg-slate-50 p-3 text-xs text-slate-600">
+                  <summary className="cursor-pointer font-bold text-slate-800">state_snapshot</summary>
+                  <pre className="mt-3 max-h-80 overflow-auto whitespace-pre-wrap break-words">
+                    {JSON.stringify(trace.checkpoint.state_snapshot ?? {}, null, 2)}
+                  </pre>
+                </details>
+              </div>
+            ) : (
+              <p className="mt-4 text-sm text-slate-500">No graph checkpoint recorded for this episode.</p>
+            )}
           </SurfaceCard>
 
           <SurfaceCard>

@@ -1,4 +1,4 @@
-import { AlertCircle, BookCheck, ChevronLeft, FileWarning, LoaderCircle, Search, ShieldCheck, Wrench } from 'lucide-react'
+import { AlertCircle, BookCheck, ChevronLeft, FileWarning, LoaderCircle, Search, Send, ShieldCheck, Wrench, X } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { EvidencePanel } from '@/components/learning/EvidencePanel'
 import { ReasonCard } from '@/components/learning/ReasonCard'
@@ -36,6 +36,42 @@ interface KnowledgeBasePageProps {
 
 type KnowledgeWorkspace = 'structure' | 'unit' | 'exercises' | 'review'
 
+interface DailyLessonRuntime {
+  episode_id: string
+  status: string
+  answer_required: boolean
+  checkpoint_id?: string | null
+  checkpoint_status?: string | null
+  resume_from?: string | null
+  prompt?: string | null
+  initial_payload?: Record<string, unknown>
+  feedback?: unknown
+  grading_result?: unknown
+  mastery_update?: unknown
+  memory_updates?: unknown
+  review_schedule?: unknown
+  verification_status?: string | null
+}
+
+interface DailyLessonStatusResponse {
+  episode_id: string
+  episode_status: string
+  checkpoint?: {
+    checkpoint_id: string
+    status: string
+    resume_from?: string | null
+    answer_required?: boolean
+    prompt_payload?: Record<string, unknown> | null
+    created_at?: string | null
+    consumed_at?: string | null
+  } | null
+  trace_summary?: {
+    event_count: number
+    tool_call_count: number
+    verification_status?: string | null
+  }
+}
+
 const WORKSPACES: Array<{ id: KnowledgeWorkspace; label: string }> = [
   { id: 'structure', label: '教材结构' },
   { id: 'unit', label: '单元学习' },
@@ -63,6 +99,10 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice }
   const [grammarTopic, setGrammarTopic] = useState<string | null>(null)
   const [exerciseSession, setExerciseSession] = useState<ExerciseSession | null>(null)
   const [isStartingExercise, setIsStartingExercise] = useState(false)
+  const [dailyLesson, setDailyLesson] = useState<DailyLessonRuntime | null>(null)
+  const [dailyAnswer, setDailyAnswer] = useState('')
+  const [isStartingDailyLesson, setIsStartingDailyLesson] = useState(false)
+  const [isSubmittingDailyAnswer, setIsSubmittingDailyAnswer] = useState(false)
 
   const loadOverview = useCallback(async (sourceId?: string | null, nodeId?: string | null) => {
     setIsLoading(true)
@@ -116,6 +156,37 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice }
     const items = overview?.review.items ?? []
     return items.find((item) => item.id === selectedReviewId) ?? items[0] ?? null
   }, [overview?.review.items, selectedReviewId])
+  const dailyLessonStorageKey = useMemo(() => `binnagent:daily-lesson:${learner.id}`, [learner.id])
+
+  useEffect(() => {
+    const episodeId = window.localStorage.getItem(dailyLessonStorageKey)
+    if (!episodeId) return
+    const controller = new AbortController()
+    fetch(`/api/learners/${learner.id}/daily-lessons/${episodeId}`, { signal: controller.signal })
+      .then((response) => response.ok ? response.json() as Promise<DailyLessonStatusResponse> : null)
+      .then((data) => {
+        if (!data?.checkpoint || data.checkpoint.status !== 'waiting_user') {
+          window.localStorage.removeItem(dailyLessonStorageKey)
+          return
+        }
+        setDailyLesson({
+          episode_id: data.episode_id,
+          status: data.episode_status,
+          answer_required: true,
+          checkpoint_id: data.checkpoint.checkpoint_id,
+          checkpoint_status: data.checkpoint.status,
+          resume_from: data.checkpoint.resume_from,
+          prompt: readPrompt(data.checkpoint.prompt_payload),
+          initial_payload: data.checkpoint.prompt_payload ?? {},
+        })
+      })
+      .catch((restoreError: unknown) => {
+        if (!(restoreError instanceof DOMException && restoreError.name === 'AbortError')) {
+          window.localStorage.removeItem(dailyLessonStorageKey)
+        }
+      })
+    return () => controller.abort()
+  }, [dailyLessonStorageKey, learner.id])
 
   const handleUpload = async (file: File) => {
     if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
@@ -208,6 +279,62 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice }
     } else {
       showToast('恭喜，你已经完成本册全部课程！', { variant: 'success', duration: 6000 })
       await loadOverview(selectedSourceId ?? overview?.source.id)
+    }
+  }
+
+  const handleStartDailyLesson = async () => {
+    if (!overview?.current_unit.id) return
+    setIsStartingDailyLesson(true)
+    try {
+      const response = await fetch(`/api/learners/${learner.id}/daily-lessons/start`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          current_curriculum_node_id: overview.current_unit.id,
+          time_budget_minutes: overview.daily_lesson.estimated_minutes,
+          mode_hint: 'textbook_guided',
+        }),
+      })
+      if (!response.ok) throw new Error('AI 每日题暂时无法开始。')
+      const started = await response.json() as DailyLessonRuntime
+      if (started.answer_required && started.episode_id) {
+        window.localStorage.setItem(dailyLessonStorageKey, started.episode_id)
+        setDailyAnswer('')
+        setDailyLesson(started)
+      } else {
+        showToast(started.initial_payload?.reason ? String(started.initial_payload.reason) : '当前没有可用的 AI 每日题。', { variant: 'warning' })
+      }
+    } catch (startError) {
+      showToast(startError instanceof Error ? startError.message : 'AI 每日题暂时无法开始。', { variant: 'error' })
+    } finally {
+      setIsStartingDailyLesson(false)
+    }
+  }
+
+  const handleSubmitDailyAnswer = async () => {
+    if (!dailyLesson || !dailyAnswer.trim()) {
+      showToast('请先填写答案。', { variant: 'warning' })
+      return
+    }
+    setIsSubmittingDailyAnswer(true)
+    try {
+      const response = await fetch(
+        `/api/learners/${learner.id}/daily-lessons/${dailyLesson.episode_id}/answer`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ answer: dailyAnswer.trim(), metadata: {} }),
+        },
+      )
+      if (!response.ok) throw new Error('答案提交失败，请重试。')
+      const result = await response.json() as DailyLessonRuntime
+      window.localStorage.removeItem(dailyLessonStorageKey)
+      setDailyLesson({ ...dailyLesson, ...result, status: result.status ?? 'completed', answer_required: false })
+      showToast('AI 每日题已完成。', { variant: 'success' })
+    } catch (submitError) {
+      showToast(submitError instanceof Error ? submitError.message : '答案提交失败，请重试。', { variant: 'error' })
+    } finally {
+      setIsSubmittingDailyAnswer(false)
     }
   }
 
@@ -392,9 +519,13 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice }
                 <span>待复习 {activeUnitVocabulary?.due ?? '—'}</span>
                 <span>已掌握 {activeUnitVocabulary?.mastered ?? '—'}</span>
               </div>
-              <div className="mt-3 grid gap-3 sm:grid-cols-3">
+              <div className="mt-3 grid gap-3 sm:grid-cols-4">
                 <button type="button" onClick={() => onStartVocabularyPractice('new', overview.current_unit.id, currentSourceLabel)} className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-black text-emerald-700 transition hover:border-emerald-300">认识本单元新词</button>
                 <button type="button" onClick={() => onStartVocabularyPractice('spelling', overview.current_unit.id, currentSourceLabel)} className="rounded-xl bg-indigo-600 px-4 py-3 text-sm font-black text-white transition hover:bg-indigo-700">练习本单元拼写</button>
+                <button type="button" disabled={isStartingDailyLesson} onClick={() => void handleStartDailyLesson()} className="inline-flex items-center justify-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm font-black text-indigo-700 transition hover:border-indigo-300 disabled:opacity-60">
+                  {isStartingDailyLesson ? <LoaderCircle className="size-4 animate-spin" /> : null}
+                  AI 每日题
+                </button>
                 <button type="button" disabled={isStartingExercise} onClick={() => void handleStartExercise()} className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-black text-white transition hover:bg-emerald-700 disabled:opacity-60">
                   {isStartingExercise ? <LoaderCircle className="size-4 animate-spin" /> : null}
                   教材练习题
@@ -458,6 +589,14 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice }
         onAttempt={handleAttempt}
         onComplete={handleCompleteLesson}
       />
+      <DailyLessonRuntimeDialog
+        lesson={dailyLesson}
+        answer={dailyAnswer}
+        isSubmitting={isSubmittingDailyAnswer}
+        onAnswerChange={setDailyAnswer}
+        onSubmit={() => void handleSubmitDailyAnswer()}
+        onClose={() => setDailyLesson(null)}
+      />
       <ExerciseSessionDialog
         key={exerciseSession?.curriculum_node_id ?? 'closed-exercise'}
         session={exerciseSession}
@@ -468,6 +607,151 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice }
       </div>
     </PageShell>
   )
+}
+
+function DailyLessonRuntimeDialog({
+  lesson,
+  answer,
+  isSubmitting,
+  onAnswerChange,
+  onSubmit,
+  onClose,
+}: {
+  lesson: DailyLessonRuntime | null
+  answer: string
+  isSubmitting: boolean
+  onAnswerChange: (value: string) => void
+  onSubmit: () => void
+  onClose: () => void
+}) {
+  if (!lesson) return null
+  const prompt = lesson.prompt ?? readPrompt(lesson.initial_payload) ?? '完成这道学习任务。'
+  const options = readOptions(lesson.initial_payload)
+  const isCompleted = lesson.status === 'completed' || Boolean(lesson.verification_status)
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 px-4 py-6">
+      <section className="max-h-[90vh] w-full max-w-2xl overflow-auto rounded-2xl bg-white shadow-2xl">
+        <header className="flex items-center justify-between gap-3 border-b border-slate-200 px-5 py-4">
+          <div>
+            <p className="text-xs font-black uppercase tracking-wide text-indigo-600">Daily Lesson</p>
+            <h2 className="mt-1 text-lg font-black text-slate-950">{lesson.status}</h2>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="inline-flex size-9 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
+            aria-label="关闭 AI 每日题"
+          >
+            <X className="size-4" />
+          </button>
+        </header>
+
+        <div className="space-y-4 px-5 py-5">
+          <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+            <p className="whitespace-pre-wrap text-sm font-bold leading-6 text-slate-900">{prompt}</p>
+            {lesson.checkpoint_id ? (
+              <p className="mt-2 break-all font-mono text-xs text-slate-500">
+                checkpoint {lesson.checkpoint_status ?? 'waiting_user'} · {lesson.checkpoint_id}
+              </p>
+            ) : null}
+          </div>
+
+          {!isCompleted ? (
+            <div className="space-y-3">
+              {options.length ? (
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {options.map((option) => (
+                    <button
+                      key={option}
+                      type="button"
+                      onClick={() => onAnswerChange(option)}
+                      className={`rounded-xl border px-4 py-3 text-left text-sm font-bold transition ${
+                        answer === option
+                          ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
+                          : 'border-slate-200 text-slate-700 hover:border-indigo-200'
+                      }`}
+                    >
+                      {option}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+              <textarea
+                value={answer}
+                onChange={(event) => onAnswerChange(event.target.value)}
+                className="min-h-32 w-full resize-y rounded-xl border border-slate-200 px-4 py-3 text-sm leading-6 text-slate-900 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+                placeholder="输入你的答案"
+              />
+              <Button onClick={onSubmit} disabled={isSubmitting} className="w-full">
+                {isSubmitting ? <LoaderCircle className="size-4 animate-spin" /> : <Send className="size-4" />}
+                提交答案
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <StatusBanner tone={lesson.verification_status === 'passed' ? 'success' : 'info'} title="AI 每日题结果">
+                Verification: {lesson.verification_status ?? 'completed'}
+              </StatusBanner>
+              <RuntimeJson title="feedback" value={lesson.feedback} />
+              <RuntimeJson title="grading_result" value={lesson.grading_result} />
+              <RuntimeJson title="mastery_update" value={lesson.mastery_update} />
+            </div>
+          )}
+        </div>
+      </section>
+    </div>
+  )
+}
+
+function RuntimeJson({ title, value }: { title: string; value: unknown }) {
+  if (value === undefined || value === null) return null
+  return (
+    <div className="rounded-xl border border-slate-200 bg-white px-4 py-3">
+      <p className="text-xs font-black uppercase text-slate-500">{title}</p>
+      <pre className="mt-2 max-h-52 overflow-auto whitespace-pre-wrap break-words text-xs leading-5 text-slate-700">
+        {typeof value === 'string' ? value : JSON.stringify(value, null, 2)}
+      </pre>
+    </div>
+  )
+}
+
+function readPrompt(payload?: Record<string, unknown> | null) {
+  if (!payload) return null
+  const direct = payload.prompt
+  if (typeof direct === 'string' && direct.trim()) return direct
+  const promptPayload = payload.prompt_payload
+  if (isRecord(promptPayload) && typeof promptPayload.prompt === 'string') return promptPayload.prompt
+  const materials = readInputMaterials(payload)
+  const first = materials[0]
+  if (!first) return null
+  for (const key of ['prompt', 'stem', 'content']) {
+    const value = first[key]
+    if (typeof value === 'string' && value.trim()) return value
+  }
+  return null
+}
+
+function readOptions(payload?: Record<string, unknown> | null) {
+  const materials = readInputMaterials(payload)
+  const first = materials[0]
+  const rawOptions = first?.options
+  return Array.isArray(rawOptions) ? rawOptions.map(String) : []
+}
+
+function readInputMaterials(payload?: Record<string, unknown> | null): Array<Record<string, unknown>> {
+  if (!payload) return []
+  const direct = payload.input_materials
+  if (Array.isArray(direct)) return direct.filter(isRecord)
+  const promptPayload = payload.prompt_payload
+  if (isRecord(promptPayload) && Array.isArray(promptPayload.input_materials)) {
+    return promptPayload.input_materials.filter(isRecord)
+  }
+  return []
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value)
 }
 
 function StructureWorkspace({ overview, onSelect }: { overview: KnowledgeBaseOverview; onSelect: (nodeId: string) => void }) {

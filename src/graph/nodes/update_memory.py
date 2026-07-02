@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime, timezone
 
 from src.db import async_session_factory
-from src.graph.state import LearningState
+from src.graph.state import LearningGraphState as LearningState
 from src.memory.curator import MemoryCurator
 from src.memory.schemas import MemoryEventInput
 from src.memory.writer import MemoryWriter

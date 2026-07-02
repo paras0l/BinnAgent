@@ -1,6 +1,7 @@
 from src.models.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
 from src.models.error_pattern import ErrorPattern
 from src.models.explore import ExploreFeaturePreference
+from src.models.graph_checkpoint import LearningGraphCheckpoint
 from src.models.knowledge import (
     CurriculumNode,
     ExerciseAttempt,
@@ -74,6 +75,7 @@ __all__ = [
     "LearnerKnowledgeState",
     "LearnerMemorySettings",
     "LearnerModelMemory",
+    "LearningGraphCheckpoint",
     "LearningEpisode",
     "LearningEvent",
     "LearningProgressItem",

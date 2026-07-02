@@ -1,7 +1,7 @@
 import json as _json
 
 from src.graph.llm import call_llm
-from src.graph.state import LearningState
+from src.graph.state import LearningGraphState as LearningState
 
 
 async def generate_feedback(state: LearningState) -> dict:

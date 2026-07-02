@@ -3,9 +3,11 @@ from datetime import datetime, timezone
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
+from fastapi import HTTPException
 
 from src.learning.orchestrator import LearningOrchestrator
 from src.learning.types import LearningPlanRequest
+from src.models.graph_checkpoint import LearningGraphCheckpoint
 from src.models.knowledge import CurriculumNode, ExerciseQuestion
 from src.models.runtime import AgentEpisode
 from src.runtime.task_spec import SuccessCriteria, TaskSpec, TaskTarget, VerificationPolicy
@@ -37,6 +39,12 @@ def _one(value):
 
 def _many(values):
     return FakeResult(values=values)
+
+
+def _count(value: int):
+    result = MagicMock()
+    result.scalar_one.return_value = value
+    return result
 
 
 def _db():
@@ -88,13 +96,36 @@ def _question(node: CurriculumNode) -> ExerciseQuestion:
     return question
 
 
+def _checkpoint(learner_id: uuid.UUID, episode_id: uuid.UUID, question: ExerciseQuestion) -> LearningGraphCheckpoint:
+    checkpoint = LearningGraphCheckpoint(
+        learner_id=learner_id,
+        episode_id=episode_id,
+        thread_id=f"daily-lesson:{episode_id}",
+        checkpoint_key=f"{episode_id}:task",
+        status="waiting_user",
+        resume_from="generate_feedback",
+        state_snapshot={
+            "episode_id": str(episode_id),
+            "current_task_id": "task",
+            "input_materials": [{"question_id": str(question.id), "stem": question.stem}],
+            "answer_required": True,
+        },
+        required_input_schema={"required": ["answer"]},
+        prompt_payload={"prompt": question.stem, "input_materials": []},
+    )
+    checkpoint.id = uuid.uuid4()
+    checkpoint.created_at = datetime.now(timezone.utc)
+    checkpoint.updated_at = checkpoint.created_at
+    return checkpoint
+
+
 @pytest.mark.asyncio
 async def test_start_daily_lesson_selects_task_and_creates_episode():
     db = _db()
     learner_id = uuid.uuid4()
     node = _node()
     question = _question(node)
-    db.execute = AsyncMock(side_effect=[_many([]), _many([]), _one(node), _one(question)])
+    db.execute = AsyncMock(side_effect=[_many([]), _many([]), _one(node), _one(question), _one(None)])
 
     plan = await LearningOrchestrator(db).build_learning_plan(
         LearningPlanRequest(
@@ -110,8 +141,13 @@ async def test_start_daily_lesson_selects_task_and_creates_episode():
 
     assert started.answer_required is True
     assert started.episode_id
+    assert started.status == "waiting_user"
+    assert started.checkpoint_id
+    assert started.checkpoint_status == "waiting_user"
+    assert started.resume_from == "generate_feedback"
     assert started.initial_payload["question_id"] == str(question.id)
     assert any(isinstance(item, AgentEpisode) for item in db.added_objects)
+    assert any(isinstance(item, LearningGraphCheckpoint) for item in db.added_objects)
 
 
 @pytest.mark.asyncio
@@ -150,7 +186,17 @@ async def test_submit_daily_lesson_answer_completes_existing_episode():
     episode.id = uuid.uuid4()
     episode.created_at = datetime.now(timezone.utc)
     episode.updated_at = datetime.now(timezone.utc)
-    db.execute = AsyncMock(side_effect=[_one(episode), _one(question), _one(None)])
+    checkpoint = _checkpoint(learner_id, episode.id, question)
+    db.execute = AsyncMock(
+        side_effect=[
+            _one(episode),
+            _one(checkpoint),
+            _one(question),
+            _one(checkpoint),
+            _one(None),
+            _one(checkpoint),
+        ]
+    )
 
     result = await LearningOrchestrator(db).submit_answer(
         learner_id=learner_id,
@@ -161,4 +207,109 @@ async def test_submit_daily_lesson_answer_completes_existing_episode():
 
     assert result["episode_id"] == str(episode.id)
     assert result["verification_status"] == "passed"
+    assert result["checkpoint_status"] == "completed"
     assert episode.status == "completed"
+    assert checkpoint.status == "completed"
+
+
+@pytest.mark.asyncio
+async def test_submit_answer_rejects_wrong_learner():
+    db = _db()
+    learner_id = uuid.uuid4()
+    episode = AgentEpisode(
+        learner_id=learner_id,
+        source="recommendation",
+        entrypoint="daily_lesson.start",
+        status="waiting_user",
+        task_spec={},
+        context_snapshot={},
+        tool_call_ids=[],
+        started_at=datetime.now(timezone.utc),
+    )
+    episode.id = uuid.uuid4()
+    db.execute = AsyncMock(side_effect=[_one(episode)])
+
+    with pytest.raises(HTTPException) as exc:
+        await LearningOrchestrator(db).submit_answer(
+            learner_id=uuid.uuid4(),
+            episode_id=episode.id,
+            answer="A",
+        )
+
+    assert exc.value.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_submit_answer_without_checkpoint_returns_409():
+    db = _db()
+    learner_id = uuid.uuid4()
+    node = _node()
+    question = _question(node)
+    task_spec = TaskSpec(
+        task_id=f"curriculum:{node.id}",
+        task_type="practice_knowledge_point",
+        source="recommendation",
+        objective="Practice greeting",
+        target=TaskTarget(target_type="knowledge_point", target_id=str(question.knowledge_point_id)),
+        success_criteria=SuccessCriteria(min_accuracy=1.0, requires_explanation=True),
+        verification_policy=VerificationPolicy(required_checks=[]),
+    )
+    episode = AgentEpisode(
+        learner_id=learner_id,
+        source="recommendation",
+        entrypoint="daily_lesson.start",
+        status="waiting_user",
+        task_spec=task_spec.model_dump(mode="json"),
+        context_snapshot={"question_id": str(question.id)},
+        tool_call_ids=[],
+        started_at=datetime.now(timezone.utc),
+    )
+    episode.id = uuid.uuid4()
+    db.execute = AsyncMock(side_effect=[_one(episode), _one(None)])
+
+    with pytest.raises(HTTPException) as exc:
+        await LearningOrchestrator(db).submit_answer(
+            learner_id=learner_id,
+            episode_id=episode.id,
+            answer="Good morning!",
+        )
+
+    assert exc.value.status_code == 409
+
+
+@pytest.mark.asyncio
+async def test_get_daily_lesson_status_returns_waiting_checkpoint():
+    db = _db()
+    learner_id = uuid.uuid4()
+    node = _node()
+    question = _question(node)
+    episode = AgentEpisode(
+        learner_id=learner_id,
+        source="recommendation",
+        entrypoint="daily_lesson.start",
+        status="waiting_user",
+        task_spec={},
+        context_snapshot={},
+        tool_call_ids=[],
+        started_at=datetime.now(timezone.utc),
+    )
+    episode.id = uuid.uuid4()
+    checkpoint = _checkpoint(learner_id, episode.id, question)
+    db.execute = AsyncMock(
+        side_effect=[
+            _one(episode),
+            _many([checkpoint]),
+            _count(3),
+            _count(1),
+        ]
+    )
+
+    result = await LearningOrchestrator(db).get_daily_lesson_status(
+        learner_id=learner_id,
+        episode_id=episode.id,
+    )
+
+    assert result["episode_status"] == "waiting_user"
+    assert result["checkpoint"]["checkpoint_id"] == str(checkpoint.id)
+    assert result["checkpoint"]["status"] == "waiting_user"
+    assert result["trace_summary"]["event_count"] == 3

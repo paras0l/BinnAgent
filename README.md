@@ -104,9 +104,9 @@ http://localhost:5174，可在 Learners / Recent Episodes 中直接选择 learne
 | Writing Phrasebook | 基础版已实现 |
 | Frontend UI/UX 统一标准 | Issue #20 首轮整改已落地，普通学习端主导航保留 AI对话 / 探索 / 学习中心，Debug/Memory/Runtime 页面移入 Dev Console；KnowledgeBase 已升级为教材解析校对工作台 |
 | Prompt Registry / Schema-first Import / Parser Quality | 基础治理已实现 |
-| Agent Runtime / Harness | 第一阶段已实现，TaskSpec、AgentEpisode、LearningEvent、EvidenceRef、ToolCallRecord、VerificationReport、MasteryEngine、RecommendationEngine 和 Dev Console 调试入口已接入；Dev Console 支持 Learners / Recent Episodes 选择上下文；Debug API 默认关闭并需 token |
-| LangGraph daily lesson | 基础线性实现，Daily Lesson 已新增 RecommendationEngine + LearningOrchestrator 的轻量 start/answer API |
-| Learner Simulation Agent | Deterministic MVP 已实现，新增 episode runtime knowledge practice 回归场景和 runtime_metrics |
+| Agent Runtime / Harness | 第一阶段已实现，TaskSpec、AgentEpisode、LearningEvent、EvidenceRef、ToolCallRecord、VerificationReport、MasteryEngine、RecommendationEngine、LearningGraphCheckpoint 和 Dev Console 调试入口已接入；Dev Console 支持 Learners / Recent Episodes 选择上下文；Debug API 默认关闭并需 token |
+| LangGraph daily lesson | 已从纯线性 graph 升级为单题 checkpoint / interrupt / resume Runtime；start 可返回 waiting_user checkpoint，answer 可恢复并完成 grading、memory、review、verification |
+| Learner Simulation Agent | Deterministic MVP 已实现，新增 episode runtime knowledge practice 和 daily_lesson_checkpoint_resume 回归场景及 runtime_metrics |
 | CET reading / writing / weekly report | 设计中 |
 | CI backend lint/test + frontend lint/test/build/build:console | 已实现 |
 

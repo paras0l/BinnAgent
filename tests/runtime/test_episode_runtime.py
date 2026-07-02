@@ -104,6 +104,7 @@ async def test_episode_runtime_records_complete_trace():
             FakeResult(episode),
             FakeResult(values=[event]),
             FakeResult(values=[tool]),
+            FakeResult(None),
         ]
     )
     trace = await runtime.get_episode_trace(episode.id)

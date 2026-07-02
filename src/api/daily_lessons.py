@@ -73,3 +73,15 @@ async def submit_daily_lesson_answer(
         answer=body.answer,
         metadata=body.metadata,
     )
+
+
+@router.get("/{episode_id}")
+async def get_daily_lesson_status(
+    learner_id: uuid.UUID,
+    episode_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db_session),
+) -> dict[str, Any]:
+    return await LearningOrchestrator(db).get_daily_lesson_status(
+        learner_id=learner_id,
+        episode_id=episode_id,
+    )

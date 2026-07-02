@@ -1,7 +1,7 @@
 import uuid
 
 from src.db import async_session_factory
-from src.graph.state import LearningState
+from src.graph.state import LearningGraphState as LearningState
 from src.memory.retriever import MemoryRetriever
 
 

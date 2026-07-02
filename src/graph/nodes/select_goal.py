@@ -1,4 +1,4 @@
-from src.graph.state import LearningState
+from src.graph.state import LearningGraphState as LearningState
 
 SKILL_GOALS: dict[str, dict] = {
     "reading": {

@@ -1,4 +1,4 @@
-from src.graph.state import LearningState
+from src.graph.state import LearningGraphState as LearningState
 
 
 async def load_profile(state: LearningState) -> dict:

@@ -181,6 +181,7 @@ class ScenarioRunner:
             "current_level": "intermediate",
             "daily_time_budget": 20,
             "active_skill": "vocabulary",
+            "learner_answer": {"answer": "sustainable means able to continue over time."},
             "messages": [{"role": "user", "content": "I want today's vocabulary lesson."}],
         }
         graph_result = await self.graph_invoker(state)

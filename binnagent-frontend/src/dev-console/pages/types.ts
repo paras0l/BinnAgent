@@ -34,6 +34,10 @@ export interface EpisodeSummary {
   event_count: number
   tool_call_count: number
   verification_status?: string | null
+  checkpoint_id?: string | null
+  checkpoint_status?: string | null
+  resume_from?: string | null
+  answer_required?: boolean
   failure_type?: string | null
   error_message?: string | null
 }

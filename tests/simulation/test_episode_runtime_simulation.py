@@ -43,6 +43,7 @@ def _task_spec(task_id: str, target_id: str) -> dict:
 async def test_episode_runtime_simulation_reports_runtime_metrics():
     learner_id = str(uuid.uuid4())
     episode_id = str(uuid.uuid4())
+    checkpoint_id = str(uuid.uuid4())
     target_id = str(uuid.uuid4())
     task_spec = _task_spec(f"task:{target_id}", target_id)
 
@@ -79,6 +80,9 @@ async def test_episode_runtime_simulation_reports_runtime_metrics():
                     "task_spec": task_spec,
                     "status": "waiting_user",
                     "answer_required": True,
+                    "checkpoint_id": checkpoint_id,
+                    "checkpoint_status": "waiting_user",
+                    "resume_from": "generate_feedback",
                     "prompt": "Choose the greeting.",
                     "initial_payload": {
                         "question_id": str(uuid.uuid4()),
@@ -96,6 +100,8 @@ async def test_episode_runtime_simulation_reports_runtime_metrics():
                     "mastery_update": {"new_score": 0.4},
                     "memory_updates": [{"memory_event_id": str(uuid.uuid4())}],
                     "verification_status": "passed",
+                    "status": "completed",
+                    "checkpoint_status": "completed",
                     "next_recommendation": None,
                     "episode_id": episode_id,
                 },
@@ -128,6 +134,21 @@ async def test_episode_runtime_simulation_reports_runtime_metrics():
                             "latency_ms": 12,
                         }
                     ],
+                    "checkpoint": {
+                        "checkpoint_id": checkpoint_id,
+                        "episode_id": episode_id,
+                        "learner_id": learner_id,
+                        "thread_id": f"daily-lesson:{episode_id}",
+                        "checkpoint_key": f"{episode_id}:task",
+                        "status": "completed",
+                        "resume_from": "generate_feedback",
+                        "answer_required": False,
+                        "prompt_payload": {"prompt": "Choose the greeting."},
+                        "state_snapshot": {},
+                        "created_at": datetime.now(timezone.utc).isoformat(),
+                        "updated_at": datetime.now(timezone.utc).isoformat(),
+                        "consumed_at": datetime.now(timezone.utc).isoformat(),
+                    },
                 },
             )
         if request.method == "GET" and request.url.path == f"/api/runtime/episodes/{episode_id}/verification":

@@ -43,6 +43,7 @@ class EpisodeTraceView(BaseModel):
     episode: AgentEpisodeView
     events: list[LearningEventView]
     tool_calls: list[ToolCallRecordView]
+    checkpoint: dict[str, Any] | None = None
 
 
 def episode_to_view(episode) -> AgentEpisodeView:

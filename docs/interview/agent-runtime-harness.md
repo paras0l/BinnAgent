@@ -58,7 +58,33 @@ flowchart TD
 8. VerificationService 按 TaskSpec 的 required_checks 验证关键步骤是否完成。
 9. Episode trace 可在前端 Debug 页面查看，也可被 simulation 回归测试读取。
 
-## 四、关键数据结构
+## 四、Daily Lesson checkpoint / interrupt / resume
+
+Daily Lesson 不再把所有节点一次跑完。`daily_lesson_graph` 在 `run_learning_task` 后按状态路由：
+
+- `answer_required=true` 且还没有 `learner_answer` 时，graph 返回题目材料并中断，不进入反馈节点。
+- 有 `learner_answer` 时，从 `generate_feedback` 后续链路继续执行。
+
+为什么需要 interrupt：学习任务必须等待真实用户作答，不能在没有答案时生成反馈、写记忆或安排复习。第一阶段使用项目内 `learning_graph_checkpoints` 表持久化暂停状态，而不是直接接入 LangGraph 官方 checkpointer。
+
+checkpoint 保存：
+
+- learner / episode / thread / checkpoint_key。
+- `resume_from`，当前固定从 `generate_feedback` 恢复。
+- `state_snapshot`，包含 `input_materials`、`current_task_id`、`answer_required` 等 graph state。
+- `prompt_payload` 和 `required_input_schema`，用于前端刷新后恢复题面。
+
+恢复流程：
+
+1. `/daily-lessons/start` 创建 `AgentEpisode`，graph 运行到 `run_learning_task`。
+2. 如果需要作答，写入 `LearningGraphCheckpoint`，episode 状态变为 `waiting_user`，并记录 `task_prepared` / `graph_interrupted`。
+3. `/daily-lessons/{episode_id}/answer` 校验 active checkpoint，注入 `learner_answer`，记录 `graph_resumed` / `learner_answer_received`。
+4. 复用现有知识练习评分、掌握度、Memory、Review 和 Verification 能力。
+5. checkpoint 标记为 `completed`，episode 标记为 `completed`，Trace 中可看到 `episode_completed`。
+
+当前边界：第一阶段只支持单题单 active `waiting_user` checkpoint；同一 episode 通过 partial unique index 保证只有一个 active checkpoint。后续可以把 `GraphCheckpointStore` 替换为 LangGraph 官方 checkpointer / thread_id 机制，并扩展为多步骤 lesson。
+
+## 五、关键数据结构
 
 | 结构 | 作用 |
 |---|---|
@@ -70,8 +96,9 @@ flowchart TD
 | RecommendationPlan | 每日学习计划，按规则综合低掌握度、到期复习、教材进度和偏好，输出 TaskSpec 列表 |
 | ToolCallRecord | 工具调用审计记录，包含 tool_name、status、latency、input_hash、output_hash 和 error |
 | VerificationReport | 可验证完成报告，列出每个 check 的 passed/failed、actual/expected 和 evidence_refs |
+| LearningGraphCheckpoint | Daily Lesson 暂停状态，保存 graph state snapshot、题面 payload、resume_from 和 consumed_at |
 
-## 五、面试讲法
+## 六、面试讲法
 
 3 分钟版本：
 
@@ -81,14 +108,14 @@ flowchart TD
 >
 > 这也不是简单 Chat。Chat 可以作为入口，但学习系统真正有价值的是长期记忆和知识追踪：MemoryWriter 记录学习证据，MasteryEngine 更新掌握度，RecommendationEngine 用这些状态生成下一步行动。最后 VerificationReport 和 simulation regression 会检查完整链路，保证 Agent 行为可解释、可验证、可回归。
 
-## 六、当前边界和后续计划
+## 七、当前边界和后续计划
 
 已实现：
 
 - AgentEpisode / LearningEvent / ToolCallRecord 数据模型和 trace API。
 - TaskSpec、EvidenceRef、MasteryEngine、RecommendationEngine、LearningOrchestrator、ToolRegistry、VerificationReport。
 - Knowledge Exercise 提交流程接入 episode trace。
-- Daily Lesson start / answer 轻量 orchestration。
+- Daily Lesson start / answer 支持 checkpoint / interrupt / resume，等待用户作答时 episode 进入 `waiting_user`。
 - Explore skill start API 和前端入口接入 TaskSpec。
 - Learner App / Dev Console 双入口：学习端只暴露学习功能，调试端承载 Memory、Episode、Tool、Evidence、RAG、Prompt、Verification 和 Simulation 面板。
 - Episode Debug、Tool Registry、Tool Call Records、RAG Debug、Simulation Report 等 Dev Console 页面。
@@ -124,18 +151,18 @@ Dev Console 使用流程：
 第一阶段 runtime 接入：
 
 - Knowledge exercise 是完整接入样板。
-- Daily Lesson 支持 answer_required 和轻量 resume 信息，但还不是完整 LangGraph checkpoint。
+- Daily Lesson 支持单题单 checkpoint 的持久化暂停和恢复，后续可替换为 LangGraph 官方 checkpointer。
 - Explore vocabulary / writing phrase 等入口已能创建 TaskSpec 和 episode，部分 handler 返回 not_implemented，保留扩展位。
 
 后续计划：
 
-- 加强 checkpoint / resume，和 LangGraph interrupt 机制深度融合。
+- 扩展多步骤 checkpoint / resume，和 LangGraph 官方 interrupt/checkpointer 机制深度融合。
 - 引入统一 current-learner 依赖，补齐多用户权限隔离。
 - 扩展 ToolRegistry wrapper，让 RAG / Memory / Mastery / Review 全部通过统一 executor 调用。
 - 增加在线 eval、golden dataset、Langfuse dashboard 和更多 simulation persona。
 - 把前端 Episode Debug 接入证据解析详情和可回放视图。
 
-## 七、验收标准
+## 八、验收标准
 
 这套文档应让技术面试官快速理解：
 

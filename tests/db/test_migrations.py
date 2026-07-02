@@ -151,3 +151,16 @@ def test_exercise_attempts_migration_upgrades_existing_attempts_for_targets() ->
     assert "should_create_error_pattern" in migration
     assert "should_create_memory_evidence" in migration
     assert "ix_exercise_attempts_learner_target_created" in migration
+
+
+def test_learning_graph_checkpoint_migration_adds_waiting_checkpoint_table() -> None:
+    migration = Path(
+        "alembic/versions/f0a1b2c3d4e5_add_learning_graph_checkpoints.py"
+    ).read_text()
+
+    assert "learning_graph_checkpoints" in migration
+    assert "agent_episodes.id" in migration
+    assert "state_snapshot" in migration
+    assert "prompt_payload" in migration
+    assert "uq_learning_graph_checkpoints_active_waiting_episode" in migration
+    assert "status = 'waiting_user'" in migration

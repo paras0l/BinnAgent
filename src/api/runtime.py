@@ -109,6 +109,9 @@ def _episode_summary(
     verification_report = (
         episode.verification_report if isinstance(episode.verification_report, dict) else {}
     )
+    context_snapshot = (
+        episode.context_snapshot if isinstance(episode.context_snapshot, dict) else {}
+    )
     return {
         "id": str(episode.id),
         "learner_id": str(episode.learner_id),
@@ -126,6 +129,10 @@ def _episode_summary(
         "event_count": int(event_count or 0),
         "tool_call_count": int(tool_call_count or 0),
         "verification_status": _optional_text(verification_report.get("status")),
+        "checkpoint_id": _optional_text(context_snapshot.get("checkpoint_id")),
+        "checkpoint_status": _optional_text(context_snapshot.get("checkpoint_status")),
+        "resume_from": _optional_text(context_snapshot.get("resume_from")),
+        "answer_required": bool(context_snapshot.get("answer_required", False)),
         "failure_type": episode.failure_type,
         "error_message": episode.error_message,
     }

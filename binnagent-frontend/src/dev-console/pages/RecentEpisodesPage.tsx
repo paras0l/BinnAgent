@@ -183,7 +183,12 @@ export function RecentEpisodesList({
             {episodes.map((episode) => (
               <tr key={episode.id}>
                 <td className="px-4 py-3">
-                  <p className="font-bold text-slate-950">{episode.status}</p>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="font-bold text-slate-950">{episode.status}</p>
+                    {episode.status === 'waiting_user' || episode.checkpoint_status === 'waiting_user' ? (
+                      <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-black text-amber-700">waiting_user</span>
+                    ) : null}
+                  </div>
                   <p className="mt-1 text-xs text-slate-500">{episode.source}</p>
                   <p className="mt-1 break-all font-mono text-xs text-slate-400">{episode.id}</p>
                 </td>
@@ -197,6 +202,8 @@ export function RecentEpisodesList({
                 <td className="px-4 py-3 text-xs text-slate-600">
                   <p>{episode.learner_nickname ?? episode.learner_id}</p>
                   <p className="mt-1">{episode.entrypoint}</p>
+                  <p className="mt-1">checkpoint {episode.checkpoint_status ?? '-'}</p>
+                  <p className="mt-1">resume {episode.resume_from ?? '-'}</p>
                   <p className="mt-1">started {formatDateTime(episode.started_at)}</p>
                   <p className="mt-1">completed {formatDateTime(episode.completed_at)}</p>
                   <p className="mt-1 font-mono">events {episode.event_count} · tools {episode.tool_call_count}</p>

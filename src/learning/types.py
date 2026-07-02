@@ -27,6 +27,9 @@ class StartedTask(BaseModel):
     task_spec: TaskSpec | None = None
     status: str
     answer_required: bool
+    checkpoint_id: str | None = None
+    checkpoint_status: str | None = None
+    resume_from: str | None = None
     prompt: str | None = None
     initial_payload: dict[str, Any] = Field(default_factory=dict)
     recommendation_reason: str | None = None

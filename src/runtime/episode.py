@@ -5,6 +5,7 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.models.graph_checkpoint import LearningGraphCheckpoint
 from src.models.runtime import AgentEpisode, LearningEvent, ToolCallRecord
 from src.runtime.events import LearningEventCreate
 from src.runtime.schemas import (
@@ -167,10 +168,18 @@ class EpisodeRuntime:
             .where(ToolCallRecord.episode_id == episode.id)
             .order_by(ToolCallRecord.created_at.asc())
         )
+        checkpoint_result = await self.db.execute(
+            select(LearningGraphCheckpoint)
+            .where(LearningGraphCheckpoint.episode_id == episode.id)
+            .order_by(LearningGraphCheckpoint.created_at.desc())
+            .limit(1)
+        )
+        checkpoint = checkpoint_result.scalar_one_or_none()
         return EpisodeTraceView(
             episode=episode_to_view(episode),
             events=[event_to_view(event) for event in events_result.scalars().all()],
             tool_calls=[tool_call_to_view(tool) for tool in tool_result.scalars().all()],
+            checkpoint=checkpoint_to_view(checkpoint) if checkpoint is not None else None,
         )
 
     async def _get_episode(self, episode_id: str | uuid.UUID) -> AgentEpisode:
@@ -187,3 +196,22 @@ def _as_uuid(value: str | uuid.UUID) -> uuid.UUID:
     if isinstance(value, uuid.UUID):
         return value
     return uuid.UUID(str(value))
+
+
+def checkpoint_to_view(checkpoint: LearningGraphCheckpoint) -> dict[str, Any]:
+    return {
+        "checkpoint_id": str(checkpoint.id),
+        "learner_id": str(checkpoint.learner_id),
+        "episode_id": str(checkpoint.episode_id),
+        "thread_id": checkpoint.thread_id,
+        "checkpoint_key": checkpoint.checkpoint_key,
+        "status": checkpoint.status,
+        "resume_from": checkpoint.resume_from,
+        "answer_required": checkpoint.status == "waiting_user",
+        "required_input_schema": checkpoint.required_input_schema,
+        "prompt_payload": checkpoint.prompt_payload,
+        "state_snapshot": checkpoint.state_snapshot,
+        "created_at": checkpoint.created_at,
+        "updated_at": checkpoint.updated_at,
+        "consumed_at": checkpoint.consumed_at,
+    }
