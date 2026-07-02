@@ -163,4 +163,58 @@ BUILTIN_SCENARIOS: dict[str, SimulationScenario] = {
             ),
         ],
     ),
+    "episode_runtime_knowledge_practice": SimulationScenario(
+        id="episode_runtime_knowledge_practice",
+        name="Episode runtime knowledge practice",
+        persona_id="grade7_low_vocab",
+        steps=[
+            SimulationStep(
+                name="create_learner",
+                action="create_learner",
+                assertions=[{"type": "exists", "path": "json.id"}],
+            ),
+            SimulationStep(
+                name="daily_plan",
+                action="daily_plan",
+                assertions=[
+                    {"type": "status_code", "path": "status_code", "equals": 200},
+                    {"type": "exists", "path": "recommendation_plan.tasks.0.task_spec"},
+                ],
+            ),
+            SimulationStep(
+                name="start_daily_lesson",
+                action="start_daily_lesson",
+                assertions=[
+                    {"type": "exists", "path": "daily_lesson.episode_id"},
+                    {"type": "exists", "path": "daily_lesson.task_spec"},
+                    {"type": "equals", "path": "daily_lesson.answer_required", "value": True},
+                ],
+            ),
+            SimulationStep(
+                name="submit_daily_lesson_answer",
+                action="submit_daily_lesson_answer",
+                payload={"answer": "Good morning!"},
+                assertions=[
+                    {"type": "equals", "path": "answer.verification_status", "value": "passed"},
+                    {"type": "exists", "path": "answer.mastery_update"},
+                ],
+            ),
+            SimulationStep(
+                name="fetch_episode_trace",
+                action="fetch_episode_trace",
+                assertions=[
+                    {"type": "equals", "path": "episode_trace.episode.status", "value": "completed"},
+                    {"type": "not_empty", "path": "episode_trace.events"},
+                    {"type": "not_empty", "path": "episode_trace.tool_calls"},
+                ],
+            ),
+            SimulationStep(
+                name="fetch_verification_report",
+                action="fetch_verification_report",
+                assertions=[
+                    {"type": "equals", "path": "verification_report.status", "value": "passed"},
+                ],
+            ),
+        ],
+    ),
 }

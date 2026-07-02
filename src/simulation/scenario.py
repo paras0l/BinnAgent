@@ -40,6 +40,7 @@ class SimulationReport:
     steps: list[SimulationStepResult]
     metrics: dict[str, float | int]
     failures: list[str]
+    runtime_metrics: dict[str, float | int] = field(default_factory=dict)
     run_id: str = field(default_factory=lambda: f"sim_{datetime.now(timezone.utc):%Y%m%d_%H%M%S}_{uuid.uuid4().hex[:8]}")
 
     def to_dict(self) -> dict[str, Any]:
@@ -59,6 +60,7 @@ class SimulationReport:
                 for step in self.steps
             ],
             "metrics": self.metrics,
+            "runtime_metrics": self.runtime_metrics,
             "failures": self.failures,
         }
 

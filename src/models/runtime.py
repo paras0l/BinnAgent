@@ -7,6 +7,7 @@ from sqlalchemy import (
     DateTime,
     Float,
     ForeignKey,
+    func,
     Integer,
     SmallInteger,
     String,
@@ -158,3 +159,87 @@ class ModelCallLog(UUIDPrimaryKeyMixin, TimestampMixin, Base):
 
     def __repr__(self) -> str:
         return f"<ModelCallLog {self.provider}/{self.model} run={self.run_id}>"
+
+
+class AgentEpisode(UUIDPrimaryKeyMixin, TimestampMixin, Base):
+    __tablename__ = "agent_episodes"
+
+    learner_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("learners.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    source: Mapped[str] = mapped_column(String(80), nullable=False, index=True)
+    entrypoint: Mapped[str] = mapped_column(String(120), nullable=False)
+    status: Mapped[str] = mapped_column(String(30), nullable=False, default="created", index=True)
+    task_spec: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
+    context_snapshot: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
+    memory_context_ids: Mapped[Optional[list]] = mapped_column(JSONB, nullable=True)
+    rag_chunk_ids: Mapped[Optional[list]] = mapped_column(JSONB, nullable=True)
+    tool_call_ids: Mapped[Optional[list]] = mapped_column(JSONB, nullable=True, default=list)
+    verification_report: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
+    failure_type: Mapped[Optional[str]] = mapped_column(String(80), nullable=True)
+    error_message: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    completed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    def __repr__(self) -> str:
+        return f"<AgentEpisode {self.status} learner={self.learner_id}>"
+
+
+class LearningEvent(UUIDPrimaryKeyMixin, Base):
+    __tablename__ = "learning_events"
+
+    episode_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("agent_episodes.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    learner_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("learners.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    event_type: Mapped[str] = mapped_column(String(80), nullable=False, index=True)
+    source_module: Mapped[str] = mapped_column(String(80), nullable=False)
+    target_type: Mapped[Optional[str]] = mapped_column(String(80), nullable=True)
+    target_id: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    payload: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
+    occurred_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False,
+    )
+
+    def __repr__(self) -> str:
+        return f"<LearningEvent {self.event_type} episode={self.episode_id}>"
+
+
+class ToolCallRecord(UUIDPrimaryKeyMixin, Base):
+    __tablename__ = "tool_call_records"
+
+    episode_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("agent_episodes.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    tool_name: Mapped[str] = mapped_column(String(120), nullable=False, index=True)
+    input_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    output_hash: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    latency_ms: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    status: Mapped[str] = mapped_column(String(30), nullable=False, default="success")
+    error: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    metadata_: Mapped[dict] = mapped_column("metadata", JSONB, nullable=False, default=dict)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False,
+    )
+
+    def __repr__(self) -> str:
+        return f"<ToolCallRecord {self.tool_name} episode={self.episode_id}>"

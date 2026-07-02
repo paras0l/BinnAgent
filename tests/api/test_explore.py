@@ -7,6 +7,7 @@ import pytest
 from src.api import deps
 from src.main import app
 from src.models.explore import ExploreFeaturePreference
+from src.models.runtime import AgentEpisode
 
 
 @pytest.fixture
@@ -109,3 +110,33 @@ class TestExplorePreferences:
         assert preference.is_favorite is False
         assert preference.priority == 10
         mock_session.add.assert_not_called()
+
+
+class TestExploreSkills:
+    @pytest.mark.asyncio
+    async def test_list_explore_skills_returns_task_entries(self, client):
+        response = await client.get("/api/explore/skills")
+
+        assert response.status_code == 200
+        skills = response.json()
+        skill_ids = {skill["skill_id"] for skill in skills}
+        assert {"vocabulary_practice", "writing_phrase_practice", "grammar_micro_lesson"}.issubset(skill_ids)
+        assert all(skill["task_type"] for skill in skills)
+        assert all(skill["required_tools"] for skill in skills)
+
+    @pytest.mark.asyncio
+    async def test_start_vocabulary_practice_creates_episode(self, client, mock_session):
+        learner_id = uuid.uuid4()
+        mock_session.execute = AsyncMock(return_value=_one(learner_id))
+
+        response = await client.post(
+            "/api/explore/skills/vocabulary_practice/start",
+            json={"learner_id": str(learner_id)},
+        )
+
+        assert response.status_code == 200
+        payload = response.json()
+        assert payload["episode_id"]
+        assert payload["status"] == "not_implemented"
+        assert payload["task_spec"]["task_type"] == "practice_vocabulary"
+        assert any(isinstance(item, AgentEpisode) for item in mock_session.added_objects)

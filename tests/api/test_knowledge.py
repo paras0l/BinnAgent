@@ -606,7 +606,7 @@ async def test_submit_exercise_attempt_records_result(client, knowledge_session)
         explanation=point.summary,
     )
     question.id = uuid.uuid4()
-    knowledge_session.execute = AsyncMock(side_effect=[_one(learner_id), _one(question)])
+    knowledge_session.execute = AsyncMock(side_effect=[_one(learner_id), _one(question), _one(None)])
 
     response = await client.post(
         f"/api/learners/{learner_id}/knowledge-base/exercises/{question.id}/attempts",
@@ -616,11 +616,15 @@ async def test_submit_exercise_attempt_records_result(client, knowledge_session)
     assert response.status_code == 200
     assert response.json()["correct"] is True
     assert response.json()["score"] == 1.0
+    assert response.json()["episode_id"]
+    assert response.json()["verification_status"] == "passed"
+    assert response.json()["runtime_events_count"] >= 5
     attempt = next(item for item in knowledge_session.added_objects if isinstance(item, ExerciseAttempt))
     assert attempt.exercise_id == str(question.id)
     assert attempt.target_type == "curriculum_node"
     assert attempt.target_id == str(question.curriculum_node_id)
     assert attempt.result == "correct"
+    assert any(item.__class__.__name__ == "AgentEpisode" for item in knowledge_session.added_objects)
 
 
 @pytest.mark.asyncio
@@ -649,7 +653,7 @@ async def test_submit_exercise_attempt_returns_feedback_and_review_signal(client
         },
     )
     question.id = uuid.uuid4()
-    knowledge_session.execute = AsyncMock(side_effect=[_one(learner_id), _one(question)])
+    knowledge_session.execute = AsyncMock(side_effect=[_one(learner_id), _one(question), _one(None)])
 
     response = await client.post(
         f"/api/learners/{learner_id}/knowledge-base/exercises/{question.id}/attempts",
@@ -662,6 +666,8 @@ async def test_submit_exercise_attempt_returns_feedback_and_review_signal(client
     assert payload["can_retry"] is True
     assert payload["hint"] == "Use the morning greeting."
     assert payload["next_review_signal"] == "urgent"
+    assert payload["episode_id"]
+    assert payload["verification_status"] == "passed"
     event = next(
         item for item in knowledge_session.added_objects if isinstance(item, KnowledgeLearningEvent)
     )

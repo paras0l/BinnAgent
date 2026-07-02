@@ -87,6 +87,7 @@ npm run test
 - [11. Vocabulary Learning](docs/architecture/11-vocabulary-learning.md)
 - [12. Textbook RAG, Langfuse & Exercises](docs/architecture/12-rag-observability-exercises.md)
 - [13. Current Scope and Status](docs/architecture/13-current-scope-and-status.md)
+- [Agent Runtime / Harness Interview Brief](docs/interview/agent-runtime-harness.md)
 - [Memory Architecture v2](docs/memory-architecture-v2.md)
 
 ## 当前实现状态
@@ -99,8 +100,9 @@ npm run test
 | Writing Phrasebook | 基础版已实现 |
 | Frontend UI/UX 统一标准 | Issue #20 首轮整改已落地，主导航固定为 AI对话 / 探索 / 学习中心 / 记忆，基础组件和 0-12 页面口径已统一；KnowledgeBase 已升级为教材解析校对工作台 |
 | Prompt Registry / Schema-first Import / Parser Quality | 基础治理已实现 |
-| LangGraph daily lesson | 基础线性实现 |
-| Learner Simulation Agent | Deterministic MVP 已实现 |
+| Agent Runtime / Harness | 第一阶段已实现，TaskSpec、AgentEpisode、LearningEvent、EvidenceRef、ToolCallRecord、VerificationReport、MasteryEngine、RecommendationEngine 和 Episode Debug 页面已接入 |
+| LangGraph daily lesson | 基础线性实现，Daily Lesson 已新增 RecommendationEngine + LearningOrchestrator 的轻量 start/answer API |
+| Learner Simulation Agent | Deterministic MVP 已实现，新增 episode runtime knowledge practice 回归场景和 runtime_metrics |
 | CET reading / writing / weekly report | 设计中 |
 | CI backend lint/test + frontend lint/build | 已实现 |
 

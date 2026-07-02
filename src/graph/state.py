@@ -22,3 +22,10 @@ class LearningState(TypedDict, total=False):
     next_tasks: list[dict[str, Any]]
     emotion_signal: dict[str, Any] | None
     model_policy: dict[str, Any] | None
+    recommendation_plan: dict[str, Any] | None
+    selected_task: dict[str, Any] | None
+    episode_id: str | None
+    answer_required: bool
+    current_task_id: str | None
+    resume_from: str | None
+    checkpoint_status: str | None

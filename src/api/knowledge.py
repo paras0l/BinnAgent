@@ -13,11 +13,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.api.deps import get_db_session
 from src.knowledge.exercise_grader import answer_to_text, grade_exercise_answer
 from src.config import settings
+from src.evidence.resolver import evidence_from_attempt, evidence_from_memory_event
+from src.evidence.types import EvidenceRef
 from src.exercises import ExerciseAttemptService
 from src.exercises.item_mapper import exercise_question_to_item
 from src.knowledge.exercises import ensure_unit_exercises
 from src.knowledge.processor import process_uploaded_textbook
 from src.knowledge.rag import retrieve_chunks
+from src.mastery.engine import MasteryEngine
+from src.mastery.types import AttemptSignal
 from src.memory.schemas import MemoryEventInput
 from src.memory.explainer import MemoryExplainer
 from src.memory.retriever import MemoryRetriever
@@ -34,6 +38,11 @@ from src.models.learner import Learner
 from src.models.session import LearningSession, LearningTask
 from src.models.vocabulary import ReviewSchedule, VocabularyItem
 from src.providers.router import router as model_router
+from src.runtime.episode import EpisodeRuntime
+from src.runtime.hashing import stable_json_hash
+from src.runtime.schemas import EpisodeTraceView, episode_to_view, event_to_view, tool_call_to_view
+from src.runtime.task_spec import SuccessCriteria, TaskSpec, TaskTarget, VerificationPolicy
+from src.verification.report import verify_knowledge_exercise_episode
 from src.vocabulary.learning import canonical_vocabulary_key, enroll_unit_vocabulary
 
 router = APIRouter(tags=["knowledge-base"])
@@ -115,6 +124,12 @@ class ExerciseAnswerResponse(BaseModel):
     error_type: str | None = None
     next_review_signal: str
     rubric: dict[str, Any]
+    episode_id: str | None = None
+    episode_trace_url: str | None = None
+    verification_status: str | None = None
+    runtime_events_count: int | None = None
+    verification_report: dict[str, Any] | None = None
+    mastery_update: dict[str, Any] | None = None
 
 
 class KnowledgeReviewRequest(BaseModel):
@@ -1069,6 +1084,146 @@ def _exercise_question_payload(question: ExerciseQuestion, *, target_label: str)
     }
 
 
+def _task_spec_for_exercise(question: ExerciseQuestion) -> TaskSpec:
+    target_type = "knowledge_point" if question.knowledge_point_id else "curriculum_node"
+    target_id = question.knowledge_point_id or question.curriculum_node_id
+    return TaskSpec(
+        task_id=f"knowledge-exercise:{question.id}",
+        task_type="practice_knowledge_point",
+        source="textbook_guided",
+        objective=f"完成教材练习：{question.stem[:80]}",
+        target=TaskTarget(
+            target_type=target_type,
+            target_id=str(target_id),
+            label=question.stem[:80],
+            metadata={
+                "question_id": str(question.id),
+                "question_type": question.question_type,
+                "curriculum_node_id": str(question.curriculum_node_id),
+            },
+        ),
+        difficulty=str(question.difficulty),
+        expected_output={"answer": "learner_submitted_answer", "grading_result": "score"},
+        allowed_tools=[
+            "exercise.grade",
+            "mastery.update",
+            "memory.write",
+            "review.schedule",
+            "verification.verify_episode",
+        ],
+        success_criteria=SuccessCriteria(min_accuracy=1.0, requires_explanation=True),
+        verification_policy=VerificationPolicy(
+            required_checks=[
+                "exercise_attempt_saved",
+                "grading_result_exists",
+                "memory_event_written",
+                "mastery_update_valid",
+            ],
+            require_evidence=True,
+        ),
+        metadata={
+            "source_id": str(question.source_id),
+            "question_id": str(question.id),
+            "question_type": question.question_type,
+        },
+    )
+
+
+async def _record_runtime_tool_call(
+    runtime: EpisodeRuntime,
+    episode,
+    tool_calls: list,
+    *,
+    tool_name: str,
+    input_payload: dict[str, Any],
+    output_payload: dict[str, Any] | None = None,
+    status: str = "success",
+    error: str | None = None,
+    metadata: dict[str, Any] | None = None,
+) -> None:
+    tool_calls.append(
+        await runtime.record_tool_call(
+            episode_id=episode.id,
+            episode=episode,
+            tool_name=tool_name,
+            input_hash=stable_json_hash(input_payload),
+            output_hash=stable_json_hash(output_payload) if output_payload is not None else None,
+            status=status,
+            error=error,
+            metadata=metadata,
+        )
+    )
+
+
+async def _append_runtime_event(
+    runtime: EpisodeRuntime,
+    events: list,
+    *,
+    episode,
+    learner_id: uuid.UUID,
+    event_type: str,
+    target_type: str | None,
+    target_id: str | None,
+    payload: dict[str, Any],
+) -> None:
+    events.append(
+        await runtime.append_event(
+            episode_id=episode.id,
+            learner_id=learner_id,
+            event_type=event_type,
+            source_module="knowledge",
+            target_type=target_type,
+            target_id=target_id,
+            payload=payload,
+        )
+    )
+
+
+async def _update_exercise_mastery_and_review(
+    db: AsyncSession,
+    *,
+    learner_id: uuid.UUID,
+    question: ExerciseQuestion,
+    correct: bool,
+    grading: dict[str, Any],
+    body: ExerciseAnswerRequest,
+    attempt_id: uuid.UUID,
+    evidence_refs: list[dict[str, Any]],
+) -> tuple[dict[str, Any] | None, ReviewSchedule | None]:
+    if question.knowledge_point_id is None:
+        return None, None
+    mastery_result = await MasteryEngine(db).update_from_attempt(
+        AttemptSignal(
+            learner_id=str(learner_id),
+            target_type="knowledge_point",
+            target_id=str(question.knowledge_point_id),
+            correct=correct,
+            score=grading.get("score"),
+            error_type=grading.get("error_type"),
+            hint_count=body.hint_used,
+            retry_count=body.attempt_index,
+            response_time_ms=body.response_time_ms,
+            source="knowledge.exercise_attempt",
+            evidence_refs=[EvidenceRef(**ref) for ref in evidence_refs],
+            metadata={"attempt_id": str(attempt_id), "question_id": str(question.id)},
+        )
+    )
+    review = ReviewSchedule(
+        learner_id=learner_id,
+        item_type="knowledge",
+        item_id=question.knowledge_point_id,
+        scheduled_at=mastery_result.next_review_at or datetime.now(timezone.utc),
+        result="correct" if correct else "incorrect",
+        response_time_ms=body.response_time_ms,
+        confidence_before=mastery_result.previous_score,
+        confidence_after=mastery_result.new_score,
+        recommended_next_drill="textbook_review",
+    )
+    db.add(review)
+    await db.flush()
+    return (mastery_result.model_dump(mode="json"), review)
+
+
 @router.post(
     "/api/learners/{learner_id}/knowledge-base/exercises/{question_id}/attempts",
     response_model=ExerciseAnswerResponse,
@@ -1092,78 +1247,317 @@ async def submit_exercise_attempt(
     submitted_answer = answer_to_text(body.answer)
     if not submitted_answer:
         raise HTTPException(status_code=422, detail="Answer cannot be empty")
-    grading = grade_exercise_answer(question, body.answer, attempt_index=body.attempt_index)
-    correct = bool(grading["correct"])
-    stored_answer = body.answer if isinstance(body.answer, str) else json.dumps(body.answer, ensure_ascii=False)
-    await ExerciseAttemptService(db).save_knowledge_question_attempt(
+    runtime = EpisodeRuntime(db)
+    runtime_events = []
+    tool_calls = []
+    task_spec = _task_spec_for_exercise(question)
+    episode = await runtime.create_episode(
         learner_id=learner_id,
-        question=question,
-        answer=stored_answer.strip(),
-        correct=correct,
-        session_id=body.session_id,
-        response_time_ms=body.response_time_ms,
-        metadata={
-            "score": grading["score"],
-            "passed": grading["passed"],
-            "error_type": grading["error_type"],
-            "hint_used": body.hint_used,
-            "attempt_index": body.attempt_index,
-            "next_review_signal": grading["next_review_signal"],
-        },
-        source_context={
-            "source_id": str(question.source_id),
+        source="textbook_guided",
+        entrypoint="knowledge.exercise_attempt",
+        task_spec=task_spec,
+        status="running",
+        context_snapshot={
+            "question_id": str(question.id),
+            "question_type": question.question_type,
+            "session_id": str(body.session_id) if body.session_id else None,
         },
     )
-    if question.knowledge_point_id:
-        now = datetime.now(timezone.utc)
-        db.add(
-            KnowledgeLearningEvent(
-                learner_id=learner_id,
-                session_id=body.session_id,
-                event_type="exercise_answered",
-                knowledge_point_id=question.knowledge_point_id,
-                payload={
-                    "question_id": str(question.id),
-                    "question_type": question.question_type,
+    target_type = task_spec.target.target_type
+    target_id = task_spec.target.target_id
+
+    try:
+        await _append_runtime_event(
+            runtime,
+            runtime_events,
+            episode=episode,
+            learner_id=learner_id,
+            event_type="episode_started",
+            target_type=target_type,
+            target_id=target_id,
+            payload={"task_id": task_spec.task_id, "question_id": str(question.id)},
+        )
+        grading = grade_exercise_answer(question, body.answer, attempt_index=body.attempt_index)
+        await _record_runtime_tool_call(
+            runtime,
+            episode,
+            tool_calls,
+            tool_name="exercise.grade",
+            input_payload={
+                "question_id": str(question.id),
+                "answer": body.answer,
+                "attempt_index": body.attempt_index,
+            },
+            output_payload=grading,
+        )
+        correct = bool(grading["correct"])
+        stored_answer = (
+            body.answer if isinstance(body.answer, str) else json.dumps(body.answer, ensure_ascii=False)
+        )
+        attempt = await ExerciseAttemptService(db).save_knowledge_question_attempt(
+            learner_id=learner_id,
+            question=question,
+            answer=stored_answer.strip(),
+            correct=correct,
+            session_id=body.session_id,
+            response_time_ms=body.response_time_ms,
+            metadata={
+                "score": grading["score"],
+                "passed": grading["passed"],
+                "error_type": grading["error_type"],
+                "hint_used": body.hint_used,
+                "attempt_index": body.attempt_index,
+                "next_review_signal": grading["next_review_signal"],
+                "episode_id": str(episode.id),
+            },
+            source_context={
+                "source_id": str(question.source_id),
+                "episode_id": str(episode.id),
+            },
+        )
+        evidence_refs = [
+            evidence_from_attempt(attempt, reason="submitted exercise answer", used_by="runtime").model_dump(
+                mode="json"
+            )
+        ]
+        if question.knowledge_point_id:
+            evidence_refs.append(
+                EvidenceRef(
+                    evidence_type="knowledge_point",
+                    evidence_id=str(question.knowledge_point_id),
+                    reason="exercise target",
+                    used_by="runtime",
+                ).model_dump(mode="json")
+            )
+        await _append_runtime_event(
+            runtime,
+            runtime_events,
+            episode=episode,
+            learner_id=learner_id,
+            event_type="exercise_answered",
+            target_type=target_type,
+            target_id=target_id,
+            payload={
+                "question_id": str(question.id),
+                "attempt_id": str(attempt.id),
+                "answer": submitted_answer,
+                "hint_used": body.hint_used,
+                "attempt_index": body.attempt_index,
+                "response_time_ms": body.response_time_ms,
+                "evidence_refs": evidence_refs,
+            },
+        )
+        await _append_runtime_event(
+            runtime,
+            runtime_events,
+            episode=episode,
+            learner_id=learner_id,
+            event_type="exercise_graded",
+            target_type=target_type,
+            target_id=target_id,
+            payload={
+                "question_id": str(question.id),
+                "attempt_id": str(attempt.id),
+                "correct": correct,
+                "score": grading["score"],
+                "passed": grading["passed"],
+                "error_type": grading["error_type"],
+                "next_review_signal": grading["next_review_signal"],
+                "evidence_refs": evidence_refs,
+            },
+        )
+
+        mastery_update, review_schedule = await _update_exercise_mastery_and_review(
+            db,
+            learner_id=learner_id,
+            question=question,
+            correct=correct,
+            grading=grading,
+            body=body,
+            attempt_id=attempt.id,
+            evidence_refs=evidence_refs,
+        )
+        if mastery_update is not None:
+            await _record_runtime_tool_call(
+                runtime,
+                episode,
+                tool_calls,
+                tool_name="mastery.update",
+                input_payload={
+                    "attempt_id": str(attempt.id),
                     "correct": correct,
                     "score": grading["score"],
-                    "passed": grading["passed"],
-                    "error_type": grading["error_type"],
-                    "hint_used": body.hint_used,
-                    "attempt_index": body.attempt_index,
-                    "response_time_ms": body.response_time_ms,
-                    "next_review_signal": grading["next_review_signal"],
+                    "hint_count": body.hint_used,
                 },
-                occurred_at=now,
+                output_payload=mastery_update,
             )
-        )
-        await MemoryWriter(db).record_event(
-            MemoryEventInput(
+            await _append_runtime_event(
+                runtime,
+                runtime_events,
+                episode=episode,
                 learner_id=learner_id,
-                event_type="knowledge_exercise_answered",
-                skill="knowledge",
-                subskill=question.question_type,
-                source_type="exercise_attempt",
-                source_id=str(question.id),
-                session_id=body.session_id,
-                payload={
-                    "question_id": str(question.id),
+                event_type="mastery_updated",
+                target_type="knowledge_point",
+                target_id=str(question.knowledge_point_id),
+                payload=mastery_update,
+            )
+        if review_schedule is not None:
+            await _record_runtime_tool_call(
+                runtime,
+                episode,
+                tool_calls,
+                tool_name="review.schedule",
+                input_payload={
+                    "attempt_id": str(attempt.id),
                     "knowledge_point_id": str(question.knowledge_point_id),
-                    "question_type": question.question_type,
-                    "correct": correct,
-                    "score": grading["score"],
-                    "passed": grading["passed"],
-                    "error_type": grading["error_type"],
-                    "hint_used": body.hint_used,
-                    "attempt_index": body.attempt_index,
-                    "response_time_ms": body.response_time_ms,
-                    "next_review_signal": grading["next_review_signal"],
                 },
-                confidence=0.95,
-                occurred_at=now,
+                output_payload={
+                    "review_schedule_id": str(review_schedule.id),
+                    "scheduled_at": review_schedule.scheduled_at.isoformat(),
+                },
             )
+            await _append_runtime_event(
+                runtime,
+                runtime_events,
+                episode=episode,
+                learner_id=learner_id,
+                event_type="review_scheduled",
+                target_type="knowledge_point",
+                target_id=str(question.knowledge_point_id),
+                payload={
+                    "review_schedule_id": str(review_schedule.id),
+                    "scheduled_at": review_schedule.scheduled_at.isoformat(),
+                    "evidence_refs": evidence_refs,
+                },
+            )
+
+        if question.knowledge_point_id:
+            now = datetime.now(timezone.utc)
+            db.add(
+                KnowledgeLearningEvent(
+                    learner_id=learner_id,
+                    session_id=body.session_id,
+                    event_type="exercise_answered",
+                    knowledge_point_id=question.knowledge_point_id,
+                    payload={
+                        "question_id": str(question.id),
+                        "attempt_id": str(attempt.id),
+                        "episode_id": str(episode.id),
+                        "question_type": question.question_type,
+                        "correct": correct,
+                        "score": grading["score"],
+                        "passed": grading["passed"],
+                        "error_type": grading["error_type"],
+                        "hint_used": body.hint_used,
+                        "attempt_index": body.attempt_index,
+                        "response_time_ms": body.response_time_ms,
+                        "next_review_signal": grading["next_review_signal"],
+                    },
+                    occurred_at=now,
+                )
+            )
+            memory_event = await MemoryWriter(db).record_event(
+                MemoryEventInput(
+                    learner_id=learner_id,
+                    event_type="knowledge_exercise_answered",
+                    skill="knowledge",
+                    subskill=question.question_type,
+                    source_type="exercise_attempt",
+                    source_id=str(attempt.id),
+                    session_id=body.session_id,
+                    payload={
+                        "question_id": str(question.id),
+                        "attempt_id": str(attempt.id),
+                        "episode_id": str(episode.id),
+                        "knowledge_point_id": str(question.knowledge_point_id),
+                        "question_type": question.question_type,
+                        "correct": correct,
+                        "score": grading["score"],
+                        "passed": grading["passed"],
+                        "error_type": grading["error_type"],
+                        "hint_used": body.hint_used,
+                        "attempt_index": body.attempt_index,
+                        "response_time_ms": body.response_time_ms,
+                        "next_review_signal": grading["next_review_signal"],
+                        "evidence_refs": evidence_refs,
+                    },
+                    confidence=0.95,
+                    occurred_at=now,
+                )
+            )
+            memory_refs = [
+                *evidence_refs,
+                evidence_from_memory_event(
+                    memory_event,
+                    reason="memory evidence written for exercise",
+                    used_by="runtime",
+                ).model_dump(mode="json"),
+            ]
+            await _record_runtime_tool_call(
+                runtime,
+                episode,
+                tool_calls,
+                tool_name="memory.write",
+                input_payload={"attempt_id": str(attempt.id), "event_type": "knowledge_exercise_answered"},
+                output_payload={"memory_event_id": str(memory_event.id)},
+            )
+            await _append_runtime_event(
+                runtime,
+                runtime_events,
+                episode=episode,
+                learner_id=learner_id,
+                event_type="memory_written",
+                target_type="knowledge_point",
+                target_id=str(question.knowledge_point_id),
+                payload={
+                    "memory_event_id": str(memory_event.id),
+                    "attempt_id": str(attempt.id),
+                    "evidence_refs": memory_refs,
+                },
+            )
+
+        await _append_runtime_event(
+            runtime,
+            runtime_events,
+            episode=episode,
+            learner_id=learner_id,
+            event_type="episode_completed",
+            target_type=target_type,
+            target_id=target_id,
+            payload={"task_id": task_spec.task_id},
         )
-    await db.flush()
+        trace = EpisodeTraceView(
+            episode=episode_to_view(episode),
+            events=[event_to_view(event) for event in runtime_events],
+            tool_calls=[tool_call_to_view(tool_call) for tool_call in tool_calls],
+        )
+        verification_report = await verify_knowledge_exercise_episode(
+            db,
+            str(episode.id),
+            trace=trace,
+        )
+        await _record_runtime_tool_call(
+            runtime,
+            episode,
+            tool_calls,
+            tool_name="verification.verify_episode",
+            input_payload={"episode_id": str(episode.id)},
+            output_payload=verification_report,
+        )
+        await runtime.complete_episode(
+            episode.id,
+            episode=episode,
+            verification_report=verification_report,
+        )
+        await db.flush()
+    except Exception as exc:
+        await runtime.fail_episode(
+            episode.id,
+            episode=episode,
+            failure_type=exc.__class__.__name__,
+            error_message=str(exc)[:500],
+        )
+        raise
     return ExerciseAnswerResponse(
         question_id=question.id,
         correct=correct,
@@ -1177,4 +1571,10 @@ async def submit_exercise_attempt(
         error_type=grading["error_type"],
         next_review_signal=grading["next_review_signal"],
         rubric=grading["rubric"],
+        episode_id=str(episode.id),
+        episode_trace_url=f"/api/runtime/episodes/{episode.id}",
+        verification_status=verification_report.get("status"),
+        runtime_events_count=len(runtime_events),
+        verification_report=verification_report,
+        mastery_update=mastery_update,
     )

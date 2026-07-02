@@ -39,6 +39,14 @@ class ScenarioRunner:
         self.api_successes = 0
         self.agent_triggers = 0
         self.memory_writes = 0
+        self.runtime_metrics: dict[str, float | int] = {
+            "episode_count": 0,
+            "completed_episode_count": 0,
+            "failed_episode_count": 0,
+            "verification_pass_count": 0,
+            "verification_fail_count": 0,
+            "avg_tool_latency_ms": 0,
+        }
 
     async def run(
         self,
@@ -64,6 +72,7 @@ class ScenarioRunner:
             api_successes=self.api_successes,
             agent_triggers=self.agent_triggers,
             memory_writes=self.memory_writes,
+            runtime_metrics=self.runtime_metrics,
         )
 
     async def _run_step(
@@ -110,6 +119,16 @@ class ScenarioRunner:
             return await self._add_vocabulary(step, context)
         if step.action == "vocabulary_practice":
             return await self._vocabulary_practice(step, context, learner_agent)
+        if step.action == "daily_plan":
+            return await self._daily_plan(step, context)
+        if step.action == "start_daily_lesson":
+            return await self._start_daily_lesson(step, context)
+        if step.action == "submit_daily_lesson_answer":
+            return await self._submit_daily_lesson_answer(step, context, learner_agent)
+        if step.action == "fetch_episode_trace":
+            return await self._fetch_episode_trace(context)
+        if step.action == "fetch_verification_report":
+            return await self._fetch_verification_report(context)
         raise ValueError(f"Unsupported simulation action: {step.action}")
 
     async def _create_learner(self, context: dict[str, Any]) -> dict[str, Any]:
@@ -256,6 +275,93 @@ class ScenarioRunner:
             "detail": detail,
         }
 
+    async def _daily_plan(self, step: SimulationStep, context: dict[str, Any]) -> dict[str, Any]:
+        learner_id = _require_context(context, "learner_id")
+        params = {"learner_id": learner_id}
+        if step.payload.get("current_curriculum_node_id"):
+            params["current_curriculum_node_id"] = step.payload["current_curriculum_node_id"]
+        response = await self._request("GET", "/api/recommendations/daily-plan", params=params)
+        payload = _json_or_empty(response)
+        context["recommendation_plan"] = payload
+        tasks = payload.get("tasks") if isinstance(payload, dict) else []
+        if tasks:
+            context["selected_task"] = tasks[0].get("task_spec")
+        return {"status_code": response.status_code, "json": payload, "recommendation_plan": payload}
+
+    async def _start_daily_lesson(self, step: SimulationStep, context: dict[str, Any]) -> dict[str, Any]:
+        learner_id = _require_context(context, "learner_id")
+        body = dict(step.payload)
+        response = await self._request(
+            "POST",
+            f"/api/learners/{learner_id}/daily-lessons/start",
+            json=body,
+        )
+        payload = _json_or_empty(response)
+        if payload.get("episode_id"):
+            context["episode_id"] = payload["episode_id"]
+        context["daily_lesson_start"] = payload
+        return {"status_code": response.status_code, "json": payload, "daily_lesson": payload}
+
+    async def _submit_daily_lesson_answer(
+        self,
+        step: SimulationStep,
+        context: dict[str, Any],
+        learner_agent: SimulatedLearnerAgent,
+    ) -> dict[str, Any]:
+        learner_id = _require_context(context, "learner_id")
+        episode_id = _require_context(context, "episode_id")
+        answer = step.payload.get("answer")
+        if answer is None:
+            options = ((context.get("daily_lesson_start") or {}).get("initial_payload") or {}).get("options") or []
+            answer = options[0] if options else learner_agent.answer_vocabulary("morning")
+        response = await self._request(
+            "POST",
+            f"/api/learners/{learner_id}/daily-lessons/{episode_id}/answer",
+            json={"answer": answer, "metadata": step.payload.get("metadata", {})},
+        )
+        payload = _json_or_empty(response)
+        context["daily_lesson_answer"] = payload
+        return {"status_code": response.status_code, "json": payload, "answer": payload}
+
+    async def _fetch_episode_trace(self, context: dict[str, Any]) -> dict[str, Any]:
+        episode_id = _require_context(context, "episode_id")
+        response = await self._request("GET", f"/api/runtime/episodes/{episode_id}")
+        payload = _json_or_empty(response)
+        context["episode_trace"] = payload
+        self._update_runtime_metrics_from_trace(payload)
+        return {"status_code": response.status_code, "json": payload, "episode_trace": payload}
+
+    async def _fetch_verification_report(self, context: dict[str, Any]) -> dict[str, Any]:
+        episode_id = _require_context(context, "episode_id")
+        response = await self._request("GET", f"/api/runtime/episodes/{episode_id}/verification")
+        payload = _json_or_empty(response)
+        context["verification_report"] = payload
+        status = payload.get("status") if isinstance(payload, dict) else None
+        if status == "passed":
+            self.runtime_metrics["verification_pass_count"] += 1
+        elif status == "failed":
+            self.runtime_metrics["verification_fail_count"] += 1
+        return {"status_code": response.status_code, "json": payload, "verification_report": payload}
+
+    def _update_runtime_metrics_from_trace(self, payload: Any) -> None:
+        if not isinstance(payload, dict):
+            return
+        episode = payload.get("episode") or {}
+        status = episode.get("status")
+        self.runtime_metrics["episode_count"] += 1
+        if status == "completed":
+            self.runtime_metrics["completed_episode_count"] += 1
+        elif status == "failed":
+            self.runtime_metrics["failed_episode_count"] += 1
+        tool_calls = payload.get("tool_calls") or []
+        latencies = [
+            item.get("latency_ms")
+            for item in tool_calls
+            if isinstance(item, dict) and isinstance(item.get("latency_ms"), int | float)
+        ]
+        if latencies:
+            self.runtime_metrics["avg_tool_latency_ms"] = sum(latencies) / len(latencies)
+
     async def _request(self, method: str, url: str, **kwargs: Any) -> httpx.Response:
         self.api_calls += 1
         response = await self.client.request(method, url, **kwargs)
@@ -313,9 +419,13 @@ def _evidence_for_output(output: dict[str, Any]) -> list[str]:
     evidence: list[str] = []
     json_payload = output.get("json")
     if isinstance(json_payload, dict):
-        for key in ("id", "thread_id", "message_id", "session_id", "attempt_id"):
+        for key in ("id", "thread_id", "message_id", "session_id", "attempt_id", "episode_id"):
             if json_payload.get(key):
                 evidence.append(f"{key}:{json_payload[key]}")
+    if "episode_trace" in output:
+        evidence.append("episode_trace:fetched")
+    if "verification_report" in output:
+        evidence.append("verification_report:fetched")
     if "graph" in output:
         evidence.append("daily_graph:completed")
     if "attempt" in output and isinstance(output["attempt"], dict):

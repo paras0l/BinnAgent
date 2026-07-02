@@ -54,6 +54,18 @@ interface ExploreFeature {
   pronunciationWorkspace?: PronunciationWorkspace
 }
 
+interface ExploreSkillStartResponse {
+  episode_id: string
+  task_spec: {
+    task_id: string
+    task_type: string
+  } | null
+  status: string
+  answer_required: boolean
+  prompt?: string | null
+  initial_payload: Record<string, unknown>
+}
+
 const CATEGORIES: Array<{ id: FeatureCategory; label: string }> = [
   { id: 'all', label: '全部' },
   { id: 'listening', label: '听力' },
@@ -273,6 +285,19 @@ const FEATURES: ExploreFeature[] = [
   },
 ]
 
+const FEATURE_SKILL_MAP: Record<string, string> = {
+  'daily-lesson': 'knowledge_practice',
+  'vocab-review': 'vocabulary_practice',
+  'vocabulary-detail': 'vocabulary_practice',
+  'word-roots-affixes': 'vocabulary_practice',
+  'add-vocabulary': 'vocabulary_practice',
+  'vocabulary-manager': 'vocabulary_practice',
+  'essay-review': 'writing_phrase_practice',
+  'writing-phrasebook': 'writing_phrase_practice',
+  'grammar-explain': 'grammar_micro_lesson',
+  'translation-practice': 'writing_phrase_practice',
+}
+
 export function ExplorePage({
   learner,
   isLocked = false,
@@ -291,6 +316,7 @@ export function ExplorePage({
   const [isReadingWorkshopOpen, setIsReadingWorkshopOpen] = useState(false)
   const [isWritingPhrasebookOpen, setIsWritingPhrasebookOpen] = useState(false)
   const [isWordPartsOpen, setIsWordPartsOpen] = useState(false)
+  const [launchingFeatureId, setLaunchingFeatureId] = useState<string | null>(null)
 
   const loadPreferences = useCallback(async () => {
     setIsLoading(true)
@@ -396,6 +422,16 @@ export function ExplorePage({
       return
     }
 
+    const startedRuntime = await startExploreRuntime(feature)
+    if (startedRuntime?.episode_id) {
+      const url = new URL(window.location.href)
+      url.hash = `episode_id=${startedRuntime.episode_id}`
+      window.history.replaceState(null, '', url)
+      showToast(`已创建 AgentEpisode：${startedRuntime.episode_id.slice(0, 8)}...`, {
+        variant: startedRuntime.status === 'not_implemented' ? 'warning' : 'success',
+      })
+    }
+
     try {
       await updatePreference(feature, { mark_used: true })
     } catch (err) {
@@ -448,6 +484,34 @@ export function ExplorePage({
     if (feature.action === 'session') {
       onDraftPrompt('开始今日课程。请根据我的学习记录安排一次适合 CET 的综合练习。')
       onTabChange('chat')
+    }
+  }
+
+  const startExploreRuntime = async (feature: ExploreFeature): Promise<ExploreSkillStartResponse | null> => {
+    const skillId = FEATURE_SKILL_MAP[feature.id]
+    if (!skillId) return null
+    setLaunchingFeatureId(feature.id)
+    try {
+      const response = await fetch(`/api/explore/skills/${skillId}/start`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          learner_id: learner.id,
+          metadata: {
+            feature_id: feature.id,
+            feature_title: feature.title,
+            category: feature.category,
+          },
+        }),
+      })
+      if (!response.ok) throw new Error('Explore skill start failed')
+      return await response.json() as ExploreSkillStartResponse
+    } catch (err) {
+      console.error('Explore skill runtime start error:', err)
+      showToast('Runtime episode 创建失败，已继续打开原功能入口。', { variant: 'warning' })
+      return null
+    } finally {
+      setLaunchingFeatureId(null)
     }
   }
 
@@ -522,7 +586,7 @@ export function ExplorePage({
               reason={feature.whenToUse}
               evidence={[feature.category === 'vocabulary' ? '词汇复习是学习中心的高频任务' : feature.category === 'writing' ? '写作表达适合沉淀成可练习资产' : '语法微知识点适合短时间集中学透']}
               outcome={feature.outcome}
-              action={<Button variant="secondary" onClick={() => void handleLaunch(feature)} disabled={isLocked}>进入工具</Button>}
+              action={<Button variant="secondary" onClick={() => void handleLaunch(feature)} disabled={isLocked || launchingFeatureId === feature.id}>进入工具</Button>}
             />
           ))}
         </div>
@@ -539,6 +603,7 @@ export function ExplorePage({
                 isFavorite
                 isLoading={isLoading}
                 isLocked={isLocked}
+                isLaunching={launchingFeatureId === feature.id}
                 onLaunch={() => void handleLaunch(feature)}
                 onToggleFavorite={() => void handleToggleFavorite(feature)}
               />
@@ -557,6 +622,7 @@ export function ExplorePage({
               isFavorite={Boolean(preferenceMap.get(feature.id)?.is_favorite)}
               isLoading={isLoading}
               isLocked={isLocked}
+              isLaunching={launchingFeatureId === feature.id}
               onLaunch={() => void handleLaunch(feature)}
               onToggleFavorite={() => void handleToggleFavorite(feature)}
             />
@@ -573,6 +639,7 @@ function FeatureCard({
   isFavorite,
   isLoading,
   isLocked,
+  isLaunching,
   onLaunch,
   onToggleFavorite,
 }: {
@@ -580,6 +647,7 @@ function FeatureCard({
   isFavorite: boolean
   isLoading: boolean
   isLocked: boolean
+  isLaunching: boolean
   onLaunch: () => void
   onToggleFavorite: () => void
 }) {
@@ -625,11 +693,11 @@ function FeatureCard({
         </span>
         <Button
           onClick={onLaunch}
-          disabled={isLocked}
+          disabled={isLocked || isLaunching}
           variant={isTodo ? 'secondary' : 'primary'}
           title={isLocked ? '回答生成中，请先等待完成或取消' : isTodo ? '查看说明' : '开始'}
         >
-          {isTodo ? '查看说明' : '开始'}
+          {isLaunching ? '启动中' : isTodo ? '查看说明' : '开始'}
         </Button>
       </div>
     </article>

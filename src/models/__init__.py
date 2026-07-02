@@ -26,11 +26,14 @@ from src.models.memory import (
 from src.models.reading import ReadingMaterialHistory
 from src.models.runtime import (
     AgentEvent,
+    AgentEpisode,
     AgentRun,
     AgentThread,
     ConversationMessage,
+    LearningEvent,
     ModelCallLog,
     ToolCall,
+    ToolCallRecord,
 )
 from src.models.session import LearningSession, LearningTask
 from src.models.vocabulary import (
@@ -51,6 +54,7 @@ from src.models.writing_phrase import (
 
 __all__ = [
     "AgentEvent",
+    "AgentEpisode",
     "AgentRun",
     "AgentThread",
     "Base",
@@ -71,6 +75,7 @@ __all__ = [
     "LearnerMemorySettings",
     "LearnerModelMemory",
     "LearningEpisode",
+    "LearningEvent",
     "LearningProgressItem",
     "LearningMemoryEvent",
     "LearningTask",
@@ -81,6 +86,7 @@ __all__ = [
     "ReviewSchedule",
     "TimestampMixin",
     "ToolCall",
+    "ToolCallRecord",
     "TeachingStrategyMemory",
     "UUIDPrimaryKeyMixin",
     "VocabularyItem",
