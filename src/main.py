@@ -6,6 +6,7 @@ from fastapi import FastAPI
 from src.api.chat import router as chat_router
 from src.api.conversations import router as conversations_router
 from src.api.dashboard import router as dashboard_router
+from src.api.debug import router as debug_router
 from src.api.daily_lessons import router as daily_lessons_router
 from src.api.evidence import router as evidence_router
 from src.api.essay_review import router as essay_review_router
@@ -52,6 +53,7 @@ app.include_router(health_router)
 app.include_router(learners_router)
 app.include_router(conversations_router)
 app.include_router(dashboard_router)
+app.include_router(debug_router)
 app.include_router(daily_lessons_router)
 app.include_router(evidence_router)
 app.include_router(explore_router)

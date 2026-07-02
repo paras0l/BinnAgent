@@ -8,7 +8,7 @@ describe('learnerRoutes', () => {
       .join(' ')
       .toLowerCase()
 
-    expect(routeText).not.toMatch(/memory|runtime|debug|prompt|tool|evidence|trace/)
+    expect(routeText).not.toMatch(/learners|episodes|memory|runtime|debug|prompt|tool|evidence|trace/)
   })
 
   it('does not include MemoryCenterPage access', () => {

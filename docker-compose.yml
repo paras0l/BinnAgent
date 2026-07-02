@@ -45,6 +45,9 @@ services:
       BINN_LANGFUSE_SECRET_KEY: ${BINN_LANGFUSE_SECRET_KEY:-}
       BINN_LANGFUSE_BASE_URL: ${BINN_LANGFUSE_DOCKER_BASE_URL:-http://host.docker.internal:3100}
       BINN_LANGFUSE_ENVIRONMENT: ${BINN_LANGFUSE_ENVIRONMENT:-development}
+      BINN_DEBUG_CONSOLE_ENABLED: ${BINN_DEBUG_CONSOLE_ENABLED:-false}
+      BINN_DEBUG_CONSOLE_TOKEN: ${BINN_DEBUG_CONSOLE_TOKEN:-}
+      BINN_DEBUG_CONSOLE_ALLOWED_ORIGINS: '${BINN_DEBUG_CONSOLE_ALLOWED_ORIGINS:-["http://localhost:5174","http://127.0.0.1:5174"]}'
     volumes:
       - knowledge_data:/app/var/knowledge
     depends_on:

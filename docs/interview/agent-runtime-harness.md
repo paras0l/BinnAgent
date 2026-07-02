@@ -90,8 +90,36 @@ flowchart TD
 - Knowledge Exercise 提交流程接入 episode trace。
 - Daily Lesson start / answer 轻量 orchestration。
 - Explore skill start API 和前端入口接入 TaskSpec。
-- Episode Debug 前端页面。
+- Learner App / Dev Console 双入口：学习端只暴露学习功能，调试端承载 Memory、Episode、Tool、Evidence、RAG、Prompt、Verification 和 Simulation 面板。
+- Episode Debug、Tool Registry、Tool Call Records、RAG Debug、Simulation Report 等 Dev Console 页面。
 - Simulation scenario 覆盖 episode runtime 知识点练习链路。
+
+本地运行入口：
+
+```bash
+cd binnagent-frontend
+npm run dev          # Learner App: http://localhost:5173
+npm run dev:console  # Dev Console: http://localhost:5174
+```
+
+Dev Console 访问后端内部 API 需要显式开启：
+
+```bash
+DEBUG_CONSOLE_ENABLED=true
+DEBUG_CONSOLE_TOKEN=dev
+DEBUG_CONSOLE_ALLOWED_ORIGINS=http://localhost:5174
+```
+
+Debug API 默认关闭。普通用户端不暴露 Memory / Runtime / Trace / Prompt / Tool / Evidence 页面，也不能直接访问 Memory Debug 页面。
+
+Dev Console 使用流程：
+
+1. 启动后端：`DEBUG_CONSOLE_ENABLED=true DEBUG_CONSOLE_TOKEN=dev uvicorn src.main:app --reload --port 8000`
+2. 启动 Dev Console：`cd binnagent-frontend && npm run dev:console`
+3. 打开 http://localhost:5174 并输入 token：`dev`
+4. 在 Learners 页面搜索或选择 learner，顶部 ContextBar 会同步 learner_id。
+5. 在 Recent Episodes 页面查看该 learner 最近的 AgentEpisode。
+6. 点击“打开 Trace”进入现有 Episode Debug，查看 TaskSpec / Timeline / Tool Calls / VerificationReport / Raw JSON。
 
 第一阶段 runtime 接入：
 

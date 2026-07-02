@@ -344,6 +344,7 @@ async def get_memory_center(
 @router.post("/curate", response_model=MemoryCurateResponse)
 async def curate_memory(
     learner_id: uuid.UUID,
+    _debug_access: None = Depends(require_debug_access),
     db: AsyncSession = Depends(get_db_session),
 ) -> MemoryCurateResponse:
     await _ensure_learner(db, learner_id)
@@ -386,6 +387,7 @@ async def control_memory_item(
 @router.get("/settings", response_model=MemorySettingsResponse)
 async def get_memory_settings(
     learner_id: uuid.UUID,
+    _debug_access: None = Depends(require_debug_access),
     db: AsyncSession = Depends(get_db_session),
 ) -> MemorySettingsResponse:
     await _ensure_learner(db, learner_id)
@@ -396,6 +398,7 @@ async def get_memory_settings(
 async def update_memory_settings(
     learner_id: uuid.UUID,
     body: MemorySettingsRequest,
+    _debug_access: None = Depends(require_debug_access),
     db: AsyncSession = Depends(get_db_session),
 ) -> MemorySettingsResponse:
     await _ensure_learner(db, learner_id)
@@ -422,6 +425,7 @@ async def update_memory_settings(
 @router.post("/reset-plan", response_model=MemoryResetPlanResponse)
 async def reset_learning_plan(
     learner_id: uuid.UUID,
+    _debug_access: None = Depends(require_debug_access),
     db: AsyncSession = Depends(get_db_session),
 ) -> MemoryResetPlanResponse:
     await _ensure_learner(db, learner_id)

@@ -26,7 +26,7 @@
 | FastAPI API | 已实现 | learners、chat、memory、dashboard、knowledge、vocabulary、grammar 等 routers | 统一 current learner 认证授权 |
 | React 前端 | 部分实现 | 多页面学习入口、SSE chat、知识库和词汇练习；Issue #20 UI/UX 统一标准首轮落地，新增统一 Button/FormField/StatusBanner/ConfirmDialog/ReasonCard/EvidencePanel；普通学习端主导航保留 AI对话 / 探索 / 学习中心，Memory/Runtime/Trace/Prompt/Tool/Evidence 等内部页面移入独立 Dev Console；KnowledgeBase 已升级为教材结构 / 单元学习 / 练习任务 / 解析校对工作台；Explore 已接入“词根与词缀”工作区；Grammar/Vocabulary/WordParts/Reading 已接入知识点配套 ExerciseBlock、练习结果摘要、AI 生成练习可编辑保存和后端优先持久化 fallback | 更深入的数据驱动推荐、恢复提示、更多页面内 drawer 化编辑 |
 | LangGraph daily lesson | 部分实现 | 线性 daily lesson graph 和主要节点 | checkpoint、interrupt、answer_required、resume |
-| Agent Runtime / Harness | 部分实现 | 新增 TaskSpec、AgentEpisode、LearningEvent、ToolCallRecord、EvidenceRef、VerificationReport、ToolRegistry、MasteryEngine、RecommendationEngine、LearningOrchestrator；Knowledge Exercise / Daily Lesson / Explore 入口已能创建 episode trace；Episode Debug、Tool Calls、Evidence Debug、Prompt Debug 和 VerificationReport 已移入 Dev Console；Debug API 默认关闭并要求 token；simulation report 增加 runtime_metrics | 更完整 LangGraph checkpoint/resume、更多工具强制走 registry、证据详情解析和可回放 UI |
+| Agent Runtime / Harness | 部分实现 | 新增 TaskSpec、AgentEpisode、LearningEvent、ToolCallRecord、EvidenceRef、VerificationReport、ToolRegistry、MasteryEngine、RecommendationEngine、LearningOrchestrator；Knowledge Exercise / Daily Lesson / Explore 入口已能创建 episode trace；Dev Console 已提供 Learners / Recent Episodes 上下文选择，以及 Episode Debug、Tool Registry、Tool Call Records、Evidence Debug、RAG Debug、Prompt Debug、VerificationReport 和 Simulation Report；新增 `/api/debug/learners`、`/api/debug/rag/search`、`/api/debug/simulation/scenarios`、`/api/debug/simulation/reports/latest`；Debug API 默认关闭并要求 token | 更完整 LangGraph checkpoint/resume、更多工具强制走 registry、证据详情解析和可回放 UI |
 | Memory | 部分实现 | 4 层学习记忆架构 + HindSight-inspired Retain/Recall/Reflect 口径已落地；统一 memory event/operation、LearningEpisode、LearnerModelMemory、TeachingStrategyMemory、MemoryWriter/Retriever/Curator、显式 L1-L4 layer metadata、ErrorPattern governance、WritingPhraseMastery；普通学习端只保留学习状态摘要，Memory Center、导出/删除/禁用/我已改善、memory_context log 和 hit-rate 指标移入 Dev Console | 更完整 debug dashboard 图表、更多 regression eval、更多 session 类型反思规则 |
 | Vocabulary Learning | 部分实现 | 单元 enroll、用户可编辑个人词卡、new/review/spelling session、attempt、错因记录、mastery vector、发音 URL；前端新增词根词缀库、拆词练习、localStorage 掌握标记和 morphology 展示/降级 | morphology 后端持久化、LearningProgress/Memory 联动、薄弱原因总结、题型推荐、更多表达迁移题 |
 | Knowledge Base / RAG | 部分实现 | PDF 解析、chunk、embedding、文本 fallback、8 题混合练习流、hint/retry/rubric 反馈；overview 返回 sources、parser/ingest 证据、review queue、来源页码和低置信词条；前端可在多本教材之间切换；课程练习和知识点验收共用统一 ExerciseAttempt target/summary 模型 | hybrid retrieval、golden query set、练习 session 总结、更多年级 golden profile |
@@ -34,7 +34,7 @@
 | Model Provider | 部分实现 | Ollama chat/stream/embed/health，结构化 JSON repair retry | task policy、local_only 强约束、持久化 model_call_logs |
 | Observability | 部分实现 | Langfuse observation 和运行时表 | run_id 贯通 graph/model/tool/memory，Dashboard 可视化 |
 | Evaluation / Simulation | 部分实现 | `src/simulation` 提供 deterministic learner persona、behavior policy、scenario runner、assertion engine 和结构化 simulation report；已覆盖 smoke、vocabulary agent deposit、vocabulary practice adaptation、daily graph 基线和 episode runtime knowledge practice；report 增加 episode_count、completed_episode_count、verification_pass_count、avg_tool_latency_ms 等 runtime_metrics | 扩展写作好句闭环、Memory 可控性 regression、LLM-assisted learner 和 dashboard |
-| CI | 已实现 | GitHub Actions 覆盖 backend lint/test、frontend lint/build、migration 文本检查 | Alembic 在线迁移检查和端到端 smoke |
+| CI | 已实现 | GitHub Actions 覆盖 backend lint/test、frontend lint/test/build/build:console、migration 文本检查 | Alembic 在线迁移检查和端到端 smoke |
 | Writing Phrasebook | 基础版已实现 | 探索页写作入口、句式 CRUD、外部模型结果提取、候选收藏、识别/填空/替换练习和 attempt 记录 | 模型辅助编辑、精细 mastery、作文批改与翻译练习深度联动 |
 
 ## Issue 对应落地
@@ -65,7 +65,7 @@
 ```bash
 ./scripts/dev.sh
 python -m pytest tests/ -v
-cd binnagent-frontend && npm run lint && npm run build
+cd binnagent-frontend && npm run lint && npm run test && npm run build && npm run build:console
 ```
 
 ## 最近风险

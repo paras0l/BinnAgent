@@ -35,8 +35,20 @@ async def _main() -> int:
     transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
         report = await ScenarioRunner(client).run(scenario=scenario, persona=persona)
-    print(json.dumps(report.to_dict(), ensure_ascii=False, indent=2))
+
+    report_data = report.to_dict()
+    _write_report(report_data)
+    print(json.dumps(report_data, ensure_ascii=False, indent=2))
     return 0 if report.status == "passed" else 1
+
+
+def _write_report(report_data: dict) -> None:
+    report_root = ROOT / "var" / "simulation"
+    reports_dir = report_root / "reports"
+    reports_dir.mkdir(parents=True, exist_ok=True)
+    content = json.dumps(report_data, ensure_ascii=False, indent=2)
+    (reports_dir / f"{report_data['run_id']}.json").write_text(content, encoding="utf-8")
+    (report_root / "latest_report.json").write_text(content, encoding="utf-8")
 
 
 if __name__ == "__main__":

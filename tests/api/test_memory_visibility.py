@@ -5,6 +5,7 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 from src.api import deps
+from src.config import settings
 from src.main import app
 from src.models.learner import Learner
 from src.models.memory import LearnerMemorySettings, MemoryOperation
@@ -14,11 +15,21 @@ from src.models.session import LearningSession, LearningTask
 
 @pytest.fixture
 def mock_session():
+    original_debug_settings = (
+        settings.debug_console_enabled,
+        settings.debug_console_token,
+        list(settings.debug_console_allowed_origins),
+    )
     session = AsyncMock()
     session.add = MagicMock()
     session.flush = AsyncMock()
     app.dependency_overrides[deps.get_db_session] = lambda: session
     yield session
+    (
+        settings.debug_console_enabled,
+        settings.debug_console_token,
+        settings.debug_console_allowed_origins,
+    ) = original_debug_settings
     app.dependency_overrides.clear()
 
 
@@ -247,25 +258,28 @@ class TestMemorySummary:
     @pytest.mark.asyncio
     async def test_memory_settings_can_disable_emotion_rhythm(self, client, mock_session):
         learner_id = uuid.uuid4()
+        settings.debug_console_enabled = True
+        settings.debug_console_token = "dev"
         learner = Learner(nickname="Alice")
         learner.id = learner_id
-        settings = LearnerMemorySettings(
+        memory_settings = LearnerMemorySettings(
             learner_id=learner_id,
             emotion_rhythm_enabled=True,
             inferred_preferences_enabled=True,
             low_confidence_memory_enabled=False,
         )
-        settings.id = uuid.uuid4()
-        mock_session.execute = AsyncMock(side_effect=[_one(learner), _one(settings)])
+        memory_settings.id = uuid.uuid4()
+        mock_session.execute = AsyncMock(side_effect=[_one(learner), _one(memory_settings)])
 
         response = await client.patch(
             f"/api/learners/{learner_id}/memory/settings",
+            headers={"X-Debug-Token": "dev"},
             json={"emotion_rhythm_enabled": False},
         )
 
         assert response.status_code == 200
         assert response.json()["emotion_rhythm_enabled"] is False
-        assert settings.emotion_rhythm_enabled is False
+        assert memory_settings.emotion_rhythm_enabled is False
         added_operations = [
             call.args[0]
             for call in mock_session.add.call_args_list
@@ -277,6 +291,8 @@ class TestMemorySummary:
     @pytest.mark.asyncio
     async def test_reset_learning_plan_marks_open_tasks_and_sessions(self, client, mock_session):
         learner_id = uuid.uuid4()
+        settings.debug_console_enabled = True
+        settings.debug_console_token = "dev"
         learner = Learner(nickname="Alice")
         learner.id = learner_id
         task = LearningTask(
@@ -295,7 +311,10 @@ class TestMemorySummary:
             side_effect=[_one(learner), _many([task]), _many([session])]
         )
 
-        response = await client.post(f"/api/learners/{learner_id}/memory/reset-plan")
+        response = await client.post(
+            f"/api/learners/{learner_id}/memory/reset-plan",
+            headers={"X-Debug-Token": "dev"},
+        )
 
         assert response.status_code == 200
         assert response.json() == {"reset_task_count": 1, "reset_session_count": 1}

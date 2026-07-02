@@ -12,15 +12,19 @@ import {
   Search,
   ShieldCheck,
   TerminalSquare,
+  Users,
   Wrench,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
+import { EmptyState } from '@/components/ui/EmptyState'
 import { ErrorState } from '@/components/ui/ErrorState'
 import { LoadingState } from '@/components/ui/LoadingState'
 import { StatusBanner } from '@/components/ui/StatusBanner'
 import { SurfaceCard } from '@/components/ui/SurfaceCard'
 import { clearDebugToken, debugFetch, readDebugToken, saveDebugToken } from '@/shared/api/debugClient'
 import type { Learner } from '@/types'
+import { LearnersPage } from './pages/LearnersPage'
+import { RecentEpisodesPage } from './pages/RecentEpisodesPage'
 import { devConsoleRoutes, findDevConsoleRoute, type DevConsoleRouteId } from './routes'
 
 const MemoryCenterPage = lazy(() =>
@@ -39,6 +43,73 @@ interface ToolSpec {
   description?: string
   input_schema?: unknown
   output_schema?: unknown
+}
+
+interface ToolCallRecord {
+  id?: string
+  tool_name?: string
+  name?: string
+  status?: string
+  latency_ms?: number
+  duration_ms?: number
+  input_hash?: string
+  output_hash?: string
+  error?: string | null
+  [key: string]: unknown
+}
+
+interface EpisodeTrace {
+  episode?: {
+    id?: string
+    status?: string
+  }
+  tool_calls?: ToolCallRecord[]
+}
+
+interface RagDebugResult {
+  chunk_id: string
+  source_id: string
+  curriculum_node_id?: string | null
+  page_number?: number
+  score?: number
+  retrieval_mode?: string
+  content_preview?: string
+  metadata?: Record<string, unknown>
+}
+
+interface RagDebugResponse {
+  query: string
+  retrieval_mode: string
+  embedding_model?: string | null
+  chunk_version?: string | null
+  result_count: number
+  results: RagDebugResult[]
+}
+
+interface SimulationScenario {
+  id: string
+  name: string
+  persona_id: string
+  step_count: number
+}
+
+interface SimulationLatestReport {
+  path: string
+  report: Record<string, unknown>
+  summary: {
+    status?: string
+    episode_count?: number
+    completed_episode_count?: number
+    failed_episode_count?: number
+    verification_pass_count?: number
+    verification_fail_count?: number
+    avg_tool_latency_ms?: number
+    failed_assertions?: string[]
+    failed_assertion_count?: number
+    step_count?: number
+    passed_step_count?: number
+    failed_step_count?: number
+  }
 }
 
 function DevConsoleApp() {
@@ -96,7 +167,7 @@ function DevConsoleShell({ onClearToken }: { onClearToken: () => void }) {
 
   const updateEpisodeId = (nextEpisodeId: string | null) => {
     setEpisodeId(nextEpisodeId)
-    if (routeId === 'episode' && nextEpisodeId) {
+    if (routeId === 'episodes' && nextEpisodeId) {
       window.history.pushState({}, '', `/runtime/episodes/${encodeURIComponent(nextEpisodeId)}`)
     }
   }
@@ -169,28 +240,37 @@ function DevConsoleShell({ onClearToken }: { onClearToken: () => void }) {
 
         <main className="px-4 py-6 lg:px-8">
           <Suspense fallback={<LoadingState title="正在打开 Dev Console" description="正在加载调试面板..." />}>
-            {routeId === 'memory' ? (
+            {routeId === 'learners' ? (
+              <LearnersPage onLearnerChange={updateLearner} navigate={navigate} />
+            ) : routeId === 'memory' ? (
               learner ? (
                 <MemoryCenterPage learner={learner} />
               ) : (
                 <ContextRequired title="Memory Debug 需要 learner_id" />
               )
-            ) : routeId === 'episode' ? (
+            ) : routeId === 'episodes' ? (
               episodeId ? (
                 <EpisodeDebugPage learner={debugLearner} episodeId={episodeId} />
               ) : (
-                <ContextRequired title="Episode Debug 需要 episode_id" />
+                <RecentEpisodesPage
+                  key={`${learner?.id ?? 'all'}:${window.location.search}`}
+                  learner={learner}
+                  onEpisodeIdChange={updateEpisodeId}
+                  navigate={navigate}
+                />
               )
             ) : routeId === 'tools' ? (
-              <ToolCatalogPage />
+              <ToolRegistryPage />
+            ) : routeId === 'tool-call-records' ? (
+              episodeId ? (
+                <ToolCallRecordsPage key={episodeId} episodeId={episodeId} />
+              ) : (
+                <ContextRequired title="Tool Call Records 需要 episode_id" />
+              )
             ) : routeId === 'evidence' ? (
               <EvidenceDebugPage />
             ) : routeId === 'rag' ? (
-              <PlaceholderPanel
-                icon={<Database className="size-5" />}
-                title="RAG Debug"
-                description="教材检索调试入口已从 Learner App 移到这里。可继续接入专门的 RAG search/report API。"
-              />
+              <RagDebugPage key={learner?.id ?? 'rag'} learner={learner} />
             ) : routeId === 'prompt' ? (
               <PromptDebugPage />
             ) : routeId === 'verification' ? (
@@ -200,11 +280,7 @@ function DevConsoleShell({ onClearToken }: { onClearToken: () => void }) {
                 onEpisodeIdChange={updateEpisodeId}
               />
             ) : (
-              <PlaceholderPanel
-                icon={<FlaskConical className="size-5" />}
-                title="Simulation Report"
-                description="仿真报告属于开发测试面板，后续可以接入 simulation run artifacts 或 CI 产物。"
-              />
+              <SimulationReportPage />
             )}
           </Suspense>
         </main>
@@ -310,7 +386,7 @@ function ContextBar({
   )
 }
 
-function ToolCatalogPage() {
+function ToolRegistryPage() {
   const [tools, setTools] = useState<ToolSpec[] | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -320,11 +396,11 @@ function ToolCatalogPage() {
     setError(null)
     try {
       const response = await debugFetch('/api/tools')
-      if (!response.ok) throw new Error('Tools unavailable')
+      if (!response.ok) throw new Error('Tool Registry unavailable')
       setTools(await response.json() as ToolSpec[])
     } catch (err) {
-      console.error('Tool debug load error:', err)
-      setError('Tool Calls 暂时无法加载。')
+      console.error('Tool Registry load error:', err)
+      setError('Tool Registry 暂时无法加载。')
     } finally {
       setIsLoading(false)
     }
@@ -335,11 +411,11 @@ function ToolCatalogPage() {
     return () => window.clearTimeout(timer)
   }, [loadTools])
 
-  if (isLoading && !tools) return <LoadingState title="正在读取 Tool Calls" description="正在请求 /api/tools..." />
+  if (isLoading && !tools) return <LoadingState title="正在读取 Tool Registry" description="正在请求 /api/tools..." />
   if (error) {
     return (
       <ErrorState
-        title="Tool Calls 不可用"
+        title="Tool Registry 不可用"
         description={error}
         action={<Button variant="secondary" onClick={() => void loadTools()}><RefreshCw className="size-4" />重试</Button>}
       />
@@ -362,6 +438,222 @@ function ToolCatalogPage() {
           </div>
         </SurfaceCard>
       ))}
+    </section>
+  )
+}
+
+function ToolCallRecordsPage({ episodeId }: { episodeId: string }) {
+  const [trace, setTrace] = useState<EpisodeTrace | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  const loadTrace = useCallback(async () => {
+    setIsLoading(true)
+    setError(null)
+    try {
+      const response = await debugFetch(`/api/runtime/episodes/${encodeURIComponent(episodeId)}`)
+      if (!response.ok) throw new Error('Tool call records unavailable')
+      setTrace(await response.json() as EpisodeTrace)
+    } catch (err) {
+      console.error('Tool Call Records load error:', err)
+      setError('Tool Call Records 暂时无法加载，请确认 episode_id 和 token。')
+    } finally {
+      setIsLoading(false)
+    }
+  }, [episodeId])
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => void loadTrace(), 0)
+    return () => window.clearTimeout(timer)
+  }, [loadTrace])
+
+  if (isLoading && !trace) {
+    return <LoadingState title="正在读取 Tool Call Records" description="正在请求 episode trace..." />
+  }
+  if (error) {
+    return (
+      <ErrorState
+        title="Tool Call Records 不可用"
+        description={error}
+        action={<Button variant="secondary" onClick={() => void loadTrace()}><RefreshCw className="size-4" />重试</Button>}
+      />
+    )
+  }
+
+  const calls = trace?.tool_calls ?? []
+
+  return (
+    <section className="space-y-4">
+      <SurfaceCard>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="text-lg font-black text-slate-950">Tool Call Records</h2>
+            <p className="mt-1 break-all font-mono text-xs text-slate-500">{episodeId}</p>
+          </div>
+          <Button variant="secondary" onClick={() => void loadTrace()}>
+            <RefreshCw className="size-4" />
+            Refresh
+          </Button>
+        </div>
+      </SurfaceCard>
+
+      {calls.length ? (
+        <SurfaceCard className="overflow-hidden p-0">
+          <div className="overflow-auto">
+            <table className="min-w-full text-left text-sm">
+              <thead className="bg-slate-50 text-xs uppercase text-slate-500">
+                <tr>
+                  <th className="px-4 py-3 font-black">Tool</th>
+                  <th className="px-4 py-3 font-black">Status</th>
+                  <th className="px-4 py-3 font-black">Latency</th>
+                  <th className="px-4 py-3 font-black">Input</th>
+                  <th className="px-4 py-3 font-black">Output</th>
+                  <th className="px-4 py-3 font-black">Error</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {calls.map((call, index) => {
+                  const latency = typeof call.latency_ms === 'number'
+                    ? call.latency_ms
+                    : typeof call.duration_ms === 'number'
+                      ? call.duration_ms
+                      : null
+                  return (
+                    <tr key={call.id ?? `${index}:${call.tool_name ?? call.name ?? 'tool'}`}>
+                      <td className="px-4 py-3 font-mono text-xs font-bold text-slate-950">
+                        {call.tool_name ?? call.name ?? 'unknown'}
+                      </td>
+                      <td className="px-4 py-3 text-slate-700">{call.status ?? 'unknown'}</td>
+                      <td className="px-4 py-3 text-slate-700">
+                        {latency === null ? '-' : `${Math.round(latency)} ms`}
+                      </td>
+                      <td className="px-4 py-3 font-mono text-xs text-slate-500">{call.input_hash ?? '-'}</td>
+                      <td className="px-4 py-3 font-mono text-xs text-slate-500">{call.output_hash ?? '-'}</td>
+                      <td className="max-w-xs px-4 py-3 text-rose-600">{call.error ?? '-'}</td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        </SurfaceCard>
+      ) : (
+        <EmptyState
+          icon={<Wrench className="size-5" />}
+          title="No tool calls"
+          description="这个 episode trace 里还没有记录 tool_calls。"
+        />
+      )}
+
+      <RawJsonPanel title="Raw episode trace" data={trace} />
+    </section>
+  )
+}
+
+function RagDebugPage({ learner }: { learner: Learner | null }) {
+  const [learnerId, setLearnerId] = useState(learner?.id ?? '')
+  const [query, setQuery] = useState('')
+  const [sourceId, setSourceId] = useState('')
+  const [nodeId, setNodeId] = useState('')
+  const [result, setResult] = useState<RagDebugResponse | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const search = async () => {
+    const trimmedQuery = query.trim()
+    if (!trimmedQuery) return
+    const params = new URLSearchParams({ query: trimmedQuery })
+    if (learnerId.trim()) params.set('learner_id', learnerId.trim())
+    if (sourceId.trim()) params.set('source_id', sourceId.trim())
+    if (nodeId.trim()) params.set('node_id', nodeId.trim())
+
+    setIsLoading(true)
+    setError(null)
+    setResult(null)
+    try {
+      const response = await debugFetch(`/api/debug/rag/search?${params.toString()}`)
+      if (!response.ok) throw new Error('RAG search failed')
+      setResult(await response.json() as RagDebugResponse)
+    } catch (err) {
+      console.error('RAG Debug search error:', err)
+      setError('RAG Debug 搜索失败，请检查 query、过滤条件和 token。')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  return (
+    <section className="space-y-4">
+      <SurfaceCard>
+        <div className="flex items-center gap-2">
+          <Database className="size-5 text-cyan-500" />
+          <h2 className="text-lg font-black text-slate-950">RAG Debug</h2>
+        </div>
+        <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+          <input
+            value={learnerId}
+            onChange={(event) => setLearnerId(event.target.value)}
+            placeholder="learner_id"
+            className="rounded-lg border border-slate-200 px-3 py-2 font-mono text-sm text-slate-900 outline-none focus:border-cyan-400"
+          />
+          <input
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="query"
+            className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 outline-none focus:border-cyan-400"
+          />
+          <input
+            value={sourceId}
+            onChange={(event) => setSourceId(event.target.value)}
+            placeholder="source_id optional"
+            className="rounded-lg border border-slate-200 px-3 py-2 font-mono text-sm text-slate-900 outline-none focus:border-cyan-400"
+          />
+          <input
+            value={nodeId}
+            onChange={(event) => setNodeId(event.target.value)}
+            placeholder="node_id optional"
+            className="rounded-lg border border-slate-200 px-3 py-2 font-mono text-sm text-slate-900 outline-none focus:border-cyan-400"
+          />
+        </div>
+        <Button className="mt-4" onClick={() => void search()} disabled={!query.trim() || isLoading}>
+          <Search className="size-4" />
+          {isLoading ? 'Searching...' : 'Search'}
+        </Button>
+        {error ? <StatusBanner tone="warning" title="Request failed">{error}</StatusBanner> : null}
+      </SurfaceCard>
+
+      {result ? (
+        <>
+          <SurfaceCard>
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              <MetricBlock label="mode" value={result.retrieval_mode} />
+              <MetricBlock label="result count" value={String(result.result_count)} />
+              <MetricBlock label="embedding model" value={result.embedding_model ?? '-'} />
+              <MetricBlock label="chunk version" value={result.chunk_version ?? '-'} />
+            </div>
+          </SurfaceCard>
+          <section className="grid gap-4 xl:grid-cols-2">
+            {result.results.map((chunk) => (
+              <SurfaceCard key={chunk.chunk_id}>
+                <div className="flex flex-wrap items-center gap-2 text-xs font-bold text-slate-500">
+                  <span>page {chunk.page_number ?? '-'}</span>
+                  <span>score {formatScore(chunk.score)}</span>
+                  <span>{chunk.retrieval_mode ?? result.retrieval_mode}</span>
+                </div>
+                <p className="mt-3 break-words text-sm leading-6 text-slate-700">{chunk.content_preview}</p>
+                <div className="mt-3 space-y-1 font-mono text-xs text-slate-500">
+                  <p className="break-all">source_id: {chunk.source_id}</p>
+                  <p className="break-all">chunk_id: {chunk.chunk_id}</p>
+                  {chunk.curriculum_node_id ? (
+                    <p className="break-all">node_id: {chunk.curriculum_node_id}</p>
+                  ) : null}
+                </div>
+              </SurfaceCard>
+            ))}
+          </section>
+          <RawJsonPanel title="Raw RAG JSON" data={result} />
+        </>
+      ) : null}
     </section>
   )
 }
@@ -502,6 +794,156 @@ function VerificationReportPage({
   )
 }
 
+function SimulationReportPage() {
+  const [scenarios, setScenarios] = useState<SimulationScenario[]>([])
+  const [latestReport, setLatestReport] = useState<SimulationLatestReport | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [reportMissing, setReportMissing] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const loadSimulationState = useCallback(async () => {
+    setIsLoading(true)
+    setError(null)
+    try {
+      const [scenariosResponse, reportResponse] = await Promise.all([
+        debugFetch('/api/debug/simulation/scenarios'),
+        debugFetch('/api/debug/simulation/reports/latest'),
+      ])
+      if (!scenariosResponse.ok) throw new Error('Simulation scenarios unavailable')
+      const scenariosData = await scenariosResponse.json() as { scenarios?: SimulationScenario[] }
+      setScenarios(scenariosData.scenarios ?? [])
+      if (reportResponse.status === 404) {
+        setLatestReport(null)
+        setReportMissing(true)
+      } else {
+        if (!reportResponse.ok) throw new Error('Latest simulation report unavailable')
+        setLatestReport(await reportResponse.json() as SimulationLatestReport)
+        setReportMissing(false)
+      }
+    } catch (err) {
+      console.error('Simulation Report load error:', err)
+      setError('Simulation Report 暂时无法加载，请确认 debug token 和后端配置。')
+    } finally {
+      setIsLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => void loadSimulationState(), 0)
+    return () => window.clearTimeout(timer)
+  }, [loadSimulationState])
+
+  if (isLoading && scenarios.length === 0 && !latestReport) {
+    return <LoadingState title="正在读取 Simulation Report" description="正在请求 simulation artifacts..." />
+  }
+  if (error) {
+    return (
+      <ErrorState
+        title="Simulation Report 不可用"
+        description={error}
+        action={<Button variant="secondary" onClick={() => void loadSimulationState()}><RefreshCw className="size-4" />重试</Button>}
+      />
+    )
+  }
+
+  const summary = latestReport?.summary
+  const failedAssertions = summary?.failed_assertions ?? []
+
+  return (
+    <section className="space-y-4">
+      <SurfaceCard>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-2">
+            <FlaskConical className="size-5 text-cyan-500" />
+            <div>
+              <h2 className="text-lg font-black text-slate-950">Simulation Report</h2>
+              {latestReport ? <p className="mt-1 break-all font-mono text-xs text-slate-500">{latestReport.path}</p> : null}
+            </div>
+          </div>
+          <Button variant="secondary" onClick={() => void loadSimulationState()}>
+            <RefreshCw className="size-4" />
+            Refresh
+          </Button>
+        </div>
+      </SurfaceCard>
+
+      {latestReport && summary ? (
+        <SurfaceCard>
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <MetricBlock label="latest run status" value={summary.status ?? 'unknown'} />
+            <MetricBlock label="episode_count" value={String(summary.episode_count ?? 0)} />
+            <MetricBlock label="completed_episode_count" value={String(summary.completed_episode_count ?? 0)} />
+            <MetricBlock label="failed_episode_count" value={String(summary.failed_episode_count ?? 0)} />
+            <MetricBlock label="verification_pass_count" value={String(summary.verification_pass_count ?? 0)} />
+            <MetricBlock label="verification_fail_count" value={String(summary.verification_fail_count ?? 0)} />
+            <MetricBlock label="avg_tool_latency_ms" value={String(Math.round(summary.avg_tool_latency_ms ?? 0))} />
+            <MetricBlock label="failed assertions" value={String(summary.failed_assertion_count ?? 0)} />
+          </div>
+        </SurfaceCard>
+      ) : reportMissing ? (
+        <EmptyState
+          icon={<FlaskConical className="size-5" />}
+          title="No simulation report"
+          description="还没有找到 var/simulation/latest_report.json。运行 ./scripts/run_learner_simulation.sh --persona grade7_low_vocab --scenario smoke_learning_journey 后刷新。"
+        />
+      ) : null}
+
+      <SurfaceCard>
+        <h3 className="text-base font-black text-slate-950">Scenarios</h3>
+        <div className="mt-3 grid gap-3 xl:grid-cols-2">
+          {scenarios.map((scenario) => (
+            <div key={scenario.id} className="rounded-lg border border-slate-100 bg-slate-50 p-3">
+              <p className="font-mono text-xs font-black text-slate-950">{scenario.id}</p>
+              <p className="mt-1 text-sm font-bold text-slate-700">{scenario.name}</p>
+              <p className="mt-1 text-xs text-slate-500">
+                {scenario.persona_id} · {scenario.step_count} steps
+              </p>
+            </div>
+          ))}
+        </div>
+      </SurfaceCard>
+
+      {failedAssertions.length ? (
+        <SurfaceCard>
+          <h3 className="text-base font-black text-slate-950">Failed Assertions</h3>
+          <ul className="mt-3 space-y-2 text-sm text-rose-700">
+            {failedAssertions.map((failure, index) => (
+              <li key={`${index}:${failure}`} className="rounded-lg bg-rose-50 px-3 py-2">{failure}</li>
+            ))}
+          </ul>
+        </SurfaceCard>
+      ) : null}
+
+      {latestReport ? <RawJsonPanel title="Raw Simulation JSON" data={latestReport.report} /> : null}
+    </section>
+  )
+}
+
+function MetricBlock({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-lg border border-slate-100 bg-slate-50 p-3">
+      <p className="text-xs font-bold uppercase text-slate-500">{label}</p>
+      <p className="mt-1 break-words font-mono text-sm font-black text-slate-950">{value}</p>
+    </div>
+  )
+}
+
+function RawJsonPanel({ title, data }: { title: string; data: unknown }) {
+  return (
+    <details className="rounded-lg border border-slate-200 bg-white p-4">
+      <summary className="cursor-pointer text-sm font-black text-slate-950">{title}</summary>
+      <pre className="mt-4 max-h-[520px] overflow-auto rounded-lg bg-slate-950 p-4 text-xs text-slate-100">
+        {JSON.stringify(data, null, 2)}
+      </pre>
+    </details>
+  )
+}
+
+function formatScore(score?: number) {
+  if (typeof score !== 'number') return '-'
+  return score.toFixed(3)
+}
+
 function DebugFormShell({
   icon,
   title,
@@ -580,9 +1022,11 @@ function readLearnerContext(): Learner | null {
 }
 
 function routeIcon(routeId: DevConsoleRouteId) {
+  if (routeId === 'learners') return <Users className="size-4" />
   if (routeId === 'memory') return <BrainCircuit className="size-4" />
-  if (routeId === 'episode') return <Activity className="size-4" />
+  if (routeId === 'episodes') return <Activity className="size-4" />
   if (routeId === 'tools') return <Wrench className="size-4" />
+  if (routeId === 'tool-call-records') return <Activity className="size-4" />
   if (routeId === 'evidence') return <Search className="size-4" />
   if (routeId === 'rag') return <Database className="size-4" />
   if (routeId === 'prompt') return <FileJson className="size-4" />
