@@ -1,3 +1,4 @@
+from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -29,6 +30,21 @@ class Settings(BaseSettings):
     langfuse_base_url: str = "http://localhost:3100"
     langfuse_environment: str = "development"
     debug: bool = False
+    debug_console_enabled: bool = Field(
+        default=False,
+        validation_alias=AliasChoices("BINN_DEBUG_CONSOLE_ENABLED", "DEBUG_CONSOLE_ENABLED"),
+    )
+    debug_console_token: str | None = Field(
+        default=None,
+        validation_alias=AliasChoices("BINN_DEBUG_CONSOLE_TOKEN", "DEBUG_CONSOLE_TOKEN"),
+    )
+    debug_console_allowed_origins: list[str] = Field(
+        default_factory=lambda: ["http://localhost:5174"],
+        validation_alias=AliasChoices(
+            "BINN_DEBUG_CONSOLE_ALLOWED_ORIGINS",
+            "DEBUG_CONSOLE_ALLOWED_ORIGINS",
+        ),
+    )
 
 
 settings = Settings()

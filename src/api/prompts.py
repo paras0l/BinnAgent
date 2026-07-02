@@ -1,11 +1,16 @@
 from typing import Any
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
+from src.api.deps import require_debug_access
 from src.prompts import prompt_registry
 
-router = APIRouter(prefix="/api/prompts", tags=["prompts"])
+router = APIRouter(
+    prefix="/api/prompts",
+    tags=["prompts"],
+    dependencies=[Depends(require_debug_access)],
+)
 
 
 class RenderPromptRequest(BaseModel):

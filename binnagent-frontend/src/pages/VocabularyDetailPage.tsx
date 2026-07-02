@@ -49,7 +49,7 @@ type VocabularyDetailWorkspace = 'term' | 'generate' | 'return' | 'card'
 
 const WORKSPACE_TABS: WorkspaceTab<VocabularyDetailWorkspace>[] = [
   { id: 'term', label: '词条输入', description: '选择目标词', icon: <BookOpen className="size-4" /> },
-  { id: 'generate', label: '生成指令', description: 'Prompt 与跳转', icon: <ExternalLink className="size-4" /> },
+  { id: 'generate', label: '生成指令', description: '指令与跳转', icon: <ExternalLink className="size-4" /> },
   { id: 'return', label: '回填预览', description: 'HTML 与阅读', icon: <FileInput className="size-4" /> },
   { id: 'card', label: '词卡沉淀', description: '保存与编辑', icon: <Check className="size-4" /> },
 ]
@@ -385,7 +385,7 @@ export function VocabularyDetailPage({
           <section className="grid gap-5 xl:grid-cols-[360px_minmax(0,1fr)]">
             <SurfaceCard>
               <h2 className="text-lg font-black text-slate-950">生成词汇详解</h2>
-              <p className="mt-1 text-sm leading-6 text-slate-500">已将“{activeTerm || '待输入'}”写入专用 prompt。</p>
+              <p className="mt-1 text-sm leading-6 text-slate-500">已将“{activeTerm || '待输入'}”写入专用生成指令。</p>
               <div className="mt-5 grid gap-2">
                 <Button onClick={() => void launchTarget()} className="justify-center">
                   <ExternalLink className="size-4" />复制并跳转
@@ -401,7 +401,7 @@ export function VocabularyDetailPage({
             </SurfaceCard>
 
             <SurfaceCard>
-              <h2 className="text-lg font-black text-slate-950">Prompt 预览</h2>
+              <h2 className="text-lg font-black text-slate-950">生成指令预览</h2>
               <textarea
                 readOnly
                 value={prompt}

@@ -476,7 +476,7 @@ function StructureWorkspace({ overview, onSelect }: { overview: KnowledgeBaseOve
       <div className="grid gap-3 sm:grid-cols-4">
         <MetricCard label="单元" value={overview.source.unit_count} />
         <MetricCard label="知识点" value={overview.source.knowledge_count} />
-        <MetricCard label="RAG chunks" value={overview.parser_evidence.rag_chunk_count} />
+        <MetricCard label="素材片段" value={overview.parser_evidence.rag_chunk_count} />
         <MetricCard label="待校对" value={overview.review.pending_count} tone={overview.review.pending_count > 0 ? 'warning' : 'success'} />
       </div>
       <ReasonCard
@@ -484,8 +484,8 @@ function StructureWorkspace({ overview, onSelect }: { overview: KnowledgeBaseOve
         reason="单元目录决定今日学习顺序；知识点和词汇会进入课程、练习、复习和记忆事件。解析校对完成后，低置信词条才会参与正式学习。"
         evidence={[
           `教材状态：${overview.source.status}`,
-          `Parser profile：${overview.parser_evidence.parser_profile ?? '未记录'}`,
-          `Manifest：${overview.parser_evidence.book_manifest_id ?? '未记录'}`,
+          `教材规则：${overview.parser_evidence.parser_profile ?? '未记录'}`,
+          `教材版本：${overview.parser_evidence.book_manifest_id ?? '未记录'}`,
         ]}
       />
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
@@ -537,7 +537,7 @@ function ExerciseWorkspace({
           `知识点数量：${overview.knowledge_points.length}`,
           `推荐依据：${overview.recommendation_reason}`,
         ]}
-        outcome="完成后更新知识点状态、词汇复习计划和 Memory 事件。"
+        outcome="完成后更新知识点状态、词汇复习计划和学习记录。"
         action={(
           <div className="flex flex-wrap gap-2">
             <Button onClick={onStartExercise} disabled={isStartingExercise}>
@@ -609,7 +609,7 @@ function ReviewWorkspace({
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
         <div className="border-b border-slate-200 px-5 py-4">
           <h2 className="text-lg font-black text-slate-950">低置信词条队列</h2>
-          <p className="mt-1 text-sm text-slate-500">逐条查看 raw line、warnings、页码和 parser evidence，再决定确认、修改或忽略。</p>
+          <p className="mt-1 text-sm text-slate-500">逐条查看原文、提示、页码和来源信息，再决定确认、修改或忽略。</p>
         </div>
         <div className="divide-y divide-slate-100">
           {items.map((item) => (
@@ -667,7 +667,7 @@ function ReviewWorkspace({
 
           <div className="mt-5 space-y-3">
             <EvidencePanel title="原始证据" items={selectedItem.evidence} />
-            <EvidencePanel title="Warnings" items={selectedItem.warnings} emptyText="无 warning" />
+            <EvidencePanel title="解析提示" items={selectedItem.warnings} emptyText="无提示" />
           </div>
 
           <div className="mt-5 flex flex-wrap gap-2">

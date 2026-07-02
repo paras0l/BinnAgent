@@ -56,7 +56,7 @@ export function LessonSessionDialog({ session, onClose, onAttempt, onComplete }:
         <div className="flex items-start justify-between gap-4">
           <div>
             <h2 id="lesson-title" className="text-xl font-extrabold text-slate-950">{session.title}</h2>
-            <p className="mt-1 text-sm text-slate-500">逐个确认掌握情况，结果会写入学习记忆并安排复习。</p>
+            <p className="mt-1 text-sm text-slate-500">逐个确认掌握情况，结果会写入学习记录并安排复习。</p>
           </div>
           <button type="button" onClick={onClose} className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700" aria-label="关闭课程">
             <X className="size-5" />

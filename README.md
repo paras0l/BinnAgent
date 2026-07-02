@@ -15,7 +15,8 @@
 脚本会启动 Docker 服务（PostgreSQL、Redis、后端 API）、执行数据库迁移，并启动前端开发服务器。
 
 - 后端 API：http://localhost:8000/docs
-- 前端页面：http://localhost:3000
+- 学习端页面：http://localhost:5173
+- Dev Console：http://localhost:5174（按需运行 `npm run dev:console`）
 
 ### Docker 部署（推荐）
 
@@ -63,10 +64,12 @@ python -m pytest tests/ -v
 cd binnagent-frontend
 npm install
 npm run dev
+npm run dev:console
 npm run test
 ```
 
-前端运行在 http://localhost:3000，自动代理 API 请求到后端。
+学习端运行在 http://localhost:5173，自动代理 API 请求到后端。Dev Console 运行在
+http://localhost:5174，用于 Memory / Episode / Tool / Evidence / Prompt 等内部调试页面。
 
 ## 文档索引
 
@@ -94,13 +97,13 @@ npm run test
 
 | 能力 | 状态 |
 |------|------|
-| Chat / Memory / Dashboard | 部分实现，Memory v2 已落地 Retain / Recall / Reflect、LearningEpisode、LearnerModelMemory、TeachingStrategyMemory 和可控记忆中心 |
+| Chat / Memory / Dashboard | 部分实现，Memory v2 已落地 Retain / Recall / Reflect、LearningEpisode、LearnerModelMemory、TeachingStrategyMemory；普通学习端只展示学习状态摘要，Memory Center 已移入 Dev Console |
 | 教材 Knowledge Base / RAG / Exercises | 部分实现，已支持多教材切换、七年级上/下册解析、八/九年级上传 fallback、解析证据展示、低置信词条人工校对入口、统一 ExerciseItem / ExerciseAttempt 语义和 AI 生成练习可编辑保存 |
 | Vocabulary Personal Cards / Practice / Spelling / Word Parts | 部分实现，已新增“词根与词缀”探索入口、四工作区学习页、内置词根词缀库、拆词练习、morphology 前端展示/降级和知识点配套练习验收 |
 | Writing Phrasebook | 基础版已实现 |
-| Frontend UI/UX 统一标准 | Issue #20 首轮整改已落地，主导航固定为 AI对话 / 探索 / 学习中心 / 记忆，基础组件和 0-12 页面口径已统一；KnowledgeBase 已升级为教材解析校对工作台 |
+| Frontend UI/UX 统一标准 | Issue #20 首轮整改已落地，普通学习端主导航保留 AI对话 / 探索 / 学习中心，Debug/Memory/Runtime 页面移入 Dev Console；KnowledgeBase 已升级为教材解析校对工作台 |
 | Prompt Registry / Schema-first Import / Parser Quality | 基础治理已实现 |
-| Agent Runtime / Harness | 第一阶段已实现，TaskSpec、AgentEpisode、LearningEvent、EvidenceRef、ToolCallRecord、VerificationReport、MasteryEngine、RecommendationEngine 和 Episode Debug 页面已接入 |
+| Agent Runtime / Harness | 第一阶段已实现，TaskSpec、AgentEpisode、LearningEvent、EvidenceRef、ToolCallRecord、VerificationReport、MasteryEngine、RecommendationEngine 和 Dev Console 调试入口已接入；Debug API 默认关闭并需 token |
 | LangGraph daily lesson | 基础线性实现，Daily Lesson 已新增 RecommendationEngine + LearningOrchestrator 的轻量 start/answer API |
 | Learner Simulation Agent | Deterministic MVP 已实现，新增 episode runtime knowledge practice 回归场景和 runtime_metrics |
 | CET reading / writing / weekly report | 设计中 |
@@ -140,4 +143,5 @@ npm run test
 | `app` | 8000 | FastAPI 应用 |
 | `db` | 5432 | PostgreSQL |
 | `redis` | 6379 | Redis 缓存 |
-| `frontend` | 3000 | React 开发服务器 |
+| `frontend` | 5173 | Learner App React 开发服务器 |
+| `dev-console` | 5174 | Agent Runtime / Harness 调试控制台 |

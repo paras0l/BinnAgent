@@ -16,10 +16,6 @@ const ExplorePage = lazy(() =>
   import('./pages/ExplorePage').then((module) => ({ default: module.ExplorePage }))
 )
 
-const EpisodeDebugPage = lazy(() =>
-  import('./pages/EpisodeDebugPage').then((module) => ({ default: module.EpisodeDebugPage }))
-)
-
 const GrammarPage = lazy(() =>
   import('./pages/GrammarPage').then((module) => ({ default: module.GrammarPage }))
 )
@@ -30,10 +26,6 @@ const KnowledgeBasePage = lazy(() =>
 
 const LoginPage = lazy(() =>
   import('./pages/LoginPage').then((module) => ({ default: module.LoginPage }))
-)
-
-const MemoryCenterPage = lazy(() =>
-  import('./pages/MemoryCenterPage').then((module) => ({ default: module.MemoryCenterPage }))
 )
 
 const PronunciationPage = lazy(() =>
@@ -59,7 +51,6 @@ function App() {
   const [practiceMode, setPracticeMode] = useState<VocabularyPracticeMode>('review')
   const [practiceNodeId, setPracticeNodeId] = useState<string | null>(null)
   const [practiceSourceLabel, setPracticeSourceLabel] = useState<string | null>(null)
-  const [runtimeEpisodeId, setRuntimeEpisodeId] = useState(() => getRuntimeEpisodeId())
   const [pronunciationWorkspace, setPronunciationWorkspace] = useState<PronunciationWorkspace>('phonetic')
   const [chatDraft, setChatDraft] = useState('')
   const [chatSkillFocus, setChatSkillFocus] = useState<string | null>(null)
@@ -96,16 +87,6 @@ function App() {
         setCurrentLearner(null)
       })
       .finally(() => setIsRestoringLearner(false))
-  }, [])
-
-  useEffect(() => {
-    const updateRuntimeEpisodeId = () => setRuntimeEpisodeId(getRuntimeEpisodeId())
-    window.addEventListener('popstate', updateRuntimeEpisodeId)
-    window.addEventListener('hashchange', updateRuntimeEpisodeId)
-    return () => {
-      window.removeEventListener('popstate', updateRuntimeEpisodeId)
-      window.removeEventListener('hashchange', updateRuntimeEpisodeId)
-    }
   }, [])
 
   const handleLogout = () => {
@@ -193,10 +174,7 @@ function App() {
       <main className="pt-16">
         <Suspense fallback={<PageLoadingFallback />}>
           {activeTab === 'chat' ? (
-            runtimeEpisodeId ? (
-              <EpisodeDebugPage learner={currentLearner} episodeId={runtimeEpisodeId} />
-            ) : (
-              <ChatPage
+            <ChatPage
               learner={currentLearner}
               draft={chatDraft}
               onDraftChange={setChatDraft}
@@ -207,7 +185,6 @@ function App() {
                 showToast('回答生成中，请先等待完成或点击取消。', { variant: 'warning' })
               }}
             />
-            )
           ) : activeTab === 'explore' ? (
             <ExplorePage
               learner={currentLearner}
@@ -227,8 +204,6 @@ function App() {
             />
           ) : activeTab === 'grammar' ? (
             <GrammarPage learner={currentLearner} onBack={() => handleTabChange('explore')} />
-          ) : activeTab === 'memory' ? (
-            <MemoryCenterPage learner={currentLearner} />
           ) : (
             learningCenterView === 'daily-learning' ? (
               <KnowledgeBasePage
@@ -252,11 +227,3 @@ function App() {
 }
 
 export default App
-
-function getRuntimeEpisodeId() {
-  const pathMatch = window.location.pathname.match(/\/runtime\/episodes\/([^/]+)/)
-  if (pathMatch?.[1]) return decodeURIComponent(pathMatch[1])
-  const hashMatch = window.location.hash.match(/runtime\/episodes\/([^/]+)/)
-  if (hashMatch?.[1]) return decodeURIComponent(hashMatch[1])
-  return null
-}

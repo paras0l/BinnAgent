@@ -105,7 +105,7 @@ export function ChatContainer({
               {activeConversation?.title || (threadId ? '当前对话' : '新对话')}
             </p>
             <p className="text-xs text-muted-foreground">
-              {threadId ? '正在使用该会话的历史上下文' : '发送第一条消息后会创建新的记忆会话'}
+              {threadId ? '正在使用该会话的历史上下文' : '发送第一条消息后会创建新的学习会话'}
             </p>
           </div>
           <div className="flex shrink-0 items-center gap-2">
@@ -119,7 +119,7 @@ export function ChatContainer({
             <button
               onClick={() => setIsMemoryCollapsed(prev => !prev)}
               className="inline-flex rounded-lg border p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-              title={isMemoryCollapsed ? '展开记忆面板' : '收起记忆面板'}
+              title={isMemoryCollapsed ? '展开学习状态' : '收起学习状态'}
             >
               <Brain className="h-4 w-4" />
             </button>

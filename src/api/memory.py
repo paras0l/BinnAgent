@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.api.deps import get_db_session
+from src.api.deps import get_db_session, require_debug_access
 from src.memory.curator import MemoryCurator
 from src.memory.explainer import MemoryExplainer
 from src.memory.layers import MemoryLayer
@@ -318,6 +318,7 @@ async def get_memory_summary(
 @router.get("/center", response_model=MemoryCenterResponse)
 async def get_memory_center(
     learner_id: uuid.UUID,
+    _debug_access: None = Depends(require_debug_access),
     db: AsyncSession = Depends(get_db_session),
 ) -> MemoryCenterResponse:
     learner = await _ensure_learner(db, learner_id)
@@ -357,6 +358,7 @@ async def control_memory_item(
     target_type: str,
     target_id: str,
     body: MemoryControlRequest,
+    _debug_access: None = Depends(require_debug_access),
     db: AsyncSession = Depends(get_db_session),
 ) -> MemoryControlResponse:
     await _ensure_learner(db, learner_id)
@@ -460,6 +462,7 @@ async def reset_learning_plan(
 @router.get("/export")
 async def export_memory(
     learner_id: uuid.UUID,
+    _debug_access: None = Depends(require_debug_access),
     db: AsyncSession = Depends(get_db_session),
 ) -> dict:
     learner = await _ensure_learner(db, learner_id)

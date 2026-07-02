@@ -66,10 +66,10 @@ export function LoginPage({ onLogin }: LoginPageProps) {
             </div>
           </div>
           <p className="mt-5 max-w-2xl text-sm leading-6 text-slate-600">
-            围绕词汇、教材、写作和学习记忆持续练习。进入后系统会根据你的练习记录安排复习、解释推荐原因，并允许你控制长期记忆。
+            围绕词汇、教材、写作和学习状态持续练习。进入后系统会根据你的练习记录安排复习，并解释推荐原因。
           </p>
           <div className="mt-6 grid gap-3 sm:grid-cols-2">
-            {['今日学习路径', '词汇复习计划', '写作表达资产', '可控学习记忆'].map((item) => (
+            {['今日学习路径', '词汇复习计划', '写作表达资产', '学习状态跟踪'].map((item) => (
               <div key={item} className="rounded-[13px] border border-slate-200 bg-white p-4 text-sm font-bold text-slate-700 shadow-[0_4px_14px_rgba(15,23,42,0.05)]">
                 {item}
               </div>

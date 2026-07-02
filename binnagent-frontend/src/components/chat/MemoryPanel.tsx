@@ -22,7 +22,7 @@ export function MemoryPanel({ memory, isCollapsed, onToggleCollapsed }: MemoryPa
         <button
           onClick={onToggleCollapsed}
           className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-          title="展开记忆面板"
+          title="展开学习状态"
         >
           <PanelRightOpen className="h-4 w-4" />
         </button>
@@ -37,32 +37,32 @@ export function MemoryPanel({ memory, isCollapsed, onToggleCollapsed }: MemoryPa
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <Brain className="h-5 w-5 text-primary" />
-            <h2 className="text-sm font-semibold text-foreground">我记住了</h2>
+            <h2 className="text-sm font-semibold text-foreground">学习状态</h2>
           </div>
           <button
             onClick={onToggleCollapsed}
             className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-            title="收起记忆面板"
+            title="收起学习状态"
           >
             <PanelRightClose className="h-4 w-4" />
           </button>
         </div>
         <p className="mt-1 text-xs text-muted-foreground">
-          来自真实对话、词汇复习和学习记录
+          来自真实对话、词汇复习和课程记录
         </p>
       </div>
 
       <div className="flex-1 space-y-4 overflow-y-auto p-4">
         {!memory ? (
           <p className="rounded-lg border border-dashed p-3 text-sm text-muted-foreground">
-            正在整理学习记忆...
+            正在整理学习状态...
           </p>
         ) : (
           <>
             <section className="rounded-lg border p-4">
               <div className="mb-3 flex items-center gap-2 text-sm font-medium text-foreground">
                 <MessageSquareText className="h-4 w-4 text-primary" />
-                对话记忆
+                对话记录
               </div>
               <div className="grid grid-cols-2 gap-2 text-sm">
                 <MemoryStat label="对话" value={memory.stats.conversation_count} />
@@ -78,7 +78,7 @@ export function MemoryPanel({ memory, isCollapsed, onToggleCollapsed }: MemoryPa
             <section className="rounded-lg border p-4">
               <div className="mb-3 flex items-center gap-2 text-sm font-medium text-foreground">
                 <BookMarked className="h-4 w-4 text-accent" />
-                词汇记忆
+                词汇进度
               </div>
               <div className="grid grid-cols-3 gap-2 text-sm">
                 <MemoryStat label="总词汇" value={memory.stats.total_vocab} />

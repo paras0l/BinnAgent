@@ -16,6 +16,7 @@ import { ErrorState } from '@/components/ui/ErrorState'
 import { LoadingState } from '@/components/ui/LoadingState'
 import { StatusBanner } from '@/components/ui/StatusBanner'
 import { SurfaceCard } from '@/components/ui/SurfaceCard'
+import { debugFetch } from '@/shared/api/debugClient'
 import type { Learner } from '@/types'
 
 interface EpisodeDebugPageProps {
@@ -114,8 +115,8 @@ export function EpisodeDebugPage({ learner, episodeId }: EpisodeDebugPageProps) 
     setError(null)
     try {
       const [traceResponse, verificationResponse] = await Promise.all([
-        fetch(`/api/runtime/episodes/${episodeId}`),
-        fetch(`/api/runtime/episodes/${episodeId}/verification`),
+        debugFetch(`/api/runtime/episodes/${episodeId}`),
+        debugFetch(`/api/runtime/episodes/${episodeId}/verification`),
       ])
       if (!traceResponse.ok) throw new Error('Episode trace failed')
       if (!verificationResponse.ok) throw new Error('Episode verification failed')

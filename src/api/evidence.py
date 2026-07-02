@@ -2,11 +2,15 @@ from pydantic import BaseModel
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.api.deps import get_db_session
+from src.api.deps import get_db_session, require_debug_access
 from src.evidence.resolver import EvidenceResolver
 from src.evidence.types import EvidenceRef, EvidenceResolution
 
-router = APIRouter(prefix="/api/evidence", tags=["evidence"])
+router = APIRouter(
+    prefix="/api/evidence",
+    tags=["evidence"],
+    dependencies=[Depends(require_debug_access)],
+)
 
 
 class ResolveEvidenceRequest(BaseModel):

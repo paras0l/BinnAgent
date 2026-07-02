@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:console": "VITE_APP_TARGET=dev-console vite",
     "build": "tsc -b && vite build",
+    "build:console": "VITE_APP_TARGET=dev-console tsc -b && VITE_APP_TARGET=dev-console vite build",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run"

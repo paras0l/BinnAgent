@@ -199,7 +199,7 @@ export function DashboardPage({ learner, onOpenDailyLearning, onStartVocabularyP
   }
 
   if (isLoading && !summary) {
-    return <LoadingState title="正在加载学习中心" description="正在读取今日目标、复习队列和最近记忆..." />
+    return <LoadingState title="正在加载学习中心" description="正在读取今日目标、复习队列和最近学习记录..." />
   }
 
   if (!summary) {

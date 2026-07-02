@@ -18,6 +18,7 @@ import { EvidencePanel } from '@/components/learning/EvidencePanel'
 import { ReasonCard } from '@/components/learning/ReasonCard'
 import type { Learner, MemoryCardItem, MemoryCenter } from '@/types'
 import { useToast } from '@/hooks/useToast'
+import { debugFetch } from '@/shared/api/debugClient'
 
 interface MemoryCenterPageProps {
   learner: Learner
@@ -36,7 +37,7 @@ export function MemoryCenterPage({ learner }: MemoryCenterPageProps) {
   const loadMemory = useCallback(async () => {
     setIsLoading(true)
     try {
-      const response = await fetch(`/api/learners/${learner.id}/memory/center`)
+      const response = await debugFetch(`/api/learners/${learner.id}/memory/center`)
       if (!response.ok) throw new Error('Failed to load memory')
       const data: MemoryCenter = await response.json()
       setMemory(data)
@@ -67,7 +68,7 @@ export function MemoryCenterPage({ learner }: MemoryCenterPageProps) {
   const handleCurate = async () => {
     setBusyId('curate')
     try {
-      const response = await fetch(`/api/learners/${learner.id}/memory/curate`, { method: 'POST' })
+      const response = await debugFetch(`/api/learners/${learner.id}/memory/curate`, { method: 'POST' })
       if (!response.ok) throw new Error('Curate failed')
       await loadMemory()
       showToast('已整理学习记忆。', { variant: 'success' })
@@ -82,7 +83,7 @@ export function MemoryCenterPage({ learner }: MemoryCenterPageProps) {
   const handleExport = async () => {
     setBusyId('export')
     try {
-      const response = await fetch(`/api/learners/${learner.id}/memory/export`)
+      const response = await debugFetch(`/api/learners/${learner.id}/memory/export`)
       if (!response.ok) throw new Error('Export failed')
       const blob = new Blob([JSON.stringify(await response.json(), null, 2)], {
         type: 'application/json',
@@ -105,7 +106,7 @@ export function MemoryCenterPage({ learner }: MemoryCenterPageProps) {
   const updateSetting = async (key: keyof MemoryCenter['settings'], value: boolean) => {
     setBusyId(`setting-${key}`)
     try {
-      const response = await fetch(`/api/learners/${learner.id}/memory/settings`, {
+      const response = await debugFetch(`/api/learners/${learner.id}/memory/settings`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ [key]: value }),
@@ -124,7 +125,7 @@ export function MemoryCenterPage({ learner }: MemoryCenterPageProps) {
   const handleResetPlan = async () => {
     setBusyId('reset-plan')
     try {
-      const response = await fetch(`/api/learners/${learner.id}/memory/reset-plan`, { method: 'POST' })
+      const response = await debugFetch(`/api/learners/${learner.id}/memory/reset-plan`, { method: 'POST' })
       if (!response.ok) throw new Error('Reset plan failed')
       await loadMemory()
       showToast('已重置学习计划。', { variant: 'success' })
@@ -146,7 +147,7 @@ export function MemoryCenterPage({ learner }: MemoryCenterPageProps) {
     if (!target) return
     setBusyId(card.id)
     try {
-      const response = await fetch(
+      const response = await debugFetch(
         `/api/learners/${learner.id}/memory/items/${target.type}/${target.id}`,
         {
           method: 'PATCH',

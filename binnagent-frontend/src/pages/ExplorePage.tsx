@@ -126,7 +126,7 @@ const FEATURES: ExploreFeature[] = [
     title: 'AI 词汇讲解沉淀',
     description: '懒人模式：把单词、句子或段落发给 AI，自动讲解重点词。',
     whenToUse: '不想手动逐个添加，想让 AI 从材料里提炼重点词并解释时使用。',
-    outcome: 'AI 会讲解词义、用法和例句；高置信词汇会通过记忆抽取进入词汇记忆。',
+    outcome: 'AI 会讲解词义、用法和例句；高置信词汇会进入你的词汇本和复习计划。',
     status: 'ready',
     action: 'chat',
     prompt: '请作为 CET 词汇教练，帮我从下面的单词、句子或阅读段落中提炼值得记忆的重点词。请按「单词 / 中文释义 / 常见搭配 / 例句 / 记忆提示」输出，并优先解释四六级高频词。材料如下：\n\n',
@@ -424,10 +424,7 @@ export function ExplorePage({
 
     const startedRuntime = await startExploreRuntime(feature)
     if (startedRuntime?.episode_id) {
-      const url = new URL(window.location.href)
-      url.hash = `episode_id=${startedRuntime.episode_id}`
-      window.history.replaceState(null, '', url)
-      showToast(`已创建 AgentEpisode：${startedRuntime.episode_id.slice(0, 8)}...`, {
+      showToast('已准备好本次学习任务。', {
         variant: startedRuntime.status === 'not_implemented' ? 'warning' : 'success',
       })
     }
@@ -508,7 +505,7 @@ export function ExplorePage({
       return await response.json() as ExploreSkillStartResponse
     } catch (err) {
       console.error('Explore skill runtime start error:', err)
-      showToast('Runtime episode 创建失败，已继续打开原功能入口。', { variant: 'warning' })
+      showToast('学习任务启动失败，已继续打开原功能入口。', { variant: 'warning' })
       return null
     } finally {
       setLaunchingFeatureId(null)

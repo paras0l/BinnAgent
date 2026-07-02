@@ -300,7 +300,7 @@ export function GrammarPage({ learner, onBack, backLabel = '返回探索', initi
       })
       .catch((err) => {
         console.error('Grammar prompt render error:', err)
-        if (isMounted) showToast('后端 Prompt Registry 暂时不可用，已使用本地兼容 prompt。', { variant: 'warning' })
+        if (isMounted) showToast('生成指令服务暂时不可用，已使用本地兼容指令。', { variant: 'warning' })
       })
     return () => {
       isMounted = false
@@ -412,11 +412,11 @@ export function GrammarPage({ learner, onBack, backLabel = '返回探索', initi
         window.location.origin
       )
       setIsCopied(true)
-      showToast('Prompt 已复制。若已安装扩展，跳转后会尝试自动填充输入框。', { variant: 'success' })
+      showToast('生成指令已复制。若已安装扩展，跳转后会尝试自动填充输入框。', { variant: 'success' })
       window.setTimeout(() => setIsCopied(false), 1800)
     } catch (err) {
       console.error('Copy grammar prompt error:', err)
-      showToast('复制失败，请手动复制 prompt。', { variant: 'error' })
+      showToast('复制失败，请手动复制生成指令。', { variant: 'error' })
     }
   }
 
@@ -669,7 +669,7 @@ export function GrammarPage({ learner, onBack, backLabel = '返回探索', initi
             </SurfaceCard>
 
             <SurfaceCard>
-              <h2 className="text-lg font-semibold text-foreground">Prompt 预览</h2>
+              <h2 className="text-lg font-semibold text-foreground">生成指令预览</h2>
               <textarea
                 readOnly
                 value={prompt}

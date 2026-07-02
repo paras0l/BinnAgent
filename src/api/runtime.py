@@ -3,13 +3,17 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.api.deps import get_db_session
+from src.api.deps import get_db_session, require_debug_access
 from src.runtime.episode import EpisodeRuntime
 from src.runtime.schemas import EpisodeTraceView
 from src.verification.report import VerificationService
 from src.verification.types import VerificationReport
 
-router = APIRouter(prefix="/api/runtime", tags=["runtime"])
+router = APIRouter(
+    prefix="/api/runtime",
+    tags=["runtime"],
+    dependencies=[Depends(require_debug_access)],
+)
 
 
 @router.get("/episodes/{episode_id}", response_model=EpisodeTraceView)

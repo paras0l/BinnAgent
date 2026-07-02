@@ -119,7 +119,7 @@ main() {
   install_frontend_deps
 
   info "Backend API: http://localhost:8000/docs"
-  info "Frontend:    http://localhost:3000"
+  info "Frontend:    http://localhost:5173"
   info "Starting frontend dev server. Press Ctrl+C to stop it."
   info "Docker services stay running. Stop them with: docker compose down"
 

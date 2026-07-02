@@ -197,7 +197,7 @@ const PROMPTS = [
 
 const WORKSPACE_TABS: WorkspaceTab<Workspace>[] = [
   { id: 'library', label: '收藏馆', description: '浏览与理解', icon: <Library className="h-4 w-4" /> },
-  { id: 'import', label: '导入好句', description: 'Prompt 与回填', icon: <FileDown className="h-4 w-4" /> },
+  { id: 'import', label: '导入好句', description: '生成指令与回填', icon: <FileDown className="h-4 w-4" /> },
   { id: 'practice', label: '练习检测', description: '从收藏到掌握', icon: <Target className="h-4 w-4" /> },
   { id: 'writing', label: '写作调用', description: '按场景选句', icon: <PenLine className="h-4 w-4" /> },
 ]
@@ -335,7 +335,7 @@ export function WritingPhrasebookPage({ learner, onBack }: WritingPhrasebookPage
       })
       .catch((err) => {
         console.error('Writing prompt render error:', err)
-        if (isMounted) showToast('后端 Prompt Registry 暂时不可用，已使用本地兼容 prompt。', { variant: 'warning' })
+        if (isMounted) showToast('生成指令服务暂时不可用，已使用本地兼容指令。', { variant: 'warning' })
       })
     return () => {
       isMounted = false
@@ -453,7 +453,7 @@ export function WritingPhrasebookPage({ learner, onBack }: WritingPhrasebookPage
   const copyPrompt = async () => {
     const copied = await copyText(selectedPrompt.text)
     showToast(
-      copied ? 'Prompt 已复制，生成结果可回到本页粘贴提取。' : '浏览器阻止了自动复制，请手动选中 Prompt 文本复制。',
+      copied ? '生成指令已复制，生成结果可回到本页粘贴提取。' : '浏览器阻止了自动复制，请手动选中生成指令文本复制。',
       { variant: copied ? 'success' : 'warning' }
     )
   }
@@ -977,7 +977,7 @@ function ImportWorkspace({
     <div className="space-y-5">
       <SurfaceCard>
         <div className="grid gap-4 md:grid-cols-4">
-          {['选择任务', '复制 Prompt', '粘贴输出', '确认收藏'].map((step, index) => (
+          {['选择任务', '复制指令', '粘贴输出', '确认收藏'].map((step, index) => (
             <div key={step} className="rounded-[13px] border border-slate-100 bg-slate-50 p-4">
               <p className="text-xs font-semibold text-primary">Step {index + 1}</p>
               <p className="mt-1 text-sm font-semibold text-slate-950">{step}</p>
@@ -1006,12 +1006,12 @@ function ImportWorkspace({
         <SurfaceCard className="space-y-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h2 className="text-base font-semibold text-slate-950">当前 Prompt</h2>
+              <h2 className="text-base font-semibold text-slate-950">当前生成指令</h2>
               <p className="text-sm text-slate-500">复制到外部模型，生成后把结果粘贴回来。</p>
             </div>
             <button onClick={onCopyPrompt} className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:border-indigo-200 hover:text-indigo-600">
               <Copy className="h-4 w-4" />
-              复制 Prompt
+              复制指令
             </button>
           </div>
           <pre className="max-h-56 overflow-auto rounded-[13px] bg-slate-950 p-4 text-sm leading-6 text-slate-100 whitespace-pre-wrap">

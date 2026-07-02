@@ -55,18 +55,18 @@ export function KnowledgeContextPanel({ overview, selectedReviewItem, onUpload }
       </section>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-5">
-        <h2 className="text-base font-extrabold text-slate-950">解析证据</h2>
+        <h2 className="text-base font-extrabold text-slate-950">解析质量</h2>
         <div className="mt-4 grid gap-2 text-xs leading-5 text-slate-600">
-          <p><span className="font-bold text-slate-800">Parser：</span>{overview.parser_evidence.parser ?? '未记录'}</p>
-          <p><span className="font-bold text-slate-800">Profile：</span>{overview.parser_evidence.parser_profile ?? '未记录'}</p>
-          <p><span className="font-bold text-slate-800">Ingest：</span>{overview.parser_evidence.vocabulary_parser ?? '未记录'}</p>
-          <p><span className="font-bold text-slate-800">RAG chunks：</span>{overview.parser_evidence.rag_chunk_count}</p>
+          <p><span className="font-bold text-slate-800">解析方式：</span>{overview.parser_evidence.parser ?? '未记录'}</p>
+          <p><span className="font-bold text-slate-800">教材规则：</span>{overview.parser_evidence.parser_profile ?? '未记录'}</p>
+          <p><span className="font-bold text-slate-800">词汇导入：</span>{overview.parser_evidence.vocabulary_parser ?? '未记录'}</p>
+          <p><span className="font-bold text-slate-800">素材片段：</span>{overview.parser_evidence.rag_chunk_count}</p>
         </div>
         <div className="mt-4">
           <EvidencePanel
-            title="Parser warnings"
+            title="解析提示"
             items={overview.parser_evidence.warnings}
-            emptyText="暂无 parser warning"
+            emptyText="暂无解析提示"
           />
         </div>
       </section>

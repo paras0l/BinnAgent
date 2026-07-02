@@ -10,7 +10,6 @@ export type AppTab =
   | 'chat'
   | 'explore'
   | 'dashboard'
-  | 'memory'
   | 'pronunciation'
   | 'grammar'
 
