@@ -1,6 +1,18 @@
 # Simulation / Evaluation Audit
 
-Status: issue #28 contract simulation + evaluator baseline gate.
+Status: issue #28 simulation mode layering + evaluator baseline gate.
+
+## Runner Modes
+
+`scripts/run_learner_simulation.py` now has three explicit modes:
+
+| Mode | Transport | Model | Default use |
+| --- | --- | --- | --- |
+| `contract` | `httpx.MockTransport` via `src/simulation/mock_transport.py` | No real model calls; deterministic graph stub for direct graph steps | Default CI / Codex regression safety net |
+| `integration` | `httpx.ASGITransport(app=app)` | `DeterministicFakeModelRouter` dependency override | Manual or nightly backend regression with FastAPI wiring |
+| `e2e` | Real `--base-url` | Whatever the target environment provides | Local/manual full-stack regression only |
+
+Contract mode validates API contract shape, scenario ordering, assertion semantics, scenario contract fields and evaluator metrics without requiring PostgreSQL, Redis, Ollama, or a running server. Integration mode exercises FastAPI routing and dependency injection while avoiding real LLM randomness through the deterministic fake model provider.
 
 ## Built-in Personas
 
@@ -22,6 +34,8 @@ Status: issue #28 contract simulation + evaluator baseline gate.
 | `episode_runtime_knowledge_practice` | daily plan, daily lesson start/answer, runtime trace, verification report | `runtime`, `exercise`, `mastery`, `memory`, `verification` |
 | `daily_lesson_capability_recommendation` | daily lesson answer, Explore capability event, runtime trace | `daily_lesson`, `recommendation`, `explore`, `memory`, `verification` |
 | `daily_lesson_checkpoint_resume` | daily lesson start/answer, runtime trace | `langgraph`, `checkpoint`, `daily_lesson`, `exercise`, `mastery`, `memory`, `verification` |
+| `daily_lesson_missing_answer_must_not_write_memory` | daily lesson start, runtime trace | `langgraph`, `checkpoint`, `daily_lesson`, `memory` |
+| `llm_json_missing_field_triggers_repair` | exercise generation | `prompt_schema`, `exercise`, `integration`, `model_provider` |
 
 Every built-in scenario now declares a contract:
 
@@ -41,6 +55,7 @@ Every built-in scenario now declares a contract:
 Current report fields:
 
 - `run_id`
+- `mode`
 - `persona`
 - `scenario`
 - `scenario_contract`
@@ -122,6 +137,17 @@ Raw `runtime_metrics` currently collected by `ScenarioRunner`:
 
 Current contract simulations can reliably infer runtime event/tool metrics, daily lesson recommendation counts, memory update counts, vocabulary attempt counts, and PromptExecutionRecord-shaped metrics when supplied in `runtime_metrics.prompt_executions`.
 
+## Deterministic Fake Model Provider
+
+`src/simulation/fake_model.py` provides `DeterministicFakeModelRouter` for integration simulations. It supports:
+
+- structured JSON output for response-schema requests
+- schema-invalid output via `metadata.simulation_fake_output=schema_invalid`
+- repaired JSON output for `exercise_generate`, with `usage.retry_count=1`
+- deterministic embeddings for RAG-facing integration paths
+
+The fake provider is only installed through simulation dependency overrides. Production model routing remains unchanged.
+
 Metrics that still need integration/E2E mode for reliable statistics:
 
 - parser quality score and source page coverage from real textbook parsing
@@ -174,9 +200,15 @@ Nested metric paths are supported, for example:
 `scripts/run_learner_simulation.py` supports:
 
 ```bash
-./scripts/run_learner_simulation.sh --scenario episode_runtime_knowledge_practice --fail-on-threshold
-./scripts/run_learner_simulation.sh --scenario episode_runtime_knowledge_practice --fail-on-regression
-./scripts/run_learner_simulation.sh --scenario episode_runtime_knowledge_practice --update-baseline
+python scripts/run_learner_simulation.py --mode contract --scenario episode_runtime_knowledge_practice
+python scripts/run_learner_simulation.py --mode contract --all
+python scripts/run_learner_simulation.py --mode contract --tag langgraph
+python scripts/run_learner_simulation.py --mode integration --scenario llm_json_missing_field_triggers_repair
+python scripts/run_learner_simulation.py --mode e2e --base-url http://localhost:8000 --scenario smoke_learning_journey
+python scripts/run_learner_simulation.py --mode contract --all --report-dir var/simulation/reports
+python scripts/run_learner_simulation.py --scenario episode_runtime_knowledge_practice --fail-on-threshold
+python scripts/run_learner_simulation.py --scenario episode_runtime_knowledge_practice --fail-on-regression
+python scripts/run_learner_simulation.py --scenario episode_runtime_knowledge_practice --update-baseline
 ```
 
 `--update-baseline` should be used only after reviewing that behavior changes are intentional and healthy. If a core learning loop regresses, fix the product code or scenario contract instead of updating the baseline to accept the regression.
@@ -194,11 +226,16 @@ Update baselines when:
 - a metric becomes more accurate because the runner now collects better signals
 - a product behavior improvement changes expected counts or latencies and the new value has been reviewed
 
-## Contract Simulation vs Integration/E2E
+## CI / Codex Workflow
 
-Current tests under `tests/simulation/` are contract simulations. They use `httpx.MockTransport` or deterministic graph stubs to verify scenario orchestration, assertion semantics, report shape, and expected runtime trace contracts.
+Recommended workflow:
 
-They are not yet full integration or E2E runs against live PostgreSQL, Redis, Ollama, LangGraph checkpointing, and frontend flows.
+- Contract simulation is default CI: `python scripts/run_learner_simulation.py --mode contract --all`.
+- Integration simulation is manual or nightly: run selected scenarios with `--mode integration`.
+- E2E simulation is local/manual only and requires a real `--base-url`.
+- For changes under `src/graph/**`, `src/memory/**`, `src/mastery/**`, `src/prompts/**`, or `src/knowledge/**`, run `scripts/list_impacted_simulations.py` and then run the returned scenarios.
+
+Current tests under `tests/simulation/` remain contract-level unit tests. They use `httpx.MockTransport`, deterministic fake outputs, or graph stubs to verify scenario orchestration, assertion semantics, report shape, and expected runtime trace contracts.
 
 Paths that still need integration/E2E coverage:
 
@@ -209,6 +246,7 @@ Paths that still need integration/E2E coverage:
 - Explore capability recommendation click-through from frontend to API to memory/event trace
 - parser/RAG ingestion flows for textbook uploads and retrieval quality
 - prompt/schema migrations through PromptExecutor and PromptExecutionRecord
+- frontend Dev Console simulation dashboard interactions
 
 ## Impacted Simulation Script
 
@@ -227,5 +265,5 @@ Current guidance:
 - Changes under `src/graph/**`: run `smoke_learning_journey` and `daily_lesson_checkpoint_resume`.
 - Changes under `src/learning/**`, `src/mastery/**`, `src/memory/**`, or `src/verification/**`: run runtime/daily lesson scenarios returned by the script.
 - Changes under vocabulary API/model/store code: run `vocabulary_agent_deposit` and/or `vocabulary_practice_adaptation`.
-- Changes under `src/prompts/**` may currently return no scenarios; prompt/schema simulation scenarios should be added in a later phase.
-- Changes under `src/knowledge/processor.py` or parser/RAG code may currently return no parser/RAG scenarios; parser/RAG contract and E2E scenarios remain follow-up work.
+- Changes under `src/prompts/**`: run `llm_json_missing_field_triggers_repair` and prompt evals.
+- Changes under `src/knowledge/**`: run impacted runtime/knowledge scenarios and parser evaluation where applicable.

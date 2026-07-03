@@ -1,4 +1,6 @@
-from scripts.run_learner_simulation import _apply_baseline, _exit_code
+from argparse import Namespace
+
+from scripts.run_learner_simulation import _apply_baseline, _exit_code, _select_scenarios
 from src.simulation.scenario import SimulationReport
 
 
@@ -49,3 +51,15 @@ def test_exit_code_can_fail_on_threshold_or_regression() -> None:
     report.threshold_failures = []
     report.regressions = [{"metric": "runtime.verification_pass_rate"}]
     assert _exit_code(report, fail_on_threshold=False, fail_on_regression=True) == 1
+
+
+def test_select_scenarios_supports_all_and_tag_filters() -> None:
+    all_scenarios = _select_scenarios(Namespace(all=True, tag=[], scenario="smoke_learning_journey"))
+    prompt_scenarios = _select_scenarios(
+        Namespace(all=False, tag=["prompt_schema"], scenario="smoke_learning_journey")
+    )
+
+    assert len(all_scenarios) > 1
+    assert [scenario.id for scenario in prompt_scenarios] == [
+        "llm_json_missing_field_triggers_repair"
+    ]

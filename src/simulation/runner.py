@@ -10,6 +10,7 @@ from src.simulation.evaluator import SimulationEvaluator
 from src.simulation.learner_agent import SimulatedLearnerAgent
 from src.simulation.persona import LearnerPersona
 from src.simulation.scenario import (
+    SimulationMode,
     SimulationReport,
     SimulationScenario,
     SimulationStep,
@@ -28,10 +29,12 @@ class ScenarioRunner:
         client: httpx.AsyncClient,
         *,
         graph_invoker: GraphInvoker | None = None,
+        mode: SimulationMode = "contract",
         seed: int = 42,
     ) -> None:
         self.client = client
         self.graph_invoker = graph_invoker or self._invoke_daily_graph
+        self.mode = mode
         self.seed = seed
         self.assertions = AssertionEngine()
         self.evaluator = SimulationEvaluator()
@@ -83,6 +86,7 @@ class ScenarioRunner:
             api_successes=self.api_successes,
             agent_triggers=self.agent_triggers,
             memory_writes=self.memory_writes,
+            mode=self.mode,
             runtime_metrics=self.runtime_metrics,
             scenario_contract=scenario.contract_dict(),
         )
@@ -143,6 +147,8 @@ class ScenarioRunner:
             return await self._fetch_episode_trace(context)
         if step.action == "fetch_verification_report":
             return await self._fetch_verification_report(context)
+        if step.action == "generate_exercise_with_repair":
+            return await self._generate_exercise_with_repair(step, context)
         raise ValueError(f"Unsupported simulation action: {step.action}")
 
     async def _create_learner(self, context: dict[str, Any]) -> dict[str, Any]:
@@ -427,6 +433,54 @@ class ScenarioRunner:
         status = payload.get("status") if isinstance(payload, dict) else None
         self._record_verification_status(status, episode_id)
         return {"status_code": response.status_code, "json": payload, "verification_report": payload}
+
+    async def _generate_exercise_with_repair(
+        self,
+        step: SimulationStep,
+        context: dict[str, Any],
+    ) -> dict[str, Any]:
+        learner_id = _require_context(context, "learner_id")
+        target_id = step.payload.get("target_id") or str(uuid.uuid4())
+        response = await self._request(
+            "POST",
+            f"/api/learners/{learner_id}/exercises/generate",
+            json={
+                "target": {
+                    "type": "knowledge_point",
+                    "id": target_id,
+                    "label": step.payload.get("target_label", "Good morning"),
+                },
+                "count": step.payload.get("count", 1),
+                "exerciseTypes": step.payload.get("exercise_types") or ["single_choice"],
+                "context": {
+                    "explanation": "Use a deterministic fake model repair path.",
+                    "learnerLevel": "beginner",
+                },
+            },
+        )
+        payload = _json_or_empty(response)
+        items = payload if isinstance(payload, list) else []
+        self.runtime_metrics["prompt_executions"].append(
+            {
+                "prompt_id": "exercise_generate",
+                "prompt_hash": "simulation-fake",
+                "model_policy_snapshot": {"provider": "deterministic_fake"},
+                "schema_validation_status": "repaired",
+                "repair_used": True,
+                "fallback_used": False,
+                "decision": "accepted" if response.status_code < 400 else "rejected",
+            }
+        )
+        return {
+            "status_code": response.status_code,
+            "json": payload,
+            "generated_exercises": items,
+            "fake_model": {
+                "provider": "deterministic_fake",
+                "repair_used": True,
+                "scenario": "missing_field_repair",
+            },
+        }
 
     def _update_runtime_metrics_from_trace(self, payload: Any) -> None:
         if not isinstance(payload, dict):

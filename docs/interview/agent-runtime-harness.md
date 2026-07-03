@@ -128,6 +128,7 @@ checkpoint 保存：
 - Learner App / Dev Console 双入口：学习端只暴露学习功能，调试端承载 Memory、Episode、Tool、Evidence、RAG、Prompt、Verification 和 Simulation 面板。
 - Episode Debug / Graph Runs、Tool Registry、Tool Call Records、RAG Debug、Prompt Debug、VerificationReport、Simulation Report 等 Dev Console 页面。
 - Simulation scenario 覆盖 episode runtime 知识点练习链路。
+- Simulation runner 已分层为 contract / integration / e2e：contract 用 MockTransport 作为默认回归安全网，integration 用 ASGITransport 和 deterministic fake model provider，e2e 指向真实 base_url 手动回归。
 - 教材解析链路新增 ParserRun、ParserQualityReport、ParserReviewItem 和 TextbookQualityScore：每次 PDF ingest 都有运行记录、质量指标、队列化审核、发布门禁和 provenance，可防止低质量解析结果静默进入学习闭环。
 - Dev Console 新增 Textbook Parsing Report：可查看教材 source 质量摘要、ParserRun 历史、quality metrics、blocking reasons、pending review items 和 parser evidence；evidence 查询只返回必要 raw line/excerpt，不展示整本 PDF 原文。
 - 教材解析新增 Golden Dataset + Parser Evaluation MVP：`books/golden/pep_grade7_upper` 保存短结构化期望，CLI 可输出 JSON report、比较 baseline、执行 threshold/regression gate，补齐“解析质量可回归”的安全网。
@@ -175,7 +176,7 @@ Graph Run Debug 不展示 raw prompt / raw output；原始 LLM trace 交给 Lang
 - 引入统一 current-learner 依赖，补齐多用户权限隔离。
 - 扩展 ToolRegistry wrapper，让 RAG / Memory / Mastery / Review 全部通过统一 executor 调用。
 - 增加在线 eval、更多 golden dataset、Langfuse dashboard 和更多 simulation persona。
-- 扩展 parser registry、CI parser regression 和更完整的节点级回放。
+- 扩展 parser registry、CI parser regression、更多真实 DB integration/e2e simulation 和 Dev Console dashboard。
 
 ## 八、验收标准
 

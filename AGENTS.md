@@ -107,6 +107,10 @@ High-frequency commands:
 - Prefer `.venv/bin/ruff ...` when checking local edits; the global `ruff` may be absent or a different version.
 - Use `./scripts/run_learner_simulation.sh` for simulation runs so the correct interpreter is selected automatically.
 - Memory v2 uses `MemoryWriter.record_event()` for Retain, `MemoryRetriever.for_*()` for scene-scoped Recall, and `MemoryCurator.reflect()` for Episode / Learner Model / Teaching Strategy updates.
+- Core learning-loop changes must update or run the relevant simulation scenarios.
+- PromptExecutor, Memory, Mastery, and LangGraph changes must add or update regression scenarios when behavior changes.
+- Do not update simulation baselines unless the behavior change has been reviewed and is intentionally accepted.
+- PR descriptions should list impacted simulations, especially for changes under `src/graph/**`, `src/memory/**`, `src/mastery/**`, `src/prompts/**`, and `src/knowledge/**`.
 
 ## Coding Style & Naming Conventions
 
@@ -119,6 +123,15 @@ Python:
 - `PascalCase` for classes and Pydantic models.
 - Typed interfaces for model providers, tools, memory stores, and API schemas.
 - Prefer structured parsers and SQLAlchemy expressions over ad hoc string manipulation.
+
+Prompt / schema governance:
+
+- Structured LLM calls must go through `PromptExecutor`.
+- New prompts must be registered as `PromptMetadata`.
+- Every structured prompt must bind `output_schema` and `model_policy`.
+- Do not bypass schema validation and write directly to Memory, Mastery, KnowledgePoint, WritingPhrase, or similar learner-facing business tables.
+- Do not duplicate raw prompt, raw output, token usage, cost, or latency locally when Langfuse already covers them.
+- `PromptExecutionRecord` records only business decisions, schema/repair/fallback status, hashes, and Langfuse references.
 
 Frontend:
 

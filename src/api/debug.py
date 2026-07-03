@@ -31,6 +31,7 @@ from src.models.memory import LearningMemoryEvent
 from src.models.prompt_execution import PromptExecutionRecord
 from src.models.runtime import AgentEpisode
 from src.models.vocabulary import VocabularyItem
+from src.prompts import prompt_registry
 from src.providers.router import router as model_router
 from src.runtime.episode import EpisodeRuntime, graph_run_debug_payload
 from src.security.ownership import CurrentUser, get_episode_for_user, get_learner_for_user
@@ -535,6 +536,26 @@ async def list_prompt_executions(
         "limit": limit,
         "offset": offset,
     }
+
+
+@router.get("/prompts/registry")
+async def list_prompt_registry() -> dict[str, Any]:
+    prompts = [
+        {
+            "prompt_id": item.id,
+            "version": item.version,
+            "owner": item.owner,
+            "purpose": item.purpose,
+            "template_path": item.template_path,
+            "input_schema": item.input_schema,
+            "output_schema": item.output_schema,
+            "model_policy": item.model_policy or {},
+            "eval_set": item.eval_set,
+            "status": item.status,
+        }
+        for item in prompt_registry.list()
+    ]
+    return {"prompts": prompts, "total": len(prompts)}
 
 
 @router.get("/prompts/executions/{execution_id}")
@@ -1676,6 +1697,7 @@ def _prompt_execution_response(record: PromptExecutionRecord) -> dict[str, Any]:
         "input_hash": record.input_hash,
         "input_schema": record.input_schema,
         "output_schema": record.output_schema,
+        "model_policy": record.model_policy_snapshot or {},
         "model_policy_snapshot": record.model_policy_snapshot or {},
         "langfuse_trace_id": record.langfuse_trace_id,
         "langfuse_observation_id": record.langfuse_observation_id,

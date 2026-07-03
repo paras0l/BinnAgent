@@ -2,7 +2,7 @@ import math
 from collections.abc import Mapping
 from typing import Any
 
-from src.simulation.scenario import SimulationReport, SimulationStepResult
+from src.simulation.scenario import SimulationMode, SimulationReport, SimulationStepResult
 
 
 MetricValue = float | int | str | None
@@ -19,6 +19,7 @@ class SimulationEvaluator:
         api_successes: int,
         agent_triggers: int,
         memory_writes: int,
+        mode: SimulationMode = "contract",
         runtime_metrics: dict[str, Any] | None = None,
         scenario_contract: dict | None = None,
     ) -> SimulationReport:
@@ -43,6 +44,7 @@ class SimulationEvaluator:
         return SimulationReport(
             persona=persona_id,
             scenario=scenario_id,
+            mode=mode,
             status="passed" if not failures and all(step.status != "failed" for step in steps) else "failed",
             steps=steps,
             metrics=metrics,

@@ -25,6 +25,10 @@ def test_daily_lesson_runtime_closure_scenarios_exist() -> None:
         "daily_lesson_missing_answer_must_not_write_memory",
         "daily_lesson_wrong_answer_updates_mastery_down",
         "daily_lesson_correct_answer_updates_mastery_up",
+        "daily_lesson_checkpoint_resume",
+        "vocabulary_practice_adaptation",
+        "episode_runtime_knowledge_practice",
+        "llm_json_missing_field_triggers_repair",
     }
 
     assert required <= set(BUILTIN_SCENARIOS)

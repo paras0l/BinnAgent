@@ -5,6 +5,7 @@ import uuid
 
 
 StepStatus = Literal["passed", "failed", "skipped"]
+SimulationMode = Literal["contract", "integration", "e2e"]
 
 
 @dataclass(frozen=True)
@@ -61,6 +62,7 @@ class SimulationReport:
     steps: list[SimulationStepResult]
     metrics: dict[str, float | int]
     failures: list[str]
+    mode: SimulationMode = "contract"
     runtime_metrics: dict[str, Any] = field(default_factory=dict)
     metric_groups: dict[str, dict[str, float | int | str | None]] = field(default_factory=dict)
     baseline_comparison: dict[str, Any] | None = None
@@ -72,6 +74,7 @@ class SimulationReport:
     def to_dict(self) -> dict[str, Any]:
         return {
             "run_id": self.run_id,
+            "mode": self.mode,
             "persona": self.persona,
             "scenario": self.scenario,
             "scenario_contract": _json_safe(self.scenario_contract) if self.scenario_contract else None,

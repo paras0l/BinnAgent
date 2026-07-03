@@ -10,15 +10,17 @@ def test_impacted_simulations_match_graph_changes() -> None:
     assert "langgraph" in payload["module_tags"]
 
 
-def test_impacted_simulations_prompt_changes_can_be_empty() -> None:
+def test_impacted_simulations_prompt_changes_include_prompt_regression() -> None:
     payload = impacted_payload(["src/prompts/registry.py"])
 
-    assert payload["scenarios"] == []
-    assert payload["module_tags"] == []
+    ids = {item["id"] for item in payload["scenarios"]}
+    assert "llm_json_missing_field_triggers_repair" in ids
+    assert "prompt_schema" in payload["module_tags"]
 
 
-def test_impacted_simulations_parser_changes_can_be_empty() -> None:
+def test_impacted_simulations_knowledge_changes_include_runtime_knowledge_practice() -> None:
     payload = impacted_payload(["src/knowledge/processor.py"])
 
-    assert payload["scenarios"] == []
-    assert payload["module_tags"] == []
+    ids = {item["id"] for item in payload["scenarios"]}
+    assert "episode_runtime_knowledge_practice" in ids
+    assert "knowledge" in payload["module_tags"]

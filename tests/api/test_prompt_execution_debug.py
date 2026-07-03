@@ -92,6 +92,44 @@ async def test_prompt_execution_debug_list_requires_debug_access(client, mock_se
 
 
 @pytest.mark.asyncio
+async def test_prompt_debug_registry_list_requires_debug_access(client, mock_session) -> None:
+    settings.debug_console_enabled = False
+
+    response = await client.get("/api/debug/prompts/registry")
+
+    assert response.status_code == 404
+    mock_session.execute.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_prompt_debug_registry_list_returns_metadata_without_raw_prompt(
+    client,
+    mock_session,
+) -> None:
+    settings.debug_console_enabled = True
+    settings.debug_console_token = "dev"
+
+    response = await client.get(
+        "/api/debug/prompts/registry",
+        headers={"X-Debug-Token": "dev"},
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    prompt = next(
+        item for item in data["prompts"] if item["prompt_id"] == "writing_phrase.import"
+    )
+    assert prompt["version"] == "v1"
+    assert prompt["output_schema"] == "WritingPhraseImportOutput"
+    assert prompt["model_policy"]["temperature"] == 0.2
+    assert prompt["eval_set"] == "evals/prompts/writing_phrase_import_v1.jsonl"
+    assert "prompt" not in prompt
+    assert "raw_prompt" not in prompt
+    assert "raw_output" not in prompt
+    mock_session.execute.assert_not_called()
+
+
+@pytest.mark.asyncio
 async def test_prompt_execution_debug_list_returns_business_record_only(
     client,
     mock_session,
@@ -113,6 +151,7 @@ async def test_prompt_execution_debug_list_returns_business_record_only(
     item = data["executions"][0]
     assert item["prompt_id"] == "writing_phrase.import"
     assert item["langfuse_trace_id"] == "trace-1"
+    assert item["model_policy"] == {"temperature": 0.2}
     assert item["decision"] == "review_required"
     assert "raw_prompt" not in item
     assert "raw_output" not in item
