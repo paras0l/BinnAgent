@@ -2,6 +2,7 @@ export const devConsoleRoutes = [
   { id: 'learners', label: 'Learners', path: '/dev/learners' },
   { id: 'episodes', label: 'Recent Episodes', path: '/dev/episodes' },
   { id: 'graph-runs', label: 'Graph Runs', path: '/dev/graph-runs' },
+  { id: 'textbooks', label: 'Textbook Parsing', path: '/dev/textbooks' },
   { id: 'memory', label: 'Memory Debug', path: '/dev/memory' },
   { id: 'tools', label: 'Tool Registry', path: '/dev/tools' },
   { id: 'tool-call-records', label: 'Tool Call Records', path: '/dev/tool-calls' },

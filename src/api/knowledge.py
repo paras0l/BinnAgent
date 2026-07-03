@@ -287,6 +287,25 @@ def _review_queue_item_payload(item: ParserReviewItem) -> dict[str, Any]:
         "decision": item.decision,
         "review_note": item.review_note,
         "reviewed_at": item.reviewed_at.isoformat() if item.reviewed_at else None,
+        "created_at": item.created_at.isoformat() if item.created_at else None,
+    }
+
+
+def _source_quality_summary_payload(source: KnowledgeSource) -> dict[str, Any]:
+    quality = _source_quality_payload(source)
+    score = quality.get("quality_score") if isinstance(quality.get("quality_score"), dict) else {}
+    return {
+        "source_id": str(source.id),
+        "title": source.title,
+        "status": source.status,
+        "quality_status": quality.get("quality_status"),
+        "overall_score": score.get("overall_score"),
+        "parser_status": quality.get("parser_status"),
+        "latest_parser_run_id": quality.get("latest_parser_run_id"),
+        "pending_review_count": quality.get("pending_review_count"),
+        "pending_blocker_count": quality.get("pending_blocker_count"),
+        "review_warning_count": quality.get("review_warning_count"),
+        "blocking_reasons": quality.get("blocking_reasons"),
     }
 
 
@@ -767,6 +786,7 @@ async def list_parser_review_items(
     severity: str | None = Query(default=None),
     issue_type: str | None = Query(default=None),
     target_type: str | None = Query(default=None),
+    parser_run_id: uuid.UUID | None = Query(default=None),
     db: AsyncSession = Depends(get_db_session),
 ) -> dict[str, Any]:
     source = await _load_review_source(db, source_id, learner_id)
@@ -779,6 +799,8 @@ async def list_parser_review_items(
         filters.append(ParserReviewItem.issue_type == issue_type)
     if target_type:
         filters.append(ParserReviewItem.target_type == target_type)
+    if parser_run_id is not None:
+        filters.append(ParserReviewItem.parser_run_id == parser_run_id)
     result = await db.execute(
         select(ParserReviewItem)
         .where(*filters)
@@ -793,6 +815,7 @@ async def list_parser_review_items(
     apply_quality_gate(source, summary=summary)
     return {
         "source": _source_payload(source),
+        "source_quality_summary": _source_quality_summary_payload(source),
         "summary": {
             "pending_review_count": summary.pending_review_count,
             "pending_blocker_count": summary.pending_blocker_count,
@@ -813,6 +836,7 @@ async def get_parser_review_item(
     item = await _load_review_item(db, source_id, review_item_id)
     return {
         "source": _source_payload(source),
+        "source_quality_summary": _source_quality_summary_payload(source),
         "item": _review_queue_item_payload(item),
     }
 
@@ -885,7 +909,10 @@ async def _decide_parser_review_item(
     if item.decision != "pending":
         raise HTTPException(status_code=409, detail="Review item has already been decided")
     if action == "ignored" and item.severity == "blocker" and not body.allow_blocker_ignore:
-        raise HTTPException(status_code=409, detail="Blocker review item requires explicit allow_blocker_ignore")
+        raise HTTPException(
+            status_code=409,
+            detail="Blocker review item requires allow_blocker_ignore=true and review_note.",
+        )
     if action == "ignored" and item.severity == "blocker" and not body.review_note:
         raise HTTPException(status_code=422, detail="Ignoring a blocker requires review_note")
 
@@ -907,6 +934,7 @@ async def _decide_parser_review_item(
     summary = await recalculate_quality_gate_from_queue(db, source)
     return {
         "source": _source_payload(source),
+        "source_quality_summary": _source_quality_summary_payload(source),
         "summary": {
             "pending_review_count": summary.pending_review_count,
             "pending_blocker_count": summary.pending_blocker_count,

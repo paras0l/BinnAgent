@@ -1,6 +1,6 @@
 # Textbook Parsing Quality
 
-> 更新时间：2026-07-03
+> 更新时间：2026-07-04
 > 目的：定义教材解析质量报告、评分和发布门禁的当前实现契约。
 
 ## 数据模型
@@ -128,6 +128,75 @@ source 列表和详情统一返回：
 - `parser_report_summary`
 
 `parser_evidence.report` 仍保留完整 report，用于 Dev Console 或解析校对工作台排查。
+
+## Debug Textbook Parsing Report API
+
+Dev Console 新增受 `require_debug_access` 保护的教材解析治理 API：
+
+- `GET /api/debug/textbook-sources`
+- `GET /api/debug/textbook-sources/{source_id}/parsing-report`
+- `GET /api/debug/textbook-sources/{source_id}/parser-runs`
+- `GET /api/debug/textbook-sources/{source_id}/parser-runs/{parser_run_id}`
+- `GET /api/debug/textbook-sources/{source_id}/review-items`
+- `POST /api/debug/textbook-sources/{source_id}/review-items/{review_item_id}/confirm`
+- `POST /api/debug/textbook-sources/{source_id}/review-items/{review_item_id}/update`
+- `POST /api/debug/textbook-sources/{source_id}/review-items/{review_item_id}/ignore`
+- `GET /api/debug/textbook-sources/{source_id}/evidence`
+
+`/api/debug/textbook-sources` 只返回摘要字段：source title/status、quality status、overall score、latest parser run id/version、pending review/blocker/warning count、blocking reasons 和时间戳，不返回完整 `quality_report` 或大 evidence snapshot。
+
+`/api/debug/textbook-sources/{source_id}/parsing-report` 返回：
+
+- `source`
+- `latest_parser_run`
+- `quality_score`
+- `quality_report`
+- `quality_metrics_by_group`
+- `blocking_reasons`
+- `warnings`
+- `pending_review_count`
+- `pending_blocker_count`
+- `review_summary_by_issue_type`
+- `review_summary_by_severity`
+- `parser_artifacts`
+- `evidence_coverage`
+
+`quality_metrics_by_group` 固定包含 `intake`、`structure`、`vocabulary`、`knowledge`、`rag` 五组。旧数据缺失字段时返回 `null`，以便前端稳定渲染。
+
+ParserRun detail 必须用 `source_id + parser_run_id` 查询；`parser_run.source_id` 不匹配时返回 404，避免跨教材读取。
+
+## Parser Evidence API
+
+Evidence 查询用于从知识点、课程节点、练习题或 RAG chunk 回溯 parser provenance：
+
+```text
+GET /api/debug/textbook-sources/{source_id}/evidence?target_type=knowledge_point&target_id=...
+GET /api/debug/textbook-sources/{source_id}/evidence?target_type=exercise_question&target_id=...
+GET /api/debug/textbook-sources/{source_id}/evidence?target_type=knowledge_chunk&target_id=...
+GET /api/debug/textbook-sources/{source_id}/evidence?target_type=curriculum_node&target_id=...
+GET /api/debug/textbook-sources/{source_id}/evidence?parser_run_id=...
+GET /api/debug/textbook-sources/{source_id}/evidence?issue_type=missing_source_page
+```
+
+返回 item 包含 `target_type`、`target_id`、`parser_run_id`、`origin`、`source_page`、`pdf_page`、`raw_line`、`raw_text_excerpt`、`raw_text_span`、`confidence`、`warnings`、`schema_version`、`review_item_ids` 和 `issue_types`。
+
+约束：
+
+- `raw_text_excerpt` 默认最多 500 字符。
+- 不返回整本 PDF 原文。
+- 不返回 raw LLM prompt/output。
+- `target_id` 必须属于当前 `source_id`。
+- 缺 evidence 时返回空数组和 warning，不抛 500。
+
+## Dev Console 页面
+
+新增 `/dev/textbooks` 工作台：
+
+- source 列表显示 status、quality status、overall score、latest parser run、pending review/blocker/warning 和 blocking reasons。
+- source 详情显示 Source Summary、Quality Score Card、metrics tabs、Review Queue、ParserRun History 和 Evidence Browser。
+- ParserRun 详情页面显示完整 run、artifact refs、错误摘要和 related review item summary。
+- 大 JSON 均放在折叠区域。
+- warning / blocker 用明显视觉样式区分。
 
 ## Provenance
 

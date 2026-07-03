@@ -125,16 +125,22 @@ async def test_review_items_api_lists_with_filters_and_summary(client, review_ap
 
     response = await client.get(
         f"/api/knowledge/sources/{source.id}/review-items",
-        params={"learner_id": str(learner_id), "severity": "warning"},
+        params={
+            "learner_id": str(learner_id),
+            "severity": "warning",
+            "parser_run_id": str(warning_item.parser_run_id),
+        },
     )
 
     assert response.status_code == 200
     payload = response.json()
     assert len(payload["items"]) == 1
     assert payload["items"][0]["issue_type"] == "low_confidence"
+    assert payload["items"][0]["created_at"] is not None
     assert payload["summary"]["pending_review_count"] == 2
     assert payload["summary"]["pending_blocker_count"] == 1
     assert payload["source"]["pending_blocker_count"] == 1
+    assert payload["source_quality_summary"]["pending_blocker_count"] == 1
 
 
 @pytest.mark.asyncio
@@ -164,6 +170,7 @@ async def test_confirm_review_item_updates_decision_and_target(client, review_ap
     assert point.content["requires_review"] is False
     assert point.content["review_decision"] == "confirmed"
     assert source.status == "published"
+    assert response.json()["source_quality_summary"]["quality_status"] == "published"
 
 
 @pytest.mark.asyncio

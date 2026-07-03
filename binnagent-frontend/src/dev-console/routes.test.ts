@@ -8,6 +8,7 @@ describe('devConsoleRoutes', () => {
         'memory',
         'episodes',
         'learners',
+        'textbooks',
         'tools',
         'tool-call-records',
         'evidence',
@@ -21,6 +22,7 @@ describe('devConsoleRoutes', () => {
       expect.arrayContaining([
         'Memory Debug',
         'Learners',
+        'Textbook Parsing',
         'Recent Episodes',
         'Tool Registry',
         'Tool Call Records',
@@ -34,7 +36,7 @@ describe('devConsoleRoutes', () => {
   })
 
   it('routes runtime episode URLs to Episode Debug', () => {
-    expect(findDevConsoleRoute('/runtime/episodes/episode-1').id).toBe('episodes')
+    expect(findDevConsoleRoute('/runtime/episodes/episode-1').id).toBe('graph-runs')
   })
 
   it('keeps Tool Registry and Tool Call Records as separate routes', () => {

@@ -1,6 +1,7 @@
 import { lazy, Suspense, useCallback, useEffect, useState } from 'react'
 import {
   Activity,
+  BookOpenCheck,
   BrainCircuit,
   Database,
   FileJson,
@@ -25,6 +26,7 @@ import { clearDebugToken, debugFetch, readDebugToken, saveDebugToken } from '@/s
 import type { Learner } from '@/types'
 import { LearnersPage } from './pages/LearnersPage'
 import { RecentEpisodesPage } from './pages/RecentEpisodesPage'
+import { TextbookParsingPage } from './pages/TextbookParsingPage'
 import { devConsoleRoutes, findDevConsoleRoute, type DevConsoleRouteId } from './routes'
 
 const MemoryCenterPage = lazy(() =>
@@ -266,6 +268,8 @@ function DevConsoleShell({ onClearToken }: { onClearToken: () => void }) {
                   navigate={navigate}
                 />
               )
+            ) : routeId === 'textbooks' ? (
+              <TextbookParsingPage navigate={navigate} />
             ) : routeId === 'tools' ? (
               <ToolRegistryPage />
             ) : routeId === 'tool-call-records' ? (
@@ -1033,6 +1037,7 @@ function routeIcon(routeId: DevConsoleRouteId) {
   if (routeId === 'memory') return <BrainCircuit className="size-4" />
   if (routeId === 'episodes') return <Activity className="size-4" />
   if (routeId === 'graph-runs') return <Route className="size-4" />
+  if (routeId === 'textbooks') return <BookOpenCheck className="size-4" />
   if (routeId === 'tools') return <Wrench className="size-4" />
   if (routeId === 'tool-call-records') return <Activity className="size-4" />
   if (routeId === 'evidence') return <Search className="size-4" />

@@ -129,6 +129,7 @@ checkpoint 保存：
 - Episode Debug / Graph Runs、Tool Registry、Tool Call Records、RAG Debug、Prompt Debug、VerificationReport、Simulation Report 等 Dev Console 页面。
 - Simulation scenario 覆盖 episode runtime 知识点练习链路。
 - 教材解析链路新增 ParserRun、ParserQualityReport、ParserReviewItem 和 TextbookQualityScore：每次 PDF ingest 都有运行记录、质量指标、队列化审核、发布门禁和 provenance，可防止低质量解析结果静默进入学习闭环。
+- Dev Console 新增 Textbook Parsing Report：可查看教材 source 质量摘要、ParserRun 历史、quality metrics、blocking reasons、pending review items 和 parser evidence；evidence 查询只返回必要 raw line/excerpt，不展示整本 PDF 原文。
 
 本地运行入口：
 
@@ -156,6 +157,7 @@ Dev Console 使用流程：
 4. 在 Learners 页面搜索或选择 learner，顶部 ContextBar 会同步 learner_id。
 5. 在 Recent Episodes 页面查看该 learner 最近的 AgentEpisode。
 6. 点击“打开 Trace”进入 Graph Run Debug，查看 Episode、checkpoint、events、tool calls、prompt execution summary、VerificationReport 和 evidence refs。
+7. 打开 Textbook Parsing Report，按 source、ParserRun、review issue 或 target object 查看解析质量和 evidence 摘要。
 
 Graph Run Debug 不展示 raw prompt / raw output；原始 LLM trace 交给 Langfuse。
 
@@ -163,7 +165,7 @@ Graph Run Debug 不展示 raw prompt / raw output；原始 LLM trace 交给 Lang
 
 - Knowledge exercise 是完整接入样板。
 - Daily Lesson 支持单题单 checkpoint 的持久化暂停和恢复，并支持可选 LangGraph checkpointer 编译；业务 checkpoint 仍负责前端恢复。
-- Textbook ingest 已接入 deterministic 质量门禁和 ParserReviewItem 队列，API 和 review flow 会根据 pending blocker / warning 决定 `published/review_required/partial_indexed/blocked/failed`。
+- Textbook ingest 已接入 deterministic 质量门禁和 ParserReviewItem 队列，API、Dev Console 和 review flow 会根据 pending blocker / warning 决定 `published/review_required/partial_indexed/blocked/failed`。
 - Explore vocabulary / writing phrase 等入口已能创建 TaskSpec 和 episode，部分 handler 返回 not_implemented，保留扩展位。
 
 后续计划：
@@ -172,7 +174,7 @@ Graph Run Debug 不展示 raw prompt / raw output；原始 LLM trace 交给 Lang
 - 引入统一 current-learner 依赖，补齐多用户权限隔离。
 - 扩展 ToolRegistry wrapper，让 RAG / Memory / Mastery / Review 全部通过统一 executor 调用。
 - 增加在线 eval、golden dataset、Langfuse dashboard 和更多 simulation persona。
-- 把前端 Graph Run Debug 接入证据解析详情和更完整的节点级回放。
+- 扩展 golden dataset parser eval、parser registry、CI parser regression 和更完整的节点级回放。
 
 ## 八、验收标准
 
