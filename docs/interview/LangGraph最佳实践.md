@@ -103,7 +103,7 @@ else:
 
 官方 LangGraph 的 interrupts 能力也是为这种 human-in-the-loop 设计的：它允许在图节点中暂停执行，保存状态，等待外部输入后再恢复。([Docs by LangChain][3])
 
-不过这里你要诚实：**你当前项目第一阶段是自己用 `LearningGraphCheckpoint` 表做持久化暂停，还没有完全接入官方 checkpointer / interrupt。** 你的文档里也写了：第一阶段使用项目内 `learning_graph_checkpoints` 表，而不是直接接入 LangGraph 官方 checkpointer，后续可替换为官方 checkpointer / thread_id 机制。
+不过这里你要诚实：**你当前项目已经支持可选 LangGraph checkpointer 编译，但生产恢复仍保留 `LearningGraphCheckpoint` 业务表，官方 `interrupt()/Command(resume=...)` 还没有深度接入。** 这让前端题面恢复和 Episode / Dev Console 调试先稳定下来。
 
 这个边界讲出来是加分的，不是减分。
 
@@ -371,9 +371,9 @@ summarize_session
 
 面试说法：
 
-> 这里的 END 不是任务完成，而是业务层面的暂停点。项目侧会保存 checkpoint，episode 进入 waiting_user，等用户提交答案后再从 generate_feedback 恢复。
+> 这里的 END 不是任务完成，而是业务层面的暂停点。项目侧会保存 checkpoint，episode 进入 waiting_user，等用户提交答案后再从 grade_attempt 恢复。
 
-你当前还有 `build_resume_graph()`，支持从 `generate_feedback`、`update_memory`、`schedule_review`、`verify_episode`、`summarize_session` 等节点恢复。
+你当前还有 `build_resume_graph()`，支持从 `grade_attempt`、`update_mastery`、`generate_feedback`、`update_memory`、`schedule_review`、`recommend_learning_action`、`verify_episode`、`summarize_session` 等节点恢复。
 
 这就是你现阶段的“手写 resume graph”。
 
@@ -407,7 +407,7 @@ API 启动 session 时，会构造 `initial_state`，然后通过 `daily_lesson_
 
 现在要诚实回答：
 
-> 当前第一阶段没有直接使用 LangGraph 官方 checkpointer，而是使用项目内 `LearningGraphCheckpoint` 表保存暂停状态。原因是我先把业务 checkpoint 和 Episode / Dev Console / required_input_schema 打通，便于前端恢复题面和调试。后续计划是把 `GraphCheckpointStore` 替换为官方 checkpointer，并使用 thread_id 统一恢复执行。
+> 当前第一阶段已经支持可选 LangGraph checkpointer 编译，但生产路径仍使用项目内 `LearningGraphCheckpoint` 表保存业务暂停状态。原因是我先把业务 checkpoint 和 Episode / Dev Console / required_input_schema 打通，便于前端恢复题面和调试。后续计划是接入生产级 PostgresSaver，并使用官方 interrupt/resume 统一恢复执行。
 
 这点有官方依据：LangGraph 的 persistence 会在每一步保存 checkpoint，并支持 human-in-the-loop、memory、time travel debugging 和 fault-tolerant execution。([Docs by LangChain][5])
 
@@ -666,7 +666,7 @@ source_node
 
 在 BinnAgent 中引入 LangGraph 作为学习型 Agent Runtime 的状态机编排层，将 Daily Lesson 拆分为 load_profile、detect_intent、select_learning_goal、route_skill_agent、run_learning_task、generate_feedback、update_memory、schedule_review、verify_episode、summarize_session 等节点。相比一次性 LLM 调用，该设计能够显式管理学习过程中的用户画像、练习作答、反馈生成、记忆写入、复习调度和验证报告。
 
-针对学习任务必须等待真实用户作答的问题，设计 checkpoint / interrupt / resume 机制：当 run_learning_task 生成题目且需要用户输入时，图不会继续执行反馈、Memory 和 Review 节点，而是持久化当前 state snapshot，使 episode 进入 waiting_user 状态；用户提交答案后从 generate_feedback 后续链路恢复执行，保证只有在存在真实学习证据时才更新 Memory、Review 和后续推荐。
+针对学习任务必须等待真实用户作答的问题，设计 checkpoint / interrupt / resume 机制：当 run_learning_task 生成题目且需要用户输入时，图在 wait_for_answer 暂停，不会继续执行评分、反馈、Memory 和 Review 节点，而是持久化当前 state snapshot，使 episode 进入 waiting_user 状态；用户提交答案后从 grade_attempt 恢复执行，保证只有在存在真实学习证据时才更新 Mastery、Memory、Review 和后续推荐。
 
 同时将 LangGraph 运行与 Langfuse、Dev Console、AgentEpisode、LearningEvent 和 VerificationReport 结合，使每次学习任务都具备可追踪、可解释、可回放和可回归测试的运行证据，支撑后续 MasteryEngine、Learning Action Recommender 和 Simulation Evaluation 的持续演进。
 
@@ -680,7 +680,7 @@ source_node
 >
 > 如果用普通 service 写，早期可以跑，但后面中断恢复、分支、Memory 副作用、掌握度更新和调试都会散落在业务代码里。所以我把 Daily Lesson 建模成 StateGraph，每个节点只读写 LearningGraphState 的一部分，图结构显式保证没有用户答案就不会生成反馈、不会写记忆、不会安排复习。
 >
-> 当前第一阶段已经实现了图编排和业务 checkpoint / resume，后续会进一步接入 LangGraph 官方 checkpointer 和 interrupt，让恢复执行、time travel debugging 和 human-in-the-loop 更原生。
+> 当前第一阶段已经实现了图编排、业务 checkpoint / resume 和可选 LangGraph checkpointer 编译，后续会进一步接入官方 interrupt，让恢复执行、time travel debugging 和 human-in-the-loop 更原生。
 
 这个回答非常稳，而且经得住追问。
 

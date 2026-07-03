@@ -167,7 +167,7 @@ def _answer_required_update(
         "input_materials": materials,
         "answer_required": True,
         "checkpoint_status": checkpoint_status or "waiting_user",
-        "resume_from": "generate_feedback",
+        "resume_from": "grade_attempt",
         "current_task_id": current_task_id,
     }
 

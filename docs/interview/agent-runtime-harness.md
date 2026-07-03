@@ -60,17 +60,24 @@ flowchart TD
 
 ## 四、Daily Lesson checkpoint / interrupt / resume
 
-Daily Lesson 不再把所有节点一次跑完。`daily_lesson_graph` 在 `run_learning_task` 后按状态路由：
+Daily Lesson 不再把所有节点一次跑完。`daily_lesson_graph` 当前链路是：
+
+```text
+load_profile -> detect_intent -> select_learning_goal -> route_skill_agent
+-> run_learning_task -> wait_for_answer -> grade_attempt -> update_mastery
+-> generate_feedback -> update_memory -> schedule_review
+-> recommend_learning_action -> verify_episode -> summarize_session
+```
 
 - `answer_required=true` 且还没有 `learner_answer` 时，graph 返回题目材料并中断，不进入反馈节点。
-- 有 `learner_answer` 时，从 `generate_feedback` 后续链路继续执行。
+- 有 `learner_answer` 时，从 `grade_attempt` 进入评分、掌握度、Memory、Review、推荐和验证闭环。
 
-为什么需要 interrupt：学习任务必须等待真实用户作答，不能在没有答案时生成反馈、写记忆或安排复习。第一阶段使用项目内 `learning_graph_checkpoints` 表持久化暂停状态，而不是直接接入 LangGraph 官方 checkpointer。
+为什么需要 interrupt：学习任务必须等待真实用户作答，不能在没有答案时生成反馈、写记忆或安排复习。当前实现同时保留两层能力：LangGraph graph 支持可选 checkpointer 编译；项目内 `learning_graph_checkpoints` 表继续作为业务 checkpoint，服务前端题面恢复。
 
 checkpoint 保存：
 
 - learner / episode / thread / checkpoint_key。
-- `resume_from`，当前固定从 `generate_feedback` 恢复。
+- `resume_from`，当前从 `grade_attempt` 恢复。
 - `state_snapshot`，包含 `input_materials`、`current_task_id`、`answer_required` 等 graph state。
 - `prompt_payload` 和 `required_input_schema`，用于前端刷新后恢复题面。
 
@@ -78,11 +85,11 @@ checkpoint 保存：
 
 1. `/daily-lessons/start` 创建 `AgentEpisode`，graph 运行到 `run_learning_task`。
 2. 如果需要作答，写入 `LearningGraphCheckpoint`，episode 状态变为 `waiting_user`，并记录 `task_prepared` / `graph_interrupted`。
-3. `/daily-lessons/{episode_id}/answer` 校验 active checkpoint，注入 `learner_answer`，记录 `graph_resumed` / `learner_answer_received`。
-4. 复用现有知识练习评分、掌握度、Memory、Review 和 Verification 能力。
+3. `/daily-lessons/{episode_id}/answer` 校验 active checkpoint，注入 `learner_answer`，以 dry-run resume graph 产出 graph-level 闭环状态，并记录 `graph_resumed` / `learner_answer_received`。
+4. 复用现有知识练习评分、掌握度、Memory、Review 和 Verification 能力，新增 `exercise_attempt_created` / `next_action_recommended` runtime events。
 5. checkpoint 标记为 `completed`，episode 标记为 `completed`，Trace 中可看到 `episode_completed`。
 
-当前边界：第一阶段只支持单题单 active `waiting_user` checkpoint；同一 episode 通过 partial unique index 保证只有一个 active checkpoint。后续可以把 `GraphCheckpointStore` 替换为 LangGraph 官方 checkpointer / thread_id 机制，并扩展为多步骤 lesson。
+当前边界：第一阶段只支持单题单 active `waiting_user` checkpoint；同一 episode 通过 partial unique index 保证只有一个 active checkpoint。LangGraph `InMemorySaver` 已可用于测试/本地实验，生产 PostgresSaver 和官方 `interrupt()/Command(resume=...)` 深度集成仍是后续任务。
 
 ## 五、关键数据结构
 
@@ -115,7 +122,7 @@ checkpoint 保存：
 - AgentEpisode / LearningEvent / ToolCallRecord 数据模型和 trace API。
 - TaskSpec、EvidenceRef、MasteryEngine、RecommendationEngine、LearningOrchestrator、ToolRegistry、VerificationReport。
 - Knowledge Exercise 提交流程接入 episode trace。
-- Daily Lesson start / answer 支持 checkpoint / interrupt / resume，等待用户作答时 episode 进入 `waiting_user`。
+- Daily Lesson start / answer 支持 checkpoint / interrupt / resume，等待用户作答时 episode 进入 `waiting_user`，答案提交后闭合 grade/mastery/memory/review/recommend/verify。
 - ExploreCapability start API 和前端入口接入 TaskSpec。
 - Learner App / Dev Console 双入口：学习端只暴露学习功能，调试端承载 Memory、Episode、Tool、Evidence、RAG、Prompt、Verification 和 Simulation 面板。
 - Episode Debug、Tool Registry、Tool Call Records、RAG Debug、Simulation Report 等 Dev Console 页面。
@@ -151,7 +158,7 @@ Dev Console 使用流程：
 第一阶段 runtime 接入：
 
 - Knowledge exercise 是完整接入样板。
-- Daily Lesson 支持单题单 checkpoint 的持久化暂停和恢复，后续可替换为 LangGraph 官方 checkpointer。
+- Daily Lesson 支持单题单 checkpoint 的持久化暂停和恢复，并支持可选 LangGraph checkpointer 编译；业务 checkpoint 仍负责前端恢复。
 - Explore vocabulary / writing phrase 等入口已能创建 TaskSpec 和 episode，部分 handler 返回 not_implemented，保留扩展位。
 
 后续计划：

@@ -53,6 +53,10 @@ class AssertionEngine:
             event_type = assertion.get("event_type")
             passed = _event_index(value, str(event_type)) is not None
             return AssertionResult(passed, f"{path} should include event_type {event_type!r}")
+        if kind == "event_absent":
+            event_type = assertion.get("event_type")
+            passed = _event_index(value, str(event_type)) is None
+            return AssertionResult(passed, f"{path} should not include event_type {event_type!r}")
         if kind == "event_order":
             before = assertion.get("before")
             after = assertion.get("after")

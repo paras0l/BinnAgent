@@ -63,7 +63,201 @@ BUILTIN_PERSONAS: dict[str, LearnerPersona] = {
 }
 
 
-BUILTIN_SCENARIOS: dict[str, SimulationScenario] = {
+BUILTIN_SCENARIOS: dict[str, SimulationScenario] = {}
+
+
+BUILTIN_SCENARIOS.update(
+    {
+        "daily_lesson_checkpoint_resume_after_restart": SimulationScenario(
+            id="daily_lesson_checkpoint_resume_after_restart",
+            name="Daily lesson checkpoint resume after restart",
+            persona_id="grade7_low_vocab",
+            steps=[
+                SimulationStep(name="create_learner", action="create_learner"),
+                SimulationStep(name="daily_plan", action="daily_plan"),
+                SimulationStep(
+                    name="start_daily_lesson",
+                    action="start_daily_lesson",
+                    assertions=[
+                        {"type": "equals", "path": "daily_lesson.status", "value": "waiting_user"},
+                        {"type": "equals", "path": "daily_lesson.resume_from", "value": "grade_attempt"},
+                        {"type": "exists", "path": "daily_lesson.thread_id"},
+                        {"type": "exists", "path": "daily_lesson.prompt_payload"},
+                    ],
+                ),
+                SimulationStep(
+                    name="submit_daily_lesson_answer",
+                    action="submit_daily_lesson_answer",
+                    payload={"answer": "Good morning!"},
+                    assertions=[
+                        {"type": "equals", "path": "answer.status", "value": "completed"},
+                        {"type": "equals", "path": "answer.checkpoint_status", "value": "completed"},
+                        {"type": "exists", "path": "answer.exercise_attempt_id"},
+                        {"type": "exists", "path": "answer.mastery_update"},
+                    ],
+                ),
+                SimulationStep(
+                    name="fetch_episode_trace",
+                    action="fetch_episode_trace",
+                    assertions=[
+                        {"type": "equals", "path": "episode_trace.episode.status", "value": "completed"},
+                        {"type": "event_exists", "path": "episode_trace.events", "event_type": "graph_interrupted"},
+                        {"type": "event_exists", "path": "episode_trace.events", "event_type": "graph_resumed"},
+                        {"type": "event_exists", "path": "episode_trace.events", "event_type": "exercise_attempt_created"},
+                        {"type": "event_exists", "path": "episode_trace.events", "event_type": "next_action_recommended"},
+                    ],
+                ),
+            ],
+            module_tags=["langgraph", "checkpoint", "daily_lesson", "runtime"],
+            entrypoints=[
+                "/api/learners/{learner_id}/daily-lessons/start",
+                "/api/learners/{learner_id}/daily-lessons/{episode_id}/answer",
+                "/api/runtime/episodes/{episode_id}",
+            ],
+            expected_events=[
+                "graph_interrupted",
+                "graph_resumed",
+                "exercise_attempt_created",
+                "exercise_graded",
+                "mastery_updated",
+                "memory_written",
+                "review_scheduled",
+                "next_action_recommended",
+            ],
+            expected_tool_calls=["exercise.grade", "mastery.update", "memory.write", "verification.verify_episode"],
+            expected_state_changes=["checkpoint_waiting_user", "checkpoint_completed"],
+            required_metrics=["api_success_rate", "episode_count", "completed_episode_count"],
+            owner_module="daily_lesson",
+            change_triggers=[
+                "src/graph/**",
+                "src/learning/**",
+                "src/api/daily_lessons.py",
+                "src/runtime/**",
+                "src/verification/**",
+                "src/simulation/**",
+            ],
+        ),
+        "daily_lesson_missing_answer_must_not_write_memory": SimulationScenario(
+            id="daily_lesson_missing_answer_must_not_write_memory",
+            name="Daily lesson missing answer must not write memory",
+            persona_id="grade7_low_vocab",
+            steps=[
+                SimulationStep(name="create_learner", action="create_learner"),
+                SimulationStep(name="daily_plan", action="daily_plan"),
+                SimulationStep(
+                    name="start_daily_lesson",
+                    action="start_daily_lesson",
+                    assertions=[
+                        {"type": "equals", "path": "daily_lesson.status", "value": "waiting_user"},
+                        {"type": "equals", "path": "daily_lesson.checkpoint_status", "value": "waiting_user"},
+                    ],
+                ),
+                SimulationStep(
+                    name="fetch_episode_trace",
+                    action="fetch_episode_trace",
+                    assertions=[
+                        {"type": "equals", "path": "episode_trace.episode.status", "value": "waiting_user"},
+                        {"type": "event_exists", "path": "episode_trace.events", "event_type": "graph_interrupted"},
+                        {"type": "event_absent", "path": "episode_trace.events", "event_type": "exercise_graded"},
+                        {"type": "event_absent", "path": "episode_trace.events", "event_type": "memory_written"},
+                    ],
+                ),
+            ],
+            module_tags=["langgraph", "checkpoint", "daily_lesson", "memory"],
+            entrypoints=[
+                "/api/learners/{learner_id}/daily-lessons/start",
+                "/api/runtime/episodes/{episode_id}",
+            ],
+            expected_events=["graph_interrupted", "task_prepared"],
+            expected_tool_calls=[],
+            expected_state_changes=["checkpoint_waiting_user"],
+            required_metrics=["api_success_rate", "episode_count"],
+            owner_module="daily_lesson",
+            change_triggers=[
+                "src/graph/**",
+                "src/learning/**",
+                "src/api/daily_lessons.py",
+                "src/memory/**",
+                "src/simulation/**",
+            ],
+        ),
+        "daily_lesson_wrong_answer_updates_mastery_down": SimulationScenario(
+            id="daily_lesson_wrong_answer_updates_mastery_down",
+            name="Daily lesson wrong answer updates mastery down",
+            persona_id="grade7_low_vocab",
+            steps=[
+                SimulationStep(name="create_learner", action="create_learner"),
+                SimulationStep(name="daily_plan", action="daily_plan"),
+                SimulationStep(name="start_daily_lesson", action="start_daily_lesson"),
+                SimulationStep(
+                    name="submit_wrong_answer",
+                    action="submit_daily_lesson_answer",
+                    payload={"answer": "I good morning."},
+                    assertions=[
+                        {"type": "equals", "path": "answer.status", "value": "completed"},
+                        {
+                            "type": "value_between",
+                            "path": "answer.mastery_update.mastery_delta",
+                            "min": -1,
+                            "max": -0.01,
+                        },
+                        {"type": "exists", "path": "answer.recommendation_result"},
+                    ],
+                ),
+            ],
+            module_tags=["daily_lesson", "mastery", "checkpoint"],
+            entrypoints=[
+                "/api/learners/{learner_id}/daily-lessons/start",
+                "/api/learners/{learner_id}/daily-lessons/{episode_id}/answer",
+            ],
+            expected_events=["exercise_graded", "mastery_updated", "next_action_recommended"],
+            expected_tool_calls=["exercise.grade", "mastery.update"],
+            expected_state_changes=["mastery_score_updated"],
+            required_metrics=["api_success_rate", "completed_episode_count"],
+            owner_module="mastery",
+            change_triggers=["src/graph/**", "src/learning/**", "src/mastery/**", "src/simulation/**"],
+        ),
+        "daily_lesson_correct_answer_updates_mastery_up": SimulationScenario(
+            id="daily_lesson_correct_answer_updates_mastery_up",
+            name="Daily lesson correct answer updates mastery up",
+            persona_id="grade7_low_vocab",
+            steps=[
+                SimulationStep(name="create_learner", action="create_learner"),
+                SimulationStep(name="daily_plan", action="daily_plan"),
+                SimulationStep(name="start_daily_lesson", action="start_daily_lesson"),
+                SimulationStep(
+                    name="submit_correct_answer",
+                    action="submit_daily_lesson_answer",
+                    payload={"answer": "Good morning!"},
+                    assertions=[
+                        {"type": "equals", "path": "answer.status", "value": "completed"},
+                        {
+                            "type": "delta_gte",
+                            "path": "answer.mastery_update.mastery_delta",
+                            "threshold": 0.01,
+                        },
+                        {"type": "exists", "path": "answer.review_schedule_result"},
+                    ],
+                ),
+            ],
+            module_tags=["daily_lesson", "mastery", "checkpoint"],
+            entrypoints=[
+                "/api/learners/{learner_id}/daily-lessons/start",
+                "/api/learners/{learner_id}/daily-lessons/{episode_id}/answer",
+            ],
+            expected_events=["exercise_graded", "mastery_updated", "review_scheduled"],
+            expected_tool_calls=["exercise.grade", "mastery.update", "review.schedule"],
+            expected_state_changes=["mastery_score_updated", "review_schedule_created"],
+            required_metrics=["api_success_rate", "completed_episode_count"],
+            owner_module="mastery",
+            change_triggers=["src/graph/**", "src/learning/**", "src/mastery/**", "src/simulation/**"],
+        ),
+    }
+)
+
+
+BUILTIN_SCENARIOS.update(
+    {
     "smoke_learning_journey": SimulationScenario(
         id="smoke_learning_journey",
         name="Smoke learning journey",
@@ -583,4 +777,5 @@ BUILTIN_SCENARIOS: dict[str, SimulationScenario] = {
             "src/simulation/**",
         ],
     ),
-}
+    }
+)

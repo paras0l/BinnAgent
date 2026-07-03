@@ -103,11 +103,37 @@ def _checkpoint(learner_id: uuid.UUID, episode_id: uuid.UUID, question: Exercise
         thread_id=f"daily-lesson:{episode_id}",
         checkpoint_key=f"{episode_id}:task",
         status="waiting_user",
-        resume_from="generate_feedback",
+        resume_from="grade_attempt",
         state_snapshot={
             "episode_id": str(episode_id),
+            "learner_id": str(learner_id),
+            "user_id": str(learner_id),
+            "thread_id": f"daily-lesson:{episode_id}",
             "current_task_id": "task",
-            "input_materials": [{"question_id": str(question.id), "stem": question.stem}],
+            "input_materials": [
+                {
+                    "task_id": "task",
+                    "question_id": str(question.id),
+                    "stem": question.stem,
+                    "options": question.options or [],
+                    "answer": question.answer,
+                    "target_type": "knowledge_point",
+                    "target_id": str(question.knowledge_point_id),
+                }
+            ],
+            "selected_task": {
+                "task_id": "task",
+                "task_type": "practice_knowledge_point",
+                "source": "test",
+                "objective": "Practice greeting",
+                "target": {
+                    "target_type": "knowledge_point",
+                    "target_id": str(question.knowledge_point_id),
+                },
+                "success_criteria": {"min_accuracy": 1.0},
+                "verification_policy": {"required_checks": []},
+                "metadata": {},
+            },
             "answer_required": True,
         },
         required_input_schema={"required": ["answer"]},
@@ -144,7 +170,10 @@ async def test_start_daily_lesson_selects_task_and_creates_episode():
     assert started.status == "waiting_user"
     assert started.checkpoint_id
     assert started.checkpoint_status == "waiting_user"
-    assert started.resume_from == "generate_feedback"
+    assert started.resume_from == "grade_attempt"
+    assert started.thread_id == f"daily-lesson:{started.episode_id}"
+    assert started.prompt_payload["prompt"] == question.stem
+    assert started.required_input_schema["required"] == ["answer"]
     assert started.initial_payload["question_id"] == str(question.id)
     assert any(isinstance(item, AgentEpisode) for item in db.added_objects)
     assert any(isinstance(item, LearningGraphCheckpoint) for item in db.added_objects)
@@ -165,10 +194,14 @@ async def test_submit_daily_lesson_answer_completes_existing_episode():
         success_criteria=SuccessCriteria(min_accuracy=1.0, requires_explanation=True),
         verification_policy=VerificationPolicy(
             required_checks=[
-                "exercise_attempt_saved",
-                "grading_result_exists",
+                "task_prepared",
+                "learner_answer_received",
+                "exercise_attempt_created",
+                "exercise_graded",
                 "memory_event_written",
-                "mastery_update_valid",
+                "mastery_updated",
+                "review_scheduled",
+                "next_action_recommended",
             ],
             require_evidence=True,
         ),
@@ -209,6 +242,9 @@ async def test_submit_daily_lesson_answer_completes_existing_episode():
     assert result["episode_id"] == str(episode.id)
     assert result["verification_status"] == "passed"
     assert result["checkpoint_status"] == "completed"
+    assert result["exercise_attempt_id"]
+    assert result["recommendation_result"]["status"] == "recommended"
+    assert result["review_schedule_result"]["status"] == "scheduled"
     assert result["next_capability_recommendations"]
     assert result["next_capability_recommendations"][0]["capability_id"] == "grammar-explain"
     assert episode.status == "completed"

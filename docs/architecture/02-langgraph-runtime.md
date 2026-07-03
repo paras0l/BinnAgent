@@ -37,6 +37,14 @@ class LearningState(TypedDict):
     next_tasks: list
     emotion_signal: dict | None
     model_policy: dict | None
+    exercise_attempt_id: str | None
+    grade_result: dict | None
+    mastery_update: dict | None
+    memory_write_result: dict | None
+    review_schedule_result: dict | None
+    recommendation_result: dict | None
+    prompt_payload: dict | None
+    required_input_schema: dict | None
 ```
 
 ## 3. 顶层 Graph
@@ -48,17 +56,17 @@ flowchart TD
     Intent --> Goal["select_learning_goal"]
     Goal --> Route["route_skill_agent"]
     Route --> Task["run_learning_task"]
-    Task --> Feedback["generate_feedback"]
+    Task --> Wait["wait_for_answer"]
+    Wait -->|"no learner_answer"| End["end / waiting_user"]
+    Wait -->|"has learner_answer"| Grade["grade_attempt"]
+    Grade --> Mastery["update_mastery"]
+    Mastery --> Feedback["generate_feedback"]
     Feedback --> Memory["update_memory"]
     Memory --> Review["schedule_review"]
-    Review --> Summary["summarize_session"]
+    Review --> Recommend["recommend_learning_action"]
+    Recommend --> Verify["verify_episode"]
+    Verify --> Summary["summarize_session"]
     Summary --> End["end"]
-
-    Intent --> QA["answer_learning_question"]
-    QA --> Memory
-
-    Task --> Interrupt["need_user_input / interrupt"]
-    Interrupt --> Task
 ```
 
 ## 4. 节点设计
@@ -162,6 +170,30 @@ flowchart TD
 - 写作批改：接收草稿 -> 诊断 -> 要求二改 -> 对照反馈。
 - 听力训练：取音频 -> 转写 -> 对照 -> 错听分析。
 
+### 4.5.1 `wait_for_answer`
+
+当前实现中的 interrupt-compatible 节点。
+
+无答案时返回 `answer_required=true`、`current_task_id`、`prompt_payload`、`required_input_schema`、`resume_from="grade_attempt"` 和 `checkpoint_status="waiting_user"`，随后 graph 到 `END`，不会进入评分、反馈、Memory 或复习节点。
+
+有答案时继续进入 `grade_attempt`。
+
+### 4.5.2 `grade_attempt`
+
+复用 `grade_exercise_answer` 的评分语义，输出：
+
+- `exercise_attempt_id`
+- `grade_result`
+- `wrong_reason`
+- `knowledge_point_ids`
+- `evidence_refs`
+
+真实 `ExerciseAttempt` 持久化仍由 `LearningOrchestrator.submit_answer` 完成，避免 graph resume 造成重复写入。
+
+### 4.5.3 `update_mastery`
+
+输出与 `MasteryUpdateResult` 兼容的掌握度更新结果。当前 graph 节点使用 rule fallback 产出状态；真实 DB 更新仍复用 orchestrator 中的 `MasteryEngine.update_from_attempt()`。
+
 ### 4.6 `generate_feedback`
 
 统一反馈格式：
@@ -216,6 +248,15 @@ flowchart TD
 - writing error pattern。
 - listening mishearing pattern。
 
+### 4.8.1 `recommend_learning_action`
+
+根据 `grade_result`、`mastery_update` 和 `wrong_reason` 生成下一步行动：
+
+- `advance`
+- `review_later`
+- `repair_grammar`
+- `retry_with_hint`
+
 ### 4.9 `summarize_session`
 
 输出给用户的结尾：
@@ -239,21 +280,22 @@ flowchart TD
 
 ### 5.2 checkpoint 粒度
 
-建议在这些节点后保存：
+当前实现区分两类 checkpoint：
 
-- `load_profile`
-- `select_learning_goal`
-- `run_learning_task` 出题后
-- 用户提交答案后
-- `generate_feedback`
-- `update_memory`
-- `summarize_session`
+- LangGraph checkpointer：`build_graph(checkpointer=None)` / `build_resume_graph(..., checkpointer=None)` 支持编译期注入；`build_checkpointer(kind="memory")` 为测试和本地实验创建 `InMemorySaver`。
+- 业务 checkpoint：`LearningGraphCheckpoint` 持久化 `state_snapshot`、`prompt_payload`、`required_input_schema`、`resume_from` 和 checkpoint 状态，用于前端恢复题面。
+
+生产默认仍使用 `None`，不启用内存 checkpointer；后续再接 PostgresSaver。
 
 ### 5.3 恢复策略
 
-- 如果用户中断在答题前：恢复题目和材料。
-- 如果中断在评分前：重新调用评分工具，但保证幂等。
-- 如果中断在 Memory 写入前：检查 session event 是否已写，避免重复。
+- 稳定 thread id：`daily-lesson:{episode_id}`。
+- 如果用户中断在答题前：恢复题目、材料和输入 schema。
+- 如果中断在评分前：从 `grade_attempt` 进入 resume graph。
+- 恢复 graph 以 `side_effect_mode="dry_run"` 产出状态，不重复写 DB。
+- 真实评分、掌握度、Memory、Review 仍由 orchestrator 的持久化路径完成。
+
+详见 [LangGraph Runtime Audit](./langgraph-runtime-audit.md)。
 
 ## 6. Streaming 事件
 

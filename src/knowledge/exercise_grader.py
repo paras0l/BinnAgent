@@ -4,6 +4,9 @@ from typing import Any
 def answer_to_text(answer: str | dict[str, Any]) -> str:
     if isinstance(answer, str):
         return answer.strip()
+    answer_value = answer.get("answer")
+    if isinstance(answer_value, str):
+        return answer_value.strip()
     value = answer.get("value")
     if isinstance(value, str):
         return value.strip()

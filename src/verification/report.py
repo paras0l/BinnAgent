@@ -72,11 +72,15 @@ def _run_check(name: str, trace: EpisodeTraceView) -> VerificationCheck:
     aliases = {
         "memory_event_written": "memory_written",
         "grading_result_exists": "exercise_graded",
+        "exercise_attempt_created": "exercise_attempt_saved",
+        "next_action_recommended": "next_action_recommended",
     }
     normalized = aliases.get(normalized, normalized)
 
     if normalized in {
         "episode_started",
+        "task_prepared",
+        "learner_answer_received",
         "exercise_answered",
         "exercise_graded",
         "memory_written",
@@ -87,6 +91,10 @@ def _run_check(name: str, trace: EpisodeTraceView) -> VerificationCheck:
         return _check_exercise_attempt_saved(trace)
     if normalized == "mastery_update_valid":
         return _check_mastery_update_valid(trace)
+    if normalized == "mastery_updated":
+        return check_event_exists(trace, "mastery_updated")
+    if normalized == "next_action_recommended":
+        return _check_next_action_recommended(trace)
     if normalized == "evidence_non_empty":
         return check_evidence_non_empty(collect_trace_evidence(trace))
     if normalized == "episode_completed":
@@ -140,6 +148,23 @@ def _check_mastery_update_valid(trace: EpisodeTraceView) -> VerificationCheck:
         actual=scores,
         evidence_refs=_event_refs(events),
         message=None if passed else check.message or "Missing valid mastery update",
+    )
+
+
+def _check_next_action_recommended(trace: EpisodeTraceView) -> VerificationCheck:
+    events = [
+        event
+        for event in trace.events
+        if event.event_type in {"next_action_recommended", "explore_capability_recommended"}
+    ]
+    return VerificationCheck(
+        name="next_action_recommended",
+        check_type="business_rule",
+        passed=bool(events),
+        expected="next_action_recommended or explore_capability_recommended event",
+        actual=[event.event_type for event in events],
+        evidence_refs=_event_refs(events),
+        message=None if events else "No next action recommendation event found",
     )
 
 

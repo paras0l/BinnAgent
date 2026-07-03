@@ -91,6 +91,7 @@ http://localhost:5174，可在 Learners / Recent Episodes 中直接选择 learne
 - [11. Vocabulary Learning](docs/architecture/11-vocabulary-learning.md)
 - [12. Textbook RAG, Langfuse & Exercises](docs/architecture/12-rag-observability-exercises.md)
 - [13. Current Scope and Status](docs/architecture/13-current-scope-and-status.md)
+- [LangGraph Runtime Audit](docs/architecture/langgraph-runtime-audit.md)
 - [Prompt Execution Audit](docs/architecture/prompt-execution-audit.md)
 - [Prompt Execution Governance](docs/architecture/prompt-execution-governance.md)
 - [Simulation / Evaluation Audit](docs/architecture/simulation-evaluation-audit.md)
@@ -112,8 +113,8 @@ http://localhost:5174，可在 Learners / Recent Episodes 中直接选择 learne
 | Prompt Registry / Schema-first Import / Parser Quality | 基础治理已实现；PromptExecutor 第一阶段、PromptExecutionRecord、结构化校验记录和 writing_phrase.import 迁移已落地 |
 | Agent Runtime / Harness | 第一阶段已实现，TaskSpec、AgentEpisode、LearningEvent、EvidenceRef、ToolCallRecord、VerificationReport、MasteryEngine、RecommendationEngine、LearningGraphCheckpoint 和 Dev Console 调试入口已接入；Dev Console 支持 Learners / Recent Episodes 选择上下文；Debug API 默认关闭并需 token |
 | Learner-scoped isolation | Issue #25 第一阶段已实现，新增 current user / current learner dependency、scoped resource helper，并加固 Runtime、Daily Lesson、Memory、Explore、ExerciseAttempt 和 Debug 高风险路径 |
-| LangGraph daily lesson | 已从纯线性 graph 升级为单题 checkpoint / interrupt / resume Runtime；start 可返回 waiting_user checkpoint，answer 可恢复并完成 grading、memory、review、verification |
-| Learner Simulation Agent | Deterministic MVP 已实现，新增 scenario contract/module_tags、impacted simulation 推导脚本、Agent Runtime 断言增强、metric_groups、baseline comparison、threshold gate、episode runtime knowledge practice、daily_lesson_checkpoint_resume 和 daily_lesson_capability_recommendation 回归场景及 runtime_metrics |
+| LangGraph daily lesson | 已升级为单题 checkpoint / interrupt / resume 学习闭环；graph 支持可选 checkpointer 编译，start 返回 waiting_user checkpoint/thread/schema/prompt，answer 从 `grade_attempt` 恢复并完成 grading、mastery、memory、review、recommend、verification |
+| Learner Simulation Agent | Deterministic MVP 已实现，新增 scenario contract/module_tags、impacted simulation 推导脚本、Agent Runtime 断言增强、metric_groups、baseline comparison、threshold gate、episode runtime knowledge practice、daily_lesson_checkpoint_resume、capability recommendation、缺答案不写 memory 和 mastery 上下行回归场景 |
 | CET reading / writing / weekly report | 设计中 |
 | CI backend lint/test + frontend lint/test/build/build:console | 已实现 |
 

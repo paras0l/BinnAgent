@@ -31,5 +31,8 @@ class StartedTask(BaseModel):
     checkpoint_status: str | None = None
     resume_from: str | None = None
     prompt: str | None = None
+    thread_id: str | None = None
+    prompt_payload: dict[str, Any] | None = None
+    required_input_schema: dict[str, Any] | None = None
     initial_payload: dict[str, Any] = Field(default_factory=dict)
     recommendation_reason: str | None = None

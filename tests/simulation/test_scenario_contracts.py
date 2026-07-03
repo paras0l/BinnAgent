@@ -17,3 +17,14 @@ def test_scenario_contract_dict_is_report_safe() -> None:
     assert contract["id"] == "daily_lesson_checkpoint_resume"
     assert "langgraph" in contract["module_tags"]
     assert "exercise.grade" in contract["expected_tool_calls"]
+
+
+def test_daily_lesson_runtime_closure_scenarios_exist() -> None:
+    required = {
+        "daily_lesson_checkpoint_resume_after_restart",
+        "daily_lesson_missing_answer_must_not_write_memory",
+        "daily_lesson_wrong_answer_updates_mastery_down",
+        "daily_lesson_correct_answer_updates_mastery_up",
+    }
+
+    assert required <= set(BUILTIN_SCENARIOS)

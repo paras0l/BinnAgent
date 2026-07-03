@@ -20,7 +20,7 @@ from src.exercises import ExerciseAttemptService
 from src.explore.recommender import ExploreCapabilityRecommender
 from src.explore.schemas import ExploreRecommendationContext
 from src.graph.checkpoint_store import GraphCheckpointStore
-from src.graph.main_graph import daily_lesson_graph
+from src.graph.main_graph import build_resume_graph, daily_lesson_graph
 from src.knowledge.exercise_grader import answer_to_text, grade_exercise_answer
 from src.memory.schemas import MemoryEventInput
 from src.memory.writer import MemoryWriter
@@ -138,11 +138,15 @@ class LearningOrchestrator:
             config={"configurable": {"thread_id": thread_id}},
         )
         input_materials = _json_safe(graph_state.get("input_materials", []))
-        prompt_payload = {
-            "prompt": _prompt_from_materials(input_materials) or question.stem,
-            "input_materials": input_materials,
-        }
-        required_input_schema = {
+        prompt_payload = _json_safe(
+            graph_state.get("prompt_payload")
+            or {
+                "task_id": graph_state.get("current_task_id") or task_spec.task_id,
+                "prompt": _prompt_from_materials(input_materials) or question.stem,
+                "input_materials": input_materials,
+            }
+        )
+        required_input_schema = _json_safe(graph_state.get("required_input_schema")) or {
             "type": "object",
             "required": ["answer"],
             "properties": {
@@ -161,7 +165,7 @@ class LearningOrchestrator:
                 episode_id=episode.id,
                 thread_id=thread_id,
                 checkpoint_key=checkpoint_key,
-                resume_from=graph_state.get("resume_from") or "generate_feedback",
+                resume_from=graph_state.get("resume_from") or "grade_attempt",
                 state_snapshot=snapshot_state,
                 required_input_schema=required_input_schema,
                 prompt_payload=prompt_payload,
@@ -178,8 +182,10 @@ class LearningOrchestrator:
                 "thread_id": thread_id,
                 "graph_run_id": graph_run_id,
                 "current_task_id": graph_state.get("current_task_id") or task_spec.task_id,
-                "resume_from": graph_state.get("resume_from") or "generate_feedback",
+                "resume_from": graph_state.get("resume_from") or "grade_attempt",
                 "input_materials": input_materials,
+                "prompt_payload": prompt_payload,
+                "required_input_schema": required_input_schema,
             }
         )
         if checkpoint is not None:
@@ -228,6 +234,9 @@ class LearningOrchestrator:
             checkpoint_status=checkpoint.status if checkpoint is not None else None,
             resume_from=snapshot["resume_from"],
             prompt=prompt_payload["prompt"],
+            thread_id=thread_id,
+            prompt_payload=prompt_payload,
+            required_input_schema=required_input_schema,
             initial_payload={
                 "question_id": str(question.id),
                 "question_type": question.question_type,
@@ -235,6 +244,7 @@ class LearningOrchestrator:
                 "difficulty": question.difficulty,
                 "input_materials": input_materials,
                 "prompt_payload": prompt_payload,
+                "required_input_schema": required_input_schema,
             },
             recommendation_reason=recommendation_reason,
         )
@@ -321,12 +331,30 @@ class LearningOrchestrator:
             {
                 "learner_answer": learner_answer,
                 "checkpoint_status": "resumed",
-                "resume_from": checkpoint.resume_from or "generate_feedback",
+                "resume_from": checkpoint.resume_from or "grade_attempt",
                 "checkpoint_id": str(checkpoint.id),
+                "side_effect_mode": "dry_run",
             }
         )
         checkpoint.state_snapshot = _json_safe(checkpoint_state)
         await checkpoint_store.mark_resumed(checkpoint.id)
+        graph_resume_state = await _resume_daily_lesson_graph(checkpoint_state, checkpoint.thread_id)
+        await _append_daily_event(
+            runtime,
+            runtime_events,
+            episode=episode,
+            learner_id=uuid.UUID(str(learner_id)),
+            event_type="task_prepared",
+            target_type=task_spec.target.target_type,
+            target_id=task_spec.target.target_id,
+            payload={
+                "current_task_id": checkpoint_state.get("current_task_id"),
+                "answer_required": True,
+                "resume_from": checkpoint.resume_from or "grade_attempt",
+                "checkpoint_id": str(checkpoint.id),
+                "input_materials": checkpoint_state.get("input_materials") or [],
+            },
+        )
         await _append_daily_event(
             runtime,
             runtime_events,
@@ -338,8 +366,9 @@ class LearningOrchestrator:
             payload={
                 "current_task_id": checkpoint_state.get("current_task_id"),
                 "answer_required": True,
-                "resume_from": checkpoint.resume_from or "generate_feedback",
+                "resume_from": checkpoint.resume_from or "grade_attempt",
                 "checkpoint_id": str(checkpoint.id),
+                "graph_resume_status": (graph_resume_state.get("verification_report") or {}).get("status"),
             },
         )
         await _append_daily_event(
@@ -401,6 +430,20 @@ class LearningOrchestrator:
             )
         target_type = task_spec.target.target_type
         target_id = task_spec.target.target_id
+        await _append_runtime_event(
+            runtime,
+            runtime_events,
+            episode=episode,
+            learner_id=uuid.UUID(str(learner_id)),
+            event_type="exercise_attempt_created",
+            target_type=target_type,
+            target_id=target_id,
+            payload={
+                "question_id": str(question.id),
+                "attempt_id": str(attempt.id),
+                "evidence_refs": evidence_refs,
+            },
+        )
         await _append_runtime_event(
             runtime,
             runtime_events,
@@ -542,6 +585,22 @@ class LearningOrchestrator:
                 },
             )
 
+        recommendation_result = _daily_lesson_recommendation_result(
+            task_spec=task_spec,
+            grading=grading,
+            mastery_update=mastery_update,
+            evidence_refs=evidence_refs,
+        )
+        await _append_daily_event(
+            runtime,
+            runtime_events,
+            episode=episode,
+            learner_id=uuid.UUID(str(learner_id)),
+            event_type="next_action_recommended",
+            target_type=target_type,
+            target_id=target_id,
+            payload=recommendation_result,
+        )
         await _append_daily_event(
             runtime,
             runtime_events,
@@ -633,6 +692,15 @@ class LearningOrchestrator:
         completion_snapshot = dict(episode.context_snapshot or {})
         completion_snapshot["checkpoint_status"] = "completed"
         completion_snapshot["checkpoint_id"] = str(checkpoint.id)
+        completion_snapshot["graph_resume_state"] = _json_safe(
+            {
+                "grade_result": graph_resume_state.get("grade_result"),
+                "mastery_update": graph_resume_state.get("mastery_update"),
+                "memory_write_result": graph_resume_state.get("memory_write_result"),
+                "review_schedule_result": graph_resume_state.get("review_schedule_result"),
+                "recommendation_result": graph_resume_state.get("recommendation_result"),
+            }
+        )
         episode.context_snapshot = completion_snapshot
         await self.db.flush()
         return {
@@ -640,9 +708,12 @@ class LearningOrchestrator:
             "grading_result": grading,
             "mastery_update": mastery_update,
             "memory_updates": memory_updates,
+            "review_schedule_result": _review_schedule_payload(review_schedule, evidence_refs),
             "verification_status": verification_report.get("status"),
             "next_recommendation": None,
             "next_capability_recommendations": next_capability_recommendations,
+            "recommendation_result": recommendation_result,
+            "exercise_attempt_id": str(attempt.id),
             "episode_id": str(episode.id),
             "status": episode.status,
             "checkpoint_status": "completed",
@@ -696,6 +767,90 @@ def _safe_uuid(value: str | None) -> uuid.UUID | None:
         return uuid.UUID(str(value))
     except (TypeError, ValueError):
         return None
+
+
+async def _resume_daily_lesson_graph(
+    checkpoint_state: dict[str, Any],
+    thread_id: str,
+) -> dict[str, Any]:
+    start_node = str(checkpoint_state.get("resume_from") or "grade_attempt")
+    try:
+        resume_graph = build_resume_graph(start_node=start_node)
+    except ValueError:
+        resume_graph = build_resume_graph(start_node="grade_attempt")
+    try:
+        return await resume_graph.ainvoke(
+            checkpoint_state,
+            config={"configurable": {"thread_id": thread_id}},
+        )
+    except Exception as exc:
+        return {
+            **checkpoint_state,
+            "graph_resume_error": str(exc),
+            "verification_report": {
+                "status": "completed_with_warnings",
+                "failed_reason": str(exc),
+            },
+        }
+
+
+def _daily_lesson_recommendation_result(
+    *,
+    task_spec: TaskSpec,
+    grading: dict[str, Any],
+    mastery_update: dict[str, Any] | None,
+    evidence_refs: list[dict[str, Any]],
+) -> dict[str, Any]:
+    error_type = grading.get("error_type")
+    correct = bool(grading.get("correct"))
+    score = _score(mastery_update.get("new_score") if mastery_update else grading.get("score"))
+    if correct and score >= 0.75:
+        action_type = "advance"
+        priority = "low"
+        reason = "Answer was correct and mastery is stable enough to continue."
+    elif correct:
+        action_type = "review_later"
+        priority = "medium"
+        reason = "Answer was correct; schedule a light review to stabilize recall."
+    elif error_type and str(error_type).startswith("grammar"):
+        action_type = "repair_grammar"
+        priority = "high"
+        reason = "The error pattern points to a grammar micro-skill."
+    else:
+        action_type = "retry_with_hint"
+        priority = "high"
+        reason = "The answer needs another attempt with a targeted hint."
+    return {
+        "status": "recommended",
+        "recommended_action": {
+            "type": action_type,
+            "priority": priority,
+            "reason": reason,
+            "task_id": task_spec.task_id,
+            "target_type": task_spec.target.target_type,
+            "target_id": task_spec.target.target_id,
+            "wrong_reason": error_type,
+        },
+        "evidence_refs": evidence_refs,
+    }
+
+
+def _review_schedule_payload(review_schedule, evidence_refs: list[dict[str, Any]]) -> dict[str, Any]:
+    if review_schedule is None:
+        return {"status": "skipped", "evidence_refs": evidence_refs}
+    return {
+        "status": "scheduled",
+        "review_schedule_id": str(review_schedule.id),
+        "scheduled_at": review_schedule.scheduled_at.isoformat(),
+        "evidence_refs": evidence_refs,
+    }
+
+
+def _score(value: Any) -> float:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return 0.0
 
 
 async def _append_daily_event(

@@ -23,6 +23,13 @@ def test_event_exists_success_and_failure() -> None:
     assert not _passed({"type": "event_exists", "path": "events", "event_type": "memory_written"}, output)
 
 
+def test_event_absent_success_and_failure() -> None:
+    output = {"events": [{"event_type": "exercise_graded"}]}
+
+    assert _passed({"type": "event_absent", "path": "events", "event_type": "memory_written"}, output)
+    assert not _passed({"type": "event_absent", "path": "events", "event_type": "exercise_graded"}, output)
+
+
 def test_event_order_success_and_failure() -> None:
     output = {
         "events": [

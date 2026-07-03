@@ -8,6 +8,17 @@ async def generate_feedback(state: LearningState) -> dict:
     learner_answer = state.get("learner_answer")
     input_materials = state.get("input_materials", [])
     active_skill = state.get("active_skill", "reading")
+    grade_result = state.get("grade_result") or {}
+    wrong_reason = state.get("wrong_reason")
+    if grade_result.get("feedback"):
+        return {
+            "agent_feedback": {
+                "summary": str(grade_result["feedback"]),
+                "key_issues": [wrong_reason] if wrong_reason else [],
+                "strengths": ["回答正确"] if grade_result.get("correct") else [],
+                "drill": None if grade_result.get("correct") else "根据提示再完成一次同类题。",
+            }
+        }
 
     material_context = ""
     if input_materials:
@@ -24,8 +35,15 @@ async def generate_feedback(state: LearningState) -> dict:
     answer_context = ""
     if learner_answer:
         answer_context = f"\n学员作答: {learner_answer.get('answer', '未提供')}"
+    grade_context = ""
+    if grade_result:
+        grade_context = (
+            f"\n评分: {'正确' if grade_result.get('correct') else '需要改进'}"
+            f"\n得分: {grade_result.get('score', 0)}"
+            f"\n错误原因: {wrong_reason or grade_result.get('error_type') or '无'}"
+        )
 
-    user_msg = f"技能类型: {active_skill}\n练习内容:\n{material_context}{answer_context}"
+    user_msg = f"技能类型: {active_skill}\n练习内容:\n{material_context}{answer_context}{grade_context}"
 
     try:
         response_text = await call_llm(
@@ -56,9 +74,13 @@ async def generate_feedback(state: LearningState) -> dict:
                 "drill": None,
             }
     except Exception:
+        if grade_result.get("feedback"):
+            summary = str(grade_result["feedback"])
+        else:
+            summary = f"已完成{active_skill}练习"
         feedback = {
-            "summary": f"已完成{active_skill}练习",
-            "key_issues": [],
+            "summary": summary,
+            "key_issues": [wrong_reason] if wrong_reason else [],
             "drill": None,
         }
 

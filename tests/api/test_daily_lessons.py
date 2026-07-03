@@ -56,7 +56,7 @@ async def test_start_daily_lesson_creates_checkpoint_when_answer_required(client
                 answer_required=True,
                 checkpoint_id=checkpoint_id,
                 checkpoint_status="waiting_user",
-                resume_from="generate_feedback",
+                resume_from="grade_attempt",
                 prompt="Which answer is correct?",
                 initial_payload={"question_id": str(uuid.uuid4())},
                 recommendation_reason="继续当前教材节点。",
@@ -90,7 +90,7 @@ async def test_get_daily_lesson_status_returns_waiting_checkpoint(client, monkey
                 "checkpoint": {
                     "checkpoint_id": checkpoint_id,
                     "status": "waiting_user",
-                    "resume_from": "generate_feedback",
+                    "resume_from": "grade_attempt",
                     "answer_required": True,
                     "prompt_payload": {"prompt": "Which answer is correct?"},
                     "created_at": None,

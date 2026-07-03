@@ -33,6 +33,19 @@ class LearningGraphState(TypedDict, total=False):
     checkpoint_status: str | None
     feedback_ready: bool | None
     verification_report: dict[str, Any] | None
+    exercise_attempt_id: str | None
+    mastery_update: dict[str, Any] | None
+    knowledge_point_ids: list[str]
+    wrong_reason: str | None
+    recommended_action: dict[str, Any] | None
+    evidence_refs: list[dict[str, Any]]
+    prompt_payload: dict[str, Any] | None
+    required_input_schema: dict[str, Any] | None
+    grade_result: dict[str, Any] | None
+    review_schedule_result: dict[str, Any] | None
+    memory_write_result: dict[str, Any] | None
+    recommendation_result: dict[str, Any] | None
+    side_effect_mode: str | None
 
 
 class LearningState(LearningGraphState, total=False):
