@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>黄滨 - Agent应用开发简历</title>
+  <style>
+    :root {
+      --text: #15171a;
+      --muted: #5f6673;
+      --line: #d7dce3;
+      --soft: #f5f7fa;
+      --accent: #1f4fd7;
+      --accent-soft: #eef3ff;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: #eef1f5;
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
+      font-size: 13px;
+      line-height: 1.48;
+    }
+
+    body {
+      padding: 24px 0;
+    }
+
+    .page {
+      width: 210mm;
+      min-height: 297mm;
+      margin: 0 auto;
+      background: #fff;
+      padding: 15mm 16mm 14mm;
+      box-shadow: 0 8px 32px rgba(15, 23, 42, 0.14);
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 16px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid var(--text);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 28px;
+      letter-spacing: 2px;
+      line-height: 1.1;
+    }
+
+    .headline {
+      margin-top: 7px;
+      font-size: 14px;
+      color: var(--accent);
+      font-weight: 700;
+      letter-spacing: 0.2px;
+    }
+
+    .contact {
+      text-align: right;
+      color: var(--muted);
+      font-size: 12.5px;
+      line-height: 1.7;
+      white-space: nowrap;
+    }
+
+    .contact a {
+      color: var(--muted);
+      text-decoration: none;
+    }
+
+    .summary {
+      margin: 10px 0 8px;
+      padding: 9px 11px;
+      border-left: 4px solid var(--accent);
+      background: var(--accent-soft);
+      color: #1f2937;
+      font-size: 12.7px;
+    }
+
+    section {
+      margin-top: 11px;
+    }
+
+    .section-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      margin: 0 0 7px;
+    }
+
+    .section-title::before {
+      content: "";
+      width: 5px;
+      height: 16px;
+      background: var(--accent);
+      border-radius: 1px;
+    }
+
+    .item {
+      margin-bottom: 8px;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    .item-head {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: baseline;
+      margin-bottom: 2px;
+    }
+
+    .item-title {
+      font-weight: 800;
+      font-size: 13.4px;
+    }
+
+    .item-title .role {
+      color: var(--muted);
+      font-weight: 650;
+    }
+
+    .time {
+      color: var(--muted);
+      font-size: 12.2px;
+      white-space: nowrap;
+    }
+
+    .sub {
+      color: var(--muted);
+      font-size: 12.2px;
+      margin-bottom: 3px;
+    }
+
+    ul {
+      margin: 3px 0 0 0;
+      padding-left: 17px;
+    }
+
+    li {
+      margin: 2px 0;
+      padding-left: 1px;
+    }
+
+    b, strong {
+      font-weight: 800;
+    }
+
+    .skills {
+      display: grid;
+      grid-template-columns: 88px 1fr;
+      gap: 4px 10px;
+      font-size: 12.6px;
+    }
+
+    .skills .label {
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-top: 5px;
+    }
+
+    .tag {
+      background: var(--soft);
+      border: 1px solid #e2e7ef;
+      border-radius: 999px;
+      padding: 2px 8px;
+      color: #3d4654;
+      font-size: 11.6px;
+    }
+
+    .project-box {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 9px 11px;
+      background: #fcfdff;
+    }
+
+    .project-box .item-head {
+      margin-bottom: 5px;
+    }
+
+    .compact-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px 14px;
+    }
+
+    .note {
+      color: var(--muted);
+      font-size: 11.8px;
+    }
+
+    .link {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 650;
+    }
+
+    .page-break {
+      break-before: page;
+      page-break-before: always;
+    }
+
+    @page {
+      size: A4;
+      margin: 10mm 10mm 10mm 10mm;
+    }
+
+    @media print {
+      html, body {
+        background: #fff;
+        font-size: 12.2px;
+      }
+      body { padding: 0; }
+      .page {
+        width: auto;
+        min-height: auto;
+        padding: 0;
+        box-shadow: none;
+      }
+      a { color: inherit; text-decoration: none; }
+      section, .item, .project-box { break-inside: avoid; page-break-inside: avoid; }
+      .summary { background: #f3f6ff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .tag { background: #f5f7fa !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header>
+      <div>
+        <h1>黄滨</h1>
+        <div class="headline">实习：Agent 应用开发 / Java后端开发 </div>
+      </div>
+      <div class="contact">
+        <div>电话：13217026711</div>
+        <div>邮箱：<a href="mailto:bin2huang@hnu.edu.cn">bin2huang@hnu.edu.cn</a></div>
+      </div>
+    </header>
+
+    <div class="summary">
+      计算机技术硕士在读，具备 Java 后端、企业项目交付和 AI Agent 应用开发经验。近期聚焦学习型 Agent 工程化，围绕 LangGraph Runtime、长期记忆、教材 RAG、练习掌握度、Prompt Registry、Schema-first 输出治理、Langfuse 可观测与 Simulation Evaluation 构建可追踪、可验证、可持续迭代的 Agent 应用。
+    </div>
+
+    <section>
+      <h2 class="section-title">教育经历</h2>
+      <div class="item">
+        <div class="item-head">
+          <div class="item-title">湖南大学 · 计算机技术 硕士（全日制）</div>
+          <div class="time">2025.09 – 至今</div>
+        </div>
+        <div class="sub">985 / 211 / 双一流 · 长沙</div>
+      </div>
+      <div class="item">
+        <div class="item-head">
+          <div class="item-title">成都信息工程大学 · 信息安全 本科（全日制）</div>
+          <div class="time">2019.09 – 2023.06</div>
+        </div>
+        <div class="sub">网络空间安全学院 · 成都</div>
+      </div>
+    </section>
+
+    <section>
+      <h2 class="section-title">专业技能</h2>
+      <div class="skills">
+        <div class="label">Agent 工程</div>
+        <div>LangGraph、Langfuse、RAG、Prompt Registry、Schema-first、Tool Calling、Memory、Evaluation / Simulation、Ollama 本地模型接入</div>
+        <div class="label">后端开发</div>
+        <div>Java、SpringBoot、MyBatis、RESTful API、Python、FastAPI、SQLAlchemy、Pydantic、异步任务、接口设计</div>
+        <div class="label">数据与存储</div>
+        <div>PostgreSQL、MySQL、Redis、Elasticsearch、索引优化、事务、缓存设计、数据建模</div>
+        <div class="label">基础能力</div>
+        <div>JUC 多线程、JVM 基础、IO、常见设计模式、数据结构与算法、问题定位和性能优化</div>
+      </div>
+    </section>
+
+    <section>
+      <h2 class="section-title">个人项目经历</h2>
+      <div class="project-box item">
+        <div class="item-head">
+          <div class="item-title">BinnAgent · 面向英语学习场景的智能学习助理 <span class="role">个人项目 / Agent 应用开发</span></div>
+          <div class="time">2026.06 – 至今</div>
+        </div>
+        <div class="sub">技术栈：Python、FastAPI、LangGraph、Langfuse、Ollama、PostgreSQL、SQLAlchemy、React、TypeScript </div>
+        <div>GitHub：<a href="https://github.com/paras0l/BinnAgent">github.com/paras0l/BinnAgent</a></div>
+        <ul>
+          <li>设计并实现面向英语学习场景的 <strong>Agent Runtime</strong>，将一次学习过程建模为 TaskSpec、AgentEpisode、LearningEvent、ToolCallRecord、VerificationReport 与 Checkpoint，支持学习任务的可追踪、可恢复、可验证。</li>
+          <li>引入 <strong>LangGraph</strong> 编排 Daily Lesson 流程，将画像加载、目标选择、技能路由、出题、等待用户作答、反馈生成、Memory 写入、复习调度和验证报告拆分为状态节点；当题目需要用户输入时持久化 checkpoint，用户提交后从指定节点恢复执行。</li>
+          <li>构建 <strong>ExerciseAttempt → Mastery → ReviewSchedule → Memory → Recommendation</strong> 学习闭环：用户答题后记录练习证据，基于 correct、score、hint、retry、error_type 更新知识点掌握度，并驱动复习计划、记忆沉淀和下一步学习动作推荐。</li>
+          <li>设计 <strong>Retain / Recall / Reflect / Control</strong> 长期学习记忆架构，统一沉淀跨模块学习证据；支持学习片段、学习者画像、教学策略记忆，并提供删除、禁用、纠正和“我已改善”等可控操作，降低错误画像长期污染风险。</li>
+          <li>实现教材冷启动与知识库治理：基于 PDF 教材抽取 CurriculumNode、KnowledgePoint、ExerciseQuestion 与 RAG Chunk；通过 ParserProfile、ParserQualityReport、confidence、warnings、source_page 与 review queue 控制低置信知识点进入人工校对流程。</li>
+          <li>建设 Prompt Registry 与 Schema-first 输出治理：为核心 Prompt 绑定 owner、version、output_schema、model_policy、eval_set；记录 prompt_hash 和 input_hash，并对写作好句、词汇提取、语法微课等 LLM 输出执行 JSON repair、fallback、confidence 与 warning 标记。</li>
+          <li>接入 Langfuse 与 Dev Console：跟踪 LangGraph、模型、工具、Memory、RAG 与 Verification 运行状态；</li>
+          <li>构建 deterministic learner simulation：内置不同学习者 persona、behavior policy、scenario runner 和 assertion engine，覆盖 Daily Lesson checkpoint/resume、词汇练习、Explore 推荐、Runtime trace 等回归场景，为高频迭代提供基础安全网。</li>
+        </ul>
+      </div>
+    </section>
+
+    <section>
+      <h2 class="section-title">工作经历</h2>
+      <div class="item">
+        <div class="item-head">
+          <div class="item-title">华为 OD 项目 · 软件开发工程师 <span class="role">智能汽车解决方案适配部</span></div>
+          <div class="time">2025.02 – 2025.08</div>
+        </div>
+        <div class="sub">上海</div>
+        <ul>
+          <li>参与后排控制屏和诊断仪双项目开发。完成数据埋点；按流程设计文档交付商用代码</li>
+          <li>在车载业务场景中积累工程规范、代码质量、可信开发和跨团队协作经验；获得华为专业级可信证书</li>
+        </ul>
+      </div>
+    </section>
+
+    <section>
+      <h2 class="section-title">实习经历</h2>
+      <div class="item">
+        <div class="item-head">
+          <div class="item-title">同程网络科技股份有限公司 · 后端开发实习生</div>
+          <div class="time">2022.10 – 2023.03</div>
+        </div>
+        <div class="sub">行政内部支撑部门 · 苏州</div>
+        <ul>
+          <li>负责供应链系统前后端日常开发及流程中心 Flowable 互备，维护审批矩阵并支持灵活访问控制配置。</li>
+          <li>使用 Scroll 从 Elasticsearch 导出数万条流程记录；使用 EasyExcel 实现导入导出；使用 Jasypt 加密数据库连接。</li>
+          <li>通过工厂模式与责任链模式重构供应商绩效相关代码，降低条件分支复杂度，提高规则扩展性。</li>
+        </ul>
+      </div>
+    </section>
+
+    <section>
+      <h2 class="section-title">其他项目经历</h2>
+      <div class="item">
+        <div class="item-head">
+          <div class="item-title">国家电网智慧数据收报平台 · 后端开发</div>
+          <div class="time">2021.03 – 2021.08</div>
+        </div>
+        <div class="sub">成都 · 已上线 · gitee.com/xding/aireport</div>
+        <ul>
+          <li>负责数据填报任务管理、保存、归档及功能优化；通过 AOP 异步上传与校验解决 Excel 大数据量接口超时问题。</li>
+          <li>使用 Quartz 定时任务与 WebSocket 实现催办和到期提醒；通过数据批次提取、缓存优化、索引失效修复减少数据库交互。</li>
+          <li>细化查询条件并优化深度分页；使用 Redis 缓存在线用户和报表完成度排行榜，提升系统查询与展示效率。</li>
+        </ul>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
