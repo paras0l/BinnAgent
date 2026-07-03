@@ -28,6 +28,7 @@
 | [13-current-scope-and-status.md](./13-current-scope-and-status.md) | 当前实现状态、产品线边界和 issue 落地表 |
 | [textbook-parsing-audit.md](./textbook-parsing-audit.md) | 教材解析链路审计、风险和治理改造结论 |
 | [textbook-parsing-quality.md](./textbook-parsing-quality.md) | ParserRun、ParserQualityReport、TextbookQualityScore 和发布门禁契约 |
+| [textbook-review-queue-audit.md](./textbook-review-queue-audit.md) | ParserReviewItem 队列、旧 requires_review 兼容和发布门禁闭环 |
 
 ## 阅读顺序
 

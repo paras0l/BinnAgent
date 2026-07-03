@@ -14,6 +14,7 @@ from src.knowledge.parser_profiles import profile_for_source
 from src.knowledge.parser_report import build_parser_report
 from src.knowledge.quality import quality_summary, score_textbook_quality
 from src.knowledge.rag import build_chunks, split_text
+from src.knowledge.review_queue import queue_summary, replace_parser_review_items
 from src.models.knowledge import (
     CurriculumNode,
     KnowledgeChunk,
@@ -937,6 +938,7 @@ async def process_uploaded_textbook(db: AsyncSession, source: KnowledgeSource) -
             content.setdefault("warnings", content.get("warnings", []))
             point.content = content
             db.add(point)
+        await db.flush()
         chunk_char_counts = [
             len(chunk)
             for page_text in page_texts
@@ -975,6 +977,17 @@ async def process_uploaded_textbook(db: AsyncSession, source: KnowledgeSource) -
         )
         report_dict = parser_report.to_dict()
         quality_score = score_textbook_quality(report_dict)
+        review_items = await replace_parser_review_items(
+            db,
+            source=source,
+            parser_run_id=parser_run.id,
+            knowledge_points=knowledge_points,
+            report=report_dict,
+            quality_score=quality_score.to_dict(),
+        )
+        review_summary = queue_summary(review_items)
+        report_dict.update(review_summary.to_report_patch())
+        quality_score = score_textbook_quality(report_dict)
 
         source.page_count = parsed.page_count
         source.unit_count = len(nodes)
@@ -988,6 +1001,7 @@ async def process_uploaded_textbook(db: AsyncSession, source: KnowledgeSource) -
             "curriculum_node_count": len(nodes),
             "knowledge_point_count": len(knowledge_points),
             "rag_chunk_count": chunk_count,
+            "review_item_count": len(review_items),
         }
         source.metadata_ = {
             **rag_metadata,

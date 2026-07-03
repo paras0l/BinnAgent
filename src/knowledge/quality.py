@@ -92,6 +92,9 @@ def score_textbook_quality(
     requires_review_count = int(report.get("requires_review_count") or 0)
     if requires_review_count > MAX_REQUIRES_REVIEW_COUNT:
         warnings.append("Parser review items are still pending.")
+    pending_blocker_count = int(report.get("pending_blocker_count") or 0)
+    if pending_blocker_count > 0:
+        blocking_reasons.append("Parser review blockers are still pending.")
 
     structure_score = _bounded_average(
         _ratio(report.get("unit_title_match_rate")),
@@ -147,6 +150,8 @@ def quality_summary(score: TextbookQualityScore, report: dict[str, Any]) -> dict
         "quality_score": score.to_dict(),
         "blocking_reasons": score.blocking_reasons,
         "pending_review_count": int(report.get("requires_review_count") or 0),
+        "pending_blocker_count": int(report.get("pending_blocker_count") or 0),
+        "review_warning_count": int(report.get("review_warning_count") or 0),
         "parser_report_summary": {
             "page_count": report.get("page_count"),
             "text_char_count": report.get("text_char_count"),
@@ -155,6 +160,8 @@ def quality_summary(score: TextbookQualityScore, report: dict[str, Any]) -> dict
             "vocabulary_entry_count": report.get("vocabulary_entry_count"),
             "rag_chunk_count": report.get("rag_chunk_count"),
             "requires_review_count": report.get("requires_review_count"),
+            "pending_blocker_count": report.get("pending_blocker_count"),
+            "review_warning_count": report.get("review_warning_count"),
             "source_page_coverage_rate": report.get("source_page_coverage_rate"),
             "core_vocabulary_hit_rate": report.get("core_vocabulary_hit_rate"),
             "warnings": report.get("warnings") or [],
@@ -204,6 +211,7 @@ def _meets_publishing_thresholds(report: dict[str, Any]) -> bool:
         _ratio(report.get("rag_page_coverage_rate"), default=1.0)
         >= MIN_RAG_PAGE_COVERAGE_RATE,
         int(report.get("requires_review_count") or 0) == MAX_REQUIRES_REVIEW_COUNT,
+        int(report.get("pending_blocker_count") or 0) == 0,
     ]
     return all(checks)
 

@@ -21,7 +21,18 @@
 - `quality_status`
 - `blocking_reasons`
 - `pending_review_count`
+- `pending_blocker_count`
+- `review_warning_count`
 - `parser_report_summary`
+
+`parser_review_items` 是解析审核队列：
+
+- `target_type` / `target_id` 定位知识点、课程节点、练习题、RAG chunk 或 source 级问题。
+- `issue_type` 表示 `low_confidence`、`missing_source_page`、`missing_evidence`、`dirty_token`、`duplicate`、`schema_invalid`、`coverage_gap`、`parser_warning`、`quality_gate_blocker`。
+- `severity` 区分 `blocker`、`warning`、`info`。
+- `decision` 只能通过 review API 从 `pending` 改为 `confirmed`、`updated` 或 `ignored`。
+
+`ParserReviewItem` 是新的 review source of truth；旧 `requires_review` 字段只作为兼容字段保留。
 
 ## ParserQualityReport
 
@@ -66,13 +77,41 @@
 
 Review API 在 confirm / update / ignore 后都会重新计算门禁：
 
-1. 更新知识点内容和 `requires_review`。
-2. 统计同一 source 的剩余待审数量。
-3. 更新 report 的 `requires_review_count`。
-4. 调用 `score_textbook_quality()`。
-5. 回写 `KnowledgeSource.status` 与 metadata 摘要。
+1. 更新 review item 的 `decision`。
+2. 同步 target 的兼容字段，例如 `requires_review=false`。
+3. 统计同一 source 的 `pending_review_count`、`pending_blocker_count` 和 `review_warning_count`。
+4. 更新 report 的 `requires_review_count`、`pending_blocker_count` 和 `review_warning_count`。
+5. 调用 `score_textbook_quality()`。
+6. 回写 `KnowledgeSource.status` 与 metadata 摘要。
 
-因此 `ignore` 只能处理单个 review item，不能绕过 `blocking_reasons`。
+因此 `ignore` 只能处理单个 review item，不能绕过 `blocking_reasons`。`blocker` 默认不能 ignore，除非显式传 `allow_blocker_ignore=true` 且记录 `review_note`。
+
+## Review Queue API
+
+- `GET /api/knowledge/sources/{source_id}/review-items`
+- `GET /api/knowledge/sources/{source_id}/review-items/{review_item_id}`
+- `POST /api/knowledge/sources/{source_id}/review-items/{review_item_id}/confirm`
+- `POST /api/knowledge/sources/{source_id}/review-items/{review_item_id}/update`
+- `POST /api/knowledge/sources/{source_id}/review-items/{review_item_id}/ignore`
+
+列表支持 `decision`、`severity`、`issue_type`、`target_type` 筛选。操作 payload：
+
+```json
+{
+  "patch": {
+    "title": "hello",
+    "source_page": "P.95",
+    "content": {
+      "confidence": 0.95,
+      "source_page": "P.95"
+    }
+  },
+  "review_note": "fixed source page",
+  "allow_blocker_ignore": false
+}
+```
+
+`update` 使用白名单 patch，不允许覆盖 `id`、`source_id`、`parser_run_id` 等危险字段。
 
 ## API 暴露
 
@@ -84,6 +123,8 @@ source 列表和详情统一返回：
 - `quality_status`
 - `blocking_reasons`
 - `pending_review_count`
+- `pending_blocker_count`
+- `review_warning_count`
 - `parser_report_summary`
 
 `parser_evidence.report` 仍保留完整 report，用于 Dev Console 或解析校对工作台排查。

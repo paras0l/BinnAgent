@@ -75,6 +75,38 @@ class ParserRun(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     error_message: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
 
+class ParserReviewItem(UUIDPrimaryKeyMixin, TimestampMixin, Base):
+    __tablename__ = "parser_review_items"
+
+    source_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("knowledge_sources.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    parser_run_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("parser_runs.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    target_type: Mapped[str] = mapped_column(String(40), nullable=False, index=True)
+    target_id: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), nullable=True, index=True)
+    issue_type: Mapped[str] = mapped_column(String(60), nullable=False, index=True)
+    severity: Mapped[str] = mapped_column(String(20), nullable=False, index=True)
+    evidence_snapshot: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
+    suggested_fix: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
+    decision: Mapped[str] = mapped_column(String(20), nullable=False, default="pending", index=True)
+    review_note: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    reviewed_by_learner_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("learners.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    reviewed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
 class CurriculumNode(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     __tablename__ = "curriculum_nodes"
     __table_args__ = (

@@ -21,6 +21,12 @@ from src.knowledge.exercises import ensure_unit_exercises
 from src.knowledge.processor import process_uploaded_textbook
 from src.knowledge.quality import quality_summary, score_textbook_quality
 from src.knowledge.rag import retrieve_chunks
+from src.knowledge.review_queue import (
+    apply_quality_gate,
+    mark_target_reviewed,
+    queue_summary,
+    recalculate_quality_gate_from_queue,
+)
 from src.mastery.engine import MasteryEngine
 from src.mastery.types import AttemptSignal
 from src.memory.schemas import MemoryEventInput
@@ -30,10 +36,12 @@ from src.memory.writer import MemoryWriter
 from src.models.knowledge import (
     CurriculumNode,
     ExerciseQuestion,
+    KnowledgeChunk,
     KnowledgeLearningEvent,
     KnowledgePoint,
     KnowledgeSource,
     LearnerKnowledgeState,
+    ParserReviewItem,
 )
 from src.models.learner import Learner
 from src.models.session import LearningSession, LearningTask
@@ -148,6 +156,12 @@ class KnowledgeReviewResponse(BaseModel):
     requires_review: bool
 
 
+class ParserReviewActionRequest(BaseModel):
+    patch: dict[str, Any] | None = None
+    review_note: str | None = Field(default=None, max_length=500)
+    allow_blocker_ignore: bool = False
+
+
 def _source_parser_payload(source: KnowledgeSource) -> dict[str, Any]:
     metadata = source.metadata_ or {}
     parser_report = metadata.get("parser_report") or {}
@@ -178,6 +192,8 @@ def _source_quality_payload(source: KnowledgeSource) -> dict[str, Any]:
         "quality_status": metadata.get("quality_status") or source.status,
         "blocking_reasons": metadata.get("blocking_reasons") or [],
         "pending_review_count": int(metadata.get("pending_review_count") or 0),
+        "pending_blocker_count": int(metadata.get("pending_blocker_count") or 0),
+        "review_warning_count": int(metadata.get("review_warning_count") or 0),
         "parser_report_summary": metadata.get("parser_report_summary") or {},
     }
 
@@ -248,11 +264,143 @@ def _recalculate_source_quality_gate(source: KnowledgeSource, pending_review_cou
             "requires_review_count": pending_review_count,
         }
     report["requires_review_count"] = pending_review_count
+    report.setdefault("pending_blocker_count", 0)
+    report.setdefault("review_warning_count", pending_review_count)
     score = score_textbook_quality(report)
     metadata["parser_report"] = report
     metadata.update(quality_summary(score, report))
     source.metadata_ = metadata
     source.status = score.status
+
+
+def _review_queue_item_payload(item: ParserReviewItem) -> dict[str, Any]:
+    return {
+        "id": str(item.id),
+        "source_id": str(item.source_id),
+        "parser_run_id": str(item.parser_run_id) if item.parser_run_id else None,
+        "target_type": item.target_type,
+        "target_id": str(item.target_id) if item.target_id else None,
+        "issue_type": item.issue_type,
+        "severity": item.severity,
+        "evidence_snapshot": item.evidence_snapshot or {},
+        "suggested_fix": item.suggested_fix or {},
+        "decision": item.decision,
+        "review_note": item.review_note,
+        "reviewed_at": item.reviewed_at.isoformat() if item.reviewed_at else None,
+    }
+
+
+def _ensure_source_review_access(source: KnowledgeSource, learner_id: uuid.UUID) -> None:
+    if source.owner_learner_id not in (None, learner_id) and source.visibility != "public":
+        raise HTTPException(status_code=403, detail="无权查看该教材审核队列")
+
+
+async def _load_review_source(
+    db: AsyncSession,
+    source_id: uuid.UUID,
+    learner_id: uuid.UUID,
+) -> KnowledgeSource:
+    await _ensure_learner(db, learner_id)
+    source_result = await db.execute(select(KnowledgeSource).where(KnowledgeSource.id == source_id))
+    source = source_result.scalar_one_or_none()
+    if source is None:
+        raise HTTPException(status_code=404, detail="教材不存在")
+    _ensure_source_review_access(source, learner_id)
+    return source
+
+
+async def _load_review_item(
+    db: AsyncSession,
+    source_id: uuid.UUID,
+    review_item_id: uuid.UUID,
+) -> ParserReviewItem:
+    result = await db.execute(
+        select(ParserReviewItem).where(
+            ParserReviewItem.id == review_item_id,
+            ParserReviewItem.source_id == source_id,
+        )
+    )
+    item = result.scalar_one_or_none()
+    if item is None:
+        raise HTTPException(status_code=404, detail="Review item not found")
+    return item
+
+
+async def _load_review_target(db: AsyncSession, item: ParserReviewItem) -> Any | None:
+    if item.target_id is None:
+        return None
+    model_by_type = {
+        "knowledge_point": KnowledgePoint,
+        "exercise_question": ExerciseQuestion,
+        "knowledge_chunk": KnowledgeChunk,
+        "curriculum_node": CurriculumNode,
+    }
+    model = model_by_type.get(item.target_type)
+    if model is None:
+        return None
+    result = await db.execute(select(model).where(model.id == item.target_id))
+    return result.scalar_one_or_none()
+
+
+def _apply_review_patch(target: Any | None, patch: dict[str, Any] | None) -> None:
+    if target is None or not patch:
+        return
+    if isinstance(target, KnowledgePoint):
+        _apply_allowed_attrs(target, patch, {"title", "summary", "source_page", "difficulty"})
+        content_patch = patch.get("content")
+        if isinstance(content_patch, dict):
+            content = dict(target.content or {})
+            for key in {
+                "text",
+                "source_page",
+                "confidence",
+                "warnings",
+                "raw_line",
+                "evidence_refs",
+                "evidence_pdf_pages",
+                "lemma",
+                "origin",
+            }:
+                if key in content_patch:
+                    content[key] = content_patch[key]
+            if "source_page" in content_patch:
+                target.source_page = str(content_patch["source_page"])
+            target.content = content
+    elif isinstance(target, ExerciseQuestion):
+        _apply_allowed_attrs(
+            target,
+            patch,
+            {"stem", "options", "answer", "explanation", "difficulty"},
+        )
+        metadata_patch = patch.get("metadata") or patch.get("content")
+        if isinstance(metadata_patch, dict):
+            metadata = dict(target.metadata_ or {})
+            for key in {"source_page", "confidence", "warnings", "evidence_refs", "parser_run_id"}:
+                if key in metadata_patch:
+                    metadata[key] = metadata_patch[key]
+            target.metadata_ = metadata
+    elif isinstance(target, KnowledgeChunk):
+        _apply_allowed_attrs(target, patch, {"content", "page_number"})
+        metadata_patch = patch.get("metadata") or patch.get("content")
+        if isinstance(metadata_patch, dict):
+            metadata = dict(target.metadata_ or {})
+            for key in {"source_page", "confidence", "warnings", "parser_run_id", "origin"}:
+                if key in metadata_patch:
+                    metadata[key] = metadata_patch[key]
+            target.metadata_ = metadata
+    elif isinstance(target, CurriculumNode):
+        _apply_allowed_attrs(
+            target,
+            patch,
+            {"title", "subtitle", "start_page", "end_page", "learning_objectives"},
+        )
+
+
+def _apply_allowed_attrs(target: Any, patch: dict[str, Any], allowed: set[str]) -> None:
+    for key in allowed:
+        if key not in patch:
+            continue
+        setattr(target, key, patch[key])
 
 
 async def _ensure_learner(db: AsyncSession, learner_id: uuid.UUID) -> None:
@@ -585,13 +733,187 @@ async def review_knowledge_point(
     )
     source = source_result.scalar_one_or_none()
     if source is not None:
-        _recalculate_source_quality_gate(source, remaining_count)
+        review_items_result = await db.execute(
+            select(ParserReviewItem).where(
+                ParserReviewItem.source_id == point.source_id,
+                ParserReviewItem.target_type == "knowledge_point",
+                ParserReviewItem.target_id == point.id,
+                ParserReviewItem.decision == "pending",
+            )
+        )
+        pending_review_items = list(review_items_result.scalars().all())
+        for item in pending_review_items:
+            item.decision = content["review_decision"]
+            item.review_note = body.note
+            item.reviewed_by_learner_id = learner_id
+            item.reviewed_at = datetime.now(timezone.utc)
+        if pending_review_items:
+            await recalculate_quality_gate_from_queue(db, source)
+        else:
+            _recalculate_source_quality_gate(source, remaining_count)
     return KnowledgeReviewResponse(
         knowledge_point_id=point.id,
         action=body.action,
         status=point.status,
         requires_review=bool(content.get("requires_review", False)),
     )
+
+
+@router.get("/api/knowledge/sources/{source_id}/review-items")
+async def list_parser_review_items(
+    source_id: uuid.UUID,
+    learner_id: uuid.UUID = Query(),
+    decision: str | None = Query(default=None),
+    severity: str | None = Query(default=None),
+    issue_type: str | None = Query(default=None),
+    target_type: str | None = Query(default=None),
+    db: AsyncSession = Depends(get_db_session),
+) -> dict[str, Any]:
+    source = await _load_review_source(db, source_id, learner_id)
+    filters = [ParserReviewItem.source_id == source_id]
+    if decision:
+        filters.append(ParserReviewItem.decision == decision)
+    if severity:
+        filters.append(ParserReviewItem.severity == severity)
+    if issue_type:
+        filters.append(ParserReviewItem.issue_type == issue_type)
+    if target_type:
+        filters.append(ParserReviewItem.target_type == target_type)
+    result = await db.execute(
+        select(ParserReviewItem)
+        .where(*filters)
+        .order_by(
+            ParserReviewItem.severity.asc(),
+            ParserReviewItem.created_at.asc().nullslast(),
+        )
+    )
+    items = list(result.scalars().all())
+    all_result = await db.execute(select(ParserReviewItem).where(ParserReviewItem.source_id == source_id))
+    summary = queue_summary(list(all_result.scalars().all()))
+    apply_quality_gate(source, summary=summary)
+    return {
+        "source": _source_payload(source),
+        "summary": {
+            "pending_review_count": summary.pending_review_count,
+            "pending_blocker_count": summary.pending_blocker_count,
+            "review_warning_count": summary.review_warning_count,
+        },
+        "items": [_review_queue_item_payload(item) for item in items],
+    }
+
+
+@router.get("/api/knowledge/sources/{source_id}/review-items/{review_item_id}")
+async def get_parser_review_item(
+    source_id: uuid.UUID,
+    review_item_id: uuid.UUID,
+    learner_id: uuid.UUID = Query(),
+    db: AsyncSession = Depends(get_db_session),
+) -> dict[str, Any]:
+    source = await _load_review_source(db, source_id, learner_id)
+    item = await _load_review_item(db, source_id, review_item_id)
+    return {
+        "source": _source_payload(source),
+        "item": _review_queue_item_payload(item),
+    }
+
+
+@router.post("/api/knowledge/sources/{source_id}/review-items/{review_item_id}/confirm")
+async def confirm_parser_review_item(
+    source_id: uuid.UUID,
+    review_item_id: uuid.UUID,
+    body: ParserReviewActionRequest | None = None,
+    learner_id: uuid.UUID = Query(),
+    db: AsyncSession = Depends(get_db_session),
+) -> dict[str, Any]:
+    return await _decide_parser_review_item(
+        source_id=source_id,
+        review_item_id=review_item_id,
+        learner_id=learner_id,
+        action="confirmed",
+        body=body or ParserReviewActionRequest(),
+        db=db,
+    )
+
+
+@router.post("/api/knowledge/sources/{source_id}/review-items/{review_item_id}/update")
+async def update_parser_review_item(
+    source_id: uuid.UUID,
+    review_item_id: uuid.UUID,
+    body: ParserReviewActionRequest,
+    learner_id: uuid.UUID = Query(),
+    db: AsyncSession = Depends(get_db_session),
+) -> dict[str, Any]:
+    return await _decide_parser_review_item(
+        source_id=source_id,
+        review_item_id=review_item_id,
+        learner_id=learner_id,
+        action="updated",
+        body=body,
+        db=db,
+    )
+
+
+@router.post("/api/knowledge/sources/{source_id}/review-items/{review_item_id}/ignore")
+async def ignore_parser_review_item(
+    source_id: uuid.UUID,
+    review_item_id: uuid.UUID,
+    body: ParserReviewActionRequest | None = None,
+    learner_id: uuid.UUID = Query(),
+    db: AsyncSession = Depends(get_db_session),
+) -> dict[str, Any]:
+    return await _decide_parser_review_item(
+        source_id=source_id,
+        review_item_id=review_item_id,
+        learner_id=learner_id,
+        action="ignored",
+        body=body or ParserReviewActionRequest(),
+        db=db,
+    )
+
+
+async def _decide_parser_review_item(
+    *,
+    source_id: uuid.UUID,
+    review_item_id: uuid.UUID,
+    learner_id: uuid.UUID,
+    action: str,
+    body: ParserReviewActionRequest,
+    db: AsyncSession,
+) -> dict[str, Any]:
+    source = await _load_review_source(db, source_id, learner_id)
+    item = await _load_review_item(db, source_id, review_item_id)
+    if item.decision != "pending":
+        raise HTTPException(status_code=409, detail="Review item has already been decided")
+    if action == "ignored" and item.severity == "blocker" and not body.allow_blocker_ignore:
+        raise HTTPException(status_code=409, detail="Blocker review item requires explicit allow_blocker_ignore")
+    if action == "ignored" and item.severity == "blocker" and not body.review_note:
+        raise HTTPException(status_code=422, detail="Ignoring a blocker requires review_note")
+
+    target = await _load_review_target(db, item)
+    if action == "updated":
+        _apply_review_patch(target, body.patch)
+    if action in {"confirmed", "updated"} or item.severity in {"warning", "info"} or body.allow_blocker_ignore:
+        mark_target_reviewed(
+            target,
+            decision=action,
+            learner_id=learner_id,
+            note=body.review_note,
+        )
+    item.decision = action
+    item.review_note = body.review_note
+    item.reviewed_by_learner_id = learner_id
+    item.reviewed_at = datetime.now(timezone.utc)
+    await db.flush()
+    summary = await recalculate_quality_gate_from_queue(db, source)
+    return {
+        "source": _source_payload(source),
+        "summary": {
+            "pending_review_count": summary.pending_review_count,
+            "pending_blocker_count": summary.pending_blocker_count,
+            "review_warning_count": summary.review_warning_count,
+        },
+        "item": _review_queue_item_payload(item),
+    }
 
 
 @router.post(

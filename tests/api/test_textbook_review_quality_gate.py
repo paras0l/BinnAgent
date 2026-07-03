@@ -20,6 +20,12 @@ def _scalar(value):
     return result
 
 
+def _many(values: list):
+    result = MagicMock()
+    result.scalars.return_value.all.return_value = values
+    return result
+
+
 @pytest.fixture
 def review_session():
     session = AsyncMock()
@@ -88,7 +94,7 @@ async def test_review_recalculates_quality_gate_to_publish(client, review_sessio
     source = _source(_healthy_report(1))
     point = _point(source.id)
     review_session.execute = AsyncMock(
-        side_effect=[_one(learner_id), _one(point), _scalar(0), _one(source)]
+        side_effect=[_one(learner_id), _one(point), _scalar(0), _one(source), _many([])]
     )
 
     response = await client.patch(
@@ -113,7 +119,7 @@ async def test_review_ignore_cannot_bypass_blocking_quality_reasons(
     source = _source(report)
     point = _point(source.id)
     review_session.execute = AsyncMock(
-        side_effect=[_one(learner_id), _one(point), _scalar(0), _one(source)]
+        side_effect=[_one(learner_id), _one(point), _scalar(0), _one(source), _many([])]
     )
 
     response = await client.patch(

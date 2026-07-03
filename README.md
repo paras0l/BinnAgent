@@ -97,6 +97,7 @@ http://localhost:5174，可在 Learners / Recent Episodes 中直接选择 learne
 - [Prompt Execution Governance](docs/architecture/prompt-execution-governance.md)
 - [Textbook Parsing Audit](docs/architecture/textbook-parsing-audit.md)
 - [Textbook Parsing Quality](docs/architecture/textbook-parsing-quality.md)
+- [Textbook Review Queue Audit](docs/architecture/textbook-review-queue-audit.md)
 - [Simulation / Evaluation Audit](docs/architecture/simulation-evaluation-audit.md)
 - [ExploreCapability Recommendation](docs/explore-capability-recommendation.md)
 - [Agent Runtime / Harness Interview Brief](docs/interview/agent-runtime-harness.md)
@@ -108,7 +109,7 @@ http://localhost:5174，可在 Learners / Recent Episodes 中直接选择 learne
 | 能力 | 状态 |
 |------|------|
 | Chat / Memory / Dashboard | 部分实现，Memory v2 已落地 Retain / Recall / Reflect、LearningEpisode、LearnerModelMemory、TeachingStrategyMemory；普通学习端只展示学习状态摘要，Memory Center 已移入 Dev Console |
-| 教材 Knowledge Base / RAG / Exercises | 部分实现，已支持多教材切换、七年级上/下册解析、八/九年级上传 fallback、ParserRun 审计、ParserQualityReport 指标、TextbookQualityScore 门禁、解析证据展示、低置信词条人工校对入口、统一 ExerciseItem / ExerciseAttempt 语义和 AI 生成练习可编辑保存 |
+| 教材 Knowledge Base / RAG / Exercises | 部分实现，已支持多教材切换、七年级上/下册解析、八/九年级上传 fallback、ParserRun 审计、ParserQualityReport 指标、ParserReviewItem 队列、TextbookQualityScore 门禁、解析证据展示、低置信词条人工校对入口、统一 ExerciseItem / ExerciseAttempt 语义和 AI 生成练习可编辑保存 |
 | Vocabulary Personal Cards / Practice / Spelling / Word Parts | 部分实现，已新增“词根与词缀”探索入口、四工作区学习页、内置词根词缀库、拆词练习、morphology 前端展示/降级和知识点配套练习验收 |
 | Writing Phrasebook | 基础版已实现 |
 | ExploreCapability 推荐 | 基础版已实现，Explore Tab 入口由后端 registry 统一管理；Daily Lesson 答题后可推荐 ready 学习能力，点击/忽略事件写入 Memory 和 episode trace |

@@ -284,7 +284,7 @@ async def test_review_knowledge_point_confirms_and_publishes(client, knowledge_s
     point.id = uuid.uuid4()
     source.status = "review_required"
     knowledge_session.execute = AsyncMock(
-        side_effect=[_one(learner_id), _one(point), _scalar(0), _one(source)]
+        side_effect=[_one(learner_id), _one(point), _scalar(0), _one(source), _many([])]
     )
 
     response = await client.patch(
