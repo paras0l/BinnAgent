@@ -13,6 +13,9 @@ from src.runtime.task_spec import SuccessCriteria, TaskSpec, TaskTarget, Verific
 @pytest.fixture(autouse=True)
 def daily_lesson_overrides():
     app.dependency_overrides[deps.get_db_session] = lambda: object()
+    app.dependency_overrides[deps.get_current_learner] = lambda: SimpleNamespace(
+        id=uuid.uuid4()
+    )
     yield
     app.dependency_overrides.clear()
 

@@ -7,7 +7,7 @@ from pydantic import AliasChoices, BaseModel, ConfigDict, Field, field_validator
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.api.deps import get_db_session
+from src.api.deps import get_current_learner, get_db_session
 from src.exercises import ExerciseAttemptCreate, ExerciseAttemptService, ExerciseTarget
 from src.exercises.attempt_service import ExerciseTargetType
 from src.models.knowledge import ExerciseAttempt
@@ -108,9 +108,9 @@ async def list_exercise_attempts(
     learner_id: uuid.UUID,
     target_type: ExerciseTargetType | None = Query(default=None),
     target_id: str | None = Query(default=None),
+    _current_learner: Learner = Depends(get_current_learner),
     db: AsyncSession = Depends(get_db_session),
 ) -> list[ExerciseAttemptResponse]:
-    await _ensure_learner_exists(db, learner_id)
     attempts = await ExerciseAttemptService(db).list_attempts(learner_id, target_type, target_id)
     return [_attempt_response(attempt) for attempt in attempts]
 
@@ -123,9 +123,9 @@ async def list_exercise_attempts(
 async def create_exercise_attempt(
     learner_id: uuid.UUID,
     body: ExerciseAttemptCreateRequest,
+    _current_learner: Learner = Depends(get_current_learner),
     db: AsyncSession = Depends(get_db_session),
 ) -> ExerciseAttemptResponse:
-    await _ensure_learner_exists(db, learner_id)
     attempt_id = _parse_uuid(body.id)
     client_attempt_id = body.id if body.id and attempt_id is None else None
     attempt = await ExerciseAttemptService(db).save_attempt(
@@ -157,9 +157,9 @@ async def get_exercise_attempt_summary(
     learner_id: uuid.UUID,
     target_type: ExerciseTargetType | None = Query(default=None),
     target_id: str | None = Query(default=None),
+    _current_learner: Learner = Depends(get_current_learner),
     db: AsyncSession = Depends(get_db_session),
 ) -> ExerciseAttemptSummaryResponse:
-    await _ensure_learner_exists(db, learner_id)
     summary = await ExerciseAttemptService(db).get_summary(learner_id, target_type, target_id)
     return ExerciseAttemptSummaryResponse(
         total=summary.total,

@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.api.deps import get_db_session, require_debug_access
+from src.api.deps import get_current_user, get_db_session, require_debug_access
 from src.config import settings
 from src.knowledge.rag import retrieve_chunks
 from src.models.knowledge import ExerciseAttempt
@@ -16,6 +16,7 @@ from src.models.memory import LearningMemoryEvent
 from src.models.runtime import AgentEpisode
 from src.models.vocabulary import VocabularyItem
 from src.providers.router import router as model_router
+from src.security.ownership import CurrentUser, get_learner_for_user
 from src.simulation.fixtures import BUILTIN_SCENARIOS
 
 router = APIRouter(
@@ -32,9 +33,17 @@ async def list_debug_learners(
     q: str | None = Query(default=None, max_length=120),
     limit: int = Query(default=20, ge=1, le=100),
     offset: int = Query(default=0, ge=0),
+    current_user: CurrentUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db_session),
 ) -> dict[str, Any]:
-    filters = []
+    ownership_filters = [
+        Learner.tenant_id == current_user.user_id,
+        Learner.id == current_user.user_id,
+    ]
+    if current_user.allow_unclaimed_learners:
+        ownership_filters.append(Learner.tenant_id.is_(None))
+
+    filters = [or_(*ownership_filters)]
     if q and q.strip():
         pattern = f"%{q.strip()}%"
         filters.append(or_(Learner.nickname.ilike(pattern), Learner.email.ilike(pattern)))
@@ -120,8 +129,16 @@ async def search_rag_chunks(
     source_id: uuid.UUID | None = None,
     node_id: uuid.UUID | None = None,
     limit: int = Query(default=8, ge=1, le=30),
+    current_user: CurrentUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db_session),
 ) -> dict[str, Any]:
+    if learner_id is not None:
+        await get_learner_for_user(
+            db,
+            current_user.user_id,
+            learner_id,
+            allow_unclaimed_learners=current_user.allow_unclaimed_learners,
+        )
     chunks = await retrieve_chunks(
         db,
         model_router,

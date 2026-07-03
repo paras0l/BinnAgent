@@ -31,6 +31,7 @@ from src.recommendation.types import RecommendationInput
 from src.runtime.episode import EpisodeRuntime
 from src.runtime.schemas import EpisodeTraceView, episode_to_view, event_to_view, tool_call_to_view
 from src.runtime.task_spec import TaskSpec
+from src.security.ownership import get_episode_for_learner
 from src.verification.report import verify_knowledge_exercise_episode
 
 from src.learning.types import LearningPlanRequest, LearningPlanResult, StartedTask
@@ -252,9 +253,7 @@ class LearningOrchestrator:
         learner_id: str | uuid.UUID,
         episode_id: str | uuid.UUID,
     ) -> dict[str, Any]:
-        episode = await self._get_episode(episode_id)
-        if str(episode.learner_id) != str(learner_id):
-            raise HTTPException(status_code=404, detail="Daily lesson episode not found")
+        episode = await get_episode_for_learner(self.db, learner_id, episode_id)
 
         checkpoints = await GraphCheckpointStore(self.db).list_checkpoints_for_episode(episode.id)
         checkpoint = checkpoints[0] if checkpoints else None
@@ -299,9 +298,7 @@ class LearningOrchestrator:
         answer: str | dict[str, Any],
         metadata: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
-        episode = await self._get_episode(episode_id)
-        if str(episode.learner_id) != str(learner_id):
-            raise HTTPException(status_code=404, detail="Daily lesson episode not found")
+        episode = await get_episode_for_learner(self.db, learner_id, episode_id)
         checkpoint_store = GraphCheckpointStore(self.db)
         checkpoint = await checkpoint_store.get_active_checkpoint(episode.id, learner_id)
         if checkpoint is None:

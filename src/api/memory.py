@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.api.deps import get_db_session, require_debug_access
+from src.api.deps import get_current_learner, get_db_session, require_debug_access
 from src.memory.curator import MemoryCurator
 from src.memory.explainer import MemoryExplainer
 from src.memory.layers import MemoryLayer
@@ -29,6 +29,7 @@ from src.models.runtime import AgentThread, ConversationMessage
 from src.models.session import LearningSession, LearningTask
 from src.models.vocabulary import VocabularyItem
 from src.models.writing_phrase import WritingPhrase
+from src.security.ownership import get_memory_item_for_learner
 
 router = APIRouter(prefix="/api/learners/{learner_id}/memory", tags=["memory"])
 
@@ -158,13 +159,9 @@ class MemoryResetPlanResponse(BaseModel):
 @router.get("/summary", response_model=MemorySummaryResponse)
 async def get_memory_summary(
     learner_id: uuid.UUID,
+    learner: Learner = Depends(get_current_learner),
     db: AsyncSession = Depends(get_db_session),
 ) -> MemorySummaryResponse:
-    learner_result = await db.execute(select(Learner).where(Learner.id == learner_id))
-    learner = learner_result.scalar_one_or_none()
-    if learner is None:
-        raise HTTPException(status_code=404, detail="Learner not found")
-
     thread_result = await db.execute(
         select(AgentThread).where(AgentThread.learner_id == learner_id)
     )
@@ -319,9 +316,9 @@ async def get_memory_summary(
 async def get_memory_center(
     learner_id: uuid.UUID,
     _debug_access: None = Depends(require_debug_access),
+    learner: Learner = Depends(get_current_learner),
     db: AsyncSession = Depends(get_db_session),
 ) -> MemoryCenterResponse:
-    learner = await _ensure_learner(db, learner_id)
     cards = await _memory_cards(db, learner_id)
     retrieved = await MemoryRetriever(db).retrieve_context(
         learner_id=learner_id,
@@ -345,9 +342,9 @@ async def get_memory_center(
 async def curate_memory(
     learner_id: uuid.UUID,
     _debug_access: None = Depends(require_debug_access),
+    _current_learner: Learner = Depends(get_current_learner),
     db: AsyncSession = Depends(get_db_session),
 ) -> MemoryCurateResponse:
-    await _ensure_learner(db, learner_id)
     result = await MemoryCurator(db).curate_learner(learner_id)
     await db.flush()
     return MemoryCurateResponse(**result)
@@ -360,9 +357,9 @@ async def control_memory_item(
     target_id: str,
     body: MemoryControlRequest,
     _debug_access: None = Depends(require_debug_access),
+    _current_learner: Learner = Depends(get_current_learner),
     db: AsyncSession = Depends(get_db_session),
 ) -> MemoryControlResponse:
-    await _ensure_learner(db, learner_id)
     before, after, status = await _apply_memory_control(
         db,
         learner_id=learner_id,
@@ -388,9 +385,9 @@ async def control_memory_item(
 async def get_memory_settings(
     learner_id: uuid.UUID,
     _debug_access: None = Depends(require_debug_access),
+    _current_learner: Learner = Depends(get_current_learner),
     db: AsyncSession = Depends(get_db_session),
 ) -> MemorySettingsResponse:
-    await _ensure_learner(db, learner_id)
     return MemorySettingsResponse(**_settings_dict(await _get_or_create_settings(db, learner_id)))
 
 
@@ -399,9 +396,9 @@ async def update_memory_settings(
     learner_id: uuid.UUID,
     body: MemorySettingsRequest,
     _debug_access: None = Depends(require_debug_access),
+    _current_learner: Learner = Depends(get_current_learner),
     db: AsyncSession = Depends(get_db_session),
 ) -> MemorySettingsResponse:
-    await _ensure_learner(db, learner_id)
     settings = await _get_or_create_settings(db, learner_id)
     before = _settings_dict(settings)
     updates = body.model_dump(exclude_unset=True)
@@ -426,9 +423,9 @@ async def update_memory_settings(
 async def reset_learning_plan(
     learner_id: uuid.UUID,
     _debug_access: None = Depends(require_debug_access),
+    _current_learner: Learner = Depends(get_current_learner),
     db: AsyncSession = Depends(get_db_session),
 ) -> MemoryResetPlanResponse:
-    await _ensure_learner(db, learner_id)
     task_result = await db.execute(
         select(LearningTask).where(
             LearningTask.learner_id == learner_id,
@@ -467,9 +464,9 @@ async def reset_learning_plan(
 async def export_memory(
     learner_id: uuid.UUID,
     _debug_access: None = Depends(require_debug_access),
+    learner: Learner = Depends(get_current_learner),
     db: AsyncSession = Depends(get_db_session),
 ) -> dict:
-    learner = await _ensure_learner(db, learner_id)
     cards = await _memory_cards(db, learner_id)
     event_result = await db.execute(
         select(LearningMemoryEvent)
@@ -816,7 +813,7 @@ async def _apply_memory_control(
         return before, after, pattern.status
 
     if target_type == "learning_memory_event":
-        event = await _get_target(db, LearningMemoryEvent, learner_id, target_id)
+        event = await get_memory_item_for_learner(db, learner_id, target_id)
         before = {"skill": event.skill, "visibility": event.visibility, "payload": event.payload or {}}
         if operation in {"delete", "disable"}:
             event.visibility = "deleted"

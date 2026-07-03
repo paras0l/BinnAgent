@@ -5,11 +5,12 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.api.deps import get_db_session, require_debug_access
+from src.api.deps import get_current_user, get_db_session, require_debug_access
 from src.models.learner import Learner
 from src.models.runtime import AgentEpisode, LearningEvent, ToolCallRecord
 from src.runtime.episode import EpisodeRuntime
 from src.runtime.schemas import EpisodeTraceView
+from src.security.ownership import CurrentUser, get_episode_for_user, get_learner_for_user
 from src.verification.report import VerificationService
 from src.verification.types import VerificationReport
 
@@ -28,11 +29,19 @@ async def list_runtime_episodes(
     entrypoint: str | None = Query(default=None, max_length=120),
     limit: int = Query(default=20, ge=1, le=100),
     offset: int = Query(default=0, ge=0),
+    current_user: CurrentUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db_session),
 ) -> dict[str, Any]:
-    filters = []
-    if learner_id:
-        filters.append(AgentEpisode.learner_id == learner_id)
+    if learner_id is None:
+        raise HTTPException(status_code=400, detail="learner_id is required")
+    await get_learner_for_user(
+        db,
+        current_user.user_id,
+        learner_id,
+        allow_unclaimed_learners=current_user.allow_unclaimed_learners,
+    )
+
+    filters = [AgentEpisode.learner_id == learner_id]
     if status:
         filters.append(AgentEpisode.status == status)
     if source:
@@ -90,10 +99,12 @@ async def list_runtime_episodes(
 @router.get("/episodes/{episode_id}", response_model=EpisodeTraceView)
 async def get_runtime_episode(
     episode_id: uuid.UUID,
+    current_user: CurrentUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db_session),
 ) -> EpisodeTraceView:
     try:
-        return await EpisodeRuntime(db).get_episode_trace(episode_id)
+        episode = await get_episode_for_user(db, current_user, episode_id)
+        return await EpisodeRuntime(db).get_episode_trace(episode.id)
     except LookupError as exc:
         raise HTTPException(status_code=404, detail="AgentEpisode not found") from exc
 
@@ -148,9 +159,11 @@ def _optional_text(value: Any) -> str | None:
 @router.get("/episodes/{episode_id}/verification", response_model=VerificationReport)
 async def get_runtime_episode_verification(
     episode_id: uuid.UUID,
+    current_user: CurrentUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db_session),
 ) -> VerificationReport:
     try:
-        return await VerificationService(db).verify_episode(str(episode_id))
+        episode = await get_episode_for_user(db, current_user, episode_id)
+        return await VerificationService(db).verify_episode(str(episode.id))
     except LookupError as exc:
         raise HTTPException(status_code=404, detail="AgentEpisode not found") from exc

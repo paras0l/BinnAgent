@@ -5,9 +5,10 @@ from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.api.deps import get_db_session
+from src.api.deps import get_current_learner, get_db_session
 from src.learning.orchestrator import LearningOrchestrator
 from src.learning.types import LearningPlanRequest, StartedTask
+from src.models.learner import Learner
 
 router = APIRouter(prefix="/api/learners/{learner_id}/daily-lessons", tags=["daily-lessons"])
 
@@ -28,6 +29,7 @@ class DailyLessonAnswerRequest(BaseModel):
 async def start_daily_lesson(
     learner_id: uuid.UUID,
     body: DailyLessonStartRequest | None = None,
+    _current_learner: Learner = Depends(get_current_learner),
     db: AsyncSession = Depends(get_db_session),
 ) -> StartedTask:
     body = body or DailyLessonStartRequest()
@@ -65,6 +67,7 @@ async def submit_daily_lesson_answer(
     learner_id: uuid.UUID,
     episode_id: uuid.UUID,
     body: DailyLessonAnswerRequest,
+    _current_learner: Learner = Depends(get_current_learner),
     db: AsyncSession = Depends(get_db_session),
 ) -> dict[str, Any]:
     return await LearningOrchestrator(db).submit_answer(
@@ -79,6 +82,7 @@ async def submit_daily_lesson_answer(
 async def get_daily_lesson_status(
     learner_id: uuid.UUID,
     episode_id: uuid.UUID,
+    _current_learner: Learner = Depends(get_current_learner),
     db: AsyncSession = Depends(get_db_session),
 ) -> dict[str, Any]:
     return await LearningOrchestrator(db).get_daily_lesson_status(

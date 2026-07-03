@@ -171,8 +171,22 @@ class TestDebugAccess:
         self, client, mock_session, monkeypatch
     ):
         episode_id = uuid.uuid4()
+        learner_id = uuid.uuid4()
+        now = datetime.now(timezone.utc)
+        learner = Learner(nickname="Alice")
+        learner.id = learner_id
+        episode = AgentEpisode(
+            learner_id=learner_id,
+            source="test",
+            entrypoint="debug.test",
+            status="completed",
+            task_spec={},
+            started_at=now,
+        )
+        episode.id = episode_id
         settings.debug_console_enabled = True
         settings.debug_console_token = "dev"
+        mock_session.execute = AsyncMock(side_effect=[_one(episode), _one(learner)])
         monkeypatch.setattr(runtime_api, "EpisodeRuntime", FakeEpisodeRuntime)
 
         response = await client.get(
@@ -231,6 +245,8 @@ class TestDebugAccess:
         learner_id = uuid.uuid4()
         episode_id = uuid.uuid4()
         now = datetime.now(timezone.utc)
+        learner = Learner(nickname="Alice")
+        learner.id = learner_id
         episode = AgentEpisode(
             learner_id=learner_id,
             source="daily_lesson",
@@ -252,6 +268,7 @@ class TestDebugAccess:
         settings.debug_console_token = "dev"
         mock_session.execute = AsyncMock(
             side_effect=[
+                _one(learner),
                 _count(1),
                 _rows([(episode, "Alice", 7, 2)]),
             ]

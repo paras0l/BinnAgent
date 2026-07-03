@@ -7,7 +7,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.api.deps import get_db_session
+from src.api.deps import get_current_learner, get_current_user, get_db_session
 from src.explore.capabilities import explore_capability_registry
 from src.explore.recommender import ExploreCapabilityRecommender
 from src.explore.schemas import (
@@ -26,6 +26,7 @@ from src.models.explore import ExploreFeaturePreference
 from src.models.learner import Learner
 from src.runtime.episode import EpisodeRuntime
 from src.runtime.task_spec import SuccessCriteria, TaskSpec, TaskTarget, VerificationPolicy
+from src.security.ownership import CurrentUser, get_episode_for_learner, get_learner_for_user
 
 router = APIRouter(prefix="/api/learners/{learner_id}/explore", tags=["explore"])
 capabilities_router = APIRouter(prefix="/api/explore", tags=["explore"])
@@ -59,9 +60,9 @@ async def _ensure_learner_exists(db: AsyncSession, learner_id: uuid.UUID) -> Non
 @router.get("/preferences", response_model=list[ExplorePreferenceResponse])
 async def list_explore_preferences(
     learner_id: uuid.UUID,
+    _current_learner: Learner = Depends(get_current_learner),
     db: AsyncSession = Depends(get_db_session),
 ) -> list[ExploreFeaturePreference]:
-    await _ensure_learner_exists(db, learner_id)
     result = await db.execute(
         select(ExploreFeaturePreference)
         .where(ExploreFeaturePreference.learner_id == learner_id)
@@ -82,9 +83,9 @@ async def update_explore_preference(
     learner_id: uuid.UUID,
     feature_id: str,
     body: UpdateExplorePreferenceRequest,
+    _current_learner: Learner = Depends(get_current_learner),
     db: AsyncSession = Depends(get_db_session),
 ) -> ExploreFeaturePreference:
-    await _ensure_learner_exists(db, learner_id)
     normalized_feature_id = feature_id.strip()
     if not normalized_feature_id:
         raise HTTPException(status_code=422, detail="feature_id must not be blank")
@@ -139,9 +140,15 @@ async def list_explore_capabilities(
 async def start_explore_capability(
     capability_id: str,
     body: StartExploreCapabilityRequest,
+    current_user: CurrentUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db_session),
 ) -> ExploreCapabilityStartResponse:
-    await _ensure_learner_exists(db, body.learner_id)
+    await get_learner_for_user(
+        db,
+        current_user.user_id,
+        body.learner_id,
+        allow_unclaimed_learners=current_user.allow_unclaimed_learners,
+    )
     spec = explore_capability_registry.get(capability_id)
     if spec is None:
         raise HTTPException(status_code=404, detail="Explore capability not found")
@@ -201,9 +208,11 @@ async def start_explore_capability(
 async def recommend_explore_capabilities(
     learner_id: uuid.UUID,
     body: ExploreRecommendationsRequest,
+    _current_learner: Learner = Depends(get_current_learner),
     db: AsyncSession = Depends(get_db_session),
 ) -> ExploreRecommendationsResponse:
-    await _ensure_learner_exists(db, learner_id)
+    if body.episode_id:
+        await get_episode_for_learner(db, learner_id, body.episode_id)
     recommendations = await ExploreCapabilityRecommender(db).recommend(
         ExploreRecommendationContext(
             learner_id=learner_id,
@@ -228,12 +237,14 @@ async def record_explore_capability_event(
     learner_id: uuid.UUID,
     capability_id: str,
     body: ExploreCapabilityEventRequest,
+    _current_learner: Learner = Depends(get_current_learner),
     db: AsyncSession = Depends(get_db_session),
 ) -> dict[str, Any]:
-    await _ensure_learner_exists(db, learner_id)
     spec = explore_capability_registry.get(capability_id)
     if spec is None:
         raise HTTPException(status_code=404, detail="Explore capability not found")
+    if body.episode_id:
+        await get_episode_for_learner(db, learner_id, body.episode_id)
 
     event_type = f"explore_capability_{body.event_type}"
     payload = {
