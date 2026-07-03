@@ -1,0 +1,36 @@
+{
+  "scenario_id": "smoke_learning_journey",
+  "version": 1,
+  "metrics": {
+    "api_success_rate": 1.0,
+    "agent_trigger_count": 0,
+    "memory_write_count": 0,
+    "assertion_pass_rate": 1.0
+  },
+  "metric_groups": {
+    "runtime": {
+      "episode_count": 0,
+      "completed_episode_count": 0,
+      "failed_episode_count": 0,
+      "episode_completion_rate": null,
+      "verification_pass_count": 0,
+      "verification_fail_count": 0,
+      "verification_pass_rate": null,
+      "tool_success_rate": null,
+      "avg_tool_latency_ms": null,
+      "p95_tool_latency_ms": null
+    },
+    "memory": {
+      "memory_write_count": 0,
+      "memory_event_count": 0
+    }
+  },
+  "thresholds": {
+    "api_success_rate": {
+      "min": 1.0
+    },
+    "assertion_pass_rate": {
+      "min": 1.0
+    }
+  }
+}

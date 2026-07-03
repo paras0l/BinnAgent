@@ -1,6 +1,6 @@
 # Simulation / Evaluation Audit
 
-Status: first-phase enhancement for issue #28.
+Status: issue #28 contract simulation + evaluator baseline gate.
 
 ## Built-in Personas
 
@@ -36,6 +36,24 @@ Every built-in scenario now declares a contract:
 
 `SimulationReport.to_dict()` includes `scenario_contract` while keeping the original top-level `scenario`, `steps`, `metrics`, `runtime_metrics`, and `failures` fields.
 
+## SimulationReport Fields
+
+Current report fields:
+
+- `run_id`
+- `persona`
+- `scenario`
+- `scenario_contract`
+- `status`
+- `steps[]`: each step has `name`, `status`, `evidence`, public `output`, and `failures[]`
+- `metrics`: backward-compatible flat summary metrics
+- `runtime_metrics`: raw runner-collected runtime signals
+- `metric_groups`: grouped evaluator metrics
+- `baseline_comparison`: baseline diff result or `baseline_found=false`
+- `regressions[]`: metrics that moved in the wrong direction against baseline
+- `threshold_failures[]`: metrics that violated configured thresholds
+- `failures[]`: flattened assertion/runtime failures from failed steps
+
 ## AssertionEngine Support
 
 Legacy assertion types:
@@ -65,14 +83,14 @@ All assertion types use the existing dotted path lookup and return assertion fai
 
 ## Evaluator Metrics
 
-Current `SimulationEvaluator` emits:
+Backward-compatible flat `metrics`:
 
 - `api_success_rate`
 - `agent_trigger_count`
 - `memory_write_count`
 - `assertion_pass_rate`
 
-Runtime metrics currently collected by `ScenarioRunner`:
+Raw `runtime_metrics` currently collected by `ScenarioRunner`:
 
 - `episode_count`
 - `completed_episode_count`
@@ -80,8 +98,101 @@ Runtime metrics currently collected by `ScenarioRunner`:
 - `verification_pass_count`
 - `verification_fail_count`
 - `avg_tool_latency_ms`
+- `tool_statuses`
+- `tool_latencies_ms`
+- `event_types`
+- `verification_statuses`
+- `recommendation_generated_count`
+- `recommendation_contains_expected_count`
+- `capability_click_recorded_count`
+- `memory_event_count`
+- `memory_recall_count`
+- `prompt_executions`
 
-Scenario contracts can list `required_metrics`, but this phase does not yet enforce metric gates.
+## Simulation Metrics Groups
+
+`metric_groups` has six stable namespaces:
+
+- `runtime`: episode counts/rates, verification pass rate, tool success rate, average and p95 tool latency.
+- `learning`: exercise attempt count, grading success, mastery update count, mastery delta direction, review schedule count.
+- `memory`: memory write/event count, expected memory event coverage, memory evidence ref coverage, recall count.
+- `recommendation`: capability recommendation generation, expected recommendation coverage, relevance pass rate, click count.
+- `parser_rag`: RAG retrieval result count, RAG evidence coverage, source page coverage, parser quality score.
+- `prompt_schema`: prompt execution count, schema validation pass/fail rate, JSON repair/fallback counts, prompt hash/model policy coverage.
+
+Current contract simulations can reliably infer runtime event/tool metrics, daily lesson recommendation counts, memory update counts, vocabulary attempt counts, and PromptExecutionRecord-shaped metrics when supplied in `runtime_metrics.prompt_executions`.
+
+Metrics that still need integration/E2E mode for reliable statistics:
+
+- parser quality score and source page coverage from real textbook parsing
+- RAG retrieval evidence quality from real embeddings/search
+- prompt execution metrics from live `prompt_execution_records`
+- memory recall hit quality from real retrieval contexts
+- frontend click-through timing and full user journey latency
+- long-run mastery delta quality across multiple sessions
+
+## Baseline Comparison
+
+Baseline files live under `var/simulation/baselines/{scenario_id}.json` and contain:
+
+- `scenario_id`
+- `version`
+- backward-compatible `metrics`
+- grouped `metric_groups`
+- optional `thresholds`
+
+`src/simulation/baseline.py` compares current report metrics against the baseline and writes:
+
+- `baseline_comparison.baseline_found`
+- `baseline_comparison.metric_diffs[]`
+- `regressions[]`
+
+Regression rules are directional:
+
+- pass/success/count/rate metrics regress when current is lower than baseline
+- latency metrics regress when current is higher than baseline
+
+Missing baselines do not fail the run; the report records `baseline_found=false`.
+
+## Threshold Gate
+
+Thresholds support:
+
+- `min`
+- `max`
+- `equals`
+
+Nested metric paths are supported, for example:
+
+```json
+{
+  "runtime.verification_pass_rate": { "min": 1.0 },
+  "runtime.avg_tool_latency_ms": { "max": 1000 }
+}
+```
+
+`scripts/run_learner_simulation.py` supports:
+
+```bash
+./scripts/run_learner_simulation.sh --scenario episode_runtime_knowledge_practice --fail-on-threshold
+./scripts/run_learner_simulation.sh --scenario episode_runtime_knowledge_practice --fail-on-regression
+./scripts/run_learner_simulation.sh --scenario episode_runtime_knowledge_practice --update-baseline
+```
+
+`--update-baseline` should be used only after reviewing that behavior changes are intentional and healthy. If a core learning loop regresses, fix the product code or scenario contract instead of updating the baseline to accept the regression.
+
+Do not update baselines when:
+
+- assertion failures indicate the scenario no longer exercises the intended flow
+- verification, tool success, or memory write rates dropped unexpectedly
+- latency rose because of a bug or accidental blocking call
+- prompt/schema validation failures increased without a planned prompt migration
+
+Update baselines when:
+
+- a scenario contract intentionally changes
+- a metric becomes more accurate because the runner now collects better signals
+- a product behavior improvement changes expected counts or latencies and the new value has been reviewed
 
 ## Contract Simulation vs Integration/E2E
 

@@ -61,7 +61,11 @@ class SimulationReport:
     steps: list[SimulationStepResult]
     metrics: dict[str, float | int]
     failures: list[str]
-    runtime_metrics: dict[str, float | int] = field(default_factory=dict)
+    runtime_metrics: dict[str, Any] = field(default_factory=dict)
+    metric_groups: dict[str, dict[str, float | int | str | None]] = field(default_factory=dict)
+    baseline_comparison: dict[str, Any] | None = None
+    regressions: list[dict[str, Any]] = field(default_factory=list)
+    threshold_failures: list[dict[str, Any]] = field(default_factory=list)
     scenario_contract: dict[str, Any] | None = None
     run_id: str = field(default_factory=lambda: f"sim_{datetime.now(timezone.utc):%Y%m%d_%H%M%S}_{uuid.uuid4().hex[:8]}")
 
@@ -83,7 +87,11 @@ class SimulationReport:
                 for step in self.steps
             ],
             "metrics": self.metrics,
-            "runtime_metrics": self.runtime_metrics,
+            "runtime_metrics": _json_safe(self.runtime_metrics),
+            "metric_groups": _json_safe(self.metric_groups),
+            "baseline_comparison": _json_safe(self.baseline_comparison),
+            "regressions": _json_safe(self.regressions),
+            "threshold_failures": _json_safe(self.threshold_failures),
             "failures": self.failures,
         }
 

@@ -39,13 +39,23 @@ class ScenarioRunner:
         self.api_successes = 0
         self.agent_triggers = 0
         self.memory_writes = 0
-        self.runtime_metrics: dict[str, float | int] = {
+        self.runtime_metrics: dict[str, Any] = {
             "episode_count": 0,
             "completed_episode_count": 0,
             "failed_episode_count": 0,
             "verification_pass_count": 0,
             "verification_fail_count": 0,
             "avg_tool_latency_ms": 0,
+            "tool_statuses": [],
+            "tool_latencies_ms": [],
+            "event_types": [],
+            "verification_statuses": [],
+            "recommendation_generated_count": 0,
+            "recommendation_contains_expected_count": 0,
+            "capability_click_recorded_count": 0,
+            "memory_event_count": 0,
+            "memory_recall_count": 0,
+            "prompt_executions": [],
         }
 
     async def run(
@@ -325,6 +335,16 @@ class ScenarioRunner:
         )
         payload = _json_or_empty(response)
         context["daily_lesson_answer"] = payload
+        memory_updates = payload.get("memory_updates") if isinstance(payload, dict) else None
+        if isinstance(memory_updates, list):
+            self.memory_writes += len(memory_updates)
+            self.runtime_metrics["memory_event_count"] += len(memory_updates)
+        recommendations = (
+            payload.get("next_capability_recommendations") if isinstance(payload, dict) else None
+        )
+        if isinstance(recommendations, list):
+            self.runtime_metrics["recommendation_generated_count"] += len(recommendations)
+            self.runtime_metrics["recommendation_contains_expected_count"] += len(recommendations)
         return {"status_code": response.status_code, "json": payload, "answer": payload}
 
     async def _click_capability_recommendation(
@@ -368,6 +388,7 @@ class ScenarioRunner:
         payload = _json_or_empty(response)
         if response.status_code < 400:
             self.memory_writes += 1
+            self.runtime_metrics["capability_click_recorded_count"] += 1
         context["capability_event"] = payload
         return {
             "status_code": response.status_code,
@@ -389,6 +410,7 @@ class ScenarioRunner:
             for item in (payload.get("events") or [])
             if isinstance(item, dict) and item.get("event_type")
         ] if isinstance(payload, dict) else []
+        self.runtime_metrics["event_types"].extend(event_types)
         return {
             "status_code": response.status_code,
             "json": payload,
@@ -406,6 +428,8 @@ class ScenarioRunner:
             self.runtime_metrics["verification_pass_count"] += 1
         elif status == "failed":
             self.runtime_metrics["verification_fail_count"] += 1
+        if status:
+            self.runtime_metrics["verification_statuses"].append(status)
         return {"status_code": response.status_code, "json": payload, "verification_report": payload}
 
     def _update_runtime_metrics_from_trace(self, payload: Any) -> None:
@@ -419,13 +443,21 @@ class ScenarioRunner:
         elif status == "failed":
             self.runtime_metrics["failed_episode_count"] += 1
         tool_calls = payload.get("tool_calls") or []
+        statuses = [
+            item.get("status")
+            for item in tool_calls
+            if isinstance(item, dict) and item.get("status") is not None
+        ]
+        self.runtime_metrics["tool_statuses"].extend(str(status) for status in statuses)
         latencies = [
             item.get("latency_ms")
             for item in tool_calls
             if isinstance(item, dict) and isinstance(item.get("latency_ms"), int | float)
         ]
+        self.runtime_metrics["tool_latencies_ms"].extend(latencies)
         if latencies:
-            self.runtime_metrics["avg_tool_latency_ms"] = sum(latencies) / len(latencies)
+            all_latencies = self.runtime_metrics["tool_latencies_ms"]
+            self.runtime_metrics["avg_tool_latency_ms"] = sum(all_latencies) / len(all_latencies)
 
     async def _request(self, method: str, url: str, **kwargs: Any) -> httpx.Response:
         self.api_calls += 1

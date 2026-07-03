@@ -14,4 +14,8 @@ binnagent-frontend/dist/
 binnagent-frontend/dist-dev-console/
 englishwiki/
 tmp/
-var/
+var/*
+!var/simulation/
+var/simulation/*
+!var/simulation/baselines/
+!var/simulation/baselines/*.json

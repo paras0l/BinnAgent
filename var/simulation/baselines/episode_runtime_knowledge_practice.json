@@ -1,0 +1,56 @@
+{
+  "scenario_id": "episode_runtime_knowledge_practice",
+  "version": 1,
+  "metrics": {
+    "api_success_rate": 1.0,
+    "agent_trigger_count": 0,
+    "memory_write_count": 1,
+    "assertion_pass_rate": 1.0
+  },
+  "metric_groups": {
+    "runtime": {
+      "episode_count": 1,
+      "completed_episode_count": 1,
+      "failed_episode_count": 0,
+      "episode_completion_rate": 1.0,
+      "verification_pass_count": 1,
+      "verification_fail_count": 0,
+      "verification_pass_rate": 1.0,
+      "tool_success_rate": 1.0,
+      "avg_tool_latency_ms": 11.0,
+      "p95_tool_latency_ms": 12.0
+    },
+    "learning": {
+      "exercise_attempt_created_count": 0,
+      "grading_success_count": 1,
+      "grading_success_rate": null,
+      "mastery_update_count": 1,
+      "review_schedule_created_count": 0
+    },
+    "memory": {
+      "memory_write_count": 1,
+      "memory_event_count": 1,
+      "memory_evidence_ref_coverage": null
+    }
+  },
+  "thresholds": {
+    "api_success_rate": {
+      "min": 1.0
+    },
+    "assertion_pass_rate": {
+      "min": 1.0
+    },
+    "runtime.episode_completion_rate": {
+      "min": 1.0
+    },
+    "runtime.verification_pass_rate": {
+      "min": 1.0
+    },
+    "runtime.tool_success_rate": {
+      "min": 1.0
+    },
+    "runtime.avg_tool_latency_ms": {
+      "max": 1000
+    }
+  }
+}

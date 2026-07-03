@@ -348,4 +348,4 @@ async def test_daily_lesson_capability_recommendation_simulation_clicks_memory_e
     )
 
     assert report.status == "passed"
-    assert report.metrics["memory_write_count"] == 1
+    assert report.metrics["memory_write_count"] == 2
