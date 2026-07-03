@@ -109,6 +109,15 @@ async def get_runtime_episode(
         raise HTTPException(status_code=404, detail="AgentEpisode not found") from exc
 
 
+@router.get("/episodes/{episode_id}/trace", response_model=EpisodeTraceView)
+async def get_runtime_episode_trace(
+    episode_id: uuid.UUID,
+    current_user: CurrentUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db_session),
+) -> EpisodeTraceView:
+    return await get_runtime_episode(episode_id, current_user=current_user, db=db)
+
+
 def _episode_summary(
     episode: AgentEpisode,
     learner_nickname: str | None,
@@ -143,6 +152,9 @@ def _episode_summary(
         "checkpoint_id": _optional_text(context_snapshot.get("checkpoint_id")),
         "checkpoint_status": _optional_text(context_snapshot.get("checkpoint_status")),
         "resume_from": _optional_text(context_snapshot.get("resume_from")),
+        "thread_id": _optional_text(context_snapshot.get("thread_id")),
+        "graph_run_id": _optional_text(context_snapshot.get("graph_run_id")),
+        "current_task_id": _optional_text(context_snapshot.get("current_task_id")),
         "answer_required": bool(context_snapshot.get("answer_required", False)),
         "failure_type": episode.failure_type,
         "error_message": episode.error_message,

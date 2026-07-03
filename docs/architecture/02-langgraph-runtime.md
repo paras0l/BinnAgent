@@ -257,6 +257,25 @@ flowchart TD
 - `repair_grammar`
 - `retry_with_hint`
 
+### 4.8.2 `verify_episode`
+
+`verify_episode` 不是 LLM judge，而是 deterministic / schema / business_rule / evidence checks。检查项来自 `TaskSpec.verification_policy.required_checks`，当前支持：
+
+- `task_prepared`
+- `learner_answer_received`
+- `exercise_attempt_created`
+- `exercise_graded`
+- `mastery_updated`
+- `memory_event_written`
+- `review_scheduled`
+- `next_action_recommended`
+- `episode_completed`
+- `tool_calls_successful`
+- `evidence_refs_present`
+- `prompt_schema_valid`
+
+critical 检查失败时，`VerificationReport.status="failed"`，episode 不允许静默进入普通 `completed`；warning 检查失败时可以进入 `completed_with_warnings`。
+
 ### 4.9 `summarize_session`
 
 输出给用户的结尾：
@@ -294,8 +313,10 @@ flowchart TD
 - 如果中断在评分前：从 `grade_attempt` 进入 resume graph。
 - 恢复 graph 以 `side_effect_mode="dry_run"` 产出状态，不重复写 DB。
 - 真实评分、掌握度、Memory、Review 仍由 orchestrator 的持久化路径完成。
+- `VerificationReport` 生成后写入 `verification_report_generated` 事件，并决定 episode 最终状态。
 
 详见 [LangGraph Runtime Audit](./langgraph-runtime-audit.md)。
+Verification / trace 细节见 [Verification Runtime Audit](./verification-runtime-audit.md)。
 
 ## 6. Streaming 事件
 

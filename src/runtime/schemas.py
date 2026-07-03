@@ -3,6 +3,7 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
+from src.evidence.types import EvidenceRef
 from src.runtime.events import LearningEventView
 
 
@@ -39,11 +40,43 @@ class ToolCallRecordView(BaseModel):
     created_at: datetime
 
 
+class PromptExecutionRecordView(BaseModel):
+    id: str
+    learner_id: str | None = None
+    episode_id: str | None = None
+    task_id: str | None = None
+    source_module: str
+    prompt_id: str
+    prompt_version: str
+    prompt_hash: str
+    input_hash: str
+    input_schema: str | None = None
+    output_schema: str | None = None
+    model_policy_snapshot: dict[str, Any] = Field(default_factory=dict)
+    langfuse_trace_id: str | None = None
+    langfuse_observation_id: str | None = None
+    schema_validation_status: str
+    schema_error_summary: str | None = None
+    repair_used: bool
+    fallback_used: bool
+    parse_mode: str
+    confidence: float | None = None
+    decision: str
+    target_type: str | None = None
+    target_id: str | None = None
+    created_at: datetime
+
+
 class EpisodeTraceView(BaseModel):
     episode: AgentEpisodeView
     events: list[LearningEventView]
     tool_calls: list[ToolCallRecordView]
     checkpoint: dict[str, Any] | None = None
+    verification_report: dict[str, Any] | None = None
+    graph_run: dict[str, Any] = Field(default_factory=dict)
+    prompt_executions: list[PromptExecutionRecordView] = Field(default_factory=list)
+    evidence_refs: list[EvidenceRef] = Field(default_factory=list)
+    node_summaries: list[dict[str, Any]] = Field(default_factory=list)
 
 
 def episode_to_view(episode) -> AgentEpisodeView:
@@ -96,4 +129,33 @@ def tool_call_to_view(tool_call) -> ToolCallRecordView:
         error=tool_call.error,
         metadata=tool_call.metadata_ or {},
         created_at=tool_call.created_at or datetime.now(timezone.utc),
+    )
+
+
+def prompt_execution_to_view(record) -> PromptExecutionRecordView:
+    return PromptExecutionRecordView(
+        id=str(record.id),
+        learner_id=str(record.learner_id) if record.learner_id else None,
+        episode_id=str(record.episode_id) if record.episode_id else None,
+        task_id=record.task_id,
+        source_module=record.source_module,
+        prompt_id=record.prompt_id,
+        prompt_version=record.prompt_version,
+        prompt_hash=record.prompt_hash,
+        input_hash=record.input_hash,
+        input_schema=record.input_schema,
+        output_schema=record.output_schema,
+        model_policy_snapshot=record.model_policy_snapshot or {},
+        langfuse_trace_id=record.langfuse_trace_id,
+        langfuse_observation_id=record.langfuse_observation_id,
+        schema_validation_status=record.schema_validation_status,
+        schema_error_summary=record.schema_error_summary,
+        repair_used=record.repair_used,
+        fallback_used=record.fallback_used,
+        parse_mode=record.parse_mode,
+        confidence=record.confidence,
+        decision=record.decision,
+        target_type=record.target_type,
+        target_id=record.target_id,
+        created_at=record.created_at or datetime.now(timezone.utc),
     )

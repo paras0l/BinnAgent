@@ -629,6 +629,25 @@ class LearningOrchestrator:
             input_payload={"episode_id": str(episode.id)},
             output_payload=verification_report,
         )
+        await _append_daily_event(
+            runtime,
+            runtime_events,
+            episode=episode,
+            learner_id=uuid.UUID(str(learner_id)),
+            event_type="verification_report_generated",
+            target_type=target_type,
+            target_id=target_id,
+            payload={
+                "status": verification_report.get("status"),
+                "required_checks": verification_report.get("required_checks") or [],
+                "passed_count": verification_report.get("passed_count"),
+                "failed_count": verification_report.get("failed_count"),
+                "warning_count": verification_report.get("warning_count"),
+                "critical_failed_count": verification_report.get("critical_failed_count"),
+                "evidence_ref_count": verification_report.get("evidence_ref_count"),
+                "evidence_refs": evidence_refs,
+            },
+        )
         await runtime.complete_episode(
             episode.id,
             episode=episode,

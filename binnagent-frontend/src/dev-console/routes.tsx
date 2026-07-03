@@ -1,6 +1,7 @@
 export const devConsoleRoutes = [
   { id: 'learners', label: 'Learners', path: '/dev/learners' },
   { id: 'episodes', label: 'Recent Episodes', path: '/dev/episodes' },
+  { id: 'graph-runs', label: 'Graph Runs', path: '/dev/graph-runs' },
   { id: 'memory', label: 'Memory Debug', path: '/dev/memory' },
   { id: 'tools', label: 'Tool Registry', path: '/dev/tools' },
   { id: 'tool-call-records', label: 'Tool Call Records', path: '/dev/tool-calls' },
@@ -15,7 +16,7 @@ export type DevConsoleRouteId = (typeof devConsoleRoutes)[number]['id']
 
 export function findDevConsoleRoute(pathname: string) {
   if (pathname.startsWith('/runtime/episodes/')) {
-    return devConsoleRoutes.find((route) => route.id === 'episodes') ?? devConsoleRoutes[0]
+    return devConsoleRoutes.find((route) => route.id === 'graph-runs') ?? devConsoleRoutes[0]
   }
   return devConsoleRoutes.find((route) => pathname.startsWith(route.path)) ?? devConsoleRoutes[0]
 }

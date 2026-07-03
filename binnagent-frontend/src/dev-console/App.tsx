@@ -249,6 +249,13 @@ function DevConsoleShell({ onClearToken }: { onClearToken: () => void }) {
                 <ContextRequired title="Memory Debug 需要 learner_id" />
               )
             ) : routeId === 'episodes' ? (
+              <RecentEpisodesPage
+                key={`${learner?.id ?? 'all'}:${window.location.search}`}
+                learner={learner}
+                onEpisodeIdChange={updateEpisodeId}
+                navigate={navigate}
+              />
+            ) : routeId === 'graph-runs' ? (
               episodeId ? (
                 <EpisodeDebugPage learner={debugLearner} episodeId={episodeId} />
               ) : (
@@ -1025,6 +1032,7 @@ function routeIcon(routeId: DevConsoleRouteId) {
   if (routeId === 'learners') return <Users className="size-4" />
   if (routeId === 'memory') return <BrainCircuit className="size-4" />
   if (routeId === 'episodes') return <Activity className="size-4" />
+  if (routeId === 'graph-runs') return <Route className="size-4" />
   if (routeId === 'tools') return <Wrench className="size-4" />
   if (routeId === 'tool-call-records') return <Activity className="size-4" />
   if (routeId === 'evidence') return <Search className="size-4" />

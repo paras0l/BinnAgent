@@ -39,6 +39,7 @@ class ScenarioRunner:
         self.api_successes = 0
         self.agent_triggers = 0
         self.memory_writes = 0
+        self._verification_counted_episode_ids: set[str] = set()
         self.runtime_metrics: dict[str, Any] = {
             "episode_count": 0,
             "completed_episode_count": 0,
@@ -424,12 +425,7 @@ class ScenarioRunner:
         payload = _json_or_empty(response)
         context["verification_report"] = payload
         status = payload.get("status") if isinstance(payload, dict) else None
-        if status == "passed":
-            self.runtime_metrics["verification_pass_count"] += 1
-        elif status == "failed":
-            self.runtime_metrics["verification_fail_count"] += 1
-        if status:
-            self.runtime_metrics["verification_statuses"].append(status)
+        self._record_verification_status(status, episode_id)
         return {"status_code": response.status_code, "json": payload, "verification_report": payload}
 
     def _update_runtime_metrics_from_trace(self, payload: Any) -> None:
@@ -440,8 +436,22 @@ class ScenarioRunner:
         self.runtime_metrics["episode_count"] += 1
         if status == "completed":
             self.runtime_metrics["completed_episode_count"] += 1
+        elif status == "completed_with_warnings":
+            self.runtime_metrics["completed_episode_count"] += 1
         elif status == "failed":
             self.runtime_metrics["failed_episode_count"] += 1
+        elif status == "verification_failed":
+            self.runtime_metrics["failed_episode_count"] += 1
+        verification_report = payload.get("verification_report") or episode.get("verification_report") or {}
+        if isinstance(verification_report, dict):
+            verification_status = verification_report.get("status")
+            episode_id = str(episode.get("id") or payload.get("episode_id") or "")
+            self._record_verification_status(verification_status, episode_id)
+        prompt_executions = payload.get("prompt_executions") or []
+        if isinstance(prompt_executions, list):
+            self.runtime_metrics["prompt_executions"].extend(
+                item for item in prompt_executions if isinstance(item, dict)
+            )
         tool_calls = payload.get("tool_calls") or []
         statuses = [
             item.get("status")
@@ -458,6 +468,20 @@ class ScenarioRunner:
         if latencies:
             all_latencies = self.runtime_metrics["tool_latencies_ms"]
             self.runtime_metrics["avg_tool_latency_ms"] = sum(all_latencies) / len(all_latencies)
+
+    def _record_verification_status(self, status: Any, episode_id: str | None) -> None:
+        if not status:
+            return
+        status_text = str(status)
+        count_key = episode_id or status_text
+        if count_key in self._verification_counted_episode_ids:
+            return
+        self._verification_counted_episode_ids.add(count_key)
+        if status_text == "passed":
+            self.runtime_metrics["verification_pass_count"] += 1
+        elif status_text == "failed":
+            self.runtime_metrics["verification_fail_count"] += 1
+        self.runtime_metrics["verification_statuses"].append(status_text)
 
     async def _request(self, method: str, url: str, **kwargs: Any) -> httpx.Response:
         self.api_calls += 1

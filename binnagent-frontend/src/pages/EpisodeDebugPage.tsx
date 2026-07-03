@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   Activity,
+  AlertTriangle,
   CheckCircle2,
   Clock3,
   Database,
+  FileJson,
   RefreshCw,
   ShieldCheck,
   Wrench,
@@ -82,8 +84,12 @@ interface VerificationCheck {
   name: string
   check_type: string
   passed: boolean
+  severity?: string
   expected?: unknown
   actual?: unknown
+  source_node?: string | null
+  source_event_type?: string | null
+  source_tool_name?: string | null
   evidence_refs?: EvidenceRef[]
   message?: string | null
 }
@@ -92,7 +98,13 @@ interface VerificationReport {
   episode_id: string
   task_id?: string | null
   status: string
+  required_checks?: string[]
   checks: VerificationCheck[]
+  passed_count?: number
+  failed_count?: number
+  warning_count?: number
+  critical_failed_count?: number
+  evidence_ref_count?: number
   failed_reason?: string | null
   generated_at: string
   metadata?: Record<string, unknown>
@@ -107,6 +119,7 @@ interface LearningCheckpoint {
   status: string
   resume_from?: string | null
   answer_required?: boolean
+  current_task_id?: string | null
   required_input_schema?: Record<string, unknown> | null
   prompt_payload?: Record<string, unknown> | null
   state_snapshot?: Record<string, unknown> | null
@@ -115,15 +128,65 @@ interface LearningCheckpoint {
   consumed_at?: string | null
 }
 
+interface PromptExecutionRecord {
+  id: string
+  prompt_id: string
+  prompt_version: string
+  source_module: string
+  schema_validation_status: string
+  schema_error_summary?: string | null
+  repair_used: boolean
+  fallback_used: boolean
+  decision: string
+  langfuse_trace_id?: string | null
+  langfuse_observation_id?: string | null
+  prompt_hash?: string
+  input_hash?: string
+  output_schema?: string | null
+  created_at: string
+}
+
 interface EpisodeTrace {
   episode: RuntimeEpisode
   events: LearningEvent[]
   tool_calls: ToolCallRecord[]
   checkpoint?: LearningCheckpoint | null
+  verification_report?: VerificationReport | Record<string, unknown> | null
+  graph_run?: Record<string, unknown>
+  prompt_executions?: PromptExecutionRecord[]
+  evidence_refs?: EvidenceRef[]
+  node_summaries?: NodeSummary[]
+}
+
+interface NodeSummary {
+  node: string
+  event_count: number
+  tool_call_count: number
+  prompt_execution_count: number
+}
+
+interface GraphRunDebug {
+  episode_id: string
+  learner_id: string
+  thread_id?: string | null
+  graph_run_id?: string | null
+  session_id?: string | null
+  checkpoint_status?: string | null
+  resume_from?: string | null
+  current_task_id?: string | null
+  node_summaries?: NodeSummary[]
+  events?: LearningEvent[]
+  tool_calls?: ToolCallRecord[]
+  prompt_executions?: PromptExecutionRecord[]
+  verification_report?: VerificationReport | null
+  evidence_refs?: EvidenceRef[]
+  langfuse_trace_id?: string | null
+  trace: EpisodeTrace
 }
 
 export function EpisodeDebugPage({ learner, episodeId }: EpisodeDebugPageProps) {
   const [trace, setTrace] = useState<EpisodeTrace | null>(null)
+  const [graphRun, setGraphRun] = useState<GraphRunDebug | null>(null)
   const [verification, setVerification] = useState<VerificationReport | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -132,23 +195,22 @@ export function EpisodeDebugPage({ learner, episodeId }: EpisodeDebugPageProps) 
     setIsLoading(true)
     setError(null)
     try {
-      const [traceResponse, verificationResponse] = await Promise.all([
-        debugFetch(`/api/runtime/episodes/${episodeId}`),
-        debugFetch(`/api/runtime/episodes/${episodeId}/verification`),
-      ])
-      if (!traceResponse.ok) throw new Error('Episode trace failed')
-      if (!verificationResponse.ok) throw new Error('Episode verification failed')
-      const traceData: EpisodeTrace = await traceResponse.json()
-      const verificationData: VerificationReport = await verificationResponse.json()
-      setTrace(traceData)
-      setVerification(verificationData)
+      const params = new URLSearchParams()
+      if (isUuidLike(learner.id)) params.set('learner_id', learner.id)
+      const query = params.toString()
+      const response = await debugFetch(`/api/debug/graph-runs/${episodeId}${query ? `?${query}` : ''}`)
+      if (!response.ok) throw new Error('Graph run debug failed')
+      const data: GraphRunDebug = await response.json()
+      setGraphRun(data)
+      setTrace(data.trace)
+      setVerification(data.verification_report ?? (data.trace.verification_report as VerificationReport | null) ?? null)
     } catch (err) {
       console.error('Episode debug load error:', err)
-      setError('Episode trace 暂时无法加载，请确认 episode_id 是否存在。')
+      setError('Graph Run Debug 暂时无法加载，请确认 episode_id、learner_id 和 debug token。')
     } finally {
       setIsLoading(false)
     }
-  }, [episodeId])
+  }, [episodeId, learner.id])
 
   useEffect(() => {
     const timer = window.setTimeout(() => void loadTrace(), 0)
@@ -156,8 +218,15 @@ export function EpisodeDebugPage({ learner, episodeId }: EpisodeDebugPageProps) 
   }, [loadTrace])
 
   const taskSpec = trace?.episode.task_spec as TaskSpecLike | undefined
-  const statusTone = trace?.episode.status === 'completed' ? 'success' : trace?.episode.status === 'failed' ? 'danger' : 'neutral'
+  const statusTone = trace?.episode.status === 'completed' || trace?.episode.status === 'completed_with_warnings'
+    ? 'success'
+    : trace?.episode.status === 'failed' || trace?.episode.status === 'verification_failed'
+      ? 'danger'
+      : 'neutral'
   const eventTypes = useMemo(() => trace?.events.map((event) => event.event_type).join(' / ') ?? '', [trace])
+  const promptExecutions = trace?.prompt_executions ?? graphRun?.prompt_executions ?? []
+  const evidenceRefs = trace?.evidence_refs ?? graphRun?.evidence_refs ?? []
+  const nodeSummaries = trace?.node_summaries ?? graphRun?.node_summaries ?? []
 
   if (isLoading && !trace) {
     return <LoadingState title="正在读取 Episode Trace" description="正在加载 TaskSpec、事件链、工具调用和验证报告..." />
@@ -188,6 +257,8 @@ export function EpisodeDebugPage({ learner, episodeId }: EpisodeDebugPageProps) 
           { label: 'Episode 状态', value: trace.episode.status, tone: statusTone === 'success' ? 'success' : statusTone === 'danger' ? 'warning' : 'primary' },
           { label: '事件数', value: trace.events.length },
           { label: '工具调用', value: trace.tool_calls.length },
+          { label: 'Prompt 执行', value: promptExecutions.length },
+          { label: 'EvidenceRefs', value: evidenceRefs.length },
           { label: '验证状态', value: verification?.status ?? 'unknown', tone: verification?.status === 'passed' ? 'success' : 'warning' },
         ]}
         actions={
@@ -200,7 +271,7 @@ export function EpisodeDebugPage({ learner, episodeId }: EpisodeDebugPageProps) 
 
       <StatusBanner tone={verification?.status === 'passed' ? 'success' : 'warning'} title="VerificationReport">
         {verification?.status === 'passed'
-          ? '关键步骤已通过验证。'
+          ? '关键步骤已通过 deterministic / schema / business_rule / evidence checks。'
           : verification?.failed_reason ?? '验证报告尚未通过。'}
       </StatusBanner>
 
@@ -219,6 +290,29 @@ export function EpisodeDebugPage({ learner, episodeId }: EpisodeDebugPageProps) 
               <KeyValue label="completed_at" value={formatDate(trace.episode.completed_at)} />
               <KeyValue label="events" value={eventTypes || 'none'} />
             </div>
+          </SurfaceCard>
+
+          <SurfaceCard>
+            <SectionTitle icon={<Database className="size-4" />} title="Graph / Checkpoint" />
+            <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+              <KeyValue label="thread_id" value={graphRun?.thread_id ?? stringValue(trace.graph_run?.thread_id)} />
+              <KeyValue label="graph_run_id" value={graphRun?.graph_run_id ?? stringValue(trace.graph_run?.graph_run_id)} />
+              <KeyValue label="session_id" value={graphRun?.session_id ?? stringValue(trace.graph_run?.session_id)} />
+              <KeyValue label="checkpoint_status" value={graphRun?.checkpoint_status ?? trace.checkpoint?.status ?? 'none'} />
+              <KeyValue label="resume_from" value={graphRun?.resume_from ?? trace.checkpoint?.resume_from ?? 'none'} />
+              <KeyValue label="current_task_id" value={graphRun?.current_task_id ?? trace.checkpoint?.current_task_id ?? 'none'} />
+              <KeyValue label="answer_required" value={String(Boolean(trace.checkpoint?.answer_required ?? trace.graph_run?.answer_required))} />
+              <KeyValue label="langfuse_trace_id" value={graphRun?.langfuse_trace_id ?? stringValue(trace.graph_run?.langfuse_trace_id)} />
+            </div>
+            {trace.checkpoint ? (
+              <div className="mt-4 grid gap-3 lg:grid-cols-2">
+                <JsonBlock title="required_input_schema" value={trace.checkpoint.required_input_schema ?? {}} />
+                <JsonBlock title="prompt_payload_summary" value={trace.checkpoint.prompt_payload ?? {}} />
+                <JsonBlock title="state_snapshot_summary" value={trace.checkpoint.state_snapshot ?? {}} />
+              </div>
+            ) : (
+              <p className="mt-4 text-sm text-slate-500">No graph checkpoint recorded for this episode.</p>
+            )}
           </SurfaceCard>
 
           <SurfaceCard>
@@ -253,32 +347,73 @@ export function EpisodeDebugPage({ learner, episodeId }: EpisodeDebugPageProps) 
 
           <SurfaceCard>
             <SectionTitle icon={<Wrench className="size-4" />} title="Tool Calls" />
-            <div className="mt-4 overflow-x-auto">
-              <table className="min-w-full text-left text-sm">
-                <thead className="text-xs uppercase text-slate-500">
-                  <tr>
-                    <th className="px-3 py-2">tool</th>
-                    <th className="px-3 py-2">status</th>
-                    <th className="px-3 py-2">latency</th>
-                    <th className="px-3 py-2">input_hash</th>
-                    <th className="px-3 py-2">output_hash</th>
-                    <th className="px-3 py-2">error</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {trace.tool_calls.map((tool) => (
-                    <tr key={tool.id}>
-                      <td className="px-3 py-3 font-bold text-slate-900">{tool.tool_name}</td>
-                      <td className="px-3 py-3"><StatusPill status={tool.status} /></td>
-                      <td className="px-3 py-3 text-slate-600">{tool.latency_ms ?? 0}ms</td>
-                      <td className="px-3 py-3 font-mono text-xs text-slate-500">{shortHash(tool.input_hash)}</td>
-                      <td className="px-3 py-3 font-mono text-xs text-slate-500">{shortHash(tool.output_hash)}</td>
-                      <td className="px-3 py-3 text-xs text-rose-600">{tool.error ?? 'none'}</td>
+            {trace.tool_calls.length ? (
+              <div className="mt-4 overflow-x-auto">
+                <table className="min-w-full text-left text-sm">
+                  <thead className="text-xs uppercase text-slate-500">
+                    <tr>
+                      <th className="px-3 py-2">tool</th>
+                      <th className="px-3 py-2">status</th>
+                      <th className="px-3 py-2">latency</th>
+                      <th className="px-3 py-2">input_hash</th>
+                      <th className="px-3 py-2">output_hash</th>
+                      <th className="px-3 py-2">error</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {trace.tool_calls.map((tool) => (
+                      <tr key={tool.id}>
+                        <td className="px-3 py-3 font-bold text-slate-900">{tool.tool_name}</td>
+                        <td className="px-3 py-3"><StatusPill status={tool.status} /></td>
+                        <td className="px-3 py-3 text-slate-600">{tool.latency_ms ?? 0}ms</td>
+                        <td className="px-3 py-3 font-mono text-xs text-slate-500">{shortHash(tool.input_hash)}</td>
+                        <td className="px-3 py-3 font-mono text-xs text-slate-500">{shortHash(tool.output_hash)}</td>
+                        <td className="px-3 py-3 text-xs text-rose-600">{tool.error ?? 'none'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <EmptyLine text="No tool calls recorded." />
+            )}
+          </SurfaceCard>
+
+          <SurfaceCard>
+            <SectionTitle icon={<FileJson className="size-4" />} title="Prompt Executions" />
+            {promptExecutions.length ? (
+              <div className="mt-4 overflow-x-auto">
+                <table className="min-w-full text-left text-sm">
+                  <thead className="text-xs uppercase text-slate-500">
+                    <tr>
+                      <th className="px-3 py-2">prompt</th>
+                      <th className="px-3 py-2">schema</th>
+                      <th className="px-3 py-2">repair</th>
+                      <th className="px-3 py-2">fallback</th>
+                      <th className="px-3 py-2">decision</th>
+                      <th className="px-3 py-2">langfuse</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {promptExecutions.map((item) => (
+                      <tr key={item.id} className="align-top">
+                        <td className="px-3 py-3">
+                          <p className="font-mono text-xs font-bold text-slate-900">{item.prompt_id}@{item.prompt_version}</p>
+                          <p className="mt-1 text-xs text-slate-500">{item.source_module}</p>
+                        </td>
+                        <td className="px-3 py-3"><StatusPill status={item.schema_validation_status} /></td>
+                        <td className="px-3 py-3 text-slate-600">{String(item.repair_used)}</td>
+                        <td className="px-3 py-3 text-slate-600">{String(item.fallback_used)}</td>
+                        <td className="px-3 py-3 text-slate-600">{item.decision}</td>
+                        <td className="px-3 py-3 font-mono text-xs text-slate-500">{item.langfuse_trace_id ?? 'none'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <EmptyLine text="No prompt executions recorded for this episode." />
+            )}
           </SurfaceCard>
         </div>
 
@@ -299,51 +434,89 @@ export function EpisodeDebugPage({ learner, episodeId }: EpisodeDebugPageProps) 
           <SurfaceCard>
             <SectionTitle icon={<ShieldCheck className="size-4" />} title="Verification" />
             <div className="mt-4 space-y-3">
+              <div className="grid gap-2 sm:grid-cols-2">
+                <KeyValue label="status" value={verification?.status ?? 'unknown'} />
+                <KeyValue label="passed / failed" value={`${verification?.passed_count ?? 0} / ${verification?.failed_count ?? 0}`} />
+                <KeyValue label="warnings" value={verification?.warning_count ?? 0} />
+                <KeyValue label="critical_failed" value={verification?.critical_failed_count ?? 0} />
+                <KeyValue label="evidence_ref_count" value={verification?.evidence_ref_count ?? 0} />
+              </div>
+              <JsonBlock title="required_checks" value={verification?.required_checks ?? []} />
               {(verification?.checks ?? []).map((check) => (
-                <div key={check.name} className="rounded-lg border border-slate-100 bg-slate-50 p-3">
+                <div key={check.name} className={`rounded-lg border p-3 ${checkCardClass(check)}`}>
                   <div className="flex items-center justify-between gap-3">
                     <p className="font-bold text-slate-900">{check.name}</p>
-                    {check.passed ? <CheckCircle2 className="size-4 text-emerald-600" /> : <XCircle className="size-4 text-rose-600" />}
+                    {check.passed ? (
+                      <CheckCircle2 className="size-4 text-emerald-600" />
+                    ) : check.severity === 'warning' ? (
+                      <AlertTriangle className="size-4 text-amber-600" />
+                    ) : (
+                      <XCircle className="size-4 text-rose-600" />
+                    )}
                   </div>
-                  <p className="mt-1 text-xs text-slate-500">{check.check_type}</p>
+                  <p className="mt-1 text-xs text-slate-500">{check.check_type} · {check.severity ?? 'warning'}</p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    source {check.source_node ?? check.source_event_type ?? check.source_tool_name ?? 'none'}
+                  </p>
                   {check.message && <p className="mt-2 text-xs leading-5 text-slate-600">{check.message}</p>}
                   <p className="mt-2 text-xs text-slate-500">evidence_refs: {check.evidence_refs?.length ?? 0}</p>
+                  <details className="mt-2 text-xs text-slate-600">
+                    <summary className="cursor-pointer font-bold text-slate-700">expected / actual</summary>
+                    <pre className="mt-2 max-h-48 overflow-auto whitespace-pre-wrap break-words rounded bg-white/70 p-2">
+                      {JSON.stringify({ expected: check.expected, actual: check.actual }, null, 2)}
+                    </pre>
+                  </details>
                 </div>
               ))}
+              {verification?.checks?.length ? null : <EmptyLine text="No verification checks recorded." />}
             </div>
           </SurfaceCard>
 
           <SurfaceCard>
-            <SectionTitle icon={<Clock3 className="size-4" />} title="Checkpoint" />
-            {trace.checkpoint ? (
-              <div className="mt-4 space-y-3">
-                <KeyValue label="checkpoint_status" value={trace.checkpoint.status} />
-                <KeyValue label="checkpoint_id" value={trace.checkpoint.checkpoint_id} />
-                <KeyValue label="resume_from" value={trace.checkpoint.resume_from ?? 'none'} />
-                <KeyValue label="answer_required" value={String(Boolean(trace.checkpoint.answer_required))} />
-                <KeyValue label="created_at" value={formatDate(trace.checkpoint.created_at)} />
-                <KeyValue label="consumed_at" value={formatDate(trace.checkpoint.consumed_at)} />
-                <JsonBlock title="prompt_payload" value={trace.checkpoint.prompt_payload ?? {}} />
-                <details className="rounded-lg border border-slate-100 bg-slate-50 p-3 text-xs text-slate-600">
-                  <summary className="cursor-pointer font-bold text-slate-800">state_snapshot</summary>
-                  <pre className="mt-3 max-h-80 overflow-auto whitespace-pre-wrap break-words">
-                    {JSON.stringify(trace.checkpoint.state_snapshot ?? {}, null, 2)}
-                  </pre>
-                </details>
+            <SectionTitle icon={<Activity className="size-4" />} title="Node Summaries" />
+            {nodeSummaries.length ? (
+              <div className="mt-4 space-y-2">
+                {nodeSummaries.map((node) => (
+                  <div key={node.node} className="rounded-lg bg-slate-50 px-3 py-2">
+                    <p className="break-all font-mono text-xs font-bold text-slate-900">{node.node}</p>
+                    <p className="mt-1 text-xs text-slate-500">
+                      events {node.event_count} · tools {node.tool_call_count} · prompts {node.prompt_execution_count}
+                    </p>
+                  </div>
+                ))}
               </div>
             ) : (
-              <p className="mt-4 text-sm text-slate-500">No graph checkpoint recorded for this episode.</p>
+              <EmptyLine text="No node summaries available." />
             )}
           </SurfaceCard>
 
           <SurfaceCard>
-            <SectionTitle icon={<Database className="size-4" />} title="Raw JSON" />
-            <details className="mt-4 rounded-lg border border-slate-100 bg-slate-50 p-3 text-xs text-slate-600">
-              <summary className="cursor-pointer font-bold text-slate-800">trace + verification</summary>
-              <pre className="mt-3 max-h-[520px] overflow-auto whitespace-pre-wrap break-words">
-                {JSON.stringify({ trace, verification }, null, 2)}
-              </pre>
-            </details>
+            <SectionTitle icon={<Database className="size-4" />} title="Evidence Refs" />
+            {evidenceRefs.length ? (
+              <div className="mt-4 space-y-2">
+                {evidenceRefs.map((ref, index) => (
+                  <div key={`${ref.evidence_type}:${ref.evidence_id}:${index}`} className="rounded-lg bg-slate-50 px-3 py-2">
+                    <p className="font-mono text-xs font-bold text-slate-900">{ref.evidence_type}:{ref.evidence_id}</p>
+                    <p className="mt-1 text-xs text-slate-500">{ref.reason ?? ref.used_by ?? evidenceSource(ref)}</p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <EmptyLine text="No evidence refs recorded." />
+            )}
+          </SurfaceCard>
+
+          <SurfaceCard>
+            <SectionTitle icon={<FileJson className="size-4" />} title="Debug Payload" />
+            <JsonBlock
+              title="summary"
+              value={{
+                graph_run: graphRun ? omitTrace(graphRun) : trace.graph_run ?? {},
+                verification_status: verification?.status,
+                prompt_execution_count: promptExecutions.length,
+                evidence_ref_count: evidenceRefs.length,
+              }}
+            />
           </SurfaceCard>
         </aside>
       </section>
@@ -393,12 +566,16 @@ function JsonBlock({ title, value }: { title: string; value: unknown }) {
 }
 
 function StatusPill({ status }: { status: string }) {
-  const success = status === 'success' || status === 'completed' || status === 'passed'
+  const success = ['success', 'completed', 'passed', 'valid'].includes(status)
   return (
     <span className={`inline-flex rounded-full px-2 py-1 text-xs font-bold ${success ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>
       {status}
     </span>
   )
+}
+
+function EmptyLine({ text }: { text: string }) {
+  return <p className="mt-4 rounded-lg bg-slate-50 px-3 py-3 text-sm text-slate-500">{text}</p>
 }
 
 function formatDate(value?: string | null) {
@@ -425,4 +602,32 @@ function payloadSummary(payload: Record<string, unknown>) {
 function shortHash(value?: string | null) {
   if (!value) return 'none'
   return value.length > 16 ? `${value.slice(0, 8)}...${value.slice(-6)}` : value
+}
+
+function isUuidLike(value: string) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)
+}
+
+function stringValue(value: unknown) {
+  if (value === null || value === undefined) return null
+  return typeof value === 'string' || typeof value === 'number' ? value : String(value)
+}
+
+function checkCardClass(check: VerificationCheck) {
+  if (check.passed) return 'border-emerald-100 bg-emerald-50'
+  if (check.severity === 'warning') return 'border-amber-200 bg-amber-50'
+  return 'border-rose-200 bg-rose-50'
+}
+
+function evidenceSource(ref: EvidenceRef) {
+  const source = ref.metadata?.source
+  return typeof source === 'string' ? source : 'evidence'
+}
+
+function omitTrace(graphRun: GraphRunDebug) {
+  const summary: Partial<GraphRunDebug> = { ...graphRun }
+  delete summary.trace
+  delete summary.events
+  delete summary.tool_calls
+  return summary
 }

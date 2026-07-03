@@ -92,6 +92,7 @@ http://localhost:5174，可在 Learners / Recent Episodes 中直接选择 learne
 - [12. Textbook RAG, Langfuse & Exercises](docs/architecture/12-rag-observability-exercises.md)
 - [13. Current Scope and Status](docs/architecture/13-current-scope-and-status.md)
 - [LangGraph Runtime Audit](docs/architecture/langgraph-runtime-audit.md)
+- [Verification Runtime Audit](docs/architecture/verification-runtime-audit.md)
 - [Prompt Execution Audit](docs/architecture/prompt-execution-audit.md)
 - [Prompt Execution Governance](docs/architecture/prompt-execution-governance.md)
 - [Simulation / Evaluation Audit](docs/architecture/simulation-evaluation-audit.md)
@@ -111,10 +112,10 @@ http://localhost:5174，可在 Learners / Recent Episodes 中直接选择 learne
 | ExploreCapability 推荐 | 基础版已实现，Explore Tab 入口由后端 registry 统一管理；Daily Lesson 答题后可推荐 ready 学习能力，点击/忽略事件写入 Memory 和 episode trace |
 | Frontend UI/UX 统一标准 | Issue #20 首轮整改已落地，普通学习端主导航保留 AI对话 / 探索 / 学习中心，Debug/Memory/Runtime 页面移入 Dev Console；KnowledgeBase 已升级为教材解析校对工作台 |
 | Prompt Registry / Schema-first Import / Parser Quality | 基础治理已实现；PromptExecutor 第一阶段、PromptExecutionRecord、结构化校验记录和 writing_phrase.import 迁移已落地 |
-| Agent Runtime / Harness | 第一阶段已实现，TaskSpec、AgentEpisode、LearningEvent、EvidenceRef、ToolCallRecord、VerificationReport、MasteryEngine、RecommendationEngine、LearningGraphCheckpoint 和 Dev Console 调试入口已接入；Dev Console 支持 Learners / Recent Episodes 选择上下文；Debug API 默认关闭并需 token |
+| Agent Runtime / Harness | 第二阶段补强中，TaskSpec、AgentEpisode、LearningEvent、EvidenceRef、ToolCallRecord、VerificationReport、MasteryEngine、RecommendationEngine、LearningGraphCheckpoint 和 Dev Console 调试入口已接入；VerificationReport 已升级为 evidence-based deterministic/schema/business_rule/evidence checks，critical 失败会阻止静默 completed；EpisodeTraceView 和 Dev Console Graph Runs 可查看 checkpoint、events、tool calls、prompt execution summary、verification checks 和 evidence refs；Debug API 默认关闭并需 token |
 | Learner-scoped isolation | Issue #25 第一阶段已实现，新增 current user / current learner dependency、scoped resource helper，并加固 Runtime、Daily Lesson、Memory、Explore、ExerciseAttempt 和 Debug 高风险路径 |
-| LangGraph daily lesson | 已升级为单题 checkpoint / interrupt / resume 学习闭环；graph 支持可选 checkpointer 编译，start 返回 waiting_user checkpoint/thread/schema/prompt，answer 从 `grade_attempt` 恢复并完成 grading、mastery、memory、review、recommend、verification |
-| Learner Simulation Agent | Deterministic MVP 已实现，新增 scenario contract/module_tags、impacted simulation 推导脚本、Agent Runtime 断言增强、metric_groups、baseline comparison、threshold gate、episode runtime knowledge practice、daily_lesson_checkpoint_resume、capability recommendation、缺答案不写 memory 和 mastery 上下行回归场景 |
+| LangGraph daily lesson | 已升级为单题 checkpoint / interrupt / resume 学习闭环；graph 支持可选 checkpointer 编译，start 返回 waiting_user checkpoint/thread/schema/prompt，answer 从 `grade_attempt` 恢复并完成 grading、mastery、memory、review、recommend、verification，验证报告决定 completed / completed_with_warnings / verification_failed |
+| Learner Simulation Agent | Deterministic MVP 已实现，新增 scenario contract/module_tags、impacted simulation 推导脚本、Agent Runtime 断言增强、metric_groups、baseline comparison、threshold gate、episode runtime knowledge practice、daily_lesson_checkpoint_resume、capability recommendation、verification failure blocks completed status、缺答案不写 memory 和 mastery 上下行回归场景 |
 | CET reading / writing / weekly report | 设计中 |
 | CI backend lint/test + frontend lint/test/build/build:console | 已实现 |
 

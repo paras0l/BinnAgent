@@ -181,6 +181,59 @@ BUILTIN_SCENARIOS.update(
                 "src/simulation/**",
             ],
         ),
+        "daily_lesson_verification_failure_blocks_completed_status": SimulationScenario(
+            id="daily_lesson_verification_failure_blocks_completed_status",
+            name="Daily lesson verification failure blocks completed status",
+            persona_id="grade7_low_vocab",
+            steps=[
+                SimulationStep(name="create_learner", action="create_learner"),
+                SimulationStep(name="daily_plan", action="daily_plan"),
+                SimulationStep(name="start_daily_lesson", action="start_daily_lesson"),
+                SimulationStep(
+                    name="submit_daily_lesson_answer",
+                    action="submit_daily_lesson_answer",
+                    payload={"answer": "Good morning!"},
+                    assertions=[
+                        {"type": "equals", "path": "answer.verification_status", "value": "failed"},
+                        {"type": "not_equals", "path": "answer.status", "value": "completed"},
+                    ],
+                ),
+                SimulationStep(
+                    name="fetch_episode_trace",
+                    action="fetch_episode_trace",
+                    assertions=[
+                        {"type": "not_equals", "path": "episode_trace.episode.status", "value": "completed"},
+                        {
+                            "type": "event_exists",
+                            "path": "episode_trace.events",
+                            "event_type": "verification_report_generated",
+                        },
+                        {
+                            "type": "verification_check_passed",
+                            "path": "episode_trace.verification_report.checks",
+                            "check_name": "exercise_graded",
+                        },
+                    ],
+                ),
+            ],
+            module_tags=["langgraph", "daily_lesson", "verification", "runtime"],
+            entrypoints=[
+                "/api/learners/{learner_id}/daily-lessons/start",
+                "/api/learners/{learner_id}/daily-lessons/{episode_id}/answer",
+                "/api/runtime/episodes/{episode_id}",
+            ],
+            expected_events=["exercise_graded", "verification_report_generated"],
+            expected_tool_calls=["exercise.grade", "verification.verify_episode"],
+            expected_state_changes=["verification_failed"],
+            required_metrics=["api_success_rate", "episode_count", "verification_fail_count"],
+            owner_module="verification",
+            change_triggers=[
+                "src/learning/**",
+                "src/runtime/**",
+                "src/verification/**",
+                "src/simulation/**",
+            ],
+        ),
         "daily_lesson_wrong_answer_updates_mastery_down": SimulationScenario(
             id="daily_lesson_wrong_answer_updates_mastery_down",
             name="Daily lesson wrong answer updates mastery down",
@@ -470,6 +523,22 @@ BUILTIN_SCENARIOS.update(
                         "event_type": "mastery_updated",
                     },
                     {
+                        "type": "event_exists",
+                        "path": "episode_trace.events",
+                        "event_type": "verification_report_generated",
+                    },
+                    {"type": "exists", "path": "episode_trace.verification_report"},
+                    {
+                        "type": "verification_check_passed",
+                        "path": "episode_trace.verification_report.checks",
+                        "check_name": "exercise_graded",
+                    },
+                    {
+                        "type": "verification_check_passed",
+                        "path": "episode_trace.verification_report.checks",
+                        "check_name": "mastery_updated",
+                    },
+                    {
                         "type": "tool_called",
                         "path": "episode_trace.tool_calls",
                         "tool_name": "exercise.grade",
@@ -489,8 +558,9 @@ BUILTIN_SCENARIOS.update(
                     {
                         "type": "verification_check_passed",
                         "path": "verification_report.checks",
-                        "check_name": "mastery_update_valid",
+                        "check_name": "mastery_updated",
                     },
+                    {"type": "no_unexpected_error"},
                 ],
             ),
         ],

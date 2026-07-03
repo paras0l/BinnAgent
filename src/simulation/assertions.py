@@ -41,6 +41,9 @@ class AssertionEngine:
         if kind == "equals":
             expected = assertion.get("value")
             return AssertionResult(value == expected, f"{path} expected {expected!r}, got {value!r}")
+        if kind == "not_equals":
+            expected = assertion.get("value")
+            return AssertionResult(value != expected, f"{path} should not equal {expected!r}")
         if kind == "contains":
             expected = assertion.get("value")
             passed = isinstance(value, list | str | dict) and expected in value

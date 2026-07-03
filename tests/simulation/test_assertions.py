@@ -12,6 +12,7 @@ def test_legacy_assertions_still_pass() -> None:
     assert _passed({"type": "exists", "path": "json.id"}, output)
     assert _passed({"type": "not_empty", "path": "json.items"}, output)
     assert _passed({"type": "equals", "path": "json.id", "value": "1"}, output)
+    assert _passed({"type": "not_equals", "path": "json.id", "value": "2"}, output)
     assert _passed({"type": "contains", "path": "json.items", "value": "a"}, output)
     assert _passed({"type": "gte", "path": "json.score", "value": 1}, output)
 

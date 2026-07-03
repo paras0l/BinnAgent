@@ -17,7 +17,8 @@ from src.models.prompt_execution import PromptExecutionRecord
 from src.models.runtime import AgentEpisode
 from src.models.vocabulary import VocabularyItem
 from src.providers.router import router as model_router
-from src.security.ownership import CurrentUser, get_learner_for_user
+from src.runtime.episode import EpisodeRuntime, graph_run_debug_payload
+from src.security.ownership import CurrentUser, get_episode_for_user, get_learner_for_user
 from src.simulation.fixtures import BUILTIN_SCENARIOS
 
 router = APIRouter(
@@ -244,6 +245,56 @@ async def get_prompt_execution(
     return _prompt_execution_response(record)
 
 
+@router.get("/graph-runs")
+async def list_debug_graph_runs(
+    learner_id: uuid.UUID | None = None,
+    limit: int = Query(default=20, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
+    current_user: CurrentUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db_session),
+) -> dict[str, Any]:
+    if learner_id is None:
+        raise HTTPException(status_code=400, detail="learner_id is required")
+    await get_learner_for_user(
+        db,
+        current_user.user_id,
+        learner_id,
+        allow_unclaimed_learners=current_user.allow_unclaimed_learners,
+    )
+    total_result = await db.execute(
+        select(func.count()).select_from(AgentEpisode).where(AgentEpisode.learner_id == learner_id)
+    )
+    total = int(total_result.scalar_one() or 0)
+    result = await db.execute(
+        select(AgentEpisode)
+        .where(AgentEpisode.learner_id == learner_id)
+        .order_by(AgentEpisode.started_at.desc(), AgentEpisode.created_at.desc())
+        .limit(limit)
+        .offset(offset)
+    )
+    episodes = result.scalars().all()
+    return {
+        "graph_runs": [_graph_run_summary(episode) for episode in episodes],
+        "total": total,
+        "limit": limit,
+        "offset": offset,
+    }
+
+
+@router.get("/graph-runs/{episode_id}")
+async def get_debug_graph_run(
+    episode_id: uuid.UUID,
+    learner_id: uuid.UUID | None = None,
+    current_user: CurrentUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db_session),
+) -> dict[str, Any]:
+    episode = await get_episode_for_user(db, current_user, episode_id)
+    if learner_id is not None and episode.learner_id != learner_id:
+        raise HTTPException(status_code=403, detail="Episode does not belong to learner_id")
+    trace = await EpisodeRuntime(db).get_episode_trace(episode.id)
+    return graph_run_debug_payload(trace)
+
+
 @router.get("/simulation/scenarios")
 async def list_simulation_scenarios() -> dict[str, Any]:
     return {
@@ -354,6 +405,31 @@ def _prompt_execution_response(record: PromptExecutionRecord) -> dict[str, Any]:
         "target_type": record.target_type,
         "target_id": record.target_id,
         "created_at": record.created_at,
+    }
+
+
+def _graph_run_summary(episode: AgentEpisode) -> dict[str, Any]:
+    context_snapshot = (
+        episode.context_snapshot if isinstance(episode.context_snapshot, dict) else {}
+    )
+    verification_report = (
+        episode.verification_report if isinstance(episode.verification_report, dict) else {}
+    )
+    return {
+        "episode_id": str(episode.id),
+        "learner_id": str(episode.learner_id),
+        "thread_id": context_snapshot.get("thread_id"),
+        "graph_run_id": context_snapshot.get("graph_run_id"),
+        "session_id": context_snapshot.get("session_id"),
+        "checkpoint_status": context_snapshot.get("checkpoint_status"),
+        "resume_from": context_snapshot.get("resume_from"),
+        "current_task_id": context_snapshot.get("current_task_id"),
+        "status": episode.status,
+        "source": episode.source,
+        "entrypoint": episode.entrypoint,
+        "verification_status": verification_report.get("status"),
+        "started_at": episode.started_at,
+        "completed_at": episode.completed_at,
     }
 
 

@@ -3,18 +3,10 @@ from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.evidence.types import EvidenceRef
 from src.runtime.episode import EpisodeRuntime
 from src.runtime.schemas import EpisodeTraceView
-from src.verification.checks import (
-    check_episode_completed,
-    check_event_exists,
-    check_evidence_non_empty,
-    check_score_range,
-    check_tool_call_success,
-    collect_trace_evidence,
-    value_in_score_range,
-)
+from src.verification.checks import collect_trace_evidence
+from src.verification.runner import checks_from_policy, run_required_checks, verification_status
 from src.verification.types import VerificationCheck, VerificationReport
 
 
@@ -29,27 +21,34 @@ class VerificationService:
 
 def build_verification_report(trace: EpisodeTraceView) -> VerificationReport:
     task_spec = trace.episode.task_spec or {}
-    policy = task_spec.get("verification_policy") or {}
-    required_checks = list(policy.get("required_checks") or [])
-    if not required_checks:
-        required_checks = ["episode_started", "exercise_answered", "exercise_graded"]
-    if policy.get("require_evidence", False) and "evidence_non_empty" not in required_checks:
-        required_checks.append("evidence_non_empty")
-
-    checks = [_run_check(name, trace) for name in required_checks]
+    required_checks = checks_from_policy(task_spec)
+    checks = run_required_checks(trace, required_checks)
     failed = [check for check in checks if not check.passed]
-    status = "passed" if not failed else "failed"
+    status = verification_status(checks)
+    evidence_refs = collect_trace_evidence(trace)
     return VerificationReport(
         episode_id=trace.episode.id,
         task_id=task_spec.get("task_id"),
         status=status,
+        required_checks=required_checks,
         checks=checks,
-        failed_reason="; ".join(check.message or check.name for check in failed) or None,
+        passed_count=sum(1 for check in checks if check.passed),
+        failed_count=len(failed),
+        warning_count=sum(
+            1 for check in checks if not check.passed and check.severity == "warning"
+        ),
+        critical_failed_count=sum(
+            1 for check in checks if not check.passed and check.severity == "critical"
+        ),
+        evidence_ref_count=len(evidence_refs),
+        failed_reason="; ".join(check.message for check in failed) or None,
         generated_at=datetime.now(timezone.utc),
         metadata={
             "required_checks": required_checks,
             "source": task_spec.get("source"),
             "task_type": task_spec.get("task_type"),
+            "trace_event_count": len(trace.events),
+            "tool_call_count": len(trace.tool_calls),
         },
     )
 
@@ -68,109 +67,4 @@ async def verify_knowledge_exercise_episode(
 
 
 def _run_check(name: str, trace: EpisodeTraceView) -> VerificationCheck:
-    normalized = name.strip()
-    aliases = {
-        "memory_event_written": "memory_written",
-        "grading_result_exists": "exercise_graded",
-        "exercise_attempt_created": "exercise_attempt_saved",
-        "next_action_recommended": "next_action_recommended",
-    }
-    normalized = aliases.get(normalized, normalized)
-
-    if normalized in {
-        "episode_started",
-        "task_prepared",
-        "learner_answer_received",
-        "exercise_answered",
-        "exercise_graded",
-        "memory_written",
-        "review_scheduled",
-    }:
-        return check_event_exists(trace, normalized)
-    if normalized == "exercise_attempt_saved":
-        return _check_exercise_attempt_saved(trace)
-    if normalized == "mastery_update_valid":
-        return _check_mastery_update_valid(trace)
-    if normalized == "mastery_updated":
-        return check_event_exists(trace, "mastery_updated")
-    if normalized == "next_action_recommended":
-        return _check_next_action_recommended(trace)
-    if normalized == "evidence_non_empty":
-        return check_evidence_non_empty(collect_trace_evidence(trace))
-    if normalized == "episode_completed":
-        return check_episode_completed(trace.episode)
-    if normalized.startswith("tool:"):
-        return check_tool_call_success(trace, normalized.removeprefix("tool:"))
-    return VerificationCheck(
-        name=normalized,
-        check_type="deterministic",
-        passed=False,
-        expected="known check",
-        actual=None,
-        message=f"Unsupported verification check {normalized}",
-    )
-
-
-def _check_exercise_attempt_saved(trace: EpisodeTraceView) -> VerificationCheck:
-    events = [event for event in trace.events if event.event_type == "exercise_answered"]
-    attempt_ids = [
-        event.payload.get("attempt_id")
-        for event in events
-        if event.payload and event.payload.get("attempt_id")
-    ]
-    return VerificationCheck(
-        name="exercise_attempt_saved",
-        check_type="business_rule",
-        passed=bool(attempt_ids),
-        expected="exercise_answered payload.attempt_id",
-        actual=attempt_ids,
-        evidence_refs=_event_refs(events),
-        message=None if attempt_ids else "No saved exercise attempt id found",
-    )
-
-
-def _check_mastery_update_valid(trace: EpisodeTraceView) -> VerificationCheck:
-    events = [event for event in trace.events if event.event_type == "mastery_updated"]
-    scores: list[Any] = []
-    for event in events:
-        payload = event.payload or {}
-        for field in ("new_score", "mastery_after", "score"):
-            if field in payload:
-                scores.append(payload[field])
-                break
-    passed = bool(scores) and all(value_in_score_range(score) for score in scores)
-    check = check_score_range(scores[0] if scores else None)
-    return VerificationCheck(
-        name="mastery_update_valid",
-        check_type="business_rule",
-        passed=passed,
-        expected="mastery_updated event with score in 0-1",
-        actual=scores,
-        evidence_refs=_event_refs(events),
-        message=None if passed else check.message or "Missing valid mastery update",
-    )
-
-
-def _check_next_action_recommended(trace: EpisodeTraceView) -> VerificationCheck:
-    events = [
-        event
-        for event in trace.events
-        if event.event_type in {"next_action_recommended", "explore_capability_recommended"}
-    ]
-    return VerificationCheck(
-        name="next_action_recommended",
-        check_type="business_rule",
-        passed=bool(events),
-        expected="next_action_recommended or explore_capability_recommended event",
-        actual=[event.event_type for event in events],
-        evidence_refs=_event_refs(events),
-        message=None if events else "No next action recommendation event found",
-    )
-
-
-def _event_refs(events) -> list[EvidenceRef]:
-    refs: list[EvidenceRef] = []
-    for event in events:
-        raw_refs = (event.payload or {}).get("evidence_refs") or []
-        refs.extend(EvidenceRef(**item) for item in raw_refs if isinstance(item, dict))
-    return refs
+    return run_required_checks(trace, [name])[0]

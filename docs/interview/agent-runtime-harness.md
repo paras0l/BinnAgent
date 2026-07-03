@@ -87,7 +87,8 @@ checkpoint 保存：
 2. 如果需要作答，写入 `LearningGraphCheckpoint`，episode 状态变为 `waiting_user`，并记录 `task_prepared` / `graph_interrupted`。
 3. `/daily-lessons/{episode_id}/answer` 校验 active checkpoint，注入 `learner_answer`，以 dry-run resume graph 产出 graph-level 闭环状态，并记录 `graph_resumed` / `learner_answer_received`。
 4. 复用现有知识练习评分、掌握度、Memory、Review 和 Verification 能力，新增 `exercise_attempt_created` / `next_action_recommended` runtime events。
-5. checkpoint 标记为 `completed`，episode 标记为 `completed`，Trace 中可看到 `episode_completed`。
+5. VerificationReport 生成后记录 `verification_report_generated`，并根据 `passed` / `warning` / `failed` 决定 episode 最终状态。
+6. checkpoint 标记为 `completed`，Trace 中可看到 `episode_completed` 和 verification 检查结果。
 
 当前边界：第一阶段只支持单题单 active `waiting_user` checkpoint；同一 episode 通过 partial unique index 保证只有一个 active checkpoint。LangGraph `InMemorySaver` 已可用于测试/本地实验，生产 PostgresSaver 和官方 `interrupt()/Command(resume=...)` 深度集成仍是后续任务。
 
@@ -102,7 +103,7 @@ checkpoint 保存：
 | MasteryUpdateResult | 掌握度更新结果，包含 previous/new score、confidence、weakness_tags、forgetting_risk 和 next_review_at |
 | RecommendationPlan | 每日学习计划，按规则综合低掌握度、到期复习、教材进度和偏好，输出 TaskSpec 列表 |
 | ToolCallRecord | 工具调用审计记录，包含 tool_name、status、latency、input_hash、output_hash 和 error |
-| VerificationReport | 可验证完成报告，列出每个 check 的 passed/failed、actual/expected 和 evidence_refs |
+| VerificationReport | 可验证完成报告，列出每个 check 的 passed/failed、severity、actual/expected 和 evidence_refs；它是 deterministic / schema / business_rule / evidence checks，不是 LLM judge |
 | LearningGraphCheckpoint | Daily Lesson 暂停状态，保存 graph state snapshot、题面 payload、resume_from 和 consumed_at |
 
 ## 六、面试讲法
@@ -125,7 +126,7 @@ checkpoint 保存：
 - Daily Lesson start / answer 支持 checkpoint / interrupt / resume，等待用户作答时 episode 进入 `waiting_user`，答案提交后闭合 grade/mastery/memory/review/recommend/verify。
 - ExploreCapability start API 和前端入口接入 TaskSpec。
 - Learner App / Dev Console 双入口：学习端只暴露学习功能，调试端承载 Memory、Episode、Tool、Evidence、RAG、Prompt、Verification 和 Simulation 面板。
-- Episode Debug、Tool Registry、Tool Call Records、RAG Debug、Simulation Report 等 Dev Console 页面。
+- Episode Debug / Graph Runs、Tool Registry、Tool Call Records、RAG Debug、Prompt Debug、VerificationReport、Simulation Report 等 Dev Console 页面。
 - Simulation scenario 覆盖 episode runtime 知识点练习链路。
 
 本地运行入口：
@@ -153,7 +154,9 @@ Dev Console 使用流程：
 3. 打开 http://localhost:5174 并输入 token：`dev`
 4. 在 Learners 页面搜索或选择 learner，顶部 ContextBar 会同步 learner_id。
 5. 在 Recent Episodes 页面查看该 learner 最近的 AgentEpisode。
-6. 点击“打开 Trace”进入现有 Episode Debug，查看 TaskSpec / Timeline / Tool Calls / VerificationReport / Raw JSON。
+6. 点击“打开 Trace”进入 Graph Run Debug，查看 Episode、checkpoint、events、tool calls、prompt execution summary、VerificationReport 和 evidence refs。
+
+Graph Run Debug 不展示 raw prompt / raw output；原始 LLM trace 交给 Langfuse。
 
 第一阶段 runtime 接入：
 
@@ -167,7 +170,7 @@ Dev Console 使用流程：
 - 引入统一 current-learner 依赖，补齐多用户权限隔离。
 - 扩展 ToolRegistry wrapper，让 RAG / Memory / Mastery / Review 全部通过统一 executor 调用。
 - 增加在线 eval、golden dataset、Langfuse dashboard 和更多 simulation persona。
-- 把前端 Episode Debug 接入证据解析详情和可回放视图。
+- 把前端 Graph Run Debug 接入证据解析详情和更完整的节点级回放。
 
 ## 八、验收标准
 
