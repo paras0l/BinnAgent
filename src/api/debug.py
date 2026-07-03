@@ -13,6 +13,7 @@ from src.knowledge.rag import retrieve_chunks
 from src.models.knowledge import ExerciseAttempt
 from src.models.learner import Learner, LearnerProfile
 from src.models.memory import LearningMemoryEvent
+from src.models.prompt_execution import PromptExecutionRecord
 from src.models.runtime import AgentEpisode
 from src.models.vocabulary import VocabularyItem
 from src.providers.router import router as model_router
@@ -185,6 +186,64 @@ async def search_rag_chunks(
     }
 
 
+@router.get("/prompts/executions")
+async def list_prompt_executions(
+    prompt_id: str | None = Query(default=None, max_length=160),
+    learner_id: uuid.UUID | None = None,
+    episode_id: uuid.UUID | None = None,
+    source_module: str | None = Query(default=None, max_length=120),
+    decision: str | None = Query(default=None, max_length=30),
+    schema_validation_status: str | None = Query(default=None, max_length=30),
+    repair_used: bool | None = None,
+    fallback_used: bool | None = None,
+    limit: int = Query(default=50, ge=1, le=200),
+    offset: int = Query(default=0, ge=0),
+    db: AsyncSession = Depends(get_db_session),
+) -> dict[str, Any]:
+    filters = _prompt_execution_filters(
+        prompt_id=prompt_id,
+        learner_id=learner_id,
+        episode_id=episode_id,
+        source_module=source_module,
+        decision=decision,
+        schema_validation_status=schema_validation_status,
+        repair_used=repair_used,
+        fallback_used=fallback_used,
+    )
+    total_result = await db.execute(
+        select(func.count()).select_from(PromptExecutionRecord).where(*filters)
+    )
+    total = int(total_result.scalar_one() or 0)
+    result = await db.execute(
+        select(PromptExecutionRecord)
+        .where(*filters)
+        .order_by(PromptExecutionRecord.created_at.desc())
+        .limit(limit)
+        .offset(offset)
+    )
+    records = result.scalars().all()
+    return {
+        "executions": [_prompt_execution_response(record) for record in records],
+        "total": total,
+        "limit": limit,
+        "offset": offset,
+    }
+
+
+@router.get("/prompts/executions/{execution_id}")
+async def get_prompt_execution(
+    execution_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db_session),
+) -> dict[str, Any]:
+    result = await db.execute(
+        select(PromptExecutionRecord).where(PromptExecutionRecord.id == execution_id)
+    )
+    record = result.scalar_one_or_none()
+    if record is None:
+        raise HTTPException(status_code=404, detail="Prompt execution record not found")
+    return _prompt_execution_response(record)
+
+
 @router.get("/simulation/scenarios")
 async def list_simulation_scenarios() -> dict[str, Any]:
     return {
@@ -235,6 +294,66 @@ def _debug_learner_summary(
             "exercise_attempt_count": int(exercise_attempt_count or 0),
             "vocabulary_count": int(vocabulary_count or 0),
         },
+    }
+
+
+def _prompt_execution_filters(
+    *,
+    prompt_id: str | None,
+    learner_id: uuid.UUID | None,
+    episode_id: uuid.UUID | None,
+    source_module: str | None,
+    decision: str | None,
+    schema_validation_status: str | None,
+    repair_used: bool | None,
+    fallback_used: bool | None,
+) -> list[Any]:
+    filters: list[Any] = []
+    if prompt_id:
+        filters.append(PromptExecutionRecord.prompt_id == prompt_id)
+    if learner_id is not None:
+        filters.append(PromptExecutionRecord.learner_id == learner_id)
+    if episode_id is not None:
+        filters.append(PromptExecutionRecord.episode_id == episode_id)
+    if source_module:
+        filters.append(PromptExecutionRecord.source_module == source_module)
+    if decision:
+        filters.append(PromptExecutionRecord.decision == decision)
+    if schema_validation_status:
+        filters.append(PromptExecutionRecord.schema_validation_status == schema_validation_status)
+    if repair_used is not None:
+        filters.append(PromptExecutionRecord.repair_used.is_(repair_used))
+    if fallback_used is not None:
+        filters.append(PromptExecutionRecord.fallback_used.is_(fallback_used))
+    return filters
+
+
+def _prompt_execution_response(record: PromptExecutionRecord) -> dict[str, Any]:
+    return {
+        "id": str(record.id),
+        "learner_id": str(record.learner_id) if record.learner_id else None,
+        "episode_id": str(record.episode_id) if record.episode_id else None,
+        "task_id": record.task_id,
+        "source_module": record.source_module,
+        "prompt_id": record.prompt_id,
+        "prompt_version": record.prompt_version,
+        "prompt_hash": record.prompt_hash,
+        "input_hash": record.input_hash,
+        "input_schema": record.input_schema,
+        "output_schema": record.output_schema,
+        "model_policy_snapshot": record.model_policy_snapshot or {},
+        "langfuse_trace_id": record.langfuse_trace_id,
+        "langfuse_observation_id": record.langfuse_observation_id,
+        "schema_validation_status": record.schema_validation_status,
+        "schema_error_summary": record.schema_error_summary,
+        "repair_used": record.repair_used,
+        "fallback_used": record.fallback_used,
+        "parse_mode": record.parse_mode,
+        "confidence": record.confidence,
+        "decision": record.decision,
+        "target_type": record.target_type,
+        "target_id": record.target_id,
+        "created_at": record.created_at,
     }
 
 

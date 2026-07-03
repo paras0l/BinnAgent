@@ -73,6 +73,7 @@ class ScenarioRunner:
             agent_triggers=self.agent_triggers,
             memory_writes=self.memory_writes,
             runtime_metrics=self.runtime_metrics,
+            scenario_contract=scenario.contract_dict(),
         )
 
     async def _run_step(

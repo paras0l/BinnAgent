@@ -166,7 +166,12 @@ async def test_episode_runtime_simulation_reports_runtime_metrics():
                             "tool_name": "exercise.grade",
                             "status": "success",
                             "latency_ms": 12,
-                        }
+                        },
+                        {
+                            "tool_name": "mastery.update",
+                            "status": "success",
+                            "latency_ms": 10,
+                        },
                     ],
                     "checkpoint": {
                         "checkpoint_id": checkpoint_id,
@@ -192,7 +197,17 @@ async def test_episode_runtime_simulation_reports_runtime_metrics():
                     "episode_id": episode_id,
                     "task_id": task_spec["task_id"],
                     "status": "passed",
-                    "checks": [],
+                    "checks": [
+                        {
+                            "name": "mastery_update_valid",
+                            "check_type": "business_rule",
+                            "passed": True,
+                            "expected": "mastery_updated event with score in 0-1",
+                            "actual": [0.4],
+                            "evidence_refs": [],
+                            "message": None,
+                        }
+                    ],
                     "failed_reason": None,
                     "generated_at": datetime.now(timezone.utc).isoformat(),
                     "metadata": {},
@@ -211,7 +226,7 @@ async def test_episode_runtime_simulation_reports_runtime_metrics():
     assert report.runtime_metrics["episode_count"] == 1
     assert report.runtime_metrics["completed_episode_count"] == 1
     assert report.runtime_metrics["verification_pass_count"] == 1
-    assert report.to_dict()["runtime_metrics"]["avg_tool_latency_ms"] == 12
+    assert report.to_dict()["runtime_metrics"]["avg_tool_latency_ms"] == 11
 
 
 @pytest.mark.asyncio

@@ -24,6 +24,7 @@ from src.models.memory import (
     TeachingStrategyMemory,
     WritingPhraseMastery,
 )
+from src.models.prompt_execution import PromptExecutionRecord
 from src.models.reading import ReadingMaterialHistory
 from src.models.runtime import (
     AgentEvent,
@@ -84,6 +85,7 @@ __all__ = [
     "MemoryContextLog",
     "MemoryOperation",
     "ModelCallLog",
+    "PromptExecutionRecord",
     "ReadingMaterialHistory",
     "ReviewSchedule",
     "TimestampMixin",

@@ -9,7 +9,11 @@ from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.api.deps import get_db_session
-from src.extraction import extract_writing_phrase_candidates
+from src.extraction import (
+    writing_phrase_regex_fallback_payload,
+    writing_phrase_result_from_payload,
+    writing_phrase_result_from_regex_fallback,
+)
 from src.memory.curator import MemoryCurator
 from src.memory.explainer import MemoryExplainer
 from src.memory.retriever import MemoryRetriever
@@ -21,6 +25,7 @@ from src.models.writing_phrase import (
     WritingPhraseAttempt,
     WritingPhraseExercise,
 )
+from src.prompts import PromptExecutionContext, PromptExecutor
 
 router = APIRouter(
     prefix="/api/learners/{learner_id}/writing-phrases",
@@ -311,8 +316,7 @@ def _infer_tags(block: str, topic: str | None) -> list[str]:
     return cleaned[:6]
 
 
-def _parse_candidates(raw_text: str, topic: str | None) -> ImportWritingPhrasesResponse:
-    result = extract_writing_phrase_candidates(raw_text, topic)
+def _import_response_from_result(result) -> ImportWritingPhrasesResponse:
     return ImportWritingPhrasesResponse(
         candidates=[
             WritingPhraseCandidate(
@@ -336,6 +340,43 @@ def _parse_candidates(raw_text: str, topic: str | None) -> ImportWritingPhrasesR
         repair_used=result.repair_used,
         confidence=result.confidence,
     )
+
+
+async def _parse_candidates(
+    raw_text: str,
+    topic: str | None,
+    *,
+    learner_id: uuid.UUID,
+    source: str,
+    import_mode: str,
+    db: AsyncSession,
+) -> ImportWritingPhrasesResponse:
+    executor_result = await PromptExecutor(db=db).execute_with_raw_output(
+        prompt_id="writing_phrase.import",
+        version="v1",
+        variables={"topic": topic or "", "task_type": import_mode},
+        raw_output=raw_text,
+        context=PromptExecutionContext(
+            learner_id=learner_id,
+            source_module="writing_phrase.import",
+            task_id="writing_phrase_import",
+            target_type="writing_phrase",
+            metadata={"source": source},
+        ),
+        fallback_parser=lambda value: writing_phrase_regex_fallback_payload(value, topic),
+    )
+    if executor_result.fallback_used:
+        result = writing_phrase_result_from_regex_fallback(raw_text, topic)
+    elif executor_result.validated_output is not None:
+        result = writing_phrase_result_from_payload(
+            executor_result.validated_output,
+            topic,
+            parse_mode=executor_result.parse_mode,
+            repair_used=executor_result.repair_used,
+        )
+    else:
+        result = writing_phrase_result_from_regex_fallback(raw_text, topic)
+    return _import_response_from_result(result)
 
 
 def _blank_answer(text: str) -> str:
@@ -502,7 +543,14 @@ async def import_writing_phrases(
     db: AsyncSession = Depends(get_db_session),
 ) -> ImportWritingPhrasesResponse:
     await _ensure_learner(db, learner_id)
-    return _parse_candidates(body.raw_text, body.topic)
+    return await _parse_candidates(
+        body.raw_text,
+        body.topic,
+        learner_id=learner_id,
+        source=body.source,
+        import_mode=body.import_mode,
+        db=db,
+    )
 
 
 @router.get("/{phrase_id}", response_model=WritingPhraseResponse)

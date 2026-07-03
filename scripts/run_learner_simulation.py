@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import argparse
 import asyncio
+from dataclasses import replace
 import json
 from pathlib import Path
 import sys
@@ -25,12 +26,7 @@ async def _main() -> int:
     persona = BUILTIN_PERSONAS[args.persona]
     scenario = BUILTIN_SCENARIOS[args.scenario]
     if scenario.persona_id != persona.id:
-        scenario = type(scenario)(
-            id=scenario.id,
-            name=scenario.name,
-            persona_id=persona.id,
-            steps=scenario.steps,
-        )
+        scenario = replace(scenario, persona_id=persona.id)
 
     transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
@@ -38,6 +34,7 @@ async def _main() -> int:
 
     report_data = report.to_dict()
     _write_report(report_data)
+    _print_scenario_contract(scenario)
     print(json.dumps(report_data, ensure_ascii=False, indent=2))
     return 0 if report.status == "passed" else 1
 
@@ -49,6 +46,14 @@ def _write_report(report_data: dict) -> None:
     content = json.dumps(report_data, ensure_ascii=False, indent=2)
     (reports_dir / f"{report_data['run_id']}.json").write_text(content, encoding="utf-8")
     (report_root / "latest_report.json").write_text(content, encoding="utf-8")
+
+
+def _print_scenario_contract(scenario) -> None:
+    print(f"scenario: {scenario.id}", file=sys.stderr)
+    print(f"module_tags: {', '.join(scenario.module_tags) or '-'}", file=sys.stderr)
+    print(f"required_metrics: {', '.join(scenario.required_metrics) or '-'}", file=sys.stderr)
+    print(f"expected_events: {', '.join(scenario.expected_events) or '-'}", file=sys.stderr)
+    print(f"expected_tool_calls: {', '.join(scenario.expected_tool_calls) or '-'}", file=sys.stderr)
 
 
 if __name__ == "__main__":

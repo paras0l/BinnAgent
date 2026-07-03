@@ -13,6 +13,7 @@ class SimulationEvaluator:
         agent_triggers: int,
         memory_writes: int,
         runtime_metrics: dict[str, float | int] | None = None,
+        scenario_contract: dict | None = None,
     ) -> SimulationReport:
         failures = [failure for step in steps for failure in step.failures]
         assertion_total = sum(1 for step in steps for _ in step.failures) + len(
@@ -31,5 +32,6 @@ class SimulationEvaluator:
                 "assertion_pass_rate": assertion_passes / assertion_total if assertion_total else 1.0,
             },
             runtime_metrics=runtime_metrics or {},
+            scenario_contract=scenario_contract,
             failures=failures,
         )

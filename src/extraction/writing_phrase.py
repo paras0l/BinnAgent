@@ -1,7 +1,9 @@
-import json
 import re
 from dataclasses import dataclass, field
 from typing import Any
+
+from src.extraction.schemas import WRITING_PHRASE_IMPORT_SCHEMA
+from src.prompts.validation import maybe_validate_json_text
 
 
 @dataclass(frozen=True)
@@ -30,17 +32,58 @@ class WritingPhraseExtractionResult:
 
 
 def extract_writing_phrase_candidates(raw_text: str, topic: str | None = None) -> WritingPhraseExtractionResult:
-    json_payload, repair_used = _extract_json_object(raw_text)
-    if isinstance(json_payload, dict):
-        candidates = _candidates_from_json(json_payload, topic)
-        if candidates:
-            confidence = min(candidate.confidence for candidate in candidates)
-            return WritingPhraseExtractionResult(
-                candidates=candidates[:20],
-                parse_mode="json_schema",
-                repair_used=repair_used,
-                confidence=confidence,
-            )
+    validation = maybe_validate_json_text(raw_text, WRITING_PHRASE_IMPORT_SCHEMA)
+    if validation.valid and validation.payload is not None:
+        result = writing_phrase_result_from_payload(
+            validation.payload,
+            topic,
+            parse_mode=validation.parse_mode,
+            repair_used=validation.repair_used,
+        )
+        if result.candidates:
+            return result
+    return writing_phrase_result_from_regex_fallback(raw_text, topic)
+
+
+def writing_phrase_result_from_payload(
+    payload: dict[str, Any],
+    topic: str | None = None,
+    *,
+    parse_mode: str = "json_schema",
+    repair_used: bool = False,
+    warnings: list[str] | None = None,
+) -> WritingPhraseExtractionResult:
+    candidates = _candidates_from_json(payload, topic, parse_mode=parse_mode)
+    if candidates:
+        confidence = min(candidate.confidence for candidate in candidates)
+        return WritingPhraseExtractionResult(
+            candidates=candidates[:20],
+            parse_mode=parse_mode,
+            warnings=warnings or [],
+            repair_used=repair_used,
+            confidence=confidence,
+        )
+    return WritingPhraseExtractionResult(
+        candidates=[],
+        parse_mode=parse_mode,
+        warnings=warnings or [],
+        repair_used=repair_used,
+        confidence=0,
+    )
+
+
+def writing_phrase_regex_fallback_payload(
+    raw_text: str,
+    topic: str | None = None,
+) -> dict[str, Any]:
+    fallback = _parse_regex_candidates(raw_text, topic)
+    return {"candidates": [_candidate_to_payload(candidate) for candidate in fallback[:20]]}
+
+
+def writing_phrase_result_from_regex_fallback(
+    raw_text: str,
+    topic: str | None = None,
+) -> WritingPhraseExtractionResult:
     fallback = _parse_regex_candidates(raw_text, topic)
     warnings = ["未识别到合法 JSON，已使用正则 fallback；请人工确认字段。"]
     return WritingPhraseExtractionResult(
@@ -51,32 +94,12 @@ def extract_writing_phrase_candidates(raw_text: str, topic: str | None = None) -
     )
 
 
-def _extract_json_object(raw_text: str) -> tuple[dict[str, Any] | None, bool]:
-    text = raw_text.strip()
-    fenced = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", text, flags=re.S | re.I)
-    if fenced:
-        text = fenced.group(1)
-    for candidate, repaired in ((text, False), (_slice_json_object(text), True)):
-        if not candidate:
-            continue
-        try:
-            parsed = json.loads(candidate)
-        except json.JSONDecodeError:
-            continue
-        if isinstance(parsed, dict):
-            return parsed, repaired
-    return None, False
-
-
-def _slice_json_object(text: str) -> str | None:
-    start = text.find("{")
-    end = text.rfind("}")
-    if start < 0 or end <= start:
-        return None
-    return text[start : end + 1]
-
-
-def _candidates_from_json(payload: dict[str, Any], topic: str | None) -> list[WritingPhraseExtractionCandidate]:
+def _candidates_from_json(
+    payload: dict[str, Any],
+    topic: str | None,
+    *,
+    parse_mode: str,
+) -> list[WritingPhraseExtractionCandidate]:
     raw_candidates = payload.get("candidates")
     if not isinstance(raw_candidates, list):
         return []
@@ -108,11 +131,26 @@ def _candidates_from_json(payload: dict[str, Any], topic: str | None) -> list[Wr
                 mistakes=_clean_list(raw.get("mistakes")),
                 quality_score=quality_score,
                 warnings=warnings,
-                parse_mode="json_schema",
+                parse_mode=parse_mode,
                 confidence=quality_score,
             )
         )
     return candidates
+
+
+def _candidate_to_payload(candidate: WritingPhraseExtractionCandidate) -> dict[str, Any]:
+    return {
+        "text": candidate.text,
+        "chinese_meaning": candidate.chinese_meaning,
+        "usage_scene": candidate.usage_scene,
+        "usage_position": candidate.usage_position,
+        "tags": candidate.tags,
+        "examples": candidate.examples,
+        "usage_notes": candidate.usage_notes,
+        "mistakes": candidate.mistakes,
+        "quality_score": candidate.quality_score,
+        "warnings": candidate.warnings,
+    }
 
 
 def _field(block: str, names: tuple[str, ...]) -> str | None:

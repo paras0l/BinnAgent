@@ -164,3 +164,19 @@ def test_learning_graph_checkpoint_migration_adds_waiting_checkpoint_table() -> 
     assert "prompt_payload" in migration
     assert "uq_learning_graph_checkpoints_active_waiting_episode" in migration
     assert "status = 'waiting_user'" in migration
+
+
+def test_prompt_execution_records_migration_stores_business_indexes_only() -> None:
+    migration = Path(
+        "alembic/versions/1a2b3c4d5e6f_add_prompt_execution_records.py"
+    ).read_text()
+
+    assert "prompt_execution_records" in migration
+    assert "langfuse_trace_id" in migration
+    assert "schema_validation_status" in migration
+    assert "model_policy_snapshot" in migration
+    assert "raw_prompt" not in migration
+    assert "raw_output" not in migration
+    assert "token" not in migration
+    assert "cost" not in migration
+    assert "latency" not in migration
