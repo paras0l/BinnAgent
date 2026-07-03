@@ -59,6 +59,13 @@ def _metadata(blueprint: ExerciseBlueprint, *, rubric: dict) -> dict:
             "page_number": point.source_page,
             "evidence": point.summary,
         },
+        "source_type": "generated",
+        "generated_from": {
+            "source_id": str(point.source_id),
+            "curriculum_node_id": str(point.curriculum_node_id),
+            "knowledge_point_id": str(point.id),
+            "parser_run_id": (point.content or {}).get("parser_run_id"),
+        },
         "estimated_seconds": blueprint.estimated_seconds,
     }
 

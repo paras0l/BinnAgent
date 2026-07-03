@@ -1,7 +1,9 @@
 import asyncio
+import hashlib
 import re
 import uuid
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from pathlib import Path
 
 from pypdf import PdfReader
@@ -10,8 +12,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.knowledge.parser_profiles import profile_for_source
 from src.knowledge.parser_report import build_parser_report
-from src.knowledge.rag import build_chunks
-from src.models.knowledge import CurriculumNode, KnowledgeChunk, KnowledgePoint, KnowledgeSource
+from src.knowledge.quality import quality_summary, score_textbook_quality
+from src.knowledge.rag import build_chunks, split_text
+from src.models.knowledge import (
+    CurriculumNode,
+    KnowledgeChunk,
+    KnowledgePoint,
+    KnowledgeSource,
+    ParserRun,
+)
 from src.providers.router import router as model_router
 
 UNIT_PATTERN = re.compile(r"(?im)^\s*((?:Starter\s+)?Unit\s+\d+)\s*$\s*^\s*([^\n]{3,80})\s*$")
@@ -794,154 +803,254 @@ async def process_uploaded_textbook(db: AsyncSession, source: KnowledgeSource) -
         if local_path.exists():
             path = local_path
     manifest, parser_profile = profile_for_source(source.filename)
-    parsed = await asyncio.to_thread(_parse_pdf, path)
-    reader = PdfReader(path)
-    vocabulary_entries = await asyncio.to_thread(lambda: _parse_unit_vocabulary(reader))
-    is_grade7_upper = "七年级上册" in source.filename
-    is_grade7_lower = "七年级下册" in source.filename
-    if not vocabulary_entries and is_grade7_lower:
-        vocabulary_entries = _known_lower_vocabulary_entries()
-    notes = (
-        await asyncio.to_thread(lambda: _parse_notes_on_the_text(reader)) if is_grade7_upper else ()
+    parser_run = ParserRun(
+        source_id=source.id,
+        parser_id="pypdf+manifest-profile",
+        parser_version="v1",
+        parser_profile_id=parser_profile.id if parser_profile else None,
+        book_manifest_id=manifest.id if manifest else None,
+        pdf_sha256=source.sha256,
+        input_hash=_file_sha256(path) if path.exists() else source.sha256,
+        status="running",
+        started_at=datetime.now(timezone.utc),
+        artifact_refs={},
     )
-    pronunciation = (
-        await asyncio.to_thread(lambda: _parse_pronunciation(reader)) if is_grade7_upper else ()
-    )
-    page_texts = [page.extract_text() or "" for page in reader.pages]
-    used_toc_fallback = False
-    if not parsed.units and is_grade7_lower:
-        parsed = ParsedTextbook(
-            page_count=parsed.page_count,
-            units=PEP_GRADE7_LOWER_UNITS,
-            text_char_count=parsed.text_char_count,
-        )
-        used_toc_fallback = True
-    if not parsed.units and manifest and manifest.unit_titles:
-        parsed = ParsedTextbook(
-            page_count=parsed.page_count,
-            units=tuple(
-                ParsedUnit(title=title, subtitle="", page_number=index)
-                for index, title in enumerate(manifest.unit_titles, start=1)
-            ),
-            text_char_count=parsed.text_char_count,
-        )
-        used_toc_fallback = True
-    if not parsed.units:
-        parsed = ParsedTextbook(
-            page_count=parsed.page_count,
-            units=(ParsedUnit(title="全册材料", subtitle=source.title, page_number=1),),
-            text_char_count=parsed.text_char_count,
-        )
-        used_toc_fallback = True
-
-    await db.execute(delete(KnowledgePoint).where(KnowledgePoint.source_id == source.id))
-    await db.execute(delete(KnowledgeChunk).where(KnowledgeChunk.source_id == source.id))
-    await db.execute(delete(CurriculumNode).where(CurriculumNode.source_id == source.id))
-
-    nodes: list[CurriculumNode] = []
-    for ordinal, unit in enumerate(parsed.units, start=1):
-        node = CurriculumNode(
-            source_id=source.id,
-            node_type="unit",
-            title=unit.title,
-            subtitle=unit.subtitle,
-            ordinal=ordinal,
-            start_page=str(unit.page_number),
-            end_page=str(unit.page_number),
-            estimated_minutes=20,
-            learning_objectives=[],
-        )
-        db.add(node)
-        nodes.append(node)
+    db.add(parser_run)
     await db.flush()
-
-    knowledge_points: list[KnowledgePoint] = []
-    for node in nodes:
-        knowledge_points.extend(_known_knowledge(source.id, node.id, node.title))
-    nodes_by_title = {_normalize_unit_title(node.title): node for node in nodes}
-    if is_grade7_upper:
-        knowledge_points.extend(
-            _appendix_knowledge(source.id, nodes_by_title, notes, pronunciation)
-        )
-    seen_vocabulary_keys: set[tuple[uuid.UUID, str]] = set()
-    for entry in vocabulary_entries:
-        node = nodes_by_title.get(entry.unit_title)
-        if node is None:
-            continue
-        duplicate_key = (node.id, entry.canonical_expression)
-        if duplicate_key in seen_vocabulary_keys:
-            continue
-        seen_vocabulary_keys.add(duplicate_key)
-        slug = re.sub(r"[^a-z0-9]+", "-", entry.canonical_expression).strip("-")
-        knowledge_points.append(
-            KnowledgePoint(
-                source_id=source.id,
-                curriculum_node_id=node.id,
-                canonical_key=f"vocabulary.{slug}.{str(source.id)[:8]}.{node.ordinal}",
-                type="vocabulary",
-                title=entry.expression,
-                summary=f"{entry.unit_title} 单元词表第 {entry.unit_order} 个词条。",
-                source_page="Words and Expressions",
-                difficulty=0.2,
-                status="draft",
-                content={
-                    "origin": "unit_wordlist_sequence_parser",
-                    "role": "unit_wordlist",
-                    "grade": source.grade,
-                    "lemma": entry.canonical_expression,
-                    "unit_order": entry.unit_order,
-                    "raw_line": entry.raw_line,
-                    "confidence": entry.confidence,
-                    "warnings": list(entry.warnings),
-                    "requires_review": entry.confidence < 0.75 or bool(entry.warnings),
-                    "dictionary_status": "pending",
-                },
-            )
-        )
-    for point in knowledge_points:
-        db.add(point)
-    chunk_count = await build_chunks(db, source, page_texts, nodes, model_router)
-    rag_metadata = source.metadata_ or {}
-    parser_report = build_parser_report(
-        profile=parser_profile,
-        unit_count=len(nodes),
-        vocabulary_entries=vocabulary_entries,
-        page_texts=page_texts,
-    )
-
-    source.page_count = parsed.page_count
-    source.unit_count = len(nodes)
-    source.knowledge_count = len(knowledge_points)
-    source.status = (
-        "index_failed"
-        if rag_metadata.get("rag_index_status") == "index_failed"
-        else "partial_indexed"
-        if rag_metadata.get("rag_index_status") == "partial_indexed"
-        else "review_required"
-    )
+    parser_run_id = str(parser_run.id)
     source.metadata_ = {
-        **rag_metadata,
-        "stage": "validated",
-        "text_char_count": parsed.text_char_count,
-        "book_manifest_id": manifest.id if manifest else None,
-        "parser_profile": parser_profile.id if parser_profile else None,
-        "parser": "pypdf+manifest-profile-v1",
-        "vocabulary_parser": "unit-sequence-with-evidence-v1",
-        "dictionary_enrichment": "free_dictionary_api+mymemory",
-        "vocabulary_entry_count": len(vocabulary_entries),
-        "low_confidence_vocabulary_count": parser_report.low_confidence_entries,
-        "notes_section_count": len(notes),
-        "pronunciation_section_count": len(pronunciation),
-        "grammar_reference_count": len(GRADE7_UPPER_GRAMMAR_TOPICS) if is_grade7_upper else 0,
-        "rag_chunk_count": chunk_count,
-        "toc_fallback": used_toc_fallback,
-        "parser_report": parser_report.to_dict(),
-        "warning": "; ".join(parser_report.warnings) if parser_report.warnings else None,
+        **(source.metadata_ or {}),
+        "latest_parser_run_id": parser_run_id,
+        "parser_status": "running",
     }
-    await db.flush()
-    return parsed
+
+    try:
+        parsed = await asyncio.to_thread(_parse_pdf, path)
+        reader = PdfReader(path)
+        vocabulary_entries = await asyncio.to_thread(lambda: _parse_unit_vocabulary(reader))
+        is_grade7_upper = "七年级上册" in source.filename
+        is_grade7_lower = "七年级下册" in source.filename
+        if not vocabulary_entries and is_grade7_lower:
+            vocabulary_entries = _known_lower_vocabulary_entries()
+        notes = (
+            await asyncio.to_thread(lambda: _parse_notes_on_the_text(reader)) if is_grade7_upper else ()
+        )
+        pronunciation = (
+            await asyncio.to_thread(lambda: _parse_pronunciation(reader)) if is_grade7_upper else ()
+        )
+        page_texts = [page.extract_text() or "" for page in reader.pages]
+        used_toc_fallback = False
+        if not parsed.units and is_grade7_lower:
+            parsed = ParsedTextbook(
+                page_count=parsed.page_count,
+                units=PEP_GRADE7_LOWER_UNITS,
+                text_char_count=parsed.text_char_count,
+            )
+            used_toc_fallback = True
+        if not parsed.units and manifest and manifest.unit_titles:
+            parsed = ParsedTextbook(
+                page_count=parsed.page_count,
+                units=tuple(
+                    ParsedUnit(title=title, subtitle="", page_number=index)
+                    for index, title in enumerate(manifest.unit_titles, start=1)
+                ),
+                text_char_count=parsed.text_char_count,
+            )
+            used_toc_fallback = True
+        if not parsed.units:
+            parsed = ParsedTextbook(
+                page_count=parsed.page_count,
+                units=(ParsedUnit(title="全册材料", subtitle=source.title, page_number=1),),
+                text_char_count=parsed.text_char_count,
+            )
+            used_toc_fallback = True
+
+        await db.execute(delete(KnowledgePoint).where(KnowledgePoint.source_id == source.id))
+        await db.execute(delete(KnowledgeChunk).where(KnowledgeChunk.source_id == source.id))
+        await db.execute(delete(CurriculumNode).where(CurriculumNode.source_id == source.id))
+
+        nodes: list[CurriculumNode] = []
+        for ordinal, unit in enumerate(parsed.units, start=1):
+            node = CurriculumNode(
+                source_id=source.id,
+                node_type="unit",
+                title=unit.title,
+                subtitle=unit.subtitle,
+                ordinal=ordinal,
+                start_page=str(unit.page_number),
+                end_page=str(unit.page_number),
+                estimated_minutes=20,
+                learning_objectives=[],
+            )
+            db.add(node)
+            nodes.append(node)
+        await db.flush()
+
+        knowledge_points: list[KnowledgePoint] = []
+        for node in nodes:
+            knowledge_points.extend(_known_knowledge(source.id, node.id, node.title))
+        nodes_by_title = {_normalize_unit_title(node.title): node for node in nodes}
+        if is_grade7_upper:
+            knowledge_points.extend(
+                _appendix_knowledge(source.id, nodes_by_title, notes, pronunciation)
+            )
+        seen_vocabulary_keys: set[tuple[uuid.UUID, str]] = set()
+        for entry in vocabulary_entries:
+            node = nodes_by_title.get(entry.unit_title)
+            if node is None:
+                continue
+            duplicate_key = (node.id, entry.canonical_expression)
+            if duplicate_key in seen_vocabulary_keys:
+                continue
+            seen_vocabulary_keys.add(duplicate_key)
+            slug = re.sub(r"[^a-z0-9]+", "-", entry.canonical_expression).strip("-")
+            knowledge_points.append(
+                KnowledgePoint(
+                    source_id=source.id,
+                    curriculum_node_id=node.id,
+                    canonical_key=f"vocabulary.{slug}.{str(source.id)[:8]}.{node.ordinal}",
+                    type="vocabulary",
+                    title=entry.expression,
+                    summary=f"{entry.unit_title} 单元词表第 {entry.unit_order} 个词条。",
+                    source_page="Words and Expressions",
+                    difficulty=0.2,
+                    status="draft",
+                    content={
+                        "origin": "unit_wordlist_sequence_parser",
+                        "role": "unit_wordlist",
+                        "grade": source.grade,
+                        "lemma": entry.canonical_expression,
+                        "unit_order": entry.unit_order,
+                        "raw_line": entry.raw_line,
+                        "confidence": entry.confidence,
+                        "warnings": list(entry.warnings),
+                        "requires_review": entry.confidence < 0.75 or bool(entry.warnings),
+                        "dictionary_status": "pending",
+                    },
+                )
+            )
+        for point in knowledge_points:
+            content = dict(point.content or {})
+            content["parser_run_id"] = parser_run_id
+            content.setdefault("source_page", point.source_page)
+            content.setdefault("confidence", content.get("confidence", 0.8))
+            content.setdefault("warnings", content.get("warnings", []))
+            point.content = content
+            db.add(point)
+        chunk_char_counts = [
+            len(chunk)
+            for page_text in page_texts
+            for chunk in split_text(page_text)
+        ]
+        rag_covered_pages = {
+            page_number
+            for page_number, page_text in enumerate(page_texts, start=1)
+            if split_text(page_text)
+        }
+        chunk_count = await build_chunks(
+            db,
+            source,
+            page_texts,
+            nodes,
+            model_router,
+            parser_run_id=parser_run_id,
+        )
+        rag_metadata = source.metadata_ or {}
+        section_count = (
+            len(notes)
+            + len(pronunciation)
+            + (len(GRADE7_UPPER_GRAMMAR_TOPICS) if is_grade7_upper else 0)
+        )
+        parser_report = build_parser_report(
+            profile=parser_profile,
+            unit_count=len(nodes),
+            vocabulary_entries=vocabulary_entries,
+            page_texts=page_texts,
+            unit_titles=[node.title for node in nodes],
+            knowledge_points=knowledge_points,
+            section_count=section_count,
+            rag_chunk_count=chunk_count,
+            rag_covered_pages=rag_covered_pages,
+            chunk_char_counts=chunk_char_counts,
+        )
+        report_dict = parser_report.to_dict()
+        quality_score = score_textbook_quality(report_dict)
+
+        source.page_count = parsed.page_count
+        source.unit_count = len(nodes)
+        source.knowledge_count = len(knowledge_points)
+        source.status = quality_score.status
+        parser_run.status = "completed"
+        parser_run.completed_at = datetime.now(timezone.utc)
+        parser_run.quality_report = report_dict
+        parser_run.quality_score = quality_score.to_dict()
+        parser_run.artifact_refs = {
+            "curriculum_node_count": len(nodes),
+            "knowledge_point_count": len(knowledge_points),
+            "rag_chunk_count": chunk_count,
+        }
+        source.metadata_ = {
+            **rag_metadata,
+            "stage": "validated",
+            "latest_parser_run_id": parser_run_id,
+            "parser_status": parser_run.status,
+            "text_char_count": parsed.text_char_count,
+            "book_manifest_id": manifest.id if manifest else None,
+            "parser_profile": parser_profile.id if parser_profile else None,
+            "parser": "pypdf+manifest-profile-v1",
+            "vocabulary_parser": "unit-sequence-with-evidence-v1",
+            "dictionary_enrichment": "free_dictionary_api+mymemory",
+            "vocabulary_entry_count": len(vocabulary_entries),
+            "low_confidence_vocabulary_count": parser_report.low_confidence_entries,
+            "notes_section_count": len(notes),
+            "pronunciation_section_count": len(pronunciation),
+            "grammar_reference_count": len(GRADE7_UPPER_GRAMMAR_TOPICS) if is_grade7_upper else 0,
+            "rag_chunk_count": chunk_count,
+            "toc_fallback": used_toc_fallback,
+            "parser_report": report_dict,
+            "warning": "; ".join(parser_report.warnings) if parser_report.warnings else None,
+            **quality_summary(quality_score, report_dict),
+        }
+        await db.flush()
+        return parsed
+    except Exception as exc:
+        parser_run.status = "failed"
+        parser_run.completed_at = datetime.now(timezone.utc)
+        parser_run.error_message = str(exc)[:500]
+        failed_report = {
+            "parser_profile": parser_profile.id if parser_profile else None,
+            "unit_count": 0,
+            "expected_unit_count": parser_profile.expected_unit_count if parser_profile else None,
+            "vocabulary_entry_count": 0,
+            "expected_min_vocabulary_count": parser_profile.min_vocabulary_count if parser_profile else None,
+            "low_confidence_entries": 0,
+            "dirty_tokens": [],
+            "warnings": [str(exc)[:500]],
+        }
+        failed_score = score_textbook_quality(failed_report, parser_failed=True)
+        parser_run.quality_report = failed_report
+        parser_run.quality_score = failed_score.to_dict()
+        source.status = failed_score.status
+        source.metadata_ = {
+            **(source.metadata_ or {}),
+            "stage": "failed",
+            "latest_parser_run_id": parser_run_id,
+            "parser_status": "failed",
+            "error": str(exc)[:500],
+            "parser_report": failed_report,
+            **quality_summary(failed_score, failed_report),
+        }
+        await db.flush()
+        raise
 
 
 async def get_source(db: AsyncSession, source_id: uuid.UUID) -> KnowledgeSource | None:
     result = await db.execute(select(KnowledgeSource).where(KnowledgeSource.id == source_id))
     return result.scalar_one_or_none()
+
+
+def _file_sha256(path: Path) -> str | None:
+    try:
+        return hashlib.sha256(path.read_bytes()).hexdigest()
+    except OSError:
+        return None

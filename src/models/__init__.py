@@ -11,6 +11,7 @@ from src.models.knowledge import (
     KnowledgePoint,
     KnowledgeSource,
     LearnerKnowledgeState,
+    ParserRun,
 )
 from src.models.learner import Learner, LearnerProfile
 from src.models.learning_progress import LearningProgressItem
@@ -85,6 +86,7 @@ __all__ = [
     "MemoryContextLog",
     "MemoryOperation",
     "ModelCallLog",
+    "ParserRun",
     "PromptExecutionRecord",
     "ReadingMaterialHistory",
     "ReviewSchedule",

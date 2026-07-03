@@ -51,6 +51,30 @@ class KnowledgeSource(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     )
 
 
+class ParserRun(UUIDPrimaryKeyMixin, TimestampMixin, Base):
+    __tablename__ = "parser_runs"
+
+    source_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("knowledge_sources.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    parser_id: Mapped[str] = mapped_column(String(120), nullable=False)
+    parser_version: Mapped[str] = mapped_column(String(80), nullable=False)
+    parser_profile_id: Mapped[Optional[str]] = mapped_column(String(120), nullable=True)
+    book_manifest_id: Mapped[Optional[str]] = mapped_column(String(120), nullable=True)
+    pdf_sha256: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    input_hash: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    status: Mapped[str] = mapped_column(String(30), nullable=False, default="running", index=True)
+    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    completed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    quality_report: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
+    quality_score: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
+    artifact_refs: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
+    error_message: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+
+
 class CurriculumNode(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     __tablename__ = "curriculum_nodes"
     __table_args__ = (

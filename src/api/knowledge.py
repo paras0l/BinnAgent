@@ -19,6 +19,7 @@ from src.exercises import ExerciseAttemptService
 from src.exercises.item_mapper import exercise_question_to_item
 from src.knowledge.exercises import ensure_unit_exercises
 from src.knowledge.processor import process_uploaded_textbook
+from src.knowledge.quality import quality_summary, score_textbook_quality
 from src.knowledge.rag import retrieve_chunks
 from src.mastery.engine import MasteryEngine
 from src.mastery.types import AttemptSignal
@@ -154,6 +155,7 @@ def _source_parser_payload(source: KnowledgeSource) -> dict[str, Any]:
     if metadata.get("warning") and metadata["warning"] not in warnings:
         warnings = [*warnings, metadata["warning"]]
     return {
+        **_source_quality_payload(source),
         "parser": metadata.get("parser"),
         "parser_profile": metadata.get("parser_profile"),
         "book_manifest_id": metadata.get("book_manifest_id"),
@@ -164,6 +166,19 @@ def _source_parser_payload(source: KnowledgeSource) -> dict[str, Any]:
         "toc_fallback": bool(metadata.get("toc_fallback", False)),
         "warnings": warnings,
         "report": parser_report,
+    }
+
+
+def _source_quality_payload(source: KnowledgeSource) -> dict[str, Any]:
+    metadata = source.metadata_ or {}
+    return {
+        "latest_parser_run_id": metadata.get("latest_parser_run_id"),
+        "parser_status": metadata.get("parser_status"),
+        "quality_score": metadata.get("quality_score"),
+        "quality_status": metadata.get("quality_status") or source.status,
+        "blocking_reasons": metadata.get("blocking_reasons") or [],
+        "pending_review_count": int(metadata.get("pending_review_count") or 0),
+        "parser_report_summary": metadata.get("parser_report_summary") or {},
     }
 
 
@@ -200,6 +215,7 @@ def _source_payload(
     requires_review: bool | None = None,
 ) -> dict[str, Any]:
     return {
+        **_source_quality_payload(source),
         "id": str(source.id),
         "title": source.title,
         "filename": source.filename,
@@ -216,6 +232,27 @@ def _source_payload(
         else requires_review,
         "page_count": source.page_count,
     }
+
+
+def _recalculate_source_quality_gate(source: KnowledgeSource, pending_review_count: int) -> None:
+    metadata = dict(source.metadata_ or {})
+    report = dict(metadata.get("parser_report") or {})
+    if not report:
+        report = {
+            "unit_count": source.unit_count,
+            "expected_unit_count": source.unit_count or None,
+            "source_page_coverage_rate": 1.0,
+            "evidence_ref_coverage_rate": 1.0,
+            "rag_chunk_count": metadata.get("rag_chunk_count", 1),
+            "rag_page_coverage_rate": 1.0,
+            "requires_review_count": pending_review_count,
+        }
+    report["requires_review_count"] = pending_review_count
+    score = score_textbook_quality(report)
+    metadata["parser_report"] = report
+    metadata.update(quality_summary(score, report))
+    source.metadata_ = metadata
+    source.status = score.status
 
 
 async def _ensure_learner(db: AsyncSession, learner_id: uuid.UUID) -> None:
@@ -283,7 +320,7 @@ async def knowledge_base_overview(
 ) -> dict[str, Any]:
     await _ensure_learner(db, learner_id)
     source_filter = and_(
-        KnowledgeSource.status.in_(["published", "review_required", "partial_indexed"]),
+        KnowledgeSource.status.in_(["published", "review_required", "partial_indexed", "blocked"]),
         or_(
             KnowledgeSource.owner_learner_id == learner_id,
             KnowledgeSource.visibility == "public",
@@ -542,13 +579,13 @@ async def review_knowledge_point(
             KnowledgePoint.status.in_(["draft", "published"]),
         )
     )
-    if int(remaining_result.scalar_one() or 0) == 0:
-        source_result = await db.execute(
-            select(KnowledgeSource).where(KnowledgeSource.id == point.source_id)
-        )
-        source = source_result.scalar_one_or_none()
-        if source is not None and source.status == "review_required":
-            source.status = "published"
+    remaining_count = int(remaining_result.scalar_one() or 0)
+    source_result = await db.execute(
+        select(KnowledgeSource).where(KnowledgeSource.id == point.source_id)
+    )
+    source = source_result.scalar_one_or_none()
+    if source is not None:
+        _recalculate_source_quality_gate(source, remaining_count)
     return KnowledgeReviewResponse(
         knowledge_point_id=point.id,
         action=body.action,
@@ -984,7 +1021,7 @@ async def ingest_knowledge_source(
         parsed = await process_uploaded_textbook(db, source)
     except Exception as exc:
         source.status = "failed"
-        source.metadata_ = {"stage": "failed", "error": str(exc)[:500]}
+        source.metadata_ = {**(source.metadata_ or {}), "stage": "failed", "error": str(exc)[:500]}
         raise HTTPException(status_code=422, detail="PDF 解析失败，请检查文件或稍后重试") from exc
     return IngestResponse(
         source_id=source.id,
@@ -992,7 +1029,7 @@ async def ingest_knowledge_source(
         page_count=parsed.page_count,
         unit_count=source.unit_count,
         knowledge_count=source.knowledge_count,
-        message="教材解析完成，知识草稿等待审核发布。",
+        message=f"教材解析完成，质量状态：{source.status}。",
     )
 
 

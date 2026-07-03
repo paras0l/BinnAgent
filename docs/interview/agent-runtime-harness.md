@@ -128,6 +128,7 @@ checkpoint 保存：
 - Learner App / Dev Console 双入口：学习端只暴露学习功能，调试端承载 Memory、Episode、Tool、Evidence、RAG、Prompt、Verification 和 Simulation 面板。
 - Episode Debug / Graph Runs、Tool Registry、Tool Call Records、RAG Debug、Prompt Debug、VerificationReport、Simulation Report 等 Dev Console 页面。
 - Simulation scenario 覆盖 episode runtime 知识点练习链路。
+- 教材解析链路新增 ParserRun、ParserQualityReport 和 TextbookQualityScore：每次 PDF ingest 都有运行记录、质量指标、发布门禁和 provenance，可防止低质量解析结果静默进入学习闭环。
 
 本地运行入口：
 
@@ -162,6 +163,7 @@ Graph Run Debug 不展示 raw prompt / raw output；原始 LLM trace 交给 Lang
 
 - Knowledge exercise 是完整接入样板。
 - Daily Lesson 支持单题单 checkpoint 的持久化暂停和恢复，并支持可选 LangGraph checkpointer 编译；业务 checkpoint 仍负责前端恢复。
+- Textbook ingest 已接入 deterministic 质量门禁，API 和 review flow 会根据质量报告决定 `published/review_required/partial_indexed/blocked/failed`。
 - Explore vocabulary / writing phrase 等入口已能创建 TaskSpec 和 episode，部分 handler 返回 not_implemented，保留扩展位。
 
 后续计划：

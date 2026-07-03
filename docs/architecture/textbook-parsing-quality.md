@@ -1,0 +1,96 @@
+# Textbook Parsing Quality
+
+> 更新时间：2026-07-03
+> 目的：定义教材解析质量报告、评分和发布门禁的当前实现契约。
+
+## 数据模型
+
+`parser_runs` 记录每次 `process_uploaded_textbook()`：
+
+- parser identity：`parser_id`、`parser_version`、`parser_profile_id`、`book_manifest_id`。
+- input identity：`source_id`、`pdf_sha256`、`input_hash`。
+- lifecycle：`running`、`completed`、`failed`，以及 `started_at` / `completed_at`。
+- outputs：`quality_report`、`quality_score`、`artifact_refs`、`error_message`。
+
+`KnowledgeSource.metadata` 保存最近一次 run 摘要：
+
+- `latest_parser_run_id`
+- `parser_status`
+- `parser_report`
+- `quality_score`
+- `quality_status`
+- `blocking_reasons`
+- `pending_review_count`
+- `parser_report_summary`
+
+## ParserQualityReport
+
+报告由 `src/knowledge/parser_report.py` 生成，当前覆盖五组指标：
+
+| 类别 | 指标 |
+|---|---|
+| intake | `page_count`、`text_char_count`、`avg_text_chars_per_page`、`empty_page_ratio`、`has_text_layer`、`is_scanned_pdf_suspected` |
+| structure | `unit_title_match_rate`、`unit_order_valid`、`section_count`、`section_coverage_rate` |
+| knowledge | `knowledge_count_by_type`、`source_page_coverage_rate`、`evidence_ref_coverage_rate`、`duplicate_knowledge_count`、`requires_review_count` |
+| vocab | `core_vocabulary_hit_rate`、`low_confidence_vocabulary_ratio`、`dirty_token_entry_count` |
+| RAG | `rag_chunk_count`、`rag_page_coverage_rate`、`chunk_avg_size` |
+
+这些指标只依赖解析结果、profile、知识点内容和 chunk 切分，便于单元测试和 simulation 回归。
+
+## TextbookQualityScore
+
+`src/knowledge/quality.py` 将报告转换为 deterministic score：
+
+- `overall_score`
+- `structure_score`
+- `vocabulary_score`
+- `rag_score`
+- `provenance_score`
+- `status`
+- `blocking_reasons`
+- `warnings`
+
+当前发布状态：
+
+| 状态 | 含义 |
+|---|---|
+| `published` | 核心阈值通过且没有待审项 |
+| `review_required` | 有低置信、轻量覆盖不足或待人工确认项 |
+| `partial_indexed` | 有结构风险但 RAG 至少部分可用 |
+| `blocked` | 结构、证据或核心词表缺失到不适合学习使用 |
+| `failed` | parser run 失败或疑似扫描 PDF 无可用 text layer |
+
+## 质量门禁
+
+解析成功后，`KnowledgeSource.status = quality_score.status`。解析失败时状态为 `failed`，并保留失败报告和错误摘要。
+
+Review API 在 confirm / update / ignore 后都会重新计算门禁：
+
+1. 更新知识点内容和 `requires_review`。
+2. 统计同一 source 的剩余待审数量。
+3. 更新 report 的 `requires_review_count`。
+4. 调用 `score_textbook_quality()`。
+5. 回写 `KnowledgeSource.status` 与 metadata 摘要。
+
+因此 `ignore` 只能处理单个 review item，不能绕过 `blocking_reasons`。
+
+## API 暴露
+
+source 列表和详情统一返回：
+
+- `latest_parser_run_id`
+- `parser_status`
+- `quality_score`
+- `quality_status`
+- `blocking_reasons`
+- `pending_review_count`
+- `parser_report_summary`
+
+`parser_evidence.report` 仍保留完整 report，用于 Dev Console 或解析校对工作台排查。
+
+## Provenance
+
+- `KnowledgePoint.content.parser_run_id` 标记知识点来源 run。
+- 词表知识点保留 `raw_line`、`source_page`、`confidence`、`warnings` 和 `parser_run_id`。
+- `KnowledgeChunk.metadata.parser_run_id` 标记 RAG chunk 来源 run。
+- 生成练习题写入 `metadata.generated_from`，指向 source、curriculum node、knowledge point 和可用的 parser run。

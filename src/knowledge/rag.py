@@ -53,6 +53,8 @@ async def build_chunks(
     pages: list[str],
     nodes: list[CurriculumNode],
     model_router: ModelRouter,
+    *,
+    parser_run_id: str | None = None,
 ) -> int:
     page_starts = sorted(
         (
@@ -83,7 +85,10 @@ async def build_chunks(
                     chunk_index=len(pending),
                     content=content,
                     char_count=len(content),
-                    metadata_={"origin": "pdf_text_layer"},
+                    metadata_={
+                        "origin": "pdf_text_layer",
+                        "parser_run_id": parser_run_id,
+                    },
                 )
             )
 
