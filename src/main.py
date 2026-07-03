@@ -10,7 +10,8 @@ from src.api.debug import router as debug_router
 from src.api.daily_lessons import router as daily_lessons_router
 from src.api.evidence import router as evidence_router
 from src.api.essay_review import router as essay_review_router
-from src.api.explore import router as explore_router, skills_router as explore_skills_router
+from src.api.explore import capabilities_router as explore_capabilities_router
+from src.api.explore import router as explore_router
 from src.api.exercises import router as exercises_router
 from src.api.exercise_attempts import router as exercise_attempts_router
 from src.api.grammar import router as grammar_router
@@ -57,7 +58,7 @@ app.include_router(debug_router)
 app.include_router(daily_lessons_router)
 app.include_router(evidence_router)
 app.include_router(explore_router)
-app.include_router(explore_skills_router)
+app.include_router(explore_capabilities_router)
 app.include_router(essay_review_router)
 app.include_router(exercises_router)
 app.include_router(exercise_attempts_router)

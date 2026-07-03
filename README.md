@@ -91,6 +91,7 @@ http://localhost:5174，可在 Learners / Recent Episodes 中直接选择 learne
 - [11. Vocabulary Learning](docs/architecture/11-vocabulary-learning.md)
 - [12. Textbook RAG, Langfuse & Exercises](docs/architecture/12-rag-observability-exercises.md)
 - [13. Current Scope and Status](docs/architecture/13-current-scope-and-status.md)
+- [ExploreCapability Recommendation](docs/explore-capability-recommendation.md)
 - [Agent Runtime / Harness Interview Brief](docs/interview/agent-runtime-harness.md)
 - [Memory Architecture v2](docs/memory-architecture-v2.md)
 
@@ -102,11 +103,12 @@ http://localhost:5174，可在 Learners / Recent Episodes 中直接选择 learne
 | 教材 Knowledge Base / RAG / Exercises | 部分实现，已支持多教材切换、七年级上/下册解析、八/九年级上传 fallback、解析证据展示、低置信词条人工校对入口、统一 ExerciseItem / ExerciseAttempt 语义和 AI 生成练习可编辑保存 |
 | Vocabulary Personal Cards / Practice / Spelling / Word Parts | 部分实现，已新增“词根与词缀”探索入口、四工作区学习页、内置词根词缀库、拆词练习、morphology 前端展示/降级和知识点配套练习验收 |
 | Writing Phrasebook | 基础版已实现 |
+| ExploreCapability 推荐 | 基础版已实现，Explore Tab 入口由后端 registry 统一管理；Daily Lesson 答题后可推荐 ready 学习能力，点击/忽略事件写入 Memory 和 episode trace |
 | Frontend UI/UX 统一标准 | Issue #20 首轮整改已落地，普通学习端主导航保留 AI对话 / 探索 / 学习中心，Debug/Memory/Runtime 页面移入 Dev Console；KnowledgeBase 已升级为教材解析校对工作台 |
 | Prompt Registry / Schema-first Import / Parser Quality | 基础治理已实现 |
 | Agent Runtime / Harness | 第一阶段已实现，TaskSpec、AgentEpisode、LearningEvent、EvidenceRef、ToolCallRecord、VerificationReport、MasteryEngine、RecommendationEngine、LearningGraphCheckpoint 和 Dev Console 调试入口已接入；Dev Console 支持 Learners / Recent Episodes 选择上下文；Debug API 默认关闭并需 token |
 | LangGraph daily lesson | 已从纯线性 graph 升级为单题 checkpoint / interrupt / resume Runtime；start 可返回 waiting_user checkpoint，answer 可恢复并完成 grading、memory、review、verification |
-| Learner Simulation Agent | Deterministic MVP 已实现，新增 episode runtime knowledge practice 和 daily_lesson_checkpoint_resume 回归场景及 runtime_metrics |
+| Learner Simulation Agent | Deterministic MVP 已实现，新增 episode runtime knowledge practice、daily_lesson_checkpoint_resume 和 daily_lesson_capability_recommendation 回归场景及 runtime_metrics |
 | CET reading / writing / weekly report | 设计中 |
 | CI backend lint/test + frontend lint/test/build/build:console | 已实现 |
 
@@ -114,6 +116,7 @@ http://localhost:5174，可在 Learners / Recent Episodes 中直接选择 learne
 
 - [Web Frontend](docs/web-frontend.md) — React 前端设计与实现
 - [Frontend Design System](docs/frontend-design-system.md) — Issue #20 UI/UX 统一标准与页面整改清单
+- [ExploreCapability Recommendation](docs/explore-capability-recommendation.md) — Explore 学习能力入口、推荐、Memory 和 trace 事件
 - [Web Frontend Design Spec](docs/superpowers/specs/2026-06-12-web-frontend-design.md) — 详细设计规范
 - [Spelling Training UI/UX](docs/superpowers/specs/2026-06-19-spelling-training-uiux.md) — 拼写训练流程、界面状态与交互规范
 

@@ -1,6 +1,10 @@
 import { AlertCircle, BookCheck, ChevronLeft, FileWarning, LoaderCircle, Search, Send, ShieldCheck, Wrench, X } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { EvidencePanel } from '@/components/learning/EvidencePanel'
+import {
+  CapabilityRecommendationCard,
+  type CapabilityRecommendation,
+} from '@/components/learning/CapabilityRecommendationCard'
 import { ReasonCard } from '@/components/learning/ReasonCard'
 import { PageShell } from '@/components/layout/PageShell'
 import { CurriculumRail } from '@/components/knowledge/CurriculumRail'
@@ -15,6 +19,7 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { StatusBanner } from '@/components/ui/StatusBanner'
 import { useToast } from '@/hooks/useToast'
 import { GrammarPage } from '@/pages/GrammarPage'
+import { exploreCapabilityEventUrl } from '@/services/exploreCapabilityApi'
 import type {
   ExerciseSession,
   KnowledgeAttemptResult,
@@ -51,6 +56,7 @@ interface DailyLessonRuntime {
   memory_updates?: unknown
   review_schedule?: unknown
   verification_status?: string | null
+  next_capability_recommendations?: CapabilityRecommendation[]
 }
 
 interface DailyLessonStatusResponse {
@@ -103,6 +109,8 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice }
   const [dailyAnswer, setDailyAnswer] = useState('')
   const [isStartingDailyLesson, setIsStartingDailyLesson] = useState(false)
   const [isSubmittingDailyAnswer, setIsSubmittingDailyAnswer] = useState(false)
+  const [dismissedDailyRecommendationIds, setDismissedDailyRecommendationIds] = useState<Set<string>>(() => new Set())
+  const [busyDailyRecommendationId, setBusyDailyRecommendationId] = useState<string | null>(null)
 
   const loadOverview = useCallback(async (sourceId?: string | null, nodeId?: string | null) => {
     setIsLoading(true)
@@ -335,6 +343,67 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice }
       showToast(submitError instanceof Error ? submitError.message : '答案提交失败，请重试。', { variant: 'error' })
     } finally {
       setIsSubmittingDailyAnswer(false)
+    }
+  }
+
+  const recordDailyCapabilityEvent = async (
+    recommendation: CapabilityRecommendation,
+    eventType: 'clicked' | 'dismissed',
+  ) => {
+    const response = await fetch(exploreCapabilityEventUrl(learner.id, recommendation.capability_id), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        event_type: eventType,
+        episode_id: dailyLesson?.episode_id,
+        recommendation_id: recommendation.recommendation_id,
+        reason: recommendation.reason,
+        evidence_refs: recommendation.evidence_refs ?? [],
+        metadata: {
+          source: 'daily_lesson_feedback',
+          reason: recommendation.reason,
+          priority_score: recommendation.priority_score,
+        },
+      }),
+    })
+    if (!response.ok) throw new Error('推荐事件记录失败。')
+  }
+
+  const handleOpenDailyCapabilityRecommendation = async (recommendation: CapabilityRecommendation) => {
+    setBusyDailyRecommendationId(recommendation.recommendation_id)
+    try {
+      await recordDailyCapabilityEvent(recommendation, 'clicked')
+      setDailyLesson(null)
+      if (recommendation.tool_target === 'grammar') {
+        setGrammarTopic(null)
+        setGrammarTopic('grammar')
+      } else if (recommendation.tool_target === 'reading-workshop') {
+        showToast('请在探索页打开精读与泛读入口。', { variant: 'info' })
+      } else if (recommendation.tool_target === 'writing-phrasebook') {
+        showToast('请在探索页打开好句收藏馆入口。', { variant: 'info' })
+      } else if (recommendation.tool_target === 'word-parts') {
+        showToast('请在探索页打开词根与词缀入口。', { variant: 'info' })
+      } else if (recommendation.action === 'vocabulary-detail') {
+        showToast('请在探索页打开词汇详解入口。', { variant: 'info' })
+      } else {
+        showToast('已记录你的选择，可从探索页继续打开该学习入口。', { variant: 'success' })
+      }
+    } catch (eventError) {
+      showToast(eventError instanceof Error ? eventError.message : '推荐事件记录失败。', { variant: 'error' })
+    } finally {
+      setBusyDailyRecommendationId(null)
+    }
+  }
+
+  const handleDismissDailyCapabilityRecommendation = async (recommendation: CapabilityRecommendation) => {
+    setDismissedDailyRecommendationIds((current) => new Set(current).add(recommendation.recommendation_id))
+    setBusyDailyRecommendationId(recommendation.recommendation_id)
+    try {
+      await recordDailyCapabilityEvent(recommendation, 'dismissed')
+    } catch (eventError) {
+      console.error('Daily capability dismiss event failed:', eventError)
+    } finally {
+      setBusyDailyRecommendationId(null)
     }
   }
 
@@ -593,8 +662,12 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice }
         lesson={dailyLesson}
         answer={dailyAnswer}
         isSubmitting={isSubmittingDailyAnswer}
+        dismissedRecommendationIds={dismissedDailyRecommendationIds}
+        busyRecommendationId={busyDailyRecommendationId}
         onAnswerChange={setDailyAnswer}
         onSubmit={() => void handleSubmitDailyAnswer()}
+        onOpenRecommendation={(item) => void handleOpenDailyCapabilityRecommendation(item)}
+        onDismissRecommendation={(item) => void handleDismissDailyCapabilityRecommendation(item)}
         onClose={() => setDailyLesson(null)}
       />
       <ExerciseSessionDialog
@@ -613,21 +686,31 @@ function DailyLessonRuntimeDialog({
   lesson,
   answer,
   isSubmitting,
+  dismissedRecommendationIds,
+  busyRecommendationId,
   onAnswerChange,
   onSubmit,
+  onOpenRecommendation,
+  onDismissRecommendation,
   onClose,
 }: {
   lesson: DailyLessonRuntime | null
   answer: string
   isSubmitting: boolean
+  dismissedRecommendationIds: Set<string>
+  busyRecommendationId: string | null
   onAnswerChange: (value: string) => void
   onSubmit: () => void
+  onOpenRecommendation: (recommendation: CapabilityRecommendation) => void
+  onDismissRecommendation: (recommendation: CapabilityRecommendation) => void
   onClose: () => void
 }) {
   if (!lesson) return null
   const prompt = lesson.prompt ?? readPrompt(lesson.initial_payload) ?? '完成这道学习任务。'
   const options = readOptions(lesson.initial_payload)
   const isCompleted = lesson.status === 'completed' || Boolean(lesson.verification_status)
+  const recommendations = (lesson.next_capability_recommendations ?? [])
+    .filter((item) => !dismissedRecommendationIds.has(item.recommendation_id))
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 px-4 py-6">
@@ -696,6 +779,20 @@ function DailyLessonRuntimeDialog({
               <RuntimeJson title="feedback" value={lesson.feedback} />
               <RuntimeJson title="grading_result" value={lesson.grading_result} />
               <RuntimeJson title="mastery_update" value={lesson.mastery_update} />
+              {recommendations.length ? (
+                <div className="space-y-3">
+                  <p className="text-sm font-black text-slate-950">接下来适合你的学习入口</p>
+                  {recommendations.map((recommendation) => (
+                    <CapabilityRecommendationCard
+                      key={recommendation.recommendation_id}
+                      recommendation={recommendation}
+                      isBusy={busyRecommendationId === recommendation.recommendation_id}
+                      onOpen={onOpenRecommendation}
+                      onDismiss={onDismissRecommendation}
+                    />
+                  ))}
+                </div>
+              ) : null}
             </div>
           )}
         </div>

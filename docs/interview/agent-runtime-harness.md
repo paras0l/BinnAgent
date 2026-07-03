@@ -116,7 +116,7 @@ checkpoint 保存：
 - TaskSpec、EvidenceRef、MasteryEngine、RecommendationEngine、LearningOrchestrator、ToolRegistry、VerificationReport。
 - Knowledge Exercise 提交流程接入 episode trace。
 - Daily Lesson start / answer 支持 checkpoint / interrupt / resume，等待用户作答时 episode 进入 `waiting_user`。
-- Explore skill start API 和前端入口接入 TaskSpec。
+- ExploreCapability start API 和前端入口接入 TaskSpec。
 - Learner App / Dev Console 双入口：学习端只暴露学习功能，调试端承载 Memory、Episode、Tool、Evidence、RAG、Prompt、Verification 和 Simulation 面板。
 - Episode Debug、Tool Registry、Tool Call Records、RAG Debug、Simulation Report 等 Dev Console 页面。
 - Simulation scenario 覆盖 episode runtime 知识点练习链路。

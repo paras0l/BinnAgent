@@ -5,8 +5,11 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 from src.api import deps
+from src.explore.recommender import ExploreCapabilityRecommender
+from src.explore.schemas import ExploreRecommendationContext
 from src.main import app
 from src.models.explore import ExploreFeaturePreference
+from src.models.memory import LearningMemoryEvent
 from src.models.runtime import AgentEpisode
 
 
@@ -112,25 +115,40 @@ class TestExplorePreferences:
         mock_session.add.assert_not_called()
 
 
-class TestExploreSkills:
+class TestExploreCapabilities:
     @pytest.mark.asyncio
-    async def test_list_explore_skills_returns_task_entries(self, client):
-        response = await client.get("/api/explore/skills")
+    async def test_list_explore_capabilities(self, client):
+        response = await client.get("/api/explore/capabilities")
 
         assert response.status_code == 200
-        skills = response.json()
-        skill_ids = {skill["skill_id"] for skill in skills}
-        assert {"vocabulary_practice", "writing_phrase_practice", "grammar_micro_lesson"}.issubset(skill_ids)
-        assert all(skill["task_type"] for skill in skills)
-        assert all(skill["required_tools"] for skill in skills)
+        capabilities = response.json()
+        capability_ids = {item["capability_id"] for item in capabilities}
+        assert {"grammar-explain", "writing-phrasebook", "vocab-review"}.issubset(
+            capability_ids
+        )
+        assert all(item["feature_id"] for item in capabilities)
+        assert all(item["title"] for item in capabilities)
+        assert all(item["category"] for item in capabilities)
+        assert all(item["status"] for item in capabilities)
 
     @pytest.mark.asyncio
-    async def test_start_vocabulary_practice_creates_episode(self, client, mock_session):
+    async def test_old_explore_skills_endpoint_removed(self, client):
+        list_response = await client.get("/api/explore/skills")
+        start_response = await client.post(
+            "/api/explore/skills/something/start",
+            json={"learner_id": str(uuid.uuid4())},
+        )
+
+        assert list_response.status_code == 404
+        assert start_response.status_code == 404
+
+    @pytest.mark.asyncio
+    async def test_start_explore_capability_creates_episode(self, client, mock_session):
         learner_id = uuid.uuid4()
         mock_session.execute = AsyncMock(return_value=_one(learner_id))
 
         response = await client.post(
-            "/api/explore/skills/vocabulary_practice/start",
+            "/api/explore/capabilities/vocab-review/start",
             json={"learner_id": str(learner_id)},
         )
 
@@ -139,4 +157,101 @@ class TestExploreSkills:
         assert payload["episode_id"]
         assert payload["status"] == "not_implemented"
         assert payload["task_spec"]["task_type"] == "practice_vocabulary"
+        assert payload["task_spec"]["metadata"]["capability_id"] == "vocab-review"
         assert any(isinstance(item, AgentEpisode) for item in mock_session.added_objects)
+
+    @pytest.mark.asyncio
+    async def test_start_todo_capability_rejected(self, client, mock_session):
+        learner_id = uuid.uuid4()
+        mock_session.execute = AsyncMock(return_value=_one(learner_id))
+
+        response = await client.post(
+            "/api/explore/capabilities/listening-intensive/start",
+            json={"learner_id": str(learner_id)},
+        )
+
+        assert response.status_code == 409
+
+    @pytest.mark.asyncio
+    async def test_recommend_capability_from_grammar_error(self, client, mock_session):
+        learner_id = uuid.uuid4()
+        mock_session.execute = AsyncMock(side_effect=[_one(learner_id), _many([])])
+
+        response = await client.post(
+            f"/api/learners/{learner_id}/explore/recommendations",
+            json={"grading_result": {"error_type": "grammar_rule_confusion"}},
+        )
+
+        assert response.status_code == 200
+        recommendations = response.json()["recommendations"]
+        assert recommendations
+        assert any(item["capability_id"] == "grammar-explain" for item in recommendations)
+
+    @pytest.mark.asyncio
+    async def test_recommend_capability_from_writing_error(self, client, mock_session):
+        learner_id = uuid.uuid4()
+        mock_session.execute = AsyncMock(side_effect=[_one(learner_id), _many([])])
+
+        response = await client.post(
+            f"/api/learners/{learner_id}/explore/recommendations",
+            json={"grading_result": {"error_type": "low_level_connector_writing"}},
+        )
+
+        assert response.status_code == 200
+        capability_ids = {item["capability_id"] for item in response.json()["recommendations"]}
+        assert capability_ids & {"writing-phrasebook", "essay-review", "translation-practice"}
+
+    @pytest.mark.asyncio
+    async def test_recommendation_never_returns_unknown_capability(self, mock_session, monkeypatch):
+        learner_id = uuid.uuid4()
+        mock_session.execute = AsyncMock(side_effect=[_many([])])
+        recommender = ExploreCapabilityRecommender(mock_session, rerank_with_llm=True)
+
+        async def fake_llm(context, scored):
+            return [
+                {
+                    "capability_id": "made-up-capability",
+                    "reason": "bad id",
+                    "priority_score": 1.0,
+                }
+            ]
+
+        monkeypatch.setattr(recommender, "_call_llm_rerank", fake_llm)
+
+        recommendations = await recommender.recommend(
+            ExploreRecommendationContext(
+                learner_id=learner_id,
+                grading_result={"error_type": "grammar_rule_confusion"},
+            )
+        )
+
+        assert recommendations
+        assert all(item.capability_id != "made-up-capability" for item in recommendations)
+        assert all(item.capability_id in {"grammar-explain", "daily-lesson"} or item.source in {"rule", "llm_rerank"} for item in recommendations)
+
+    @pytest.mark.asyncio
+    async def test_capability_clicked_event_writes_memory_and_updates_preference(
+        self,
+        client,
+        mock_session,
+    ):
+        learner_id = uuid.uuid4()
+        mock_session.execute = AsyncMock(side_effect=[_one(learner_id), _one(None)])
+
+        response = await client.post(
+            f"/api/learners/{learner_id}/explore/capabilities/grammar-explain/events",
+            json={
+                "event_type": "clicked",
+                "recommendation_id": "caprec:test",
+                "reason": "grammar mistake",
+                "evidence_refs": [],
+            },
+        )
+
+        assert response.status_code == 200
+        assert any(isinstance(item, LearningMemoryEvent) for item in mock_session.added_objects)
+        preference = next(
+            item for item in mock_session.added_objects if isinstance(item, ExploreFeaturePreference)
+        )
+        assert preference.feature_id == "grammar-explain"
+        assert preference.last_used_at is not None

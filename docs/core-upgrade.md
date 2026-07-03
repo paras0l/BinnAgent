@@ -1313,7 +1313,7 @@ GET /api/runtime/episodes/{episode_id}/verification
 # Task 11：把 Explore Tab 入口统一接入 TaskSpec
 
 ```text
-请把 BinnAgent 的 Explore Tab / 技能入口改造成统一 TaskSpec 入口。
+请把 BinnAgent 的 Explore Tab / 学习能力入口改造成统一 TaskSpec 入口。
 
 目标：探索模块不再是孤立页面入口，而是每个入口都能生成标准 TaskSpec，并进入统一 AgentEpisode Runtime。
 
@@ -1321,23 +1321,29 @@ GET /api/runtime/episodes/{episode_id}/verification
 
 请先阅读：
 - Explore Tab 相关前端页面和组件
-- 后端对应 skill / vocabulary / writing / knowledge API
+- 后端对应 explore / vocabulary / writing / knowledge API
 - src/runtime/task_spec.py
 - src/learning/orchestrator.py
 
-二、定义 ExploreSkillSpec
+二、定义 ExploreCapabilitySpec
 
 在后端新增或扩展：
 
-ExploreSkillSpec:
-- skill_id: str
+ExploreCapabilitySpec:
+- capability_id: str
+- feature_id: str
 - title: str
 - description: str
+- category: str
+- status: ready / todo
+- action: chat / session / tool / vocabulary-detail / todo
+- tool_target: str | None
+- learning_skill: str
 - task_type: str
 - target_type: str | None
 - default_difficulty: str | None
 - estimated_minutes: int | None
-- required_tools: list[str]
+- allowed_tools: list[str]
 - produces:
   - attempt
   - memory_event
@@ -1349,11 +1355,11 @@ ExploreSkillSpec:
 
 新增：
 
-GET /api/explore/skills
+GET /api/explore/capabilities
 
-返回所有探索技能入口。
+返回所有探索学习能力入口。
 
-POST /api/explore/skills/{skill_id}/start
+POST /api/explore/capabilities/{capability_id}/start
 
 body:
 - learner_id
@@ -1370,7 +1376,7 @@ body:
 
 四、TaskSpec 生成
 
-每个 Explore skill 必须生成 TaskSpec。
+每个 ExploreCapability 必须生成 TaskSpec。
 
 第一阶段至少支持 3 个入口：
 
@@ -1382,7 +1388,7 @@ body:
 
 调用 LearningOrchestrator.start_task。
 
-如果某个 skill 还没有完整 handler，可以返回 not_implemented，但要保留 TaskSpec 和 episode_started event，方便后续扩展。
+如果某个 capability 还没有完整 handler，可以返回 not_implemented，但要保留 TaskSpec 和 episode_started event，方便后续扩展。
 
 六、前端调整
 
@@ -1394,11 +1400,11 @@ Explore Tab 卡片点击后，不直接跳散落功能逻辑，而是调用 star
 
 新增测试：
 
-1. GET /api/explore/skills 返回技能列表。
-2. 每个 skill 都有 task_type 和 required_tools。
+1. GET /api/explore/capabilities 返回学习能力列表。
+2. 每个 capability 都有 task_type 和 allowed_tools。
 3. start vocabulary_practice 返回 TaskSpec。
-4. start skill 创建 AgentEpisode。
-5. 不支持的 skill 明确返回 not_implemented，不崩溃。
+4. start capability 创建 AgentEpisode。
+5. 不支持的 capability 明确返回 not_implemented，不崩溃。
 
 八、验收标准
 

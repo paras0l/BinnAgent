@@ -18,6 +18,10 @@ import { PageShell } from '@/components/layout/PageShell'
 import { Button } from '@/components/ui/Button'
 import { FilterChip } from '@/components/ui/FilterChip'
 import { SurfaceCard } from '@/components/ui/SurfaceCard'
+import {
+  CapabilityRecommendationCard,
+  type CapabilityRecommendation,
+} from '@/components/learning/CapabilityRecommendationCard'
 import { ReasonCard } from '@/components/learning/ReasonCard'
 import type { AppTab, ExplorePreference, Learner, PronunciationWorkspace } from '@/types'
 import { useToast } from '@/hooks/useToast'
@@ -26,6 +30,13 @@ import { ReadingWorkshopPage } from '@/pages/ReadingWorkshopPage'
 import { VocabularyDetailPage } from '@/pages/VocabularyDetailPage'
 import { WordPartsPage } from '@/pages/WordPartsPage'
 import { WritingPhrasebookPage } from '@/pages/WritingPhrasebookPage'
+import {
+  FEATURE_CAPABILITY_MAP,
+  exploreCapabilitiesUrl,
+  exploreCapabilityEventUrl,
+  exploreCapabilityStartUrl,
+  learnerExploreRecommendationsUrl,
+} from '@/services/exploreCapabilityApi'
 
 type FeatureCategory = 'all' | 'listening' | 'speaking' | 'reading' | 'writing' | 'vocabulary' | 'grammar' | 'exam'
 type FeatureStatus = 'ready' | 'todo'
@@ -54,7 +65,22 @@ interface ExploreFeature {
   pronunciationWorkspace?: PronunciationWorkspace
 }
 
-interface ExploreSkillStartResponse {
+interface ExploreCapabilitySpec {
+  capability_id: string
+  feature_id: string
+  title: string
+  description: string
+  category: Exclude<FeatureCategory, 'all'>
+  status: FeatureStatus
+  action: FeatureAction
+  tool_target?: ExploreFeature['toolTarget'] | null
+  learning_skill: string
+  recommended_when: string[]
+  expected_learning_outcome: string
+  metadata?: Record<string, unknown>
+}
+
+interface ExploreCapabilityStartResponse {
   episode_id: string
   task_spec: {
     task_id: string
@@ -64,6 +90,10 @@ interface ExploreSkillStartResponse {
   answer_required: boolean
   prompt?: string | null
   initial_payload: Record<string, unknown>
+}
+
+interface ExploreRecommendationsResponse {
+  recommendations?: CapabilityRecommendation[]
 }
 
 const CATEGORIES: Array<{ id: FeatureCategory; label: string }> = [
@@ -232,7 +262,7 @@ const FEATURES: ExploreFeature[] = [
     pronunciationWorkspace: 'phonetic',
   },
   {
-    id: 'shadowing-practice',
+    id: 'shadowing',
     category: 'speaking',
     title: '影子跟读训练',
     description: '听一句，跟一句，模仿真实表达的节奏、重音和语调。',
@@ -285,19 +315,6 @@ const FEATURES: ExploreFeature[] = [
   },
 ]
 
-const FEATURE_SKILL_MAP: Record<string, string> = {
-  'daily-lesson': 'knowledge_practice',
-  'vocab-review': 'vocabulary_practice',
-  'vocabulary-detail': 'vocabulary_practice',
-  'word-roots-affixes': 'vocabulary_practice',
-  'add-vocabulary': 'vocabulary_practice',
-  'vocabulary-manager': 'vocabulary_practice',
-  'essay-review': 'writing_phrase_practice',
-  'writing-phrasebook': 'writing_phrase_practice',
-  'grammar-explain': 'grammar_micro_lesson',
-  'translation-practice': 'writing_phrase_practice',
-}
-
 export function ExplorePage({
   learner,
   isLocked = false,
@@ -308,6 +325,9 @@ export function ExplorePage({
 }: ExplorePageProps) {
   const { showToast } = useToast()
   const [preferences, setPreferences] = useState<ExplorePreference[]>([])
+  const [capabilitySpecs, setCapabilitySpecs] = useState<ExploreCapabilitySpec[]>([])
+  const [capabilityRecommendations, setCapabilityRecommendations] = useState<CapabilityRecommendation[]>([])
+  const [dismissedRecommendationIds, setDismissedRecommendationIds] = useState<Set<string>>(() => new Set())
   const [category, setCategory] = useState<FeatureCategory>('all')
   const [query, setQuery] = useState('')
   const [isLoading, setIsLoading] = useState(true)
@@ -317,17 +337,33 @@ export function ExplorePage({
   const [isWritingPhrasebookOpen, setIsWritingPhrasebookOpen] = useState(false)
   const [isWordPartsOpen, setIsWordPartsOpen] = useState(false)
   const [launchingFeatureId, setLaunchingFeatureId] = useState<string | null>(null)
+  const [busyRecommendationId, setBusyRecommendationId] = useState<string | null>(null)
 
   const loadPreferences = useCallback(async () => {
     setIsLoading(true)
     try {
-      const response = await fetch(`/api/learners/${learner.id}/explore/preferences`)
-      if (!response.ok) throw new Error('Failed to load explore preferences')
-      const data: ExplorePreference[] = await response.json()
+      const [preferencesResponse, capabilitiesResponse, recommendationsResponse] = await Promise.all([
+        fetch(`/api/learners/${learner.id}/explore/preferences`),
+        fetch(exploreCapabilitiesUrl()),
+        fetch(learnerExploreRecommendationsUrl(learner.id), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ metadata: { source: 'explore_page' } }),
+        }),
+      ])
+      if (!preferencesResponse.ok) throw new Error('Failed to load explore preferences')
+      const data: ExplorePreference[] = await preferencesResponse.json()
       setPreferences(data)
+      if (capabilitiesResponse.ok) {
+        setCapabilitySpecs(await capabilitiesResponse.json() as ExploreCapabilitySpec[])
+      }
+      if (recommendationsResponse.ok) {
+        const recommendationData = await recommendationsResponse.json() as ExploreRecommendationsResponse
+        setCapabilityRecommendations(recommendationData.recommendations ?? [])
+      }
     } catch (err) {
       console.error('Explore preferences error:', err)
-      showToast('探索偏好暂时无法加载，功能入口仍可使用。', { variant: 'warning' })
+      showToast('探索能力暂时无法同步，固定入口仍可使用。', { variant: 'warning' })
     } finally {
       setIsLoading(false)
     }
@@ -342,10 +378,15 @@ export function ExplorePage({
     () => new Map(preferences.map((preference) => [preference.feature_id, preference])),
     [preferences]
   )
+  const features = useMemo(() => {
+    if (!capabilitySpecs.length) return FEATURES
+    return capabilitySpecs.map(capabilityToFeature)
+  }, [capabilitySpecs])
+  const featureMap = useMemo(() => new Map(features.map((feature) => [feature.id, feature])), [features])
 
   const visibleFeatures = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase()
-    return FEATURES
+    return features
       .filter((feature) => category === 'all' || feature.category === category)
       .filter((feature) => {
         if (!normalizedQuery) return true
@@ -365,13 +406,20 @@ export function ExplorePage({
         if (!Number.isNaN(usedDelta) && usedDelta !== 0) return usedDelta
         return a.title.localeCompare(b.title)
       })
-  }, [category, preferenceMap, query])
+  }, [category, features, preferenceMap, query])
 
   const favorites = visibleFeatures.filter((feature) => preferenceMap.get(feature.id)?.is_favorite)
   const recommendedFeatures = useMemo(() => {
-    const preferred = FEATURES.filter((feature) => ['word-roots-affixes', 'writing-phrasebook', 'vocab-review'].includes(feature.id))
+    const preferred = features.filter((feature) => ['word-roots-affixes', 'writing-phrasebook', 'vocab-review'].includes(feature.id))
     return preferred.filter((feature) => category === 'all' || feature.category === category).slice(0, 3)
-  }, [category])
+  }, [category, features])
+  const visibleCapabilityRecommendations = useMemo(
+    () => capabilityRecommendations
+      .filter((item) => !dismissedRecommendationIds.has(item.recommendation_id))
+      .filter((item) => category === 'all' || item.category === category)
+      .slice(0, 3),
+    [capabilityRecommendations, category, dismissedRecommendationIds]
+  )
 
   const updatePreference = async (
     feature: ExploreFeature,
@@ -422,9 +470,9 @@ export function ExplorePage({
       return
     }
 
-    const startedRuntime = await startExploreRuntime(feature)
+    const startedRuntime = await startExploreCapabilityRuntime(feature)
     if (startedRuntime?.episode_id) {
-      showToast('已准备好本次学习任务。', {
+      showToast('已准备好本次学习能力任务。', {
         variant: startedRuntime.status === 'not_implemented' ? 'warning' : 'success',
       })
     }
@@ -484,12 +532,59 @@ export function ExplorePage({
     }
   }
 
-  const startExploreRuntime = async (feature: ExploreFeature): Promise<ExploreSkillStartResponse | null> => {
-    const skillId = FEATURE_SKILL_MAP[feature.id]
-    if (!skillId) return null
+  const recordCapabilityRecommendationEvent = async (
+    recommendation: CapabilityRecommendation,
+    eventType: 'clicked' | 'dismissed' | 'shown' | 'completed',
+  ) => {
+    const response = await fetch(exploreCapabilityEventUrl(learner.id, recommendation.capability_id), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        event_type: eventType,
+        recommendation_id: recommendation.recommendation_id,
+        reason: recommendation.reason,
+        evidence_refs: recommendation.evidence_refs ?? [],
+        metadata: {
+          source: 'explore_page',
+          reason: recommendation.reason,
+          priority_score: recommendation.priority_score,
+        },
+      }),
+    })
+    if (!response.ok) throw new Error('Capability recommendation event failed')
+  }
+
+  const handleOpenRecommendation = async (recommendation: CapabilityRecommendation) => {
+    const feature = featureMap.get(recommendation.feature_id) ?? recommendationToFeature(recommendation)
+    setBusyRecommendationId(recommendation.recommendation_id)
+    try {
+      await recordCapabilityRecommendationEvent(recommendation, 'clicked')
+    } catch (err) {
+      console.error('Capability recommendation click event failed:', err)
+    } finally {
+      setBusyRecommendationId(null)
+    }
+    await handleLaunch(feature)
+  }
+
+  const handleDismissRecommendation = async (recommendation: CapabilityRecommendation) => {
+    setDismissedRecommendationIds((current) => new Set(current).add(recommendation.recommendation_id))
+    setBusyRecommendationId(recommendation.recommendation_id)
+    try {
+      await recordCapabilityRecommendationEvent(recommendation, 'dismissed')
+    } catch (err) {
+      console.error('Capability recommendation dismiss event failed:', err)
+    } finally {
+      setBusyRecommendationId(null)
+    }
+  }
+
+  const startExploreCapabilityRuntime = async (feature: ExploreFeature): Promise<ExploreCapabilityStartResponse | null> => {
+    const capabilityId = FEATURE_CAPABILITY_MAP[feature.id]
+    if (!capabilityId) return null
     setLaunchingFeatureId(feature.id)
     try {
-      const response = await fetch(`/api/explore/skills/${skillId}/start`, {
+      const response = await fetch(exploreCapabilityStartUrl(capabilityId), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -501,11 +596,11 @@ export function ExplorePage({
           },
         }),
       })
-      if (!response.ok) throw new Error('Explore skill start failed')
-      return await response.json() as ExploreSkillStartResponse
+      if (!response.ok) throw new Error('Explore capability start failed')
+      return await response.json() as ExploreCapabilityStartResponse
     } catch (err) {
-      console.error('Explore skill runtime start error:', err)
-      showToast('学习任务启动失败，已继续打开原功能入口。', { variant: 'warning' })
+      console.error('Explore capability runtime start error:', err)
+      showToast('学习能力启动失败，已继续打开原入口。', { variant: 'warning' })
       return null
     } finally {
       setLaunchingFeatureId(null)
@@ -538,11 +633,11 @@ export function ExplorePage({
     <PageShell>
       <FeatureHero
         eyebrow="Explore"
-        title="探索专项技能"
-        description="选择一个想加强的场景，进入对应练习；暂未开放的能力会清楚标记。"
+        title="探索学习能力"
+        description="选择一个想加强的场景，进入对应练习；暂未开放的学习入口会清楚标记。"
         stats={[
-          { label: '可用入口', value: FEATURES.filter((feature) => feature.status === 'ready').length, tone: 'success' },
-          { label: '待开发', value: FEATURES.filter((feature) => feature.status === 'todo').length, tone: 'warning' },
+          { label: '可用入口', value: features.filter((feature) => feature.status === 'ready').length, tone: 'success' },
+          { label: '待开发', value: features.filter((feature) => feature.status === 'todo').length, tone: 'warning' },
           { label: '已收藏', value: favorites.length, tone: 'primary' },
           { label: '分类', value: CATEGORIES.length - 1 },
         ]}
@@ -574,19 +669,35 @@ export function ExplorePage({
       </SurfaceCard>
 
       <section>
-        <h2 className="mb-3 text-sm font-semibold text-foreground">最近适合你</h2>
-        <div className="grid gap-4 md:grid-cols-3">
-          {recommendedFeatures.map((feature) => (
-            <ReasonCard
-              key={`recommended-${feature.id}`}
-              title={feature.title}
-              reason={feature.whenToUse}
-              evidence={[feature.category === 'vocabulary' ? '词汇复习是学习中心的高频任务' : feature.category === 'writing' ? '写作表达适合沉淀成可练习资产' : '语法微知识点适合短时间集中学透']}
-              outcome={feature.outcome}
-              action={<Button variant="secondary" onClick={() => void handleLaunch(feature)} disabled={isLocked || launchingFeatureId === feature.id}>进入工具</Button>}
-            />
-          ))}
-        </div>
+        <h2 className="mb-3 text-sm font-semibold text-foreground">
+          {visibleCapabilityRecommendations.length ? '根据最近学习推荐' : '最近适合你'}
+        </h2>
+        {visibleCapabilityRecommendations.length ? (
+          <div className="grid gap-4 md:grid-cols-3">
+            {visibleCapabilityRecommendations.map((recommendation) => (
+              <CapabilityRecommendationCard
+                key={recommendation.recommendation_id}
+                recommendation={recommendation}
+                isBusy={busyRecommendationId === recommendation.recommendation_id}
+                onOpen={(item) => void handleOpenRecommendation(item)}
+                onDismiss={(item) => void handleDismissRecommendation(item)}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="grid gap-4 md:grid-cols-3">
+            {recommendedFeatures.map((feature) => (
+              <ReasonCard
+                key={`recommended-${feature.id}`}
+                title={feature.title}
+                reason={feature.whenToUse}
+                evidence={[feature.category === 'vocabulary' ? '词汇复习是学习中心的高频任务' : feature.category === 'writing' ? '写作表达适合沉淀成可练习资产' : '语法微知识点适合短时间集中学透']}
+                outcome={feature.outcome}
+                action={<Button variant="secondary" onClick={() => void handleLaunch(feature)} disabled={isLocked || launchingFeatureId === feature.id}>打开入口</Button>}
+              />
+            ))}
+          </div>
+        )}
       </section>
 
       {favorites.length > 0 && (
@@ -719,6 +830,40 @@ function CategoryIcon({ category }: { category: ExploreFeature['category'] }) {
   if (category === 'vocabulary') return <Sparkles className={className} />
   if (category === 'grammar') return <Wrench className={className} />
   return <Timer className={className} />
+}
+
+function capabilityToFeature(capability: ExploreCapabilitySpec): ExploreFeature {
+  const metadata = capability.metadata ?? {}
+  const prompt = typeof metadata.prompt === 'string' ? metadata.prompt : undefined
+  const pronunciationWorkspace = metadata.pronunciation_workspace === 'shadowing' ? 'shadowing' : metadata.pronunciation_workspace === 'phonetic' ? 'phonetic' : undefined
+  return {
+    id: capability.feature_id || capability.capability_id,
+    category: capability.category,
+    title: capability.title,
+    description: capability.description,
+    whenToUse: capability.recommended_when.join('；') || capability.description,
+    outcome: capability.expected_learning_outcome,
+    status: capability.status,
+    action: capability.action,
+    prompt,
+    toolTarget: capability.tool_target ?? undefined,
+    pronunciationWorkspace,
+  }
+}
+
+function recommendationToFeature(recommendation: CapabilityRecommendation): ExploreFeature {
+  return {
+    id: recommendation.feature_id,
+    category: recommendation.category as ExploreFeature['category'],
+    title: recommendation.title,
+    description: recommendation.reason,
+    whenToUse: recommendation.reason,
+    outcome: '根据本次学习结果继续巩固。',
+    status: 'ready',
+    action: recommendation.action as FeatureAction,
+    prompt: recommendation.prompt_seed ?? undefined,
+    toolTarget: (recommendation.tool_target ?? undefined) as ExploreFeature['toolTarget'],
+  }
 }
 
 function labelForCategory(category: ExploreFeature['category']) {

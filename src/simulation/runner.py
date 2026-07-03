@@ -125,6 +125,8 @@ class ScenarioRunner:
             return await self._start_daily_lesson(step, context)
         if step.action == "submit_daily_lesson_answer":
             return await self._submit_daily_lesson_answer(step, context, learner_agent)
+        if step.action == "click_capability_recommendation":
+            return await self._click_capability_recommendation(step, context)
         if step.action == "fetch_episode_trace":
             return await self._fetch_episode_trace(context)
         if step.action == "fetch_verification_report":
@@ -324,13 +326,74 @@ class ScenarioRunner:
         context["daily_lesson_answer"] = payload
         return {"status_code": response.status_code, "json": payload, "answer": payload}
 
+    async def _click_capability_recommendation(
+        self,
+        step: SimulationStep,
+        context: dict[str, Any],
+    ) -> dict[str, Any]:
+        learner_id = _require_context(context, "learner_id")
+        episode_id = context.get("episode_id")
+        recommendations = (context.get("daily_lesson_answer") or {}).get(
+            "next_capability_recommendations"
+        ) or []
+        capability_id = step.payload.get("capability_id")
+        recommendation = next(
+            (
+                item
+                for item in recommendations
+                if isinstance(item, dict)
+                and (capability_id is None or item.get("capability_id") == capability_id)
+            ),
+            None,
+        )
+        if recommendation is None:
+            raise ValueError("Simulation context missing capability recommendation")
+        capability_id = recommendation["capability_id"]
+        response = await self._request(
+            "POST",
+            f"/api/learners/{learner_id}/explore/capabilities/{capability_id}/events",
+            json={
+                "event_type": "clicked",
+                "episode_id": episode_id,
+                "recommendation_id": recommendation.get("recommendation_id"),
+                "reason": recommendation.get("reason"),
+                "evidence_refs": recommendation.get("evidence_refs") or [],
+                "metadata": {
+                    "source": "simulation",
+                    "priority_score": recommendation.get("priority_score"),
+                },
+            },
+        )
+        payload = _json_or_empty(response)
+        if response.status_code < 400:
+            self.memory_writes += 1
+        context["capability_event"] = payload
+        return {
+            "status_code": response.status_code,
+            "json": payload,
+            "capability_event": {
+                **(payload if isinstance(payload, dict) else {}),
+                "capability_id": capability_id,
+            },
+        }
+
     async def _fetch_episode_trace(self, context: dict[str, Any]) -> dict[str, Any]:
         episode_id = _require_context(context, "episode_id")
         response = await self._request("GET", f"/api/runtime/episodes/{episode_id}")
         payload = _json_or_empty(response)
         context["episode_trace"] = payload
         self._update_runtime_metrics_from_trace(payload)
-        return {"status_code": response.status_code, "json": payload, "episode_trace": payload}
+        event_types = [
+            item.get("event_type")
+            for item in (payload.get("events") or [])
+            if isinstance(item, dict) and item.get("event_type")
+        ] if isinstance(payload, dict) else []
+        return {
+            "status_code": response.status_code,
+            "json": payload,
+            "episode_trace": payload,
+            "episode_trace_event_types": event_types,
+        }
 
     async def _fetch_verification_report(self, context: dict[str, Any]) -> dict[str, Any]:
         episode_id = _require_context(context, "episode_id")

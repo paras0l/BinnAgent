@@ -220,6 +220,78 @@ BUILTIN_SCENARIOS: dict[str, SimulationScenario] = {
             ),
         ],
     ),
+    "daily_lesson_capability_recommendation": SimulationScenario(
+        id="daily_lesson_capability_recommendation",
+        name="Daily lesson recommends an Explore capability",
+        persona_id="grade7_low_vocab",
+        steps=[
+            SimulationStep(
+                name="create_learner",
+                action="create_learner",
+                assertions=[{"type": "exists", "path": "json.id"}],
+            ),
+            SimulationStep(
+                name="daily_plan",
+                action="daily_plan",
+                assertions=[
+                    {"type": "status_code", "path": "status_code", "equals": 200},
+                    {"type": "exists", "path": "recommendation_plan.tasks.0.task_spec"},
+                ],
+            ),
+            SimulationStep(
+                name="start_daily_lesson",
+                action="start_daily_lesson",
+                assertions=[
+                    {"type": "exists", "path": "daily_lesson.episode_id"},
+                    {"type": "equals", "path": "daily_lesson.answer_required", "value": True},
+                ],
+            ),
+            SimulationStep(
+                name="submit_grammar_mistake",
+                action="submit_daily_lesson_answer",
+                payload={"answer": "I good morning."},
+                assertions=[
+                    {"type": "equals", "path": "answer.status", "value": "completed"},
+                    {"type": "not_empty", "path": "answer.next_capability_recommendations"},
+                    {
+                        "type": "equals",
+                        "path": "answer.next_capability_recommendations.0.capability_id",
+                        "value": "grammar-explain",
+                    },
+                ],
+            ),
+            SimulationStep(
+                name="click_recommendation",
+                action="click_capability_recommendation",
+                payload={"capability_id": "grammar-explain"},
+                assertions=[
+                    {"type": "status_code", "path": "status_code", "equals": 200},
+                    {
+                        "type": "equals",
+                        "path": "capability_event.event_type",
+                        "value": "explore_capability_clicked",
+                    },
+                    {
+                        "type": "equals",
+                        "path": "capability_event.capability_id",
+                        "value": "grammar-explain",
+                    },
+                ],
+            ),
+            SimulationStep(
+                name="fetch_episode_trace",
+                action="fetch_episode_trace",
+                assertions=[
+                    {"type": "equals", "path": "episode_trace.episode.status", "value": "completed"},
+                    {
+                        "type": "contains",
+                        "path": "episode_trace_event_types",
+                        "value": "explore_capability_recommended",
+                    },
+                ],
+            ),
+        ],
+    ),
     "daily_lesson_checkpoint_resume": SimulationScenario(
         id="daily_lesson_checkpoint_resume",
         name="Daily lesson checkpoint resume",

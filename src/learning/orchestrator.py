@@ -17,6 +17,8 @@ from src.api.knowledge import (
 from src.evidence.resolver import evidence_from_attempt, evidence_from_memory_event
 from src.evidence.types import EvidenceRef
 from src.exercises import ExerciseAttemptService
+from src.explore.recommender import ExploreCapabilityRecommender
+from src.explore.schemas import ExploreRecommendationContext
 from src.graph.checkpoint_store import GraphCheckpointStore
 from src.graph.main_graph import daily_lesson_graph
 from src.knowledge.exercise_grader import answer_to_text, grade_exercise_answer
@@ -576,6 +578,60 @@ class LearningOrchestrator:
             episode=episode,
             verification_report=verification_report,
         )
+        next_capability_recommendations: list[dict[str, Any]] = []
+        try:
+            recommendations = await ExploreCapabilityRecommender(self.db).recommend_for_daily_lesson(
+                ExploreRecommendationContext(
+                    learner_id=uuid.UUID(str(learner_id)),
+                    episode_id=episode.id,
+                    task_spec=task_spec.model_dump(mode="json"),
+                    knowledge_point_id=(
+                        str(question.knowledge_point_id) if question.knowledge_point_id else None
+                    ),
+                    knowledge_point_title=question.stem,
+                    learning_skill="grammar"
+                    if (grading.get("error_type") or "").startswith("grammar")
+                    else "knowledge",
+                    subskill=question.question_type,
+                    grading_result=grading,
+                    mastery_update=mastery_update,
+                    evidence_refs=evidence_refs,
+                    metadata={
+                        "verification_status": verification_report.get("status"),
+                        "question_id": str(question.id),
+                    },
+                )
+            )
+            next_capability_recommendations = [
+                item.model_dump(mode="json") for item in recommendations
+            ]
+            if next_capability_recommendations:
+                await _append_daily_event(
+                    runtime,
+                    runtime_events,
+                    episode=episode,
+                    learner_id=uuid.UUID(str(learner_id)),
+                    event_type="explore_capability_recommended",
+                    target_type=target_type,
+                    target_id=target_id,
+                    payload={
+                        "recommendations": next_capability_recommendations,
+                        "candidate_count": len(next_capability_recommendations),
+                        "source": next_capability_recommendations[0].get("source", "rule"),
+                        "evidence_refs": evidence_refs,
+                    },
+                )
+        except Exception as exc:
+            await _append_daily_event(
+                runtime,
+                runtime_events,
+                episode=episode,
+                learner_id=uuid.UUID(str(learner_id)),
+                event_type="explore_capability_recommendation_failed",
+                target_type=target_type,
+                target_id=target_id,
+                payload={"warning": str(exc), "evidence_refs": evidence_refs},
+            )
         await checkpoint_store.mark_completed(checkpoint.id)
         completion_snapshot = dict(episode.context_snapshot or {})
         completion_snapshot["checkpoint_status"] = "completed"
@@ -589,6 +645,7 @@ class LearningOrchestrator:
             "memory_updates": memory_updates,
             "verification_status": verification_report.get("status"),
             "next_recommendation": None,
+            "next_capability_recommendations": next_capability_recommendations,
             "episode_id": str(episode.id),
             "status": episode.status,
             "checkpoint_status": "completed",

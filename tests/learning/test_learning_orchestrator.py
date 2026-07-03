@@ -194,6 +194,7 @@ async def test_submit_daily_lesson_answer_completes_existing_episode():
             _one(question),
             _one(checkpoint),
             _one(None),
+            _many([]),
             _one(checkpoint),
         ]
     )
@@ -208,6 +209,8 @@ async def test_submit_daily_lesson_answer_completes_existing_episode():
     assert result["episode_id"] == str(episode.id)
     assert result["verification_status"] == "passed"
     assert result["checkpoint_status"] == "completed"
+    assert result["next_capability_recommendations"]
+    assert result["next_capability_recommendations"][0]["capability_id"] == "grammar-explain"
     assert episode.status == "completed"
     assert checkpoint.status == "completed"
 
