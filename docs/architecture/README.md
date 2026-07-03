@@ -28,6 +28,8 @@
 | [13-current-scope-and-status.md](./13-current-scope-and-status.md) | 当前实现状态、产品线边界和 issue 落地表 |
 | [textbook-parsing-audit.md](./textbook-parsing-audit.md) | 教材解析链路审计、风险和治理改造结论 |
 | [textbook-parsing-quality.md](./textbook-parsing-quality.md) | ParserRun、ParserQualityReport、TextbookQualityScore 和发布门禁契约 |
+| [textbook-parser-evaluation-audit.md](./textbook-parser-evaluation-audit.md) | Parser profile、fixture、质量报告和 golden eval 的当前边界审计 |
+| [textbook-parser-evaluation.md](./textbook-parser-evaluation.md) | Golden dataset、parser evaluation CLI、指标、baseline 和 threshold gate 使用说明 |
 | [textbook-parsing-dev-console-audit.md](./textbook-parsing-dev-console-audit.md) | Dev Console Textbook Parsing Report、ParserRun、Review Queue 和 Evidence 查询入口审计 |
 | [textbook-review-queue-audit.md](./textbook-review-queue-audit.md) | ParserReviewItem 队列、旧 requires_review 兼容和发布门禁闭环 |
 

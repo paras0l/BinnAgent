@@ -48,6 +48,17 @@
 
 这些指标只依赖解析结果、profile、知识点内容和 chunk 切分，便于单元测试和 simulation 回归。
 
+## Golden Parser Evaluation
+
+本批新增离线 golden dataset 评估，用于检查 parser 是否仍命中已知正确样例：
+
+- golden 数据位于 `books/golden/`，当前 profile 为 `pep_grade7_upper`。
+- baseline 位于 `var/parser_eval/baselines/pep_grade7_upper.json`。
+- CLI 为 `scripts/evaluate_textbook_parser.py`，支持 `--json`、`--all`、`--fail-on-threshold`、`--fail-on-regression` 和 `--update-baseline`。
+- 指标覆盖单元标题、单元顺序、词汇 precision/recall/core hit、语法/短语/练习 recall、来源页准确率、重复率、脏 token 率和 review_required precision。
+
+Golden evaluation 不替代 `ParserQualityReport`。前者用于回归已知答案，后者用于每次 ingest 的质量治理和发布门禁。详细用法见 [Textbook Parser Evaluation](./textbook-parser-evaluation.md)。
+
 ## TextbookQualityScore
 
 `src/knowledge/quality.py` 将报告转换为 deterministic score：

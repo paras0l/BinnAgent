@@ -1,0 +1,26 @@
+{
+  "profile_id": "pep_grade7_upper",
+  "version": 1,
+  "metrics": {
+    "unit_title_exact_match": 1.0,
+    "unit_order_accuracy": 0.75,
+    "vocabulary_recall": 1.0,
+    "core_vocabulary_hit_rate": 1.0,
+    "grammar_topic_recall": 1.0,
+    "phrase_recall": 1.0,
+    "source_page_accuracy": 1.0,
+    "duplicate_rate": 0.0166,
+    "dirty_token_rate": 0.0,
+    "review_required_precision": 1.0
+  },
+  "thresholds": {
+    "unit_title_exact_match": { "min": 1.0 },
+    "vocabulary_recall": { "min": 1.0 },
+    "core_vocabulary_hit_rate": { "min": 1.0 },
+    "grammar_topic_recall": { "min": 1.0 },
+    "phrase_recall": { "min": 1.0 },
+    "source_page_accuracy": { "min": 0.95 },
+    "dirty_token_rate": { "max": 0.02 },
+    "duplicate_rate": { "max": 0.05 }
+  }
+}

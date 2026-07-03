@@ -19,3 +19,7 @@ var/*
 var/simulation/*
 !var/simulation/baselines/
 !var/simulation/baselines/*.json
+!var/parser_eval/
+var/parser_eval/*
+!var/parser_eval/baselines/
+!var/parser_eval/baselines/*.json
