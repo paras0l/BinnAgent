@@ -111,6 +111,9 @@ High-frequency commands:
 - PromptExecutor, Memory, Mastery, and LangGraph changes must add or update regression scenarios when behavior changes.
 - Do not update simulation baselines unless the behavior change has been reviewed and is intentionally accepted.
 - PR descriptions should list impacted simulations, especially for changes under `src/graph/**`, `src/memory/**`, `src/mastery/**`, `src/prompts/**`, and `src/knowledge/**`.
+- Private learner resources must be learner-scoped through current learner / ownership helpers before remote or multi-user use.
+- Prompt changes must update the relevant `eval_set` or explicitly document why no eval fixture is needed.
+- Baselines must never be updated merely to hide a regression.
 
 ## Coding Style & Naming Conventions
 

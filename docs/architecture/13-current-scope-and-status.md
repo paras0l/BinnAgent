@@ -19,6 +19,28 @@
 | CET 备考线 | 设计中 | 7 天计划、阅读训练、写作二改和周报仍主要在架构文档中 |
 | 通用英语陪伴 | 部分实现 | Chat、Memory 摘要、Dashboard 和词汇沉淀已有基础闭环 |
 
+## 核心路线最终收口
+
+| 模块 | 已完成 | 未完成 | 后续计划 | 面试可讲点 |
+|---|---|---|---|---|
+| Learner-scoped isolation | 已新增 current user/current learner dependency、owner 校验和 scoped resource helper；Runtime、Daily Lesson、Memory、Explore、ExerciseAttempt、Debug 高风险路径已加固 | chat、knowledge、vocabulary、writing phrases、reading、dashboard 等部分旧路由仍需继续迁移 | 继续替换直接信任 `learner_id` 的路径，补覆盖剩余 router 的授权测试 | 多用户 Agent 不能只靠前端传 learner_id；学习数据、记忆、trace、推荐都必须有 ownership boundary |
+| LangGraph Daily Lesson Runtime | Daily Lesson 支持 checkpoint / interrupt / resume；等待用户作答时停在 `waiting_user`，answer 后从 `grade_attempt` 恢复并闭合 grading/mastery/memory/review/recommend/verify | 当前主要是单题单 active checkpoint；生产 PostgresSaver 和官方 `interrupt()/Command(resume=...)` 深度集成未完成 | 扩展多步骤 lesson、生产 checkpointer、幂等副作用和更丰富题型 handler | 普通 Agent 一次性生成答案，学习 Agent 必须暂停等待真实用户作答；checkpoint 让学习过程可恢复、可追踪 |
+| ExerciseAttempt → Mastery → Memory → Review → Recommendation | 练习提交可生成 ExerciseAttempt，MasteryEngine 更新掌握度，MemoryWriter 写学习证据，ReviewSchedule 安排复习，RecommendationEngine 推荐下一步 | 多 session 长周期掌握度、更多题型、跨模块推荐排序仍不完整 | 增加真实用户反馈闭环、错因聚合、更多 dashboard 可视化 | 个性化不是“换 prompt”，而是由作答证据驱动掌握度、记忆和复习计划 |
+| Prompt Registry + PromptExecutor + Schema-first | 核心 prompt 已登记 PromptMetadata；PromptExecutor 记录 prompt hash/input hash/schema/model policy；结构化输出支持 schema validation、JSON repair、fallback decision 和 PromptExecutionRecord | vocabulary agent、exercise generation、vocabulary enrichment/detail HTML、graph feedback、essay scoring、dictionary lookup 等仍有直接 model 调用路径 | 分批迁移结构化 LLM 调用，补 eval_set 和 regression scenario | LLM 输出不能直接写关键业务表；先验证 schema，再决定 accepted/review_required/rejected |
+| Langfuse observability boundary | Langfuse 负责 raw prompt/raw output/token/cost/latency；本地 PromptExecutionRecord 只保存业务索引、schema 状态、decision 和 Langfuse reference | Langfuse dashboard 与本地 Dev Console 的跳转/聚合还可增强 | 保持本地隐私面小，补 trace id 深链和业务指标 dashboard | 不重复造 ModelCallLog；把原始观测交给 Langfuse，本地只回答“这个输出能不能写业务数据” |
+| Simulation / Evaluation | `contract` / `integration` / `e2e` mode 分层；contract 可默认跑全量场景；integration 使用 deterministic fake model；impacted simulations 可按改动路径推导；baseline/threshold gate 已有 | integration 独立 test DB、真实 e2e、前端 dashboard 回归仍未完成 | contract 进默认 CI，integration 做 nightly/manual，e2e 做发布前手动回归 | Agent 应用改一处可能影响整条学习链，simulation 是防止 runtime/prompt/memory 退化的安全网 |
+| ParserRun / QualityGate / ReviewQueue | 教材 ingest 记录 ParserRun、ParserQualityReport、TextbookQualityScore、ParserReviewItem；Dev Console 可看 parsing report/evidence/review queue；golden parser evaluation 已有 MVP | layout-aware extractor、OCR、多年级 golden profile、后台 ingest 队列未完成 | 保留为知识冷启动与质量治理，不继续重投入为主线 | 教材解析是知识来源治理，不是产品主卖点；重点是防止低质量知识静默进入学习闭环 |
+| Dev Console Debug | 已有 Learners、Recent Episodes、Graph Runs、Runtime Trace、Tool/Evidence/RAG/Prompt/Verification/Simulation/Textbook Parsing 调试入口；Debug API 默认关闭且需 token | UI polish、trace drill-down、dashboard 聚合仍可加强 | 做演示脚本、截图、关键路径可视化和部署说明 | 复杂 Agent 必须能解释“为什么这么做、用了什么工具、写了什么记忆、哪里失败了” |
+
+## 收口判断
+
+核心面试路线已基本完成。后续不建议继续重投入教材解析；更高收益方向是：
+
+- 真实用户体验与 UI polish。
+- 5–8 分钟稳定 demo script。
+- 部署文档和一键演示数据。
+- 少量关键路径 e2e 和 Dev Console dashboard。
+
 ## 共享底座状态
 
 | 模块 | 状态 | 当前能力 | 下一步 |

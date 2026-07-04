@@ -1,8 +1,18 @@
 # BinnAgent
 
-基于 LangGraph 的英语学习陪伴 Agent 系统。优先落地英语四级、六级备考场景，构建能长期陪伴学习者、持续记录错词错因、动态调整计划并形成复习闭环的 AI 英语私教系统。
+BinnAgent 是面向英语学习场景的个性化 Agent 系统。它不是普通 Chatbot，而是把学习任务编排、用户作答、练习评分、掌握度更新、长期记忆、复习安排、下一步推荐和调试验证串成可追踪、可回归的学习闭环。
 
-**核心闭环**：诊断 → 计划 → 训练 → 反馈 → 复习 → 复盘 → 记忆更新 → 下一次训练
+**核心闭环**：TaskSpec → LangGraph Runtime → ExerciseAttempt → Mastery → Memory → Review → Recommendation → Verification
+
+核心能力包括：
+
+- **LangGraph Runtime**：Daily Lesson 支持 checkpoint / interrupt / resume，等待真实用户作答后再继续评分和反馈。
+- **Memory + Mastery**：用学习证据更新掌握度、错因、复习计划和个性化推荐。
+- **PromptExecutor + Schema-first**：结构化 LLM 输出必须经过 schema validation / repair / fallback decision 后才能进入业务写入。
+- **Simulation / Evaluation**：contract / integration / e2e 分层回归，覆盖学习闭环、Prompt schema、Memory/Mastery 和 Runtime trace。
+- **Dev Console**：集中查看 EpisodeTrace、ToolCall、PromptExecution、VerificationReport、Memory、RAG 和解析质量。
+
+教材解析用于冷启动知识来源和教材线体验，不是项目主卖点；项目主线是“可解释、可验证、可持续个性化”的 Agent Runtime。
 
 ## 快速开始
 
@@ -104,6 +114,9 @@ http://localhost:5174，可在 Learners / Recent Episodes 中直接选择 learne
 - [Simulation / Evaluation Audit](docs/architecture/simulation-evaluation-audit.md)
 - [ExploreCapability Recommendation](docs/explore-capability-recommendation.md)
 - [Agent Runtime / Harness Interview Brief](docs/interview/agent-runtime-harness.md)
+- [Project Interview Bullets](docs/interview/project-bullets.md)
+- [Issue Roadmap Status](docs/project/issue-roadmap-status.md)
+- [Demo Script](docs/demo/demo-script.md)
 - [Memory Architecture v2](docs/memory-architecture-v2.md)
 - [Learner Scope Audit](docs/security/learner_scope_audit.md)
 
@@ -112,7 +125,7 @@ http://localhost:5174，可在 Learners / Recent Episodes 中直接选择 learne
 | 能力 | 状态 |
 |------|------|
 | Chat / Memory / Dashboard | 部分实现，Memory v2 已落地 Retain / Recall / Reflect、LearningEpisode、LearnerModelMemory、TeachingStrategyMemory；普通学习端只展示学习状态摘要，Memory Center 已移入 Dev Console |
-| 教材 Knowledge Base / RAG / Exercises | 部分实现，已支持多教材切换、七年级上/下册解析、八/九年级上传 fallback、ParserRun 审计、ParserQualityReport 指标、ParserReviewItem 队列、TextbookQualityScore 门禁、Golden Dataset + Parser Evaluation MVP、Parser Evidence 查询、Dev Console Textbook Parsing Report、低置信词条人工校对入口、统一 ExerciseItem / ExerciseAttempt 语义和 AI 生成练习可编辑保存 |
+| 教材 Knowledge Base / RAG / Exercises | 部分实现，作为冷启动知识来源；已支持多教材切换、七年级上/下册解析、八/九年级上传 fallback、ParserRun 审计、ParserQualityReport 指标、ParserReviewItem 队列、TextbookQualityScore 门禁、Golden Dataset + Parser Evaluation MVP、Parser Evidence 查询、Dev Console Textbook Parsing Report、低置信词条人工校对入口、统一 ExerciseItem / ExerciseAttempt 语义和 AI 生成练习可编辑保存 |
 | Vocabulary Personal Cards / Practice / Spelling / Word Parts | 部分实现，已新增“词根与词缀”探索入口、四工作区学习页、内置词根词缀库、拆词练习、morphology 前端展示/降级和知识点配套练习验收 |
 | Writing Phrasebook | 基础版已实现 |
 | ExploreCapability 推荐 | 基础版已实现，Explore Tab 入口由后端 registry 统一管理；Daily Lesson 答题后可推荐 ready 学习能力，点击/忽略事件写入 Memory 和 episode trace |
@@ -124,6 +137,10 @@ http://localhost:5174，可在 Learners / Recent Episodes 中直接选择 learne
 | Learner Simulation Agent | Deterministic MVP 已实现，新增 contract/integration/e2e mode 分层、deterministic fake model provider、scenario contract/module_tags、impacted simulation 推导脚本、Agent Runtime 断言增强、metric_groups、baseline comparison、threshold gate、episode runtime knowledge practice、daily_lesson_checkpoint_resume、capability recommendation、verification failure blocks completed status、缺答案不写 memory、mastery 上下行和 LLM JSON repair 回归场景 |
 | CET reading / writing / weekly report | 设计中 |
 | CI backend lint/test + frontend lint/test/build/build:console | 已实现 |
+
+## 当前收口结论
+
+核心面试路线已基本完成：Agent Runtime、PromptExecutor、Memory/Mastery、Simulation、Learner Isolation、Parser Quality 和 Dev Console 已形成可讲、可演示、可回归的工程闭环。后续不建议继续重投入教材解析；优先做真实用户体验、UI polish、demo script、部署文档和少量关键路径 e2e。
 
 ### 前端文档
 
