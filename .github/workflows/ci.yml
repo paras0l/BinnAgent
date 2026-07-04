@@ -42,7 +42,14 @@ jobs:
       - name: Migration smoke
         run: python -m pytest tests/db/test_migrations.py -v
       - name: Pytest
-        run: python -m pytest tests/ -v
+        run: python -m pytest tests/ -v --tb=short --maxfail=20 -ra --junitxml=pytest-results.xml
+      - name: Upload pytest results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-pytest-results
+          path: pytest-results.xml
+          if-no-files-found: ignore
 
   frontend:
     name: Frontend lint and build

@@ -12,8 +12,6 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from src.api import deps
-from src.main import app
 from src.simulation.baseline import (
     compare_report_to_baseline,
     detect_regressions,
@@ -111,6 +109,9 @@ async def _run_one(
                 mode=mode,
             ).run(scenario=scenario, persona=persona)
     if mode == "integration":
+        from src.api import deps
+        from src.main import app
+
         fake_model = DeterministicFakeModelRouter()
         previous = dict(app.dependency_overrides)
         app.dependency_overrides[deps.get_model_router] = lambda: fake_model
