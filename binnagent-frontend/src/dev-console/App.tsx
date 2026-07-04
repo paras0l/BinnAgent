@@ -4,6 +4,7 @@ import {
   BookOpenCheck,
   BrainCircuit,
   Database,
+  ExternalLink,
   FileJson,
   FlaskConical,
   KeyRound,
@@ -137,6 +138,7 @@ function DevConsoleShell({ onClearToken }: { onClearToken: () => void }) {
   const [routeId, setRouteId] = useState<DevConsoleRouteId>(() => routeIdFromLocation())
   const [learner, setLearner] = useState<Learner | null>(() => readLearnerContext())
   const [episodeId, setEpisodeId] = useState<string | null>(() => readEpisodeIdFromLocation())
+  const langfuseUrl = langfuseHomeUrl()
 
   useEffect(() => {
     const handleLocationChange = () => {
@@ -211,6 +213,15 @@ function DevConsoleShell({ onClearToken }: { onClearToken: () => void }) {
               <h1 className="mt-1 text-2xl font-black text-white">Agent Runtime Harness</h1>
             </div>
             <div className="flex flex-wrap gap-2">
+              <a
+                href={langfuseUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-700 bg-slate-900 px-4 py-2.5 text-sm font-bold text-slate-100 transition hover:border-cyan-300 hover:text-cyan-200"
+              >
+                <ExternalLink className="size-4" />
+                Langfuse
+              </a>
               <Button variant="secondary" onClick={onClearToken}>
                 <LockKeyhole className="size-4" />
                 清除 Token
@@ -1030,6 +1041,11 @@ function readLearnerContext(): Learner | null {
     id,
     nickname: localStorage.getItem(DEV_LEARNER_NAME_KEY)?.trim() || 'Dev Learner',
   }
+}
+
+function langfuseHomeUrl() {
+  const configured = import.meta.env.VITE_LANGFUSE_BASE_URL?.trim()
+  return configured || 'http://localhost:3100'
 }
 
 function routeIcon(routeId: DevConsoleRouteId) {

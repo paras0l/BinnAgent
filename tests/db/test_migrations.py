@@ -1,4 +1,37 @@
+import ast
 from pathlib import Path
+
+
+def test_alembic_migrations_have_single_head_revision() -> None:
+    revisions: set[str] = set()
+    parents: set[str] = set()
+
+    for path in Path("alembic/versions").glob("*.py"):
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+        revision = None
+        down_revision = None
+        for node in tree.body:
+            if not isinstance(node, ast.AnnAssign | ast.Assign):
+                continue
+            targets = [node.target] if isinstance(node, ast.AnnAssign) else node.targets
+            target_names = {target.id for target in targets if isinstance(target, ast.Name)}
+            value = node.value
+            if value is None:
+                continue
+            if "revision" in target_names:
+                revision = ast.literal_eval(value)
+            if "down_revision" in target_names:
+                down_revision = ast.literal_eval(value)
+
+        assert isinstance(revision, str), f"{path} is missing revision"
+        revisions.add(revision)
+        if isinstance(down_revision, str):
+            parents.add(down_revision)
+        elif isinstance(down_revision, tuple | list):
+            parents.update(item for item in down_revision if isinstance(item, str))
+
+    heads = revisions - parents
+    assert heads == {"j0e1f2a3b4c5"}
 
 
 def test_initial_migration_enables_pgcrypto_for_gen_random_uuid() -> None:

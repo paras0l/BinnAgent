@@ -1,13 +1,17 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import {
   ArrowLeft,
   ArrowRight,
   BookOpen,
+  BrainCircuit,
   CalendarDays,
+  ClipboardList,
   Clock3,
+  FileText,
   Plus,
   RefreshCw,
   Search,
+  ShieldCheck,
   Target,
   Trash2,
   X,
@@ -23,10 +27,12 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { ErrorState } from '@/components/ui/ErrorState'
 import { LoadingState } from '@/components/ui/LoadingState'
 import { SurfaceCard } from '@/components/ui/SurfaceCard'
-import type { DashboardSummary, Learner, VocabularyListItem } from '@/types'
+import type { DashboardSummary, Learner, MemorySummary, VocabularyListItem } from '@/types'
 import { useToast } from '@/hooks/useToast'
 import type { VocabularyPracticeMode } from '@/pages/VocabularyPracticePage'
 import { VocabularyPracticePage } from '@/pages/VocabularyPracticePage'
+
+type DashboardWorkspace = 'home' | 'vocabulary' | 'profile' | 'records'
 
 interface DashboardPageProps {
   learner: Learner
@@ -37,6 +43,7 @@ interface DashboardPageProps {
 export function DashboardPage({ learner, onOpenDailyLearning, onStartVocabularyPractice }: DashboardPageProps) {
   const { showToast } = useToast()
   const [summary, setSummary] = useState<DashboardSummary | null>(null)
+  const [memorySummary, setMemorySummary] = useState<MemorySummary | null>(null)
   const [currentVocabIndex, setCurrentVocabIndex] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
   const [isReviewing, setIsReviewing] = useState(false)
@@ -50,16 +57,24 @@ export function DashboardPage({ learner, onOpenDailyLearning, onStartVocabularyP
   const [newWord, setNewWord] = useState('')
   const [newPhonetic, setNewPhonetic] = useState('')
   const [newMeaning, setNewMeaning] = useState('')
-  const [activeWorkspace, setActiveWorkspace] = useState<'home' | 'vocabulary'>('home')
+  const [activeWorkspace, setActiveWorkspace] = useState<DashboardWorkspace>('home')
   const [detailItemId, setDetailItemId] = useState<string | null>(null)
 
   const loadDashboard = useCallback(async () => {
     setIsLoading(true)
     try {
-      const response = await fetch(`/api/learners/${learner.id}/dashboard`)
-      if (!response.ok) throw new Error('Failed to load dashboard')
-      const data: DashboardSummary = await response.json()
-      setSummary(data)
+      const [dashboardResult, memoryResult] = await Promise.allSettled([
+        fetchDashboardSummary(learner.id),
+        fetchMemorySummary(learner.id),
+      ])
+      if (dashboardResult.status === 'rejected') throw dashboardResult.reason
+      setSummary(dashboardResult.value)
+      if (memoryResult.status === 'fulfilled') {
+        setMemorySummary(memoryResult.value)
+      } else {
+        console.warn('Memory summary unavailable:', memoryResult.reason)
+        setMemorySummary(null)
+      }
       setCurrentVocabIndex(0)
     } catch (err) {
       console.error('Dashboard error:', err)
@@ -218,8 +233,33 @@ export function DashboardPage({ learner, onOpenDailyLearning, onStartVocabularyP
         learnerName={learner.nickname}
         summary={summary}
         onOpenDailyLearning={onOpenDailyLearning}
-        onOpenVocabulary={() => setActiveWorkspace('vocabulary')}
+        onOpenProfile={() => setActiveWorkspace('profile')}
+        onOpenRecords={() => setActiveWorkspace('records')}
         onStartVocabularyPractice={onStartVocabularyPractice}
+      />
+    )
+  }
+
+  if (activeWorkspace === 'profile') {
+    return (
+      <LearningProfileView
+        learner={learner}
+        summary={summary}
+        memorySummary={memorySummary}
+        onBack={() => setActiveWorkspace('home')}
+        onOpenDailyLearning={onOpenDailyLearning}
+        onOpenRecords={() => setActiveWorkspace('records')}
+      />
+    )
+  }
+
+  if (activeWorkspace === 'records') {
+    return (
+      <LearningRecordsView
+        summary={summary}
+        memorySummary={memorySummary}
+        onBack={() => setActiveWorkspace('home')}
+        onOpenProfile={() => setActiveWorkspace('profile')}
       />
     )
   }
@@ -400,13 +440,15 @@ function LearningCenterHome({
   learnerName,
   summary,
   onOpenDailyLearning,
-  onOpenVocabulary,
+  onOpenProfile,
+  onOpenRecords,
   onStartVocabularyPractice,
 }: {
   learnerName: string
   summary: DashboardSummary
   onOpenDailyLearning: () => void
-  onOpenVocabulary: () => void
+  onOpenProfile: () => void
+  onOpenRecords: () => void
   onStartVocabularyPractice: (mode: VocabularyPracticeMode) => void
 }) {
   const todayPercent = toPercent(summary.today_goal.completed, summary.today_goal.total)
@@ -433,18 +475,18 @@ function LearningCenterHome({
             todayPercent={todayPercent}
             onOpenDailyLearning={onOpenDailyLearning}
           />
-          <ActivityCalendarCard summary={summary} />
+          <ActivityCalendarCard summary={summary} onOpenRecords={onOpenRecords} />
         </section>
 
         <LearningRouteGrid
           summary={summary}
-          onOpenActivity={() => document.getElementById('learning-activity')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+          onOpenProfile={onOpenProfile}
+          onOpenRecords={onOpenRecords}
           onOpenDailyLearning={onOpenDailyLearning}
-          onOpenVocabulary={onOpenVocabulary}
           onStartVocabularyPractice={onStartVocabularyPractice}
         />
 
-        <LearningStatusStrip summary={summary} reasons={focusReasons} />
+        <LearningStatusStrip summary={summary} reasons={focusReasons} onOpenProfile={onOpenProfile} />
     </PageShell>
   )
 }
@@ -492,7 +534,15 @@ function PrimaryLearningRoute({
   )
 }
 
-function ActivityCalendarCard({ summary }: { summary: DashboardSummary }) {
+function ActivityCalendarCard({
+  summary,
+  onOpenRecords,
+  showAction = true,
+}: {
+  summary: DashboardSummary
+  onOpenRecords?: () => void
+  showAction?: boolean
+}) {
   const activity = summary.daily_activity.length > 0 ? summary.daily_activity : []
   const maxLearningAmount = Math.max(...activity.map((item) => item.count), 1)
 
@@ -525,11 +575,13 @@ function ActivityCalendarCard({ summary }: { summary: DashboardSummary }) {
             )
           })}
         </div>
-        <div className="mt-4">
-          <Button variant="secondary" className="w-full justify-between" onClick={() => document.getElementById('learning-activity')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>
-            查看学习记录 <ArrowRight className="size-4" />
-          </Button>
-        </div>
+        {showAction && onOpenRecords ? (
+          <div className="mt-4">
+            <Button variant="secondary" className="w-full justify-between" onClick={onOpenRecords}>
+              查看学习记录 <ArrowRight className="size-4" />
+            </Button>
+          </div>
+        ) : null}
       </SurfaceCard>
     </section>
   )
@@ -537,15 +589,15 @@ function ActivityCalendarCard({ summary }: { summary: DashboardSummary }) {
 
 function LearningRouteGrid({
   summary,
-  onOpenActivity,
+  onOpenProfile,
+  onOpenRecords,
   onOpenDailyLearning,
-  onOpenVocabulary,
   onStartVocabularyPractice,
 }: {
   summary: DashboardSummary
-  onOpenActivity: () => void
+  onOpenProfile: () => void
+  onOpenRecords: () => void
   onOpenDailyLearning: () => void
-  onOpenVocabulary: () => void
   onStartVocabularyPractice: (mode: VocabularyPracticeMode) => void
 }) {
   return (
@@ -572,7 +624,7 @@ function LearningRouteGrid({
         description="查看近期薄弱点，安排下一组短练习。"
         status={summary.error_patterns.length > 0 ? `${summary.error_patterns.length} 类薄弱点` : '暂无明显薄弱点'}
         action="查看"
-        onAction={onOpenVocabulary}
+        onAction={onOpenProfile}
       />
       <LearningRouteCard
         icon={CalendarDays}
@@ -580,7 +632,7 @@ function LearningRouteGrid({
         description="回顾最近 14 天活跃度和学习节奏。"
         status={`${summary.stats.streak_days} 天连续学习`}
         action="查看"
-        onAction={onOpenActivity}
+        onAction={onOpenRecords}
       />
     </section>
   )
@@ -616,19 +668,305 @@ function LearningRouteCard({
   )
 }
 
-function LearningStatusStrip({ summary, reasons }: { summary: DashboardSummary; reasons: string[] }) {
+function LearningStatusStrip({
+  summary,
+  reasons,
+  onOpenProfile,
+}: {
+  summary: DashboardSummary
+  reasons: string[]
+  onOpenProfile: () => void
+}) {
   const leadingReason = reasons[0] ?? '今天从一个小任务开始，保持学习连续性。'
   return (
-    <section className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm shadow-sm sm:flex-row sm:items-center sm:justify-between">
+    <section className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm shadow-sm lg:flex-row lg:items-center lg:justify-between">
       <div className="flex min-w-0 items-start gap-3">
-        <Target className="mt-0.5 size-4 shrink-0 text-primary" />
+        <BrainCircuit className="mt-0.5 size-4 shrink-0 text-primary" />
         <p className="min-w-0 text-slate-600">
-          <span className="font-black text-slate-900">学习状态：</span>{leadingReason}
+          <span className="font-black text-slate-900">我的学习画像：</span>{leadingReason}
         </p>
       </div>
-      <p className="shrink-0 font-bold text-slate-500">正确率 {summary.stats.accuracy}% · 词汇 {summary.stats.total_vocab}</p>
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+        <p className="shrink-0 font-bold text-slate-500">正确率 {summary.stats.accuracy}% · 词汇 {summary.stats.total_vocab}</p>
+        <Button variant="secondary" className="shrink-0" onClick={onOpenProfile}>
+          查看我的学习画像 <ArrowRight className="size-4" />
+        </Button>
+      </div>
     </section>
   )
+}
+
+export function LearningProfileView({
+  learner,
+  summary,
+  memorySummary,
+  onBack,
+  onOpenDailyLearning,
+  onOpenRecords,
+}: {
+  learner: Learner
+  summary: DashboardSummary
+  memorySummary: MemorySummary | null
+  onBack: () => void
+  onOpenDailyLearning: () => void
+  onOpenRecords: () => void
+}) {
+  const reasons = buildFocusReasons(summary)
+  const weaknesses = buildWeaknessList(summary, memorySummary)
+  const recentActivity = memorySummary?.recent_events?.slice(0, 4) ?? []
+  const hasProfileData = weaknesses.length > 0 || recentActivity.length > 0 || summary.stats.total_vocab > 0
+
+  return (
+    <PageShell>
+      <FeatureHero
+        eyebrow="学习画像"
+        title="我的学习画像"
+        description={`${learner.nickname}，这是根据你的练习和复习整理出的学习近况。`}
+        actions={
+          <>
+            <Button variant="secondary" onClick={onBack}><ArrowLeft className="size-4" />返回学习中心</Button>
+            <Button variant="secondary" onClick={onOpenRecords}><ClipboardList className="size-4" />学习记录</Button>
+          </>
+        }
+        stats={[
+          { label: '正确率', value: `${summary.stats.accuracy}%`, tone: summary.stats.accuracy >= 80 ? 'success' : 'primary' },
+          { label: '连续学习', value: `${summary.stats.streak_days} 天` },
+          { label: '词汇量', value: summary.stats.total_vocab },
+          { label: '薄弱点', value: weaknesses.length, tone: weaknesses.length ? 'warning' : 'success' },
+        ]}
+      />
+
+      {!hasProfileData ? (
+        <EmptyState
+          icon={<BrainCircuit className="size-5" />}
+          title="画像正在建立中"
+          description="完成一次今日学习、词汇复习或教材练习后，这里会变得更准确。"
+          action={<Button onClick={onOpenDailyLearning}>开始今日学习</Button>}
+        />
+      ) : null}
+
+      <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="space-y-4">
+          <SurfaceCard>
+            <SectionHeading icon={<Target className="size-4" />} title="当前学习状态摘要" />
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              <ProfileMetric label={summary.today_goal.label} value={`${summary.today_goal.completed}/${summary.today_goal.total}`} />
+              <ProfileMetric label={summary.weekly_goal.label} value={`${summary.weekly_goal.completed}/${summary.weekly_goal.total}`} />
+              <ProfileMetric label="今日待复习" value={`${summary.stats.today_reviews} 个`} />
+              <ProfileMetric label="已掌握词汇" value={`${memorySummary?.stats.mastered_vocab ?? 0} 个`} />
+            </div>
+          </SurfaceCard>
+
+          <SurfaceCard>
+            <SectionHeading icon={<BrainCircuit className="size-4" />} title="主要薄弱点" />
+            {weaknesses.length ? (
+              <div className="mt-4 grid gap-3 md:grid-cols-2">
+                {weaknesses.map((weakness) => (
+                  <div key={weakness.name} className="rounded-lg border border-amber-100 bg-amber-50 p-3">
+                    <p className="font-bold text-amber-950">{weakness.name}</p>
+                    <p className="mt-1 text-sm leading-6 text-amber-800">{weakness.reason}</p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="mt-3 text-sm leading-6 text-slate-500">暂时没有明显薄弱点。继续完成学习任务后，系统会根据错因和练习结果更新这里。</p>
+            )}
+          </SurfaceCard>
+
+          <SurfaceCard>
+            <SectionHeading icon={<FileText className="size-4" />} title="最近表现" />
+            {recentActivity.length ? (
+              <div className="mt-4 space-y-3">
+                {recentActivity.map((event) => (
+                  <EvidenceRow
+                    key={event.id}
+                    title={event.summary}
+                    meta={formatDate(event.occurred_at)}
+                  />
+                ))}
+              </div>
+            ) : (
+              <p className="mt-3 text-sm leading-6 text-slate-500">还没有足够的近期表现记录。完成一次今日学习或词汇练习后会出现在这里。</p>
+            )}
+          </SurfaceCard>
+        </div>
+
+        <aside className="space-y-4">
+          <SurfaceCard>
+            <SectionHeading icon={<BookOpen className="size-4" />} title="能力概览" />
+            <div className="mt-4 space-y-3">
+              <ProfileMetric label="词汇复习" value={`${summary.stats.today_completed_reviews}/${summary.stats.today_reviews + summary.stats.today_completed_reviews}`} />
+              <ProfileMetric label="近期记录" value={`${memorySummary?.recent_sessions.length ?? 0} 条`} />
+              <ProfileMetric label="学习动态" value={`${memorySummary?.recent_events?.length ?? 0} 条`} />
+            </div>
+          </SurfaceCard>
+
+          <SurfaceCard>
+            <SectionHeading icon={<ShieldCheck className="size-4" />} title="下一步建议" />
+            <ul className="mt-3 space-y-2 text-sm leading-6 text-slate-600">
+              {reasons.map((reason) => <li key={reason}>• {reason}</li>)}
+            </ul>
+          </SurfaceCard>
+        </aside>
+      </section>
+    </PageShell>
+  )
+}
+
+export function LearningRecordsView({
+  summary,
+  memorySummary,
+  onBack,
+  onOpenProfile,
+}: {
+  summary: DashboardSummary
+  memorySummary: MemorySummary | null
+  onBack: () => void
+  onOpenProfile: () => void
+}) {
+  const sessions = memorySummary?.recent_sessions ?? []
+  const events = memorySummary?.recent_events ?? []
+  const hasActivity = summary.daily_activity.some((item) => item.count > 0) || sessions.length > 0 || events.length > 0
+
+  return (
+    <PageShell>
+      <FeatureHero
+        eyebrow="学习记录"
+        title="学习记录"
+        description="回顾最近 14 天的学习节奏、练习记录和复习动态。"
+        actions={
+          <>
+            <Button variant="secondary" onClick={onBack}><ArrowLeft className="size-4" />返回学习中心</Button>
+            <Button variant="secondary" onClick={onOpenProfile}><BrainCircuit className="size-4" />我的学习画像</Button>
+          </>
+        }
+        stats={[
+          { label: '连续学习', value: `${summary.stats.streak_days} 天` },
+          { label: '今日完成复习', value: summary.stats.today_completed_reviews, tone: 'success' },
+          { label: '近期记录', value: sessions.length },
+          { label: '学习动态', value: events.length },
+        ]}
+      />
+
+      {!hasActivity ? (
+        <EmptyState
+          icon={<ClipboardList className="size-5" />}
+          title="还没有学习记录"
+          description="完成一次今日学习、词汇复习或教材练习后，这里会显示你的学习日历和近期动态。"
+        />
+      ) : null}
+
+      <section className="grid gap-5 xl:grid-cols-[360px_minmax(0,1fr)]">
+        <ActivityCalendarCard summary={summary} showAction={false} />
+        <SurfaceCard>
+          <SectionHeading icon={<ClipboardList className="size-4" />} title="统计概览" />
+          <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <ProfileMetric label="总词汇" value={summary.stats.total_vocab} />
+            <ProfileMetric label="正确率" value={`${summary.stats.accuracy}%`} />
+            <ProfileMetric label="待复习" value={summary.stats.today_reviews} />
+            <ProfileMetric label="已掌握词汇" value={memorySummary?.stats.mastered_vocab ?? 0} />
+          </div>
+        </SurfaceCard>
+      </section>
+
+      <section className="grid gap-5 xl:grid-cols-2">
+        <SurfaceCard>
+          <SectionHeading icon={<Clock3 className="size-4" />} title="最近学习记录" />
+          {sessions.length ? (
+            <div className="mt-4 space-y-3">
+              {sessions.map((session) => (
+                <EvidenceRow
+                  key={session.id}
+                  title={session.summary ?? '一次学习记录'}
+                  meta={formatDate(session.completed_at) || '进行中'}
+                />
+              ))}
+            </div>
+          ) : (
+            <p className="mt-3 text-sm leading-6 text-slate-500">还没有近期学习记录。</p>
+          )}
+        </SurfaceCard>
+
+        <SurfaceCard>
+          <SectionHeading icon={<FileText className="size-4" />} title="学习动态" />
+          {events.length ? (
+            <div className="mt-4 space-y-3">
+              {events.map((event) => (
+                <EvidenceRow
+                  key={event.id}
+                  title={event.summary}
+                  meta={formatDate(event.occurred_at)}
+                />
+              ))}
+            </div>
+          ) : (
+            <p className="mt-3 text-sm leading-6 text-slate-500">还没有近期学习动态。</p>
+          )}
+        </SurfaceCard>
+      </section>
+    </PageShell>
+  )
+}
+
+function SectionHeading({ icon, title }: { icon: ReactNode; title: string }) {
+  return (
+    <div className="flex items-center gap-2">
+      <span className="text-primary">{icon}</span>
+      <h2 className="text-base font-black text-slate-950">{title}</h2>
+    </div>
+  )
+}
+
+function ProfileMetric({ label, value }: { label: string; value: string | number }) {
+  return (
+    <div className="rounded-lg border border-slate-100 bg-slate-50 p-3">
+      <p className="text-xs font-bold text-slate-500">{label}</p>
+      <p className="mt-1 break-words text-lg font-black text-slate-950">{value}</p>
+    </div>
+  )
+}
+
+function EvidenceRow({
+  title,
+  meta,
+}: {
+  title: string
+  meta: string
+}) {
+  return (
+    <article className="rounded-lg border border-slate-100 bg-slate-50 p-3">
+      <p className="text-sm font-bold leading-6 text-slate-900">{title}</p>
+      <p className="mt-1 text-xs leading-5 text-slate-500">{meta}</p>
+    </article>
+  )
+}
+
+function buildWeaknessList(summary: DashboardSummary, memorySummary: MemorySummary | null) {
+  const fromDashboard = summary.error_patterns.map((pattern) => ({
+    name: pattern.name,
+    reason: `${pattern.count} 次近期记录${pattern.example ? `，例如：${pattern.example}` : ''}`,
+  }))
+  const existing = new Set(fromDashboard.map((item) => item.name))
+  const fromMemory = (memorySummary?.active_weaknesses ?? [])
+    .filter((name) => !existing.has(name))
+    .map((name) => ({
+      name,
+      reason: '最近练习里多次出现，需要优先巩固。',
+    }))
+  return [...fromDashboard, ...fromMemory].slice(0, 6)
+}
+
+// User-facing profile pages intentionally use summary APIs only; raw debug fields stay in Dev Console.
+async function fetchDashboardSummary(learnerId: string) {
+  const response = await fetch(`/api/learners/${learnerId}/dashboard`)
+  if (!response.ok) throw new Error('Failed to load dashboard')
+  return await response.json() as DashboardSummary
+}
+
+async function fetchMemorySummary(learnerId: string) {
+  const response = await fetch(`/api/learners/${learnerId}/memory/summary`)
+  if (!response.ok) throw new Error('Failed to load memory summary')
+  return await response.json() as MemorySummary
 }
 
 function buildFocusReasons(summary: DashboardSummary) {

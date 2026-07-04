@@ -5,6 +5,7 @@ import {
   CheckCircle2,
   Clock3,
   Database,
+  ExternalLink,
   FileJson,
   RefreshCw,
   ShieldCheck,
@@ -227,6 +228,7 @@ export function EpisodeDebugPage({ learner, episodeId }: EpisodeDebugPageProps) 
   const promptExecutions = trace?.prompt_executions ?? graphRun?.prompt_executions ?? []
   const evidenceRefs = trace?.evidence_refs ?? graphRun?.evidence_refs ?? []
   const nodeSummaries = trace?.node_summaries ?? graphRun?.node_summaries ?? []
+  const graphLangfuseTraceId = graphRun?.langfuse_trace_id ?? stringValue(trace?.graph_run?.langfuse_trace_id)
 
   if (isLoading && !trace) {
     return <LoadingState title="正在读取 Episode Trace" description="正在加载 TaskSpec、事件链、工具调用和验证报告..." />
@@ -262,10 +264,13 @@ export function EpisodeDebugPage({ learner, episodeId }: EpisodeDebugPageProps) 
           { label: '验证状态', value: verification?.status ?? 'unknown', tone: verification?.status === 'passed' ? 'success' : 'warning' },
         ]}
         actions={
-          <Button variant="secondary" onClick={() => void loadTrace()}>
-            <RefreshCw className="size-4" />
-            刷新
-          </Button>
+          <>
+            <LangfuseTraceLink traceId={graphLangfuseTraceId} label="Open Langfuse trace" />
+            <Button variant="secondary" onClick={() => void loadTrace()}>
+              <RefreshCw className="size-4" />
+              刷新
+            </Button>
+          </>
         }
       />
 
@@ -302,7 +307,7 @@ export function EpisodeDebugPage({ learner, episodeId }: EpisodeDebugPageProps) 
               <KeyValue label="resume_from" value={graphRun?.resume_from ?? trace.checkpoint?.resume_from ?? 'none'} />
               <KeyValue label="current_task_id" value={graphRun?.current_task_id ?? trace.checkpoint?.current_task_id ?? 'none'} />
               <KeyValue label="answer_required" value={String(Boolean(trace.checkpoint?.answer_required ?? trace.graph_run?.answer_required))} />
-              <KeyValue label="langfuse_trace_id" value={graphRun?.langfuse_trace_id ?? stringValue(trace.graph_run?.langfuse_trace_id)} />
+              <KeyValue label="langfuse_trace_id" value={graphLangfuseTraceId} />
             </div>
             {trace.checkpoint ? (
               <div className="mt-4 grid gap-3 lg:grid-cols-2">
@@ -405,7 +410,9 @@ export function EpisodeDebugPage({ learner, episodeId }: EpisodeDebugPageProps) 
                         <td className="px-3 py-3 text-slate-600">{String(item.repair_used)}</td>
                         <td className="px-3 py-3 text-slate-600">{String(item.fallback_used)}</td>
                         <td className="px-3 py-3 text-slate-600">{item.decision}</td>
-                        <td className="px-3 py-3 font-mono text-xs text-slate-500">{item.langfuse_trace_id ?? 'none'}</td>
+                        <td className="px-3 py-3 font-mono text-xs text-slate-500">
+                          <LangfuseTraceLink traceId={item.langfuse_trace_id} compact />
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -578,6 +585,45 @@ function EmptyLine({ text }: { text: string }) {
   return <p className="mt-4 rounded-lg bg-slate-50 px-3 py-3 text-sm text-slate-500">{text}</p>
 }
 
+function LangfuseTraceLink({
+  traceId,
+  label = 'Langfuse',
+  compact = false,
+}: {
+  traceId?: string | null
+  label?: string
+  compact?: boolean
+}) {
+  const url = langfuseTraceUrl(traceId)
+  if (!traceId || traceId === 'none') return <span>none</span>
+  if (!url) return <span>{traceId}</span>
+  return (
+    <a
+      href={url}
+      target="_blank"
+      rel="noreferrer"
+      className={
+        compact
+          ? 'inline-flex items-center gap-1 text-cyan-700 underline underline-offset-2'
+          : 'inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 shadow-sm transition hover:border-cyan-300 hover:text-cyan-700'
+      }
+      title={traceId}
+    >
+      <ExternalLink className="size-4" />
+      {compact ? shortHash(traceId) : label}
+    </a>
+  )
+}
+
+function langfuseTraceUrl(traceId?: string | null) {
+  const id = traceId?.trim()
+  if (!id || id === 'none') return null
+  const template = import.meta.env.VITE_LANGFUSE_TRACE_URL_TEMPLATE?.trim()
+  if (template) return template.replace('{traceId}', encodeURIComponent(id))
+  const base = import.meta.env.VITE_LANGFUSE_BASE_URL?.trim() || 'http://localhost:3100'
+  return `${base.replace(/\/$/, '')}/trace/${encodeURIComponent(id)}`
+}
+
 function formatDate(value?: string | null) {
   if (!value) return 'none'
   const date = new Date(value)
@@ -610,7 +656,7 @@ function isUuidLike(value: string) {
 
 function stringValue(value: unknown) {
   if (value === null || value === undefined) return null
-  return typeof value === 'string' || typeof value === 'number' ? value : String(value)
+  return String(value)
 }
 
 function checkCardClass(check: VerificationCheck) {
