@@ -31,7 +31,7 @@ def test_alembic_migrations_have_single_head_revision() -> None:
             parents.update(item for item in down_revision if isinstance(item, str))
 
     heads = revisions - parents
-    assert heads == {"j0e1f2a3b4c5"}
+    assert heads == {"k1f2a3b4c5d6"}
 
 
 def test_initial_migration_enables_pgcrypto_for_gen_random_uuid() -> None:
@@ -210,6 +210,15 @@ def test_prompt_execution_records_migration_stores_business_indexes_only() -> No
     assert "model_policy_snapshot" in migration
     assert "raw_prompt" not in migration
     assert "raw_output" not in migration
+
+
+def test_parser_run_progress_migration_adds_stage_and_progress() -> None:
+    migration = Path("alembic/versions/k1f2a3b4c5d6_add_parser_run_progress.py").read_text()
+
+    assert '"parser_runs"' in migration
+    assert '"stage"' in migration
+    assert '"progress"' in migration
+    assert "queued" in migration
     assert "token" not in migration
     assert "cost" not in migration
     assert "latency" not in migration

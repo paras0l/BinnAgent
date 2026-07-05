@@ -52,4 +52,7 @@ def test_quality_score_fails_scanned_or_failed_parser_runs() -> None:
     failed = score_textbook_quality(_healthy_report(), parser_failed=True)
 
     assert scanned.status == "failed"
+    assert scanned.blocking_reasons == [
+        "PDF appears to be scanned and has no usable text layer."
+    ]
     assert failed.status == "failed"

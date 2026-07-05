@@ -795,7 +795,78 @@ def _known_knowledge(source_id: uuid.UUID, node_id: uuid.UUID, title: str) -> li
     ]
 
 
-async def process_uploaded_textbook(db: AsyncSession, source: KnowledgeSource) -> ParsedTextbook:
+async def _load_or_create_parser_run(
+    db: AsyncSession,
+    *,
+    source: KnowledgeSource,
+    parser_run_id: uuid.UUID | None,
+    parser_profile_id: str | None,
+    book_manifest_id: str | None,
+    input_hash: str | None,
+) -> ParserRun:
+    if parser_run_id is not None:
+        result = await db.execute(select(ParserRun).where(ParserRun.id == parser_run_id))
+        parser_run = result.scalar_one_or_none()
+        if parser_run is None:
+            raise ValueError("ParserRun not found")
+        parser_run.parser_profile_id = parser_profile_id
+        parser_run.book_manifest_id = book_manifest_id
+        parser_run.pdf_sha256 = source.sha256
+        parser_run.input_hash = input_hash
+        return parser_run
+    parser_run = ParserRun(
+        source_id=source.id,
+        parser_id="pypdf+manifest-profile",
+        parser_version="v1",
+        parser_profile_id=parser_profile_id,
+        book_manifest_id=book_manifest_id,
+        pdf_sha256=source.sha256,
+        input_hash=input_hash,
+        status="running",
+        stage="queued",
+        progress=0,
+        started_at=datetime.now(timezone.utc),
+        artifact_refs={},
+    )
+    db.add(parser_run)
+    return parser_run
+
+
+async def _set_parser_progress(
+    db: AsyncSession,
+    source: KnowledgeSource,
+    parser_run: ParserRun,
+    *,
+    status: str | None = None,
+    stage: str,
+    progress: int,
+) -> None:
+    if status is not None:
+        parser_run.status = status
+    parser_run.stage = stage
+    parser_run.progress = max(0, min(100, progress))
+    if parser_run.status == "running":
+        source.status = "processing"
+    metadata = dict(source.metadata_ or {})
+    metadata.update(
+        {
+            "latest_parser_run_id": str(parser_run.id),
+            "processing_status": parser_run.status,
+            "parser_status": parser_run.status,
+            "parser_stage": parser_run.stage,
+            "parser_progress": parser_run.progress,
+        }
+    )
+    source.metadata_ = metadata
+    await db.flush()
+
+
+async def process_uploaded_textbook(
+    db: AsyncSession,
+    source: KnowledgeSource,
+    *,
+    parser_run_id: uuid.UUID | None = None,
+) -> ParsedTextbook:
     if not source.object_key:
         raise ValueError("Knowledge source has no stored PDF")
     path = Path(source.object_key)
@@ -804,31 +875,37 @@ async def process_uploaded_textbook(db: AsyncSession, source: KnowledgeSource) -
         if local_path.exists():
             path = local_path
     manifest, parser_profile = profile_for_source(source.filename)
-    parser_run = ParserRun(
-        source_id=source.id,
-        parser_id="pypdf+manifest-profile",
-        parser_version="v1",
+    parser_run = await _load_or_create_parser_run(
+        db,
+        source=source,
+        parser_run_id=parser_run_id,
         parser_profile_id=parser_profile.id if parser_profile else None,
         book_manifest_id=manifest.id if manifest else None,
-        pdf_sha256=source.sha256,
         input_hash=_file_sha256(path) if path.exists() else source.sha256,
-        status="running",
-        started_at=datetime.now(timezone.utc),
-        artifact_refs={},
     )
-    db.add(parser_run)
     await db.flush()
-    parser_run_id = str(parser_run.id)
+    parser_run_id_str = str(parser_run.id)
+    await _set_parser_progress(
+        db,
+        source,
+        parser_run,
+        status="running",
+        stage="extracting_text",
+        progress=5,
+    )
     source.metadata_ = {
         **(source.metadata_ or {}),
-        "latest_parser_run_id": parser_run_id,
+        "latest_parser_run_id": parser_run_id_str,
         "parser_status": "running",
+        "processing_status": "running",
     }
 
     try:
         parsed = await asyncio.to_thread(_parse_pdf, path)
+        await _set_parser_progress(db, source, parser_run, stage="detecting_structure", progress=20)
         reader = PdfReader(path)
         vocabulary_entries = await asyncio.to_thread(lambda: _parse_unit_vocabulary(reader))
+        await _set_parser_progress(db, source, parser_run, stage="extracting_vocabulary", progress=35)
         is_grade7_upper = "七年级上册" in source.filename
         is_grade7_lower = "七年级下册" in source.filename
         if not vocabulary_entries and is_grade7_lower:
@@ -869,6 +946,7 @@ async def process_uploaded_textbook(db: AsyncSession, source: KnowledgeSource) -
         await db.execute(delete(KnowledgePoint).where(KnowledgePoint.source_id == source.id))
         await db.execute(delete(KnowledgeChunk).where(KnowledgeChunk.source_id == source.id))
         await db.execute(delete(CurriculumNode).where(CurriculumNode.source_id == source.id))
+        await _set_parser_progress(db, source, parser_run, stage="building_knowledge", progress=50)
 
         nodes: list[CurriculumNode] = []
         for ordinal, unit in enumerate(parsed.units, start=1):
@@ -932,7 +1010,7 @@ async def process_uploaded_textbook(db: AsyncSession, source: KnowledgeSource) -
             )
         for point in knowledge_points:
             content = dict(point.content or {})
-            content["parser_run_id"] = parser_run_id
+            content["parser_run_id"] = parser_run_id_str
             content.setdefault("source_page", point.source_page)
             content.setdefault("confidence", content.get("confidence", 0.8))
             content.setdefault("warnings", content.get("warnings", []))
@@ -949,14 +1027,16 @@ async def process_uploaded_textbook(db: AsyncSession, source: KnowledgeSource) -
             for page_number, page_text in enumerate(page_texts, start=1)
             if split_text(page_text)
         }
+        await _set_parser_progress(db, source, parser_run, stage="building_index", progress=70)
         chunk_count = await build_chunks(
             db,
             source,
             page_texts,
             nodes,
             model_router,
-            parser_run_id=parser_run_id,
+            parser_run_id=parser_run_id_str,
         )
+        await _set_parser_progress(db, source, parser_run, stage="quality_checking", progress=85)
         rag_metadata = source.metadata_ or {}
         section_count = (
             len(notes)
@@ -992,8 +1072,10 @@ async def process_uploaded_textbook(db: AsyncSession, source: KnowledgeSource) -
         source.page_count = parsed.page_count
         source.unit_count = len(nodes)
         source.knowledge_count = len(knowledge_points)
-        source.status = quality_score.status
+        source.status = "failed" if quality_score.status == "failed" else "completed"
         parser_run.status = "completed"
+        parser_run.stage = "completed"
+        parser_run.progress = 100
         parser_run.completed_at = datetime.now(timezone.utc)
         parser_run.quality_report = report_dict
         parser_run.quality_score = quality_score.to_dict()
@@ -1006,8 +1088,9 @@ async def process_uploaded_textbook(db: AsyncSession, source: KnowledgeSource) -
         source.metadata_ = {
             **rag_metadata,
             "stage": "validated",
-            "latest_parser_run_id": parser_run_id,
+            "latest_parser_run_id": parser_run_id_str,
             "parser_status": parser_run.status,
+            "processing_status": parser_run.status,
             "text_char_count": parsed.text_char_count,
             "book_manifest_id": manifest.id if manifest else None,
             "parser_profile": parser_profile.id if parser_profile else None,
@@ -1029,6 +1112,8 @@ async def process_uploaded_textbook(db: AsyncSession, source: KnowledgeSource) -
         return parsed
     except Exception as exc:
         parser_run.status = "failed"
+        parser_run.stage = "failed"
+        parser_run.progress = max(parser_run.progress or 0, 1)
         parser_run.completed_at = datetime.now(timezone.utc)
         parser_run.error_message = str(exc)[:500]
         failed_report = {
@@ -1044,12 +1129,13 @@ async def process_uploaded_textbook(db: AsyncSession, source: KnowledgeSource) -
         failed_score = score_textbook_quality(failed_report, parser_failed=True)
         parser_run.quality_report = failed_report
         parser_run.quality_score = failed_score.to_dict()
-        source.status = failed_score.status
+        source.status = "failed"
         source.metadata_ = {
             **(source.metadata_ or {}),
             "stage": "failed",
-            "latest_parser_run_id": parser_run_id,
+            "latest_parser_run_id": parser_run_id_str,
             "parser_status": "failed",
+            "processing_status": "failed",
             "error": str(exc)[:500],
             "parser_report": failed_report,
             **quality_summary(failed_score, failed_report),

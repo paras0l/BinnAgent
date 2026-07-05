@@ -131,6 +131,26 @@ export interface KnowledgeParserEvidence {
   report: Record<string, unknown>
 }
 
+export interface ParserReportSummary {
+  page_count?: number | null
+  text_char_count?: number | null
+  unit_count?: number | null
+  rag_chunk_count?: number | null
+  is_scanned_pdf_suspected?: boolean | null
+  has_text_layer?: boolean | null
+  [key: string]: unknown
+}
+
+export interface FailedKnowledgeSourceDetail {
+  source_id?: string
+  title?: string
+  filename?: string
+  status?: string
+  quality_status?: string | null
+  blocking_reasons?: string[]
+  parser_report_summary?: ParserReportSummary
+}
+
 export interface DailyLessonPart {
   id: string
   title: string
@@ -207,6 +227,38 @@ export interface KnowledgeUploadResult {
   source_id: string
   filename: string
   status: 'uploaded' | 'processing'
+  message: string
+}
+
+export interface KnowledgeIngestResult {
+  source_id: string
+  parser_run_id?: string | null
+  status: string
+  processing_status?: string | null
+  page_count: number
+  unit_count: number
+  knowledge_count: number
+  message: string
+  quality_status?: string | null
+  availability_status?: string | null
+  blocking_reasons?: string[]
+  parser_report_summary?: ParserReportSummary
+}
+
+export interface KnowledgeIngestStatus {
+  source_id: string
+  parser_run_id?: string | null
+  processing_status: string
+  stage: string
+  progress: number
+  quality_status?: string | null
+  availability_status: string
+  blocking_reasons: string[]
+  warnings: string[]
+  parser_report_summary: ParserReportSummary
+  error_message?: string | null
+  can_open_knowledge_base: boolean
+  next_action: 'wait' | 'review' | 'upload_text_pdf' | 'open_knowledge_base'
   message: string
 }
 

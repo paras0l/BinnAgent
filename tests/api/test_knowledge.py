@@ -5,6 +5,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
+from src.api import knowledge as knowledge_api
 from src.api import deps
 from src.config import settings
 from src.main import app
@@ -16,6 +17,7 @@ from src.models.knowledge import (
     KnowledgePoint,
     KnowledgeSource,
     LearnerKnowledgeState,
+    ParserRun,
 )
 from src.models.session import LearningSession, LearningTask
 from src.models.vocabulary import ReviewSchedule
@@ -206,6 +208,42 @@ async def test_overview_can_select_source_id(client, knowledge_session):
 
 
 @pytest.mark.asyncio
+async def test_overview_does_not_load_failed_source_but_returns_failure_detail(
+    client,
+    knowledge_session,
+):
+    learner_id = uuid.uuid4()
+    failed_source = _source()
+    failed_source.status = "failed"
+    failed_source.owner_learner_id = learner_id
+    failed_source.metadata_ = {
+        "quality_status": "failed",
+        "blocking_reasons": ["PDF appears to be scanned and has no usable text layer."],
+        "parser_report_summary": {
+            "page_count": 12,
+            "text_char_count": 0,
+            "unit_count": 0,
+            "rag_chunk_count": 0,
+        },
+    }
+    knowledge_session.execute = AsyncMock(
+        side_effect=[
+            _one(learner_id),
+            _many([]),
+            _one(failed_source),
+        ]
+    )
+
+    response = await client.get(f"/api/learners/{learner_id}/knowledge-base")
+
+    assert response.status_code == 404
+    detail = response.json()["detail"]
+    assert detail["failed_source"]["source_id"] == str(failed_source.id)
+    assert detail["failed_source"]["quality_status"] == "failed"
+    assert "PDF appears to be scanned" in detail["failed_source"]["blocking_reasons"][0]
+
+
+@pytest.mark.asyncio
 async def test_overview_exposes_parser_review_queue(client, knowledge_session):
     learner_id = uuid.uuid4()
     source = _source()
@@ -304,7 +342,8 @@ async def test_review_knowledge_point_confirms_and_publishes(client, knowledge_s
     assert point.summary == "电话；电话机。"
     assert point.source_page == "P.104"
     assert point.content["review_decision"] == "updated"
-    assert source.status == "published"
+    assert source.status == "completed"
+    assert source.metadata_["quality_status"] == "published"
 
 
 @pytest.mark.asyncio
@@ -473,6 +512,95 @@ async def test_upload_does_not_reuse_private_duplicate_from_other_learner(
     )
     assert created.owner_learner_id == learner_id
     assert created.id != duplicate.id
+
+
+@pytest.mark.asyncio
+async def test_ingest_returns_202_and_creates_queued_parser_run(
+    client,
+    knowledge_session,
+    monkeypatch,
+):
+    learner_id = uuid.uuid4()
+    source = _source()
+    source.status = "uploaded"
+    source.owner_learner_id = learner_id
+    scheduled: list[tuple[uuid.UUID, uuid.UUID]] = []
+
+    def fake_schedule(background_tasks, *, source_id, parser_run_id):
+        scheduled.append((source_id, parser_run_id))
+
+    monkeypatch.setattr(knowledge_api, "_schedule_ingest_background_task", fake_schedule)
+    knowledge_session.execute = AsyncMock(side_effect=[_one(learner_id), _one(source), _one(None)])
+
+    response = await client.post(
+        f"/api/knowledge/sources/{source.id}/ingest?learner_id={learner_id}"
+    )
+
+    assert response.status_code == 202
+    payload = response.json()
+    parser_run = next(item for item in knowledge_session.added_objects if isinstance(item, ParserRun))
+    assert payload["parser_run_id"] == str(parser_run.id)
+    assert payload["processing_status"] == "queued"
+    assert payload["availability_status"] == "unavailable"
+    assert payload["message"] == "教材已进入后台解析，请稍后查看进度。"
+    assert parser_run.status == "queued"
+    assert parser_run.stage == "queued"
+    assert parser_run.progress == 0
+    assert source.status == "queued"
+    assert source.metadata_["latest_parser_run_id"] == str(parser_run.id)
+    assert scheduled == [(source.id, parser_run.id)]
+
+
+@pytest.mark.asyncio
+async def test_ingest_status_returns_failed_scanned_pdf_diagnostics(client, knowledge_session):
+    learner_id = uuid.uuid4()
+    source = _source()
+    source.status = "failed"
+    source.owner_learner_id = learner_id
+    source.metadata_ = {
+        "quality_status": "failed",
+        "availability_status": "unavailable",
+        "blocking_reasons": ["PDF appears to be scanned and has no usable text layer."],
+        "parser_report_summary": {
+            "page_count": 12,
+            "text_char_count": 0,
+            "unit_count": 0,
+            "rag_chunk_count": 0,
+            "is_scanned_pdf_suspected": True,
+        },
+    }
+    parser_run = ParserRun(
+        source_id=source.id,
+        parser_id="pypdf+manifest-profile",
+        parser_version="v1",
+        status="completed",
+        stage="completed",
+        progress=100,
+        started_at=datetime.now(timezone.utc),
+        completed_at=datetime.now(timezone.utc),
+        quality_report={"warnings": []},
+        quality_score={"status": "failed"},
+    )
+    parser_run.id = uuid.uuid4()
+    knowledge_session.execute = AsyncMock(
+        side_effect=[_one(learner_id), _one(source), _one(parser_run)]
+    )
+
+    response = await client.get(
+        f"/api/knowledge/sources/{source.id}/ingest-status?learner_id={learner_id}"
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["processing_status"] == "completed"
+    assert payload["stage"] == "completed"
+    assert payload["progress"] == 100
+    assert payload["quality_status"] == "failed"
+    assert payload["availability_status"] == "unavailable"
+    assert payload["can_open_knowledge_base"] is False
+    assert payload["next_action"] == "upload_text_pdf"
+    assert "当前版本不支持扫描版 PDF/OCR" in payload["message"]
+    assert payload["parser_report_summary"]["text_char_count"] == 0
 
 
 def test_knowledge_migration_creates_source_graph_and_memory_tables() -> None:

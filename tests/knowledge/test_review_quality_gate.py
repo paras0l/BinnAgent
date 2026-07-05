@@ -56,7 +56,9 @@ def test_pending_blocker_prevents_published_status() -> None:
 
     apply_quality_gate(source, summary=queue_summary([_item(source.id, severity="blocker")]))
 
-    assert source.status == "blocked"
+    assert source.status == "completed"
+    assert source.metadata_["quality_status"] == "blocked"
+    assert source.metadata_["availability_status"] == "unavailable"
     assert source.metadata_["pending_review_count"] == 1
     assert source.metadata_["pending_blocker_count"] == 1
     assert "Parser review blockers are still pending." in source.metadata_["blocking_reasons"]
@@ -70,6 +72,8 @@ def test_source_publishes_when_pending_review_queue_is_empty_and_report_is_healt
         summary=queue_summary([_item(source.id, severity="blocker", decision="confirmed")]),
     )
 
-    assert source.status == "published"
+    assert source.status == "completed"
+    assert source.metadata_["quality_status"] == "published"
+    assert source.metadata_["availability_status"] == "available"
     assert source.metadata_["pending_review_count"] == 0
     assert source.metadata_["pending_blocker_count"] == 0

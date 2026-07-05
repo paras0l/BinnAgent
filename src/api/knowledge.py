@@ -5,7 +5,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Literal
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request, status
 from pydantic import BaseModel, Field
 from sqlalchemy import and_, case, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -13,13 +13,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.api.deps import get_db_session
 from src.knowledge.exercise_grader import answer_to_text, grade_exercise_answer
 from src.config import settings
+from src.db import async_session_factory
 from src.evidence.resolver import evidence_from_attempt, evidence_from_memory_event
 from src.evidence.types import EvidenceRef
 from src.exercises import ExerciseAttemptService
 from src.exercises.item_mapper import exercise_question_to_item
 from src.knowledge.exercises import ensure_unit_exercises
 from src.knowledge.processor import process_uploaded_textbook
-from src.knowledge.quality import quality_summary, score_textbook_quality
+from src.knowledge.quality import availability_status_for_quality, quality_summary, score_textbook_quality
 from src.knowledge.rag import retrieve_chunks
 from src.knowledge.review_queue import (
     apply_quality_gate,
@@ -42,6 +43,7 @@ from src.models.knowledge import (
     KnowledgeSource,
     LearnerKnowledgeState,
     ParserReviewItem,
+    ParserRun,
 )
 from src.models.learner import Learner
 from src.models.session import LearningSession, LearningTask
@@ -105,10 +107,33 @@ class UploadResponse(BaseModel):
 
 class IngestResponse(BaseModel):
     source_id: uuid.UUID
+    parser_run_id: uuid.UUID | None = None
     status: str
-    page_count: int
-    unit_count: int
-    knowledge_count: int
+    processing_status: str | None = None
+    page_count: int = 0
+    unit_count: int = 0
+    knowledge_count: int = 0
+    message: str
+    quality_status: str | None = None
+    availability_status: str | None = None
+    blocking_reasons: list[str] = Field(default_factory=list)
+    parser_report_summary: dict[str, Any] = Field(default_factory=dict)
+
+
+class IngestStatusResponse(BaseModel):
+    source_id: uuid.UUID
+    parser_run_id: uuid.UUID | None = None
+    processing_status: str
+    stage: str
+    progress: int
+    quality_status: str | None = None
+    availability_status: str
+    blocking_reasons: list[str] = Field(default_factory=list)
+    warnings: list[str] = Field(default_factory=list)
+    parser_report_summary: dict[str, Any] = Field(default_factory=dict)
+    error_message: str | None = None
+    can_open_knowledge_base: bool
+    next_action: Literal["wait", "review", "upload_text_pdf", "open_knowledge_base"]
     message: str
 
 
@@ -185,12 +210,21 @@ def _source_parser_payload(source: KnowledgeSource) -> dict[str, Any]:
 
 def _source_quality_payload(source: KnowledgeSource) -> dict[str, Any]:
     metadata = source.metadata_ or {}
+    quality_score = metadata.get("quality_score") if isinstance(metadata.get("quality_score"), dict) else {}
+    quality_status = metadata.get("quality_status")
+    if not quality_status and source.status in {"published", "review_required", "partial_indexed", "blocked"}:
+        quality_status = source.status
+    availability_status = metadata.get("availability_status")
+    if not availability_status and quality_status:
+        availability_status = availability_status_for_quality(str(quality_status))
     return {
         "latest_parser_run_id": metadata.get("latest_parser_run_id"),
         "parser_status": metadata.get("parser_status"),
+        "processing_status": metadata.get("processing_status") or source.status,
         "quality_score": metadata.get("quality_score"),
-        "quality_status": metadata.get("quality_status") or source.status,
-        "blocking_reasons": metadata.get("blocking_reasons") or [],
+        "quality_status": quality_status,
+        "availability_status": availability_status or "unavailable",
+        "blocking_reasons": metadata.get("blocking_reasons") or quality_score.get("blocking_reasons") or [],
         "pending_review_count": int(metadata.get("pending_review_count") or 0),
         "pending_blocker_count": int(metadata.get("pending_blocker_count") or 0),
         "review_warning_count": int(metadata.get("review_warning_count") or 0),
@@ -243,7 +277,7 @@ def _source_payload(
         "unit_count": source.unit_count,
         "knowledge_count": source.knowledge_count,
         "progress": progress,
-        "requires_review": source.status == "review_required"
+        "requires_review": _quality_status_for_source(source) == "review_required"
         if requires_review is None
         else requires_review,
         "page_count": source.page_count,
@@ -270,7 +304,7 @@ def _recalculate_source_quality_gate(source: KnowledgeSource, pending_review_cou
     metadata["parser_report"] = report
     metadata.update(quality_summary(score, report))
     source.metadata_ = metadata
-    source.status = score.status
+    source.status = "completed"
 
 
 def _review_queue_item_payload(item: ParserReviewItem) -> dict[str, Any]:
@@ -299,6 +333,7 @@ def _source_quality_summary_payload(source: KnowledgeSource) -> dict[str, Any]:
         "title": source.title,
         "status": source.status,
         "quality_status": quality.get("quality_status"),
+        "availability_status": quality.get("availability_status"),
         "overall_score": score.get("overall_score"),
         "parser_status": quality.get("parser_status"),
         "latest_parser_run_id": quality.get("latest_parser_run_id"),
@@ -306,7 +341,136 @@ def _source_quality_summary_payload(source: KnowledgeSource) -> dict[str, Any]:
         "pending_blocker_count": quality.get("pending_blocker_count"),
         "review_warning_count": quality.get("review_warning_count"),
         "blocking_reasons": quality.get("blocking_reasons"),
+        "parser_report_summary": quality.get("parser_report_summary"),
     }
+
+
+def _recent_failed_source_detail(source: KnowledgeSource | None) -> dict[str, Any] | None:
+    if source is None:
+        return None
+    quality = _source_quality_payload(source)
+    return {
+        "source_id": str(source.id),
+        "title": source.title,
+        "filename": source.filename,
+        "status": source.status,
+        "quality_status": quality.get("quality_status"),
+        "blocking_reasons": quality.get("blocking_reasons") or [],
+        "parser_report_summary": quality.get("parser_report_summary") or {},
+    }
+
+
+def _availability_for_source(source: KnowledgeSource) -> str:
+    return str(_source_quality_payload(source).get("availability_status") or "unavailable")
+
+
+def _quality_status_for_source(source: KnowledgeSource) -> str:
+    return str(_source_quality_payload(source).get("quality_status") or "pending")
+
+
+def _source_can_open(source: KnowledgeSource) -> bool:
+    return _availability_for_source(source) in {"available", "partially_available", "needs_review"}
+
+
+def _ingest_message(status_value: str, blocking_reasons: list[str]) -> str:
+    messages = {
+        "published": "教材解析完成，知识库已可用。",
+        "review_required": "教材解析完成，但需要校对后使用。",
+        "partial_indexed": "教材部分解析完成，可先使用部分内容。",
+        "blocked": "教材解析完成，但存在阻断问题，请查看解析报告。",
+        "failed": "教材解析失败或 PDF 文本层不可用，知识库暂不可用，请查看失败原因。",
+    }
+    message = messages.get(status_value, f"教材解析完成，当前状态：{status_value}。")
+    if status_value == "failed" and _has_scanned_text_layer_reason(blocking_reasons):
+        message += " 当前版本不支持扫描版 PDF/OCR，请换成可复制文字的 PDF。"
+    return message
+
+
+def _has_scanned_text_layer_reason(blocking_reasons: list[str]) -> bool:
+    joined = " ".join(blocking_reasons).casefold()
+    return any(token in joined for token in ("scanned", "no usable text layer", "text layer", "ocr"))
+
+
+def _ingest_response(source: KnowledgeSource, page_count: int) -> IngestResponse:
+    quality = _source_quality_payload(source)
+    raw_quality_status = quality.get("quality_status")
+    quality_status = str(raw_quality_status) if raw_quality_status else None
+    availability_status = str(
+        quality.get("availability_status")
+        or (availability_status_for_quality(quality_status) if quality_status else "unavailable")
+    )
+    blocking_reasons = list(quality.get("blocking_reasons") or [])
+    parser_report_summary = dict(quality.get("parser_report_summary") or {})
+    latest_parser_run_id = quality.get("latest_parser_run_id")
+    return IngestResponse(
+        source_id=source.id,
+        parser_run_id=uuid.UUID(str(latest_parser_run_id)) if latest_parser_run_id else None,
+        status=source.status,
+        processing_status=str(quality.get("processing_status") or source.status),
+        page_count=page_count,
+        unit_count=source.unit_count,
+        knowledge_count=source.knowledge_count,
+        message=_ingest_message(quality_status or source.status, blocking_reasons),
+        quality_status=quality_status,
+        availability_status=availability_status,
+        blocking_reasons=blocking_reasons,
+        parser_report_summary=parser_report_summary,
+    )
+
+
+def _status_message(payload: IngestStatusResponse) -> str:
+    if payload.processing_status in {"queued", "running"}:
+        return "教材正在后台解析，请稍后查看进度。"
+    if payload.processing_status == "failed" or payload.quality_status == "failed":
+        return _ingest_message("failed", payload.blocking_reasons)
+    if payload.next_action == "review":
+        return "教材解析完成，但需要校对后使用。"
+    if payload.can_open_knowledge_base:
+        return "教材解析完成，知识库已可用。"
+    return "教材暂不可用，请查看失败原因。"
+
+
+def _ingest_status_payload(source: KnowledgeSource, parser_run: ParserRun | None) -> IngestStatusResponse:
+    quality = _source_quality_payload(source)
+    quality_status = str(quality.get("quality_status") or "pending")
+    availability_status = str(quality.get("availability_status") or "unavailable")
+    parser_report_summary = dict(quality.get("parser_report_summary") or {})
+    report = parser_run.quality_report if parser_run and isinstance(parser_run.quality_report, dict) else {}
+    warnings = list(parser_report_summary.get("warnings") or report.get("warnings") or [])
+    blocking_reasons = list(quality.get("blocking_reasons") or [])
+    processing_status = parser_run.status if parser_run else str(quality.get("processing_status") or source.status)
+    stage = parser_run.stage if parser_run else str((source.metadata_ or {}).get("parser_stage") or processing_status)
+    progress = int(parser_run.progress if parser_run else (source.metadata_ or {}).get("parser_progress") or 0)
+    can_open = availability_status in {"available", "partially_available", "needs_review"}
+    next_action: Literal["wait", "review", "upload_text_pdf", "open_knowledge_base"]
+    if processing_status in {"queued", "running"}:
+        next_action = "wait"
+    elif quality_status == "failed" or _has_scanned_text_layer_reason(blocking_reasons):
+        next_action = "upload_text_pdf"
+    elif availability_status == "needs_review":
+        next_action = "review"
+    elif can_open:
+        next_action = "open_knowledge_base"
+    else:
+        next_action = "upload_text_pdf"
+    payload = IngestStatusResponse(
+        source_id=source.id,
+        parser_run_id=parser_run.id if parser_run else None,
+        processing_status=processing_status,
+        stage=stage,
+        progress=progress,
+        quality_status=quality_status,
+        availability_status=availability_status,
+        blocking_reasons=blocking_reasons,
+        warnings=warnings,
+        parser_report_summary=parser_report_summary,
+        error_message=parser_run.error_message if parser_run else (source.metadata_ or {}).get("error"),
+        can_open_knowledge_base=can_open,
+        next_action=next_action,
+        message="",
+    )
+    payload.message = _status_message(payload)
+    return payload
 
 
 def _ensure_source_review_access(source: KnowledgeSource, learner_id: uuid.UUID) -> None:
@@ -486,8 +650,14 @@ async def knowledge_base_overview(
     db: AsyncSession = Depends(get_db_session),
 ) -> dict[str, Any]:
     await _ensure_learner(db, learner_id)
+    available_status_filter = or_(
+        KnowledgeSource.metadata_["availability_status"].as_string().in_(
+            ["available", "partially_available", "needs_review"]
+        ),
+        KnowledgeSource.status.in_(["published", "review_required", "partial_indexed"]),
+    )
     source_filter = and_(
-        KnowledgeSource.status.in_(["published", "review_required", "partial_indexed", "blocked"]),
+        available_status_filter,
         or_(
             KnowledgeSource.owner_learner_id == learner_id,
             KnowledgeSource.visibility == "public",
@@ -506,7 +676,26 @@ async def knowledge_base_overview(
     else:
         source = available_sources[0] if available_sources else None
     if source is None:
-        raise HTTPException(status_code=404, detail="Published textbook not found")
+        failed_result = await db.execute(
+            select(KnowledgeSource)
+            .where(
+                KnowledgeSource.status == "failed",
+                or_(
+                    KnowledgeSource.owner_learner_id == learner_id,
+                    KnowledgeSource.visibility == "public",
+                ),
+            )
+            .order_by(KnowledgeSource.created_at.desc().nullslast(), KnowledgeSource.title.asc())
+            .limit(1)
+        )
+        failed_source = failed_result.scalar_one_or_none()
+        raise HTTPException(
+            status_code=404,
+            detail={
+                "message": "Published textbook not found",
+                "failed_source": _recent_failed_source_detail(failed_source),
+            },
+        )
 
     source_result = await db.execute(
         select(KnowledgeSource)
@@ -620,10 +809,10 @@ async def knowledge_base_overview(
         "source": _source_payload(
             source,
             progress=progress,
-            requires_review=source.status == "review_required" or bool(review_points),
+            requires_review=_quality_status_for_source(source) == "review_required" or bool(review_points),
         ),
         "sources": [
-            _source_payload(item, requires_review=item.status == "review_required")
+            _source_payload(item, requires_review=_quality_status_for_source(item) == "review_required")
             for item in available_sources
         ],
         "curriculum": [
@@ -680,7 +869,7 @@ async def knowledge_base_overview(
             for point in points
         ],
         "review": {
-            "requires_review": source.status == "review_required" or bool(review_points),
+            "requires_review": _quality_status_for_source(source) == "review_required" or bool(review_points),
             "pending_count": len(review_points),
             "low_confidence_count": sum(
                 1 for point in review_points if ((point.content or {}).get("confidence") or 1) < 0.75
@@ -1343,9 +1532,124 @@ async def upload_knowledge_source(
     )
 
 
-@router.post("/api/knowledge/sources/{source_id}/ingest", response_model=IngestResponse)
+async def _latest_parser_run(db: AsyncSession, source_id: uuid.UUID) -> ParserRun | None:
+    result = await db.execute(
+        select(ParserRun)
+        .where(ParserRun.source_id == source_id)
+        .order_by(ParserRun.started_at.desc())
+        .limit(1)
+    )
+    return result.scalar_one_or_none()
+
+
+async def _active_parser_run(db: AsyncSession, source_id: uuid.UUID) -> ParserRun | None:
+    result = await db.execute(
+        select(ParserRun)
+        .where(ParserRun.source_id == source_id, ParserRun.status.in_(["queued", "running"]))
+        .order_by(ParserRun.started_at.desc())
+        .limit(1)
+    )
+    return result.scalar_one_or_none()
+
+
+async def _create_queued_parser_run(db: AsyncSession, source: KnowledgeSource) -> ParserRun:
+    parser_run = ParserRun(
+        source_id=source.id,
+        parser_id="pypdf+manifest-profile",
+        parser_version="v1",
+        parser_profile_id=None,
+        book_manifest_id=None,
+        pdf_sha256=source.sha256,
+        input_hash=source.sha256,
+        status="queued",
+        stage="queued",
+        progress=0,
+        started_at=datetime.now(timezone.utc),
+        artifact_refs={},
+    )
+    db.add(parser_run)
+    await db.flush()
+    metadata = dict(source.metadata_ or {})
+    metadata.update(
+        {
+            "latest_parser_run_id": str(parser_run.id),
+            "processing_status": "queued",
+            "parser_status": "queued",
+            "parser_stage": "queued",
+            "parser_progress": 0,
+            "availability_status": metadata.get("availability_status") or "unavailable",
+        }
+    )
+    source.metadata_ = metadata
+    source.status = "queued"
+    await db.flush()
+    return parser_run
+
+
+def _schedule_ingest_background_task(
+    background_tasks: BackgroundTasks,
+    *,
+    source_id: uuid.UUID,
+    parser_run_id: uuid.UUID,
+) -> None:
+    background_tasks.add_task(_run_ingest_background, source_id, parser_run_id)
+
+
+async def _run_ingest_background(source_id: uuid.UUID, parser_run_id: uuid.UUID) -> None:
+    async with async_session_factory() as db:
+        try:
+            result = await db.execute(select(KnowledgeSource).where(KnowledgeSource.id == source_id))
+            source = result.scalar_one_or_none()
+            if source is None:
+                return
+            await process_uploaded_textbook(db, source, parser_run_id=parser_run_id)
+            await db.commit()
+        except Exception as exc:
+            await db.rollback()
+            async with async_session_factory() as failure_db:
+                result = await failure_db.execute(select(KnowledgeSource).where(KnowledgeSource.id == source_id))
+                source = result.scalar_one_or_none()
+                run_result = await failure_db.execute(select(ParserRun).where(ParserRun.id == parser_run_id))
+                parser_run = run_result.scalar_one_or_none()
+                if parser_run is not None:
+                    parser_run.status = "failed"
+                    parser_run.stage = "failed"
+                    parser_run.progress = max(parser_run.progress or 0, 1)
+                    parser_run.error_message = str(exc)[:500]
+                    parser_run.completed_at = datetime.now(timezone.utc)
+                if source is not None:
+                    metadata = dict(source.metadata_ or {})
+                    failed_report = {
+                        "unit_count": 0,
+                        "warnings": [str(exc)[:500]],
+                    }
+                    failed_score = score_textbook_quality(failed_report, parser_failed=True)
+                    metadata.update(
+                        {
+                            "stage": "failed",
+                            "latest_parser_run_id": str(parser_run_id),
+                            "processing_status": "failed",
+                            "parser_status": "failed",
+                            "parser_stage": "failed",
+                            "parser_progress": parser_run.progress if parser_run else 1,
+                            "error": str(exc)[:500],
+                            "parser_report": failed_report,
+                            **quality_summary(failed_score, failed_report),
+                        }
+                    )
+                    source.status = "failed"
+                    source.metadata_ = metadata
+                await failure_db.commit()
+
+
+@router.post(
+    "/api/knowledge/sources/{source_id}/ingest",
+    response_model=IngestResponse,
+    status_code=status.HTTP_202_ACCEPTED,
+)
 async def ingest_knowledge_source(
     source_id: uuid.UUID,
+    background_tasks: BackgroundTasks,
     learner_id: uuid.UUID = Query(),
     db: AsyncSession = Depends(get_db_session),
 ) -> IngestResponse:
@@ -1356,31 +1660,39 @@ async def ingest_knowledge_source(
         raise HTTPException(status_code=404, detail="教材不存在")
     if source.owner_learner_id not in (None, learner_id):
         raise HTTPException(status_code=403, detail="无权处理该教材")
-    if source.status == "published":
-        return IngestResponse(
+    active_run = await _active_parser_run(db, source.id)
+    parser_run = active_run or await _create_queued_parser_run(db, source)
+    if active_run is None:
+        _schedule_ingest_background_task(
+            background_tasks,
             source_id=source.id,
-            status=source.status,
-            page_count=source.page_count or 0,
-            unit_count=source.unit_count,
-            knowledge_count=source.knowledge_count,
-            message="已复用发布中的教材知识。",
+            parser_run_id=parser_run.id,
         )
-    try:
-        source.status = "processing"
-        await db.flush()
-        parsed = await process_uploaded_textbook(db, source)
-    except Exception as exc:
-        source.status = "failed"
-        source.metadata_ = {**(source.metadata_ or {}), "stage": "failed", "error": str(exc)[:500]}
-        raise HTTPException(status_code=422, detail="PDF 解析失败，请检查文件或稍后重试") from exc
-    return IngestResponse(
-        source_id=source.id,
-        status=source.status,
-        page_count=parsed.page_count,
-        unit_count=source.unit_count,
-        knowledge_count=source.knowledge_count,
-        message=f"教材解析完成，质量状态：{source.status}。",
-    )
+    response = _ingest_response(source, source.page_count or 0)
+    response.parser_run_id = parser_run.id
+    response.processing_status = parser_run.status
+    response.message = "教材已进入后台解析，请稍后查看进度。"
+    return response
+
+
+@router.get(
+    "/api/knowledge/sources/{source_id}/ingest-status",
+    response_model=IngestStatusResponse,
+)
+async def get_ingest_status(
+    source_id: uuid.UUID,
+    learner_id: uuid.UUID = Query(),
+    db: AsyncSession = Depends(get_db_session),
+) -> IngestStatusResponse:
+    await _ensure_learner(db, learner_id)
+    result = await db.execute(select(KnowledgeSource).where(KnowledgeSource.id == source_id))
+    source = result.scalar_one_or_none()
+    if source is None:
+        raise HTTPException(status_code=404, detail="教材不存在")
+    if source.owner_learner_id not in (None, learner_id):
+        raise HTTPException(status_code=403, detail="无权查看该教材")
+    parser_run = await _latest_parser_run(db, source.id)
+    return _ingest_status_payload(source, parser_run)
 
 
 @router.get("/api/knowledge/search")

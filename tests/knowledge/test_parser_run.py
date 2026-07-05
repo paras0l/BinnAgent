@@ -97,11 +97,14 @@ async def test_process_uploaded_textbook_records_completed_parser_run(
     knowledge_point = next(item for item in db.added_objects if isinstance(item, KnowledgePoint))
     assert parsed.page_count == 1
     assert parser_run.status == "completed"
+    assert parser_run.stage == "completed"
+    assert parser_run.progress == 100
     assert parser_run.quality_report["page_count"] == 1
     assert parser_run.quality_score["status"] == "published"
     assert source.metadata_["latest_parser_run_id"] == str(parser_run.id)
     assert source.metadata_["quality_status"] == "published"
-    assert source.status == "published"
+    assert source.metadata_["availability_status"] == "available"
+    assert source.status == "completed"
     assert knowledge_point.content["parser_run_id"] == str(parser_run.id)
     assert processor.build_chunks.await_args.kwargs["parser_run_id"] == str(parser_run.id)
 
@@ -128,6 +131,7 @@ async def test_process_uploaded_textbook_marks_parser_run_failed(
 
     parser_run = next(item for item in db.added_objects if isinstance(item, ParserRun))
     assert parser_run.status == "failed"
+    assert parser_run.stage == "failed"
     assert parser_run.error_message == "broken pdf"
     assert parser_run.quality_score["status"] == "failed"
     assert source.status == "failed"

@@ -169,7 +169,7 @@ async def test_confirm_review_item_updates_decision_and_target(client, review_ap
     assert item.decision == "confirmed"
     assert point.content["requires_review"] is False
     assert point.content["review_decision"] == "confirmed"
-    assert source.status == "published"
+    assert source.status == "completed"
     assert response.json()["source_quality_summary"]["quality_status"] == "published"
 
 

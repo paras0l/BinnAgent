@@ -1,4 +1,4 @@
-import { FileText, LoaderCircle, UploadCloud, X } from 'lucide-react'
+import { AlertCircle, FileText, LoaderCircle, UploadCloud, X } from 'lucide-react'
 import { useRef, useState } from 'react'
 
 interface UploadTextbookDialogProps {
@@ -72,7 +72,7 @@ export function UploadTextbookDialog({ open, onClose, onUpload }: UploadTextbook
             setError(null)
           }}
         />
-        {error ? <p className="mt-3 text-sm font-semibold text-red-600">{error}</p> : null}
+        {error ? <UploadFailureDetails message={error} /> : null}
 
         <div className="mt-6 flex justify-end gap-3">
           <button type="button" onClick={onClose} disabled={isUploading} className="rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-50">取消</button>
@@ -87,6 +87,24 @@ export function UploadTextbookDialog({ open, onClose, onUpload }: UploadTextbook
           </button>
         </div>
       </section>
+    </div>
+  )
+}
+
+export function UploadFailureDetails({ message }: { message: string }) {
+  const lines = message.split('\n').filter((line) => line.trim().length > 0)
+  return (
+    <div className="mt-3 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+      <div className="flex items-start gap-2">
+        <AlertCircle className="mt-0.5 size-4 shrink-0" />
+        <div className="min-w-0 space-y-1">
+          {lines.map((line, index) => (
+            <p key={`${line}-${index}`} className={line.startsWith('- ') ? 'pl-3' : 'font-semibold'}>
+              {line}
+            </p>
+          ))}
+        </div>
+      </div>
     </div>
   )
 }

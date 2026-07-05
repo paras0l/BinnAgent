@@ -103,7 +103,7 @@ async def test_review_recalculates_quality_gate_to_publish(client, review_sessio
     )
 
     assert response.status_code == 200
-    assert source.status == "published"
+    assert source.status == "completed"
     assert source.metadata_["quality_status"] == "published"
     assert source.metadata_["pending_review_count"] == 0
     assert source.metadata_["parser_report"]["requires_review_count"] == 0
@@ -129,8 +129,9 @@ async def test_review_ignore_cannot_bypass_blocking_quality_reasons(
 
     assert response.status_code == 200
     assert point.status == "ignored"
-    assert source.status == "blocked"
+    assert source.status == "completed"
     assert source.metadata_["quality_status"] == "blocked"
+    assert source.metadata_["availability_status"] == "unavailable"
     assert source.metadata_["blocking_reasons"] == [
         "Source page coverage is too low for safe learning use."
     ]

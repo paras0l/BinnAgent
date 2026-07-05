@@ -147,6 +147,7 @@ def score_textbook_quality(
 def quality_summary(score: TextbookQualityScore, report: dict[str, Any]) -> dict[str, Any]:
     return {
         "quality_status": score.status,
+        "availability_status": availability_status_for_quality(score.status),
         "quality_score": score.to_dict(),
         "blocking_reasons": score.blocking_reasons,
         "pending_review_count": int(report.get("requires_review_count") or 0),
@@ -155,6 +156,8 @@ def quality_summary(score: TextbookQualityScore, report: dict[str, Any]) -> dict
         "parser_report_summary": {
             "page_count": report.get("page_count"),
             "text_char_count": report.get("text_char_count"),
+            "has_text_layer": report.get("has_text_layer"),
+            "is_scanned_pdf_suspected": report.get("is_scanned_pdf_suspected"),
             "unit_count": report.get("unit_count"),
             "expected_unit_count": report.get("expected_unit_count"),
             "vocabulary_entry_count": report.get("vocabulary_entry_count"),
@@ -195,6 +198,16 @@ def _status(
     if _meets_publishing_thresholds(report):
         return "published"
     return "review_required"
+
+
+def availability_status_for_quality(quality_status: str) -> str:
+    if quality_status == "published":
+        return "available"
+    if quality_status == "partial_indexed":
+        return "partially_available"
+    if quality_status == "review_required":
+        return "needs_review"
+    return "unavailable"
 
 
 def _meets_publishing_thresholds(report: dict[str, Any]) -> bool:

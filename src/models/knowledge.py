@@ -67,6 +67,8 @@ class ParserRun(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     pdf_sha256: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
     input_hash: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
     status: Mapped[str] = mapped_column(String(30), nullable=False, default="running", index=True)
+    stage: Mapped[str] = mapped_column(String(40), nullable=False, default="queued")
+    progress: Mapped[int] = mapped_column(SmallInteger, nullable=False, default=0)
     started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     completed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     quality_report: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)

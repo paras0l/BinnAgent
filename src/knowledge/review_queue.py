@@ -209,7 +209,7 @@ def apply_quality_gate(
     metadata["pending_blocker_count"] = summary.pending_blocker_count
     metadata["review_warning_count"] = summary.review_warning_count
     source.metadata_ = metadata
-    source.status = score.status
+    source.status = "completed"
     return report
 
 
