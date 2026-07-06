@@ -1,4 +1,5 @@
-import { Bot, BookOpen, Compass, LogOut, User } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { Bot, BookOpen, ChevronDown, Compass, LogOut, Settings, User } from 'lucide-react'
 import type { AppTab, Learner } from '@/types'
 
 interface HeaderProps {
@@ -6,6 +7,7 @@ interface HeaderProps {
   isLocked?: boolean
   learner: Learner
   onLogout: () => void
+  onOpenLearningSettings: () => void
   onTabChange: (tab: AppTab) => void
 }
 
@@ -14,9 +16,21 @@ export function Header({
   isLocked = false,
   learner,
   onLogout,
+  onOpenLearningSettings,
   onTabChange,
 }: HeaderProps) {
   const isTabDisabled = (tab: AppTab) => isLocked && tab !== 'chat'
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!isMenuOpen) return
+    const onPointerDown = (event: PointerEvent) => {
+      if (!menuRef.current?.contains(event.target as Node)) setIsMenuOpen(false)
+    }
+    window.addEventListener('pointerdown', onPointerDown)
+    return () => window.removeEventListener('pointerdown', onPointerDown)
+  }, [isMenuOpen])
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 h-16 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -67,19 +81,69 @@ export function Header({
             </button>
           </nav>
 
-          <div className="flex items-center gap-2 border-l pl-1 sm:pl-4">
-            <User className="hidden h-4 w-4 text-muted-foreground md:block" />
-            <span className="hidden max-w-28 truncate text-sm font-medium text-foreground md:block">
-              {learner.nickname}
-            </span>
+          <div className="relative border-l pl-1 sm:pl-4" ref={menuRef}>
             <button
-              onClick={onLogout}
-              disabled={isLocked}
-              className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent"
-              title={isLocked ? '回答生成中，请先等待完成或取消' : '切换学习者'}
+              type="button"
+              onClick={() => setIsMenuOpen((value) => !value)}
+              className="inline-flex max-w-44 items-center gap-2 rounded-lg px-2.5 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted active:bg-muted/80 focus-visible:outline-2 focus-visible:outline-primary"
+              aria-expanded={isMenuOpen}
+              aria-haspopup="menu"
             >
-              <LogOut className="h-4 w-4" />
+              <User className="h-4 w-4 text-muted-foreground" />
+              <span className="hidden min-w-0 truncate md:block">{learner.nickname}</span>
+              <ChevronDown className={`h-4 w-4 text-muted-foreground transition ${isMenuOpen ? 'rotate-180' : ''}`} />
             </button>
+
+            {isMenuOpen ? (
+              <div
+                className="absolute right-0 top-[calc(100%+0.5rem)] w-72 rounded-lg border border-slate-200 bg-white p-2 shadow-xl"
+                role="menu"
+              >
+                <div className="border-b border-slate-100 px-3 py-3">
+                  <p className="truncate text-sm font-black text-slate-950">{learner.nickname}</p>
+                  <p className="mt-1 truncate text-xs text-slate-500">
+                    {learner.email ?? `学习者 ID ${learner.id.slice(0, 8)}`}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => {
+                    setIsMenuOpen(false)
+                    onOpenLearningSettings()
+                  }}
+                  className="mt-2 flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-bold text-slate-700 transition hover:bg-slate-50 hover:text-indigo-700 focus-visible:outline-2 focus-visible:outline-primary"
+                >
+                  <Settings className="size-4" />
+                  学习设置
+                </button>
+                <div className="rounded-lg px-3 py-2.5">
+                  <div className="flex items-start gap-3">
+                    <BookOpen className="mt-0.5 size-4 shrink-0 text-slate-400" />
+                    <div className="min-w-0">
+                      <p className="text-sm font-bold text-slate-700">当前学习者摘要</p>
+                      <p className="mt-1 text-xs leading-5 text-slate-500">
+                        学习记录和画像会按当前学习者保存；调试记忆与原始证据在 Dev Console 查看。
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => {
+                    setIsMenuOpen(false)
+                    onLogout()
+                  }}
+                  disabled={isLocked}
+                  className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-bold text-slate-700 transition hover:bg-slate-50 hover:text-rose-600 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-slate-700"
+                  title={isLocked ? '回答生成中，请先等待完成或取消' : '切换学习者'}
+                >
+                  <LogOut className="size-4" />
+                  登出 / 切换学习者
+                </button>
+              </div>
+            ) : null}
           </div>
         </div>
       </div>

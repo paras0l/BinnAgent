@@ -10,6 +10,7 @@ import {
 } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { Learner, WordPartAnalysis } from '@/types'
+import type { LearningPreferences } from '@/hooks/useLearningPreferences'
 import {
   RichVocabularyEntry,
   type BilingualMeaning,
@@ -28,6 +29,7 @@ interface VocabularyPracticePageProps {
   learner: Learner
   initialMode: VocabularyPracticeMode
   curriculumNodeId?: string | null
+  preferences?: LearningPreferences
   sourceLabel?: string | null
   readonlyItemId?: string | null
   readonlyBackLabel?: string
@@ -132,16 +134,19 @@ export function VocabularyPracticePage({
   learner,
   initialMode,
   curriculumNodeId,
+  preferences,
   sourceLabel,
   readonlyItemId,
   readonlyBackLabel = '返回',
   onExit,
 }: VocabularyPracticePageProps) {
   const [mode, setMode] = useState<VocabularyPracticeMode>(initialMode)
-  const [limit, setLimit] = useState(10)
-  const [isCustomLimit, setIsCustomLimit] = useState(false)
-  const [accent, setAccent] = useState<'uk' | 'us' | 'auto'>('uk')
-  const [phase, setPhase] = useState<'setup' | 'loading' | 'practice' | 'summary'>('setup')
+  const [limit, setLimit] = useState(preferences?.defaultLimit ?? 10)
+  const [isCustomLimit, setIsCustomLimit] = useState(!counts.includes(preferences?.defaultLimit ?? 10))
+  const [accent, setAccent] = useState<'uk' | 'us' | 'auto'>(preferences?.pronunciationAccent ?? 'uk')
+  const [phase, setPhase] = useState<'setup' | 'loading' | 'practice' | 'summary'>(
+    preferences?.showSetupBeforePractice === false && !readonlyItemId ? 'loading' : 'setup',
+  )
   const [sessionId, setSessionId] = useState<string | null>(null)
   const [task, setTask] = useState<PracticeTask | null>(null)
   const [answer, setAnswer] = useState('')
@@ -166,11 +171,14 @@ export function VocabularyPracticePage({
   const compositionRef = useRef(false)
   const autoJudgeTimer = useRef<number | null>(null)
   const lastAutoSubmitted = useRef('')
+  const hasAutoStarted = useRef(false)
+  const lastAutoPlayedTaskId = useRef<string | null>(null)
 
   const api = `/api/learners/${learner.id}/vocabulary`
+  const activeCurriculumNodeId = preferences?.scopeUnitVocabularyByDefault === false ? null : curriculumNodeId
 
   const loadAvailableTotal = useCallback((signal?: AbortSignal) => {
-    const url = curriculumNodeId ? `${api}/units/${curriculumNodeId}/summary` : api
+    const url = activeCurriculumNodeId ? `${api}/units/${activeCurriculumNodeId}/summary` : api
     return fetch(url, { signal })
       .then((response) => response.ok ? response.json() as Promise<{ total: number } | Array<{ status: string }>> : null)
       .then((data) => {
@@ -180,7 +188,7 @@ export function VocabularyPracticePage({
       .catch((fetchError: unknown) => {
         if (!(fetchError instanceof DOMException && fetchError.name === 'AbortError')) setAvailableTotal(null)
       })
-  }, [api, curriculumNodeId])
+  }, [activeCurriculumNodeId, api])
 
   const loadTask = useCallback(async (id: string) => {
     const response = await fetch(`${api}/sessions/${id}/next`)
@@ -234,7 +242,7 @@ export function VocabularyPracticePage({
     if (autoJudgeTimer.current !== null) window.clearTimeout(autoJudgeTimer.current)
   }, [])
 
-  const startPractice = async () => {
+  const startPractice = useCallback(async () => {
     setPhase('loading')
     setError(null)
     try {
@@ -245,7 +253,7 @@ export function VocabularyPracticePage({
           mode,
           prompt_mode: mode === 'spelling' ? 'audio' : mode === 'new' ? 'context' : 'meaning',
           accent,
-          curriculum_node_id: curriculumNodeId ?? null,
+          curriculum_node_id: activeCurriculumNodeId ?? null,
           limit: availableTotal ? Math.min(limit, availableTotal) : limit,
         }),
       })
@@ -260,7 +268,7 @@ export function VocabularyPracticePage({
       setError(startError instanceof Error ? startError.message : '练习暂时无法开始。')
       setPhase('setup')
     }
-  }
+  }, [accent, activeCurriculumNodeId, api, availableTotal, limit, loadTask, mode])
 
   const playAudio = useCallback(async (accentOverride?: 'uk' | 'us') => {
     if (!task) return
@@ -297,6 +305,21 @@ export function VocabularyPracticePage({
       }
     }
   }, [accent, feedback, task])
+
+  useEffect(() => {
+    if (readonlyItemId || hasAutoStarted.current || phase !== 'loading') return
+    hasAutoStarted.current = true
+    void startPractice()
+  }, [phase, readonlyItemId, startPractice])
+
+  useEffect(() => {
+    if (!preferences?.autoPlayPronunciation || phase !== 'practice' || !task || feedback) return
+    if (!['review', 'spelling'].includes(mode)) return
+    if (lastAutoPlayedTaskId.current === task.vocabulary_item_id) return
+    lastAutoPlayedTaskId.current = task.vocabulary_item_id
+    const timer = window.setTimeout(() => void playAudio(), 220)
+    return () => window.clearTimeout(timer)
+  }, [feedback, mode, phase, playAudio, preferences?.autoPlayPronunciation, task])
 
   const submitAttempt = async (options?: { reveal?: boolean; rating?: number; answerOverride?: string }) => {
     if (!task || !sessionId || isBusy) return null
@@ -348,6 +371,7 @@ export function VocabularyPracticePage({
       !compositionRef.current &&
       !feedback &&
       !isBusy &&
+      preferences?.autoCheckSpelling !== false &&
       task &&
       value.length === task.answer_length &&
       value !== lastAutoSubmitted.current
@@ -369,7 +393,7 @@ export function VocabularyPracticePage({
     void playAudio()
   }
 
-  const advance = async () => {
+  const advance = useCallback(async () => {
     if (!task || !sessionId || isBusy) return
     setIsBusy(true)
     try {
@@ -391,12 +415,19 @@ export function VocabularyPracticePage({
     } finally {
       setIsBusy(false)
     }
-  }
+  }, [api, isBusy, loadTask, sessionId, task])
 
   const rateAndAdvance = async (rating: 1 | 2 | 3 | 4) => {
     const attempt = await submitAttempt({ rating })
     if (attempt) await advance()
   }
+
+  useEffect(() => {
+    if (!preferences?.autoAdvanceAfterPractice || mode !== 'spelling' || phase !== 'practice') return
+    if (feedback?.result !== 'correct' || isBusy) return
+    const timer = window.setTimeout(() => void advance(), 650)
+    return () => window.clearTimeout(timer)
+  }, [advance, feedback, isBusy, mode, phase, preferences?.autoAdvanceAfterPractice])
 
   const requestHint = async () => {
     if (!sessionId || hintCount >= 3) return
@@ -480,7 +511,7 @@ export function VocabularyPracticePage({
               <Choice selected={mode === 'spelling'} onClick={() => setMode('spelling')}>听音拼写</Choice>
             </SetupGroup>
             <SetupGroup label="词汇来源">
-              <div className="rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm font-bold text-indigo-700">{sourceLabel ?? (curriculumNodeId ? '当前教材单元' : '全部待学词汇')}{availableTotal !== null ? <span className="ml-2 text-indigo-500">共 {availableTotal} 词</span> : null}</div>
+              <div className="rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm font-bold text-indigo-700">{sourceLabel ?? (activeCurriculumNodeId ? '当前教材单元' : '全部待学词汇')}{availableTotal !== null ? <span className="ml-2 text-indigo-500">共 {availableTotal} 词</span> : null}</div>
             </SetupGroup>
             <SetupGroup label="本组数量">
               {counts.filter((count) => availableTotal === null || count <= availableTotal).map((count) => <Choice key={count} selected={!isCustomLimit && limit === count} onClick={() => { setLimit(count); setIsCustomLimit(false) }}>{count} 个</Choice>)}
@@ -586,7 +617,7 @@ export function VocabularyPracticePage({
                       </div>
                     </label>
                     {error ? <p className="mt-4 text-sm font-bold text-amber-700">{error}</p> : null}
-                    <p className={`mt-4 text-xs font-bold ${inputWarning ? 'text-orange-600' : 'text-slate-400'}`}>{inputWarning ?? '请使用英文键盘输入；填满字母后会自动检查。'}</p>
+                    <p className={`mt-4 text-xs font-bold ${inputWarning ? 'text-orange-600' : 'text-slate-400'}`}>{inputWarning ?? (preferences?.autoCheckSpelling === false ? '请使用英文键盘输入；可以按 Enter 或底部按钮检查。' : '请使用英文键盘输入；填满字母后会自动检查。')}</p>
                     {hint ? <p className="mx-auto mt-5 max-w-xl rounded-xl bg-indigo-50 px-4 py-3 text-sm font-semibold text-indigo-800">{hint}</p> : null}
                   </div>
                 )}

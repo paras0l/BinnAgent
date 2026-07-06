@@ -1,0 +1,198 @@
+import { RotateCcw, Settings, X } from 'lucide-react'
+import type { LearningPreferences } from '@/hooks/useLearningPreferences'
+import { Button } from '@/components/ui/Button'
+import { IconButton } from '@/components/ui/IconButton'
+
+interface LearningSettingsDialogProps {
+  open: boolean
+  preferences: LearningPreferences
+  onClose: () => void
+  onReset: () => void
+  onUpdate: (patch: Partial<LearningPreferences>) => void
+}
+
+export function LearningSettingsDialog({
+  open,
+  preferences,
+  onClose,
+  onReset,
+  onUpdate,
+}: LearningSettingsDialogProps) {
+  if (!open) return null
+
+  return (
+    <div className="fixed inset-0 z-[70] flex items-end justify-center bg-slate-950/35 px-3 py-4 sm:items-center">
+      <section className="max-h-[calc(100dvh-2rem)] w-full max-w-2xl overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-2xl">
+        <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-slate-100 bg-white px-5 py-4">
+          <div className="flex min-w-0 items-start gap-3">
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
+              <Settings className="size-5" />
+            </span>
+            <div className="min-w-0">
+              <h2 className="text-lg font-black text-slate-950">学习设置</h2>
+              <p className="mt-1 text-sm leading-6 text-slate-500">
+                设置会即时保存在当前学习者本机，下次进入词汇任务时自动生效。
+              </p>
+            </div>
+          </div>
+          <IconButton label="关闭学习设置" onClick={onClose}>
+            <X className="size-4" />
+          </IconButton>
+        </div>
+
+        <div className="space-y-5 px-5 py-5">
+          <SettingsGroup title="默认词汇练习">
+            <SegmentedChoice
+              label="默认模式"
+              options={[
+                { label: '认识新词', value: 'new' },
+                { label: '今日复习', value: 'review' },
+                { label: '听音拼写', value: 'spelling' },
+              ]}
+              value={preferences.defaultPracticeMode}
+              onChange={(defaultPracticeMode) => onUpdate({ defaultPracticeMode })}
+            />
+            <SegmentedChoice
+              label="默认数量"
+              options={[
+                { label: '5', value: '5' },
+                { label: '10', value: '10' },
+                { label: '15', value: '15' },
+                { label: '20', value: '20' },
+              ]}
+              value={String(preferences.defaultLimit)}
+              onChange={(value) => onUpdate({ defaultLimit: Number(value) })}
+            />
+            <SegmentedChoice
+              label="发音偏好"
+              options={[
+                { label: '英音', value: 'uk' },
+                { label: '美音', value: 'us' },
+                { label: '跟随词典', value: 'auto' },
+              ]}
+              value={preferences.pronunciationAccent}
+              onChange={(pronunciationAccent) => onUpdate({ pronunciationAccent })}
+            />
+          </SettingsGroup>
+
+          <SettingsGroup title="进入任务">
+            <ToggleRow
+              checked={preferences.showSetupBeforePractice}
+              description="关闭后，点击练习入口会按默认设置直接开始。"
+              label="进入练习前显示设置页"
+              onChange={(showSetupBeforePractice) => onUpdate({ showSetupBeforePractice })}
+            />
+            <ToggleRow
+              checked={preferences.scopeUnitVocabularyByDefault}
+              description="从教材单元进入词汇任务时，默认只练当前单元词汇。"
+              label="教材单元词汇限定当前单元"
+              onChange={(scopeUnitVocabularyByDefault) => onUpdate({ scopeUnitVocabularyByDefault })}
+            />
+          </SettingsGroup>
+
+          <SettingsGroup title="练习行为">
+            <ToggleRow
+              checked={preferences.autoPlayPronunciation}
+              description="听写和复习进入新题时自动播放一次发音。"
+              label="自动播放发音"
+              onChange={(autoPlayPronunciation) => onUpdate({ autoPlayPronunciation })}
+            />
+            <ToggleRow
+              checked={preferences.autoCheckSpelling}
+              description="拼写填满目标长度后自动检查。"
+              label="拼写填满后自动检查"
+              onChange={(autoCheckSpelling) => onUpdate({ autoCheckSpelling })}
+            />
+            <ToggleRow
+              checked={preferences.autoAdvanceAfterPractice}
+              description="拼写答对后短暂停留，再进入下一题。"
+              label="答对后自动进入下一题"
+              onChange={(autoAdvanceAfterPractice) => onUpdate({ autoAdvanceAfterPractice })}
+            />
+          </SettingsGroup>
+        </div>
+
+        <div className="flex flex-col-reverse gap-2 border-t border-slate-100 px-5 py-4 sm:flex-row sm:justify-between">
+          <Button variant="secondary" onClick={onReset}>
+            <RotateCcw className="size-4" />
+            恢复默认
+          </Button>
+          <Button onClick={onClose}>完成</Button>
+        </div>
+      </section>
+    </div>
+  )
+}
+
+function SettingsGroup({ children, title }: { children: React.ReactNode; title: string }) {
+  return (
+    <section className="rounded-lg border border-slate-200 p-4">
+      <h3 className="text-sm font-black text-slate-950">{title}</h3>
+      <div className="mt-4 space-y-4">{children}</div>
+    </section>
+  )
+}
+
+function SegmentedChoice<TValue extends string>({
+  label,
+  onChange,
+  options,
+  value,
+}: {
+  label: string
+  options: Array<{ label: string; value: TValue }>
+  value: TValue
+  onChange: (value: TValue) => void
+}) {
+  return (
+    <div className="grid gap-2 sm:grid-cols-[128px_minmax(0,1fr)] sm:items-center">
+      <p className="text-sm font-bold text-slate-700">{label}</p>
+      <div className="grid gap-2 sm:grid-cols-3">
+        {options.map((option) => (
+          <button
+            key={option.value}
+            type="button"
+            onClick={() => onChange(option.value)}
+            className={`rounded-lg border px-3 py-2 text-sm font-bold transition focus-visible:outline-2 focus-visible:outline-primary ${
+              value === option.value
+                ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
+                : 'border-slate-200 bg-white text-slate-600 hover:border-indigo-200 hover:text-indigo-700'
+            }`}
+          >
+            {option.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function ToggleRow({
+  checked,
+  description,
+  label,
+  onChange,
+}: {
+  checked: boolean
+  description: string
+  label: string
+  onChange: (checked: boolean) => void
+}) {
+  return (
+    <label className="grid cursor-pointer gap-3 rounded-lg border border-slate-100 bg-slate-50 p-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+      <span className="min-w-0">
+        <span className="block text-sm font-bold text-slate-900">{label}</span>
+        <span className="mt-1 block text-xs leading-5 text-slate-500">{description}</span>
+      </span>
+      <span className="inline-flex items-center justify-between gap-3 sm:justify-end">
+        <span className="text-xs font-bold text-slate-500">{checked ? '开启' : '关闭'}</span>
+        <input
+          type="checkbox"
+          checked={checked}
+          onChange={(event) => onChange(event.currentTarget.checked)}
+          className="size-5 accent-indigo-600"
+        />
+      </span>
+    </label>
+  )
+}

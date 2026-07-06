@@ -146,7 +146,7 @@ http://localhost:5174，可在 Learners / Recent Episodes 中直接选择 learne
 ### 前端文档
 
 - [Web Frontend](docs/web-frontend.md) — React 前端设计与实现
-- [Frontend Design System](docs/frontend-design-system.md) — Issue #20 UI/UX 统一标准与页面整改清单
+- [Frontend Design System](docs/frontend-design-system.md) — Issue #20/#33 UI/UX 统一标准、用户端入口边界与页面整改清单
 - [ExploreCapability Recommendation](docs/explore-capability-recommendation.md) — Explore 学习能力入口、推荐、Memory 和 trace 事件
 - [Web Frontend Design Spec](docs/superpowers/specs/2026-06-12-web-frontend-design.md) — 详细设计规范
 - [Spelling Training UI/UX](docs/superpowers/specs/2026-06-19-spelling-training-uiux.md) — 拼写训练流程、界面状态与交互规范

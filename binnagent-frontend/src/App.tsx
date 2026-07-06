@@ -1,6 +1,8 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
 import { Header } from './components/layout/Header'
+import { LearningSettingsDialog } from './components/learning/LearningSettingsDialog'
 import { useToast } from './hooks/useToast'
+import { useLearningPreferences } from './hooks/useLearningPreferences'
 import type { VocabularyPracticeMode } from './pages/VocabularyPracticePage'
 import type { AppTab, Learner, PronunciationWorkspace } from './types'
 
@@ -55,6 +57,7 @@ function App() {
   const [chatDraft, setChatDraft] = useState('')
   const [chatSkillFocus, setChatSkillFocus] = useState<string | null>(null)
   const [isChatGenerating, setIsChatGenerating] = useState(false)
+  const [isLearningSettingsOpen, setIsLearningSettingsOpen] = useState(false)
   const [currentLearner, setCurrentLearner] = useState<Learner | null>(() => {
     const cached = localStorage.getItem('binnLearner')
     if (!cached) return null
@@ -67,6 +70,7 @@ function App() {
   const [isRestoringLearner, setIsRestoringLearner] = useState(() =>
     Boolean(localStorage.getItem('binnLearnerId'))
   )
+  const { preferences, resetPreferences, updatePreferences } = useLearningPreferences(currentLearner?.id)
 
   useEffect(() => {
     const learnerId = localStorage.getItem('binnLearnerId')
@@ -155,6 +159,7 @@ function App() {
           learner={currentLearner}
           initialMode={practiceMode}
           curriculumNodeId={practiceNodeId}
+          preferences={preferences}
           sourceLabel={practiceSourceLabel}
           onExit={() => setLearningCenterView(practiceNodeId ? 'daily-learning' : 'home')}
         />
@@ -169,7 +174,15 @@ function App() {
         isLocked={isChatGenerating}
         learner={currentLearner}
         onLogout={handleLogout}
+        onOpenLearningSettings={() => setIsLearningSettingsOpen(true)}
         onTabChange={handleTabChange}
+      />
+      <LearningSettingsDialog
+        open={isLearningSettingsOpen}
+        preferences={preferences}
+        onClose={() => setIsLearningSettingsOpen(false)}
+        onReset={resetPreferences}
+        onUpdate={updatePreferences}
       />
       <main className="pt-16">
         <Suspense fallback={<PageLoadingFallback />}>
@@ -216,7 +229,7 @@ function App() {
               <DashboardPage
                 learner={currentLearner}
                 onOpenDailyLearning={() => setLearningCenterView('daily-learning')}
-                onStartVocabularyPractice={(mode) => openVocabularyPractice(mode)}
+                onStartVocabularyPractice={(mode) => openVocabularyPractice(mode ?? preferences.defaultPracticeMode)}
               />
             )
           )

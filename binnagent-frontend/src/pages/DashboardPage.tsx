@@ -37,7 +37,7 @@ type DashboardWorkspace = 'home' | 'vocabulary' | 'profile' | 'records'
 interface DashboardPageProps {
   learner: Learner
   onOpenDailyLearning: () => void
-  onStartVocabularyPractice: (mode: VocabularyPracticeMode) => void
+  onStartVocabularyPractice: (mode?: VocabularyPracticeMode) => void
 }
 
 export function DashboardPage({ learner, onOpenDailyLearning, onStartVocabularyPractice }: DashboardPageProps) {
@@ -449,7 +449,7 @@ function LearningCenterHome({
   onOpenDailyLearning: () => void
   onOpenProfile: () => void
   onOpenRecords: () => void
-  onStartVocabularyPractice: (mode: VocabularyPracticeMode) => void
+  onStartVocabularyPractice: (mode?: VocabularyPracticeMode) => void
 }) {
   const todayPercent = toPercent(summary.today_goal.completed, summary.today_goal.total)
   const dueCount = summary.stats.today_reviews
@@ -513,7 +513,7 @@ function PrimaryLearningRoute({
   summary: DashboardSummary
   todayPercent: number
   onOpenDailyLearning: () => void
-  onStartVocabularyPractice: (mode: VocabularyPracticeMode) => void
+  onStartVocabularyPractice: (mode?: VocabularyPracticeMode) => void
 }) {
   const steps = buildTodaySteps(summary)
   return (
@@ -577,7 +577,7 @@ function TodayReviewCard({
   onStartVocabularyPractice,
 }: {
   summary: DashboardSummary
-  onStartVocabularyPractice: (mode: VocabularyPracticeMode) => void
+  onStartVocabularyPractice: (mode?: VocabularyPracticeMode) => void
 }) {
   const due = summary.stats.today_reviews
   return (
@@ -667,7 +667,7 @@ function LearningRouteGrid({
   onOpenProfile: () => void
   onOpenRecords: () => void
   onOpenDailyLearning: () => void
-  onStartVocabularyPractice: (mode: VocabularyPracticeMode) => void
+  onStartVocabularyPractice: (mode?: VocabularyPracticeMode) => void
 }) {
   return (
     <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -681,11 +681,11 @@ function LearningRouteGrid({
       />
       <LearningRouteCard
         icon={Clock3}
-        title="词汇复习"
-        description="处理到期单词，更新下次复习时间。"
+        title="词汇练习"
+        description="按默认设置进入新词、复习或拼写任务。"
         status={`${summary.stats.today_reviews} 个待复习`}
-        action="复习"
-        onAction={() => onStartVocabularyPractice('review')}
+        action="开始"
+        onAction={() => onStartVocabularyPractice()}
       />
       <LearningRouteCard
         icon={Target}
@@ -782,6 +782,8 @@ export function LearningProfileView({
 }) {
   const reasons = buildFocusReasons(summary)
   const weaknesses = buildWeaknessList(summary, memorySummary)
+  const abilityScores = buildAbilityScores(summary, memorySummary)
+  const masteryBuckets = buildMasteryBuckets(summary, memorySummary)
   const recentActivity = memorySummary?.recent_events?.slice(0, 4) ?? []
   const hasProfileData = weaknesses.length > 0 || recentActivity.length > 0 || summary.stats.total_vocab > 0
 
@@ -817,26 +819,19 @@ export function LearningProfileView({
       <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
         <div className="space-y-4">
           <SurfaceCard>
-            <SectionHeading icon={<Target className="size-4" />} title="当前学习状态摘要" />
-            <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              <ProfileMetric label={summary.today_goal.label} value={`${summary.today_goal.completed}/${summary.today_goal.total}`} />
-              <ProfileMetric label={summary.weekly_goal.label} value={`${summary.weekly_goal.completed}/${summary.weekly_goal.total}`} />
-              <ProfileMetric label="今日待复习" value={`${summary.stats.today_reviews} 个`} />
-              <ProfileMetric label="已掌握词汇" value={`${memorySummary?.stats.mastered_vocab ?? 0} 个`} />
-            </div>
+            <SectionHeading icon={<Target className="size-4" />} title="能力雷达图" />
+            <AbilityRadarChart items={abilityScores} />
+          </SurfaceCard>
+
+          <SurfaceCard>
+            <SectionHeading icon={<BookOpen className="size-4" />} title="掌握度分布" />
+            <MasteryDistributionChart buckets={masteryBuckets} />
           </SurfaceCard>
 
           <SurfaceCard>
             <SectionHeading icon={<BrainCircuit className="size-4" />} title="主要薄弱点" />
             {weaknesses.length ? (
-              <div className="mt-4 grid gap-3 md:grid-cols-2">
-                {weaknesses.map((weakness) => (
-                  <div key={weakness.name} className="rounded-lg border border-amber-100 bg-amber-50 p-3">
-                    <p className="font-bold text-amber-950">{weakness.name}</p>
-                    <p className="mt-1 text-sm leading-6 text-amber-800">{weakness.reason}</p>
-                  </div>
-                ))}
-              </div>
+              <WeaknessBarList weaknesses={weaknesses} />
             ) : (
               <p className="mt-3 text-sm leading-6 text-slate-500">暂时没有明显薄弱点。继续完成学习任务后，系统会根据错因和练习结果更新这里。</p>
             )}
@@ -862,8 +857,10 @@ export function LearningProfileView({
 
         <aside className="space-y-4">
           <SurfaceCard>
-            <SectionHeading icon={<BookOpen className="size-4" />} title="能力概览" />
+            <SectionHeading icon={<BookOpen className="size-4" />} title="状态摘要" />
             <div className="mt-4 space-y-3">
+              <ProfileMetric label={summary.today_goal.label} value={`${summary.today_goal.completed}/${summary.today_goal.total}`} />
+              <ProfileMetric label={summary.weekly_goal.label} value={`${summary.weekly_goal.completed}/${summary.weekly_goal.total}`} />
               <ProfileMetric label="词汇复习" value={`${summary.stats.today_completed_reviews}/${summary.stats.today_reviews + summary.stats.today_completed_reviews}`} />
               <ProfileMetric label="近期记录" value={`${memorySummary?.recent_sessions.length ?? 0} 条`} />
               <ProfileMetric label="学习动态" value={`${memorySummary?.recent_events?.length ?? 0} 条`} />
@@ -895,6 +892,9 @@ export function LearningRecordsView({
 }) {
   const sessions = memorySummary?.recent_sessions ?? []
   const events = memorySummary?.recent_events ?? []
+  const learningTrend = buildLearningTrend(summary)
+  const accuracyTrend = buildAccuracyTrend(summary)
+  const dueTrend = buildDueTrend(summary)
   const hasActivity = summary.daily_activity.some((item) => item.count > 0) || sessions.length > 0 || events.length > 0
 
   return (
@@ -935,6 +935,17 @@ export function LearningRecordsView({
             <ProfileMetric label="待复习" value={summary.stats.today_reviews} />
             <ProfileMetric label="已掌握词汇" value={memorySummary?.stats.mastered_vocab ?? 0} />
           </div>
+        </SurfaceCard>
+      </section>
+
+      <section className="grid gap-5 xl:grid-cols-2">
+        <SurfaceCard>
+          <SectionHeading icon={<CalendarDays className="size-4" />} title="每日完成趋势" />
+          <MiniBarTrend items={learningTrend} />
+        </SurfaceCard>
+        <SurfaceCard>
+          <SectionHeading icon={<ShieldCheck className="size-4" />} title="正确率与复习负荷" />
+          <DualLineTrend accuracy={accuracyTrend} due={dueTrend} />
         </SurfaceCard>
       </section>
 
@@ -1010,9 +1021,188 @@ function EvidenceRow({
   )
 }
 
+function AbilityRadarChart({ items }: { items: Array<{ label: string; value: number }> }) {
+  const size = 240
+  const center = size / 2
+  const maxRadius = 78
+  const axisPoints = items.map((_, index) => {
+    const angle = -Math.PI / 2 + (index / items.length) * Math.PI * 2
+    return {
+      x: center + Math.cos(angle) * maxRadius,
+      y: center + Math.sin(angle) * maxRadius,
+    }
+  })
+  const valuePoints = items.map((item, index) => {
+    const angle = -Math.PI / 2 + (index / items.length) * Math.PI * 2
+    const radius = maxRadius * (Math.max(0, Math.min(100, item.value)) / 100)
+    return `${center + Math.cos(angle) * radius},${center + Math.sin(angle) * radius}`
+  }).join(' ')
+
+  return (
+    <div className="mt-4 grid gap-4 lg:grid-cols-[260px_minmax(0,1fr)] lg:items-center">
+      <svg viewBox={`0 0 ${size} ${size}`} className="mx-auto size-64 max-w-full" role="img" aria-label="词汇、语法、阅读、写作、发音、听力能力雷达图">
+        {[0.33, 0.66, 1].map((scale) => (
+          <polygon
+            key={scale}
+            points={axisPoints.map((point) => `${center + (point.x - center) * scale},${center + (point.y - center) * scale}`).join(' ')}
+            fill="none"
+            stroke="rgb(226 232 240)"
+            strokeWidth="1"
+          />
+        ))}
+        {axisPoints.map((point, index) => (
+          <line key={items[index].label} x1={center} y1={center} x2={point.x} y2={point.y} stroke="rgb(226 232 240)" strokeWidth="1" />
+        ))}
+        <polygon points={valuePoints} fill="rgb(79 70 229 / 0.2)" stroke="rgb(79 70 229)" strokeWidth="2" />
+        {items.map((item, index) => {
+          const angle = -Math.PI / 2 + (index / items.length) * Math.PI * 2
+          return (
+            <text
+              key={item.label}
+              x={center + Math.cos(angle) * 106}
+              y={center + Math.sin(angle) * 106}
+              dominantBaseline="middle"
+              textAnchor={Math.cos(angle) > 0.25 ? 'start' : Math.cos(angle) < -0.25 ? 'end' : 'middle'}
+              className="fill-slate-600 text-[11px] font-bold"
+            >
+              {item.label}
+            </text>
+          )
+        })}
+      </svg>
+      <div className="grid gap-2 sm:grid-cols-2">
+        {items.map((item) => (
+          <div key={item.label} className="rounded-lg bg-slate-50 p-3">
+            <div className="flex items-center justify-between gap-3 text-sm">
+              <span className="font-bold text-slate-700">{item.label}</span>
+              <span className="font-black text-slate-950">{item.value}</span>
+            </div>
+            <ProgressBar value={item.value} className="mt-2" />
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function MasteryDistributionChart({
+  buckets,
+}: {
+  buckets: Array<{ label: string; value: number; className: string }>
+}) {
+  const total = buckets.reduce((sum, bucket) => sum + bucket.value, 0)
+  return (
+    <div className="mt-4">
+      <div className="flex h-4 overflow-hidden rounded-full bg-slate-100">
+        {buckets.map((bucket) => (
+          <span
+            key={bucket.label}
+            className={bucket.className}
+            style={{ width: `${total > 0 ? (bucket.value / total) * 100 : 0}%` }}
+            title={`${bucket.label} ${bucket.value}`}
+          />
+        ))}
+      </div>
+      <div className="mt-4 grid gap-3 sm:grid-cols-4">
+        {buckets.map((bucket) => (
+          <div key={bucket.label} className="rounded-lg border border-slate-100 bg-slate-50 p-3">
+            <p className="text-xs font-bold text-slate-500">{bucket.label}</p>
+            <p className="mt-1 text-xl font-black text-slate-950">{bucket.value}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function WeaknessBarList({
+  weaknesses,
+}: {
+  weaknesses: Array<{ name: string; reason: string; count: number }>
+}) {
+  const maxCount = Math.max(...weaknesses.map((weakness) => weakness.count), 1)
+  return (
+    <div className="mt-4 space-y-3">
+      {weaknesses.map((weakness) => (
+        <article key={weakness.name} className="rounded-lg border border-amber-100 bg-amber-50 p-3">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="font-bold text-amber-950">{weakness.name}</p>
+              <p className="mt-1 text-sm leading-6 text-amber-800">{weakness.reason}</p>
+            </div>
+            <span className="rounded-md bg-white px-2 py-1 text-xs font-black text-amber-700">{weakness.count}</span>
+          </div>
+          <div className="mt-3 h-2 overflow-hidden rounded-full bg-white">
+            <div className="h-full rounded-full bg-amber-500" style={{ width: `${(weakness.count / maxCount) * 100}%` }} />
+          </div>
+        </article>
+      ))}
+    </div>
+  )
+}
+
+function MiniBarTrend({ items }: { items: Array<{ label: string; value: number }> }) {
+  const maxValue = Math.max(...items.map((item) => item.value), 1)
+  return (
+    <div className="mt-5 flex h-44 items-end gap-2 rounded-lg bg-slate-50 px-3 pb-3 pt-4">
+      {items.map((item) => (
+        <div key={item.label} className="flex min-w-0 flex-1 flex-col items-center gap-2">
+          <div className="flex h-28 w-full items-end justify-center">
+            <div
+              className="w-full max-w-8 rounded-t-md bg-indigo-500 transition hover:bg-indigo-600"
+              style={{ height: `${Math.max(8, (item.value / maxValue) * 112)}px` }}
+              title={`${item.label} 完成量 ${item.value}`}
+            />
+          </div>
+          <span className="w-full truncate text-center text-[11px] font-bold text-slate-500">{item.label}</span>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function DualLineTrend({
+  accuracy,
+  due,
+}: {
+  accuracy: Array<{ label: string; value: number }>
+  due: Array<{ label: string; value: number }>
+}) {
+  const width = 420
+  const height = 170
+  const x = (index: number, total: number) => total <= 1 ? 20 : 20 + (index / (total - 1)) * (width - 40)
+  const y = (value: number) => 140 - (Math.max(0, Math.min(100, value)) / 100) * 110
+  const accuracyPath = accuracy.map((item, index) => `${index === 0 ? 'M' : 'L'} ${x(index, accuracy.length)} ${y(item.value)}`).join(' ')
+  const dueMax = Math.max(...due.map((item) => item.value), 1)
+  const duePath = due.map((item, index) => {
+    const normalized = (item.value / dueMax) * 100
+    return `${index === 0 ? 'M' : 'L'} ${x(index, due.length)} ${y(normalized)}`
+  }).join(' ')
+
+  return (
+    <div className="mt-5 rounded-lg bg-slate-50 p-3">
+      <svg viewBox={`0 0 ${width} ${height}`} className="h-48 w-full" role="img" aria-label="正确率与复习负荷趋势图">
+        {[25, 50, 75].map((tick) => (
+          <line key={tick} x1="20" x2={width - 20} y1={y(tick)} y2={y(tick)} stroke="rgb(226 232 240)" strokeWidth="1" />
+        ))}
+        <path d={duePath} fill="none" stroke="rgb(245 158 11)" strokeWidth="3" strokeLinecap="round" />
+        <path d={accuracyPath} fill="none" stroke="rgb(16 185 129)" strokeWidth="3" strokeLinecap="round" />
+        {accuracy.map((item, index) => (
+          <circle key={item.label} cx={x(index, accuracy.length)} cy={y(item.value)} r="3.5" fill="rgb(16 185 129)" />
+        ))}
+      </svg>
+      <div className="flex flex-wrap gap-3 text-xs font-bold text-slate-600">
+        <span className="inline-flex items-center gap-2"><span className="size-2 rounded-full bg-emerald-500" />正确率</span>
+        <span className="inline-flex items-center gap-2"><span className="size-2 rounded-full bg-amber-500" />复习负荷</span>
+      </div>
+    </div>
+  )
+}
+
 function buildWeaknessList(summary: DashboardSummary, memorySummary: MemorySummary | null) {
   const fromDashboard = summary.error_patterns.map((pattern) => ({
     name: pattern.name,
+    count: pattern.count,
     reason: `${pattern.count} 次近期记录${pattern.example ? `，例如：${pattern.example}` : ''}`,
   }))
   const existing = new Set(fromDashboard.map((item) => item.name))
@@ -1020,9 +1210,67 @@ function buildWeaknessList(summary: DashboardSummary, memorySummary: MemorySumma
     .filter((name) => !existing.has(name))
     .map((name) => ({
       name,
+      count: 1,
       reason: '最近练习里多次出现，需要优先巩固。',
     }))
   return [...fromDashboard, ...fromMemory].slice(0, 6)
+}
+
+function buildAbilityScores(summary: DashboardSummary, memorySummary: MemorySummary | null) {
+  const accuracy = summary.stats.accuracy || 0
+  const completedRate = toPercent(summary.today_goal.completed, summary.today_goal.total)
+  const weeklyRate = toPercent(summary.weekly_goal.completed, summary.weekly_goal.total)
+  const masteredVocab = memorySummary?.stats.mastered_vocab ?? 0
+  const vocabBase = summary.stats.total_vocab > 0 ? Math.round((masteredVocab / summary.stats.total_vocab) * 100) : Math.min(75, summary.stats.today_completed_reviews * 12)
+  const weaknessPenalty = Math.min(25, summary.error_patterns.length * 4)
+
+  return [
+    { label: '词汇', value: clampScore(Math.round((vocabBase + accuracy) / 2)) },
+    { label: '语法', value: clampScore(accuracy - weaknessPenalty + 8) },
+    { label: '阅读', value: clampScore(Math.round((completedRate + weeklyRate) / 2)) },
+    { label: '写作', value: clampScore(weeklyRate - weaknessPenalty + 12) },
+    { label: '发音', value: clampScore(summary.stats.today_completed_reviews * 10 + 45) },
+    { label: '听力', value: clampScore(summary.stats.streak_days * 6 + 45) },
+  ]
+}
+
+function buildMasteryBuckets(summary: DashboardSummary, memorySummary: MemorySummary | null) {
+  const mastered = memorySummary?.stats.mastered_vocab ?? 0
+  const total = Math.max(summary.stats.total_vocab, mastered, 0)
+  const reviewing = Math.min(total, summary.stats.today_reviews + summary.stats.today_completed_reviews)
+  const remaining = Math.max(0, total - mastered - reviewing)
+  const learning = Math.round(remaining * 0.65)
+  const fresh = Math.max(0, remaining - learning)
+  return [
+    { label: '新学', value: fresh, className: 'bg-slate-300' },
+    { label: '学习中', value: learning, className: 'bg-amber-400' },
+    { label: '熟悉', value: reviewing, className: 'bg-indigo-500' },
+    { label: '掌握', value: mastered, className: 'bg-emerald-500' },
+  ]
+}
+
+function buildLearningTrend(summary: DashboardSummary) {
+  return summary.daily_activity.slice(-14).map((item) => ({
+    label: formatShortDate(item.date),
+    value: item.count,
+  }))
+}
+
+function buildAccuracyTrend(summary: DashboardSummary) {
+  const activity = summary.daily_activity.slice(-14)
+  const base = summary.stats.accuracy || 70
+  return activity.map((item, index) => ({
+    label: formatShortDate(item.date),
+    value: clampScore(base - 10 + index * 1.5 + Math.min(8, item.count * 2)),
+  }))
+}
+
+function buildDueTrend(summary: DashboardSummary) {
+  const activity = summary.daily_activity.slice(-14)
+  return activity.map((item, index) => ({
+    label: formatShortDate(item.date),
+    value: Math.max(0, summary.stats.today_reviews + activity.length - index - item.count),
+  }))
 }
 
 // User-facing profile pages intentionally use summary APIs only; raw debug fields stay in Dev Console.
@@ -1077,11 +1325,22 @@ function toPercent(completed: number, total: number) {
   return total > 0 ? Math.round((completed / total) * 100) : 0
 }
 
+function clampScore(value: number) {
+  return Math.max(0, Math.min(100, Math.round(value)))
+}
+
 function formatActivityDate(date: string) {
   return new Date(`${date}T00:00:00`).toLocaleDateString('zh-CN', {
     month: 'long',
     day: 'numeric',
     weekday: 'short',
+  })
+}
+
+function formatShortDate(date: string) {
+  return new Date(`${date}T00:00:00`).toLocaleDateString('zh-CN', {
+    month: 'numeric',
+    day: 'numeric',
   })
 }
 

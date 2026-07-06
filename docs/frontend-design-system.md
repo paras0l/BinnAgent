@@ -2,34 +2,33 @@
 
 > 适用范围：BinnAgent React 前端的核心学习页面。目标是保持低噪音、重引导、重练习闭环的学习产品体验。
 
-## Issue #20 UI/UX Direction
+## Issue #20 / #33 UI/UX Direction
 
 BinnAgent 的统一方向是“功能优先的英语学习工作台”。统一不等于所有页面长一样，而是所有页面都遵循同一套外壳、组件、状态反馈、推荐原因和证据表达。
 
 主导航固定为：
 
 ```text
-AI对话 / 探索 / 学习中心 / 记忆
+AI对话 / 探索 / 学习中心
 ```
 
-新增功能只能归入这四个入口体系，不再新增一级导航。好句收藏馆只是一个可借鉴的较好实现，不作为全局页面模板。
+Issue #33 后，`记忆` 不再是普通用户端一级入口。Memory / raw memory / debug evidence 统一由 Dev Console 查看和管理；用户端只展示“学习记录”和“学习者画像”，并优先用图表表达。新增功能只能归入这三个入口体系，不再新增一级导航。好句收藏馆只是一个可借鉴的较好实现，不作为全局页面模板。
 
-Issue #20 覆盖页面清单：
+用户端覆盖页面清单：
 
 ```text
 0. AppShell / Header / 全局布局
 1. ChatPage / ChatContainer
 2. ExplorePage
 3. DashboardPage
-4. MemoryCenterPage
-5. WritingPhrasebookPage
-6. GrammarPage
-7. VocabularyDetailPage
-8. PronunciationPage
-9. KnowledgeBasePage
-10. VocabularyPracticePage
-11. Dashboard 内部 VocabularyWorkspace
-12. LoginPage
+4. WritingPhrasebookPage
+5. GrammarPage
+6. VocabularyDetailPage
+7. PronunciationPage
+8. KnowledgeBasePage
+9. VocabularyPracticePage
+10. Dashboard 内部 VocabularyWorkspace
+11. LoginPage
 ```
 
 所有页面整改必须满足：
@@ -43,6 +42,9 @@ Issue #20 覆盖页面清单：
 - 删除、清空、否认长期记忆必须使用 `ConfirmDialog` 或同等二次确认。
 - 空状态必须给出下一步动作。
 - AI 或外部模型生成内容保存前必须可确认、可编辑、可追溯。
+- Header 右侧使用学习者菜单承载学习设置、学习者摘要和登出/切换学习者；登出不作为裸 icon 常驻。
+- 学习中心定位为入口页面和轻量状态概览，不堆叠教材解析、词汇管理表单、raw memory 或调试证据。
+- 学习设置优先使用 learner-scoped localStorage，后续可迁移为后端 learner preference；词汇练习默认模式、数量、发音、进入前设置页、自动播放、拼写自动检查、答对后自动进入下一题、单元词汇范围都应从该设置读取。
 
 ## PageShell
 

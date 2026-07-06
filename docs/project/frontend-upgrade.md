@@ -19,7 +19,8 @@
 | 精读与泛读       | 材料输入、自动标题建议、历史材料、泛读任务、关键词、精读拆句、语法卡点、复盘沉淀               | `ReadingWorkshopPage`                      | 四个 workspace：材料输入 / 泛读模式 / 精读模式 / 沉淀复盘；精读可跳到 GrammarPage。                                              | 需要文本高亮、句子难度、阅读流程进度、语法卡点图示；左侧句子栏移动端折叠。                            |
 | 词根词缀        | 方法入门、词根词缀库、搜索/筛选、拆词练习、提示/答案、掌握状态、本地进度                  | `WordPartsPage`                            | 四个 workspace：方法入门 / 词根词缀库 / 拆词练习 / 我的掌握。                                                               | 进度页要加图表；拆词练习答案 reveal 应有展开动效；词根卡需要统一 hover/selected。             |
 | 写作好句        | 句式收藏、搜索/筛选、更多筛选折叠、新增/编辑 drawer、导入好句、候选收藏、练习检测、写作调用     | `WritingPhrasebookPage`                    | 四个 workspace：收藏馆 / 导入好句 / 练习检测 / 写作调用；编辑通过 drawer。                                                     | 这是当前较好的 UI 参考，但还要把自定义按钮换成统一 Button/IconButton，并补充练习结果图表。         |
-| 学习记忆控制      | 查看记忆、整理、导出、重置计划、开关记忆设置、编辑/删除/禁用记忆、证据展示                 | `MemoryCenterPage`                         | 目前由 Dev Console 懒加载；页面本身使用 FeatureHero、ReasonCard、EvidencePanel、ConfirmDialog。                         | 需要确认它是否回到用户端主导航“记忆”；若给用户看，要弱化 debug 感、强化可解释推荐。                   |
+| 学习记录与画像     | 活动热力、每日完成趋势、正确率/复习负荷趋势、能力雷达、掌握度分布、薄弱点排行、推荐原因            | `DashboardPage` profile / records          | 用户端学习中心内部二级视图；只展示学习者能理解的记录和画像，不展示 raw memory/debug evidence。                              | 后续可接入更真实的 mastery/error aggregation 数据源，替换当前轻量估算图表。                         |
+| 学习记忆控制      | 查看记忆、整理、导出、重置计划、开关记忆设置、编辑/删除/禁用记忆、证据展示                 | `MemoryCenterPage`                         | 仅由 Dev Console 懒加载；页面本身使用 FeatureHero、ReasonCard、EvidencePanel、ConfirmDialog。                         | 不回到用户端一级导航；用户端只保留学习记录和学习者画像。                                      |
 
 ---
 
@@ -64,7 +65,7 @@ Dev Console 路由当前定义了 12 个主要页面：Learners、Recent Episode
 | Recent Episodes            |     `/dev/episodes` | 按 learner/status/source/entrypoint/limit 过滤 episodes，打开 trace                                       | 过滤表单 + episode 表格。                                               | 加状态分布、失败原因、运行耗时趋势。                                |
 | Graph Runs / Episode Trace |   `/dev/graph-runs` | 查看 Episode Summary、Graph/Checkpoint、Timeline、Tool Calls、Prompt Executions、Verification、EvidenceRefs | `EpisodeDebugPage` 使用 full PageShell + 左主右侧栏。                    | 强烈建议加 DAG/Timeline/waterfall，而不是纯表格。              |
 | Textbook Parsing           |    `/dev/textbooks` | 查看教材 source、解析状态、quality、parser runs、review queue、evidence browser                                  | sources 表格 + detail + review queue + parser run panels。          | 解析治理需要漏斗图、质量雷达、review 队列优先级。                      |
-| Memory Debug               |       `/dev/memory` | 记忆查看、整理、导出、设置开关、控制记忆项                                                                               | 复用 `MemoryCenterPage`。                                           | 与用户端 Memory 要视觉分层：Dev 保留 raw/evidence，用户端保留解释/控制。 |
+| Memory Debug               |       `/dev/memory` | 记忆查看、整理、导出、设置开关、控制记忆项                                                                               | 复用 `MemoryCenterPage`。                                           | Dev 保留 raw/evidence；用户端不暴露 Memory Center，只展示记录/画像。 |
 | Tool Registry              |        `/dev/tools` | 查看 `/api/tools` 返回的 ToolSpec、schema                                                                 | Dev Console App 内 fetch tools 并渲染 cards/schema。                  | Schema 需要可折叠 JSON、搜索、分组、调用频率。                     |
 | Tool Call Records          |   `/dev/tool-calls` | 按 episode 查看工具调用记录                                                                                  | 读取 `/api/runtime/episodes/{episodeId}`，展示 tool calls 与 raw JSON。 | 增加 latency bar、status badge、错误聚合。                 |
 | Evidence Debug             |     `/dev/evidence` | evidence resolve 调试                                                                                 | 表单请求 `/api/evidence/resolve`。                                    | Evidence 链路要图形化：来源 → 使用位置 → 检查结果。                 |
@@ -177,11 +178,9 @@ Dev Console Shell 目前已有桌面左侧导航，移动端改为 select；但�
 
 # 8. 当前明显缺口
 
-1. **主导航与设计目标不完全一致**：设计文档要求包含“记忆”，但当前用户端主导航没有把 MemoryCenter 当作普通用户页面处理。
-2. **图表不足**：Dashboard 有 activity calendar，但整体还缺趋势、雷达、堆叠条、DAG、waterfall、coverage matrix 等可视化。
-3. **折叠策略不统一**：Chat 已有折叠，Knowledge/Pronunciation/Reading/Writing 等复杂页面需要统一 drawer/bottom sheet 规则。
-4. **交互状态不统一**：部分页面使用统一 Button，部分页面还有手写 button class；hover、focus、loading、disabled、danger 状态需要归一。
-5. **Dev Console 太偏表格/JSON**：适合开发，但需要更多可视化链路，尤其 Graph Runs、Textbook Parsing、Verification、RAG。
-6. **Pronunciation 的 Minimal Pairs / Records 仍是占位**：后续确认界面时要标成“待设计/待接入”，不能误认为完整功能。
-
+1. **复杂页面折叠策略不统一**：Chat 已有折叠，Knowledge/Pronunciation/Reading/Writing 等复杂页面需要统一 drawer/bottom sheet 规则。
+2. **交互状态仍需继续归一**：部分页面使用统一 Button，部分页面还有手写 button class；hover、focus、loading、disabled、danger 状态需要继续清理。
+3. **图表数据源仍可增强**：Dashboard 已补能力雷达、掌握度分布、趋势图和热力图，但部分指标仍是基于 summary 的轻量估算，后续应接入更完整 mastery/error aggregation。
+4. **Dev Console 太偏表格/JSON**：适合开发，但需要更多可视化链路，尤其 Graph Runs、Textbook Parsing、Verification、RAG。
+5. **Pronunciation 的 Minimal Pairs / Records 仍是占位**：后续确认界面时要标成“待设计/待接入”，不能误认为完整功能。
 

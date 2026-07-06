@@ -51,20 +51,24 @@ BinnAgent 前端是 `binnagent-frontend/` 下的 React 19 + TypeScript + Vite �
 
 ## UI/UX 统一标准状态
 
-Issue #20 已把前端方向收敛为“功能优先的英语学习工作台”，主导航固定为：
+Issue #20 / #33 已把前端方向收敛为“功能优先的英语学习工作台”，用户端主导航固定为：
 
 ```text
-AI对话 / 探索 / 学习中心 / 记忆
+AI对话 / 探索 / 学习中心
 ```
+
+`记忆` 不再作为普通用户端一级 tab。Memory、raw memory、EpisodeTrace、PromptExecution、ToolCall、VerificationReport 等调试对象进入 Dev Console；用户端在学习中心内展示“学习记录”和“学习者画像”。
 
 本轮已完成的统一整改：
 
 - 新增统一基础组件：`Button`、`IconButton`、`FormField`、`StatusBanner`、`LoadingState`、`ErrorState`、`EmptyState`、`ConfirmDialog`、`ReasonCard`、`EvidencePanel`。
 - `PageShell` 支持 `standard/full` 变体，标准宽度统一为 `max-w-[1180px]`。
-- `DashboardPage` 从数据面板升级为今日学习驾驶舱：`FeatureHero`、今日主推荐、复习队列、继续学习、能力状态和推荐原因。
+- `DashboardPage` 从数据面板升级为今日学习入口页：`FeatureHero`、今日主推荐、复习队列、继续学习、学习记录、学习者画像和推荐原因；画像页包含能力雷达、掌握度分布和薄弱点排行，记录页包含活动热力、每日完成趋势、正确率/复习负荷趋势。
 - `ExplorePage` 改为学习能力工作台：优先展示后端 ExploreCapability 推荐，保留固定入口、收藏、搜索和分类筛选。
 - `ChatContainer` 的 Skill 状态使用 `StatusBanner`。
-- `MemoryCenterPage` 使用 `FeatureHero`、`ReasonCard`、`EvidencePanel` 和 `ConfirmDialog` 表达可解释、可控制记忆。
+- Header 右侧改为学习者菜单，包含学习设置、当前学习者摘要和登出/切换学习者；裸退出 icon 不再常驻导航。
+- 新增 learner-scoped 本地学习设置，覆盖词汇练习默认模式、数量、英/美音、是否显示 setup、自动播放、拼写填满自动检查、答对后自动进入下一题和单元词汇范围。
+- `MemoryCenterPage` 不在用户端主导航出现；Dev Console 可继续复用它查看和管理 memory/debug evidence。
 - `GrammarPage`、`PronunciationPage`、`VocabularyDetailPage`、`LoginPage` 接入统一外壳和表单/按钮标准。
 - `KnowledgeBasePage` 保留全宽教材学习页，并拆成“今日单元 / 练习任务”两个学习者 workspace；左侧支持多本教材切换，右侧只展示教材信息、学习路径和推荐理由。解析校对、解析质量、教材结构内部产物、parser/ingest 证据和调试表格统一放入 Dev Console 的 Textbook Parsing。
 - `VocabularyPracticePage` 保持沉浸式一屏一任务，并在顶部明确模式和来源；练习阶段按主任务区、学习辅助区和底部操作区组织，底部操作栏固定可见，中间内容内部滚动，避免用户上下翻动才能评分或进入下一题。
