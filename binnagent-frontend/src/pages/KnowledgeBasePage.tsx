@@ -1,4 +1,4 @@
-import { AlertCircle, BookCheck, ChevronLeft, FileWarning, LoaderCircle, Search, Send, ShieldCheck, UploadCloud, Wrench, X } from 'lucide-react'
+import { AlertCircle, BookCheck, ChevronLeft, FileWarning, LoaderCircle, Search, Send, ShieldCheck, Trash2, UploadCloud, Wrench, X } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { EvidencePanel } from '@/components/learning/EvidencePanel'
 import {
@@ -19,6 +19,7 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { StatusBanner } from '@/components/ui/StatusBanner'
 import { useToast } from '@/hooks/useToast'
 import { GrammarPage } from '@/pages/GrammarPage'
+import { deleteKnowledgeSource } from '@/api/knowledge'
 import { exploreCapabilityEventUrl } from '@/services/exploreCapabilityApi'
 import {
   formatFailedIngestMessage,
@@ -93,6 +94,11 @@ interface DailyLessonStatusResponse {
   }
 }
 
+interface DeleteSourceTarget {
+  sourceId: string
+  title: string
+}
+
 const WORKSPACES: Array<{ id: KnowledgeWorkspace; label: string }> = [
   { id: 'structure', label: '教材结构' },
   { id: 'unit', label: '单元学习' },
@@ -146,6 +152,8 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice }
   const [selectedSourceId, setSelectedSourceId] = useState<string | null>(null)
   const [selectedReviewId, setSelectedReviewId] = useState<string | null>(null)
   const [isUploadOpen, setIsUploadOpen] = useState(false)
+  const [deleteSourceTarget, setDeleteSourceTarget] = useState<DeleteSourceTarget | null>(null)
+  const [isDeletingSource, setIsDeletingSource] = useState(false)
   const [confirmReviewItem, setConfirmReviewItem] = useState<KnowledgeReviewItem | null>(null)
   const [isReviewSaving, setIsReviewSaving] = useState(false)
   const [lessonSession, setLessonSession] = useState<KnowledgeLessonSession | null>(null)
@@ -355,6 +363,47 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice }
     setSelectedReviewId(null)
     setUnitVocabulary(null)
     void loadOverview(sourceId)
+  }
+
+  const handleRequestDeleteCurrentSource = () => {
+    if (!overview?.source.can_delete) return
+    setDeleteSourceTarget({
+      sourceId: overview.source.id,
+      title: overview.source.title || overview.source.filename || '当前教材',
+    })
+  }
+
+  const handleRequestDeleteFailedSource = () => {
+    if (!failedSource?.source_id || failedSource.can_delete === false) return
+    setDeleteSourceTarget({
+      sourceId: failedSource.source_id,
+      title: failedSource.title || failedSource.filename || '最近上传的教材',
+    })
+  }
+
+  const handleConfirmDeleteSource = async () => {
+    if (!deleteSourceTarget) return
+    setIsDeletingSource(true)
+    try {
+      const result = await deleteKnowledgeSource(deleteSourceTarget.sourceId, learner.id)
+      showToast(result.message, { variant: 'success' })
+      setDeleteSourceTarget(null)
+      if (ingestStatus?.source_id === result.source_id) setIngestStatus(null)
+      if (failedSource?.source_id === result.source_id) setFailedSource(null)
+      if (overview?.source.id === result.source_id) {
+        setOverview(null)
+        setSelectedSourceId(null)
+        setSelectedNodeId(null)
+        setSelectedReviewId(null)
+        await loadOverview()
+      } else {
+        await loadOverview(selectedSourceId ?? overview?.source.id, selectedNodeId)
+      }
+    } catch (deleteError) {
+      showToast(deleteError instanceof Error ? deleteError.message : '教材删除失败，请重试。', { variant: 'error' })
+    } finally {
+      setIsDeletingSource(false)
+    }
   }
 
   const handleAttempt = async (knowledgePointId: string, correct: boolean) => {
@@ -578,7 +627,12 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice }
             {failedSource ? '最近上传的教材暂时不可用，可以重新上传一份可复制文字的 PDF。' : '当前还没有可用教材。上传 PDF 后会进入后台解析，并在这里显示解析进度。'}
           </p>
           {ingestStatus ? <div className="mt-5"><IngestStatusPanel status={ingestStatus} compact /></div> : null}
-          {failedSource ? <FailedSourceSummary source={failedSource} /> : null}
+          {failedSource ? (
+            <FailedSourceSummary
+              source={failedSource}
+              onDelete={failedSource.source_id && failedSource.can_delete !== false ? handleRequestDeleteFailedSource : undefined}
+            />
+          ) : null}
           {error && !failedSource ? (
             <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-semibold leading-6 text-amber-800">
               <AlertCircle className="mr-1 inline size-4 align-[-2px]" />
@@ -603,6 +657,16 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice }
             </button>
           </div>
           <UploadTextbookDialog open={isUploadOpen} onClose={() => setIsUploadOpen(false)} onUpload={handleUpload} />
+          <ConfirmDialog
+            open={Boolean(deleteSourceTarget)}
+            title="删除这本教材？"
+            description={deleteSourceTarget ? `删除后会移除「${deleteSourceTarget.title}」及其解析出的目录、知识点、练习和索引。之后可以重新上传 PDF 生成新的知识库。` : ''}
+            confirmLabel="删除教材"
+            isBusy={isDeletingSource}
+            danger
+            onCancel={() => setDeleteSourceTarget(null)}
+            onConfirm={() => void handleConfirmDeleteSource()}
+          />
         </div>
       </div>
     )
@@ -643,9 +707,11 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice }
         sources={overview.sources}
         currentSourceId={overview.source.id}
         progress={overview.source.progress}
+        canDelete={overview.source.can_delete}
         onSourceChange={handleSelectSource}
         onSelect={handleSelectNode}
         onManage={() => setIsUploadOpen(true)}
+        onDelete={handleRequestDeleteCurrentSource}
       />
 
       <main className="min-w-0 px-6 py-8 xl:px-8">
@@ -689,8 +755,8 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice }
               </div>
             ) : null}
             {overview.review.requires_review ? (
-              <StatusBanner title="教材解析需要人工校对" tone="warning">
-                {overview.review.low_confidence_count} 个低置信词条、{overview.review.warning_count} 个 warning 正在等待确认，确认后才会进入正式教材学习材料。
+              <StatusBanner title="教材已可学习，部分条目待校对" tone="warning">
+                已确认的单元、词汇和知识点可以先学；还有 {overview.review.low_confidence_count} 个低置信词条、{overview.review.warning_count} 个解析提示等待校对，确认后会继续加入练习材料。
               </StatusBanner>
             ) : (
               <StatusBanner title="今日教材学习" tone="info">
@@ -779,6 +845,16 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice }
       <KnowledgeContextPanel overview={overview} selectedReviewItem={selectedReviewItem} onUpload={() => setIsUploadOpen(true)} />
       <UploadTextbookDialog open={isUploadOpen} onClose={() => setIsUploadOpen(false)} onUpload={handleUpload} />
       <ConfirmDialog
+        open={Boolean(deleteSourceTarget)}
+        title="删除这本教材？"
+        description={deleteSourceTarget ? `删除后会移除「${deleteSourceTarget.title}」及其解析出的目录、知识点、练习和索引。之后可以重新上传 PDF 生成新的知识库。` : ''}
+        confirmLabel="删除教材"
+        isBusy={isDeletingSource}
+        danger
+        onCancel={() => setDeleteSourceTarget(null)}
+        onConfirm={() => void handleConfirmDeleteSource()}
+      />
+      <ConfirmDialog
         open={Boolean(confirmReviewItem)}
         title="确认这个解析词条？"
         description={confirmReviewItem ? `确认后「${confirmReviewItem.title}」会从低置信队列进入正式教材知识库，并可用于单元学习、练习和词汇沉淀。` : ''}
@@ -825,7 +901,7 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice }
   )
 }
 
-function FailedSourceSummary({ source }: { source: FailedKnowledgeSourceDetail }) {
+function FailedSourceSummary({ source, onDelete }: { source: FailedKnowledgeSourceDetail; onDelete?: () => void }) {
   const reasons = normalizeBlockingReasons(source.blocking_reasons ?? [])
   const summary = source.parser_report_summary ?? {}
   const metrics = [
@@ -848,9 +924,17 @@ function FailedSourceSummary({ source }: { source: FailedKnowledgeSourceDetail }
       {metrics.length ? <p className="mt-3 text-xs font-bold text-amber-700">{metrics.join(' · ')}</p> : null}
       <div className="mt-3 rounded-xl bg-white/70 px-3 py-2 text-sm leading-6 text-amber-900">
         {hasScannedPdfSignal(source)
-          ? '当前版本不支持扫描版 PDF/OCR。请换成可以复制文字的 PDF。'
+          ? '系统会尝试本地 OCR 处理扫描版 PDF；如果仍不可用，请上传已 OCR、可复制文字的 PDF。'
           : '可以换成文字更清晰、可复制文字的 PDF 后重新上传。'}
       </div>
+      {onDelete ? (
+        <div className="mt-4">
+          <Button variant="danger" onClick={onDelete} className="w-full">
+            <Trash2 className="size-4" />
+            删除这次上传
+          </Button>
+        </div>
+      ) : null}
     </div>
   )
 }
@@ -902,7 +986,7 @@ export function IngestStatusPanel({ status, compact = false }: { status: Knowled
           ) : null}
           {(isFailed && hasScannedPdfSignal(status)) || needsOcr ? (
             <p className={`mt-3 rounded-xl bg-white/70 px-3 py-2 text-sm font-bold leading-6 ${isFailed ? 'text-red-800' : 'text-indigo-800'}`}>
-              当前 PDF 文本层较弱，已完成基础解析，但可能需要 OCR 才能获得更完整内容。
+              当前 PDF 文本层较弱，系统会尝试本地 OCR；如果仍不完整，请上传已 OCR 的可搜索 PDF。
             </p>
           ) : null}
         </div>

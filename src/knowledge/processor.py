@@ -10,7 +10,8 @@ from pypdf import PdfReader
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.documents.parser_router import ParserRouter
+from src.documents.ocr import OcrResult, run_pdf_ocr, should_ocr_artifact
+from src.documents.parser_router import ParserRouter, ParserRouterResult
 from src.knowledge.parser_profiles import profile_for_source
 from src.knowledge.parser_report import build_parser_report
 from src.knowledge.quality import quality_summary, score_textbook_quality
@@ -245,11 +246,25 @@ def _node_for_candidate(
     page_number: int,
     nodes: list[CurriculumNode],
     nodes_by_title: dict[str, CurriculumNode],
+    *,
+    candidate_key: str | None = None,
 ) -> CurriculumNode | None:
     normalized_title = candidate_title.replace(" overview", "")
     node = nodes_by_title.get(_normalize_unit_title(normalized_title))
     if node is not None:
         return node
+    unit_match = re.search(r"\b(?:Starter\s+Unit|Unit)\s+\d+\b", candidate_title, re.IGNORECASE)
+    if unit_match:
+        node = nodes_by_title.get(_normalize_unit_title(unit_match.group(0)))
+        if node is not None:
+            return node
+    if candidate_key:
+        key_match = re.search(r"\b(starter-unit|unit)-(\d+)\b", candidate_key, re.IGNORECASE)
+        if key_match:
+            prefix = "Starter Unit" if key_match.group(1).casefold().startswith("starter") else "Unit"
+            node = nodes_by_title.get(f"{prefix} {int(key_match.group(2))}")
+            if node is not None:
+                return node
     if not nodes:
         return None
     ordered = sorted(
@@ -257,6 +272,28 @@ def _node_for_candidate(
         key=lambda item: abs(_safe_int(item.start_page, default=page_number) - page_number),
     )
     return ordered[0]
+
+
+def _merge_manifest_units(parsed_units: tuple[ParsedUnit, ...], manifest: object | None) -> tuple[ParsedUnit, ...]:
+    manifest_units = tuple(getattr(manifest, "units", ()) or ())
+    if not manifest_units:
+        return parsed_units
+    parsed_by_title = {_normalize_unit_title(unit.title): unit for unit in parsed_units}
+    merged: list[ParsedUnit] = []
+    for index, unit in enumerate(manifest_units, start=1):
+        title = str(getattr(unit, "title", "") or "").strip()
+        if not title:
+            continue
+        parsed = parsed_by_title.get(_normalize_unit_title(title))
+        page_number = parsed.page_number if parsed else int(getattr(unit, "start_printed_page", None) or index)
+        merged.append(
+            ParsedUnit(
+                title=title,
+                subtitle=str(getattr(unit, "subtitle", "") or (parsed.subtitle if parsed else "")).strip(),
+                page_number=page_number,
+            )
+        )
+    return tuple(merged)
 
 
 def _safe_int(value: str | None, *, default: int) -> int:
@@ -281,6 +318,50 @@ def _db_label(value: str | None, *, max_length: int) -> str:
     if len(normalized) <= max_length:
         return normalized
     return normalized[: max_length - 1].rstrip() + "…"
+
+
+def _knowledge_point_status(requires_review: bool) -> str:
+    return "draft" if requires_review else "published"
+
+
+def _vocabulary_entry_requires_review(entry: ParsedVocabularyEntry) -> bool:
+    if entry.confidence < 0.75:
+        return True
+    warnings = set(entry.warnings)
+    if not warnings:
+        return False
+    if warnings == {"missing_phonetic"}:
+        return len(entry.canonical_expression.split()) <= 1
+    return True
+
+
+async def _parse_with_optional_ocr(
+    path: Path,
+    *,
+    source_id: uuid.UUID,
+) -> tuple[ParserRouterResult, OcrResult | None]:
+    router_result = await asyncio.to_thread(
+        lambda: ParserRouter().parse(
+            path,
+            {
+                "source_id": str(source_id),
+            },
+        )
+    )
+    if not should_ocr_artifact(router_result.artifact):
+        return router_result, None
+    ocr_result = await asyncio.to_thread(lambda: run_pdf_ocr(path))
+    if not ocr_result.used or ocr_result.output_path is None:
+        return router_result, ocr_result
+    ocr_router_result = await asyncio.to_thread(
+        lambda: ParserRouter().parse(
+            ocr_result.output_path,
+            {
+                "source_id": str(source_id),
+            },
+        )
+    )
+    return ocr_router_result, ocr_result
 
 
 async def _load_or_create_parser_run(
@@ -391,20 +472,14 @@ async def process_uploaded_textbook(
     }
 
     try:
-        router_result = await asyncio.to_thread(
-            lambda: ParserRouter().parse(
-                path,
-                {
-                    "source_id": str(source.id),
-                },
-            )
-        )
+        router_result, ocr_result = await _parse_with_optional_ocr(path, source_id=source.id)
         artifact = router_result.artifact
         document_quality = artifact.quality_dict()
         parser_run.parser_id = "document-parser-router"
         parser_run.parser_version = "v1"
         parser_run.artifact_refs = {
             "document_parse_artifact": artifact.to_dict(),
+            "ocr": ocr_result.to_dict() if ocr_result else None,
             **router_result.metadata(),
         }
         await _set_parser_progress(db, source, parser_run, stage="normalizing_artifact", progress=20)
@@ -416,16 +491,17 @@ async def process_uploaded_textbook(
             stage="extracting_textbook_structure",
             progress=35,
         )
+        extracted_units = tuple(
+            ParsedUnit(
+                title=item.title,
+                subtitle=item.subtitle,
+                page_number=item.page_number,
+            )
+            for item in extraction.curriculum
+        )
         parsed = ParsedTextbook(
             page_count=int(document_quality.get("page_count") or len(artifact.pages)),
-            units=tuple(
-                ParsedUnit(
-                    title=item.title,
-                    subtitle=item.subtitle,
-                    page_number=item.page_number,
-                )
-                for item in extraction.curriculum
-            )
+            units=_merge_manifest_units(extracted_units, manifest)
             or (ParsedUnit(title="全册材料", subtitle=source.title, page_number=1),),
             text_char_count=int(document_quality.get("text_char_count") or len(artifact.markdown)),
         )
@@ -473,9 +549,16 @@ async def process_uploaded_textbook(
         knowledge_points: list[KnowledgePoint] = []
         nodes_by_title = {_normalize_unit_title(node.title): node for node in nodes}
         for candidate in extraction.knowledge:
-            node = _node_for_candidate(candidate.title, candidate.page_number, nodes, nodes_by_title)
+            node = _node_for_candidate(
+                candidate.title,
+                candidate.page_number,
+                nodes,
+                nodes_by_title,
+                candidate_key=candidate.canonical_key,
+            )
             if node is None:
                 continue
+            requires_review = candidate.confidence < 0.8 or bool(candidate.warnings)
             knowledge_points.append(
                 KnowledgePoint(
                     source_id=source.id,
@@ -486,10 +569,10 @@ async def process_uploaded_textbook(
                     summary=candidate.summary,
                     source_page=str(candidate.page_number),
                     difficulty=0.3,
-                    status="draft",
+                    status=_knowledge_point_status(requires_review),
                     content={
                         "origin": "document_artifact_extractor",
-                        "requires_review": candidate.confidence < 0.8 or bool(candidate.warnings),
+                        "requires_review": requires_review,
                         "confidence": candidate.confidence,
                         "warnings": list(candidate.warnings),
                         "evidence": candidate.evidence.to_dict(),
@@ -506,6 +589,7 @@ async def process_uploaded_textbook(
                 continue
             seen_vocabulary_keys.add(duplicate_key)
             slug = re.sub(r"[^a-z0-9]+", "-", entry.canonical_expression).strip("-")
+            requires_review = _vocabulary_entry_requires_review(entry)
             knowledge_points.append(
                 KnowledgePoint(
                     source_id=source.id,
@@ -516,7 +600,7 @@ async def process_uploaded_textbook(
                     summary=f"{entry.unit_title} 单元词表第 {entry.unit_order} 个词条。",
                     source_page="Words and Expressions",
                     difficulty=0.2,
-                    status="draft",
+                    status=_knowledge_point_status(requires_review),
                     content={
                         "origin": "document_artifact_extractor",
                         "role": "unit_wordlist",
@@ -526,7 +610,7 @@ async def process_uploaded_textbook(
                         "raw_line": entry.raw_line,
                         "confidence": entry.confidence,
                         "warnings": list(entry.warnings),
-                        "requires_review": entry.confidence < 0.75 or bool(entry.warnings),
+                        "requires_review": requires_review,
                         "dictionary_status": "pending",
                         "evidence": vocabulary_evidence.get(
                             (entry.unit_title, entry.canonical_expression, entry.unit_order),
@@ -585,6 +669,7 @@ async def process_uploaded_textbook(
                 "attempted_engines": router_result.attempted_engines,
                 "selected_engine": router_result.selected_engine,
                 "fallback_used": router_result.fallback_used,
+                "ocr": ocr_result.to_dict() if ocr_result else None,
                 "needs_ocr": bool(document_quality.get("needs_ocr")),
                 "needs_review": bool(document_quality.get("needs_review")),
                 "page_count": parsed.page_count,
@@ -616,7 +701,7 @@ async def process_uploaded_textbook(
         source.page_count = parsed.page_count
         source.unit_count = len(nodes)
         source.knowledge_count = len(knowledge_points)
-        source.status = "completed"
+        source.status = quality_score.status
         parser_run.status = "completed"
         parser_run.stage = "completed"
         parser_run.progress = 100
@@ -629,6 +714,7 @@ async def process_uploaded_textbook(
             "rag_chunk_count": chunk_count,
             "review_item_count": len(review_items),
             "document_parse_artifact": artifact.to_dict(),
+            "ocr": ocr_result.to_dict() if ocr_result else None,
             **router_result.metadata(),
         }
         parse_quality_status = _parse_quality_status(document_quality, parser_run.status)
@@ -650,6 +736,7 @@ async def process_uploaded_textbook(
                     "attempted_engines": router_result.attempted_engines,
                     "selected_engine": router_result.selected_engine,
                     "fallback_used": router_result.fallback_used,
+                    "ocr": ocr_result.to_dict() if ocr_result else None,
                     "needs_ocr": bool(document_quality.get("needs_ocr")),
                     "warnings": report_dict.get("warnings", []),
                 },
@@ -668,6 +755,12 @@ async def process_uploaded_textbook(
             "selected_engine": router_result.selected_engine,
             "attempted_engines": router_result.attempted_engines,
             "fallback_used": router_result.fallback_used,
+            "ocr": ocr_result.to_dict() if ocr_result else None,
+            "ocr_object_key": (
+                str(ocr_result.output_path)
+                if ocr_result and ocr_result.used and ocr_result.output_path
+                else None
+            ),
             "document_quality": document_quality,
             "parse_quality_status": parse_quality_status,
             "vocabulary_parser": "document-artifact-v1",

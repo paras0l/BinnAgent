@@ -1,4 +1,4 @@
-import { BookMarked, Check, Circle } from 'lucide-react'
+import { BookMarked, Check, Circle, Trash2 } from 'lucide-react'
 import type { CurriculumNode, KnowledgeBaseOverview } from '@/types'
 
 interface CurriculumRailProps {
@@ -8,9 +8,11 @@ interface CurriculumRailProps {
   sources: KnowledgeBaseOverview['sources']
   currentSourceId: string
   progress: number
+  canDelete?: boolean
   onSourceChange: (sourceId: string) => void
   onSelect: (nodeId: string) => void
   onManage: () => void
+  onDelete?: () => void
 }
 
 export function CurriculumRail({
@@ -20,9 +22,11 @@ export function CurriculumRail({
   sources,
   currentSourceId,
   progress,
+  canDelete = false,
   onSourceChange,
   onSelect,
   onManage,
+  onDelete,
 }: CurriculumRailProps) {
   return (
     <aside className="knowledge-rail flex min-h-[calc(100vh-4rem)] flex-col border-r border-slate-200 bg-white px-5 py-7">
@@ -103,14 +107,26 @@ export function CurriculumRail({
         </ol>
       </nav>
 
-      <button
-        type="button"
-        onClick={onManage}
-        className="mt-8 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-indigo-200 px-4 py-2.5 text-sm font-bold text-indigo-600 transition-colors hover:bg-indigo-50"
-      >
-        <BookMarked className="size-4" />
-        管理教材
-      </button>
+      <div className="mt-8 space-y-2">
+        <button
+          type="button"
+          onClick={onManage}
+          className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-indigo-200 px-4 py-2.5 text-sm font-bold text-indigo-600 transition-colors hover:bg-indigo-50"
+        >
+          <BookMarked className="size-4" />
+          管理教材
+        </button>
+        {canDelete && onDelete ? (
+          <button
+            type="button"
+            onClick={onDelete}
+            className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-rose-200 px-4 py-2.5 text-sm font-bold text-rose-600 transition-colors hover:bg-rose-50"
+          >
+            <Trash2 className="size-4" />
+            删除教材
+          </button>
+        ) : null}
+      </div>
     </aside>
   )
 }

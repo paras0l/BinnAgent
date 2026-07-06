@@ -66,7 +66,9 @@ def score_textbook_quality(
         warnings.append("Dirty PDF tokens were detected.")
 
     core_hit_rate = _ratio(report.get("core_vocabulary_hit_rate"))
-    if core_hit_rate is not None and core_hit_rate < 0.25:
+    vocabulary_count_ratio = _vocabulary_count_ratio(report)
+    has_enough_vocabulary = vocabulary_count_ratio is not None and vocabulary_count_ratio >= 1.0
+    if core_hit_rate is not None and core_hit_rate < 0.25 and not has_enough_vocabulary:
         blocking_reasons.append("Core vocabulary hit rate is extremely low.")
     elif core_hit_rate is not None and core_hit_rate < MIN_CORE_VOCABULARY_HIT_RATE:
         warnings.append("Core vocabulary hit rate is below the publishing threshold.")
@@ -102,7 +104,9 @@ def score_textbook_quality(
         _ratio(report.get("section_coverage_rate")),
     )
     vocabulary_score = _bounded_average(
-        core_hit_rate,
+        max(core_hit_rate or 0.0, vocabulary_count_ratio or 0.0)
+        if core_hit_rate is not None or vocabulary_count_ratio is not None
+        else None,
         _inverse_ratio(low_conf_ratio),
         1.0 if dirty_count == 0 else max(0.0, 1.0 - dirty_count / 20),
     )
@@ -161,6 +165,8 @@ def quality_summary(score: TextbookQualityScore, report: dict[str, Any]) -> dict
             "unit_count": report.get("unit_count"),
             "expected_unit_count": report.get("expected_unit_count"),
             "vocabulary_entry_count": report.get("vocabulary_entry_count"),
+            "expected_min_vocabulary_count": report.get("expected_min_vocabulary_count"),
+            "vocabulary_count_coverage_rate": _vocabulary_count_ratio(report),
             "rag_chunk_count": report.get("rag_chunk_count"),
             "requires_review_count": report.get("requires_review_count"),
             "pending_blocker_count": report.get("pending_blocker_count"),
@@ -212,8 +218,11 @@ def availability_status_for_quality(quality_status: str) -> str:
 
 def _meets_publishing_thresholds(report: dict[str, Any]) -> bool:
     checks = [
-        _ratio(report.get("core_vocabulary_hit_rate"), default=1.0)
-        >= MIN_CORE_VOCABULARY_HIT_RATE,
+        (
+            _ratio(report.get("core_vocabulary_hit_rate"), default=1.0)
+            >= MIN_CORE_VOCABULARY_HIT_RATE
+            or _vocabulary_count_ratio(report, default=0.0) >= 1.0
+        ),
         _ratio(report.get("low_confidence_vocabulary_ratio"), default=0.0)
         <= MAX_LOW_CONFIDENCE_VOCABULARY_RATIO,
         _ratio(report.get("source_page_coverage_rate"), default=1.0)
@@ -236,6 +245,17 @@ def _ratio(value: Any, *, default: float | None = None) -> float | None:
         return max(0.0, min(1.0, float(value)))
     except (TypeError, ValueError):
         return default
+
+
+def _vocabulary_count_ratio(report: dict[str, Any], *, default: float | None = None) -> float | None:
+    expected = report.get("expected_min_vocabulary_count")
+    if not isinstance(expected, int) or expected <= 0:
+        return default
+    try:
+        actual = int(report.get("vocabulary_entry_count") or 0)
+    except (TypeError, ValueError):
+        return default
+    return max(0.0, min(1.0, actual / expected))
 
 
 def _inverse_ratio(value: float | None) -> float | None:

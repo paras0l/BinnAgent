@@ -41,6 +41,14 @@ export async function decideKnowledgeParserReviewItem(
   )
 }
 
+export async function deleteKnowledgeSource(sourceId: string, learnerId: string) {
+  const params = compactParams({ learner_id: learnerId })
+  return requestJson<{ source_id: string; deleted: boolean; message: string }>(
+    `/api/knowledge/sources/${encodeURIComponent(sourceId)}${params}`,
+    { method: 'DELETE' },
+  )
+}
+
 async function requestJson<T>(input: RequestInfo | URL, init?: RequestInit) {
   const response = await fetch(input, init)
   if (!response.ok) {

@@ -11,6 +11,7 @@ interface KnowledgeContextPanelProps {
 
 export function KnowledgeContextPanel({ overview, selectedReviewItem, onUpload }: KnowledgeContextPanelProps) {
   const { source } = overview
+  const sourceStatus = sourceStatusLabel(source.status, overview.review.pending_count)
   return (
     <aside className="knowledge-context space-y-5 border-l border-slate-200 bg-slate-50/40 px-5 py-7">
       <section className="rounded-2xl border border-slate-200 bg-white p-5">
@@ -30,9 +31,9 @@ export function KnowledgeContextPanel({ overview, selectedReviewItem, onUpload }
           <div className="min-w-0 py-1">
             <p className="text-xs text-slate-500">{source.publisher}</p>
             <h3 className="mt-1 text-sm font-extrabold leading-6 text-slate-900">{source.title}</h3>
-            <span className="mt-3 inline-flex items-center gap-1.5 rounded-md bg-emerald-50 px-2 py-1 text-xs font-bold text-emerald-700">
+            <span className={`mt-3 inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-bold ${sourceStatus.className}`}>
               <CheckCircle2 className="size-3.5" />
-              {source.status === 'published' ? '已发布' : '处理中'}
+              {sourceStatus.label}
             </span>
           </div>
         </div>
@@ -74,7 +75,7 @@ export function KnowledgeContextPanel({ overview, selectedReviewItem, onUpload }
       {selectedReviewItem ? (
         <ReasonCard
           title="当前校对项"
-          reason={`${selectedReviewItem.title} 需要人工确认后才能进入正式学习材料。`}
+          reason={`${selectedReviewItem.title} 需要人工确认；已确认的教材内容可以先学习，校对后的条目会继续加入练习。`}
           evidence={selectedReviewItem.evidence}
           outcome={selectedReviewItem.confidence == null ? undefined : `置信度 ${Math.round(selectedReviewItem.confidence * 100)}%`}
         />
@@ -116,4 +117,17 @@ export function KnowledgeContextPanel({ overview, selectedReviewItem, onUpload }
       </section>
     </aside>
   )
+}
+
+function sourceStatusLabel(status: string, pendingReviewCount: number) {
+  if (status === 'published' && pendingReviewCount === 0) {
+    return { label: '可学习', className: 'bg-emerald-50 text-emerald-700' }
+  }
+  if (status === 'review_required' || status === 'partial_indexed' || pendingReviewCount > 0) {
+    return { label: '可先学习，待校对', className: 'bg-amber-50 text-amber-700' }
+  }
+  if (status === 'failed' || status === 'index_failed') {
+    return { label: '解析失败', className: 'bg-rose-50 text-rose-700' }
+  }
+  return { label: '解析中', className: 'bg-indigo-50 text-indigo-700' }
 }

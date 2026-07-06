@@ -180,14 +180,17 @@ def _unit_title_match_rate(
 
 
 def _unit_order_valid(unit_titles: list[str] | tuple[str, ...]) -> bool | None:
-    unit_numbers: list[int] = []
+    order_keys: list[tuple[int, int]] = []
     for title in unit_titles:
-        parts = str(title).split()
-        if parts and parts[-1].isdigit():
-            unit_numbers.append(int(parts[-1]))
-    if len(unit_numbers) < 2:
+        normalized = str(title).casefold()
+        parts = normalized.split()
+        if not parts or not parts[-1].isdigit():
+            continue
+        group = 0 if normalized.startswith("starter unit") else 1
+        order_keys.append((group, int(parts[-1])))
+    if len(order_keys) < 2:
         return None
-    return unit_numbers == sorted(unit_numbers)
+    return order_keys == sorted(order_keys)
 
 
 def _knowledge_metrics(knowledge_points: list[Any] | tuple[Any, ...]) -> dict[str, Any]:

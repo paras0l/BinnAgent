@@ -15,6 +15,14 @@ class ParserProfile:
 
 
 @dataclass(frozen=True)
+class BookUnit:
+    title: str
+    subtitle: str = ""
+    start_printed_page: int | None = None
+    end_printed_page: int | None = None
+
+
+@dataclass(frozen=True)
 class BookManifest:
     id: str
     filename: str
@@ -23,15 +31,62 @@ class BookManifest:
     expected_unit_count: int | None = None
     min_vocabulary_count: int | None = None
     unit_titles: tuple[str, ...] = ()
+    units: tuple[BookUnit, ...] = ()
 
 
-PARSER_PROFILES: dict[str, ParserProfile] = {}
+PARSER_PROFILES: dict[str, ParserProfile] = {
+    "pep_grade7_upper_v1": ParserProfile(
+        id="pep_grade7_upper_v1",
+        page_offset=-23,
+        expected_unit_count=12,
+        min_vocabulary_count=250,
+        expected_unit_titles=(
+            "Starter Unit 1",
+            "Starter Unit 2",
+            "Starter Unit 3",
+            "Unit 1",
+            "Unit 2",
+            "Unit 3",
+            "Unit 4",
+            "Unit 5",
+            "Unit 6",
+            "Unit 7",
+            "Unit 8",
+            "Unit 9",
+        ),
+        expected_core_vocabulary=("first name", "last name", "telephone number"),
+    ),
+    "pep_grade7_lower_v1": ParserProfile(
+        id="pep_grade7_lower_v1",
+        expected_unit_count=12,
+        min_vocabulary_count=220,
+        expected_unit_titles=(
+            "Unit 1",
+            "Unit 2",
+            "Unit 3",
+            "Unit 4",
+            "Unit 5",
+            "Unit 6",
+            "Unit 7",
+            "Unit 8",
+            "Unit 9",
+            "Unit 10",
+            "Unit 11",
+            "Unit 12",
+        ),
+        expected_core_vocabulary=("guitar", "usually", "train", "rule", "panda"),
+    ),
+}
 
 
 def profile_for_source(filename: str, manifest_path: Path | None = None) -> tuple[BookManifest | None, ParserProfile | None]:
     manifest = find_book_manifest(filename, manifest_path=manifest_path)
     if manifest:
         return manifest, PARSER_PROFILES.get(manifest.parser_profile)
+    if "七年级上册" in filename or "七上" in filename:
+        return None, PARSER_PROFILES["pep_grade7_upper_v1"]
+    if "七年级下册" in filename or "七下" in filename:
+        return None, PARSER_PROFILES["pep_grade7_lower_v1"]
     return None, None
 
 
@@ -41,11 +96,22 @@ def find_book_manifest(filename: str, manifest_path: Path | None = None) -> Book
         return None
     books = _parse_manifest(path.read_text(encoding="utf-8")).get("books", [])
     for raw in books:
-        if not isinstance(raw, dict) or raw.get("filename") != filename:
+        manifest_filename = str(raw.get("filename") or "")
+        if not isinstance(raw, dict) or not _filename_matches_manifest(filename, manifest_filename):
             continue
         expected = raw.get("expected") if isinstance(raw.get("expected"), dict) else {}
         page_offset = raw.get("page_offset") if isinstance(raw.get("page_offset"), dict) else {}
-        units = raw.get("units") if isinstance(raw.get("units"), list) else []
+        raw_units = raw.get("units") if isinstance(raw.get("units"), list) else []
+        units = tuple(
+            BookUnit(
+                title=str(unit.get("title") or ""),
+                subtitle=str(unit.get("subtitle") or ""),
+                start_printed_page=_optional_int(unit.get("start_printed_page")),
+                end_printed_page=_optional_int(unit.get("end_printed_page")),
+            )
+            for unit in raw_units
+            if isinstance(unit, dict) and unit.get("title")
+        )
         return BookManifest(
             id=str(raw.get("id") or filename),
             filename=filename,
@@ -53,9 +119,18 @@ def find_book_manifest(filename: str, manifest_path: Path | None = None) -> Book
             page_offset=int(page_offset.get("pdf_to_printed") or 0),
             expected_unit_count=_optional_int(expected.get("unit_count")),
             min_vocabulary_count=_optional_int(expected.get("min_vocabulary_count")),
-            unit_titles=tuple(str(unit.get("title")) for unit in units if isinstance(unit, dict) and unit.get("title")),
+            unit_titles=tuple(unit.title for unit in units),
+            units=units,
         )
     return None
+
+
+def _filename_matches_manifest(filename: str, manifest_filename: str) -> bool:
+    if filename == manifest_filename:
+        return True
+    if not manifest_filename:
+        return False
+    return manifest_filename in filename or filename in manifest_filename
 
 
 def _optional_int(value: Any) -> int | None:

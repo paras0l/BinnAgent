@@ -30,8 +30,8 @@ describe('UploadTextbookDialog failure details', () => {
 
     expect(html).toContain('教材解析失败或 PDF 文本层不可用')
     expect(html).toContain('PDF 可能是扫描版，当前没有可用的文字层。')
-    expect(html).toContain('当前版本不支持扫描版 PDF/OCR')
-    expect(html).toContain('请换成可以复制文字的 PDF')
+    expect(html).toContain('系统会尝试本地 OCR 处理扫描版 PDF')
+    expect(html).toContain('请换成已 OCR、可复制文字的 PDF')
     expect(html).toContain('可读取文字：0 字')
   })
 

@@ -1,9 +1,11 @@
 import uuid
+from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
 from src.documents.artifact import DocumentBlock, DocumentPage, DocumentParseArtifact
+from src.documents.ocr import OcrResult
 from src.documents.parser_router import ParserAttempt, ParserRouterResult
 from src.knowledge import processor
 from src.knowledge.parser_profiles import ParserProfile
@@ -67,22 +69,22 @@ async def test_process_uploaded_textbook_records_completed_parser_run(
         id="test_profile",
         expected_unit_count=1,
         min_vocabulary_count=1,
-        expected_unit_titles=("Unit X",),
+        expected_unit_titles=("Unit 1",),
         expected_core_vocabulary=("hello",),
     )
     artifact = DocumentParseArtifact(
         source_id=str(source.id),
         parser_engine="pypdf",
         parser_version="test",
-        markdown="Unit X\nGreetings\n\nWords and Expressions in Each Unit\nUnit X\nhello /həˈləʊ/ interj. 你好 p.1\nVocabulary Index",
+        markdown="Unit 1\nGreetings\n\nWords and Expressions in Each Unit\nUnit 1\nhello /həˈləʊ/ interj. 你好 p.1\nVocabulary Index",
         pages=[DocumentPage(page_number=1, text="hello " * 160)],
         blocks=[
-            DocumentBlock("b1", 1, "heading", "Unit X\nGreetings", 0, 0.9, "pypdf"),
+            DocumentBlock("b1", 1, "heading", "Unit 1\nGreetings", 0, 0.9, "pypdf"),
             DocumentBlock(
                 "b2",
                 1,
                 "paragraph",
-                "Words and Expressions in Each Unit\nUnit X\nhello /həˈləʊ/ interj. 你好 p.1\nVocabulary Index",
+                "Words and Expressions in Each Unit\nUnit 1\nhello /həˈləʊ/ interj. 你好 p.1\nVocabulary Index",
                 1,
                 0.9,
                 "pypdf",
@@ -123,21 +125,109 @@ async def test_process_uploaded_textbook_records_completed_parser_run(
     parsed = await processor.process_uploaded_textbook(db, source)
 
     parser_run = next(item for item in db.added_objects if isinstance(item, ParserRun))
-    knowledge_point = next(item for item in db.added_objects if isinstance(item, KnowledgePoint))
+    knowledge_points = [item for item in db.added_objects if isinstance(item, KnowledgePoint)]
+    vocabulary_point = next(item for item in knowledge_points if item.type == "vocabulary")
     assert parsed.page_count == 1
     assert parser_run.status == "completed"
     assert parser_run.stage == "completed"
     assert parser_run.progress == 100
     assert parser_run.quality_report["page_count"] == 1
-    assert parser_run.quality_score["status"] in {"published", "partial_indexed"}
+    assert parser_run.quality_score["status"] == "review_required"
     assert source.metadata_["latest_parser_run_id"] == str(parser_run.id)
-    assert source.metadata_["quality_status"] in {"published", "partial_indexed"}
-    assert source.metadata_["availability_status"] in {"available", "partially_available"}
+    assert source.metadata_["quality_status"] == "review_required"
+    assert source.metadata_["availability_status"] == "needs_review"
     assert source.metadata_["selected_engine"] == "pypdf"
     assert source.metadata_["fallback_used"] is True
-    assert source.status == "completed"
-    assert knowledge_point.content["parser_run_id"] == str(parser_run.id)
+    assert source.status == parser_run.quality_score["status"]
+    assert vocabulary_point.status == "published"
+    assert vocabulary_point.content["requires_review"] is False
+    assert vocabulary_point.content["parser_run_id"] == str(parser_run.id)
     assert processor.build_chunks.await_args.kwargs["parser_run_id"] == str(parser_run.id)
+
+
+@pytest.mark.asyncio
+async def test_parse_with_optional_ocr_reruns_parser_for_scanned_pdf(tmp_path, monkeypatch) -> None:
+    source_id = uuid.uuid4()
+    pdf = tmp_path / "book.pdf"
+    pdf.write_bytes(b"%PDF fake")
+    ocr_pdf = tmp_path / "book.ocr.pdf"
+    ocr_pdf.write_bytes(b"%PDF searchable")
+    scanned_artifact = DocumentParseArtifact(
+        source_id=str(source_id),
+        parser_engine="pypdf",
+        parser_version="test",
+        markdown="",
+        pages=[DocumentPage(page_number=1, text="")],
+        blocks=[],
+        warnings=["PDF has no usable extracted text layer."],
+        quality={
+            "page_count": 1,
+            "text_char_count": 0,
+            "text_coverage_score": 0.0,
+            "empty_page_ratio": 1.0,
+            "block_count": 0,
+            "heading_count": 0,
+            "needs_ocr": True,
+            "needs_review": True,
+            "warnings": [],
+        },
+    )
+    searchable_artifact = DocumentParseArtifact(
+        source_id=str(source_id),
+        parser_engine="markitdown",
+        parser_version="test",
+        markdown="Unit 1\nHello",
+        pages=[DocumentPage(page_number=1, text="Unit 1\nHello")],
+        blocks=[DocumentBlock("b1", 1, "heading", "Unit 1\nHello", 0, 0.9, "markitdown")],
+        warnings=[],
+        quality={
+            "page_count": 1,
+            "text_char_count": 12,
+            "text_coverage_score": 0.8,
+            "empty_page_ratio": 0.0,
+            "block_count": 1,
+            "heading_count": 1,
+            "needs_ocr": False,
+            "needs_review": False,
+            "warnings": [],
+        },
+    )
+    first_result = ParserRouterResult(
+        artifact=scanned_artifact,
+        attempted_engines=["markitdown", "pypdf"],
+        attempts=[ParserAttempt("pypdf", "selected")],
+        selected_engine="pypdf",
+        fallback_used=True,
+    )
+    second_result = ParserRouterResult(
+        artifact=searchable_artifact,
+        attempted_engines=["markitdown"],
+        attempts=[ParserAttempt("markitdown", "selected")],
+        selected_engine="markitdown",
+        fallback_used=False,
+    )
+    parser = MagicMock()
+    parser.parse = MagicMock(side_effect=[first_result, second_result])
+    monkeypatch.setattr(processor, "ParserRouter", lambda: parser)
+    monkeypatch.setattr(
+        processor,
+        "run_pdf_ocr",
+        lambda path: OcrResult(
+            engine="ocrmypdf+tesseract",
+            input_path=Path(path),
+            output_path=ocr_pdf,
+            languages=("eng", "chi_sim"),
+            used=True,
+            available=True,
+        ),
+    )
+
+    result, ocr = await processor._parse_with_optional_ocr(pdf, source_id=source_id)
+
+    assert result is second_result
+    assert ocr is not None
+    assert ocr.used is True
+    assert parser.parse.call_args_list[1].args[0] == ocr_pdf
 
 
 @pytest.mark.asyncio

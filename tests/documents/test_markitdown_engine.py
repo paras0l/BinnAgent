@@ -35,6 +35,31 @@ def test_markitdown_engine_converts_uploaded_local_file(monkeypatch, tmp_path) -
     assert artifact.blocks[0].type == "heading"
 
 
+def test_markitdown_engine_keeps_pdf_page_text_when_available(monkeypatch, tmp_path) -> None:
+    upload_dir = tmp_path / "uploads"
+    upload_dir.mkdir()
+    document = upload_dir / "book.pdf"
+    document.write_text("fake", encoding="utf-8")
+    monkeypatch.setattr(markitdown_engine, "_load_markitdown", lambda: _FakeMarkItDown)
+    monkeypatch.setattr(
+        markitdown_engine,
+        "_pages_from_pdf_text",
+        lambda path: [
+            markitdown_engine.DocumentPage(page_number=1, text="Unit 1\nHello", source="pypdf"),
+            markitdown_engine.DocumentPage(page_number=2, text="Words and Expressions", source="pypdf"),
+        ],
+    )
+
+    artifact = MarkItDownEngine().parse(
+        document,
+        {"source_id": "source-1", "upload_dir": str(upload_dir)},
+    )
+
+    assert artifact.parser_engine == "markitdown"
+    assert [page.source for page in artifact.pages] == ["pypdf", "pypdf"]
+    assert artifact.quality_dict()["page_count"] == 2
+
+
 def test_markitdown_engine_refuses_remote_urls(tmp_path) -> None:
     with pytest.raises(ParserInputError, match="remote URLs"):
         MarkItDownEngine().parse(

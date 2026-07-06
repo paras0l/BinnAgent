@@ -53,6 +53,7 @@ def knowledge_session():
                 item.id = uuid.uuid4()
 
     session.flush = AsyncMock(side_effect=flush)
+    session.delete = AsyncMock()
     session.added_objects = added
     app.dependency_overrides[deps.get_db_session] = lambda: session
     yield session
@@ -481,6 +482,84 @@ async def test_upload_stores_grade7_pdf(client, knowledge_session, tmp_path, mon
 
 
 @pytest.mark.asyncio
+async def test_delete_private_uploaded_source_removes_database_row_and_file(
+    client,
+    knowledge_session,
+    tmp_path,
+    monkeypatch,
+):
+    learner_id = uuid.uuid4()
+    monkeypatch.setattr(settings, "knowledge_upload_dir", str(tmp_path))
+    source = _source()
+    source.owner_learner_id = learner_id
+    source.visibility = "private"
+    source.status = "failed"
+    source.object_key = str(tmp_path / "book.pdf")
+    Path(source.object_key).write_bytes(b"%PDF-1.4\n")
+    knowledge_session.execute = AsyncMock(
+        side_effect=[
+            _one(learner_id),
+            _one(source),
+            _one(None),
+            _scalar(0),
+        ]
+    )
+
+    response = await client.delete(
+        f"/api/knowledge/sources/{source.id}?learner_id={learner_id}"
+    )
+
+    assert response.status_code == 200
+    assert response.json()["deleted"] is True
+    knowledge_session.delete.assert_awaited_once_with(source)
+    assert not Path(source.object_key).exists()
+
+
+@pytest.mark.asyncio
+async def test_delete_source_rejects_public_textbook(client, knowledge_session):
+    learner_id = uuid.uuid4()
+    source = _source()
+    source.owner_learner_id = None
+    source.visibility = "public"
+    knowledge_session.execute = AsyncMock(side_effect=[_one(learner_id), _one(source)])
+
+    response = await client.delete(
+        f"/api/knowledge/sources/{source.id}?learner_id={learner_id}"
+    )
+
+    assert response.status_code == 403
+    knowledge_session.delete.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_delete_source_rejects_active_parser_run(client, knowledge_session):
+    learner_id = uuid.uuid4()
+    source = _source()
+    source.owner_learner_id = learner_id
+    source.visibility = "private"
+    run = ParserRun(
+        source_id=source.id,
+        parser_id="document-parser-router",
+        parser_version="v1",
+        status="running",
+        stage="parsing_document",
+        progress=20,
+        started_at=datetime.now(timezone.utc),
+    )
+    run.id = uuid.uuid4()
+    knowledge_session.execute = AsyncMock(
+        side_effect=[_one(learner_id), _one(source), _one(run)]
+    )
+
+    response = await client.delete(
+        f"/api/knowledge/sources/{source.id}?learner_id={learner_id}"
+    )
+
+    assert response.status_code == 409
+    knowledge_session.delete.assert_not_awaited()
+
+
+@pytest.mark.asyncio
 async def test_upload_does_not_reuse_private_duplicate_from_other_learner(
     client, knowledge_session, tmp_path, monkeypatch
 ):
@@ -600,7 +679,7 @@ async def test_ingest_status_returns_failed_scanned_pdf_diagnostics(client, know
     assert payload["availability_status"] == "unavailable"
     assert payload["can_open_knowledge_base"] is False
     assert payload["next_action"] == "upload_text_pdf"
-    assert "当前版本不支持扫描版 PDF/OCR" in payload["message"]
+    assert "已尝试本地 OCR" in payload["message"]
     assert payload["parser_report_summary"]["text_char_count"] == 0
 
 

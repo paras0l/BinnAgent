@@ -7,13 +7,22 @@ WORKDIR /app
 
 # Install system dependencies
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends gcc libpq-dev && \
+    apt-get install -y --no-install-recommends \
+        gcc \
+        ghostscript \
+        libpq-dev \
+        ocrmypdf \
+        qpdf \
+        tesseract-ocr \
+        tesseract-ocr-chi-sim \
+        tesseract-ocr-eng && \
     rm -rf /var/lib/apt/lists/*
 
 # Copy application code before installing the project package
 COPY pyproject.toml ./
 COPY alembic/ ./alembic/
 COPY alembic.ini ./
+COPY books/ ./books/
 COPY src/ ./src/
 
 # Install Python dependencies and project package

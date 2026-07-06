@@ -16,7 +16,7 @@ export function formatFailedIngestMessage(result: KnowledgeIngestResult) {
     typeof summary.rag_chunk_count === 'number' ? `素材片段：${summary.rag_chunk_count}` : null,
   ].filter(Boolean)
   const suggestions = hasScannedPdfSignal(result)
-    ? ['当前版本不支持扫描版 PDF/OCR。', '请换成可以复制文字的 PDF，或等待后续 OCR 支持。']
+    ? ['系统会尝试本地 OCR 处理扫描版 PDF。', '如果仍不可用，请换成已 OCR、可复制文字的 PDF。']
     : ['请换成文字更清晰、可复制文字的 PDF，或稍后重试。']
   return [
     result.message || '教材解析失败，知识库暂不可用。',

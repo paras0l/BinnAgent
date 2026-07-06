@@ -166,6 +166,12 @@ class IngestStatusResponse(BaseModel):
     message: str
 
 
+class DeleteKnowledgeSourceResponse(BaseModel):
+    source_id: uuid.UUID
+    deleted: bool
+    message: str
+
+
 class ExerciseAnswerRequest(BaseModel):
     answer: str | dict[str, Any]
     session_id: uuid.UUID | None = None
@@ -311,6 +317,7 @@ def _source_payload(
         if requires_review is None
         else requires_review,
         "page_count": source.page_count,
+        "can_delete": source.visibility == "private",
     }
 
 
@@ -385,6 +392,7 @@ def _recent_failed_source_detail(source: KnowledgeSource | None) -> dict[str, An
         "filename": source.filename,
         "status": source.status,
         "quality_status": quality.get("quality_status"),
+        "can_delete": source.visibility == "private",
         "blocking_reasons": quality.get("blocking_reasons") or [],
         "parser_report_summary": quality.get("parser_report_summary") or {},
     }
@@ -412,7 +420,7 @@ def _ingest_message(status_value: str, blocking_reasons: list[str]) -> str:
     }
     message = messages.get(status_value, f"教材解析完成，当前状态：{status_value}。")
     if status_value == "failed" and _has_scanned_text_layer_reason(blocking_reasons):
-        message += " 当前版本不支持扫描版 PDF/OCR，请换成可复制文字的 PDF。"
+        message += " 已尝试本地 OCR；如果仍不可用，请换成已 OCR、可复制文字的 PDF。"
     return message
 
 
@@ -466,7 +474,7 @@ def _status_message(payload: IngestStatusResponse) -> str:
     if payload.processing_status == "failed" or payload.quality_status == "failed":
         return _ingest_message("failed", payload.blocking_reasons)
     if payload.parse_quality_status == "needs_ocr":
-        return "当前 PDF 文本层较弱，已完成基础解析，但可能需要 OCR 才能获得更完整内容。"
+        return "当前 PDF 文本层较弱，系统会尝试本地 OCR；如仍不完整，请上传已 OCR 的可搜索 PDF。"
     if payload.next_action == "review":
         return "教材解析完成，但需要校对后使用。"
     if payload.can_open_knowledge_base:
@@ -1595,6 +1603,50 @@ async def upload_knowledge_source(
     )
 
 
+@router.delete(
+    "/api/knowledge/sources/{source_id}",
+    response_model=DeleteKnowledgeSourceResponse,
+)
+async def delete_knowledge_source(
+    source_id: uuid.UUID,
+    learner_id: uuid.UUID = Query(),
+    db: AsyncSession = Depends(get_db_session),
+) -> DeleteKnowledgeSourceResponse:
+    await _ensure_learner(db, learner_id)
+    result = await db.execute(select(KnowledgeSource).where(KnowledgeSource.id == source_id))
+    source = result.scalar_one_or_none()
+    if source is None:
+        raise HTTPException(status_code=404, detail="教材不存在")
+    if source.owner_learner_id != learner_id or source.visibility != "private":
+        raise HTTPException(status_code=403, detail="只能删除自己上传的私有教材")
+    active_run = await _active_parser_run(db, source.id)
+    if active_run is not None:
+        raise HTTPException(status_code=409, detail="教材正在解析中，请等待解析结束后再删除")
+
+    object_key = source.object_key
+    ocr_object_key = (source.metadata_ or {}).get("ocr_object_key")
+    should_delete_file = False
+    if object_key:
+        reference_result = await db.execute(
+            select(func.count())
+            .select_from(KnowledgeSource)
+            .where(KnowledgeSource.object_key == object_key, KnowledgeSource.id != source.id)
+        )
+        should_delete_file = int(reference_result.scalar_one() or 0) == 0
+
+    await db.delete(source)
+    await db.flush()
+    if should_delete_file:
+        _delete_uploaded_file(object_key)
+    if isinstance(ocr_object_key, str) and ocr_object_key != object_key:
+        _delete_uploaded_file(ocr_object_key)
+    return DeleteKnowledgeSourceResponse(
+        source_id=source_id,
+        deleted=True,
+        message="教材已删除，可以重新上传。",
+    )
+
+
 async def _latest_parser_run(db: AsyncSession, source_id: uuid.UUID) -> ParserRun | None:
     result = await db.execute(
         select(ParserRun)
@@ -1603,6 +1655,24 @@ async def _latest_parser_run(db: AsyncSession, source_id: uuid.UUID) -> ParserRu
         .limit(1)
     )
     return result.scalar_one_or_none()
+
+
+def _delete_uploaded_file(object_key: str) -> None:
+    try:
+        path = Path(object_key).expanduser().resolve()
+        upload_dir = Path(settings.knowledge_upload_dir).expanduser().resolve()
+        if path.exists() and path.is_file() and _is_relative_to(path, upload_dir):
+            path.unlink()
+    except OSError:
+        return
+
+
+def _is_relative_to(path: Path, parent: Path) -> bool:
+    try:
+        path.relative_to(parent)
+        return True
+    except ValueError:
+        return False
 
 
 async def _active_parser_run(db: AsyncSession, source_id: uuid.UUID) -> ParserRun | None:

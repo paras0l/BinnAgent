@@ -49,6 +49,7 @@ class DocumentParseArtifact:
     blocks: list[DocumentBlock]
     warnings: list[str]
     quality: DocumentQuality | dict[str, Any]
+    metadata: dict[str, Any] = field(default_factory=dict)
     created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
     def quality_dict(self) -> dict[str, Any]:
@@ -90,5 +91,6 @@ class DocumentParseArtifact:
             ],
             warnings=list(payload.get("warnings") or []),
             quality=quality,
+            metadata=dict(payload.get("metadata") or {}),
             created_at=parsed_created_at,
         )

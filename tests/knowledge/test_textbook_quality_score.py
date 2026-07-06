@@ -38,6 +38,21 @@ def test_quality_score_requires_review_for_pending_parser_items() -> None:
     assert "Parser review items are still pending." in score.warnings
 
 
+def test_quality_score_does_not_block_low_core_hits_when_vocabulary_volume_is_healthy() -> None:
+    report = {
+        **_healthy_report(),
+        "core_vocabulary_hit_rate": 0.0,
+        "vocabulary_entry_count": 370,
+        "expected_min_vocabulary_count": 250,
+    }
+
+    score = score_textbook_quality(report)
+
+    assert score.status == "review_required"
+    assert "Core vocabulary hit rate is extremely low." not in score.blocking_reasons
+    assert "Core vocabulary hit rate is below the publishing threshold." in score.warnings
+
+
 def test_quality_score_blocks_when_provenance_is_too_low() -> None:
     report = {**_healthy_report(), "source_page_coverage_rate": 0.3}
 

@@ -73,3 +73,21 @@ def test_parser_quality_report_emits_intake_structure_knowledge_and_rag_metrics(
     assert payload["low_confidence_vocabulary_ratio"] == 0.5
     assert payload["rag_page_coverage_rate"] == 1.0
     assert payload["chunk_avg_size"] == 240.0
+
+
+def test_parser_quality_report_accepts_starter_units_before_regular_units() -> None:
+    profile = ParserProfile(
+        id="starter-profile",
+        expected_unit_count=5,
+        expected_unit_titles=("Starter Unit 1", "Starter Unit 2", "Starter Unit 3", "Unit 1", "Unit 2"),
+    )
+
+    report = build_parser_report(
+        profile=profile,
+        unit_count=5,
+        vocabulary_entries=[],
+        page_texts=["Starter Unit 1"],
+        unit_titles=("Starter Unit 1", "Starter Unit 2", "Starter Unit 3", "Unit 1", "Unit 2"),
+    )
+
+    assert report.unit_order_valid is True

@@ -155,6 +155,7 @@ export interface FailedKnowledgeSourceDetail {
   quality_status?: string | null
   blocking_reasons?: string[]
   parser_report_summary?: ParserReportSummary
+  can_delete?: boolean
 }
 
 export interface DailyLessonPart {
@@ -179,6 +180,7 @@ export interface KnowledgeBaseOverview {
     progress: number
     requires_review?: boolean
     page_count?: number | null
+    can_delete?: boolean
   }
   sources: Array<{
     id: string
@@ -194,6 +196,7 @@ export interface KnowledgeBaseOverview {
     progress: number
     requires_review?: boolean
     page_count?: number | null
+    can_delete?: boolean
   }>
   curriculum: CurriculumNode[]
   current_node_id: string

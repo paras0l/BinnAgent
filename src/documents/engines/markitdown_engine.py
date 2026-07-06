@@ -6,6 +6,8 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
+from pypdf import PdfReader
+
 from src.config import settings
 from src.documents.artifact import DocumentBlock, DocumentPage, DocumentParseArtifact
 from src.documents.parser_engine import (
@@ -50,7 +52,9 @@ class MarkItDownEngine(ParserEngine):
             raise ParserParseError("MarkItDown returned empty markdown.")
 
         blocks = _blocks_from_markdown(markdown)
-        pages = [DocumentPage(page_number=1, text=_plain_text(markdown), source=self.name)]
+        pages = _pages_from_pdf_text(path) if path.suffix.casefold() == ".pdf" else []
+        if not pages:
+            pages = [DocumentPage(page_number=1, text=_plain_text(markdown), source=self.name)]
         warnings: list[str] = []
         quality = evaluate_document_quality(
             pages=pages,
@@ -67,6 +71,7 @@ class MarkItDownEngine(ParserEngine):
             blocks=blocks,
             warnings=list(dict.fromkeys([*warnings, *quality.warnings])),
             quality=quality,
+            metadata={"file_path": str(path)},
         )
 
 
@@ -153,3 +158,14 @@ def _markdown_chunks(markdown: str) -> list[str]:
 def _plain_text(markdown: str) -> str:
     lines = [line.lstrip("#").strip() for line in markdown.splitlines()]
     return "\n".join(line for line in lines if line)
+
+
+def _pages_from_pdf_text(path: Path) -> list[DocumentPage]:
+    try:
+        reader = PdfReader(path)
+        return [
+            DocumentPage(page_number=page_number, text=page.extract_text() or "", source="pypdf")
+            for page_number, page in enumerate(reader.pages, start=1)
+        ]
+    except Exception:
+        return []

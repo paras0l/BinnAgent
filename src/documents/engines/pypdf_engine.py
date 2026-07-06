@@ -80,6 +80,7 @@ class PyPdfEngine(ParserEngine):
             blocks=blocks,
             warnings=list(dict.fromkeys([*warnings, *quality.warnings])),
             quality=quality,
+            metadata={"file_path": str(path)},
         )
 
 
