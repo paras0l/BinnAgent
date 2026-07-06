@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useState, type ReactNode } from 'react'
 import {
   ArrowRight,
   BarChart3,
@@ -9,7 +9,6 @@ import {
   RefreshCw,
   Sparkles,
   Target,
-  TrendingUp,
 } from 'lucide-react'
 import { FeatureHero } from '@/components/layout/FeatureHero'
 import { PageShell } from '@/components/layout/PageShell'
