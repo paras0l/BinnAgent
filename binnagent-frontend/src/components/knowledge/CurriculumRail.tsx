@@ -8,6 +8,7 @@ interface CurriculumRailProps {
   sources: KnowledgeBaseOverview['sources']
   currentSourceId: string
   progress: number
+  className?: string
   canDelete?: boolean
   onSourceChange: (sourceId: string) => void
   onSelect: (nodeId: string) => void
@@ -22,6 +23,7 @@ export function CurriculumRail({
   sources,
   currentSourceId,
   progress,
+  className = '',
   canDelete = false,
   onSourceChange,
   onSelect,
@@ -29,16 +31,18 @@ export function CurriculumRail({
   onDelete,
 }: CurriculumRailProps) {
   return (
-    <aside className="knowledge-rail flex min-h-[calc(100vh-4rem)] flex-col border-r border-slate-200 bg-white px-5 py-7">
+    <aside className={`knowledge-rail flex min-h-[calc(100vh-4rem)] flex-col border-r border-slate-200 bg-white px-5 py-7 ${className}`}>
       <div>
         <h2 className="text-lg font-extrabold tracking-tight text-slate-950">{sourceTitle}</h2>
         {sources.length > 1 ? (
           <label className="mt-4 block">
             <span className="text-xs font-bold text-slate-500">切换教材</span>
             <select
+              name="knowledge_source"
+              autoComplete="off"
               value={currentSourceId}
               onChange={(event) => onSourceChange(event.target.value)}
-              className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-800 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+              className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-800 outline-none focus-visible:border-indigo-400 focus-visible:ring-2 focus-visible:ring-indigo-100"
             >
               {sources.map((source) => (
                 <option key={source.id} value={source.id}>
@@ -71,7 +75,7 @@ export function CurriculumRail({
                 <button
                   type="button"
                   onClick={() => onSelect(node.id)}
-                  className={`group grid w-full grid-cols-[36px_minmax(0,1fr)] items-start rounded-xl px-2 py-4 text-left transition-colors ${
+                  className={`group grid w-full grid-cols-[36px_minmax(0,1fr)] items-start rounded-xl px-2 py-4 text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 ${
                     isCurrent ? 'bg-indigo-50 text-indigo-700' : 'hover:bg-slate-50'
                   }`}
                   aria-current={isCurrent ? 'step' : undefined}
@@ -111,7 +115,7 @@ export function CurriculumRail({
         <button
           type="button"
           onClick={onManage}
-          className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-indigo-200 px-4 py-2.5 text-sm font-bold text-indigo-600 transition-colors hover:bg-indigo-50"
+          className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-indigo-200 px-4 py-2.5 text-sm font-bold text-indigo-600 transition-colors hover:bg-indigo-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
         >
           <BookMarked className="size-4" />
           管理教材
@@ -120,7 +124,7 @@ export function CurriculumRail({
           <button
             type="button"
             onClick={onDelete}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-rose-200 px-4 py-2.5 text-sm font-bold text-rose-600 transition-colors hover:bg-rose-50"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-rose-200 px-4 py-2.5 text-sm font-bold text-rose-600 transition-colors hover:bg-rose-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-500"
           >
             <Trash2 className="size-4" />
             删除教材

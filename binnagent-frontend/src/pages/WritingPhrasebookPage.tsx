@@ -9,6 +9,7 @@ import {
   FileDown,
   Library,
   PenLine,
+  PanelLeftOpen,
   Plus,
   RotateCcw,
   Save,
@@ -23,7 +24,9 @@ import {
 import { FeatureHero } from '@/components/layout/FeatureHero'
 import { PageShell } from '@/components/layout/PageShell'
 import { WorkspaceTabs, type WorkspaceTab } from '@/components/layout/WorkspaceTabs'
+import { Button } from '@/components/ui/Button'
 import { FilterChip } from '@/components/ui/FilterChip'
+import { IconButton } from '@/components/ui/IconButton'
 import { SurfaceCard } from '@/components/ui/SurfaceCard'
 import { useToast } from '@/hooks/useToast'
 import type { Learner } from '@/types'
@@ -569,9 +572,9 @@ export function WritingPhrasebookPage({ learner, onBack }: WritingPhrasebookPage
 
   return (
     <PageShell>
-      <button onClick={onBack} className="w-fit text-sm font-medium text-primary hover:underline">
+      <Button variant="ghost" className="w-fit px-0 hover:bg-transparent" onClick={onBack}>
         返回探索
-      </button>
+      </Button>
 
       <FeatureHero
         eyebrow="Writing Phrasebook"
@@ -585,14 +588,14 @@ export function WritingPhrasebookPage({ learner, onBack }: WritingPhrasebookPage
         ]}
         actions={
           <>
-            <button onClick={openNewPhrase} className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:border-indigo-200 hover:text-indigo-600">
+            <Button variant="secondary" onClick={openNewPhrase}>
               <Plus className="h-4 w-4" />
               新增句式
-            </button>
-            <button onClick={() => setWorkspace('import')} className="inline-flex items-center gap-2 rounded-lg bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90">
+            </Button>
+            <Button onClick={() => setWorkspace('import')}>
               <FileDown className="h-4 w-4" />
               导入好句
-            </button>
+            </Button>
           </>
         }
       />
@@ -759,8 +762,10 @@ function LibraryWorkspace({
           <input
             value={query}
             onChange={(event) => onQueryChange(event.target.value)}
-            className="w-full rounded-lg border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm outline-none focus:border-primary"
-            placeholder="搜索句式、标签、使用场景"
+            className="w-full rounded-lg border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm outline-none transition-colors focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
+            placeholder="搜索句式、标签、使用场景…"
+            name="writing_phrase_search"
+            autoComplete="off"
           />
         </div>
         <div className="flex gap-2 overflow-x-auto pb-1">
@@ -773,7 +778,11 @@ function LibraryWorkspace({
         <div>
           <div className="mb-2 flex items-center justify-between">
             <h2 className="text-xs font-semibold text-slate-500">常用标签</h2>
-            <button onClick={onToggleMoreFilters} className="text-xs font-medium text-primary">
+            <button
+              type="button"
+              onClick={onToggleMoreFilters}
+              className="rounded-md px-2 py-1 text-xs font-medium text-primary transition-colors hover:bg-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            >
               {isMoreFiltersOpen ? '收起' : '更多筛选'}
             </button>
           </div>
@@ -819,8 +828,9 @@ function LibraryWorkspace({
 function PhraseCard({ phrase, active, onClick }: { phrase: WritingPhrase; active: boolean; onClick: () => void }) {
   return (
     <button
+      type="button"
       onClick={onClick}
-      className={`w-full rounded-[13px] border p-4 text-left transition-colors ${
+      className={`w-full rounded-[13px] border p-4 text-left transition-[border-color,background-color,box-shadow,transform] hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
         active ? 'border-primary bg-primary/5' : 'border-slate-200 bg-white hover:border-indigo-200'
       }`}
     >
@@ -881,13 +891,13 @@ function PhraseDetailPanel({
           <p className="mt-2 text-base text-slate-600">{phrase.chinese_meaning || '待补充中文含义'}</p>
         </div>
         <div className="flex shrink-0 flex-wrap gap-2">
-          <IconButton title={phrase.is_favorite ? '取消收藏' : '收藏'} onClick={() => onPatch({ is_favorite: !phrase.is_favorite })}>
+          <IconButton label={phrase.is_favorite ? '取消收藏' : '收藏'} onClick={() => onPatch({ is_favorite: !phrase.is_favorite })}>
             {phrase.is_favorite ? <Star className="h-4 w-4 fill-warning text-warning" /> : <StarOff className="h-4 w-4" />}
           </IconButton>
-          <IconButton title={phrase.review_enabled ? '移出复习' : '加入复习'} onClick={() => onPatch({ review_enabled: !phrase.review_enabled })}>
+          <IconButton label={phrase.review_enabled ? '移出复习' : '加入复习'} onClick={() => onPatch({ review_enabled: !phrase.review_enabled })}>
             <RotateCcw className="h-4 w-4" />
           </IconButton>
-          <IconButton title={phrase.is_archived ? '取消归档' : '归档'} onClick={() => onPatch({ is_archived: !phrase.is_archived })}>
+          <IconButton label={phrase.is_archived ? '取消归档' : '归档'} onClick={() => onPatch({ is_archived: !phrase.is_archived })}>
             <Archive className="h-4 w-4" />
           </IconButton>
         </div>
@@ -927,18 +937,18 @@ function PhraseDetailPanel({
       </div>
 
       <div className="flex flex-wrap gap-2 border-t border-slate-100 pt-5">
-        <button onClick={onEdit} className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:border-indigo-200 hover:text-indigo-600">
+        <Button variant="secondary" onClick={onEdit}>
           <Edit3 className="h-4 w-4" />
           编辑
-        </button>
-        <button onClick={onGenerateExercises} className="inline-flex items-center gap-2 rounded-lg bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90">
+        </Button>
+        <Button onClick={onGenerateExercises}>
           <Target className="h-4 w-4" />
           生成练习
-        </button>
-        <button onClick={() => onPatch({ review_enabled: true })} className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:border-indigo-200 hover:text-indigo-600">
+        </Button>
+        <Button variant="secondary" onClick={() => onPatch({ review_enabled: true })}>
           <RotateCcw className="h-4 w-4" />
           加入复习
-        </button>
+        </Button>
       </div>
     </SurfaceCard>
   )
@@ -991,9 +1001,10 @@ function ImportWorkspace({
           <h2 className="text-base font-semibold text-slate-950">任务类型</h2>
           {PROMPTS.map((prompt) => (
             <button
+              type="button"
               key={prompt.id}
               onClick={() => onPromptChange(prompt.id)}
-              className={`w-full rounded-[13px] border p-4 text-left transition-colors ${
+              className={`w-full rounded-[13px] border p-4 text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
                 selectedPromptId === prompt.id ? 'border-primary bg-primary/5' : 'border-slate-200 hover:border-indigo-200'
               }`}
             >
@@ -1009,22 +1020,36 @@ function ImportWorkspace({
               <h2 className="text-base font-semibold text-slate-950">当前生成指令</h2>
               <p className="text-sm text-slate-500">复制到外部模型，生成后把结果粘贴回来。</p>
             </div>
-            <button onClick={onCopyPrompt} className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:border-indigo-200 hover:text-indigo-600">
+            <Button variant="secondary" onClick={onCopyPrompt}>
               <Copy className="h-4 w-4" />
               复制指令
-            </button>
+            </Button>
           </div>
           <pre className="max-h-56 overflow-auto rounded-[13px] bg-slate-950 p-4 text-sm leading-6 text-slate-100 whitespace-pre-wrap">
             {selectedPrompt.text}
           </pre>
           <div className="grid gap-3 sm:grid-cols-[220px_minmax(0,1fr)]">
-            <input value={importTopic} onChange={(event) => onImportTopicChange(event.target.value)} className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-primary" placeholder="主题标签" />
-            <textarea value={importText} onChange={(event) => onImportTextChange(event.target.value)} className="min-h-28 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm leading-6 outline-none focus:border-primary" placeholder="粘贴外部模型输出" />
+            <input
+              value={importTopic}
+              onChange={(event) => onImportTopicChange(event.target.value)}
+              className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none transition-colors focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
+              placeholder="主题标签…"
+              name="writing_phrase_import_topic"
+              autoComplete="off"
+            />
+            <textarea
+              value={importText}
+              onChange={(event) => onImportTextChange(event.target.value)}
+              className="min-h-28 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm leading-6 outline-none transition-colors focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
+              placeholder="粘贴外部模型输出…"
+              name="writing_phrase_import_text"
+              autoComplete="off"
+            />
           </div>
-          <button onClick={onImport} className="inline-flex items-center gap-2 rounded-lg bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90">
+          <Button onClick={onImport}>
             <FileDown className="h-4 w-4" />
             提取候选句式
-          </button>
+          </Button>
         </SurfaceCard>
       </div>
 
@@ -1035,16 +1060,17 @@ function ImportWorkspace({
               <h2 className="text-base font-semibold text-slate-950">候选句式</h2>
               <p className="text-sm text-slate-500">勾选后批量收藏，不建议收藏的句式会显示提示。</p>
             </div>
-            <button onClick={onSaveCandidates} className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90">
+            <Button onClick={onSaveCandidates}>
               <Check className="h-4 w-4" />
               收藏选中
-            </button>
+            </Button>
           </div>
           <div className="grid gap-3 md:grid-cols-2">
             {candidates.map((candidate, index) => (
               <label key={`${candidate.text}-${index}`} className="rounded-[13px] border border-slate-200 p-4">
                 <div className="flex items-start gap-3">
                   <input
+                    name={`writing_phrase_candidate_${index}`}
                     type="checkbox"
                     checked={selectedCandidates.has(index)}
                     onChange={(event) => onToggleCandidate(index, event.target.checked)}
@@ -1099,9 +1125,24 @@ function PracticeWorkspace({
   phrases: WritingPhrase[]
   selectedPhrase: WritingPhrase | null
 }) {
+  const progressPercent = exercises.length > 0 ? Math.round(((activeExerciseIndex + 1) / exercises.length) * 100) : 0
+  const answeredCount = exercises.filter((exercise) => Boolean(answers[exercise.id]?.trim())).length
+  const [isPhraseListOpen, setIsPhraseListOpen] = useState(false)
+  const selectPhraseForPractice = (phraseId: string) => {
+    onSelectPhrase(phraseId)
+    setIsPhraseListOpen(false)
+  }
   return (
     <div className="grid gap-5 lg:grid-cols-[330px_minmax(0,1fr)]">
-      <SurfaceCard className="space-y-4">
+      <Button
+        variant="secondary"
+        className="lg:hidden"
+        onClick={() => setIsPhraseListOpen((current) => !current)}
+      >
+        <PanelLeftOpen className="h-4 w-4" />
+        {isPhraseListOpen ? '收起句式列表' : '展开句式列表'}
+      </Button>
+      <SurfaceCard className={`${isPhraseListOpen ? 'block' : 'hidden'} space-y-4 lg:block`}>
         <div>
           <h2 className="text-base font-semibold text-slate-950">选择练习句式</h2>
           <p className="mt-1 text-sm text-slate-500">优先练习已加入复习或最近收藏的表达。</p>
@@ -1110,8 +1151,9 @@ function PracticeWorkspace({
           {phrases.map((phrase) => (
             <button
               key={phrase.id}
-              onClick={() => onSelectPhrase(phrase.id)}
-              className={`w-full rounded-[13px] border p-3 text-left text-sm ${
+              type="button"
+              onClick={() => selectPhraseForPractice(phrase.id)}
+              className={`w-full rounded-[13px] border p-3 text-left text-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
                 selectedPhrase?.id === phrase.id ? 'border-primary bg-primary/5' : 'border-slate-200 hover:border-indigo-200'
               }`}
             >
@@ -1120,10 +1162,10 @@ function PracticeWorkspace({
             </button>
           ))}
         </div>
-        <button onClick={onGenerate} disabled={!selectedPhrase} className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50">
+        <Button onClick={onGenerate} disabled={!selectedPhrase} className="w-full">
           <Target className="h-4 w-4" />
           生成三类练习
-        </button>
+        </Button>
       </SurfaceCard>
 
       <SurfaceCard className="min-h-[520px]">
@@ -1135,11 +1177,15 @@ function PracticeWorkspace({
           </div>
         ) : (
           <div className="mx-auto flex max-w-2xl flex-col gap-5">
-            <div className="flex items-center justify-between">
+            <PracticeProgressPanel
+              answeredCount={answeredCount}
+              currentIndex={activeExerciseIndex}
+              exercises={exercises}
+              progressPercent={progressPercent}
+            />
+            <div className="flex items-center justify-between gap-3">
               <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">{exerciseTypeLabel(activeExercise.exercise_type)}</span>
-              <span className="text-xs font-medium text-slate-500">
-                {activeExerciseIndex + 1} / {exercises.length}
-              </span>
+              <span className="text-xs font-medium text-slate-500">{activeExerciseIndex + 1} / {exercises.length}</span>
             </div>
             <div>
               <p className="text-sm font-semibold text-slate-500">题目</p>
@@ -1148,33 +1194,87 @@ function PracticeWorkspace({
             {activeExercise.options.length > 0 && (
               <div className="grid gap-2">
                 {activeExercise.options.map((option) => (
-                  <button key={option} onClick={() => onAnswerChange(activeExercise.id, option)} className="rounded-[13px] border border-slate-200 p-3 text-left text-sm text-slate-700 hover:border-indigo-200 hover:text-indigo-600">
+                  <button
+                    key={option}
+                    type="button"
+                    onClick={() => onAnswerChange(activeExercise.id, option)}
+                    className="rounded-[13px] border border-slate-200 p-3 text-left text-sm text-slate-700 transition-colors hover:border-indigo-200 hover:text-indigo-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                  >
                     {option}
                   </button>
                 ))}
               </div>
             )}
             <textarea
+              name="writing_practice_answer"
+              autoComplete="off"
               value={answers[activeExercise.id] ?? ''}
               onChange={(event) => onAnswerChange(activeExercise.id, event.target.value)}
-              className="min-h-28 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm leading-6 outline-none focus:border-primary"
-              placeholder="输入你的答案或造句"
+              className="min-h-28 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm leading-6 outline-none transition-colors focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
+              placeholder="输入你的答案或造句…"
             />
             <div className="flex flex-wrap gap-2">
-              <button onClick={() => onSubmit(activeExercise)} className="inline-flex items-center gap-2 rounded-lg bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90">
+              <Button onClick={() => onSubmit(activeExercise)}>
                 <Clipboard className="h-4 w-4" />
                 提交并记录
-              </button>
-              <button onClick={onPrevious} disabled={activeExerciseIndex === 0} className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:border-indigo-200 hover:text-indigo-600 disabled:opacity-50">
+              </Button>
+              <Button variant="secondary" onClick={onPrevious} disabled={activeExerciseIndex === 0}>
                 上一题
-              </button>
-              <button onClick={onNext} disabled={activeExerciseIndex >= exercises.length - 1} className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:border-indigo-200 hover:text-indigo-600 disabled:opacity-50">
+              </Button>
+              <Button variant="secondary" onClick={onNext} disabled={activeExerciseIndex >= exercises.length - 1}>
                 下一题
-              </button>
+              </Button>
             </div>
           </div>
         )}
       </SurfaceCard>
+    </div>
+  )
+}
+
+function PracticeProgressPanel({
+  answeredCount,
+  currentIndex,
+  exercises,
+  progressPercent,
+}: {
+  answeredCount: number
+  currentIndex: number
+  exercises: PhraseExercise[]
+  progressPercent: number
+}) {
+  const typeCounts = getExerciseTypeCounts(exercises)
+  return (
+    <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <p className="text-xs font-black uppercase tracking-wide text-primary">练习进度</p>
+          <p className="mt-1 text-sm font-semibold text-slate-600">
+            已填写 {answeredCount}/{exercises.length}
+          </p>
+        </div>
+        <span className="text-2xl font-black text-slate-950">{progressPercent}%</span>
+      </div>
+      <div className="mt-3 h-2 overflow-hidden rounded-full bg-white">
+        <div className="h-full rounded-full bg-primary transition-[width] duration-500" style={{ width: `${progressPercent}%` }} />
+      </div>
+      <div className="mt-4 grid gap-2 sm:grid-cols-3">
+        {(['recognition', 'blank', 'replacement'] as PhraseExercise['exercise_type'][]).map((type) => (
+          <div key={type} className="rounded-lg bg-white px-3 py-2">
+            <p className="text-xs font-bold text-slate-500">{exerciseTypeLabel(type)}</p>
+            <p className="mt-1 text-lg font-black text-slate-950">{typeCounts[type]}</p>
+          </div>
+        ))}
+      </div>
+      <div className="mt-3 grid grid-cols-3 gap-2">
+        {exercises.map((exercise, index) => (
+          <span
+            key={exercise.id}
+            className={`h-2 rounded-full ${index <= currentIndex ? 'bg-primary' : 'bg-white'}`}
+            title={`${exerciseTypeLabel(exercise.exercise_type)} ${index + 1}`}
+          />
+        ))}
+      </div>
     </div>
   )
 }
@@ -1231,25 +1331,31 @@ function PhraseEditDrawer({
 }) {
   const update = (payload: Partial<PhraseForm>) => onChange({ ...form, ...payload })
   return (
-    <div className="fixed inset-0 z-[60] bg-slate-950/35">
+    <div className="fixed inset-0 z-[60] overscroll-contain bg-slate-950/35">
       <div className="ml-auto flex h-full w-full max-w-2xl flex-col bg-white shadow-2xl">
         <div className="flex items-center justify-between border-b border-slate-200 p-5">
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-primary">Edit Phrase</p>
             <h2 className="mt-1 text-xl font-black text-slate-950">{isSelected ? '编辑句式' : '新增句式'}</h2>
           </div>
-          <button onClick={onClose} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100" title="关闭">
+          <IconButton label="关闭编辑抽屉" onClick={onClose}>
             <X className="h-5 w-5" />
-          </button>
+          </IconButton>
         </div>
         <div className="flex-1 space-y-5 overflow-y-auto p-5">
           <FormSection title="基础信息">
-            <Field label="英文句式" value={form.text} onChange={(value) => update({ text: value })} textarea />
-            <Field label="中文含义" value={form.chinese_meaning} onChange={(value) => update({ chinese_meaning: value })} />
+            <Field label="英文句式" name="writing_phrase_text" value={form.text} onChange={(value) => update({ text: value })} textarea />
+            <Field label="中文含义" name="writing_phrase_meaning" value={form.chinese_meaning} onChange={(value) => update({ chinese_meaning: value })} />
             <div className="grid grid-cols-2 gap-3">
               <label className="text-sm">
                 <span className="font-medium text-slate-950">使用位置</span>
-                <select value={form.usage_position} onChange={(event) => update({ usage_position: event.target.value })} className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 outline-none focus:border-primary">
+                <select
+                  name="writing_phrase_position"
+                  autoComplete="off"
+                  value={form.usage_position}
+                  onChange={(event) => update({ usage_position: event.target.value })}
+                  className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 outline-none transition-colors focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
+                >
                   <option value="opening">开头</option>
                   <option value="body">主体</option>
                   <option value="closing">结尾</option>
@@ -1258,28 +1364,38 @@ function PhraseEditDrawer({
               </label>
               <label className="text-sm">
                 <span className="font-medium text-slate-950">难度</span>
-                <input type="number" min={1} max={5} value={form.difficulty} onChange={(event) => update({ difficulty: Number(event.target.value) })} className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 outline-none focus:border-primary" />
+                <input
+                  type="number"
+                  name="writing_phrase_difficulty"
+                  autoComplete="off"
+                  inputMode="numeric"
+                  min={1}
+                  max={5}
+                  value={form.difficulty}
+                  onChange={(event) => update({ difficulty: Number(event.target.value) })}
+                  className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 outline-none transition-colors focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
+                />
               </label>
             </div>
           </FormSection>
 
           <FormSection title="使用说明">
-            <Field label="解释说明" value={form.explanation} onChange={(value) => update({ explanation: value })} textarea />
-            <Field label="适用场景" value={form.usage_scene} onChange={(value) => update({ usage_scene: value })} textarea />
-            <Field label="注意事项" value={form.notes_text} onChange={(value) => update({ notes_text: value })} textarea />
-            <Field label="常见错误" value={form.mistakes_text} onChange={(value) => update({ mistakes_text: value })} textarea />
+            <Field label="解释说明" name="writing_phrase_explanation" value={form.explanation} onChange={(value) => update({ explanation: value })} textarea />
+            <Field label="适用场景" name="writing_phrase_usage_scene" value={form.usage_scene} onChange={(value) => update({ usage_scene: value })} textarea />
+            <Field label="注意事项" name="writing_phrase_notes" value={form.notes_text} onChange={(value) => update({ notes_text: value })} textarea />
+            <Field label="常见错误" name="writing_phrase_mistakes" value={form.mistakes_text} onChange={(value) => update({ mistakes_text: value })} textarea />
           </FormSection>
 
           <FormSection title="例句与标签">
-            <Field label="例句" value={form.examples_text} onChange={(value) => update({ examples_text: value })} textarea />
-            <Field label="标签" value={form.tags_text} onChange={(value) => update({ tags_text: value })} />
+            <Field label="例句" name="writing_phrase_examples" value={form.examples_text} onChange={(value) => update({ examples_text: value })} textarea />
+            <Field label="标签" name="writing_phrase_tags" value={form.tags_text} onChange={(value) => update({ tags_text: value })} />
             <div className="flex flex-wrap gap-4 text-sm text-slate-600">
               <label className="flex items-center gap-2">
-                <input type="checkbox" checked={form.is_favorite} onChange={(event) => update({ is_favorite: event.target.checked })} />
+                <input name="writing_phrase_favorite" type="checkbox" checked={form.is_favorite} onChange={(event) => update({ is_favorite: event.target.checked })} />
                 收藏
               </label>
               <label className="flex items-center gap-2">
-                <input type="checkbox" checked={form.review_enabled} onChange={(event) => update({ review_enabled: event.target.checked })} />
+                <input name="writing_phrase_review_enabled" type="checkbox" checked={form.review_enabled} onChange={(event) => update({ review_enabled: event.target.checked })} />
                 加入复习
               </label>
             </div>
@@ -1287,21 +1403,21 @@ function PhraseEditDrawer({
         </div>
         <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-200 p-5">
           {isSelected ? (
-            <button onClick={onDelete} className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-500 hover:border-red-200 hover:text-error">
+            <Button variant="danger" onClick={onDelete}>
               <Trash2 className="h-4 w-4" />
               删除
-            </button>
+            </Button>
           ) : (
             <span />
           )}
           <div className="flex gap-2">
-            <button onClick={onClose} className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:border-indigo-200 hover:text-indigo-600">
+            <Button variant="secondary" onClick={onClose}>
               取消
-            </button>
-            <button onClick={onSave} disabled={isSaving} className="inline-flex items-center gap-2 rounded-lg bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60">
+            </Button>
+            <Button onClick={onSave} disabled={isSaving}>
               <Save className="h-4 w-4" />
               保存
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -1315,10 +1431,10 @@ function EmptyLibrary({ onCreateDemo }: { onCreateDemo: () => void }) {
       <Sparkles className="h-8 w-8 text-slate-300" />
       <p className="mt-3 font-semibold text-slate-950">还没有收藏句式</p>
       <p className="mt-1 leading-6">可以先创建示例，或从外部模型导入一组分层递进表达。</p>
-      <button onClick={onCreateDemo} className="mt-4 inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 font-medium text-slate-700 hover:border-indigo-200 hover:text-indigo-600">
+      <Button variant="secondary" className="mt-4" onClick={onCreateDemo}>
         <Sparkles className="h-4 w-4" />
         创建示例
-      </button>
+      </Button>
     </div>
   )
 }
@@ -1377,23 +1493,39 @@ function Bullets({ items, fallback }: { items: string[]; fallback: string }) {
   )
 }
 
-function IconButton({ title, children, onClick }: { title: string; children: ReactNode; onClick: () => void }) {
-  return (
-    <button onClick={onClick} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-primary" title={title}>
-      {children}
-    </button>
-  )
-}
-
-function Field({ label, value, onChange, textarea = false }: { label: string; value: string; onChange: (value: string) => void; textarea?: boolean }) {
-  const className = 'mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm leading-6 outline-none focus:border-primary'
+function Field({
+  label,
+  name,
+  value,
+  onChange,
+  textarea = false,
+}: {
+  label: string
+  name: string
+  value: string
+  onChange: (value: string) => void
+  textarea?: boolean
+}) {
+  const className = 'mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm leading-6 outline-none transition-colors focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20'
   return (
     <label className="block text-sm">
       <span className="font-medium text-slate-950">{label}</span>
       {textarea ? (
-        <textarea value={value} onChange={(event) => onChange(event.target.value)} className={`${className} min-h-24`} />
+        <textarea
+          name={name}
+          autoComplete="off"
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          className={`${className} min-h-24`}
+        />
       ) : (
-        <input value={value} onChange={(event) => onChange(event.target.value)} className={className} />
+        <input
+          name={name}
+          autoComplete="off"
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          className={className}
+        />
       )}
     </label>
   )
@@ -1410,4 +1542,11 @@ function exerciseTypeLabel(type: PhraseExercise['exercise_type']) {
   if (type === 'recognition') return '识别题'
   if (type === 'blank') return '填空题'
   return '替换题'
+}
+
+function getExerciseTypeCounts(exercises: PhraseExercise[]) {
+  return exercises.reduce<Record<PhraseExercise['exercise_type'], number>>((counts, exercise) => {
+    counts[exercise.exercise_type] += 1
+    return counts
+  }, { recognition: 0, blank: 0, replacement: 0 })
 }

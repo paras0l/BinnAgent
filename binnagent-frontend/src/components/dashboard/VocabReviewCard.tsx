@@ -33,17 +33,11 @@ export function VocabReviewCard({
 
   return (
     <div className="flex flex-col items-center gap-4">
-      <div
-        className="flex min-h-64 w-full max-w-md cursor-pointer flex-col items-center justify-center rounded-2xl border bg-card p-8 text-center shadow-sm transition-colors hover:border-primary/40"
+      <button
+        type="button"
+        className="flex min-h-64 w-full max-w-md cursor-pointer flex-col items-center justify-center rounded-2xl border bg-card p-8 text-center shadow-sm transition-[border-color,box-shadow] duration-150 hover:border-primary/40 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
         onClick={handleFlip}
-        role="button"
-        tabIndex={0}
-        onKeyDown={(event) => {
-          if (event.key === 'Enter' || event.key === ' ') {
-            event.preventDefault()
-            handleFlip()
-          }
-        }}
+        aria-pressed={isFlipped}
       >
         <div className="transition-opacity duration-200">
           {!isFlipped ? (
@@ -76,15 +70,16 @@ export function VocabReviewCard({
             </>
           )}
         </div>
-      </div>
+      </button>
 
       {isFlipped && (
         <div className="flex gap-2">
           {ratings.map((rating) => (
             <button
               key={rating.value}
+              type="button"
               onClick={() => onRate(rating.value)}
-              className={`px-4 py-2 rounded-lg text-primary-foreground transition-colors ${rating.color}`}
+              className={`rounded-lg px-4 py-2 text-primary-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 ${rating.color}`}
             >
               {rating.label}
             </button>

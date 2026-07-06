@@ -9,8 +9,9 @@ interface FilterChipProps {
 export function FilterChip({ active = false, children, onClick }: FilterChipProps) {
   return (
     <button
+      type="button"
       onClick={onClick}
-      className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
+      className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors active:translate-y-px focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
         active
           ? 'border-primary bg-primary/10 text-primary'
           : 'border-slate-200 bg-white text-slate-600 hover:border-indigo-200 hover:text-indigo-600'

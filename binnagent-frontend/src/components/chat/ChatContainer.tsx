@@ -8,6 +8,7 @@ import { WelcomeScreen } from './WelcomeScreen'
 import { ConversationSidebar } from './ConversationSidebar'
 import { MemoryPanel } from './MemoryPanel'
 import { Button } from '@/components/ui/Button'
+import { IconButton } from '@/components/ui/IconButton'
 import { StatusBanner } from '@/components/ui/StatusBanner'
 
 interface ChatContainerProps {
@@ -87,7 +88,7 @@ export function ChatContainer({
   const currentSkillName = activeSkillName || (currentSkillId === 'vocabulary_deposit' ? '词汇 Skill' : null)
 
   return (
-    <div className="flex h-[calc(100vh-4rem)]">
+    <div className="flex h-[calc(100vh-4rem)] overflow-hidden">
       <ConversationSidebar
         conversations={conversations}
         activeThreadId={threadId}
@@ -109,36 +110,39 @@ export function ChatContainer({
             </p>
           </div>
           <div className="flex shrink-0 items-center gap-2">
-            <button
+            <IconButton
               onClick={() => setIsHistoryCollapsed(prev => !prev)}
-              className="inline-flex rounded-lg border p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-              title={isHistoryCollapsed ? '展开历史对话' : '收起历史对话'}
+              label={isHistoryCollapsed ? '展开历史对话' : '收起历史对话'}
+              aria-expanded={!isHistoryCollapsed}
+              className="border-border text-muted-foreground hover:bg-muted hover:text-foreground"
             >
               <MessagesSquare className="h-4 w-4" />
-            </button>
-            <button
+            </IconButton>
+            <IconButton
               onClick={() => setIsMemoryCollapsed(prev => !prev)}
-              className="inline-flex rounded-lg border p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-              title={isMemoryCollapsed ? '展开学习状态' : '收起学习状态'}
+              label={isMemoryCollapsed ? '展开学习状态' : '收起学习状态'}
+              aria-expanded={!isMemoryCollapsed}
+              className="border-border text-muted-foreground hover:bg-muted hover:text-foreground"
             >
               <Brain className="h-4 w-4" />
-            </button>
-            <button
+            </IconButton>
+            <Button
+              variant="secondary"
               onClick={handleNewConversation}
               disabled={isLoading}
-              className="flex items-center gap-2 rounded-lg border px-3 py-2 text-sm text-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent"
               title={isLoading ? '回答生成中，请先等待完成或取消' : '新建对话'}
+              className="px-3 py-2"
             >
               <MessageSquarePlus className="h-4 w-4" />
               新建
-            </button>
+            </Button>
           </div>
         </div>
 
-        <div className="flex-1 space-y-4 overflow-y-auto p-4">
+        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-4" aria-live="polite">
           {isLoadingHistory ? (
             <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-              正在恢复最近对话...
+              正在恢复最近对话…
             </div>
           ) : messages.length === 0 ? (
             <WelcomeScreen

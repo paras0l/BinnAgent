@@ -25,6 +25,7 @@ import { Button } from '@/components/ui/Button'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { ErrorState } from '@/components/ui/ErrorState'
+import { IconButton } from '@/components/ui/IconButton'
 import { LoadingState } from '@/components/ui/LoadingState'
 import { SurfaceCard } from '@/components/ui/SurfaceCard'
 import type { DashboardSummary, Learner, MemorySummary, VocabularyListItem } from '@/types'
@@ -284,10 +285,25 @@ export function DashboardPage({ learner, onOpenDailyLearning, onStartVocabularyP
         ]}
       />
 
-        <section className="grid gap-3 lg:grid-cols-3">
-          <button type="button" onClick={() => onStartVocabularyPractice('new')} className="rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-left text-emerald-800 transition hover:border-emerald-300"><span className="block text-base font-black">认识新词</span><span className="mt-1 block text-xs text-emerald-700">先看发音、释义和例句，低压力建立印象</span></button>
-          <button type="button" onClick={() => onStartVocabularyPractice('review')} className="rounded-xl bg-indigo-600 px-5 py-4 text-left text-white shadow-lg shadow-indigo-100 transition hover:bg-indigo-700"><span className="block text-base font-black">今日复习</span><span className="mt-1 block text-xs text-indigo-100">默认隐藏答案，先主动回忆再评分</span></button>
-          <button type="button" onClick={() => onStartVocabularyPractice('spelling')} className="rounded-xl border border-indigo-200 bg-indigo-50 px-5 py-4 text-left text-indigo-800 transition hover:border-indigo-300"><span className="block text-base font-black">拼写练习</span><span className="mt-1 block text-xs text-indigo-600">听音主动拼写，获得字母级反馈</span></button>
+        <section className="grid gap-3 lg:grid-cols-3" aria-label="词汇练习入口">
+          <VocabularyModeCard
+            tone="success"
+            title="认识新词"
+            description="先看发音、释义和例句，低压力建立印象"
+            onClick={() => onStartVocabularyPractice('new')}
+          />
+          <VocabularyModeCard
+            tone="primary"
+            title="今日复习"
+            description="默认隐藏答案，先主动回忆再评分"
+            onClick={() => onStartVocabularyPractice('review')}
+          />
+          <VocabularyModeCard
+            tone="accent"
+            title="拼写练习"
+            description="听音主动拼写，获得字母级反馈"
+            onClick={() => onStartVocabularyPractice('spelling')}
+          />
         </section>
 
       {isVocabListOpen && (
@@ -303,20 +319,21 @@ export function DashboardPage({ learner, onOpenDailyLearning, onStartVocabularyP
               <div className="relative">
                 <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <input
+                  name="vocabulary_search"
+                  autoComplete="off"
+                  aria-label="搜索词汇本"
                   value={vocabQuery}
                   onChange={(event) => setVocabQuery(event.target.value)}
-                  className="w-full rounded-lg border bg-background py-2 pl-9 pr-3 text-sm outline-none transition-colors focus:border-primary md:w-64"
-                  placeholder="搜索单词、音标或释义"
+                  className="w-full rounded-lg border bg-background py-2 pl-9 pr-3 text-sm outline-none transition-colors focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20 md:w-64"
+                  placeholder="搜索单词、音标或释义…"
                 />
               </div>
-              <button
-                type="button"
+              <IconButton
+                label="关闭词汇列表"
                 onClick={() => setIsVocabListOpen(false)}
-                className="inline-flex size-9 items-center justify-center rounded-lg border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                aria-label="关闭词汇列表"
               >
                 <X className="h-4 w-4" />
-              </button>
+              </IconButton>
             </div>
           </div>
 
@@ -362,24 +379,33 @@ export function DashboardPage({ learner, onOpenDailyLearning, onStartVocabularyP
         </div>
         <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,2fr)_auto]">
           <input
+            name="new_vocabulary_word"
+            autoComplete="off"
+            aria-label="新词单词"
             value={newWord}
             onChange={(event) => setNewWord(event.target.value)}
-            className="rounded-lg border bg-background px-3 py-2 text-sm outline-none transition-colors focus:border-primary"
-            placeholder="significant"
+            className="rounded-lg border bg-background px-3 py-2 text-sm outline-none transition-colors focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
+            placeholder="例如：significant…"
             maxLength={255}
           />
           <input
+            name="new_vocabulary_phonetic"
+            autoComplete="off"
+            aria-label="新词音标"
             value={newPhonetic}
             onChange={(event) => setNewPhonetic(event.target.value)}
-            className="rounded-lg border bg-background px-3 py-2 text-sm outline-none transition-colors focus:border-primary"
-            placeholder="可选音标，例如：/sɪɡˈnɪfɪkənt/"
+            className="rounded-lg border bg-background px-3 py-2 text-sm outline-none transition-colors focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
+            placeholder="可选音标，例如：/sɪɡˈnɪfɪkənt/…"
             maxLength={255}
           />
           <input
+            name="new_vocabulary_meaning"
+            autoComplete="off"
+            aria-label="新词释义"
             value={newMeaning}
             onChange={(event) => setNewMeaning(event.target.value)}
-            className="rounded-lg border bg-background px-3 py-2 text-sm outline-none transition-colors focus:border-primary"
-            placeholder="可选释义，例如：重要的，显著的"
+            className="rounded-lg border bg-background px-3 py-2 text-sm outline-none transition-colors focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
+            placeholder="可选释义，例如：重要的，显著的…"
             maxLength={255}
           />
           <Button
@@ -1344,6 +1370,36 @@ function formatShortDate(date: string) {
   })
 }
 
+function VocabularyModeCard({
+  description,
+  onClick,
+  title,
+  tone,
+}: {
+  description: string
+  onClick: () => void
+  title: string
+  tone: 'accent' | 'primary' | 'success'
+}) {
+  const toneClass = {
+    accent: 'border-indigo-200 bg-indigo-50 text-indigo-800 hover:border-indigo-300 hover:bg-indigo-100/70',
+    primary: 'border-indigo-600 bg-indigo-600 text-white shadow-lg shadow-indigo-100 hover:bg-indigo-700',
+    success: 'border-emerald-200 bg-emerald-50 text-emerald-800 hover:border-emerald-300 hover:bg-emerald-100/70',
+  }[tone]
+  const descriptionClass = tone === 'primary' ? 'text-indigo-100' : tone === 'success' ? 'text-emerald-700' : 'text-indigo-600'
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`rounded-xl border px-5 py-4 text-left transition-[background-color,border-color,box-shadow,transform] duration-150 hover:-translate-y-0.5 active:translate-y-px focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${toneClass}`}
+    >
+      <span className="block text-base font-black">{title}</span>
+      <span className={`mt-1 block text-xs leading-5 ${descriptionClass}`}>{description}</span>
+    </button>
+  )
+}
+
 function VocabularyListRow({
   item,
   isDeleting,
@@ -1359,32 +1415,44 @@ function VocabularyListRow({
   const confidencePercent = Math.round(item.confidence * 100)
 
   return (
-    <article
-      role="button"
-      tabIndex={0}
-      onClick={() => onOpen(item)}
-      onKeyDown={(event) => {
-        if (event.key === 'Enter' || event.key === ' ') {
-          event.preventDefault()
-          onOpen(item)
-        }
-      }}
-      className="cursor-pointer rounded-lg border bg-background p-4 text-left transition hover:border-primary/40 hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-      aria-label={`查看 ${item.word} 详情`}
-    >
+    <article className="rounded-lg border bg-background transition-[border-color,box-shadow] hover:border-primary/40 hover:shadow-sm focus-within:border-primary/40 focus-within:shadow-sm">
       <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <h3 className="text-lg font-semibold text-foreground">{item.word}</h3>
-            {item.phonetic && (
-              <span className="text-sm text-muted-foreground">{item.phonetic}</span>
-            )}
-          </div>
-          <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">
-            {item.meaning || '暂无释义'}
-          </p>
-        </div>
-        <div className="flex shrink-0 items-center gap-2">
+        <button
+          type="button"
+          onClick={() => onOpen(item)}
+          className="min-w-0 flex-1 rounded-lg p-4 text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          aria-label={`查看 ${item.word} 详情`}
+        >
+          <span className="block min-w-0">
+            <span className="flex flex-wrap items-center gap-2">
+              <span className="text-lg font-semibold text-foreground">{item.word}</span>
+              {item.phonetic && (
+                <span className="text-sm text-muted-foreground">{item.phonetic}</span>
+              )}
+            </span>
+            <span className="mt-2 line-clamp-2 text-sm text-muted-foreground">
+              {item.meaning || '暂无释义'}
+            </span>
+          </span>
+
+          <span className="mt-4 grid gap-3 text-xs text-muted-foreground sm:grid-cols-3">
+            <span>
+              <span className="block">熟练度</span>
+              <span className="mt-1 block font-semibold text-foreground">{confidencePercent}%</span>
+            </span>
+            <span>
+              <span className="block">复习次数</span>
+              <span className="mt-1 block font-semibold text-foreground">{item.review_count}</span>
+            </span>
+            <span>
+              <span className="block">下次复习</span>
+              <span className="mt-1 block font-semibold text-foreground">
+                {formatDate(item.next_review_at) || '待安排'}
+              </span>
+            </span>
+          </span>
+        </button>
+        <div className="flex shrink-0 items-center gap-2 py-4 pr-4">
           <span
             className={`rounded-full px-2.5 py-1 text-xs font-medium ${getVocabularyStatusClass(
               item.status,
@@ -1399,7 +1467,7 @@ function VocabularyListRow({
               onDelete(item)
             }}
             disabled={isDeleting}
-            className="inline-flex size-8 items-center justify-center rounded-lg border text-muted-foreground transition-colors hover:border-error/40 hover:bg-error/5 hover:text-error disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex size-8 items-center justify-center rounded-lg border text-muted-foreground transition-colors hover:border-error/40 hover:bg-error/5 hover:text-error focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-error disabled:cursor-not-allowed disabled:opacity-50"
             aria-label={`删除 ${item.word}`}
             title="删除单词"
           >
@@ -1409,23 +1477,6 @@ function VocabularyListRow({
               <Trash2 className="h-4 w-4" />
             )}
           </button>
-        </div>
-      </div>
-
-      <div className="mt-4 grid gap-3 text-xs text-muted-foreground sm:grid-cols-3">
-        <div>
-          <p>熟练度</p>
-          <p className="mt-1 font-semibold text-foreground">{confidencePercent}%</p>
-        </div>
-        <div>
-          <p>复习次数</p>
-          <p className="mt-1 font-semibold text-foreground">{item.review_count}</p>
-        </div>
-        <div>
-          <p>下次复习</p>
-          <p className="mt-1 font-semibold text-foreground">
-            {formatDate(item.next_review_at) || '待安排'}
-          </p>
         </div>
       </div>
     </article>

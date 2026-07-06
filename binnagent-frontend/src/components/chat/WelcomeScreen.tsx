@@ -1,4 +1,5 @@
 import { Bot, BookOpen, MessageSquare, Mic } from 'lucide-react'
+import { Button } from '@/components/ui/Button'
 
 interface WelcomeScreenProps {
   onStartLesson: () => void
@@ -27,10 +28,11 @@ export function WelcomeScreen({
       </div>
 
       <div className="flex flex-col gap-3 w-full max-w-md">
-        <button
+        <Button
+          variant="secondary"
           onClick={onStartLesson}
           disabled={isLocked}
-          className="flex items-center gap-3 rounded-xl border p-4 text-left transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-transparent"
+          className="w-full justify-start rounded-xl p-4 text-left transition-[background-color,border-color,box-shadow,transform] duration-150 hover:-translate-y-0.5 hover:shadow-sm"
           title={isLocked ? lockedTitle : '开始一节对话课'}
         >
           <div className="flex size-10 items-center justify-center rounded-lg bg-primary/10">
@@ -40,12 +42,13 @@ export function WelcomeScreen({
             <p className="font-medium text-foreground">开始一节对话课</p>
             <p className="text-sm text-muted-foreground">和 AI 进行英语对话练习</p>
           </div>
-        </button>
+        </Button>
 
-        <button
+        <Button
+          variant="secondary"
           onClick={onReviewVocab}
           disabled={isLocked}
-          className="flex items-center gap-3 rounded-xl border p-4 text-left transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-transparent"
+          className="w-full justify-start rounded-xl p-4 text-left transition-[background-color,border-color,box-shadow,transform] duration-150 hover:-translate-y-0.5 hover:shadow-sm"
           title={isLocked ? lockedTitle : '复习今天词汇'}
         >
           <div className="flex size-10 items-center justify-center rounded-lg bg-success/10">
@@ -55,12 +58,13 @@ export function WelcomeScreen({
             <p className="font-medium text-foreground">复习今天词汇</p>
             <p className="text-sm text-muted-foreground">使用间隔重复法复习单词</p>
           </div>
-        </button>
+        </Button>
 
-        <button
+        <Button
+          variant="secondary"
           onClick={onPracticeSpeaking}
           disabled={isLocked}
-          className="flex items-center gap-3 rounded-xl border p-4 text-left transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-transparent"
+          className="w-full justify-start rounded-xl p-4 text-left transition-[background-color,border-color,box-shadow,transform] duration-150 hover:-translate-y-0.5 hover:shadow-sm"
           title={isLocked ? lockedTitle : '练习口语场景'}
         >
           <div className="flex size-10 items-center justify-center rounded-lg bg-accent/10">
@@ -70,7 +74,7 @@ export function WelcomeScreen({
             <p className="font-medium text-foreground">练习口语场景</p>
             <p className="text-sm text-muted-foreground">模拟真实场景进行口语练习</p>
           </div>
-        </button>
+        </Button>
       </div>
     </div>
   )

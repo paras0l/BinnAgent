@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { ArrowRight, CheckCircle2, RotateCcw, XCircle } from 'lucide-react'
+import { ArrowRight, CheckCircle2, LoaderCircle, RotateCcw, XCircle } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { recordExerciseAttempt, saveExerciseAttempt } from '@/services/exerciseRepository'
 import type { ExerciseAttempt, ExerciseItem } from '@/types/exercises'
@@ -40,6 +40,9 @@ export function ExerciseRenderer({
   const currentFeedback = currentExercise ? feedbackByExerciseId[currentExercise.id] : undefined
   const completedCount = exercises.filter((exercise) => feedbackByExerciseId[exercise.id]).length
   const correctCount = exercises.filter((exercise) => feedbackByExerciseId[exercise.id]?.result === 'correct').length
+  const progressPercent = exercises.length > 0
+    ? Math.round((completedCount / exercises.length) * 100)
+    : 0
 
   useEffect(() => {
     onProgressChange?.({
@@ -135,6 +138,12 @@ export function ExerciseRenderer({
           {exerciseSkillLabel(currentExercise.skill)}
         </p>
       </div>
+      <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-100" aria-label={`练习进度 ${progressPercent}%`}>
+        <div
+          className="h-full rounded-full bg-primary transition-[width] duration-500"
+          style={{ width: `${progressPercent}%` }}
+        />
+      </div>
 
       {scenario ? (
         <div className="mt-4 rounded-lg border border-sky-100 bg-sky-50 px-4 py-3">
@@ -157,6 +166,7 @@ export function ExerciseRenderer({
                 onClick={() => updateAnswer(currentExercise.id, option)}
                 disabled={Boolean(currentFeedback)}
                 className={optionClassName(option, currentAnswer, currentExercise, currentFeedback)}
+                aria-pressed={option === currentAnswer}
               >
                 {option}
               </button>
@@ -166,19 +176,21 @@ export function ExerciseRenderer({
           <label className="block text-sm font-bold text-slate-700">
             我的答案
             <textarea
+              name={`exercise_answer_${currentExercise.id}`}
+              autoComplete="off"
               value={currentAnswer}
               onChange={(event) => updateAnswer(currentExercise.id, event.target.value)}
               disabled={Boolean(currentFeedback)}
               rows={3}
-              className="mt-2 w-full resize-none rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm leading-6 outline-none transition focus:border-primary disabled:bg-slate-50"
-              placeholder="输入答案"
+              className="mt-2 w-full resize-none rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm leading-6 transition-colors focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 disabled:bg-slate-50"
+              placeholder="输入答案…"
             />
           </label>
         )}
       </div>
 
       {currentFeedback ? (
-        <div className={feedbackBoxClassName(currentFeedback.result)}>
+        <div className={feedbackBoxClassName(currentFeedback.result)} aria-live="polite">
           <div className="flex items-center gap-2">
             {currentFeedback.result === 'correct' ? (
               <CheckCircle2 className="size-5 text-emerald-600" />
@@ -202,7 +214,8 @@ export function ExerciseRenderer({
             onClick={() => void submitAnswer()}
             disabled={!currentAnswer.trim() || Boolean(currentFeedback) || isSubmitting}
           >
-            {isSubmitting ? '提交中' : '提交答案'}
+            {isSubmitting ? <LoaderCircle className="size-4 animate-spin" /> : null}
+            {isSubmitting ? '提交中…' : '提交答案'}
           </Button>
           {currentFeedback ? (
             <Button variant="secondary" onClick={resetCurrentAnswer}>
@@ -245,16 +258,16 @@ function optionClassName(
   const isSelected = option === currentAnswer
   if (feedback) {
     if (isAcceptedAnswer(exercise, option)) {
-      return 'rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-3 text-left text-sm font-semibold text-emerald-800'
+      return 'rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-3 text-left text-sm font-semibold text-emerald-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-200'
     }
     if (isSelected && feedback.result === 'incorrect') {
-      return 'rounded-lg border border-rose-300 bg-rose-50 px-3 py-3 text-left text-sm font-semibold text-rose-700'
+      return 'rounded-lg border border-rose-300 bg-rose-50 px-3 py-3 text-left text-sm font-semibold text-rose-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-200'
     }
-    return 'rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 text-left text-sm text-slate-500'
+    return 'rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 text-left text-sm text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20'
   }
   return isSelected
-    ? 'rounded-lg border border-primary bg-primary/10 px-3 py-3 text-left text-sm font-bold text-primary'
-    : 'rounded-lg border border-slate-200 bg-white px-3 py-3 text-left text-sm font-semibold text-slate-700 transition hover:border-primary/40 hover:text-primary'
+    ? 'rounded-lg border border-primary bg-primary/10 px-3 py-3 text-left text-sm font-bold text-primary transition-[border-color,background-color,color,box-shadow] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30'
+    : 'rounded-lg border border-slate-200 bg-white px-3 py-3 text-left text-sm font-semibold text-slate-700 transition-[border-color,background-color,color,box-shadow,transform] duration-150 hover:-translate-y-0.5 hover:border-primary/40 hover:text-primary hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30'
 }
 
 function feedbackBoxClassName(result: ExerciseAttempt['result']) {

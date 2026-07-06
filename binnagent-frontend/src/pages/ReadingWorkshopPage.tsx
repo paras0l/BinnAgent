@@ -11,6 +11,7 @@ import {
   Highlighter,
   Layers3,
   ListChecks,
+  PanelLeftOpen,
   PencilLine,
   RotateCw,
   Save,
@@ -95,7 +96,7 @@ const EMPTY_INTENSIVE_NOTES: IntensiveNotes = {
   evidenceNote: '',
 }
 
-const SELECT_CLASS = 'w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none transition focus:border-primary'
+const SELECT_CLASS = 'w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none transition-colors focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20'
 
 const WORKSPACE_TABS: WorkspaceTab<ReadingWorkspace>[] = [
   { id: 'input', label: '材料输入', description: '标题与原文', icon: <FileText className="h-4 w-4" /> },
@@ -435,6 +436,7 @@ export function ReadingWorkshopPage({ learner, onBack }: ReadingWorkshopPageProp
         <ReviewWorkspace
           extensiveNotes={extensiveNotes}
           intensiveNotes={intensiveNotes}
+          keywordCandidates={keywordCandidates}
           material={material}
           openedGrammarTopics={openedGrammarTopics}
           selectedGrammarOptions={selectedGrammarOptions}
@@ -482,6 +484,7 @@ function InputWorkspace({
   saveStatus: MaterialSaveStatus
   titleSuggestionStatus: TitleSuggestionStatus
 }) {
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false)
   const titleDescription = {
     idle: '可选；粘贴完整材料后会自动建议标题，仍可手动修改。',
     checking: '正在根据材料建议标题，仍可手动填写。',
@@ -506,14 +509,18 @@ function InputWorkspace({
         <div className="mt-5 grid gap-4 md:grid-cols-2">
           <FormField
             label="标题"
+            name="reading_material_title"
+            autoComplete="off"
             description={titleDescription[titleSuggestionStatus]}
             value={material.title}
             onChange={(event) => onTitleChange(event.target.value)}
-            placeholder="例如 The Future of Libraries"
+            placeholder="例如 The Future of Libraries…"
           />
           <div className="grid gap-4 sm:grid-cols-2">
             <FormField label="难度">
               <select
+                name="reading_material_level"
+                autoComplete="off"
                 className={SELECT_CLASS}
                 value={material.level}
                 onChange={(event) => onLevelChange(event.target.value as ReadingLevel)}
@@ -525,6 +532,8 @@ function InputWorkspace({
             </FormField>
             <FormField label="训练目标">
               <select
+                name="reading_training_goal"
+                autoComplete="off"
                 className={SELECT_CLASS}
                 value={material.goal}
                 onChange={(event) => onGoalChange(event.target.value as ReadingTrainingGoal)}
@@ -540,9 +549,11 @@ function InputWorkspace({
           <FormField
             as="textarea"
             label="英文材料"
+            name="reading_material_text"
+            autoComplete="off"
             value={material.text}
             onChange={(event) => onTextChange(event.target.value)}
-            placeholder="Paste an English paragraph here..."
+            placeholder="Paste an English paragraph here…"
             className="h-64 resize-y"
           />
         </div>
@@ -566,7 +577,16 @@ function InputWorkspace({
         </div>
       </SurfaceCard>
 
-      <SurfaceCard className="flex flex-col justify-between">
+      <Button
+        variant="secondary"
+        className="xl:hidden"
+        onClick={() => setIsHistoryOpen((current) => !current)}
+      >
+        <PanelLeftOpen className="h-4 w-4" />
+        {isHistoryOpen ? '收起材料历史' : '展开材料历史'}
+      </Button>
+
+      <SurfaceCard className={`${isHistoryOpen ? 'flex' : 'hidden'} flex-col justify-between xl:flex`}>
         <div>
           <div className="flex items-center gap-2">
             <Layers3 className="h-5 w-5 text-success" />
@@ -589,7 +609,9 @@ function InputWorkspace({
               <h2 className="text-lg font-black text-slate-950">材料历史</h2>
             </div>
             <button
-              className="rounded-lg p-2 text-slate-500 transition hover:bg-slate-100 hover:text-primary"
+              type="button"
+              aria-label="刷新历史记录"
+              className="rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
               onClick={onRefreshHistory}
               title="刷新历史记录"
             >
@@ -599,7 +621,7 @@ function InputWorkspace({
           <div className="mt-4 max-h-[420px] space-y-3 overflow-y-auto pr-1">
             {historyStatus === 'loading' ? (
               <p className="rounded-lg border border-dashed border-slate-200 p-3 text-sm text-muted-foreground">
-                正在加载历史材料...
+                正在加载历史材料…
               </p>
             ) : historyStatus === 'error' ? (
               <p className="rounded-lg border border-dashed border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">
@@ -677,27 +699,35 @@ function ExtensiveWorkspace({
             <FormField
               as="textarea"
               label="主旨判断"
+              name="reading_gist_note"
+              autoComplete="off"
               value={notes.gist}
               onChange={(event) => onNotesChange('gist', event.target.value)}
-              placeholder="这段材料主要讲什么？"
+              placeholder="这段材料主要讲什么…"
             />
             <FormField
               label="作者态度"
+              name="reading_attitude_note"
+              autoComplete="off"
               value={notes.attitude}
               onChange={(event) => onNotesChange('attitude', event.target.value)}
-              placeholder="支持 / 反对 / 中立，以及依据"
+              placeholder="支持 / 反对 / 中立，以及依据…"
             />
             <FormField
               label="段落功能"
+              name="reading_paragraph_function_note"
+              autoComplete="off"
               value={notes.paragraphFunction}
               onChange={(event) => onNotesChange('paragraphFunction', event.target.value)}
-              placeholder="引入问题 / 解释原因 / 举例 / 总结"
+              placeholder="引入问题 / 解释原因 / 举例 / 总结…"
             />
             <FormField
               label="中心句"
+              name="reading_central_sentence_note"
+              autoComplete="off"
               value={notes.centralSentence}
               onChange={(event) => onNotesChange('centralSentence', event.target.value)}
-              placeholder="哪一句最能概括段落中心？"
+              placeholder="哪一句最能概括段落中心…"
             />
           </div>
         </SurfaceCard>
@@ -760,6 +790,7 @@ function IntensiveWorkspace({
   onSelectSentence: (sentence: ReadingSentence) => void
   onToggleGrammarOption: (optionId: string) => void
 }) {
+  const [isSentenceListOpen, setIsSentenceListOpen] = useState(false)
   if (!canUseMaterial) {
     return <EmptyMaterialCard onOpenInput={() => onOpenWorkspace('input')} />
   }
@@ -770,7 +801,16 @@ function IntensiveWorkspace({
 
   return (
     <section className="grid gap-5 xl:grid-cols-[340px_minmax(0,1fr)]">
-      <SurfaceCard>
+      <Button
+        variant="secondary"
+        className="xl:hidden"
+        onClick={() => setIsSentenceListOpen((current) => !current)}
+      >
+        <PanelLeftOpen className="h-4 w-4" />
+        {isSentenceListOpen ? '收起句子列表' : '展开句子列表'}
+      </Button>
+
+      <SurfaceCard className={isSentenceListOpen ? '' : 'hidden xl:block'}>
         <div className="flex items-center gap-2">
           <ListChecks className="h-5 w-5 text-primary" />
           <h2 className="text-lg font-black text-slate-950">选择精读句子</h2>
@@ -779,8 +819,12 @@ function IntensiveWorkspace({
           {sentences.map((sentence) => (
             <button
               key={sentence.id}
-              onClick={() => onSelectSentence(sentence)}
-              className={`w-full rounded-lg border p-3 text-left text-sm leading-6 transition ${
+              type="button"
+              onClick={() => {
+                onSelectSentence(sentence)
+                setIsSentenceListOpen(false)
+              }}
+              className={`w-full rounded-lg border p-3 text-left text-sm leading-6 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
                 selectedSentenceId === sentence.id
                   ? 'border-primary bg-primary/5 text-primary'
                   : 'border-slate-200 bg-white text-slate-600 hover:border-primary/30 hover:text-slate-950'
@@ -816,23 +860,29 @@ function IntensiveWorkspace({
                 <FormField
                   as="textarea"
                   label="主干识别"
+                  name="reading_main_structure"
+                  autoComplete="off"
                   value={notes.mainStructure}
                   onChange={(event) => onNotesChange('mainStructure', event.target.value)}
-                  placeholder="S + V + O/C..."
+                  placeholder="S + V + O/C…"
                 />
                 <FormField
                   as="textarea"
                   label="词组和搭配"
+                  name="reading_phrase_notes"
+                  autoComplete="off"
                   value={notes.phraseNotes}
                   onChange={(event) => onNotesChange('phraseNotes', event.target.value)}
-                  placeholder="记录值得复用的短语"
+                  placeholder="记录值得复用的短语…"
                 />
                 <FormField
                   as="textarea"
                   label="细节证据"
+                  name="reading_evidence_note"
+                  autoComplete="off"
                   value={notes.evidenceNote}
                   onChange={(event) => onNotesChange('evidenceNote', event.target.value)}
-                  placeholder="这句话支持了哪一个细节？"
+                  placeholder="这句话支持了哪一个细节…"
                 />
               </div>
             </>
@@ -887,6 +937,7 @@ function IntensiveWorkspace({
 function ReviewWorkspace({
   extensiveNotes,
   intensiveNotes,
+  keywordCandidates,
   material,
   openedGrammarTopics,
   selectedGrammarOptions,
@@ -898,6 +949,7 @@ function ReviewWorkspace({
 }: {
   extensiveNotes: ExtensiveNotes
   intensiveNotes: IntensiveNotes
+  keywordCandidates: ReadingKeywordCandidate[]
   material: ReadingMaterial
   openedGrammarTopics: string[]
   selectedGrammarOptions: ReadingGrammarOption[]
@@ -918,6 +970,15 @@ function ReviewWorkspace({
           <MetricTile label="材料" value={material.title.trim() || '未命名'} />
           <MetricTile label="词数 / 句子" value={`${wordCount} / ${sentences.length}`} />
           <MetricTile label="目标" value={READING_GOAL_LABELS[material.goal]} />
+        </div>
+
+        <div className="mt-5 grid gap-4 xl:grid-cols-3">
+          <KeywordFrequencyChart keywords={keywordCandidates.slice(0, 8)} />
+          <SentenceDifficultyHeatmap sentences={sentences} selectedSentences={selectedSentences} />
+          <GrammarTroubleChart
+            openedGrammarTopics={openedGrammarTopics}
+            selectedGrammarOptions={selectedGrammarOptions}
+          />
         </div>
 
         <div className="mt-5 grid gap-4 lg:grid-cols-2">
@@ -1040,11 +1101,12 @@ function GrammarOptionCard({
           <p className="mt-2 text-sm leading-6 text-slate-500">{option.description}</p>
         </div>
         <button
+          type="button"
           className={`rounded-lg border px-2 py-1 text-xs font-bold transition ${
             isSelected
               ? 'border-primary bg-primary text-primary-foreground'
               : 'border-slate-200 text-slate-500 hover:border-primary/30 hover:text-primary'
-          }`}
+          } focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary`}
           onClick={onToggle}
         >
           {isSelected ? '已标记' : '标记'}
@@ -1107,9 +1169,142 @@ function MetricTile({ label, value }: { label: string; value: string | number })
   )
 }
 
+function KeywordFrequencyChart({ keywords }: { keywords: ReadingKeywordCandidate[] }) {
+  const maxCount = Math.max(...keywords.map((keyword) => keyword.count), 1)
+  return (
+    <div className="rounded-lg border border-slate-200 p-4">
+      <h3 className="text-sm font-black text-slate-950">关键词频次</h3>
+      <div className="mt-3 space-y-2">
+        {keywords.length > 0 ? (
+          keywords.map((keyword) => (
+            <div key={keyword.word} className="grid grid-cols-[80px_minmax(0,1fr)_28px] items-center gap-2">
+              <span className="truncate text-xs font-bold text-slate-600">{keyword.word}</span>
+              <div className="h-2 overflow-hidden rounded-full bg-slate-100">
+                <div
+                  className="h-full rounded-full bg-primary transition-[width] duration-500"
+                  style={{ width: `${(keyword.count / maxCount) * 100}%` }}
+                />
+              </div>
+              <span className="text-right text-xs font-black text-slate-500">{keyword.count}</span>
+            </div>
+          ))
+        ) : (
+          <p className="text-sm leading-6 text-slate-500">材料较短，暂未形成关键词频次。</p>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function SentenceDifficultyHeatmap({
+  selectedSentences,
+  sentences,
+}: {
+  selectedSentences: ReadingSentence[]
+  sentences: ReadingSentence[]
+}) {
+  const selectedIds = new Set(selectedSentences.map((sentence) => sentence.id))
+  return (
+    <div className="rounded-lg border border-slate-200 p-4">
+      <div className="flex items-center justify-between gap-3">
+        <h3 className="text-sm font-black text-slate-950">句子难度热力图</h3>
+        <span className="text-xs font-bold text-slate-500">按词数估算</span>
+      </div>
+      <div className="mt-3 grid grid-cols-8 gap-2 sm:grid-cols-10">
+        {sentences.length > 0 ? (
+          sentences.map((sentence) => {
+            const wordCount = countEnglishWords(sentence.text)
+            const intensity = Math.min(1, 0.18 + wordCount / 28)
+            const isSelected = selectedIds.has(sentence.id)
+            return (
+              <span
+                key={sentence.id}
+                className={`flex aspect-square items-center justify-center rounded-[4px] text-[10px] font-black ring-1 ring-inset ${
+                  isSelected ? 'text-indigo-950 ring-indigo-500' : 'text-slate-600 ring-slate-200'
+                }`}
+                style={{ backgroundColor: `rgb(99 102 241 / ${intensity.toFixed(2)})` }}
+                title={`Sentence ${sentence.order}: ${wordCount} words${isSelected ? '，已精读' : ''}`}
+              >
+                {sentence.order}
+              </span>
+            )
+          })
+        ) : (
+          <span className="col-span-full text-sm leading-6 text-slate-500">添加材料后会显示句子难度。</span>
+        )}
+      </div>
+      <p className="mt-3 text-xs font-semibold text-slate-500">深色代表句子更长；描边代表你在精读中选中过。</p>
+    </div>
+  )
+}
+
+function GrammarTroubleChart({
+  openedGrammarTopics,
+  selectedGrammarOptions,
+}: {
+  openedGrammarTopics: string[]
+  selectedGrammarOptions: ReadingGrammarOption[]
+}) {
+  const rows = getGrammarTroubleRows(selectedGrammarOptions, openedGrammarTopics)
+  const maxValue = Math.max(...rows.map((row) => row.value), 1)
+
+  return (
+    <div className="rounded-lg border border-slate-200 p-4">
+      <div className="flex items-center justify-between gap-3">
+        <h3 className="text-sm font-black text-slate-950">语法卡点分布</h3>
+        <span className="text-xs font-bold text-slate-500">标记 + 跳转</span>
+      </div>
+      <div className="mt-3 space-y-2">
+        {rows.length > 0 ? (
+          rows.map((row) => (
+            <div key={row.label}>
+              <div className="flex justify-between gap-3 text-xs font-bold text-slate-500">
+                <span className="truncate">{row.label}</span>
+                <span>{row.value}</span>
+              </div>
+              <div className="mt-1 h-2 overflow-hidden rounded-full bg-slate-100">
+                <div
+                  className="h-full rounded-full bg-success transition-[width] duration-500"
+                  style={{ width: `${(row.value / maxValue) * 100}%` }}
+                />
+              </div>
+              <p className="mt-1 text-xs font-semibold text-slate-500">{row.meta}</p>
+            </div>
+          ))
+        ) : (
+          <p className="text-sm leading-6 text-slate-500">精读时标记语法卡点后，这里会显示分布。</p>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function getGrammarTroubleRows(
+  selectedGrammarOptions: ReadingGrammarOption[],
+  openedGrammarTopics: string[]
+) {
+  const selectedByTopic = new Map<string, number>()
+  selectedGrammarOptions.forEach((option) => {
+    selectedByTopic.set(option.grammarTopicTitle, (selectedByTopic.get(option.grammarTopicTitle) ?? 0) + 1)
+  })
+  const openedByTopic = new Map<string, number>()
+  openedGrammarTopics.forEach((topic) => {
+    openedByTopic.set(topic, (openedByTopic.get(topic) ?? 0) + 1)
+  })
+  return uniqueList([...selectedByTopic.keys(), ...openedByTopic.keys()]).map((topic) => {
+    const selected = selectedByTopic.get(topic) ?? 0
+    const opened = openedByTopic.get(topic) ?? 0
+    return {
+      label: topic,
+      value: selected + opened,
+      meta: `标记 ${selected} · 跳转 ${opened}`,
+    }
+  })
+}
+
 function HistoryItem({ item, onRestore }: { item: ReadingMaterialHistoryItem; onRestore: () => void }) {
   const title = item.title?.trim() || '未命名阅读材料'
-  const preview = item.text.length > 118 ? `${item.text.slice(0, 118)}...` : item.text
+  const preview = item.text.length > 118 ? `${item.text.slice(0, 118)}…` : item.text
 
   return (
     <div className="rounded-lg border border-slate-200 bg-white p-3">

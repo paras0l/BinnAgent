@@ -500,7 +500,7 @@ export function VocabularyPracticePage({
     return (
       <div className="min-h-screen bg-[#f7f8fc] px-4 py-8 sm:py-14">
         <div className="mx-auto max-w-2xl">
-          <button onClick={onExit} className="inline-flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-indigo-600"><ArrowLeft className="size-4" />返回学习中心</button>
+          <button type="button" onClick={onExit} className="inline-flex items-center gap-2 rounded-lg text-sm font-bold text-slate-500 hover:text-indigo-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"><ArrowLeft className="size-4" />返回学习中心</button>
           <section className="mt-8 rounded-[28px] border border-slate-200 bg-white p-6 shadow-[0_20px_60px_rgba(30,41,59,0.08)] sm:p-10">
             <div className="flex size-14 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600">{mode === 'spelling' ? <Headphones className="size-7" /> : <BookOpen className="size-7" />}</div>
             <h1 className="mt-5 text-3xl font-black text-slate-950">{mode === 'new' ? '认识新词' : mode === 'spelling' ? '拼写练习' : '今日复习'}</h1>
@@ -516,7 +516,7 @@ export function VocabularyPracticePage({
             <SetupGroup label="本组数量">
               {counts.filter((count) => availableTotal === null || count <= availableTotal).map((count) => <Choice key={count} selected={!isCustomLimit && limit === count} onClick={() => { setLimit(count); setIsCustomLimit(false) }}>{count} 个</Choice>)}
               <Choice selected={isCustomLimit} onClick={() => { setLimit((current) => Math.min(current, availableTotal ?? current)); setIsCustomLimit(true) }}>自定义</Choice>
-              {isCustomLimit ? <label className="inline-flex items-center gap-2 rounded-xl border border-indigo-300 bg-white px-3 py-1.5 text-sm font-bold text-slate-600"><input type="number" min={1} max={availableTotal ?? undefined} value={limit} onChange={(event) => setLimit(Math.max(1, Math.min(availableTotal ?? Number.MAX_SAFE_INTEGER, Number(event.target.value) || 1)))} className="w-14 bg-transparent text-center text-slate-950 outline-none" aria-label="自定义本组数量" />个{availableTotal !== null ? <span className="text-xs text-slate-400">（1–{availableTotal}）</span> : null}</label> : null}
+              {isCustomLimit ? <label className="inline-flex items-center gap-2 rounded-xl border border-indigo-300 bg-white px-3 py-1.5 text-sm font-bold text-slate-600 focus-within:ring-2 focus-within:ring-indigo-100"><input type="number" name="vocabulary_practice_limit" autoComplete="off" inputMode="numeric" min={1} max={availableTotal ?? undefined} value={limit} onChange={(event) => setLimit(Math.max(1, Math.min(availableTotal ?? Number.MAX_SAFE_INTEGER, Number(event.target.value) || 1)))} className="w-14 bg-transparent text-center text-slate-950 outline-none" aria-label="自定义本组数量" />个{availableTotal !== null ? <span className="text-xs text-slate-400">（1–{availableTotal}）</span> : null}</label> : null}
             </SetupGroup>
             <SetupGroup label="发音偏好">
               <Choice selected={accent === 'uk'} onClick={() => setAccent('uk')}>英音</Choice>
@@ -524,7 +524,7 @@ export function VocabularyPracticePage({
               <Choice selected={accent === 'auto'} onClick={() => setAccent('auto')}>跟随词典</Choice>
             </SetupGroup>
             {error ? <p className="mt-5 rounded-xl bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800">{error}</p> : null}
-            <button onClick={() => void startPractice()} className="mt-8 w-full rounded-xl bg-indigo-600 px-5 py-3.5 text-sm font-black text-white shadow-lg shadow-indigo-200 transition hover:bg-indigo-700">开始练习</button>
+            <button type="button" onClick={() => void startPractice()} className="mt-8 w-full rounded-xl bg-indigo-600 px-5 py-3.5 text-sm font-black text-white shadow-lg shadow-indigo-200 transition-colors hover:bg-indigo-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500">开始练习</button>
           </section>
         </div>
       </div>
@@ -547,7 +547,7 @@ export function VocabularyPracticePage({
             <SummaryMetric label="用过提示" value={summary.hinted} />
             <SummaryMetric label="查看答案" value={summary.revealed} />
           </div>
-          <button onClick={onExit} className="mt-8 w-full rounded-xl bg-indigo-600 px-5 py-3.5 text-sm font-black text-white">返回背单词</button>
+          <button type="button" onClick={onExit} className="mt-8 w-full rounded-xl bg-indigo-600 px-5 py-3.5 text-sm font-black text-white hover:bg-indigo-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500">返回背单词</button>
         </section>
       </div>
     )
@@ -561,8 +561,8 @@ export function VocabularyPracticePage({
     <div className="flex h-dvh flex-col overflow-hidden bg-[#fbfbfd] text-slate-950">
       <header className="shrink-0 border-b border-slate-200 bg-white px-4 py-3 sm:px-8">
         <div className="mx-auto flex max-w-[1420px] items-center gap-5">
-          <button onClick={onExit} className="inline-flex shrink-0 items-center gap-2 text-sm font-bold text-slate-500 hover:text-indigo-600"><ArrowLeft className="size-4" />退出练习</button>
-          <div className="mx-auto flex w-full max-w-xl items-center gap-3"><div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-indigo-600 transition-all" style={{ width: `${progress}%` }} /></div><span className="text-xs font-black text-slate-500">{task.current_index + 1} / {task.total}</span></div>
+          <button type="button" onClick={onExit} className="inline-flex shrink-0 items-center gap-2 rounded-lg text-sm font-bold text-slate-500 hover:text-indigo-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"><ArrowLeft className="size-4" />退出练习</button>
+          <div className="mx-auto flex w-full max-w-xl items-center gap-3"><div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-indigo-600 transition-[width] duration-500" style={{ width: `${progress}%` }} /></div><span className="text-xs font-black text-slate-500">{task.current_index + 1} / {task.total}</span></div>
           <span className="hidden shrink-0 text-sm font-bold text-slate-600 sm:inline">
             {mode === 'new' ? '新词学习' : mode === 'review' ? '今日复习' : '拼写练习'} · {task.sources[0]?.label ?? sourceLabel ?? '我的词汇本'}
           </span>
@@ -577,7 +577,7 @@ export function VocabularyPracticePage({
             </div>
             <div className={`min-h-0 flex-1 overflow-y-auto p-4 sm:p-5 ${mode === 'review' && isReviewRevealed ? '' : 'flex items-center justify-center text-center'}`}>
               <div className="w-full">
-                {mode === 'spelling' ? <><p className="text-sm font-black uppercase tracking-[0.18em] text-indigo-600">{feedback ? (feedback.result === 'correct' ? '拼对了' : feedback.result === 'revealed' ? '先记住答案' : '差一点，再看看') : '听发音，拼出这个词'}</p><button onClick={() => void playAudio()} aria-label="播放发音" className={`mx-auto mt-5 flex size-20 items-center justify-center rounded-full bg-indigo-600 text-white shadow-[0_14px_36px_rgba(79,70,229,0.28)] transition hover:scale-[1.03] sm:size-24 ${isPlaying ? 'ring-8 ring-indigo-100' : ''}`}><Volume2 className="size-9 sm:size-10" /></button><p className="mt-3 text-xs font-bold text-slate-400">点击播放 · 空格键重播 · {accent === 'us' ? '美音' : '英音'}</p></> : null}
+                {mode === 'spelling' ? <><p className="text-sm font-black uppercase tracking-[0.18em] text-indigo-600">{feedback ? (feedback.result === 'correct' ? '拼对了' : feedback.result === 'revealed' ? '先记住答案' : '差一点，再看看') : '听发音，拼出这个词'}</p><button type="button" onClick={() => void playAudio()} aria-label="播放发音" className={`mx-auto mt-5 flex size-20 items-center justify-center rounded-full bg-indigo-600 text-white shadow-[0_14px_36px_rgba(79,70,229,0.28)] transition-transform hover:scale-[1.03] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 sm:size-24 ${isPlaying ? 'ring-8 ring-indigo-100' : ''}`}><Volume2 className="size-9 sm:size-10" /></button><p className="mt-3 text-xs font-bold text-slate-400">点击播放 · 空格键重播 · {accent === 'us' ? '美音' : '英音'}</p></> : null}
 
                 {(mode === 'review' || mode === 'new') && isReviewRevealed ? (
                   <RichVocabularyEntry
@@ -601,8 +601,8 @@ export function VocabularyPracticePage({
                     <h1 className="mt-4 text-4xl font-black text-slate-950 sm:text-5xl">{task.word}</h1>
                     {task.phonetic ? <p className="mt-3 text-lg font-semibold text-slate-400">{task.phonetic}</p> : null}
                     <div className="mt-6 flex flex-wrap justify-center gap-3">
-                      <button type="button" onClick={() => void playAudio()} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-black text-slate-700 hover:border-indigo-200"><Volume2 className="size-4" />播放发音</button>
-                      <button type="button" onClick={() => setIsReviewRevealed(true)} className="rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-black text-white hover:bg-indigo-700">显示答案</button>
+                      <button type="button" onClick={() => void playAudio()} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-black text-slate-700 transition-colors hover:border-indigo-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"><Volume2 className="size-4" />播放发音</button>
+                      <button type="button" onClick={() => setIsReviewRevealed(true)} className="rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-black text-white transition-colors hover:bg-indigo-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500">显示答案</button>
                     </div>
                     {hint ? <p className="mx-auto mt-5 max-w-xl rounded-xl bg-indigo-50 px-4 py-3 text-sm font-semibold text-indigo-800">{hint}</p> : null}
                   </div>
@@ -610,8 +610,8 @@ export function VocabularyPracticePage({
                   <FeedbackPanel feedback={feedback} />
                 ) : (
                   <div className="mx-auto max-w-2xl">
-                    <label className="relative block cursor-text" onClick={() => inputRef.current?.focus()}>
-                      <input ref={inputRef} value={answer} onChange={(event) => handleAnswerChange(event.target.value)} onCompositionStart={() => { compositionRef.current = true; setIsComposing(true); setInputWarning('正在使用输入法，请切换到英文输入后再提交。') }} onCompositionEnd={(event) => { compositionRef.current = false; setIsComposing(false); handleAnswerChange(event.currentTarget.value) }} lang="en" inputMode="text" autoCapitalize="none" autoCorrect="off" autoComplete="off" spellCheck={false} className="absolute inset-0 h-full w-full cursor-text opacity-0" aria-label="拼写答案" />
+                    <label className="relative block cursor-text rounded-xl focus-within:ring-2 focus-within:ring-indigo-100" onClick={() => inputRef.current?.focus()}>
+                      <input ref={inputRef} name="vocabulary_spelling_answer" value={answer} onChange={(event) => handleAnswerChange(event.target.value)} onCompositionStart={() => { compositionRef.current = true; setIsComposing(true); setInputWarning('正在使用输入法，请切换到英文输入后再提交。') }} onCompositionEnd={(event) => { compositionRef.current = false; setIsComposing(false); handleAnswerChange(event.currentTarget.value) }} lang="en" inputMode="text" autoCapitalize="none" autoCorrect="off" autoComplete="off" spellCheck={false} className="absolute inset-0 h-full w-full cursor-text opacity-0" aria-label="拼写答案" />
                       <div className="flex min-h-16 flex-wrap items-end justify-center gap-2" aria-hidden="true">
                         {Array.from({ length: Math.max(task.answer_length, answer.length) }, (_, index) => <span key={index} className={`flex h-14 min-w-10 items-center justify-center border-b-2 text-3xl font-black ${answer[index] ? 'border-indigo-500 text-slate-950' : 'border-slate-300 text-transparent'}`}>{answer[index] ?? '·'}</span>)}
                       </div>
@@ -649,14 +649,14 @@ export function VocabularyPracticePage({
         <div className="mx-auto flex max-w-[1420px] flex-col-reverse items-stretch justify-between gap-3 sm:flex-row sm:items-center">
           <span className={`text-xs font-semibold ${error ? 'block text-rose-600' : 'hidden text-slate-400 sm:block'}`}>{error ?? (feedback ? (feedback.result === 'revealed' ? '可以隐藏答案再拼一次' : 'Enter 进入下一词') : mode === 'spelling' ? '填满后自动检查，也可按 Enter' : mode === 'review' && !isReviewRevealed ? '先回忆，再显示答案评分' : '评分后自动进入下一词')}</span>
           {feedback ? (
-            <div className="flex gap-3 sm:ml-auto">{mode === 'spelling' && (feedback.can_retry || feedback.result === 'revealed') ? <button onClick={retrySpelling} className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 px-5 py-3 text-sm font-black text-slate-700"><RotateCcw className="size-4" />{feedback.result === 'revealed' ? '隐藏答案，继续拼写' : '再拼一次'}</button> : null}<button onClick={() => void advance()} disabled={isBusy} className="flex-1 rounded-xl bg-indigo-600 px-7 py-3 text-sm font-black text-white disabled:opacity-60">下一个</button></div>
+            <div className="flex gap-3 sm:ml-auto">{mode === 'spelling' && (feedback.can_retry || feedback.result === 'revealed') ? <button type="button" onClick={retrySpelling} className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 px-5 py-3 text-sm font-black text-slate-700 transition-colors hover:border-indigo-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"><RotateCcw className="size-4" />{feedback.result === 'revealed' ? '隐藏答案，继续拼写' : '再拼一次'}</button> : null}<button type="button" onClick={() => void advance()} disabled={isBusy} className="flex-1 rounded-xl bg-indigo-600 px-7 py-3 text-sm font-black text-white transition-colors hover:bg-indigo-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 disabled:opacity-60">下一个</button></div>
           ) : mode === 'review' || mode === 'new' ? (
             isReviewRevealed ? (
             <div className="grid grid-cols-2 gap-2 sm:ml-auto sm:grid-cols-4"><RatingButton shortcut="1" label="忘记了" disabled={isBusy} onClick={() => void rateAndAdvance(1)} /><RatingButton shortcut="2" label="有点模糊" disabled={isBusy} onClick={() => void rateAndAdvance(2)} /><RatingButton shortcut="3" label="认识" primary disabled={isBusy} onClick={() => void rateAndAdvance(3)} /><RatingButton shortcut="4" label="很熟" disabled={isBusy} onClick={() => void rateAndAdvance(4)} /></div>
             ) : (
-              <button onClick={() => setIsReviewRevealed(true)} disabled={isBusy} className="rounded-xl bg-indigo-600 px-7 py-3 text-sm font-black text-white disabled:opacity-60">显示答案</button>
+              <button type="button" onClick={() => setIsReviewRevealed(true)} disabled={isBusy} className="rounded-xl bg-indigo-600 px-7 py-3 text-sm font-black text-white transition-colors hover:bg-indigo-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 disabled:opacity-60">显示答案</button>
             )
-          ) : <button onClick={() => void submitAttempt()} disabled={isBusy} className="rounded-xl bg-indigo-600 px-8 py-3 text-sm font-black text-white disabled:opacity-60">{isBusy ? '正在检查…' : '检查拼写'}</button>}
+          ) : <button type="button" onClick={() => void submitAttempt()} disabled={isBusy} className="rounded-xl bg-indigo-600 px-8 py-3 text-sm font-black text-white transition-colors hover:bg-indigo-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 disabled:opacity-60">{isBusy ? '正在检查…' : '检查拼写'}</button>}
         </div>
       </footer>
     </div>
@@ -719,7 +719,7 @@ function ReadonlyVocabularyDetail({
     <div className="flex h-dvh flex-col overflow-hidden bg-[#fbfbfd] text-slate-950">
       <header className="shrink-0 border-b border-slate-200 bg-white px-4 py-3 sm:px-8">
         <div className="mx-auto flex max-w-[1420px] items-center justify-between gap-4">
-          <button onClick={onBack} className="inline-flex shrink-0 items-center gap-2 text-sm font-bold text-slate-500 hover:text-indigo-600">
+          <button type="button" onClick={onBack} className="inline-flex shrink-0 items-center gap-2 rounded-lg text-sm font-bold text-slate-500 hover:text-indigo-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500">
             <ArrowLeft className="size-4" />{backLabel}
           </button>
           <span className="truncate text-sm font-bold text-slate-600">
@@ -780,7 +780,7 @@ function ReadonlyVocabularyDetail({
               <button
                 type="button"
                 onClick={() => void playDetailAudio(accent === 'us' ? 'us' : 'uk')}
-                className="inline-flex items-center justify-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-2.5 text-sm font-black text-indigo-700 transition hover:border-indigo-300"
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-2.5 text-sm font-black text-indigo-700 transition-colors hover:border-indigo-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
               >
                 {isPlaying ? <LoaderCircle className="size-4 animate-spin" /> : <Volume2 className="size-4" />}
                 播放发音
@@ -794,7 +794,7 @@ function ReadonlyVocabularyDetail({
 }
 
 function Choice({ selected, onClick, children }: { selected: boolean; onClick: () => void; children: React.ReactNode }) {
-  return <button type="button" onClick={onClick} className={`rounded-xl border px-4 py-2.5 text-sm font-bold transition ${selected ? 'border-indigo-500 bg-indigo-50 text-indigo-700' : 'border-slate-200 bg-white text-slate-600 hover:border-indigo-200'}`}>{children}</button>
+  return <button type="button" onClick={onClick} className={`rounded-xl border px-4 py-2.5 text-sm font-bold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 ${selected ? 'border-indigo-500 bg-indigo-50 text-indigo-700' : 'border-slate-200 bg-white text-slate-600 hover:border-indigo-200'}`}>{children}</button>
 }
 
 function TaskSupportPanel({
@@ -859,7 +859,7 @@ function TaskSupportPanel({
             type="button"
             onClick={onHint}
             disabled={hintCount >= 3}
-            className="inline-flex items-center justify-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-2.5 text-sm font-black text-indigo-700 transition hover:border-indigo-300 disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-300"
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-2.5 text-sm font-black text-indigo-700 transition-colors hover:border-indigo-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-300"
           >
             <Lightbulb className="size-4" />
             {hintCount ? `再给一点提示 ${hintCount}/3` : '给我一个提示'}
@@ -869,7 +869,7 @@ function TaskSupportPanel({
           <button
             type="button"
             onClick={onReveal}
-            className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-black text-slate-600 transition hover:bg-slate-50 hover:text-slate-900"
+            className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-black text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
           >
             {mode === 'spelling' ? '不认识，先看答案' : '显示答案'}
           </button>
@@ -878,7 +878,7 @@ function TaskSupportPanel({
           <button
             type="button"
             onClick={onEditTerm}
-            className="inline-flex items-center justify-center gap-2 rounded-xl border border-indigo-200 bg-white px-4 py-2.5 text-sm font-black text-indigo-700 transition hover:border-indigo-400"
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-indigo-200 bg-white px-4 py-2.5 text-sm font-black text-indigo-700 transition-colors hover:border-indigo-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
           >
             编辑词卡 <BookOpen className="size-4" />
           </button>
@@ -890,7 +890,7 @@ function TaskSupportPanel({
           <button
             type="button"
             onClick={onToggleMorphologyHint}
-            className="flex w-full items-center justify-between gap-3 text-left text-sm font-black text-indigo-800"
+            className="flex w-full items-center justify-between gap-3 rounded-lg text-left text-sm font-black text-indigo-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
           >
             <span>{mode === 'spelling' ? '前后缀提示' : '构词提示'}</span>
             <span className="text-xs font-semibold text-indigo-500">{isMorphologyHintVisible ? '收起' : '显示'}</span>
@@ -947,5 +947,5 @@ function SummaryMetric({ label, value }: { label: string; value: number }) {
 }
 
 function RatingButton({ label, shortcut, primary, disabled, onClick }: { label: string; shortcut: string; primary?: boolean; disabled?: boolean; onClick: () => void }) {
-  return <button type="button" onClick={onClick} disabled={disabled} className={`min-w-28 rounded-xl border px-4 py-2.5 text-sm font-black transition disabled:cursor-wait disabled:opacity-60 ${primary ? 'border-amber-500 bg-amber-50 text-amber-800' : 'border-slate-200 bg-white text-slate-700 hover:border-indigo-300'}`}><span className="block">{label}</span><span className="mt-0.5 block text-[10px] font-semibold opacity-55">{shortcut} 键</span></button>
+  return <button type="button" onClick={onClick} disabled={disabled} className={`min-w-28 rounded-xl border px-4 py-2.5 text-sm font-black transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 disabled:cursor-wait disabled:opacity-60 ${primary ? 'border-amber-500 bg-amber-50 text-amber-800' : 'border-slate-200 bg-white text-slate-700 hover:border-indigo-300'}`}><span className="block">{label}</span><span className="mt-0.5 block text-[10px] font-semibold opacity-55">{shortcut} 键</span></button>
 }

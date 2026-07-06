@@ -1,5 +1,7 @@
 import { MessageSquarePlus, MessagesSquare, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
 import type { ConversationThread } from '@/types'
+import { Button } from '@/components/ui/Button'
+import { IconButton } from '@/components/ui/IconButton'
 
 interface ConversationSidebarProps {
   conversations: ConversationThread[]
@@ -23,50 +25,50 @@ export function ConversationSidebar({
   if (isCollapsed) {
     return (
       <aside className="hidden w-14 shrink-0 border-r bg-background lg:flex lg:flex-col lg:items-center lg:gap-2 lg:py-3">
-        <button
+        <IconButton
           onClick={onToggleCollapsed}
-          className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-          title="展开历史对话"
+          label="展开历史对话"
+          className="border-transparent text-muted-foreground hover:bg-muted hover:text-foreground"
         >
           <PanelLeftOpen className="h-4 w-4" />
-        </button>
-        <button
+        </IconButton>
+        <IconButton
           onClick={onNewConversation}
           disabled={isLocked}
-          className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent"
-          title={isLocked ? '回答生成中，请先等待完成或取消' : '新建对话'}
+          label={isLocked ? '回答生成中，请先等待完成或取消' : '新建对话'}
+          className="border-transparent text-muted-foreground hover:bg-muted hover:text-foreground"
         >
           <MessageSquarePlus className="h-4 w-4" />
-        </button>
+        </IconButton>
       </aside>
     )
   }
 
   return (
-    <aside className="fixed bottom-0 left-0 top-16 z-40 flex w-72 shrink-0 flex-col border-r bg-background shadow-lg lg:static lg:shadow-none">
+    <aside className="fixed bottom-0 left-0 top-16 z-40 flex w-72 shrink-0 flex-col overscroll-contain border-r bg-background shadow-lg lg:static lg:shadow-none">
       <div className="space-y-3 border-b p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
             <MessagesSquare className="h-4 w-4 text-primary" />
             历史对话
           </div>
-          <button
+          <IconButton
             onClick={onToggleCollapsed}
-            className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-            title="收起历史对话"
+            label="收起历史对话"
+            className="border-transparent text-muted-foreground hover:bg-muted hover:text-foreground"
           >
             <PanelLeftClose className="h-4 w-4" />
-          </button>
+          </IconButton>
         </div>
-        <button
+        <Button
           onClick={onNewConversation}
           disabled={isLocked}
-          className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-3 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-primary"
           title={isLocked ? '回答生成中，请先等待完成或取消' : '新建对话'}
+          className="w-full px-3 py-2"
         >
           <MessageSquarePlus className="h-4 w-4" />
           新建对话
-        </button>
+        </Button>
       </div>
 
       <div className="flex-1 overflow-y-auto p-3">
@@ -78,15 +80,17 @@ export function ConversationSidebar({
           <div className="space-y-2">
             {conversations.map((conversation) => (
               <button
+                type="button"
                 key={conversation.thread_id}
                 onClick={() => onSelectThread(conversation.thread_id)}
                 disabled={isLocked}
-                className={`w-full rounded-lg border p-3 text-left transition-colors ${
+                className={`w-full rounded-lg border p-3 text-left transition-[background-color,border-color,box-shadow] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 ${
                   activeThreadId === conversation.thread_id
-                    ? 'border-primary bg-primary/5'
-                    : 'hover:bg-muted'
+                    ? 'border-primary bg-primary/5 shadow-sm'
+                    : 'hover:bg-muted hover:shadow-sm'
                 } disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-transparent`}
                 title={isLocked ? '回答生成中，请先等待完成或取消' : conversation.title}
+                aria-current={activeThreadId === conversation.thread_id ? 'page' : undefined}
               >
                 <p className="truncate text-sm font-medium text-foreground">
                   {conversation.title}

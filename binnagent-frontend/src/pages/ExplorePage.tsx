@@ -645,10 +645,13 @@ export function ExplorePage({
           <div className="relative w-full lg:w-80">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <input
+              name="explore_search"
+              autoComplete="off"
+              aria-label="搜索学习能力"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              className="w-full rounded-lg border bg-background py-2 pl-9 pr-3 text-sm outline-none transition-colors focus:border-primary"
-              placeholder="搜索作文、阅读、词汇..."
+              className="w-full rounded-lg border bg-background py-2 pl-9 pr-3 text-sm outline-none transition-colors focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
+              placeholder="搜索作文、阅读、词汇…"
             />
           </div>
         }
@@ -761,7 +764,7 @@ function FeatureCard({
 }) {
   const isTodo = feature.status === 'todo'
   return (
-    <article className="flex min-h-[290px] flex-col rounded-[13px] border border-slate-200 bg-white p-4 shadow-[0_4px_14px_rgba(15,23,42,0.05)]">
+    <article className="flex min-h-[290px] flex-col rounded-[13px] border border-slate-200 bg-white p-4 shadow-[0_4px_14px_rgba(15,23,42,0.05)] transition-[border-color,box-shadow,transform] duration-150 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-[0_12px_26px_rgba(15,23,42,0.08)]">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-2">
           <div className="flex size-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
@@ -773,9 +776,11 @@ function FeatureCard({
           </div>
         </div>
         <button
+          type="button"
           onClick={onToggleFavorite}
           disabled={isLoading || isLocked}
-          className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-warning disabled:opacity-50"
+          className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-warning focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-50"
+          aria-label={isLocked ? '当前无法收藏入口' : isFavorite ? `取消收藏 ${feature.title}` : `收藏 ${feature.title}`}
           title={isLocked ? '回答生成中，请先等待完成或取消' : isFavorite ? '取消收藏' : '收藏入口'}
         >
           {isFavorite ? <Star className="h-4 w-4 fill-warning text-warning" /> : <StarOff className="h-4 w-4" />}

@@ -32,6 +32,8 @@ import { ExerciseBlock } from '@/components/exercise/ExerciseBlock'
 import { ExerciseAttemptSummary } from '@/components/exercise/ExerciseAttemptSummary'
 import { ExerciseLearningSignal } from '@/components/exercise/ExerciseLearningSignal'
 import { Button } from '@/components/ui/Button'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
+import { IconButton } from '@/components/ui/IconButton'
 import { SurfaceCard } from '@/components/ui/SurfaceCard'
 import type { ExerciseTarget } from '@/types/exercises'
 
@@ -69,6 +71,21 @@ const EXTENSION_PATH = '/Users/binge/Documents/BinnAgent/browser-extension/gramm
 
 type CacheStatus = 'idle' | 'loading' | 'hit' | 'miss' | 'saving' | 'saved' | 'error' | 'bypassed'
 type GrammarWorkspace = 'topics' | 'generate' | 'preview' | 'settings'
+type PendingGrammarAction = 'regenerate-topic' | 'clear-html' | 'remove-target' | null
+
+interface GrammarCategoryRow {
+  id: GrammarCategory
+  label: string
+  total: number
+  learned: number
+  cached: number
+}
+
+interface GrammarLevelRow {
+  level: GrammarTopic['level']
+  total: number
+  learned: number
+}
 
 const GRAMMAR_WORKSPACE_TABS: WorkspaceTab<GrammarWorkspace>[] = [
   { id: 'topics', label: '知识点', description: '选择微知识点', icon: <Search className="h-4 w-4" /> },
@@ -147,6 +164,7 @@ export function GrammarPage({ learner, onBack, backLabel = '返回探索', initi
   const [isCopied, setIsCopied] = useState(false)
   const [isExtensionPathCopied, setIsExtensionPathCopied] = useState(false)
   const [isImmersiveReading, setIsImmersiveReading] = useState(false)
+  const [pendingAction, setPendingAction] = useState<PendingGrammarAction>(null)
   const [workspace, setWorkspace] = useState<GrammarWorkspace>('topics')
   const [renderedPrompt, setRenderedPrompt] = useState<{ topicId: string; prompt: string; prompt_hash: string; version: string } | null>(null)
 
@@ -163,6 +181,44 @@ export function GrammarPage({ learner, onBack, backLabel = '返回探索', initi
   const currentHtml = htmlByTopicId[selectedTopic.id] ?? ''
   const currentProgress = progressByTopicId[selectedTopic.id]
   const currentCacheStatus = cacheStatusByTopicId[selectedTopic.id] ?? 'idle'
+  const progressValues = useMemo(() => Object.values(progressByTopicId), [progressByTopicId])
+  const categoryRows = useMemo(
+    () => getGrammarCategoryRows(topicOptions, progressByTopicId, htmlByTopicId),
+    [htmlByTopicId, progressByTopicId, topicOptions]
+  )
+  const levelRows = useMemo(
+    () => getGrammarLevelRows(topicOptions, progressByTopicId),
+    [progressByTopicId, topicOptions]
+  )
+  const learnedTopicCount = progressValues.filter((item) => item.status === 'learned').length
+  const favoriteTopicCount = progressValues.filter((item) => item.is_favorite).length
+  const cachedTopicCount = Object.values(htmlByTopicId).filter((html) => html.trim()).length
+  const openedTopicCount = progressValues.filter((item) => item.opened_count > 0).length
+  const generationStatusItems = useMemo(
+    () => [
+      {
+        label: '知识点',
+        value: selectedTopic.title,
+        tone: 'primary' as const,
+      },
+      {
+        label: 'Prompt',
+        value: activeRenderedPrompt ? '已渲染' : '本地兼容',
+        tone: activeRenderedPrompt ? 'success' as const : 'warning' as const,
+      },
+      {
+        label: 'HTML 缓存',
+        value: cacheStatusLabel(currentCacheStatus),
+        tone: cacheStatusTone(currentCacheStatus),
+      },
+      {
+        label: '练习状态',
+        value: currentProgress?.status === 'learned' ? '已学习' : '待练习',
+        tone: currentProgress?.status === 'learned' ? 'success' as const : 'default' as const,
+      },
+    ],
+    [activeRenderedPrompt, currentCacheStatus, currentProgress?.status, selectedTopic.title]
+  )
   const grammarExerciseTarget = useMemo<ExerciseTarget>(() => ({
     type: 'grammar_topic',
     id: selectedTopic.id,
@@ -439,6 +495,22 @@ export function GrammarPage({ learner, onBack, backLabel = '返回探索', initi
     })
   }
 
+  const confirmPendingAction = () => {
+    if (pendingAction === 'regenerate-topic') {
+      regenerateCurrentTopic()
+    }
+    if (pendingAction === 'clear-html') {
+      setTopicHtml(selectedTopic.id, '')
+      showToast('当前 HTML 已清空。', { variant: 'info' })
+    }
+    if (pendingAction === 'remove-target') {
+      removeTarget(selectedTarget.id)
+    }
+    setPendingAction(null)
+  }
+
+  const pendingDialogCopy = getPendingActionCopy(pendingAction, selectedTopic.title, selectedTarget.label)
+
   const copyExtensionPath = async () => {
     try {
       await navigator.clipboard.writeText(EXTENSION_PATH)
@@ -490,7 +562,8 @@ export function GrammarPage({ learner, onBack, backLabel = '返回探索', initi
         description="选择一个小知识点，生成可读讲解并完成配套练习；保存前先预览内容。"
         stats={[
           { label: '知识点', value: topicOptions.length },
-          { label: '已缓存', value: Object.keys(htmlByTopicId).length, tone: 'success' },
+          { label: '已学习', value: learnedTopicCount, tone: 'success' },
+          { label: '已缓存', value: cachedTopicCount, tone: 'primary' },
           { label: '目标网站', value: targets.length },
           { label: '当前分类', value: category === 'all' ? '全部' : GRAMMAR_CATEGORY_LABELS[category] },
         ]}
@@ -514,13 +587,25 @@ export function GrammarPage({ learner, onBack, backLabel = '返回探索', initi
             <div className="relative w-full lg:w-72">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <input
+                name="grammar_topic_search"
+                autoComplete="off"
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                className="w-full rounded-lg border bg-background py-2 pl-9 pr-3 text-sm outline-none transition-colors focus:border-primary"
-                placeholder="搜索主将从现、since..."
+                className="w-full rounded-lg border bg-background py-2 pl-9 pr-3 text-sm outline-none transition-colors focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
+                placeholder="搜索主将从现、since…"
               />
             </div>
           </div>
+
+          <GrammarOverviewPanel
+            categoryRows={categoryRows}
+            levelRows={levelRows}
+            learnedTopicCount={learnedTopicCount}
+            cachedTopicCount={cachedTopicCount}
+            favoriteTopicCount={favoriteTopicCount}
+            openedTopicCount={openedTopicCount}
+            totalTopicCount={topicOptions.length}
+          />
 
           <div className="mt-4 flex gap-2 overflow-x-auto pb-1">
             <CategoryButton active={category === 'all'} label="全部" onClick={() => setCategory('all')} />
@@ -543,7 +628,7 @@ export function GrammarPage({ learner, onBack, backLabel = '返回探索', initi
                   setSelectedTopicId(topic.id)
                   setWorkspace('generate')
                 }}
-                className={`min-h-[142px] rounded-lg border p-4 text-left transition-colors ${
+                className={`min-h-[142px] rounded-lg border p-4 text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
                   selectedTopic.id === topic.id
                     ? 'border-primary bg-primary/10'
                     : 'bg-background hover:border-primary/50 hover:bg-muted/50'
@@ -582,6 +667,7 @@ export function GrammarPage({ learner, onBack, backLabel = '返回探索', initi
             <SurfaceCard>
               <h2 className="text-lg font-semibold text-foreground">生成链路</h2>
               <p className="mt-1 text-sm text-muted-foreground">先复制 prompt，再跳转到目标 AI 网站。</p>
+              <GrammarFlowStatus items={generationStatusItems} />
 
               <div className="mt-4 rounded-lg border bg-background p-3">
                 <p className="text-xs font-medium text-muted-foreground">当前知识点</p>
@@ -593,14 +679,14 @@ export function GrammarPage({ learner, onBack, backLabel = '返回探索', initi
                 </div>
                 <p className="mt-2 text-sm text-muted-foreground">{selectedTopic.shortDescription}</p>
                 <div className="mt-3 flex flex-wrap gap-2">
-                  <button
-                    type="button"
+                  <Button
+                    variant="secondary"
                     onClick={() =>
                       void persistGrammarProgress(selectedTopic, {
                         is_favorite: !currentProgress?.is_favorite,
                       })
                     }
-                    className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-medium text-foreground transition-colors hover:bg-muted"
+                    className="px-3 py-2 text-xs"
                   >
                     {currentProgress?.is_favorite ? (
                       <Star className="h-4 w-4 fill-warning text-warning" />
@@ -608,24 +694,24 @@ export function GrammarPage({ learner, onBack, backLabel = '返回探索', initi
                       <StarOff className="h-4 w-4" />
                     )}
                     {currentProgress?.is_favorite ? '取消喜爱' : '喜爱'}
-                  </button>
-                  <button
-                    type="button"
+                  </Button>
+                  <Button
+                    variant="secondary"
                     onClick={() => void persistGrammarProgress(selectedTopic, { mark_learned: true })}
-                    className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-60"
+                    className="px-3 py-2 text-xs"
                     disabled={currentProgress?.status === 'learned'}
                   >
                     <CheckCircle2 className="h-4 w-4 text-success" />
                     {currentProgress?.status === 'learned' ? '已学习' : '标记已学习'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={regenerateCurrentTopic}
-                    className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-medium text-foreground transition-colors hover:bg-muted"
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    onClick={() => setPendingAction('regenerate-topic')}
+                    className="px-3 py-2 text-xs"
                   >
                     <RefreshCw className="h-4 w-4" />
                     重新生成
-                  </button>
+                  </Button>
                 </div>
               </div>
 
@@ -635,9 +721,11 @@ export function GrammarPage({ learner, onBack, backLabel = '返回探索', initi
               <div className="mt-2 flex gap-2">
                 <select
                   id="grammar-target"
+                  name="grammar_target"
+                  autoComplete="off"
                   value={selectedTarget.id}
                   onChange={(event) => setTargetId(event.target.value)}
-                  className="min-w-0 flex-1 rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+                  className="min-w-0 flex-1 rounded-lg border bg-background px-3 py-2 text-sm outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
                 >
                   {targets.map((target) => (
                     <option key={target.id} value={target.id}>
@@ -649,31 +737,33 @@ export function GrammarPage({ learner, onBack, backLabel = '返回探索', initi
               </div>
 
               <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-                <button
-                  type="button"
+                <Button
+                  variant="secondary"
                   onClick={() => void copyPrompt()}
-                  className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted"
+                  className="flex-1"
                 >
                   {isCopied ? <Check className="h-4 w-4 text-success" /> : <Clipboard className="h-4 w-4" />}
                   {isCopied ? '已复制' : '复制指令'}
-                </button>
-                <button
-                  type="button"
+                </Button>
+                <Button
                   onClick={() => void launchTarget()}
-                  className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg bg-primary px-3 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+                  className="flex-1"
                 >
                   <ExternalLink className="h-4 w-4" />
                   复制并跳转
-                </button>
+                </Button>
               </div>
             </SurfaceCard>
 
             <SurfaceCard>
               <h2 className="text-lg font-semibold text-foreground">生成指令预览</h2>
               <textarea
+                name="grammar_prompt_preview"
+                autoComplete="off"
+                aria-label="生成指令预览"
                 readOnly
                 value={prompt}
-                className="mt-3 h-[460px] w-full resize-none rounded-lg border bg-background p-3 text-xs leading-relaxed text-foreground outline-none"
+                className="mt-3 h-[460px] w-full resize-none rounded-lg border bg-background p-3 text-xs leading-relaxed text-foreground outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
               />
             </SurfaceCard>
           </div>
@@ -716,9 +806,11 @@ export function GrammarPage({ learner, onBack, backLabel = '返回探索', initi
             <div className="mt-2 flex gap-2">
               <select
                 id="grammar-target-settings"
+                name="grammar_target_settings"
+                autoComplete="off"
                 value={selectedTarget.id}
                 onChange={(event) => setTargetId(event.target.value)}
-                className="min-w-0 flex-1 rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+                className="min-w-0 flex-1 rounded-lg border bg-background px-3 py-2 text-sm outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
               >
                 {targets.map((target) => (
                   <option key={target.id} value={target.id}>
@@ -726,37 +818,47 @@ export function GrammarPage({ learner, onBack, backLabel = '返回探索', initi
                   </option>
                 ))}
               </select>
-              <button
-                type="button"
-                onClick={() => removeTarget(selectedTarget.id)}
-                className="rounded-lg border p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-error"
-                title="删除当前目标"
+              <IconButton
+                label="删除当前目标"
+                danger
+                onClick={() => setPendingAction('remove-target')}
+                disabled={targets.length <= 1}
               >
                 <Trash2 className="h-4 w-4" />
-              </button>
+              </IconButton>
             </div>
 
             <div className="mt-4 grid grid-cols-[1fr_1fr_auto] gap-2">
-              <input
-                value={newTargetLabel}
-                onChange={(event) => setNewTargetLabel(event.target.value)}
-                className="min-w-0 rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
-                placeholder="网站名"
-              />
-              <input
-                value={newTargetUrl}
-                onChange={(event) => setNewTargetUrl(event.target.value)}
-                className="min-w-0 rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
-                placeholder="https://..."
-              />
-              <button
-                type="button"
+              <label className="min-w-0">
+                <span className="sr-only">网站名称</span>
+                <input
+                  name="grammar_new_target_label"
+                  autoComplete="off"
+                  value={newTargetLabel}
+                  onChange={(event) => setNewTargetLabel(event.target.value)}
+                  className="min-w-0 rounded-lg border bg-background px-3 py-2 text-sm outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
+                  placeholder="网站名…"
+                />
+              </label>
+              <label className="min-w-0">
+                <span className="sr-only">网站网址</span>
+                <input
+                  name="grammar_new_target_url"
+                  type="url"
+                  inputMode="url"
+                  autoComplete="off"
+                  value={newTargetUrl}
+                  onChange={(event) => setNewTargetUrl(event.target.value)}
+                  className="min-w-0 rounded-lg border bg-background px-3 py-2 text-sm outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
+                  placeholder="https://example.com…"
+                />
+              </label>
+              <IconButton
+                label="添加网站"
                 onClick={addTarget}
-                className="rounded-lg border p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                title="添加网站"
               >
                 <Plus className="h-4 w-4" />
-              </button>
+              </IconButton>
             </div>
           </SurfaceCard>
 
@@ -777,14 +879,14 @@ export function GrammarPage({ learner, onBack, backLabel = '返回探索', initi
             <div className="mt-3 rounded-lg border bg-background p-3">
               <p className="break-all font-mono text-xs text-foreground">{EXTENSION_PATH}</p>
             </div>
-            <button
-              type="button"
+            <Button
+              variant="secondary"
               onClick={() => void copyExtensionPath()}
-              className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted"
+              className="mt-3 w-full"
             >
               {isExtensionPathCopied ? <Check className="h-4 w-4 text-success" /> : <Clipboard className="h-4 w-4" />}
               {isExtensionPathCopied ? '路径已复制' : '复制扩展目录'}
-            </button>
+            </Button>
             <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
               DeepSeek 的 HTML 代码区通常有复制按钮：先复制代码块，再点扩展的“发送回 BinnAgent”。如果代码块是完整 HTML 文档，扩展会保留 head/style/body。没装扩展也能用：手动粘贴 prompt，AI 输出 HTML 后再粘贴回左侧 HTML 输入区。
             </p>
@@ -801,20 +903,21 @@ export function GrammarPage({ learner, onBack, backLabel = '返回探索', initi
               <p className="text-sm text-muted-foreground">扩展回传或手动粘贴 AI 输出的 HTML。</p>
               <p className="mt-1 text-xs text-muted-foreground">{cacheStatusText(currentCacheStatus)}</p>
             </div>
-            <button
-              type="button"
-              onClick={() => setTopicHtml(selectedTopic.id, '')}
-              className="rounded-lg border p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-              title="清空 HTML"
+            <IconButton
+              label="清空 HTML"
+              onClick={() => setPendingAction('clear-html')}
             >
               <RefreshCw className="h-4 w-4" />
-            </button>
+            </IconButton>
           </div>
           <textarea
+            name="grammar_html_input"
+            autoComplete="off"
+            aria-label="HTML 输入"
             value={currentHtml}
             onChange={(event) => setTopicHtml(selectedTopic.id, event.target.value)}
-            className="mt-4 h-[460px] w-full resize-none rounded-lg border bg-background p-3 font-mono text-xs leading-relaxed text-foreground outline-none focus:border-primary"
-            placeholder="把 AI 返回的 HTML 片段粘贴到这里，或使用浏览器扩展发送回 BinnAgent。"
+            className="mt-4 h-[460px] w-full resize-none rounded-lg border bg-background p-3 font-mono text-xs leading-relaxed text-foreground outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
+            placeholder="把 AI 返回的 HTML 片段粘贴到这里，或使用浏览器扩展发送回 BinnAgent…"
           />
         </SurfaceCard>
 
@@ -829,14 +932,13 @@ export function GrammarPage({ learner, onBack, backLabel = '返回探索', initi
                 预览在沙箱 iframe 中渲染，脚本、表单和 iframe 会被移除或阻止执行。
               </p>
             </div>
-            <button
-              type="button"
+            <Button
+              variant="secondary"
               onClick={() => setIsImmersiveReading(true)}
-              className="inline-flex items-center justify-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted"
             >
               <Maximize2 className="h-4 w-4" />
               沉浸阅读
-            </button>
+            </Button>
           </div>
           <iframe
             title={`${selectedTopic.title} 讲解预览`}
@@ -874,7 +976,154 @@ export function GrammarPage({ learner, onBack, backLabel = '返回探索', initi
           />
         </div>
       )}
+
+      <ConfirmDialog
+        open={Boolean(pendingAction)}
+        title={pendingDialogCopy.title}
+        description={pendingDialogCopy.description}
+        confirmLabel={pendingDialogCopy.confirmLabel}
+        danger={pendingDialogCopy.danger}
+        onConfirm={confirmPendingAction}
+        onCancel={() => setPendingAction(null)}
+      />
     </PageShell>
+  )
+}
+
+function GrammarOverviewPanel({
+  categoryRows,
+  levelRows,
+  learnedTopicCount,
+  cachedTopicCount,
+  favoriteTopicCount,
+  openedTopicCount,
+  totalTopicCount,
+}: {
+  categoryRows: GrammarCategoryRow[]
+  levelRows: GrammarLevelRow[]
+  learnedTopicCount: number
+  cachedTopicCount: number
+  favoriteTopicCount: number
+  openedTopicCount: number
+  totalTopicCount: number
+}) {
+  return (
+    <div className="mt-5 grid gap-4 xl:grid-cols-[minmax(0,1.25fr)_minmax(280px,0.75fr)]">
+      <div className="rounded-xl border bg-background p-4">
+        <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-primary">Topic Matrix</p>
+            <h3 className="text-base font-bold text-foreground">知识点分类矩阵</h3>
+          </div>
+          <span className="rounded-md bg-muted px-2 py-1 text-xs font-medium text-muted-foreground">
+            {totalTopicCount} 个知识点
+          </span>
+        </div>
+        <div className="mt-4 grid gap-2 sm:grid-cols-2">
+          {categoryRows.map((row) => {
+            const learnedPercent = row.total > 0 ? Math.round((row.learned / row.total) * 100) : 0
+            const cachedPercent = row.total > 0 ? Math.round((row.cached / row.total) * 100) : 0
+            return (
+              <div key={row.id} className="rounded-lg border bg-white p-3">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-sm font-bold text-foreground">{row.label}</p>
+                  <p className="text-xs text-muted-foreground">{row.total} 个</p>
+                </div>
+                <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-100">
+                  <div
+                    className="h-full rounded-full bg-success transition-[width] duration-300"
+                    style={{ width: `${learnedPercent}%` }}
+                  />
+                </div>
+                <div className="mt-1 h-2 overflow-hidden rounded-full bg-slate-100">
+                  <div
+                    className="h-full rounded-full bg-primary transition-[width] duration-300"
+                    style={{ width: `${cachedPercent}%` }}
+                  />
+                </div>
+                <div className="mt-2 flex justify-between text-xs text-muted-foreground">
+                  <span>已学 {row.learned}</span>
+                  <span>缓存 {row.cached}</span>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+
+      <div className="space-y-4">
+        <div className="grid grid-cols-2 gap-3">
+          <GrammarStatusMetric label="已打开" value={openedTopicCount} tone="primary" />
+          <GrammarStatusMetric label="已学习" value={learnedTopicCount} tone="success" />
+          <GrammarStatusMetric label="已缓存" value={cachedTopicCount} tone="primary" />
+          <GrammarStatusMetric label="喜爱" value={favoriteTopicCount} tone="warning" />
+        </div>
+        <div className="rounded-xl border bg-background p-4">
+          <p className="text-xs font-semibold uppercase tracking-wide text-primary">Level Status</p>
+          <h3 className="text-base font-bold text-foreground">难度掌握分布</h3>
+          <div className="mt-4 space-y-3">
+            {levelRows.map((row) => {
+              const percent = row.total > 0 ? Math.round((row.learned / row.total) * 100) : 0
+              return (
+                <div key={row.level}>
+                  <div className="flex justify-between text-xs font-medium text-muted-foreground">
+                    <span>{row.level}</span>
+                    <span>{row.learned}/{row.total}</span>
+                  </div>
+                  <div className="mt-1 h-2 overflow-hidden rounded-full bg-slate-100">
+                    <div
+                      className="h-full rounded-full bg-success transition-[width] duration-300"
+                      style={{ width: `${percent}%` }}
+                    />
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function GrammarStatusMetric({
+  label,
+  value,
+  tone,
+}: {
+  label: string
+  value: number
+  tone: 'primary' | 'success' | 'warning'
+}) {
+  const toneClass = tone === 'success'
+    ? 'bg-success/10 text-success'
+    : tone === 'warning'
+      ? 'bg-warning/10 text-warning'
+      : 'bg-primary/10 text-primary'
+  return (
+    <div className="rounded-xl border bg-background p-3">
+      <p className="text-xs font-medium text-muted-foreground">{label}</p>
+      <p className={`mt-2 inline-flex rounded-lg px-2.5 py-1 text-lg font-black tabular-nums ${toneClass}`}>
+        {value}
+      </p>
+    </div>
+  )
+}
+
+function GrammarFlowStatus({
+  items,
+}: {
+  items: Array<{ label: string; value: string; tone: 'default' | 'primary' | 'success' | 'warning' | 'error' }>
+}) {
+  return (
+    <div className="mt-4 grid gap-2 sm:grid-cols-2">
+      {items.map((item) => (
+        <div key={item.label} className="rounded-lg border bg-background p-3">
+          <p className="text-xs font-medium text-muted-foreground">{item.label}</p>
+          <p className={`mt-1 text-sm font-bold ${statusToneTextClass(item.tone)}`}>{item.value}</p>
+        </div>
+      ))}
+    </div>
   )
 }
 
@@ -891,7 +1140,7 @@ function CategoryButton({
     <button
       type="button"
       onClick={onClick}
-      className={`shrink-0 rounded-lg border px-3 py-2 text-sm transition-colors ${
+      className={`shrink-0 rounded-lg border px-3 py-2 text-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
         active
           ? 'border-primary bg-primary/10 font-medium text-primary'
           : 'text-muted-foreground hover:bg-muted hover:text-foreground'
@@ -900,6 +1149,99 @@ function CategoryButton({
       {label}
     </button>
   )
+}
+
+function getGrammarCategoryRows(
+  topics: GrammarTopic[],
+  progressByTopicId: Record<string, LearningProgressItem>,
+  htmlByTopicId: Record<string, string>
+): GrammarCategoryRow[] {
+  return Object.entries(GRAMMAR_CATEGORY_LABELS).map(([id, label]) => {
+    const categoryId = id as GrammarCategory
+    const categoryTopics = topics.filter((topic) => topic.category === categoryId)
+    return {
+      id: categoryId,
+      label,
+      total: categoryTopics.length,
+      learned: categoryTopics.filter((topic) => progressByTopicId[topic.id]?.status === 'learned').length,
+      cached: categoryTopics.filter((topic) => htmlByTopicId[topic.id]?.trim()).length,
+    }
+  })
+}
+
+function getGrammarLevelRows(
+  topics: GrammarTopic[],
+  progressByTopicId: Record<string, LearningProgressItem>
+): GrammarLevelRow[] {
+  const levels: GrammarTopic['level'][] = ['基础', '进阶', '高频易错']
+  return levels.map((level) => {
+    const levelTopics = topics.filter((topic) => topic.level === level)
+    return {
+      level,
+      total: levelTopics.length,
+      learned: levelTopics.filter((topic) => progressByTopicId[topic.id]?.status === 'learned').length,
+    }
+  })
+}
+
+function cacheStatusLabel(status: CacheStatus) {
+  if (status === 'loading') return '查找中'
+  if (status === 'hit') return '命中缓存'
+  if (status === 'miss') return '待生成'
+  if (status === 'saving') return '保存中'
+  if (status === 'saved') return '已保存'
+  if (status === 'bypassed') return '已跳过'
+  if (status === 'error') return '缓存异常'
+  return '未检查'
+}
+
+function cacheStatusTone(status: CacheStatus): 'default' | 'primary' | 'success' | 'warning' | 'error' {
+  if (status === 'hit' || status === 'saved') return 'success'
+  if (status === 'loading' || status === 'saving') return 'primary'
+  if (status === 'miss' || status === 'bypassed') return 'warning'
+  if (status === 'error') return 'error'
+  return 'default'
+}
+
+function statusToneTextClass(tone: 'default' | 'primary' | 'success' | 'warning' | 'error') {
+  if (tone === 'primary') return 'text-primary'
+  if (tone === 'success') return 'text-success'
+  if (tone === 'warning') return 'text-warning'
+  if (tone === 'error') return 'text-error'
+  return 'text-foreground'
+}
+
+function getPendingActionCopy(action: PendingGrammarAction, topicTitle: string, targetLabel: string) {
+  if (action === 'regenerate-topic') {
+    return {
+      title: '重新生成讲解？',
+      description: `这会清空「${topicTitle}」当前 HTML，并跳过已有缓存，方便重新从目标 AI 网站生成。`,
+      confirmLabel: '重新生成',
+      danger: true,
+    }
+  }
+  if (action === 'clear-html') {
+    return {
+      title: '清空 HTML？',
+      description: `这会清空「${topicTitle}」当前预览内容；如果需要恢复，需要重新粘贴或重新生成。`,
+      confirmLabel: '清空',
+      danger: true,
+    }
+  }
+  if (action === 'remove-target') {
+    return {
+      title: '删除目标网站？',
+      description: `这会从目标列表中删除「${targetLabel}」。至少需要保留一个目标网站。`,
+      confirmLabel: '删除',
+      danger: true,
+    }
+  }
+  return {
+    title: '',
+    description: '',
+    confirmLabel: '确认',
+    danger: false,
+  }
 }
 
 function buildGrammarPrompt(topic: GrammarTopic) {
@@ -997,10 +1339,10 @@ function stableHash(value: string) {
 }
 
 function cacheStatusText(status: CacheStatus) {
-  if (status === 'loading') return '正在查找缓存...'
+  if (status === 'loading') return '正在查找缓存…'
   if (status === 'hit') return '已使用缓存讲解，可直接阅读或重新生成。'
   if (status === 'miss') return '暂无缓存，可复制指令生成。'
-  if (status === 'saving') return '正在保存 HTML 缓存...'
+  if (status === 'saving') return '正在保存 HTML 缓存…'
   if (status === 'saved') return 'HTML 已保存到缓存。'
   if (status === 'bypassed') return '已跳过缓存，请重新生成当前知识点。'
   if (status === 'error') return '缓存服务暂时不可用，本地内容仍可使用。'

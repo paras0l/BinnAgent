@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { Plus, Save, Sparkles, Trash2 } from 'lucide-react'
+import { LoaderCircle, Plus, Save, Sparkles, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { FormField } from '@/components/ui/FormField'
+import { StatusBanner } from '@/components/ui/StatusBanner'
 import { SurfaceCard } from '@/components/ui/SurfaceCard'
 import {
   generateExercisesForTarget,
@@ -102,16 +103,18 @@ export function AddExerciseForm({ target, learnerId, className = '', context }: 
             手动添加
           </Button>
           <Button onClick={() => void generateExercises()} disabled={isGenerating}>
-            <Sparkles className="size-4" />
-            {isGenerating ? '生成中' : 'AI 生成练习'}
+            {isGenerating ? <LoaderCircle className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
+            {isGenerating ? '生成中…' : 'AI 生成练习'}
           </Button>
         </div>
       </div>
 
       {status ? (
-        <p className="mt-4 rounded-lg bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-600">
-          {status}
-        </p>
+        <div className="mt-4">
+          <StatusBanner title="练习表单状态">
+            {status}
+          </StatusBanner>
+        </div>
       ) : null}
 
       {drafts.length > 0 ? (
@@ -128,9 +131,11 @@ export function AddExerciseForm({ target, learnerId, className = '', context }: 
                 <label className="block">
                   <span className="text-sm font-medium text-slate-950">题型</span>
                   <select
+                    name={`exercise_${index}_type`}
+                    autoComplete="off"
                     value={draft.type}
                     onChange={(event) => updateDraft(index, { type: event.target.value as ExerciseItem['type'] })}
-                    className="mt-1.5 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none transition focus:border-primary"
+                    className="mt-1.5 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm transition-colors focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20"
                   >
                     <option value="single_choice">单选题</option>
                     <option value="fill_blank">填空题</option>
@@ -139,9 +144,11 @@ export function AddExerciseForm({ target, learnerId, className = '', context }: 
                 <label className="block">
                   <span className="text-sm font-medium text-slate-950">能力</span>
                   <select
+                    name={`exercise_${index}_skill`}
+                    autoComplete="off"
                     value={draft.skill}
                     onChange={(event) => updateDraft(index, { skill: event.target.value as ExerciseItem['skill'] })}
-                    className="mt-1.5 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none transition focus:border-primary"
+                    className="mt-1.5 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm transition-colors focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20"
                   >
                     <option value="grammar">语法</option>
                     <option value="vocabulary">词汇</option>
@@ -151,9 +158,11 @@ export function AddExerciseForm({ target, learnerId, className = '', context }: 
                 <label className="block">
                   <span className="text-sm font-medium text-slate-950">难度</span>
                   <select
+                    name={`exercise_${index}_difficulty`}
+                    autoComplete="off"
                     value={draft.difficulty ?? 'easy'}
                     onChange={(event) => updateDraft(index, { difficulty: event.target.value as ExerciseItem['difficulty'] })}
-                    className="mt-1.5 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none transition focus:border-primary"
+                    className="mt-1.5 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm transition-colors focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20"
                   >
                     <option value="easy">easy</option>
                     <option value="medium">medium</option>
@@ -166,33 +175,48 @@ export function AddExerciseForm({ target, learnerId, className = '', context }: 
                 <FormField
                   as="textarea"
                   label="题干"
+                  name={`exercise_${index}_prompt`}
+                  autoComplete="off"
                   value={draft.prompt}
                   onChange={(event) => updateDraft(index, { prompt: event.target.value })}
+                  placeholder="写出要验收的题干…"
                 />
                 <FormField
                   as="textarea"
                   label="选项"
                   description="单选题每行一个选项；填空题可以留空。"
+                  name={`exercise_${index}_options`}
+                  autoComplete="off"
                   value={draft.optionsText}
                   onChange={(event) => updateDraft(index, { optionsText: event.target.value })}
+                  placeholder="每行一个选项…"
                 />
                 <FormField
                   label="正确答案"
+                  name={`exercise_${index}_correct_answer`}
+                  autoComplete="off"
                   value={draft.correctAnswer}
                   onChange={(event) => updateDraft(index, { correctAnswer: event.target.value })}
+                  placeholder="输入标准答案…"
                 />
                 <FormField
                   as="textarea"
                   label="可接受答案"
                   description="每行一个，可留空。"
+                  name={`exercise_${index}_accepted_answers`}
+                  autoComplete="off"
                   value={draft.acceptedAnswersText}
                   onChange={(event) => updateDraft(index, { acceptedAnswersText: event.target.value })}
+                  placeholder="每行一个可接受答案…"
                 />
                 <FormField
                   as="textarea"
                   label="解释"
+                  name={`exercise_${index}_explanation`}
+                  autoComplete="off"
                   value={draft.explanation}
                   onChange={(event) => updateDraft(index, { explanation: event.target.value })}
+                  placeholder="说明为什么这个答案成立…"
                 />
               </div>
             </div>

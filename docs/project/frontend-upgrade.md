@@ -1,24 +1,47 @@
-我已按当前仓库做了一版“功能 × 页面 × 归属 × UI 验收点”的清单；这次只是梳理，没有改代码。
+我已按当前仓库做了一版“功能 × 页面 × 归属 × UI 验收点”的清单，并持续把自查结果回填到前端实现。
+
+最近整改进展：
+
+- Header / 学习中心已按 issue #33 收敛为 `AI对话 / 探索 / 学习中心`，学习设置进入用户菜单。
+- `ChatContainer` / Chat 输入区已补统一 `Button` / `IconButton`、聊天输入 `name` / `autocomplete` / `aria-live`、typing reduced-motion、消息 hover 反馈和侧栏 overscroll 控制；`LoginPage` 表单字段与能力卡 hover 状态已补齐。
+- Dashboard Profile / Records 已补能力雷达、掌握度分布、薄弱点排行、活动热力、每日完成趋势、正确率与复习负荷趋势。
+- `DashboardPage` 词汇工作区已补统一练习入口卡、词汇搜索/新增表单 `name` / `autocomplete` / focus-visible 状态，词汇行改为真实按钮入口加独立删除操作；Dashboard 共享统计卡、学习目标进度条和词汇复习卡已清理伪按钮与 `transition-all`。
+- `VocabularyDetailPage` 已补生成-回填-保存四步 stepper，生成指令、HTML 回填、个人词卡和构词笔记表单已统一 `name` / `autocomplete` / focus-visible 与省略号占位文案。
+- `VocabularyPracticePage` 继续保持 TaskShell，一屏任务页已清理 `transition-all`，核心按钮补齐 `type` / focus-visible，拼写答案和自定义数量输入补齐 `name` / `autocomplete` / `inputMode`。
+- `AddExerciseForm` / `ExerciseRenderer` / `ExerciseSessionDialog` 已补练习表单 `name` / `autocomplete` / focus-visible、选项 pressed/focus 状态、提交/生成 loading 文案、练习进度条和弹层内部滚动，使教材练习入口更接近 TaskShell。
+- `DailyLessonRuntimeDialog` 已改为固定头部、内部滚动内容和固定底部 ActionBar，补选项 pressed/focus、提交 loading、ESC 关闭和焦点恢复。
+- `ExplorePage` 搜索框已补 `name` / `autocomplete` / `aria-label` / focus-visible 和省略号占位文案，能力卡和收藏按钮补齐 hover / focus-visible / disabled 语义。
+- `WordPartsPage` 的“我的掌握”已补整体掌握堆叠条、prefix/root/suffix 掌握条和练习次数趋势；重置本地记录已加确认弹窗。
+- `ReadingWorkshopPage` 的复盘页已补关键词频次条和句子难度热力图。
+- `WorkspaceTabs`、`FilterChip` 已补 `type="button"`、pressed、focus-visible 状态；相关页面移除本轮发现的 `transition-all`。
+- `WritingPhrasebookPage` 的主操作、详情操作、导入操作、练习推进和编辑抽屉关键按钮已改用统一 `Button` / `IconButton`；练习检测页已补进度条、题型分布和已填写统计。
+- `WritingPhrasebookPage` 的练习检测页已补移动端句式列表折叠，编辑抽屉表单已补 `name` / `autocomplete` / `inputMode` 与 overscroll 控制。
+- `PronunciationPage` 的 Minimal Pairs / Records 已从占位页升级为可用工作区：支持易混音组选择、左右词播放、对比句练习、自评记录、音标完成度、shadowing 自评分布、最小对立音清晰率和练习概览。
+- `GrammarPage` 已补知识点分类矩阵、已打开/已学习/已缓存/喜爱状态卡、难度掌握分布和生成链路状态卡；重新生成、清空 HTML、删除目标网站已接入确认弹窗，关键表单字段补齐 `name` / `autocomplete` / focus-visible。
+- `KnowledgeBasePage` 已补移动端教材目录 / 学习概览折叠入口，以及教材学习概览图表：教材单元、知识点、RAG 片段、待校对、单元掌握堆叠条、知识点类型覆盖、教材路径进度、解析与索引覆盖。
+- `EpisodeDebugPage` / Dev Console Graph Runs 已补 Graph Run Overview、Node Waterfall、Event Rhythm、Tool Latency 和 Verification Map，让 trace 先图形化扫读，再下钻表格/JSON。
+- `ReadingWorkshopPage` 已补移动端材料历史 / 精读句子列表折叠入口，复盘页新增语法卡点分布图；本轮触及的阅读表单字段补齐 `name` / `autocomplete` / focus-visible 和省略号占位文案。
+- `PronunciationPage` 的 Shadowing 工作区已补移动端句子列表折叠、原句播放状态、节奏条和重音词可视化。
 
 # 1. 用户端功能总账
 
 | 功能域         | 当前可用功能                                                 | 页面体现                                       | 当前 UI 状态                                                                                               | 后续确认重点                                                           |
 | ----------- | ------------------------------------------------------ | ------------------------------------------ | ------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------- |
-| 登录与学习者空间    | 昵称/邮箱登录，创建或恢复 learner，本地保存 learner 信息                  | `LoginPage`                                | 左侧产品说明 + 右侧登录卡片；提交时有 loading spinner；错误 toast。                                                         | 登录页需要统一视觉 token；四个能力卡要有 hover/进入动效；移动端上下布局要更舒服。                  |
-| AI 对话       | 流式聊天、取消生成、会话历史、记忆面板、Skill 状态条、Agent Skill 退出           | `ChatPage` / `ChatContainer`               | 左侧会话栏、中间聊天区、右侧记忆栏；History 和 Memory 可折叠。                                                                | 必须强化 streaming 动效、typing indicator、消息 hover 操作、移动端抽屉式历史/记忆栏。     |
-| 探索能力中心      | 能力搜索、分类筛选、收藏、推荐卡、点击启动能力、跳转专项页面或进入 Chat Skill           | `ExplorePage`                              | FeatureHero + 推荐 + 分类 chip + feature card；能打开 Grammar、Reading、Writing、WordParts、VocabularyDetail 等子页面。 | 卡片 hover、推荐原因、收藏动效、状态 badge、能力启动 loading 要统一。                    |
-| 学习中心首页      | 今日学习路径、学习状态、活动日历、学习路线、词汇入口、个人学习概览                      | `DashboardPage`                            | Home / vocabulary / profile / records 内部 workspace；有 activity calendar、路线卡、状态条。                        | 这是用户端核心首页，需要最多图表：趋势、热力、掌握度、复习负荷、错因分布。                            |
-| 词汇管理        | 添加词、复习队列、删除、跳转新词/复习/拼写练习、只读词条详情                        | `DashboardPage` 内 Vocabulary Workspace     | 词汇列表、添加表单、统计、练习入口。                                                                                     | 列表行 hover、批量操作、掌握度 badge、复习优先级图示。                                |
-| 教材知识库       | 上传教材、解析/ingest 状态、教材结构、单元学习、练习任务、解析校对、来源切换             | `KnowledgeBasePage`                        | 四个 workspace：教材结构 / 单元学习 / 练习任务 / 解析校对；左右有 CurriculumRail 和 ContextPanel。                              | 必须做可折叠左右栏；教材树、单元进度、解析质量、RAG 覆盖要图形化。                              |
-| 每日教材题 / 单元题 | Daily lesson、单题提交、反馈、mastery/recommendations、教材练习题启动   | `KnowledgeBasePage` 弹层与 exercise workspace | DailyLesson modal 展示题目、选项/文本作答、反馈、推荐。                                                                  | 题目弹层要更接近 TaskShell；反馈出现后下一步操作仍要固定可见。                             |
-| 词汇练习        | 新词、复习、拼写三种模式；TTS；英/美音；键盘快捷键；提示；构词信息；总结页                | `VocabularyPracticePage`                   | practice 阶段使用 h-dvh、固定 top/bottom、中间滚动；底部 action bar 固定。                                               | 这是 TaskShell 标准样板；正确/错误、拼写差异、TTS、提示展开都要有明确动效。                    |
-| 词汇详解        | 输入词条、生成 prompt、外部模型回填 HTML、安全预览、沉浸阅读、加入词库、个人词卡编辑、练习接入  | `VocabularyDetailPage`                     | 四个 workspace：词条输入 / 生成指令 / 回填预览 / 词卡沉淀。                                                                | 生成-回填-保存要做成 stepper；HTML 状态、保存状态、词卡状态要清楚。                        |
-| 发音训练        | 音标卡、搜索/筛选、播放、音素高亮、完成进度、今日 5 个、随机练、影子跟读、自评记录            | `PronunciationPage`                        | workspace 包括音标训练、影子跟读、最小对立音、训练记录；后两个目前是 placeholder。                                                   | 音频播放必须有 pulse/waveform；音标卡 hover 已有基础，但要统一动效；placeholder 要列为待设计。 |
-| 影子跟读        | 句子列表、分块朗读、重音词、语调提示、练习建议、自评、本地记录                        | `PronunciationPage` Shadowing Workspace    | 左侧句子列表 + 右侧当前句详情；提示可隐藏。                                                                                | 需要节奏条、重音可视化、录音/播放状态位；移动端列表应可折叠。                                  |
-| 语法微课        | 语法知识点库、生成 prompt、跳转目标 AI、HTML 缓存、回填预览、沉浸阅读、目标网站设置、练习接入 | `GrammarPage`                              | 四个 workspace：知识点 / 生成指令 / 预览回填 / 目标设置。                                                                 | 需要把 cache 状态、生成链路、练习状态做成统一状态条；预览页左右栏要能折叠。                        |
-| 精读与泛读       | 材料输入、自动标题建议、历史材料、泛读任务、关键词、精读拆句、语法卡点、复盘沉淀               | `ReadingWorkshopPage`                      | 四个 workspace：材料输入 / 泛读模式 / 精读模式 / 沉淀复盘；精读可跳到 GrammarPage。                                              | 需要文本高亮、句子难度、阅读流程进度、语法卡点图示；左侧句子栏移动端折叠。                            |
-| 词根词缀        | 方法入门、词根词缀库、搜索/筛选、拆词练习、提示/答案、掌握状态、本地进度                  | `WordPartsPage`                            | 四个 workspace：方法入门 / 词根词缀库 / 拆词练习 / 我的掌握。                                                               | 进度页要加图表；拆词练习答案 reveal 应有展开动效；词根卡需要统一 hover/selected。             |
-| 写作好句        | 句式收藏、搜索/筛选、更多筛选折叠、新增/编辑 drawer、导入好句、候选收藏、练习检测、写作调用     | `WritingPhrasebookPage`                    | 四个 workspace：收藏馆 / 导入好句 / 练习检测 / 写作调用；编辑通过 drawer。                                                     | 这是当前较好的 UI 参考，但还要把自定义按钮换成统一 Button/IconButton，并补充练习结果图表。         |
+| 登录与学习者空间    | 昵称/邮箱登录，创建或恢复 learner，本地保存 learner 信息                  | `LoginPage`                                | 左侧产品说明 + 右侧登录卡片；提交时有 loading spinner；错误 toast；表单字段已补 `name` / `autocomplete`，能力卡已有 hover 反馈。                                                         | 后续继续统一视觉 token，并细化移动端上下布局。                  |
+| AI 对话       | 流式聊天、取消生成、会话历史、记忆面板、Skill 状态条、Agent Skill 退出           | `ChatPage` / `ChatContainer`               | 左侧会话栏、中间聊天区、右侧记忆栏；History 和 Memory 可折叠；输入区和图标操作已接入统一 Button/IconButton，streaming/typing 有 live region 与消息 hover。                                                                | 后续继续强化移动端 drawer 遮罩/焦点管理和更细的 streaming 光标/typing 动效。     |
+| 探索能力中心      | 能力搜索、分类筛选、收藏、推荐卡、点击启动能力、跳转专项页面或进入 Chat Skill           | `ExplorePage`                              | FeatureHero + 推荐 + 分类 chip + feature card；能打开 Grammar、Reading、Writing、WordParts、VocabularyDetail 等子页面；搜索框和能力卡 hover/focus/favorite 状态已补基础规范。 | 后续继续加强推荐分组折叠、能力启动 loading 骨架和收藏反馈动画。                    |
+| 学习中心首页      | 今日学习路径、学习状态、活动日历、学习路线、词汇入口、个人学习概览                      | `DashboardPage`                            | Home / vocabulary / profile / records 内部 workspace；有 activity calendar、路线卡、状态条；Profile / Records 图表已补齐；共享统计卡、目标进度和复习卡片已补真实按钮/focus/显式 transition。                        | 后续继续接真实 mastery/error aggregation，减少轻量估算。                            |
+| 词汇管理        | 添加词、复习队列、删除、跳转新词/复习/拼写练习、只读词条详情                        | `DashboardPage` 内 Vocabulary Workspace     | 词汇列表、添加表单、统计、练习入口；练习入口卡、搜索/新增表单、词汇行和复习卡键盘/focus 状态已统一。                                                                                     | 后续补批量操作、复习优先级图示和更完整的列表 loading skeleton。                                |
+| 教材知识库       | 上传教材、解析/ingest 状态、教材结构、单元学习、练习任务、解析校对、来源切换、学习概览图表             | `KnowledgeBasePage`                        | 学习者端保留“今日单元 / 练习任务”两个 workspace；左右有 CurriculumRail 和 ContextPanel，移动端可折叠；主区已补教材学习概览图表。                              | 后续继续把折叠升级为 drawer/bottom sheet 动画，并补更细的 parser quality radar / review funnel。                              |
+| 每日教材题 / 单元题 | Daily lesson、单题提交、反馈、mastery/recommendations、教材练习题启动   | `KnowledgeBasePage` 弹层与 exercise workspace | DailyLesson modal 展示题目、选项/文本作答、反馈、推荐；共享 `ExerciseRenderer` 已补进度条、选项状态、提交 loading 与弹层内部滚动；DailyLesson 本体已补固定头部/底部 ActionBar、ESC 关闭和焦点恢复。                                                                  | 后续继续补更完整的 focus trap、遮罩动画和推荐完成后的复盘图示。                             |
+| 词汇练习        | 新词、复习、拼写三种模式；TTS；英/美音；键盘快捷键；提示；构词信息；总结页                | `VocabularyPracticePage`                   | practice 阶段使用 h-dvh、固定 top/bottom、中间滚动；底部 action bar 固定；核心按钮、进度条和拼写输入已补 focus/name/autocomplete 与显式 transition。                                               | 这是 TaskShell 标准样板；后续补更完整的 due queue 分布、拼写错误热力图和 summary 复盘图。                    |
+| 词汇详解        | 输入词条、生成 prompt、外部模型回填 HTML、安全预览、沉浸阅读、加入词库、个人词卡编辑、练习接入  | `VocabularyDetailPage`                     | 四个 workspace：词条输入 / 生成指令 / 回填预览 / 词卡沉淀；已补生成-回填-保存 stepper 和关键表单 focus/name/autocomplete。                                                                | 后续补个人词卡状态 timeline、保存前 diff 和更细的 HTML 解析质量提示。                        |
+| 发音训练        | 音标卡、搜索/筛选、播放、音素高亮、完成进度、今日 5 个、随机练、影子跟读、自评记录、最小对立音练习、训练记录图表            | `PronunciationPage`                        | workspace 包括音标训练、影子跟读、最小对立音、训练记录；Minimal Pairs / Records 已有可用交互和本地记录图表；Shadowing 已补移动端列表折叠、播放状态和节奏/重音可视化。                                                   | 音频播放后续要补真实录音状态、波形和跟读评分；音标卡 hover 已有基础，但要继续统一动效与移动端 detail 折叠。 |
+| 影子跟读        | 句子列表、分块朗读、重音词、语调提示、练习建议、自评、本地记录                        | `PronunciationPage` Shadowing Workspace    | 左侧句子列表 + 右侧当前句详情；提示可隐藏；移动端句子列表可展开/收起，当前句提供原句播放、节奏条和重音词提示。                                                                                | 后续补真实录音、波形、自动评分和 bottom sheet 动画。                                  |
+| 语法微课        | 语法知识点库、生成 prompt、跳转目标 AI、HTML 缓存、回填预览、沉浸阅读、目标网站设置、练习接入、知识点状态图表 | `GrammarPage`                              | 四个 workspace：知识点 / 生成指令 / 预览回填 / 目标设置；已补分类矩阵、状态卡、难度掌握分布和生成链路状态卡。                                                                 | 后续继续补练习正确率趋势、预览页折叠策略和更完整的 stepper。                        |
+| 精读与泛读       | 材料输入、自动标题建议、历史材料、泛读任务、关键词、精读拆句、语法卡点、复盘沉淀               | `ReadingWorkshopPage`                      | 四个 workspace：材料输入 / 泛读模式 / 精读模式 / 沉淀复盘；材料历史和精读句子列表已支持移动端折叠；复盘页已有关键词频次、句子难度热力图和语法卡点分布；精读可跳到 GrammarPage。                                              | 后续继续加强正文高亮、阅读流程进度和更完整的 drawer/bottom sheet 动画。                            |
+| 词根词缀        | 方法入门、词根词缀库、搜索/筛选、拆词练习、提示/答案、掌握状态、本地进度                  | `WordPartsPage`                            | 四个 workspace：方法入门 / 词根词缀库 / 拆词练习 / 我的掌握；进度页已有整体掌握堆叠条、类型掌握条和练习次数趋势。                                                               | 拆词练习答案 reveal 应有展开动效；继续清理词根卡手写交互状态。             |
+| 写作好句        | 句式收藏、搜索/筛选、更多筛选折叠、新增/编辑 drawer、导入好句、候选收藏、练习检测、写作调用     | `WritingPhrasebookPage`                    | 四个 workspace：收藏馆 / 导入好句 / 练习检测 / 写作调用；编辑通过 drawer；关键按钮已接入统一 Button/IconButton，练习页已有进度、题型分布图和移动端句式列表折叠。                                                     | 后续补真实 attempt 正确率趋势、写作位置 coverage 和 drawer/bottom sheet 动画。         |
 | 学习记录与画像     | 活动热力、每日完成趋势、正确率/复习负荷趋势、能力雷达、掌握度分布、薄弱点排行、推荐原因            | `DashboardPage` profile / records          | 用户端学习中心内部二级视图；只展示学习者能理解的记录和画像，不展示 raw memory/debug evidence。                              | 后续可接入更真实的 mastery/error aggregation 数据源，替换当前轻量估算图表。                         |
 | 学习记忆控制      | 查看记忆、整理、导出、重置计划、开关记忆设置、编辑/删除/禁用记忆、证据展示                 | `MemoryCenterPage`                         | 仅由 Dev Console 懒加载；页面本身使用 FeatureHero、ReasonCard、EvidencePanel、ConfirmDialog。                         | 不回到用户端一级导航；用户端只保留学习记录和学习者画像。                                      |
 
@@ -30,11 +53,11 @@
 
 | 页面                       | 当前入口                                        | 页面职责                      | 必须确认的 UI 点                                 |
 | ------------------------ | ------------------------------------------- | ------------------------- | ------------------------------------------ |
-| `LoginPage`              | 未登录时展示                                      | 创建/恢复学习空间                 | 登录卡、产品说明卡、表单 focus/loading/error、移动端上下布局   |
-| `ChatPage`               | 主导航 AI 对话                                   | Agent 对话、Skill 执行、会话/记忆辅助 | 左右栏折叠、消息 hover、streaming、typing、移动端 drawer |
+| `LoginPage`              | 未登录时展示                                      | 创建/恢复学习空间                 | 登录卡、产品说明卡、表单 focus/loading/error、能力卡 hover、移动端上下布局   |
+| `ChatPage`               | 主导航 AI 对话                                   | Agent 对话、Skill 执行、会话/记忆辅助 | 左右栏折叠、统一按钮、消息 hover、streaming/typing live 状态、移动端 drawer |
 | `ExplorePage`            | 主导航 探索                                      | 所有能力的入口与推荐                | 能力卡 hover、分类 chip、收藏、推荐原因、启动 loading       |
 | `DashboardPage`          | 主导航 学习中心                                    | 学习首页、词汇、画像、记录             | 首页图表、热力图、学习路线、内部 workspace 切换              |
-| `KnowledgeBasePage`      | 学习中心进入 Daily Learning                       | 教材学习工作台                   | CurriculumRail / ContextPanel 折叠，四工作区布局    |
+| `KnowledgeBasePage`      | 学习中心进入 Daily Learning                       | 教材学习工作台                   | CurriculumRail / ContextPanel 折叠，四工作区布局，教材练习和 DailyLesson 弹层内部滚动/底部操作固定    |
 | `VocabularyPracticePage` | 学习中心/知识库/词汇入口                               | 新词、复习、拼写正式任务流             | TaskShell、固定底部操作区、反馈动画、键盘操作                |
 | `PronunciationPage`      | Explore 或 AppTab                            | 发音训练                      | IPA 网格、详情 panel、音频状态、Shadowing 交互          |
 | `GrammarPage`            | Explore / Reading / Knowledge grammar topic | 语法微知识点                    | 生成链路、HTML 回填、沉浸阅读、练习模块                     |
@@ -63,7 +86,7 @@ Dev Console 路由当前定义了 12 个主要页面：Learners、Recent Episode
 | -------------------------- | ------------------: | --------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- | ------------------------------------------------- |
 | Learners                   |     `/dev/learners` | 搜索 learner、设置当前 learner、查看 episodes                                                                 | 搜索表单 + learner 表格 + actions。                                     | 大表格移动端改 card；增加 learner 指标图。                      |
 | Recent Episodes            |     `/dev/episodes` | 按 learner/status/source/entrypoint/limit 过滤 episodes，打开 trace                                       | 过滤表单 + episode 表格。                                               | 加状态分布、失败原因、运行耗时趋势。                                |
-| Graph Runs / Episode Trace |   `/dev/graph-runs` | 查看 Episode Summary、Graph/Checkpoint、Timeline、Tool Calls、Prompt Executions、Verification、EvidenceRefs | `EpisodeDebugPage` 使用 full PageShell + 左主右侧栏。                    | 强烈建议加 DAG/Timeline/waterfall，而不是纯表格。              |
+| Graph Runs / Episode Trace |   `/dev/graph-runs` | 查看 Episode Summary、Graph/Checkpoint、Timeline、Tool Calls、Prompt Executions、Verification、EvidenceRefs | `EpisodeDebugPage` 使用 full PageShell + 左主右侧栏；已补 Graph Run Overview、Node Waterfall、Event Rhythm、Tool Latency 和 Verification Map。                    | 后续继续加更完整 DAG、节点耗时 waterfall、筛选和 raw JSON 折叠策略。              |
 | Textbook Parsing           |    `/dev/textbooks` | 查看教材 source、解析状态、quality、parser runs、review queue、evidence browser                                  | sources 表格 + detail + review queue + parser run panels。          | 解析治理需要漏斗图、质量雷达、review 队列优先级。                      |
 | Memory Debug               |       `/dev/memory` | 记忆查看、整理、导出、设置开关、控制记忆项                                                                               | 复用 `MemoryCenterPage`。                                           | Dev 保留 raw/evidence；用户端不暴露 Memory Center，只展示记录/画像。 |
 | Tool Registry              |        `/dev/tools` | 查看 `/api/tools` 返回的 ToolSpec、schema                                                                 | Dev Console App 内 fetch tools 并渲染 cards/schema。                  | Schema 需要可折叠 JSON、搜索、分组、调用频率。                     |
@@ -122,15 +145,15 @@ Dev Console Shell 目前已有桌面左侧导航，移动端改为 select；但�
 | Dashboard 首页           | 学习活动 heatmap、7/30 天学习趋势线、今日任务完成环、技能掌握雷达图、复习负荷柱状图                                   |
 | Dashboard Profile      | vocabulary / grammar / reading / writing / pronunciation 五维能力雷达、薄弱点排行、最近错因堆叠条      |
 | Dashboard Records      | session timeline、学习事件流、每日完成量、正确率趋势                                                 |
-| KnowledgeBase          | 教材目录树、单元进度 timeline、解析质量 score card、parser warnings 分布、RAG coverage 条形图            |
-| VocabularyPractice     | 遗忘曲线、due queue 分布、拼写错误热力图、掌握度趋势、词性/来源分布                                            |
-| VocabularyDetail       | 词义结构树、构词拆解图、个人词卡状态 timeline                                                        |
-| Pronunciation          | IPA matrix、音素分类网格、shadowing 练习次数趋势、句子节奏/重音条、音素完成度环                                 |
-| Grammar                | 知识点分类矩阵、已学/收藏/缓存状态图、练习正确率趋势                                                        |
-| ReadingWorkshop        | 词数/句数/耗时指标卡、句子难度 heatmap、关键词频次、语法卡点分布                                              |
-| WordParts              | prefix/root/suffix 掌握度堆叠条、练习次数趋势、词根关系图                                             |
-| WritingPhrasebook      | 句式功能分布、难度分布、待复习数量、练习正确率、写作位置 coverage                                              |
-| Dev Console Graph Runs | DAG、事件 timeline、node waterfall、tool latency histogram、verification pass/fail donut |
+| KnowledgeBase          | 教材目录树、单元路径进度、单元掌握堆叠条、知识点类型覆盖、解析与索引覆盖、RAG 片段和待校对指标已落地；后续补 parser quality radar / review funnel            |
+| VocabularyPractice     | TaskShell 固定操作区和拼写输入状态已落地；后续补遗忘曲线、due queue 分布、拼写错误热力图、掌握度趋势、词性/来源分布                                            |
+| VocabularyDetail       | 生成-回填-保存 stepper 和构词拆解编辑已落地；后续补词义结构树、个人词卡状态 timeline 和保存前 diff                                                        |
+| Pronunciation          | IPA matrix、音素分类网格、音标完成度、shadowing 自评分布、最小对立音清晰率、句子节奏/重音条和 Shadowing 列表折叠已落地；后续补 shadowing 练习次数趋势、真实录音波形和自动评分                                 |
+| Grammar                | 知识点分类矩阵、已学/收藏/缓存状态图、难度掌握分布和生成链路状态已落地；后续补练习正确率趋势                                                        |
+| ReadingWorkshop        | 词数/句数/耗时指标卡、句子难度 heatmap、关键词频次、语法卡点分布已落地；后续补正文高亮覆盖和阅读流程进度                                              |
+| WordParts              | prefix/root/suffix 掌握度堆叠条、练习次数趋势；后续补词根关系图                                             |
+| WritingPhrasebook      | 练习进度、题型分布、待填写数量和练习句式列表折叠已落地；后续补句式功能分布、难度分布、练习正确率、写作位置 coverage                                              |
+| Dev Console Graph Runs | Graph Run Overview、事件 rhythm、node waterfall、tool latency、verification pass/fail donut 已落地；后续补完整 DAG 和节点耗时 waterfall |
 | Dev Console Textbook   | parser quality radar、review queue funnel、source status stacked bar                 |
 | Dev Console RAG        | score scatter、top-k bar、chunk source distribution                                  |
 | Dev Console Simulation | scenario coverage matrix、失败类型趋势、版本对比图                                              |
@@ -178,9 +201,8 @@ Dev Console Shell 目前已有桌面左侧导航，移动端改为 select；但�
 
 # 8. 当前明显缺口
 
-1. **复杂页面折叠策略不统一**：Chat 已有折叠，Knowledge/Pronunciation/Reading/Writing 等复杂页面需要统一 drawer/bottom sheet 规则。
-2. **交互状态仍需继续归一**：部分页面使用统一 Button，部分页面还有手写 button class；hover、focus、loading、disabled、danger 状态需要继续清理。
-3. **图表数据源仍可增强**：Dashboard 已补能力雷达、掌握度分布、趋势图和热力图，但部分指标仍是基于 summary 的轻量估算，后续应接入更完整 mastery/error aggregation。
-4. **Dev Console 太偏表格/JSON**：适合开发，但需要更多可视化链路，尤其 Graph Runs、Textbook Parsing、Verification、RAG。
-5. **Pronunciation 的 Minimal Pairs / Records 仍是占位**：后续确认界面时要标成“待设计/待接入”，不能误认为完整功能。
-
+1. **复杂页面折叠策略不统一**：Chat、Knowledge、Reading、Pronunciation Shadowing 和 Writing 练习句式列表已补移动端开关，DailyLesson 已补 ESC 关闭和焦点恢复；剩余工作主要是统一 drawer/bottom sheet 遮罩动画和完整 focus trap。
+2. **交互状态仍需继续归一**：`WorkspaceTabs`、`FilterChip`、`ChatContainer`、`LoginPage`、`ExplorePage`、`DashboardPage` 词汇区与共享卡片、`AddExerciseForm` / `ExerciseRenderer`、`VocabularyPracticePage`、`GrammarPage`、`KnowledgeBasePage`、`ReadingWorkshopPage`、`WritingPhrasebookPage` 关键路径已补基础状态，但部分页面还有手写 button class；hover、focus、loading、disabled、danger 状态需要继续清理。
+3. **图表数据源仍可增强**：Dashboard、Grammar、KnowledgeBase、Pronunciation、Reading、WordParts、WritingPhrasebook 已补一批图表，但部分指标仍是基于 summary/localStorage/当前 session 的轻量估算，后续应接入更完整 mastery/error aggregation。
+4. **Dev Console 仍需继续图表化**：Graph Runs / Episode Trace 已补首层可视化，但 Textbook Parsing、RAG、Simulation、Verification 独立页仍偏表格/JSON，需要更多漏斗、分布、覆盖和趋势图。
+5. **Pronunciation 仍缺真实录音闭环**：Minimal Pairs / Records 已不是占位，Shadowing 已补原句播放态和节奏/重音可视化，但真实录音态、波形、跟读评分和移动端 bottom sheet 还需要继续打磨。

@@ -8,6 +8,7 @@ import {
   PanelRightOpen,
 } from 'lucide-react'
 import type { MemorySummary } from '@/types'
+import { IconButton } from '@/components/ui/IconButton'
 
 interface MemoryPanelProps {
   memory: MemorySummary | null
@@ -19,33 +20,33 @@ export function MemoryPanel({ memory, isCollapsed, onToggleCollapsed }: MemoryPa
   if (isCollapsed) {
     return (
       <aside className="hidden w-14 shrink-0 border-l bg-background xl:flex xl:flex-col xl:items-center xl:py-3">
-        <button
+        <IconButton
           onClick={onToggleCollapsed}
-          className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-          title="展开学习状态"
+          label="展开学习状态"
+          className="border-transparent text-muted-foreground hover:bg-muted hover:text-foreground"
         >
           <PanelRightOpen className="h-4 w-4" />
-        </button>
+        </IconButton>
         <Brain className="mt-2 h-4 w-4 text-primary" />
       </aside>
     )
   }
 
   return (
-    <aside className="fixed bottom-0 right-0 top-16 z-40 flex w-80 shrink-0 flex-col border-l bg-background shadow-lg xl:static xl:shadow-none">
+    <aside className="fixed bottom-0 right-0 top-16 z-40 flex w-80 shrink-0 flex-col overscroll-contain border-l bg-background shadow-lg xl:static xl:shadow-none">
       <div className="border-b p-4">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <Brain className="h-5 w-5 text-primary" />
             <h2 className="text-sm font-semibold text-foreground">学习状态</h2>
           </div>
-          <button
+          <IconButton
             onClick={onToggleCollapsed}
-            className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-            title="收起学习状态"
+            label="收起学习状态"
+            className="border-transparent text-muted-foreground hover:bg-muted hover:text-foreground"
           >
             <PanelRightClose className="h-4 w-4" />
-          </button>
+          </IconButton>
         </div>
         <p className="mt-1 text-xs text-muted-foreground">
           来自真实对话、词汇复习和课程记录
@@ -55,7 +56,7 @@ export function MemoryPanel({ memory, isCollapsed, onToggleCollapsed }: MemoryPa
       <div className="flex-1 space-y-4 overflow-y-auto p-4">
         {!memory ? (
           <p className="rounded-lg border border-dashed p-3 text-sm text-muted-foreground">
-            正在整理学习状态...
+            正在整理学习状态…
           </p>
         ) : (
           <>

@@ -17,14 +17,17 @@ export function MessageBubble({ role, content, timestamp, isStreaming }: Message
   }
 
   return (
-    <div className={`flex gap-3 ${isUser ? 'flex-row-reverse' : ''}`}>
+    <div
+      className={`group flex gap-3 ${isUser ? 'flex-row-reverse' : ''}`}
+      aria-live={isStreaming ? 'polite' : undefined}
+    >
       <div className={`flex size-8 shrink-0 items-center justify-center rounded-full ${
         isUser ? 'bg-primary text-primary-foreground' : 'bg-accent/20 text-accent'
       }`}>
         {isUser ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
       </div>
       
-      <div className={`max-w-[80%] rounded-2xl px-4 py-2.5 ${
+      <div className={`min-w-0 max-w-[80%] rounded-2xl px-4 py-2.5 transition-[box-shadow,transform] duration-150 group-hover:-translate-y-0.5 group-hover:shadow-sm ${
         isUser
           ? 'bg-primary text-primary-foreground rounded-tr-sm'
           : 'bg-muted text-foreground rounded-tl-sm'

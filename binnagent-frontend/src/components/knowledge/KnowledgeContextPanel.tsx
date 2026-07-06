@@ -1,16 +1,18 @@
 import { BookOpen, CheckCircle2, Info, Layers3, Target, TrendingUp, UploadCloud } from 'lucide-react'
+import { Button } from '@/components/ui/Button'
 import type { KnowledgeBaseOverview } from '@/types'
 
 interface KnowledgeContextPanelProps {
   overview: KnowledgeBaseOverview
+  className?: string
   onUpload: () => void
 }
 
-export function KnowledgeContextPanel({ overview, onUpload }: KnowledgeContextPanelProps) {
+export function KnowledgeContextPanel({ overview, className = '', onUpload }: KnowledgeContextPanelProps) {
   const { source } = overview
   const sourceStatus = sourceStatusLabel(source.status)
   return (
-    <aside className="knowledge-context space-y-5 border-l border-slate-200 bg-slate-50/40 px-5 py-7">
+    <aside className={`knowledge-context space-y-5 border-l border-slate-200 bg-slate-50/40 px-5 py-7 ${className}`}>
       <section className="rounded-2xl border border-slate-200 bg-white p-5">
         <h2 className="text-base font-extrabold text-slate-950">教材信息</h2>
         <div className="mt-5 flex gap-4">
@@ -18,6 +20,8 @@ export function KnowledgeContextPanel({ overview, onUpload }: KnowledgeContextPa
             <img
               src="/grade7-english-upper-cover.png"
               alt="人教版英语七年级上册封面"
+              width={96}
+              height={144}
               className="h-36 w-24 shrink-0 rounded-md border border-slate-100 object-cover object-[78%_center] shadow-sm"
             />
           ) : (
@@ -40,14 +44,14 @@ export function KnowledgeContextPanel({ overview, onUpload }: KnowledgeContextPa
           <span className="flex items-center gap-2">页数 {source.page_count ?? '—'}</span>
           <span className="flex items-center gap-2 text-emerald-700"><CheckCircle2 className="size-4" />可练习</span>
         </div>
-        <button
-          type="button"
+        <Button
+          variant="secondary"
           onClick={onUpload}
-          className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-indigo-300 px-4 py-2.5 text-sm font-extrabold text-indigo-600 transition-colors hover:bg-indigo-50"
+          className="mt-5 w-full border-indigo-300 text-indigo-600 hover:bg-indigo-50"
         >
           <UploadCloud className="size-4" />
           上传英语教材
-        </button>
+        </Button>
       </section>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-5">

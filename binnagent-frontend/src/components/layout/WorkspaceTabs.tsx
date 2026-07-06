@@ -20,8 +20,9 @@ export function WorkspaceTabs<T extends string>({ tabs, activeTab, onChange }: W
         {tabs.map((tab) => (
           <button
             key={tab.id}
+            type="button"
             onClick={() => onChange(tab.id)}
-            className={`flex min-w-36 items-center gap-2 rounded-[10px] px-3 py-2 text-left text-sm transition-colors ${
+            className={`flex min-w-36 items-center gap-2 rounded-[10px] px-3 py-2 text-left text-sm transition-colors active:translate-y-px focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
               activeTab === tab.id
                 ? 'bg-primary text-primary-foreground'
                 : 'text-slate-600 hover:bg-slate-100 hover:text-slate-950'

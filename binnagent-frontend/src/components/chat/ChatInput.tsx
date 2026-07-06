@@ -1,4 +1,5 @@
 import { Send, Square } from 'lucide-react'
+import { IconButton } from '@/components/ui/IconButton'
 
 interface ChatInputProps {
   onSend: (message: string) => void
@@ -31,31 +32,38 @@ export function ChatInput({
 
   return (
     <form onSubmit={handleSubmit} className="flex gap-2">
-      <input
-        type="text"
-        value={message}
-        onChange={(e) => onMessageChange(e.target.value)}
-        onKeyDown={handleKeyDown}
-        placeholder="输入你想练习的内容..."
-        className="flex-1 rounded-xl border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-        disabled={isLoading}
-      />
+      <label className="min-w-0 flex-1">
+        <span className="sr-only">聊天消息</span>
+        <input
+          type="text"
+          name="chat_message"
+          autoComplete="off"
+          value={message}
+          onChange={(e) => onMessageChange(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder="输入你想练习的内容…"
+          className="w-full rounded-xl border bg-background px-4 py-3 text-sm transition-colors focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 disabled:cursor-not-allowed disabled:opacity-60"
+          disabled={isLoading}
+        />
+      </label>
       {isLoading ? (
-        <button
-          type="button"
+        <IconButton
           onClick={onCancel}
-          className="rounded-xl bg-error px-4 py-3 text-primary-foreground transition-colors hover:bg-error/90"
+          label="停止生成"
+          danger
+          className="size-12 border-error bg-error text-primary-foreground hover:bg-error/90 hover:text-primary-foreground"
         >
           <Square className="h-4 w-4" />
-        </button>
+        </IconButton>
       ) : (
-        <button
+        <IconButton
           type="submit"
           disabled={!message.trim()}
-          className="rounded-xl bg-primary px-4 py-3 text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+          label="发送消息"
+          className="size-12 border-primary bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground"
         >
           <Send className="h-4 w-4" />
-        </button>
+        </IconButton>
       )}
     </form>
   )

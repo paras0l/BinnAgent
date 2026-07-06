@@ -20,6 +20,7 @@ import { ExerciseBlock } from '@/components/exercise/ExerciseBlock'
 import { ExerciseAttemptSummary } from '@/components/exercise/ExerciseAttemptSummary'
 import { ExerciseLearningSignal } from '@/components/exercise/ExerciseLearningSignal'
 import { Button } from '@/components/ui/Button'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { FilterChip } from '@/components/ui/FilterChip'
 import { SurfaceCard } from '@/components/ui/SurfaceCard'
 import {
@@ -72,6 +73,7 @@ export function WordPartsPage({ learner, onBack }: WordPartsPageProps) {
   const [selectedExerciseId, setSelectedExerciseId] = useState(WORD_PART_EXERCISES[0]?.id ?? '')
   const [visibleHintCount, setVisibleHintCount] = useState(1)
   const [isAnswerVisible, setIsAnswerVisible] = useState(false)
+  const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false)
   const [progress, setProgress] = useState<Record<string, WordPartProgress>>(() => loadProgress())
 
   useEffect(() => {
@@ -90,12 +92,15 @@ export function WordPartsPage({ learner, onBack }: WordPartsPageProps) {
   }, [selectedPart])
   const selectedExercise = WORD_PART_EXERCISES.find((item) => item.id === selectedExerciseId) ?? WORD_PART_EXERCISES[0]
   const selectedAnalysis = useMemo(() => inferWordPartAnalysis(selectedExercise?.word), [selectedExercise])
-  const progressValues = Object.values(progress)
+  const progressValues = useMemo(() => Object.values(progress), [progress])
   const practicedCount = progressValues.filter((item) => item.practicedCount > 0).length
   const familiarCount = WORD_PARTS.filter((item) => {
     const status = progress[item.id]?.status
     return status === 'familiar' || status === 'mastered'
   }).length
+  const progressStatusCounts = useMemo(() => getProgressStatusCounts(progress), [progress])
+  const progressKindRows = useMemo(() => getKindProgressRows(progress), [progress])
+  const practiceTrend = useMemo(() => getPracticeTrend(progressValues), [progressValues])
 
   const updatePartStatus = (wordPartId: string, status: WordPartProgressStatus, practiced = false) => {
     setProgress((current) => {
@@ -213,8 +218,8 @@ export function WordPartsPage({ learner, onBack }: WordPartsPageProps) {
                 <input
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}
-                  className="w-full rounded-lg border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm outline-none transition focus:border-primary"
-                  placeholder="搜索 re-、port、prediction..."
+                  className="w-full rounded-lg border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm outline-none transition-colors focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
+                  placeholder="搜索 re-、port、prediction…"
                 />
               </div>
               <div className="flex gap-2 overflow-x-auto pb-1">
@@ -239,7 +244,7 @@ export function WordPartsPage({ learner, onBack }: WordPartsPageProps) {
                   key={item.id}
                   type="button"
                   onClick={() => setSelectedPartId(item.id)}
-                  className={`rounded-xl border p-4 text-left transition ${
+                  className={`rounded-xl border p-4 text-left transition-[border-color,box-shadow,background-color] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
                     selectedPart?.id === item.id
                       ? 'border-primary bg-primary/5 shadow-sm'
                       : 'border-slate-200 bg-white hover:border-primary/30'
@@ -328,7 +333,7 @@ export function WordPartsPage({ learner, onBack }: WordPartsPageProps) {
                     setVisibleHintCount(1)
                     setIsAnswerVisible(false)
                   }}
-                  className={`rounded-xl border px-4 py-3 text-left transition ${
+                  className={`rounded-xl border px-4 py-3 text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
                     selectedExercise?.id === exercise.id
                       ? 'border-primary bg-primary/5 text-primary'
                       : 'border-slate-200 bg-white text-slate-700 hover:border-primary/30'
@@ -440,18 +445,19 @@ export function WordPartsPage({ learner, onBack }: WordPartsPageProps) {
         <section className="grid gap-5 lg:grid-cols-[300px_minmax(0,1fr)]">
           <SurfaceCard>
             <h2 className="text-lg font-black text-slate-950">掌握概览</h2>
+            <ProgressStackedBar counts={progressStatusCounts} />
             <div className="mt-4 grid gap-3">
               {(['new', 'learning', 'familiar', 'mastered'] as WordPartProgressStatus[]).map((status) => (
                 <ProgressMetric
                   key={status}
                   label={STATUS_LABELS[status]}
-                  value={WORD_PARTS.filter((item) => (progress[item.id]?.status ?? 'new') === status).length}
+                  value={progressStatusCounts[status]}
                 />
               ))}
             </div>
             <Button
               variant="secondary"
-              onClick={() => setProgress({})}
+              onClick={() => setIsResetConfirmOpen(true)}
               className="mt-5 w-full justify-center"
             >
               <RotateCcw className="size-4" />重置本地记录
@@ -459,6 +465,16 @@ export function WordPartsPage({ learner, onBack }: WordPartsPageProps) {
           </SurfaceCard>
 
           <SurfaceCard>
+            <div className="mb-5 grid gap-4 xl:grid-cols-[minmax(0,1fr)_280px]">
+              <div>
+                <h2 className="text-lg font-black text-slate-950">按类型掌握度</h2>
+                <KindMasteryChart rows={progressKindRows} />
+              </div>
+              <div>
+                <h2 className="text-lg font-black text-slate-950">练习次数趋势</h2>
+                <PracticeTrendChart values={practiceTrend} />
+              </div>
+            </div>
             <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
               {WORD_PARTS.map((item) => {
                 const itemProgress = progress[item.id]
@@ -487,6 +503,19 @@ export function WordPartsPage({ learner, onBack }: WordPartsPageProps) {
           </SurfaceCard>
         </section>
       )}
+
+      <ConfirmDialog
+        open={isResetConfirmOpen}
+        title="重置词根词缀记录？"
+        description="这会清空本机保存的词根词缀练习次数和掌握状态，不会影响后端学习记录。"
+        confirmLabel="重置"
+        danger
+        onCancel={() => setIsResetConfirmOpen(false)}
+        onConfirm={() => {
+          setProgress({})
+          setIsResetConfirmOpen(false)
+        }}
+      />
     </PageShell>
   )
 }
@@ -618,11 +647,118 @@ function MiniStatusButton({ label, onClick }: { label: string; onClick: () => vo
     <button
       type="button"
       onClick={onClick}
-      className="rounded-md border border-slate-200 px-2 py-1 text-xs font-bold text-slate-500 transition hover:border-primary/40 hover:text-primary"
+      className="rounded-md border border-slate-200 px-2 py-1 text-xs font-bold text-slate-500 transition-colors hover:border-primary/40 hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
     >
       {label}
     </button>
   )
+}
+
+function ProgressStackedBar({ counts }: { counts: Record<WordPartProgressStatus, number> }) {
+  const total = WORD_PARTS.length
+  const segments: Array<{ status: WordPartProgressStatus; className: string }> = [
+    { status: 'new', className: 'bg-slate-300' },
+    { status: 'learning', className: 'bg-amber-400' },
+    { status: 'familiar', className: 'bg-sky-400' },
+    { status: 'mastered', className: 'bg-emerald-500' },
+  ]
+  return (
+    <div className="mt-4">
+      <div className="flex h-4 overflow-hidden rounded-full bg-slate-100">
+        {segments.map((segment) => (
+          <span
+            key={segment.status}
+            className={segment.className}
+            style={{ width: `${total > 0 ? (counts[segment.status] / total) * 100 : 0}%` }}
+            title={`${STATUS_LABELS[segment.status]} ${counts[segment.status]}`}
+          />
+        ))}
+      </div>
+      <p className="mt-2 text-xs font-semibold text-slate-500">
+        已熟悉以上 {counts.familiar + counts.mastered}/{total}
+      </p>
+    </div>
+  )
+}
+
+function KindMasteryChart({
+  rows,
+}: {
+  rows: Array<{ kind: WordPart['kind']; total: number; masteredLike: number; practiced: number }>
+}) {
+  return (
+    <div className="mt-4 space-y-3">
+      {rows.map((row) => {
+        const percent = row.total > 0 ? Math.round((row.masteredLike / row.total) * 100) : 0
+        return (
+          <div key={row.kind} className="rounded-xl border border-slate-100 bg-slate-50 p-3">
+            <div className="flex items-center justify-between gap-3">
+              <PartKindPill kind={row.kind} />
+              <span className="text-xs font-black text-slate-500">{percent}%</span>
+            </div>
+            <div className="mt-3 h-2 overflow-hidden rounded-full bg-white">
+              <div className="h-full rounded-full bg-primary transition-[width] duration-500" style={{ width: `${percent}%` }} />
+            </div>
+            <p className="mt-2 text-xs font-semibold text-slate-500">
+              练过 {row.practiced}/{row.total}，熟悉以上 {row.masteredLike}
+            </p>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+function PracticeTrendChart({ values }: { values: number[] }) {
+  const maxValue = Math.max(...values, 1)
+  return (
+    <div className="mt-4 flex h-36 items-end gap-2 rounded-xl border border-slate-100 bg-slate-50 px-3 pb-3 pt-4">
+      {values.map((value, index) => (
+        <div key={`${value}-${index}`} className="flex min-w-0 flex-1 flex-col items-center gap-2">
+          <div className="flex h-24 w-full items-end justify-center">
+            <div
+              className="w-full max-w-7 rounded-t-md bg-emerald-500 transition-[height] duration-500"
+              style={{ height: `${Math.max(6, (value / maxValue) * 96)}px` }}
+              title={`第 ${index + 1} 组练习 ${value} 次`}
+            />
+          </div>
+          <span className="text-[10px] font-bold text-slate-400">{index + 1}</span>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function getProgressStatusCounts(progress: Record<string, WordPartProgress>) {
+  return WORD_PARTS.reduce<Record<WordPartProgressStatus, number>>((counts, item) => {
+    const status = progress[item.id]?.status ?? 'new'
+    counts[status] += 1
+    return counts
+  }, { new: 0, learning: 0, familiar: 0, mastered: 0 })
+}
+
+function getKindProgressRows(progress: Record<string, WordPartProgress>) {
+  return (['prefix', 'root', 'suffix'] as Array<WordPart['kind']>).map((kind) => {
+    const items = WORD_PARTS.filter((item) => item.kind === kind)
+    return {
+      kind,
+      total: items.length,
+      masteredLike: items.filter((item) => {
+        const status = progress[item.id]?.status
+        return status === 'familiar' || status === 'mastered'
+      }).length,
+      practiced: items.filter((item) => (progress[item.id]?.practicedCount ?? 0) > 0).length,
+    }
+  })
+}
+
+function getPracticeTrend(progressValues: WordPartProgress[]) {
+  const practiced = progressValues
+    .filter((item) => item.practicedCount > 0)
+    .sort((left, right) => new Date(left.lastPracticedAt).getTime() - new Date(right.lastPracticedAt).getTime())
+    .slice(-8)
+    .map((item) => item.practicedCount)
+  return practiced.length > 0 ? practiced : [0, 0, 0, 0, 0, 0, 0, 0]
 }
 
 function loadProgress(): Record<string, WordPartProgress> {

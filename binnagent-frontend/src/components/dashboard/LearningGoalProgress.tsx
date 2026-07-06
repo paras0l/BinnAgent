@@ -82,7 +82,7 @@ export function LearningGoalProgress({ dailyGoal, weeklyGoal }: LearningGoalProg
                 </div>
                 <div className="h-2 overflow-hidden rounded-full bg-muted">
                   <div
-                    className={`h-full transition-all duration-500 ${
+                    className={`h-full transition-[width,background-color] duration-500 ${
                       isComplete ? 'bg-success' : 'bg-warning'
                     }`}
                     style={{ width: `${percent}%` }}

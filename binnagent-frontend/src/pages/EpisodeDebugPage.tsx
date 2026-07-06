@@ -7,6 +7,9 @@ import {
   Database,
   ExternalLink,
   FileJson,
+  GitBranch,
+  Gauge,
+  ListChecks,
   RefreshCw,
   ShieldCheck,
   Wrench,
@@ -231,7 +234,7 @@ export function EpisodeDebugPage({ learner, episodeId }: EpisodeDebugPageProps) 
   const graphLangfuseTraceId = graphRun?.langfuse_trace_id ?? stringValue(trace?.graph_run?.langfuse_trace_id)
 
   if (isLoading && !trace) {
-    return <LoadingState title="正在读取 Episode Trace" description="正在加载 TaskSpec、事件链、工具调用和验证报告..." />
+    return <LoadingState title="正在读取 Episode Trace" description="正在加载 TaskSpec、事件链、工具调用和验证报告…" />
   }
 
   if (error || !trace) {
@@ -279,6 +282,14 @@ export function EpisodeDebugPage({ learner, episodeId }: EpisodeDebugPageProps) 
           ? '关键步骤已通过 deterministic / schema / business_rule / evidence checks。'
           : verification?.failed_reason ?? '验证报告尚未通过。'}
       </StatusBanner>
+
+      <TraceVisualOverview
+        trace={trace}
+        nodeSummaries={nodeSummaries}
+        promptExecutions={promptExecutions}
+        evidenceRefs={evidenceRefs}
+        verification={verification}
+      />
 
       <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
         <div className="flex flex-col gap-4">
@@ -552,6 +563,192 @@ function SectionTitle({ icon, title }: { icon: React.ReactNode; title: string })
   )
 }
 
+function TraceVisualOverview({
+  trace,
+  nodeSummaries,
+  promptExecutions,
+  evidenceRefs,
+  verification,
+}: {
+  trace: EpisodeTrace
+  nodeSummaries: NodeSummary[]
+  promptExecutions: PromptExecutionRecord[]
+  evidenceRefs: EvidenceRef[]
+  verification: VerificationReport | null
+}) {
+  const nodeRows = nodeSummaries.length
+    ? nodeSummaries
+    : deriveNodeSummaries(trace.events, trace.tool_calls, promptExecutions)
+  const eventRows = trace.events.slice(0, 8)
+  const toolRows = trace.tool_calls.slice(0, 6)
+  const maxLatency = Math.max(1, ...toolRows.map((tool) => tool.latency_ms ?? 0))
+  const verificationStats = getVerificationStats(verification)
+
+  return (
+    <section className="grid gap-4 xl:grid-cols-[minmax(0,1.25fr)_minmax(320px,0.75fr)]">
+      <SurfaceCard>
+        <SectionTitle icon={<GitBranch className="size-4" />} title="Graph Run Overview" />
+        <div className="mt-4 grid gap-3 md:grid-cols-3">
+          <TraceMetric label="事件" value={trace.events.length} />
+          <TraceMetric label="工具调用" value={trace.tool_calls.length} />
+          <TraceMetric label="Prompt" value={promptExecutions.length} />
+        </div>
+
+        <div className="mt-5">
+          <p className="text-xs font-black uppercase tracking-wide text-slate-500">Node Waterfall</p>
+          {nodeRows.length ? (
+            <div className="mt-3 grid gap-3 lg:grid-cols-3">
+              {nodeRows.slice(0, 9).map((node, index) => {
+                const total = node.event_count + node.tool_call_count + node.prompt_execution_count
+                return (
+                  <div key={`${node.node}:${index}`} className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                    <div className="flex items-center gap-2">
+                      <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-black text-primary-foreground">
+                        {index + 1}
+                      </span>
+                      <p className="min-w-0 truncate font-mono text-xs font-bold text-slate-900">{node.node}</p>
+                    </div>
+                    <div className="mt-3 flex h-2 overflow-hidden rounded-full bg-white" aria-label={`${node.node} node activity`}>
+                      <div
+                        className="bg-indigo-500 transition-[width] duration-500"
+                        style={{ width: `${segmentPercent(node.event_count, total)}%` }}
+                      />
+                      <div
+                        className="bg-cyan-500 transition-[width] duration-500"
+                        style={{ width: `${segmentPercent(node.tool_call_count, total)}%` }}
+                      />
+                      <div
+                        className="bg-emerald-500 transition-[width] duration-500"
+                        style={{ width: `${segmentPercent(node.prompt_execution_count, total)}%` }}
+                      />
+                    </div>
+                    <p className="mt-2 text-xs font-semibold text-slate-500">
+                      events {node.event_count} · tools {node.tool_call_count} · prompts {node.prompt_execution_count}
+                    </p>
+                  </div>
+                )
+              })}
+            </div>
+          ) : (
+            <EmptyLine text="No node waterfall available." />
+          )}
+        </div>
+      </SurfaceCard>
+
+      <SurfaceCard>
+        <SectionTitle icon={<ListChecks className="size-4" />} title="Verification Map" />
+        <div className="mt-4 flex items-center gap-4">
+          <div
+            className="flex size-24 shrink-0 items-center justify-center rounded-full"
+            style={{ background: verificationConicGradient(verificationStats) }}
+            aria-label="Verification pass fail warning distribution"
+          >
+            <div className="flex size-16 items-center justify-center rounded-full bg-white text-sm font-black text-slate-900">
+              {verificationStats.total}
+            </div>
+          </div>
+          <div className="min-w-0 flex-1 space-y-2 text-sm">
+            <VerificationLegend label="passed" value={verificationStats.passed} className="bg-emerald-500" />
+            <VerificationLegend label="failed" value={verificationStats.failed} className="bg-rose-500" />
+            <VerificationLegend label="warnings" value={verificationStats.warning} className="bg-amber-400" />
+            <VerificationLegend label="evidence refs" value={evidenceRefs.length} className="bg-indigo-500" />
+          </div>
+        </div>
+        <p className="mt-4 rounded-lg bg-slate-50 px-3 py-2 text-xs font-semibold leading-5 text-slate-600">
+          {verification?.failed_reason ?? 'Verification checks are grouped by pass/fail/warning so failures surface before raw JSON inspection.'}
+        </p>
+      </SurfaceCard>
+
+      <SurfaceCard>
+        <SectionTitle icon={<Clock3 className="size-4" />} title="Event Rhythm" />
+        {eventRows.length ? (
+          <div className="mt-4 space-y-3">
+            {eventRows.map((event, index) => (
+              <div key={event.id} className="grid grid-cols-[2rem_minmax(0,1fr)] gap-3">
+                <div className="flex flex-col items-center">
+                  <span className="flex size-7 items-center justify-center rounded-full bg-slate-900 text-xs font-black text-white">
+                    {index + 1}
+                  </span>
+                  {index < eventRows.length - 1 ? <span className="h-full min-h-6 w-px bg-slate-200" /> : null}
+                </div>
+                <div className="min-w-0 rounded-xl border border-slate-200 bg-white px-3 py-2">
+                  <div className="flex items-start justify-between gap-3">
+                    <p className="min-w-0 truncate text-sm font-black text-slate-900">{event.event_type}</p>
+                    <span className="shrink-0 text-xs font-semibold text-slate-500">{formatTimeOnly(event.occurred_at)}</span>
+                  </div>
+                  <p className="mt-1 truncate text-xs font-semibold text-slate-500">
+                    {event.source_module} · evidence {evidenceCount(event.payload)}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <EmptyLine text="No events recorded." />
+        )}
+      </SurfaceCard>
+
+      <SurfaceCard>
+        <SectionTitle icon={<Gauge className="size-4" />} title="Tool Latency" />
+        {toolRows.length ? (
+          <div className="mt-4 space-y-3">
+            {toolRows.map((tool) => {
+              const latency = tool.latency_ms ?? 0
+              const percent = Math.max(6, Math.round((latency / maxLatency) * 100))
+              return (
+                <div key={tool.id}>
+                  <div className="flex items-center justify-between gap-3 text-xs font-bold text-slate-500">
+                    <span className="min-w-0 truncate">{tool.tool_name}</span>
+                    <span className="shrink-0 text-slate-700">{latency}ms</span>
+                  </div>
+                  <div className="mt-1 h-2 overflow-hidden rounded-full bg-slate-100">
+                    <div
+                      className={`h-full rounded-full transition-[width] duration-500 ${tool.status === 'success' ? 'bg-emerald-500' : 'bg-amber-500'}`}
+                      style={{ width: `${percent}%` }}
+                    />
+                  </div>
+                  {tool.error ? <p className="mt-1 text-xs font-semibold text-rose-600">{tool.error}</p> : null}
+                </div>
+              )
+            })}
+          </div>
+        ) : (
+          <EmptyLine text="No tool latency data." />
+        )}
+      </SurfaceCard>
+    </section>
+  )
+}
+
+function TraceMetric({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="rounded-xl border border-slate-200 bg-white px-3 py-2">
+      <p className="text-xs font-bold uppercase text-slate-500">{label}</p>
+      <p className="mt-1 text-2xl font-black text-slate-950 tabular-nums">{value}</p>
+    </div>
+  )
+}
+
+function VerificationLegend({
+  label,
+  value,
+  className,
+}: {
+  label: string
+  value: number
+  className: string
+}) {
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <span className="inline-flex min-w-0 items-center gap-2 text-xs font-bold text-slate-600">
+        <span className={`size-2 shrink-0 rounded-full ${className}`} />
+        <span className="truncate">{label}</span>
+      </span>
+      <span className="font-mono text-xs font-black text-slate-900">{value}</span>
+    </div>
+  )
+}
+
 function KeyValue({ label, value }: { label: string; value: string | number | null | undefined }) {
   return (
     <div className="min-w-0 rounded-lg bg-slate-50 px-3 py-2">
@@ -645,9 +842,73 @@ function payloadSummary(payload: Record<string, unknown>) {
     .join(' · ')
 }
 
+function deriveNodeSummaries(
+  events: LearningEvent[],
+  toolCalls: ToolCallRecord[],
+  promptExecutions: PromptExecutionRecord[],
+): NodeSummary[] {
+  const byNode = new Map<string, NodeSummary>()
+  const ensureNode = (node: string) => {
+    const existing = byNode.get(node)
+    if (existing) return existing
+    const next = {
+      node,
+      event_count: 0,
+      tool_call_count: 0,
+      prompt_execution_count: 0,
+    }
+    byNode.set(node, next)
+    return next
+  }
+
+  events.forEach((event) => {
+    ensureNode(event.source_module || 'event').event_count += 1
+  })
+  toolCalls.forEach((tool) => {
+    ensureNode(tool.tool_name || 'tool').tool_call_count += 1
+  })
+  promptExecutions.forEach((prompt) => {
+    ensureNode(prompt.source_module || prompt.prompt_id || 'prompt').prompt_execution_count += 1
+  })
+
+  return Array.from(byNode.values())
+}
+
+function segmentPercent(value: number, total: number) {
+  if (total <= 0) return 0
+  return Math.round((value / total) * 100)
+}
+
+function getVerificationStats(verification: VerificationReport | null) {
+  const checks = verification?.checks ?? []
+  const passed = verification?.passed_count ?? checks.filter((check) => check.passed).length
+  const warning = verification?.warning_count ?? checks.filter((check) => !check.passed && check.severity === 'warning').length
+  const failed = verification?.failed_count ?? checks.filter((check) => !check.passed && check.severity !== 'warning').length
+  const total = Math.max(0, passed + warning + failed)
+  return { passed, warning, failed, total }
+}
+
+function verificationConicGradient(stats: { passed: number; warning: number; failed: number; total: number }) {
+  if (stats.total <= 0) return 'conic-gradient(#e2e8f0 0deg 360deg)'
+  const passedDeg = (stats.passed / stats.total) * 360
+  const warningDeg = passedDeg + (stats.warning / stats.total) * 360
+  return `conic-gradient(#10b981 0deg ${passedDeg}deg, #f59e0b ${passedDeg}deg ${warningDeg}deg, #ef4444 ${warningDeg}deg 360deg)`
+}
+
+function formatTimeOnly(value?: string | null) {
+  if (!value) return 'none'
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return value
+  return new Intl.DateTimeFormat('zh-CN', {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  }).format(date)
+}
+
 function shortHash(value?: string | null) {
   if (!value) return 'none'
-  return value.length > 16 ? `${value.slice(0, 8)}...${value.slice(-6)}` : value
+  return value.length > 16 ? `${value.slice(0, 8)}…${value.slice(-6)}` : value
 }
 
 function isUuidLike(value: string) {

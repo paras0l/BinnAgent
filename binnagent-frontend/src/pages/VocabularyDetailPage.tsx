@@ -22,6 +22,7 @@ import { ExerciseLearningSignal } from '@/components/exercise/ExerciseLearningSi
 import { Button } from '@/components/ui/Button'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { FormField } from '@/components/ui/FormField'
+import { IconButton } from '@/components/ui/IconButton'
 import { SurfaceCard } from '@/components/ui/SurfaceCard'
 import {
   CORE_VOCABULARY_EXERCISE_TARGET,
@@ -344,6 +345,13 @@ export function VocabularyDetailPage({
         />
 
         <WorkspaceTabs tabs={WORKSPACE_TABS} activeTab={workspace} onChange={setWorkspace} />
+        <VocabularyDetailStepper
+          activeTerm={activeTerm}
+          cardDetail={cardDetail}
+          hasHtml={Boolean(html.trim())}
+          workspace={workspace}
+          onSelect={setWorkspace}
+        />
 
         {workspace === 'term' && (
           <section className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
@@ -360,7 +368,9 @@ export function VocabularyDetailPage({
                 onKeyDown={(event) => {
                   if (event.key === 'Enter') applyTermInput()
                 }}
-                placeholder="significant / look up / take off"
+                name="vocabulary_detail_term"
+                autoComplete="off"
+                placeholder="例如：significant / look up / take off…"
               />
               <div className="mt-4 flex flex-col gap-2 sm:flex-row">
                 <Button onClick={applyTermInput}>应用 / 生成指令</Button>
@@ -404,8 +414,10 @@ export function VocabularyDetailPage({
               <h2 className="text-lg font-black text-slate-950">生成指令预览</h2>
               <textarea
                 readOnly
+                name="vocabulary_detail_prompt"
+                aria-label="生成指令预览"
                 value={prompt}
-                className="mt-3 h-64 w-full resize-none rounded-xl border bg-slate-50 p-3 text-xs leading-relaxed outline-none"
+                className="mt-3 h-64 w-full resize-none rounded-xl border bg-slate-50 p-3 text-xs leading-relaxed outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
               />
             </SurfaceCard>
           </section>
@@ -419,20 +431,21 @@ export function VocabularyDetailPage({
                   <h2 className="text-lg font-black text-slate-950">HTML 输入</h2>
                   <p className="mt-1 text-sm text-slate-500">扩展回传或手动粘贴 AI 输出的 HTML。</p>
                 </div>
-                <button
-                  type="button"
+                <IconButton
+                  label="清空 HTML 内容"
                   onClick={() => updateHtml('')}
-                  className="rounded-lg border p-2 text-slate-500 hover:bg-slate-50"
-                  title="清空内容"
                 >
                   <RefreshCw className="size-4" />
-                </button>
+                </IconButton>
               </div>
               <textarea
+                name="vocabulary_detail_html"
+                autoComplete="off"
+                aria-label="AI 返回的 HTML 片段"
                 value={html}
                 onChange={(event) => updateHtml(event.target.value)}
-                placeholder="粘贴 AI 返回的 HTML 片段..."
-                className="mt-4 h-[calc(100vh-330px)] min-h-[420px] w-full resize-none rounded-xl border p-3 font-mono text-xs leading-relaxed outline-none focus:border-indigo-500"
+                placeholder="粘贴 AI 返回的 HTML 片段…"
+                className="mt-4 h-[calc(100vh-330px)] min-h-[420px] w-full resize-none rounded-xl border p-3 font-mono text-xs leading-relaxed outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
               />
             </SurfaceCard>
 
@@ -520,10 +533,16 @@ export function VocabularyDetailPage({
                   <h2 className="text-lg font-black text-slate-950">个人词卡编辑</h2>
                   <p className="mt-1 text-sm text-slate-500">用户内容会影响后续复习和出题。</p>
                   <div className="mt-4 grid gap-4 lg:grid-cols-2">
-                    <Field label="展示名" value={cardForm.display_form_override} onChange={(value) => setCardForm((prev) => ({ ...prev, display_form_override: value }))} placeholder={cardDetail.word} />
+                    <Field label="展示名" name="vocabulary_display_form" value={cardForm.display_form_override} onChange={(value) => setCardForm((prev) => ({ ...prev, display_form_override: value }))} placeholder={`例如：${cardDetail.word}…`} />
                     <label className="block text-sm font-bold text-slate-700">
                       掌握状态 / 复习偏好
-                      <select value={cardForm.review_preference} onChange={(event) => setCardForm((prev) => ({ ...prev, review_preference: event.target.value }))} className="mt-1.5 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500">
+                      <select
+                        name="vocabulary_review_preference"
+                        autoComplete="off"
+                        value={cardForm.review_preference}
+                        onChange={(event) => setCardForm((prev) => ({ ...prev, review_preference: event.target.value }))}
+                        className="mt-1.5 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
+                      >
                         <option value="normal">正常复习</option>
                         <option value="mastered">已掌握</option>
                         <option value="too_easy">太简单</option>
@@ -531,20 +550,22 @@ export function VocabularyDetailPage({
                         <option value="relearn">重新学习</option>
                       </select>
                     </label>
-                    <Field label="我的理解" value={cardForm.user_understanding} onChange={(value) => setCardForm((prev) => ({ ...prev, user_understanding: value }))} textarea />
-                    <Field label="我的例句" value={cardForm.user_examples_text} onChange={(value) => setCardForm((prev) => ({ ...prev, user_examples_text: value }))} textarea placeholder="每行一个例句" />
-                    <Field label="个人笔记" value={cardForm.user_notes} onChange={(value) => setCardForm((prev) => ({ ...prev, user_notes: value }))} textarea />
+                    <Field label="我的理解" name="vocabulary_user_understanding" value={cardForm.user_understanding} onChange={(value) => setCardForm((prev) => ({ ...prev, user_understanding: value }))} textarea />
+                    <Field label="我的例句" name="vocabulary_user_examples" value={cardForm.user_examples_text} onChange={(value) => setCardForm((prev) => ({ ...prev, user_examples_text: value }))} textarea placeholder="每行一个例句…" />
+                    <Field label="个人笔记" name="vocabulary_user_notes" value={cardForm.user_notes} onChange={(value) => setCardForm((prev) => ({ ...prev, user_notes: value }))} textarea />
                     <div className="lg:col-span-2">
                       <label className="block text-sm font-bold text-slate-700">
                         构词分析 / 词根词缀
                         <textarea
+                          name="vocabulary_morphology_note"
+                          autoComplete="off"
                           value={morphologyDraft}
                           onChange={(event) => setMorphologyDraftState({
                             source: inferredMorphologyText,
                             value: event.target.value,
                           })}
-                          className="mt-1.5 min-h-36 w-full resize-y rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm leading-6 outline-none focus:border-indigo-500"
-                          placeholder="pre- = before / 预先&#10;view = 看&#10;preview = 预先看 -> 预览"
+                          className="mt-1.5 min-h-36 w-full resize-y rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm leading-6 outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
+                          placeholder="pre- = before / 预先&#10;view = 看&#10;preview = 预先看 -> 预览…"
                         />
                       </label>
                       <div className="mt-2 flex flex-wrap gap-2">
@@ -628,6 +649,108 @@ export function VocabularyDetailPage({
   )
 }
 
+function VocabularyDetailStepper({
+  activeTerm,
+  cardDetail,
+  hasHtml,
+  onSelect,
+  workspace,
+}: {
+  activeTerm: string
+  cardDetail: PersonalCardDetail | null
+  hasHtml: boolean
+  onSelect: (workspace: VocabularyDetailWorkspace) => void
+  workspace: VocabularyDetailWorkspace
+}) {
+  const steps: Array<{
+    id: VocabularyDetailWorkspace
+    label: string
+    description: string
+    isComplete: boolean
+  }> = [
+    {
+      id: 'term',
+      label: '选择词条',
+      description: activeTerm ? activeTerm : '先输入目标词',
+      isComplete: Boolean(activeTerm.trim()),
+    },
+    {
+      id: 'generate',
+      label: '复制指令',
+      description: activeTerm ? '可生成结构化详解' : '等待词条',
+      isComplete: hasHtml || Boolean(cardDetail),
+    },
+    {
+      id: 'return',
+      label: '回填预览',
+      description: hasHtml ? 'HTML 已回填' : '等待 AI 输出',
+      isComplete: hasHtml,
+    },
+    {
+      id: 'card',
+      label: '保存词卡',
+      description: cardDetail ? '个人词卡已存在' : '保存前可编辑',
+      isComplete: Boolean(cardDetail),
+    },
+  ]
+  const currentIndex = Math.max(steps.findIndex((step) => step.id === workspace), 0)
+  const completedCount = steps.filter((step) => step.isComplete).length
+
+  return (
+    <SurfaceCard className="p-0">
+      <div className="grid gap-0 md:grid-cols-4" aria-label="词汇详解流程">
+        {steps.map((step, index) => {
+          const isActive = step.id === workspace
+          const isPast = index < currentIndex
+          return (
+            <button
+              key={step.id}
+              type="button"
+              onClick={() => onSelect(step.id)}
+              aria-current={isActive ? 'step' : undefined}
+              className={`min-w-0 border-b border-slate-100 px-4 py-4 text-left transition-[background-color,border-color] hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary md:border-b-0 md:border-r last:md:border-r-0 ${
+                isActive ? 'bg-primary/5' : ''
+              }`}
+            >
+              <span className="flex min-w-0 items-center gap-3">
+                <span
+                  className={`flex size-8 shrink-0 items-center justify-center rounded-lg text-xs font-black ${
+                    step.isComplete
+                      ? 'bg-success/15 text-success'
+                      : isActive
+                        ? 'bg-primary text-white'
+                        : isPast
+                          ? 'bg-slate-200 text-slate-600'
+                          : 'bg-slate-100 text-slate-500'
+                  }`}
+                >
+                  {step.isComplete ? <Check className="size-4" /> : index + 1}
+                </span>
+                <span className="min-w-0">
+                  <span className="block truncate text-sm font-black text-slate-950">{step.label}</span>
+                  <span className="mt-0.5 block truncate text-xs font-semibold text-slate-500">{step.description}</span>
+                </span>
+              </span>
+            </button>
+          )
+        })}
+      </div>
+      <div className="border-t border-slate-100 px-4 py-3">
+        <div className="flex items-center justify-between gap-3 text-xs font-bold text-slate-500">
+          <span>已完成 {completedCount}/4 步</span>
+          <span>{steps[currentIndex]?.label ?? '选择词条'}</span>
+        </div>
+        <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100">
+          <div
+            className="h-full rounded-full bg-primary transition-[width] duration-500"
+            style={{ width: `${Math.max(8, (completedCount / steps.length) * 100)}%` }}
+          />
+        </div>
+      </div>
+    </SurfaceCard>
+  )
+}
+
 function MorphologySummaryCard({
   morphology,
   compact = false,
@@ -667,12 +790,14 @@ function MorphologySummaryCard({
 
 function Field({
   label,
+  name,
   value,
   onChange,
   placeholder,
   textarea,
 }: {
   label: string
+  name: string
   value: string
   onChange: (value: string) => void
   placeholder?: string
@@ -680,8 +805,27 @@ function Field({
 }) {
   return (
     textarea
-      ? <FormField as="textarea" label={label} value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} />
-      : <FormField label={label} value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} />
+      ? (
+          <FormField
+            as="textarea"
+            label={label}
+            name={name}
+            autoComplete="off"
+            value={value}
+            onChange={(event) => onChange(event.target.value)}
+            placeholder={placeholder}
+          />
+        )
+      : (
+          <FormField
+            label={label}
+            name={name}
+            autoComplete="off"
+            value={value}
+            onChange={(event) => onChange(event.target.value)}
+            placeholder={placeholder}
+          />
+        )
   )
 }
 

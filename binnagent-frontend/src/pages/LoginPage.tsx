@@ -70,7 +70,10 @@ export function LoginPage({ onLogin }: LoginPageProps) {
           </p>
           <div className="mt-6 grid gap-3 sm:grid-cols-2">
             {['今日学习路径', '词汇复习计划', '写作表达资产', '学习状态跟踪'].map((item) => (
-              <div key={item} className="rounded-[13px] border border-slate-200 bg-white p-4 text-sm font-bold text-slate-700 shadow-[0_4px_14px_rgba(15,23,42,0.05)]">
+              <div
+                key={item}
+                className="rounded-[13px] border border-slate-200 bg-white p-4 text-sm font-bold text-slate-700 shadow-[0_4px_14px_rgba(15,23,42,0.05)] transition-[border-color,box-shadow,transform] duration-150 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-[0_10px_24px_rgba(15,23,42,0.08)]"
+              >
                 {item}
               </div>
             ))}
@@ -83,7 +86,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
             <Bot className="h-5 w-5" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-foreground">BinnAgent</h1>
+            <h2 className="text-xl font-bold text-foreground">BinnAgent</h2>
             <p className="text-sm text-muted-foreground">进入你的英语学习空间</p>
           </div>
         </div>
@@ -91,19 +94,24 @@ export function LoginPage({ onLogin }: LoginPageProps) {
         <form className="space-y-4" onSubmit={handleSubmit}>
           <FormField
             label="昵称"
+            name="learner_nickname"
+            autoComplete="name"
             value={nickname}
             onChange={(event) => setNickname(event.target.value)}
-            placeholder="例如：Alex"
+            placeholder="例如：Alex…"
             maxLength={100}
           />
 
           <FormField
             label="邮箱（可选）"
             description="用于在下次打开时恢复学习记录。"
+            name="learner_email"
+            autoComplete="email"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
-            placeholder="alex@example.com"
+            placeholder="alex@example.com…"
             type="email"
+            spellCheck={false}
             maxLength={255}
           />
 
