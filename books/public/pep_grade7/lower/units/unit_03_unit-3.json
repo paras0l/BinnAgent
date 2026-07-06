@@ -1,0 +1,1760 @@
+{
+  "curriculum_node_key": "pep-grade7-lower-2024:unit:03",
+  "exercise_questions": [
+    {
+      "answer": "火车",
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:03",
+      "difficulty": 0.28,
+      "explanation": "train 的本单元义项是：火车。",
+      "knowledge_point_key": "pep-grade7-lower-2024:unit:03:vocabulary:train",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:03",
+          "knowledge_point_key": "pep-grade7-lower-2024:unit:03:vocabulary:train",
+          "source_stable_id": "pep-grade7-lower-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "requires_review": true,
+        "source": "curated_public_textbook_seed",
+        "warnings": [
+          "generated_from_lower_draft_content"
+        ]
+      },
+      "options": [
+        "火车",
+        "公共汽车",
+        "地铁",
+        "骑"
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-lower-2024:unit:03:ex:01-train",
+      "status": "draft",
+      "stem": "“train”在本单元词表中的意思最接近哪一项？"
+    },
+    {
+      "answer": "How do you get to school?",
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:03",
+      "difficulty": 0.28,
+      "explanation": "本单元核心句式包括“How do you get to school?”。",
+      "knowledge_point_key": "pep-grade7-lower-2024:unit:03:sentence_pattern:how-do-you-get-to-school",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:03",
+          "knowledge_point_key": "pep-grade7-lower-2024:unit:03:sentence_pattern:how-do-you-get-to-school",
+          "source_stable_id": "pep-grade7-lower-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "requires_review": true,
+        "source": "curated_public_textbook_seed",
+        "warnings": [
+          "generated_from_lower_draft_content"
+        ]
+      },
+      "options": [
+        "How do you get to school?",
+        "every day",
+        "think of",
+        "train"
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-lower-2024:unit:03:ex:02-how-do-you-get-to-school",
+      "status": "draft",
+      "stem": "围绕“交通方式与通勤距离”，下列哪一句最贴近本单元核心句式？"
+    },
+    {
+      "answer": "how/how far/how long 问句",
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:03",
+      "difficulty": 0.28,
+      "explanation": "本单元语法重点是：how/how far/how long 问句。",
+      "knowledge_point_key": "pep-grade7-lower-2024:unit:03:grammar:how-how-far-how-long",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:03",
+          "knowledge_point_key": "pep-grade7-lower-2024:unit:03:grammar:how-how-far-how-long",
+          "source_stable_id": "pep-grade7-lower-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "requires_review": true,
+        "source": "curated_public_textbook_seed",
+        "warnings": [
+          "generated_from_lower_draft_content"
+        ]
+      },
+      "options": [
+        "how/how far/how long 问句",
+        "过去完成时",
+        "定语从句",
+        "虚拟语气"
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-lower-2024:unit:03:ex:03-how-how-far-how-long",
+      "status": "draft",
+      "stem": "本单元语法重点最接近哪一项？"
+    },
+    {
+      "answer": "every day",
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:03",
+      "difficulty": 0.28,
+      "explanation": "“every day”属于本单元短语或功能表达。",
+      "knowledge_point_key": "pep-grade7-lower-2024:unit:03:phrase:every-day",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:03",
+          "knowledge_point_key": "pep-grade7-lower-2024:unit:03:phrase:every-day",
+          "source_stable_id": "pep-grade7-lower-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "requires_review": true,
+        "source": "curated_public_textbook_seed",
+        "warnings": [
+          "generated_from_lower_draft_content"
+        ]
+      },
+      "options": [
+        "every day",
+        "in conclusion",
+        "as soon as possible",
+        "by mistake"
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-lower-2024:unit:03:ex:04-every-day",
+      "status": "draft",
+      "stem": "下列哪一项是本单元可迁移短语/功能表达？"
+    },
+    {
+      "answer": "自行车",
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:03",
+      "difficulty": 0.28,
+      "explanation": "该题检查本单元词汇义项。",
+      "knowledge_point_key": "pep-grade7-lower-2024:unit:03:vocabulary:bike",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:03",
+          "knowledge_point_key": "pep-grade7-lower-2024:unit:03:vocabulary:bike",
+          "source_stable_id": "pep-grade7-lower-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "requires_review": true,
+        "source": "curated_public_textbook_seed",
+        "warnings": [
+          "generated_from_lower_draft_content"
+        ]
+      },
+      "options": [
+        "自行车",
+        "机场",
+        "科学家",
+        "电影院"
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-lower-2024:unit:03:ex:05-bike",
+      "status": "draft",
+      "stem": "选择与“bike”对应的本单元中文义项。"
+    },
+    {
+      "answer": "How far is it?",
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:03",
+      "difficulty": 0.28,
+      "explanation": "该句来自本单元目标语言框架的整理。",
+      "knowledge_point_key": "pep-grade7-lower-2024:unit:03:sentence_pattern:how-far-is-it",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:03",
+          "knowledge_point_key": "pep-grade7-lower-2024:unit:03:sentence_pattern:how-far-is-it",
+          "source_stable_id": "pep-grade7-lower-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "requires_review": true,
+        "source": "curated_public_textbook_seed",
+        "warnings": [
+          "generated_from_lower_draft_content"
+        ]
+      },
+      "options": [
+        "How far is it?",
+        "I have finished the report.",
+        "Although it rained, we left.",
+        "The book was written in 1999."
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-lower-2024:unit:03:ex:06-how-far-is-it",
+      "status": "draft",
+      "stem": "下列哪一句也属于本单元目标语言？"
+    }
+  ],
+  "extraction_gaps": [
+    {
+      "description": "听力活动需要配套音频，暂不进入公共默认学习流。",
+      "gap_type": "audio_required",
+      "scope": "pep-grade7-lower-2024:unit:03",
+      "suggested_future_handling": "后续接入音频资源和听力题型后再结构化。"
+    },
+    {
+      "description": "结对/小组互动活动不适合直接作为稳定自动评分题。",
+      "gap_type": "pair_work",
+      "scope": "pep-grade7-lower-2024:unit:03",
+      "suggested_future_handling": "后续作为课堂互动或口语任务模板处理。"
+    },
+    {
+      "description": "长课文、整页练习或连续对话不写入 seed pack。",
+      "gap_type": "copyright_sensitive_long_text",
+      "scope": "pep-grade7-lower-2024:unit:03",
+      "suggested_future_handling": "仅保存短摘要和知识点，必要时通过受控证据摘录展示。"
+    },
+    {
+      "description": "该册 PDF 文本层为空，本单元短项来自人工整理，需后续 OCR/layout 校对。",
+      "gap_type": "low_confidence_layout",
+      "scope": "pep-grade7-lower-2024:unit:03",
+      "suggested_future_handling": "用 OCR/layout-aware pipeline 回填页内证据并复核词表。"
+    }
+  ],
+  "knowledge_points": [
+    {
+      "content": {
+        "confidence": 0.9,
+        "display_group": "unit_intro",
+        "evidence": {
+          "page_label": "P.13",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "requires_review": false,
+        "role": "unit_overview",
+        "source_unit_subtitle": "How do you get to school?",
+        "source_unit_title": "Unit 3",
+        "theme": "交通方式与通勤距离",
+        "unit_order": 3,
+        "warnings": [
+          "lower_pdf_text_layer_empty"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:03",
+      "difficulty": 0.18,
+      "source_page": "P.13",
+      "stable_key": "pep-grade7-lower-2024:unit:03:text_note:unit-3-overview",
+      "status": "published",
+      "summary": "本单元主题：交通方式与通勤距离；核心标题表达为“How do you get to school?”。",
+      "title": "Unit 3 overview",
+      "type": "text_note"
+    },
+    {
+      "content": {
+        "chinese_meaning": "火车",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "train ... 火车",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "train",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 3,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:03",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:03:vocabulary:train",
+      "status": "draft",
+      "summary": "火车",
+      "title": "train",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "公共汽车",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "bus ... 公共汽车",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "bus",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 3,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:03",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:03:vocabulary:bus",
+      "status": "draft",
+      "summary": "公共汽车",
+      "title": "bus",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "地铁",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "subway ... 地铁",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "subway",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 3,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:03",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:03:vocabulary:subway",
+      "status": "draft",
+      "summary": "地铁",
+      "title": "subway",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "骑",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "ride ... 骑",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "ride",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 3,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:03",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:03:vocabulary:ride",
+      "status": "draft",
+      "summary": "骑",
+      "title": "ride",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "自行车",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "bike ... 自行车",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "bike",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 3,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:03",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:03:vocabulary:bike",
+      "status": "draft",
+      "summary": "自行车",
+      "title": "bike",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "六十",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "sixty ... 六十",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "sixty",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 3,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:03",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:03:vocabulary:sixty",
+      "status": "draft",
+      "summary": "六十",
+      "title": "sixty",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "七十",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "seventy ... 七十",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "seventy",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 3,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:03",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:03:vocabulary:seventy",
+      "status": "draft",
+      "summary": "七十",
+      "title": "seventy",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "八十",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "eighty ... 八十",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "eighty",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 3,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:03",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:03:vocabulary:eighty",
+      "status": "draft",
+      "summary": "八十",
+      "title": "eighty",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "九十",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "ninety ... 九十",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "ninety",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 3,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:03",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:03:vocabulary:ninety",
+      "status": "draft",
+      "summary": "九十",
+      "title": "ninety",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "一百",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "hundred ... 一百",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "hundred",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 3,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:03",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:03:vocabulary:hundred",
+      "status": "draft",
+      "summary": "一百",
+      "title": "hundred",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "分钟",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "minute ... 分钟",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "minute",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 3,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:03",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:03:vocabulary:minute",
+      "status": "draft",
+      "summary": "分钟",
+      "title": "minute",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "远",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "far ... 远",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "far",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 3,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:03",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:03:vocabulary:far",
+      "status": "draft",
+      "summary": "远",
+      "title": "far",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "千米",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "kilometer ... 千米",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "kilometer",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 3,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:03",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:03:vocabulary:kilometer",
+      "status": "draft",
+      "summary": "千米",
+      "title": "kilometer",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "新的",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "new ... 新的",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "new",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 3,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:03",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:03:vocabulary:new",
+      "status": "draft",
+      "summary": "新的",
+      "title": "new",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "每一",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "every ... 每一",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "every",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 3,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:03",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:03:vocabulary:every",
+      "status": "draft",
+      "summary": "每一",
+      "title": "every",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "每天",
+        "confidence": 0.72,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "every day ... 每天",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "every day",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_phrase",
+        "unit_order": 3,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:03",
+      "difficulty": 0.28,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:03:phrase:every-day",
+      "status": "draft",
+      "summary": "每天",
+      "title": "every day",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "chinese_meaning": "乘",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "by ... 乘",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "by",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 3,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:03",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:03:vocabulary:by",
+      "status": "draft",
+      "summary": "乘",
+      "title": "by",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "开车",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "drive ... 开车",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "drive",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 3,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:03",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:03:vocabulary:drive",
+      "status": "draft",
+      "summary": "开车",
+      "title": "drive",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "小汽车",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "car ... 小汽车",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "car",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 3,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:03",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:03:vocabulary:car",
+      "status": "draft",
+      "summary": "小汽车",
+      "title": "car",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "居住",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "live ... 居住",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "live",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 3,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:03",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:03:vocabulary:live",
+      "status": "draft",
+      "summary": "居住",
+      "title": "live",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "车站；停止",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "stop ... 车站；停止",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "stop",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 3,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:03",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:03:vocabulary:stop",
+      "status": "draft",
+      "summary": "车站；停止",
+      "title": "stop",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "认为",
+        "confidence": 0.72,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "think of ... 认为",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "think of",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_phrase",
+        "unit_order": 3,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:03",
+      "difficulty": 0.28,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:03:phrase:think-of",
+      "status": "draft",
+      "summary": "认为",
+      "title": "think of",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "chinese_meaning": "横过",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "cross ... 横过",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "cross",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 3,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:03",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:03:vocabulary:cross",
+      "status": "draft",
+      "summary": "横过",
+      "title": "cross",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "河",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "river ... 河",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "river",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 3,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:03",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:03:vocabulary:river",
+      "status": "draft",
+      "summary": "河",
+      "title": "river",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "许多",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "many ... 许多",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "many",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 3,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:03",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:03:vocabulary:many",
+      "status": "draft",
+      "summary": "许多",
+      "title": "many",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "村庄",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "village ... 村庄",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "village",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 3,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:03",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:03:vocabulary:village",
+      "status": "draft",
+      "summary": "村庄",
+      "title": "village",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "介于",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "between ... 介于",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "between",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 3,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:03",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:03:vocabulary:between",
+      "status": "draft",
+      "summary": "介于",
+      "title": "between",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "桥",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "bridge ... 桥",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "bridge",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 3,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:03",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:03:vocabulary:bridge",
+      "status": "draft",
+      "summary": "桥",
+      "title": "bridge",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "小船",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "boat ... 小船",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "boat",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 3,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:03",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:03:vocabulary:boat",
+      "status": "draft",
+      "summary": "小船",
+      "title": "boat",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "索道",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "ropeway ... 索道",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "ropeway",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 3,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:03",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:03:vocabulary:ropeway",
+      "status": "draft",
+      "summary": "索道",
+      "title": "ropeway",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "年",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "year ... 年",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "year",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 3,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:03",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:03:vocabulary:year",
+      "status": "draft",
+      "summary": "年",
+      "title": "year",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "害怕的",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "afraid ... 害怕的",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "afraid",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 3,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:03",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:03:vocabulary:afraid",
+      "status": "draft",
+      "summary": "害怕的",
+      "title": "afraid",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "村民",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "villager ... 村民",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "villager",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 3,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:03",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:03:vocabulary:villager",
+      "status": "draft",
+      "summary": "村民",
+      "title": "villager",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "离开",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "leave ... 离开",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "leave",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 3,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:03",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:03:vocabulary:leave",
+      "status": "draft",
+      "summary": "离开",
+      "title": "leave",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "梦想",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "dream ... 梦想",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "dream",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 3,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:03",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:03:vocabulary:dream",
+      "status": "draft",
+      "summary": "梦想",
+      "title": "dream",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "真的",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "true ... 真的",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "true",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 3,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:03",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:03:vocabulary:true",
+      "status": "draft",
+      "summary": "真的",
+      "title": "true",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "实现",
+        "confidence": 0.72,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "come true ... 实现",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "come true",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_phrase",
+        "unit_order": 3,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:03",
+      "difficulty": 0.28,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:03:phrase:come-true",
+      "status": "draft",
+      "summary": "实现",
+      "title": "come true",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "Unit pages",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "phrase": "take the subway",
+        "requires_review": true,
+        "role": "unit_phrase",
+        "unit_order": 3,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:03",
+      "difficulty": 0.28,
+      "source_page": "Unit pages",
+      "stable_key": "pep-grade7-lower-2024:unit:03:phrase:take-the-subway",
+      "status": "draft",
+      "summary": "本单元可迁移短语或功能表达：take the subway。",
+      "title": "take the subway",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "Unit pages",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "phrase": "ride a bike",
+        "requires_review": true,
+        "role": "unit_phrase",
+        "unit_order": 3,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:03",
+      "difficulty": 0.28,
+      "source_page": "Unit pages",
+      "stable_key": "pep-grade7-lower-2024:unit:03:phrase:ride-a-bike",
+      "status": "draft",
+      "summary": "本单元可迁移短语或功能表达：ride a bike。",
+      "title": "ride a bike",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "Unit pages",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "phrase": "by bike",
+        "requires_review": true,
+        "role": "unit_phrase",
+        "unit_order": 3,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:03",
+      "difficulty": 0.28,
+      "source_page": "Unit pages",
+      "stable_key": "pep-grade7-lower-2024:unit:03:phrase:by-bike",
+      "status": "draft",
+      "summary": "本单元可迁移短语或功能表达：by bike。",
+      "title": "by bike",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "Unit pages",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "phrase": "between ... and ...",
+        "requires_review": true,
+        "role": "unit_phrase",
+        "unit_order": 3,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:03",
+      "difficulty": 0.28,
+      "source_page": "Unit pages",
+      "stable_key": "pep-grade7-lower-2024:unit:03:phrase:between-and",
+      "status": "draft",
+      "summary": "本单元可迁移短语或功能表达：between ... and ...。",
+      "title": "between ... and ...",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "sentence_patterns",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "pattern": "How do you get to school?",
+        "requires_review": true,
+        "role": "target_language",
+        "unit_order": 3,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:03",
+      "difficulty": 0.32,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-lower-2024:unit:03:sentence_pattern:how-do-you-get-to-school",
+      "status": "draft",
+      "summary": "核心句式：How do you get to school?",
+      "title": "How do you get to school?",
+      "type": "sentence_pattern"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "sentence_patterns",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "pattern": "How far is it?",
+        "requires_review": true,
+        "role": "target_language",
+        "unit_order": 3,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:03",
+      "difficulty": 0.32,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-lower-2024:unit:03:sentence_pattern:how-far-is-it",
+      "status": "draft",
+      "summary": "核心句式：How far is it?",
+      "title": "How far is it?",
+      "type": "sentence_pattern"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "sentence_patterns",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "pattern": "How long does it take?",
+        "requires_review": true,
+        "role": "target_language",
+        "unit_order": 3,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:03",
+      "difficulty": 0.32,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-lower-2024:unit:03:sentence_pattern:how-long-does-it-take",
+      "status": "draft",
+      "summary": "核心句式：How long does it take?",
+      "title": "How long does it take?",
+      "type": "sentence_pattern"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "sentence_patterns",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "pattern": "I ride my bike.",
+        "requires_review": true,
+        "role": "target_language",
+        "unit_order": 3,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:03",
+      "difficulty": 0.32,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-lower-2024:unit:03:sentence_pattern:i-ride-my-bike",
+      "status": "draft",
+      "summary": "核心句式：I ride my bike.",
+      "title": "I ride my bike.",
+      "type": "sentence_pattern"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "grammar",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "focus": "how/how far/how long 问句",
+        "related_units": [
+          "Unit 3"
+        ],
+        "requires_review": true,
+        "role": "grammar_focus",
+        "unit_order": 3,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:03",
+      "difficulty": 0.38,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-lower-2024:unit:03:grammar:how-how-far-how-long",
+      "status": "draft",
+      "summary": "how/how far/how long 问句",
+      "title": "how/how far/how long 问句",
+      "type": "grammar"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "grammar",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "focus": "交通方式 by + 交通工具",
+        "related_units": [
+          "Unit 3"
+        ],
+        "requires_review": true,
+        "role": "grammar_focus",
+        "unit_order": 3,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:03",
+      "difficulty": 0.38,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-lower-2024:unit:03:grammar:by",
+      "status": "draft",
+      "summary": "交通方式 by + 交通工具",
+      "title": "交通方式 by + 交通工具",
+      "type": "grammar"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "grammar",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "focus": "It takes ... to do ...",
+        "related_units": [
+          "Unit 3"
+        ],
+        "requires_review": true,
+        "role": "grammar_focus",
+        "unit_order": 3,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:03",
+      "difficulty": 0.38,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-lower-2024:unit:03:grammar:it-takes-to-do",
+      "status": "draft",
+      "summary": "It takes ... to do ...",
+      "title": "It takes ... to do ...",
+      "type": "grammar"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "pronunciation",
+        "evidence": {
+          "page_label": "Pronunciation",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "focus": "get to / go to 的连读",
+        "requires_review": true,
+        "role": "pronunciation_note",
+        "unit_order": 3,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:03",
+      "difficulty": 0.28,
+      "source_page": "Pronunciation",
+      "stable_key": "pep-grade7-lower-2024:unit:03:pronunciation:get-to-go-to",
+      "status": "draft",
+      "summary": "语音关注点：get to / go to 的连读。",
+      "title": "get to / go to 的连读",
+      "type": "pronunciation"
+    }
+  ],
+  "schema_version": "public_textbook_unit.v2",
+  "source_stable_id": "pep-grade7-lower-2024",
+  "unit": {
+    "end_page": "P.18",
+    "ordinal": 3,
+    "start_page": "P.13",
+    "subtitle": "How do you get to school?",
+    "title": "Unit 3"
+  }
+}

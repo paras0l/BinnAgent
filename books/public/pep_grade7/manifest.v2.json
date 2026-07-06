@@ -1,0 +1,53 @@
+{
+  "deprecated_artifacts": [
+    "books/public/pep_grade7_public_pack.v1.json"
+  ],
+  "extraction_gaps_path": "extraction_gaps.json",
+  "generated_from": {
+    "notes": "Split v2 public Grade 7 seed pack. Unit files contain short structured facts and generated checking exercises only.",
+    "source": "checked_in_pdf"
+  },
+  "schema_version": "public_textbook_pack_manifest.v2",
+  "sources": [
+    {
+      "curriculum_path": "upper/curriculum.json",
+      "source_path": "upper/source.json",
+      "stable_id": "pep-grade7-upper-2024",
+      "unit_paths": [
+        "upper/units/unit_01_starter-unit-1.json",
+        "upper/units/unit_02_starter-unit-2.json",
+        "upper/units/unit_03_starter-unit-3.json",
+        "upper/units/unit_04_unit-1.json",
+        "upper/units/unit_05_unit-2.json",
+        "upper/units/unit_06_unit-3.json",
+        "upper/units/unit_07_unit-4.json",
+        "upper/units/unit_08_unit-5.json",
+        "upper/units/unit_09_unit-6.json",
+        "upper/units/unit_10_unit-7.json",
+        "upper/units/unit_11_unit-8.json",
+        "upper/units/unit_12_unit-9.json"
+      ],
+      "volume": "upper"
+    },
+    {
+      "curriculum_path": "lower/curriculum.json",
+      "source_path": "lower/source.json",
+      "stable_id": "pep-grade7-lower-2024",
+      "unit_paths": [
+        "lower/units/unit_01_unit-1.json",
+        "lower/units/unit_02_unit-2.json",
+        "lower/units/unit_03_unit-3.json",
+        "lower/units/unit_04_unit-4.json",
+        "lower/units/unit_05_unit-5.json",
+        "lower/units/unit_06_unit-6.json",
+        "lower/units/unit_07_unit-7.json",
+        "lower/units/unit_08_unit-8.json",
+        "lower/units/unit_09_unit-9.json",
+        "lower/units/unit_10_unit-10.json",
+        "lower/units/unit_11_unit-11.json",
+        "lower/units/unit_12_unit-12.json"
+      ],
+      "volume": "lower"
+    }
+  ]
+}

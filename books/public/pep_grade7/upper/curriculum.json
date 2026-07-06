@@ -1,0 +1,402 @@
+{
+  "curriculum_nodes": [
+    {
+      "end_page": "P.4",
+      "estimated_minutes": 18,
+      "front_end_blocks": [
+        {
+          "block_type": "unit_hero",
+          "status": "ready"
+        },
+        {
+          "block_type": "core_vocabulary",
+          "status": "ready_or_pending_review"
+        },
+        {
+          "block_type": "sentence_patterns",
+          "status": "ready_or_pending_review"
+        },
+        {
+          "block_type": "practice",
+          "status": "ready_or_pending_review"
+        }
+      ],
+      "learning_objectives": [
+        "围绕“问候与简单寒暄”理解并使用本单元核心表达。",
+        "掌握可迁移到日常交流的词汇、短语、句式和语法点。"
+      ],
+      "node_type": "unit",
+      "ordinal": 1,
+      "parent_key": null,
+      "stable_key": "pep-grade7-upper-2024:unit:01",
+      "start_page": "P.1",
+      "subtitle": "Good morning!",
+      "title": "Starter Unit 1"
+    },
+    {
+      "end_page": "P.8",
+      "estimated_minutes": 18,
+      "front_end_blocks": [
+        {
+          "block_type": "unit_hero",
+          "status": "ready"
+        },
+        {
+          "block_type": "core_vocabulary",
+          "status": "ready_or_pending_review"
+        },
+        {
+          "block_type": "sentence_patterns",
+          "status": "ready_or_pending_review"
+        },
+        {
+          "block_type": "practice",
+          "status": "ready_or_pending_review"
+        }
+      ],
+      "learning_objectives": [
+        "围绕“用英语询问物品名称”理解并使用本单元核心表达。",
+        "掌握可迁移到日常交流的词汇、短语、句式和语法点。"
+      ],
+      "node_type": "unit",
+      "ordinal": 2,
+      "parent_key": null,
+      "stable_key": "pep-grade7-upper-2024:unit:02",
+      "start_page": "P.5",
+      "subtitle": "What's this in English?",
+      "title": "Starter Unit 2"
+    },
+    {
+      "end_page": "P.12",
+      "estimated_minutes": 18,
+      "front_end_blocks": [
+        {
+          "block_type": "unit_hero",
+          "status": "ready"
+        },
+        {
+          "block_type": "core_vocabulary",
+          "status": "ready_or_pending_review"
+        },
+        {
+          "block_type": "sentence_patterns",
+          "status": "ready_or_pending_review"
+        },
+        {
+          "block_type": "practice",
+          "status": "ready_or_pending_review"
+        }
+      ],
+      "learning_objectives": [
+        "围绕“颜色与字母复习”理解并使用本单元核心表达。",
+        "掌握可迁移到日常交流的词汇、短语、句式和语法点。"
+      ],
+      "node_type": "unit",
+      "ordinal": 3,
+      "parent_key": null,
+      "stable_key": "pep-grade7-upper-2024:unit:03",
+      "start_page": "P.9",
+      "subtitle": "What color is it?",
+      "title": "Starter Unit 3"
+    },
+    {
+      "end_page": "P.18",
+      "estimated_minutes": 28,
+      "front_end_blocks": [
+        {
+          "block_type": "unit_hero",
+          "status": "ready"
+        },
+        {
+          "block_type": "core_vocabulary",
+          "status": "ready_or_pending_review"
+        },
+        {
+          "block_type": "sentence_patterns",
+          "status": "ready_or_pending_review"
+        },
+        {
+          "block_type": "practice",
+          "status": "ready_or_pending_review"
+        }
+      ],
+      "learning_objectives": [
+        "围绕“自我介绍、问候与电话号码”理解并使用本单元核心表达。",
+        "掌握可迁移到日常交流的词汇、短语、句式和语法点。"
+      ],
+      "node_type": "unit",
+      "ordinal": 4,
+      "parent_key": null,
+      "stable_key": "pep-grade7-upper-2024:unit:04",
+      "start_page": "P.13",
+      "subtitle": "My name's Gina.",
+      "title": "Unit 1"
+    },
+    {
+      "end_page": "P.24",
+      "estimated_minutes": 28,
+      "front_end_blocks": [
+        {
+          "block_type": "unit_hero",
+          "status": "ready"
+        },
+        {
+          "block_type": "core_vocabulary",
+          "status": "ready_or_pending_review"
+        },
+        {
+          "block_type": "sentence_patterns",
+          "status": "ready_or_pending_review"
+        },
+        {
+          "block_type": "practice",
+          "status": "ready_or_pending_review"
+        }
+      ],
+      "learning_objectives": [
+        "围绕“家庭成员介绍”理解并使用本单元核心表达。",
+        "掌握可迁移到日常交流的词汇、短语、句式和语法点。"
+      ],
+      "node_type": "unit",
+      "ordinal": 5,
+      "parent_key": null,
+      "stable_key": "pep-grade7-upper-2024:unit:05",
+      "start_page": "P.19",
+      "subtitle": "This is my sister.",
+      "title": "Unit 2"
+    },
+    {
+      "end_page": "P.30",
+      "estimated_minutes": 28,
+      "front_end_blocks": [
+        {
+          "block_type": "unit_hero",
+          "status": "ready"
+        },
+        {
+          "block_type": "core_vocabulary",
+          "status": "ready_or_pending_review"
+        },
+        {
+          "block_type": "sentence_patterns",
+          "status": "ready_or_pending_review"
+        },
+        {
+          "block_type": "practice",
+          "status": "ready_or_pending_review"
+        }
+      ],
+      "learning_objectives": [
+        "围绕“学习用品与失物招领”理解并使用本单元核心表达。",
+        "掌握可迁移到日常交流的词汇、短语、句式和语法点。"
+      ],
+      "node_type": "unit",
+      "ordinal": 6,
+      "parent_key": null,
+      "stable_key": "pep-grade7-upper-2024:unit:06",
+      "start_page": "P.25",
+      "subtitle": "Is this your pencil?",
+      "title": "Unit 3"
+    },
+    {
+      "end_page": "P.36",
+      "estimated_minutes": 28,
+      "front_end_blocks": [
+        {
+          "block_type": "unit_hero",
+          "status": "ready"
+        },
+        {
+          "block_type": "core_vocabulary",
+          "status": "ready_or_pending_review"
+        },
+        {
+          "block_type": "sentence_patterns",
+          "status": "ready_or_pending_review"
+        },
+        {
+          "block_type": "practice",
+          "status": "ready_or_pending_review"
+        }
+      ],
+      "learning_objectives": [
+        "围绕“房间物品与位置”理解并使用本单元核心表达。",
+        "掌握可迁移到日常交流的词汇、短语、句式和语法点。"
+      ],
+      "node_type": "unit",
+      "ordinal": 7,
+      "parent_key": null,
+      "stable_key": "pep-grade7-upper-2024:unit:07",
+      "start_page": "P.31",
+      "subtitle": "Where's my schoolbag?",
+      "title": "Unit 4"
+    },
+    {
+      "end_page": "P.42",
+      "estimated_minutes": 28,
+      "front_end_blocks": [
+        {
+          "block_type": "unit_hero",
+          "status": "ready"
+        },
+        {
+          "block_type": "core_vocabulary",
+          "status": "ready_or_pending_review"
+        },
+        {
+          "block_type": "sentence_patterns",
+          "status": "ready_or_pending_review"
+        },
+        {
+          "block_type": "practice",
+          "status": "ready_or_pending_review"
+        }
+      ],
+      "learning_objectives": [
+        "围绕“运动物品与喜好”理解并使用本单元核心表达。",
+        "掌握可迁移到日常交流的词汇、短语、句式和语法点。"
+      ],
+      "node_type": "unit",
+      "ordinal": 8,
+      "parent_key": null,
+      "stable_key": "pep-grade7-upper-2024:unit:08",
+      "start_page": "P.37",
+      "subtitle": "Do you have a soccer ball?",
+      "title": "Unit 5"
+    },
+    {
+      "end_page": "P.48",
+      "estimated_minutes": 28,
+      "front_end_blocks": [
+        {
+          "block_type": "unit_hero",
+          "status": "ready"
+        },
+        {
+          "block_type": "core_vocabulary",
+          "status": "ready_or_pending_review"
+        },
+        {
+          "block_type": "sentence_patterns",
+          "status": "ready_or_pending_review"
+        },
+        {
+          "block_type": "practice",
+          "status": "ready_or_pending_review"
+        }
+      ],
+      "learning_objectives": [
+        "围绕“食物与饮食习惯”理解并使用本单元核心表达。",
+        "掌握可迁移到日常交流的词汇、短语、句式和语法点。"
+      ],
+      "node_type": "unit",
+      "ordinal": 9,
+      "parent_key": null,
+      "stable_key": "pep-grade7-upper-2024:unit:09",
+      "start_page": "P.43",
+      "subtitle": "Do you like bananas?",
+      "title": "Unit 6"
+    },
+    {
+      "end_page": "P.54",
+      "estimated_minutes": 28,
+      "front_end_blocks": [
+        {
+          "block_type": "unit_hero",
+          "status": "ready"
+        },
+        {
+          "block_type": "core_vocabulary",
+          "status": "ready_or_pending_review"
+        },
+        {
+          "block_type": "sentence_patterns",
+          "status": "ready_or_pending_review"
+        },
+        {
+          "block_type": "practice",
+          "status": "ready_or_pending_review"
+        }
+      ],
+      "learning_objectives": [
+        "围绕“购物与价格”理解并使用本单元核心表达。",
+        "掌握可迁移到日常交流的词汇、短语、句式和语法点。"
+      ],
+      "node_type": "unit",
+      "ordinal": 10,
+      "parent_key": null,
+      "stable_key": "pep-grade7-upper-2024:unit:10",
+      "start_page": "P.49",
+      "subtitle": "How much are these socks?",
+      "title": "Unit 7"
+    },
+    {
+      "end_page": "P.60",
+      "estimated_minutes": 28,
+      "front_end_blocks": [
+        {
+          "block_type": "unit_hero",
+          "status": "ready"
+        },
+        {
+          "block_type": "core_vocabulary",
+          "status": "ready_or_pending_review"
+        },
+        {
+          "block_type": "sentence_patterns",
+          "status": "ready_or_pending_review"
+        },
+        {
+          "block_type": "practice",
+          "status": "ready_or_pending_review"
+        }
+      ],
+      "learning_objectives": [
+        "围绕“生日、月份与日期”理解并使用本单元核心表达。",
+        "掌握可迁移到日常交流的词汇、短语、句式和语法点。"
+      ],
+      "node_type": "unit",
+      "ordinal": 11,
+      "parent_key": null,
+      "stable_key": "pep-grade7-upper-2024:unit:11",
+      "start_page": "P.55",
+      "subtitle": "When is your birthday?",
+      "title": "Unit 8"
+    },
+    {
+      "end_page": "P.66",
+      "estimated_minutes": 28,
+      "front_end_blocks": [
+        {
+          "block_type": "unit_hero",
+          "status": "ready"
+        },
+        {
+          "block_type": "core_vocabulary",
+          "status": "ready_or_pending_review"
+        },
+        {
+          "block_type": "sentence_patterns",
+          "status": "ready_or_pending_review"
+        },
+        {
+          "block_type": "practice",
+          "status": "ready_or_pending_review"
+        }
+      ],
+      "learning_objectives": [
+        "围绕“学校科目与偏好理由”理解并使用本单元核心表达。",
+        "掌握可迁移到日常交流的词汇、短语、句式和语法点。"
+      ],
+      "node_type": "unit",
+      "ordinal": 12,
+      "parent_key": null,
+      "stable_key": "pep-grade7-upper-2024:unit:12",
+      "start_page": "P.61",
+      "subtitle": "My favorite subject is science.",
+      "title": "Unit 9"
+    }
+  ],
+  "schema_version": "public_textbook_curriculum.v2",
+  "source_stable_id": "pep-grade7-upper-2024"
+}

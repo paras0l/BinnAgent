@@ -1,0 +1,1696 @@
+{
+  "curriculum_node_key": "pep-grade7-lower-2024:unit:11",
+  "exercise_questions": [
+    {
+      "answer": "奶牛",
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:11",
+      "difficulty": 0.28,
+      "explanation": "cow 的本单元义项是：奶牛。",
+      "knowledge_point_key": "pep-grade7-lower-2024:unit:11:vocabulary:cow",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:11",
+          "knowledge_point_key": "pep-grade7-lower-2024:unit:11:vocabulary:cow",
+          "source_stable_id": "pep-grade7-lower-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "requires_review": true,
+        "source": "curated_public_textbook_seed",
+        "warnings": [
+          "generated_from_lower_draft_content"
+        ]
+      },
+      "options": [
+        "奶牛",
+        "马",
+        "喂养",
+        "农民"
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-lower-2024:unit:11:ex:01-cow",
+      "status": "draft",
+      "stem": "“cow”在本单元词表中的意思最接近哪一项？"
+    },
+    {
+      "answer": "How was your school trip?",
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:11",
+      "difficulty": 0.28,
+      "explanation": "本单元核心句式包括“How was your school trip?”。",
+      "knowledge_point_key": "pep-grade7-lower-2024:unit:11:sentence_pattern:how-was-your-school-trip",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:11",
+          "knowledge_point_key": "pep-grade7-lower-2024:unit:11:sentence_pattern:how-was-your-school-trip",
+          "source_stable_id": "pep-grade7-lower-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "requires_review": true,
+        "source": "curated_public_textbook_seed",
+        "warnings": [
+          "generated_from_lower_draft_content"
+        ]
+      },
+      "options": [
+        "How was your school trip?",
+        "milk a cow",
+        "ride a horse",
+        "cow"
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-lower-2024:unit:11:ex:02-how-was-your-school-trip",
+      "status": "draft",
+      "stem": "围绕“过去的学校旅行”，下列哪一句最贴近本单元核心句式？"
+    },
+    {
+      "answer": "一般过去时 be 动词 was/were",
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:11",
+      "difficulty": 0.28,
+      "explanation": "本单元语法重点是：一般过去时 be 动词 was/were。",
+      "knowledge_point_key": "pep-grade7-lower-2024:unit:11:grammar:be-was-were",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:11",
+          "knowledge_point_key": "pep-grade7-lower-2024:unit:11:grammar:be-was-were",
+          "source_stable_id": "pep-grade7-lower-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "requires_review": true,
+        "source": "curated_public_textbook_seed",
+        "warnings": [
+          "generated_from_lower_draft_content"
+        ]
+      },
+      "options": [
+        "一般过去时 be 动词 was/were",
+        "过去完成时",
+        "定语从句",
+        "虚拟语气"
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-lower-2024:unit:11:ex:03-be-was-were",
+      "status": "draft",
+      "stem": "本单元语法重点最接近哪一项？"
+    },
+    {
+      "answer": "milk a cow",
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:11",
+      "difficulty": 0.28,
+      "explanation": "“milk a cow”属于本单元短语或功能表达。",
+      "knowledge_point_key": "pep-grade7-lower-2024:unit:11:phrase:milk-a-cow",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:11",
+          "knowledge_point_key": "pep-grade7-lower-2024:unit:11:phrase:milk-a-cow",
+          "source_stable_id": "pep-grade7-lower-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "requires_review": true,
+        "source": "curated_public_textbook_seed",
+        "warnings": [
+          "generated_from_lower_draft_content"
+        ]
+      },
+      "options": [
+        "milk a cow",
+        "in conclusion",
+        "as soon as possible",
+        "by mistake"
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-lower-2024:unit:11:ex:04-milk-a-cow",
+      "status": "draft",
+      "stem": "下列哪一项是本单元可迁移短语/功能表达？"
+    },
+    {
+      "answer": "相当",
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:11",
+      "difficulty": 0.28,
+      "explanation": "该题检查本单元词汇义项。",
+      "knowledge_point_key": "pep-grade7-lower-2024:unit:11:vocabulary:quite",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:11",
+          "knowledge_point_key": "pep-grade7-lower-2024:unit:11:vocabulary:quite",
+          "source_stable_id": "pep-grade7-lower-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "requires_review": true,
+        "source": "curated_public_textbook_seed",
+        "warnings": [
+          "generated_from_lower_draft_content"
+        ]
+      },
+      "options": [
+        "相当",
+        "机场",
+        "科学家",
+        "电影院"
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-lower-2024:unit:11:ex:05-quite",
+      "status": "draft",
+      "stem": "选择与“quite”对应的本单元中文义项。"
+    },
+    {
+      "answer": "It was great.",
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:11",
+      "difficulty": 0.28,
+      "explanation": "该句来自本单元目标语言框架的整理。",
+      "knowledge_point_key": "pep-grade7-lower-2024:unit:11:sentence_pattern:it-was-great",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:11",
+          "knowledge_point_key": "pep-grade7-lower-2024:unit:11:sentence_pattern:it-was-great",
+          "source_stable_id": "pep-grade7-lower-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "requires_review": true,
+        "source": "curated_public_textbook_seed",
+        "warnings": [
+          "generated_from_lower_draft_content"
+        ]
+      },
+      "options": [
+        "It was great.",
+        "I have finished the report.",
+        "Although it rained, we left.",
+        "The book was written in 1999."
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-lower-2024:unit:11:ex:06-it-was-great",
+      "status": "draft",
+      "stem": "下列哪一句也属于本单元目标语言？"
+    }
+  ],
+  "extraction_gaps": [
+    {
+      "description": "听力活动需要配套音频，暂不进入公共默认学习流。",
+      "gap_type": "audio_required",
+      "scope": "pep-grade7-lower-2024:unit:11",
+      "suggested_future_handling": "后续接入音频资源和听力题型后再结构化。"
+    },
+    {
+      "description": "结对/小组互动活动不适合直接作为稳定自动评分题。",
+      "gap_type": "pair_work",
+      "scope": "pep-grade7-lower-2024:unit:11",
+      "suggested_future_handling": "后续作为课堂互动或口语任务模板处理。"
+    },
+    {
+      "description": "该册 PDF 文本层为空，本单元短项来自人工整理，需后续 OCR/layout 校对。",
+      "gap_type": "low_confidence_layout",
+      "scope": "pep-grade7-lower-2024:unit:11",
+      "suggested_future_handling": "用 OCR/layout-aware pipeline 回填页内证据并复核词表。"
+    }
+  ],
+  "knowledge_points": [
+    {
+      "content": {
+        "confidence": 0.9,
+        "display_group": "unit_intro",
+        "evidence": {
+          "page_label": "P.61",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "requires_review": false,
+        "role": "unit_overview",
+        "source_unit_subtitle": "How was your school trip?",
+        "source_unit_title": "Unit 11",
+        "theme": "过去的学校旅行",
+        "unit_order": 11,
+        "warnings": [
+          "lower_pdf_text_layer_empty"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:11",
+      "difficulty": 0.18,
+      "source_page": "P.61",
+      "stable_key": "pep-grade7-lower-2024:unit:11:text_note:unit-11-overview",
+      "status": "published",
+      "summary": "本单元主题：过去的学校旅行；核心标题表达为“How was your school trip?”。",
+      "title": "Unit 11 overview",
+      "type": "text_note"
+    },
+    {
+      "content": {
+        "chinese_meaning": "给奶牛挤奶",
+        "confidence": 0.72,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "milk a cow ... 给奶牛挤奶",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "milk a cow",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_phrase",
+        "unit_order": 11,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:11",
+      "difficulty": 0.28,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:11:phrase:milk-a-cow",
+      "status": "draft",
+      "summary": "给奶牛挤奶",
+      "title": "milk a cow",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "chinese_meaning": "奶牛",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "cow ... 奶牛",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "cow",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 11,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:11",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:11:vocabulary:cow",
+      "status": "draft",
+      "summary": "奶牛",
+      "title": "cow",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "马",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "horse ... 马",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "horse",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 11,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:11",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:11:vocabulary:horse",
+      "status": "draft",
+      "summary": "马",
+      "title": "horse",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "骑马",
+        "confidence": 0.72,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "ride a horse ... 骑马",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "ride a horse",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_phrase",
+        "unit_order": 11,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:11",
+      "difficulty": 0.28,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:11:phrase:ride-a-horse",
+      "status": "draft",
+      "summary": "骑马",
+      "title": "ride a horse",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "chinese_meaning": "喂养",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "feed ... 喂养",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "feed",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 11,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:11",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:11:vocabulary:feed",
+      "status": "draft",
+      "summary": "喂养",
+      "title": "feed",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "喂鸡",
+        "confidence": 0.72,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "feed chickens ... 喂鸡",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "feed chickens",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_phrase",
+        "unit_order": 11,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:11",
+      "difficulty": 0.28,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:11:phrase:feed-chickens",
+      "status": "draft",
+      "summary": "喂鸡",
+      "title": "feed chickens",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "chinese_meaning": "农民",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "farmer ... 农民",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "farmer",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 11,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:11",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:11:vocabulary:farmer",
+      "status": "draft",
+      "summary": "农民",
+      "title": "farmer",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "相当",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "quite ... 相当",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "quite",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 11,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:11",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:11:vocabulary:quite",
+      "status": "draft",
+      "summary": "相当",
+      "title": "quite",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "任何东西",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "anything ... 任何东西",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "anything",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 11,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:11",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:11:vocabulary:anything",
+      "status": "draft",
+      "summary": "任何东西",
+      "title": "anything",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "种植；生长",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "grow ... 种植；生长",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "grow",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 11,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:11",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:11:vocabulary:grow",
+      "status": "draft",
+      "summary": "种植；生长",
+      "title": "grow",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "农场",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "farm ... 农场",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "farm",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 11,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:11",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:11:vocabulary:farm",
+      "status": "draft",
+      "summary": "农场",
+      "title": "farm",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "采摘",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "pick ... 采摘",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "pick",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 11,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:11",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:11:vocabulary:pick",
+      "status": "draft",
+      "summary": "采摘",
+      "title": "pick",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "优秀的",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "excellent ... 优秀的",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "excellent",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 11,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:11",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:11:vocabulary:excellent",
+      "status": "draft",
+      "summary": "优秀的",
+      "title": "excellent",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "乡村",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "countryside ... 乡村",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "countryside",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 11,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:11",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:11:vocabulary:countryside",
+      "status": "draft",
+      "summary": "乡村",
+      "title": "countryside",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "昨天",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "yesterday ... 昨天",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "yesterday",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 11,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:11",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:11:vocabulary:yesterday",
+      "status": "draft",
+      "summary": "昨天",
+      "title": "yesterday",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "花",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "flower ... 花",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "flower",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 11,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:11",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:11:vocabulary:flower",
+      "status": "draft",
+      "summary": "花",
+      "title": "flower",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "担心",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "worry ... 担心",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "worry",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 11,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:11",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:11:vocabulary:worry",
+      "status": "draft",
+      "summary": "担心",
+      "title": "worry",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "幸运地",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "luckily ... 幸运地",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "luckily",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 11,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:11",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:11:vocabulary:luckily",
+      "status": "draft",
+      "summary": "幸运地",
+      "title": "luckily",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "太阳",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "sun ... 太阳",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "sun",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 11,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:11",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:11:vocabulary:sun",
+      "status": "draft",
+      "summary": "太阳",
+      "title": "sun",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "博物馆",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "museum ... 博物馆",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "museum",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 11,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:11",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:11:vocabulary:museum",
+      "status": "draft",
+      "summary": "博物馆",
+      "title": "museum",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "消防站",
+        "confidence": 0.72,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "fire station ... 消防站",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "fire station",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_phrase",
+        "unit_order": 11,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:11",
+      "difficulty": 0.28,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:11:phrase:fire-station",
+      "status": "draft",
+      "summary": "消防站",
+      "title": "fire station",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "chinese_meaning": "油画",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "painting ... 油画",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "painting",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 11,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:11",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:11:vocabulary:painting",
+      "status": "draft",
+      "summary": "油画",
+      "title": "painting",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "令人兴奋的",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "exciting ... 令人兴奋的",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "exciting",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 11,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:11",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:11:vocabulary:exciting",
+      "status": "draft",
+      "summary": "令人兴奋的",
+      "title": "exciting",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "可爱的",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "lovely ... 可爱的",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "lovely",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 11,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:11",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:11:vocabulary:lovely",
+      "status": "draft",
+      "summary": "可爱的",
+      "title": "lovely",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "昂贵的",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "expensive ... 昂贵的",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "expensive",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 11,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:11",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:11:vocabulary:expensive",
+      "status": "draft",
+      "summary": "昂贵的",
+      "title": "expensive",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "便宜的",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "cheap ... 便宜的",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "cheap",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 11,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:11",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:11:vocabulary:cheap",
+      "status": "draft",
+      "summary": "便宜的",
+      "title": "cheap",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "缓慢的",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "slow ... 缓慢的",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "slow",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 11,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:11",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:11:vocabulary:slow",
+      "status": "draft",
+      "summary": "缓慢的",
+      "title": "slow",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "快的",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "fast ... 快的",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "fast",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 11,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:11",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:11:vocabulary:fast",
+      "status": "draft",
+      "summary": "快的",
+      "title": "fast",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "机器人",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "robot ... 机器人",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "robot",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 11,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:11",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:11:vocabulary:robot",
+      "status": "draft",
+      "summary": "机器人",
+      "title": "robot",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "导游",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "guide ... 导游",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "guide",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 11,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:11",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:11:vocabulary:guide",
+      "status": "draft",
+      "summary": "导游",
+      "title": "guide",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "礼物",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "gift ... 礼物",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "gift",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 11,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:11",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:11:vocabulary:gift",
+      "status": "draft",
+      "summary": "礼物",
+      "title": "gift",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "总的说来",
+        "confidence": 0.72,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "all in all ... 总的说来",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "all in all",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_phrase",
+        "unit_order": 11,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:11",
+      "difficulty": 0.28,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:11:phrase:all-in-all",
+      "status": "draft",
+      "summary": "总的说来",
+      "title": "all in all",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "chinese_meaning": "一切",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "everything ... 一切",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "everything",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 11,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:11",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:11:vocabulary:everything",
+      "status": "draft",
+      "summary": "一切",
+      "title": "everything",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "感兴趣的",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "interested ... 感兴趣的",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "interested",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 11,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:11",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:11:vocabulary:interested",
+      "status": "draft",
+      "summary": "感兴趣的",
+      "title": "interested",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "黑暗的",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "dark ... 黑暗的",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "dark",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 11,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:11",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:11:vocabulary:dark",
+      "status": "draft",
+      "summary": "黑暗的",
+      "title": "dark",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "听见",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "hear ... 听见",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "hear",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 11,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:11",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:11:vocabulary:hear",
+      "status": "draft",
+      "summary": "听见",
+      "title": "hear",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "Unit pages",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "phrase": "quite a lot",
+        "requires_review": true,
+        "role": "unit_phrase",
+        "unit_order": 11,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:11",
+      "difficulty": 0.28,
+      "source_page": "Unit pages",
+      "stable_key": "pep-grade7-lower-2024:unit:11:phrase:quite-a-lot",
+      "status": "draft",
+      "summary": "本单元可迁移短语或功能表达：quite a lot。",
+      "title": "quite a lot",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "Unit pages",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "phrase": "in the countryside",
+        "requires_review": true,
+        "role": "unit_phrase",
+        "unit_order": 11,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:11",
+      "difficulty": 0.28,
+      "source_page": "Unit pages",
+      "stable_key": "pep-grade7-lower-2024:unit:11:phrase:in-the-countryside",
+      "status": "draft",
+      "summary": "本单元可迁移短语或功能表达：in the countryside。",
+      "title": "in the countryside",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "Unit pages",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "phrase": "be interested in",
+        "requires_review": true,
+        "role": "unit_phrase",
+        "unit_order": 11,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:11",
+      "difficulty": 0.28,
+      "source_page": "Unit pages",
+      "stable_key": "pep-grade7-lower-2024:unit:11:phrase:be-interested-in",
+      "status": "draft",
+      "summary": "本单元可迁移短语或功能表达：be interested in。",
+      "title": "be interested in",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "sentence_patterns",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "pattern": "How was your school trip?",
+        "requires_review": true,
+        "role": "target_language",
+        "unit_order": 11,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:11",
+      "difficulty": 0.32,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-lower-2024:unit:11:sentence_pattern:how-was-your-school-trip",
+      "status": "draft",
+      "summary": "核心句式：How was your school trip?",
+      "title": "How was your school trip?",
+      "type": "sentence_pattern"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "sentence_patterns",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "pattern": "It was great.",
+        "requires_review": true,
+        "role": "target_language",
+        "unit_order": 11,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:11",
+      "difficulty": 0.32,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-lower-2024:unit:11:sentence_pattern:it-was-great",
+      "status": "draft",
+      "summary": "核心句式：It was great.",
+      "title": "It was great.",
+      "type": "sentence_pattern"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "sentence_patterns",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "pattern": "Did you see any cows?",
+        "requires_review": true,
+        "role": "target_language",
+        "unit_order": 11,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:11",
+      "difficulty": 0.32,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-lower-2024:unit:11:sentence_pattern:did-you-see-any-cows",
+      "status": "draft",
+      "summary": "核心句式：Did you see any cows?",
+      "title": "Did you see any cows?",
+      "type": "sentence_pattern"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "sentence_patterns",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "pattern": "What did you do?",
+        "requires_review": true,
+        "role": "target_language",
+        "unit_order": 11,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:11",
+      "difficulty": 0.32,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-lower-2024:unit:11:sentence_pattern:what-did-you-do",
+      "status": "draft",
+      "summary": "核心句式：What did you do?",
+      "title": "What did you do?",
+      "type": "sentence_pattern"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "grammar",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "focus": "一般过去时 be 动词 was/were",
+        "related_units": [
+          "Unit 11"
+        ],
+        "requires_review": true,
+        "role": "grammar_focus",
+        "unit_order": 11,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:11",
+      "difficulty": 0.38,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-lower-2024:unit:11:grammar:be-was-were",
+      "status": "draft",
+      "summary": "一般过去时 be 动词 was/were",
+      "title": "一般过去时 be 动词 was/were",
+      "type": "grammar"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "grammar",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "focus": "一般过去时 did 问句",
+        "related_units": [
+          "Unit 11"
+        ],
+        "requires_review": true,
+        "role": "grammar_focus",
+        "unit_order": 11,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:11",
+      "difficulty": 0.38,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-lower-2024:unit:11:grammar:did",
+      "status": "draft",
+      "summary": "一般过去时 did 问句",
+      "title": "一般过去时 did 问句",
+      "type": "grammar"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "grammar",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "focus": "规则/不规则动词过去式入门",
+        "related_units": [
+          "Unit 11"
+        ],
+        "requires_review": true,
+        "role": "grammar_focus",
+        "unit_order": 11,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:11",
+      "difficulty": 0.38,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-lower-2024:unit:11:grammar:zh-438d7726c3",
+      "status": "draft",
+      "summary": "规则/不规则动词过去式入门",
+      "title": "规则/不规则动词过去式入门",
+      "type": "grammar"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "pronunciation",
+        "evidence": {
+          "page_label": "Pronunciation",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "focus": "过去式 -ed 结尾读音",
+        "requires_review": true,
+        "role": "pronunciation_note",
+        "unit_order": 11,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:11",
+      "difficulty": 0.28,
+      "source_page": "Pronunciation",
+      "stable_key": "pep-grade7-lower-2024:unit:11:pronunciation:ed",
+      "status": "draft",
+      "summary": "语音关注点：过去式 -ed 结尾读音。",
+      "title": "过去式 -ed 结尾读音",
+      "type": "pronunciation"
+    }
+  ],
+  "schema_version": "public_textbook_unit.v2",
+  "source_stable_id": "pep-grade7-lower-2024",
+  "unit": {
+    "end_page": "P.66",
+    "ordinal": 11,
+    "start_page": "P.61",
+    "subtitle": "How was your school trip?",
+    "title": "Unit 11"
+  }
+}

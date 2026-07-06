@@ -1,0 +1,23 @@
+{
+  "extraction_gaps": [
+    {
+      "description": "v2 不保存整页课文、长对话或 tapescript。",
+      "gap_type": "copyright_sensitive_long_text",
+      "scope": "pep-grade7-upper-2024",
+      "suggested_future_handling": "通过受控证据摘录和版权策略处理。"
+    },
+    {
+      "description": "七下 PDF 的文本层为空，v2 lower 单元内容为人工整理短结构化项，需 OCR 校对后提升证据粒度。",
+      "gap_type": "low_confidence_layout",
+      "scope": "pep-grade7-lower-2024",
+      "suggested_future_handling": "后续接入 OCR/layout-aware extractor，回填 Words and Expressions 与页内栏目证据。"
+    },
+    {
+      "description": "扫描图片中的看图、配图和版面定位题暂不进入默认学习流。",
+      "gap_type": "image_required",
+      "scope": "pep-grade7-lower-2024",
+      "suggested_future_handling": "引入图片裁剪证据和图片题组件后再处理。"
+    }
+  ],
+  "schema_version": "public_textbook_gaps.v2"
+}

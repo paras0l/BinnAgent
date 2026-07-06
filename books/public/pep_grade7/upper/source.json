@@ -1,0 +1,32 @@
+{
+  "schema_version": "public_textbook_source.v2",
+  "source_seed": {
+    "edition": "人教版",
+    "file_size": 12005272,
+    "filename": "义务教育教科书·英语七年级上册.pdf",
+    "grade": "grade-7",
+    "knowledge_count": 538,
+    "metadata": {
+      "availability_status": "available",
+      "book_manifest_id": "pep-grade7-upper-2024",
+      "copyright_policy": "short structured facts only; no full page text or long textbook passages",
+      "default_pack_manifest": "books/public/pep_grade7/manifest.v2.json",
+      "parser_profile": "pep_grade7_upper_v1",
+      "parser_status": "curated",
+      "public_textbook_seed": true,
+      "quality_status": "published",
+      "source_kind": "public_textbook",
+      "text_layer_status": "usable_text_layer"
+    },
+    "owner_learner_id": null,
+    "page_count": 138,
+    "publisher": "人民教育出版社（PEP）",
+    "sha256": "4cdfd213e2c54164b6b97bcd6d15e93b71e6b243e8aea958f330e6bf8822f46e",
+    "status": "published",
+    "title": "英语 七年级上册",
+    "unit_count": 12,
+    "visibility": "public",
+    "volume": "upper"
+  },
+  "stable_id": "pep-grade7-upper-2024"
+}

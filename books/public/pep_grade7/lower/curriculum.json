@@ -1,0 +1,402 @@
+{
+  "curriculum_nodes": [
+    {
+      "end_page": "P.6",
+      "estimated_minutes": 28,
+      "front_end_blocks": [
+        {
+          "block_type": "unit_hero",
+          "status": "ready"
+        },
+        {
+          "block_type": "core_vocabulary",
+          "status": "ready_or_pending_review"
+        },
+        {
+          "block_type": "sentence_patterns",
+          "status": "ready_or_pending_review"
+        },
+        {
+          "block_type": "practice",
+          "status": "ready_or_pending_review"
+        }
+      ],
+      "learning_objectives": [
+        "围绕“能力表达与社团活动”理解并使用本单元核心表达。",
+        "掌握可迁移到日常交流的词汇、短语、句式和语法点。"
+      ],
+      "node_type": "unit",
+      "ordinal": 1,
+      "parent_key": null,
+      "stable_key": "pep-grade7-lower-2024:unit:01",
+      "start_page": "P.1",
+      "subtitle": "Can you play the guitar?",
+      "title": "Unit 1"
+    },
+    {
+      "end_page": "P.12",
+      "estimated_minutes": 28,
+      "front_end_blocks": [
+        {
+          "block_type": "unit_hero",
+          "status": "ready"
+        },
+        {
+          "block_type": "core_vocabulary",
+          "status": "ready_or_pending_review"
+        },
+        {
+          "block_type": "sentence_patterns",
+          "status": "ready_or_pending_review"
+        },
+        {
+          "block_type": "practice",
+          "status": "ready_or_pending_review"
+        }
+      ],
+      "learning_objectives": [
+        "围绕“日常作息与时间表达”理解并使用本单元核心表达。",
+        "掌握可迁移到日常交流的词汇、短语、句式和语法点。"
+      ],
+      "node_type": "unit",
+      "ordinal": 2,
+      "parent_key": null,
+      "stable_key": "pep-grade7-lower-2024:unit:02",
+      "start_page": "P.7",
+      "subtitle": "What time do you go to school?",
+      "title": "Unit 2"
+    },
+    {
+      "end_page": "P.18",
+      "estimated_minutes": 28,
+      "front_end_blocks": [
+        {
+          "block_type": "unit_hero",
+          "status": "ready"
+        },
+        {
+          "block_type": "core_vocabulary",
+          "status": "ready_or_pending_review"
+        },
+        {
+          "block_type": "sentence_patterns",
+          "status": "ready_or_pending_review"
+        },
+        {
+          "block_type": "practice",
+          "status": "ready_or_pending_review"
+        }
+      ],
+      "learning_objectives": [
+        "围绕“交通方式与通勤距离”理解并使用本单元核心表达。",
+        "掌握可迁移到日常交流的词汇、短语、句式和语法点。"
+      ],
+      "node_type": "unit",
+      "ordinal": 3,
+      "parent_key": null,
+      "stable_key": "pep-grade7-lower-2024:unit:03",
+      "start_page": "P.13",
+      "subtitle": "How do you get to school?",
+      "title": "Unit 3"
+    },
+    {
+      "end_page": "P.24",
+      "estimated_minutes": 28,
+      "front_end_blocks": [
+        {
+          "block_type": "unit_hero",
+          "status": "ready"
+        },
+        {
+          "block_type": "core_vocabulary",
+          "status": "ready_or_pending_review"
+        },
+        {
+          "block_type": "sentence_patterns",
+          "status": "ready_or_pending_review"
+        },
+        {
+          "block_type": "practice",
+          "status": "ready_or_pending_review"
+        }
+      ],
+      "learning_objectives": [
+        "围绕“校园规则与祈使句”理解并使用本单元核心表达。",
+        "掌握可迁移到日常交流的词汇、短语、句式和语法点。"
+      ],
+      "node_type": "unit",
+      "ordinal": 4,
+      "parent_key": null,
+      "stable_key": "pep-grade7-lower-2024:unit:04",
+      "start_page": "P.19",
+      "subtitle": "Don't eat in class.",
+      "title": "Unit 4"
+    },
+    {
+      "end_page": "P.30",
+      "estimated_minutes": 28,
+      "front_end_blocks": [
+        {
+          "block_type": "unit_hero",
+          "status": "ready"
+        },
+        {
+          "block_type": "core_vocabulary",
+          "status": "ready_or_pending_review"
+        },
+        {
+          "block_type": "sentence_patterns",
+          "status": "ready_or_pending_review"
+        },
+        {
+          "block_type": "practice",
+          "status": "ready_or_pending_review"
+        }
+      ],
+      "learning_objectives": [
+        "围绕“动物与喜好原因”理解并使用本单元核心表达。",
+        "掌握可迁移到日常交流的词汇、短语、句式和语法点。"
+      ],
+      "node_type": "unit",
+      "ordinal": 5,
+      "parent_key": null,
+      "stable_key": "pep-grade7-lower-2024:unit:05",
+      "start_page": "P.25",
+      "subtitle": "Why do you like pandas?",
+      "title": "Unit 5"
+    },
+    {
+      "end_page": "P.36",
+      "estimated_minutes": 28,
+      "front_end_blocks": [
+        {
+          "block_type": "unit_hero",
+          "status": "ready"
+        },
+        {
+          "block_type": "core_vocabulary",
+          "status": "ready_or_pending_review"
+        },
+        {
+          "block_type": "sentence_patterns",
+          "status": "ready_or_pending_review"
+        },
+        {
+          "block_type": "practice",
+          "status": "ready_or_pending_review"
+        }
+      ],
+      "learning_objectives": [
+        "围绕“正在进行的活动”理解并使用本单元核心表达。",
+        "掌握可迁移到日常交流的词汇、短语、句式和语法点。"
+      ],
+      "node_type": "unit",
+      "ordinal": 6,
+      "parent_key": null,
+      "stable_key": "pep-grade7-lower-2024:unit:06",
+      "start_page": "P.31",
+      "subtitle": "I'm watching TV.",
+      "title": "Unit 6"
+    },
+    {
+      "end_page": "P.42",
+      "estimated_minutes": 28,
+      "front_end_blocks": [
+        {
+          "block_type": "unit_hero",
+          "status": "ready"
+        },
+        {
+          "block_type": "core_vocabulary",
+          "status": "ready_or_pending_review"
+        },
+        {
+          "block_type": "sentence_patterns",
+          "status": "ready_or_pending_review"
+        },
+        {
+          "block_type": "practice",
+          "status": "ready_or_pending_review"
+        }
+      ],
+      "learning_objectives": [
+        "围绕“天气与近况”理解并使用本单元核心表达。",
+        "掌握可迁移到日常交流的词汇、短语、句式和语法点。"
+      ],
+      "node_type": "unit",
+      "ordinal": 7,
+      "parent_key": null,
+      "stable_key": "pep-grade7-lower-2024:unit:07",
+      "start_page": "P.37",
+      "subtitle": "It's raining!",
+      "title": "Unit 7"
+    },
+    {
+      "end_page": "P.48",
+      "estimated_minutes": 28,
+      "front_end_blocks": [
+        {
+          "block_type": "unit_hero",
+          "status": "ready"
+        },
+        {
+          "block_type": "core_vocabulary",
+          "status": "ready_or_pending_review"
+        },
+        {
+          "block_type": "sentence_patterns",
+          "status": "ready_or_pending_review"
+        },
+        {
+          "block_type": "practice",
+          "status": "ready_or_pending_review"
+        }
+      ],
+      "learning_objectives": [
+        "围绕“街区地点与问路”理解并使用本单元核心表达。",
+        "掌握可迁移到日常交流的词汇、短语、句式和语法点。"
+      ],
+      "node_type": "unit",
+      "ordinal": 8,
+      "parent_key": null,
+      "stable_key": "pep-grade7-lower-2024:unit:08",
+      "start_page": "P.43",
+      "subtitle": "Is there a post office near here?",
+      "title": "Unit 8"
+    },
+    {
+      "end_page": "P.54",
+      "estimated_minutes": 28,
+      "front_end_blocks": [
+        {
+          "block_type": "unit_hero",
+          "status": "ready"
+        },
+        {
+          "block_type": "core_vocabulary",
+          "status": "ready_or_pending_review"
+        },
+        {
+          "block_type": "sentence_patterns",
+          "status": "ready_or_pending_review"
+        },
+        {
+          "block_type": "practice",
+          "status": "ready_or_pending_review"
+        }
+      ],
+      "learning_objectives": [
+        "围绕“外貌描述”理解并使用本单元核心表达。",
+        "掌握可迁移到日常交流的词汇、短语、句式和语法点。"
+      ],
+      "node_type": "unit",
+      "ordinal": 9,
+      "parent_key": null,
+      "stable_key": "pep-grade7-lower-2024:unit:09",
+      "start_page": "P.49",
+      "subtitle": "What does he look like?",
+      "title": "Unit 9"
+    },
+    {
+      "end_page": "P.60",
+      "estimated_minutes": 28,
+      "front_end_blocks": [
+        {
+          "block_type": "unit_hero",
+          "status": "ready"
+        },
+        {
+          "block_type": "core_vocabulary",
+          "status": "ready_or_pending_review"
+        },
+        {
+          "block_type": "sentence_patterns",
+          "status": "ready_or_pending_review"
+        },
+        {
+          "block_type": "practice",
+          "status": "ready_or_pending_review"
+        }
+      ],
+      "learning_objectives": [
+        "围绕“点餐与食物规格”理解并使用本单元核心表达。",
+        "掌握可迁移到日常交流的词汇、短语、句式和语法点。"
+      ],
+      "node_type": "unit",
+      "ordinal": 10,
+      "parent_key": null,
+      "stable_key": "pep-grade7-lower-2024:unit:10",
+      "start_page": "P.55",
+      "subtitle": "I'd like some noodles.",
+      "title": "Unit 10"
+    },
+    {
+      "end_page": "P.66",
+      "estimated_minutes": 28,
+      "front_end_blocks": [
+        {
+          "block_type": "unit_hero",
+          "status": "ready"
+        },
+        {
+          "block_type": "core_vocabulary",
+          "status": "ready_or_pending_review"
+        },
+        {
+          "block_type": "sentence_patterns",
+          "status": "ready_or_pending_review"
+        },
+        {
+          "block_type": "practice",
+          "status": "ready_or_pending_review"
+        }
+      ],
+      "learning_objectives": [
+        "围绕“过去的学校旅行”理解并使用本单元核心表达。",
+        "掌握可迁移到日常交流的词汇、短语、句式和语法点。"
+      ],
+      "node_type": "unit",
+      "ordinal": 11,
+      "parent_key": null,
+      "stable_key": "pep-grade7-lower-2024:unit:11",
+      "start_page": "P.61",
+      "subtitle": "How was your school trip?",
+      "title": "Unit 11"
+    },
+    {
+      "end_page": "P.72",
+      "estimated_minutes": 28,
+      "front_end_blocks": [
+        {
+          "block_type": "unit_hero",
+          "status": "ready"
+        },
+        {
+          "block_type": "core_vocabulary",
+          "status": "ready_or_pending_review"
+        },
+        {
+          "block_type": "sentence_patterns",
+          "status": "ready_or_pending_review"
+        },
+        {
+          "block_type": "practice",
+          "status": "ready_or_pending_review"
+        }
+      ],
+      "learning_objectives": [
+        "围绕“周末活动与过去事件”理解并使用本单元核心表达。",
+        "掌握可迁移到日常交流的词汇、短语、句式和语法点。"
+      ],
+      "node_type": "unit",
+      "ordinal": 12,
+      "parent_key": null,
+      "stable_key": "pep-grade7-lower-2024:unit:12",
+      "start_page": "P.67",
+      "subtitle": "What did you do last weekend?",
+      "title": "Unit 12"
+    }
+  ],
+  "schema_version": "public_textbook_curriculum.v2",
+  "source_stable_id": "pep-grade7-lower-2024"
+}

@@ -1,0 +1,1289 @@
+{
+  "curriculum_node_key": "pep-grade7-upper-2024:unit:12",
+  "exercise_questions": [
+    {
+      "answer": "& n. （= favourite）特别喜爱的 ( 人或事物 )",
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:12",
+      "difficulty": 0.28,
+      "explanation": "favorite 的本单元义项是：& n. （= favourite）特别喜爱的 ( 人或事物 )。",
+      "knowledge_point_key": "pep-grade7-upper-2024:unit:12:vocabulary:favorite",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:12",
+          "knowledge_point_key": "pep-grade7-upper-2024:unit:12:vocabulary:favorite",
+          "source_stable_id": "pep-grade7-upper-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "source": "curated_public_textbook_seed"
+      },
+      "options": [
+        "& n. （= favourite）特别喜爱的 ( 人或事物 )",
+        "学科；科目",
+        "科学",
+        "音乐；乐曲"
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-upper-2024:unit:12:ex:01-favorite",
+      "status": "published",
+      "stem": "“favorite”在本单元词表中的意思最接近哪一项？"
+    },
+    {
+      "answer": "What's your favorite subject?",
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:12",
+      "difficulty": 0.28,
+      "explanation": "本单元核心句式包括“What's your favorite subject?”。",
+      "knowledge_point_key": "pep-grade7-upper-2024:unit:12:sentence_pattern:whats-your-favorite-subject",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:12",
+          "knowledge_point_key": "pep-grade7-upper-2024:unit:12:sentence_pattern:whats-your-favorite-subject",
+          "source_stable_id": "pep-grade7-upper-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "source": "curated_public_textbook_seed"
+      },
+      "options": [
+        "What's your favorite subject?",
+        "P .E.",
+        "for sure",
+        "favorite"
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-upper-2024:unit:12:ex:02-whats-your-favorite-subject",
+      "status": "published",
+      "stem": "围绕“学校科目与偏好理由”，下列哪一句最贴近本单元核心句式？"
+    },
+    {
+      "answer": "why/because 问答",
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:12",
+      "difficulty": 0.28,
+      "explanation": "本单元语法重点是：why/because 问答。",
+      "knowledge_point_key": "pep-grade7-upper-2024:unit:12:grammar:why-because",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:12",
+          "knowledge_point_key": "pep-grade7-upper-2024:unit:12:grammar:why-because",
+          "source_stable_id": "pep-grade7-upper-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "source": "curated_public_textbook_seed"
+      },
+      "options": [
+        "why/because 问答",
+        "过去完成时",
+        "定语从句",
+        "虚拟语气"
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-upper-2024:unit:12:ex:03-why-because",
+      "status": "published",
+      "stem": "本单元语法重点最接近哪一项？"
+    },
+    {
+      "answer": "P .E.",
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:12",
+      "difficulty": 0.28,
+      "explanation": "“P .E.”属于本单元短语或功能表达。",
+      "knowledge_point_key": "pep-grade7-upper-2024:unit:12:phrase:p-e",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:12",
+          "knowledge_point_key": "pep-grade7-upper-2024:unit:12:phrase:p-e",
+          "source_stable_id": "pep-grade7-upper-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "source": "curated_public_textbook_seed"
+      },
+      "options": [
+        "P .E.",
+        "in conclusion",
+        "as soon as possible",
+        "by mistake"
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-upper-2024:unit:12:ex:04-p-e",
+      "status": "published",
+      "stem": "下列哪一项是本单元可迁移短语/功能表达？"
+    },
+    {
+      "answer": "（= maths）数学",
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:12",
+      "difficulty": 0.28,
+      "explanation": "该题检查本单元词汇义项。",
+      "knowledge_point_key": "pep-grade7-upper-2024:unit:12:vocabulary:math",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:12",
+          "knowledge_point_key": "pep-grade7-upper-2024:unit:12:vocabulary:math",
+          "source_stable_id": "pep-grade7-upper-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "source": "curated_public_textbook_seed"
+      },
+      "options": [
+        "（= maths）数学",
+        "机场",
+        "科学家",
+        "电影院"
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-upper-2024:unit:12:ex:05-math",
+      "status": "published",
+      "stem": "选择与“math”对应的本单元中文义项。"
+    },
+    {
+      "answer": "Why do you like science?",
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:12",
+      "difficulty": 0.28,
+      "explanation": "该句来自本单元目标语言框架的整理。",
+      "knowledge_point_key": "pep-grade7-upper-2024:unit:12:sentence_pattern:why-do-you-like-science",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:12",
+          "knowledge_point_key": "pep-grade7-upper-2024:unit:12:sentence_pattern:why-do-you-like-science",
+          "source_stable_id": "pep-grade7-upper-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "source": "curated_public_textbook_seed"
+      },
+      "options": [
+        "Why do you like science?",
+        "I have finished the report.",
+        "Although it rained, we left.",
+        "The book was written in 1999."
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-upper-2024:unit:12:ex:06-why-do-you-like-science",
+      "status": "published",
+      "stem": "下列哪一句也属于本单元目标语言？"
+    }
+  ],
+  "extraction_gaps": [
+    {
+      "description": "听力活动需要配套音频，暂不进入公共默认学习流。",
+      "gap_type": "audio_required",
+      "scope": "pep-grade7-upper-2024:unit:12",
+      "suggested_future_handling": "后续接入音频资源和听力题型后再结构化。"
+    },
+    {
+      "description": "结对/小组互动活动不适合直接作为稳定自动评分题。",
+      "gap_type": "pair_work",
+      "scope": "pep-grade7-upper-2024:unit:12",
+      "suggested_future_handling": "后续作为课堂互动或口语任务模板处理。"
+    },
+    {
+      "description": "长课文、整页练习或连续对话不写入 seed pack。",
+      "gap_type": "copyright_sensitive_long_text",
+      "scope": "pep-grade7-upper-2024:unit:12",
+      "suggested_future_handling": "仅保存短摘要和知识点，必要时通过受控证据摘录展示。"
+    }
+  ],
+  "knowledge_points": [
+    {
+      "content": {
+        "confidence": 0.95,
+        "display_group": "unit_intro",
+        "evidence": {
+          "page_label": "P.61",
+          "raw_line_excerpt": null,
+          "source": "pdf_curated_extract"
+        },
+        "requires_review": false,
+        "role": "unit_overview",
+        "source_unit_subtitle": "My favorite subject is science.",
+        "source_unit_title": "Unit 9",
+        "theme": "学校科目与偏好理由",
+        "unit_order": 12,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:12",
+      "difficulty": 0.18,
+      "source_page": "P.61",
+      "stable_key": "pep-grade7-upper-2024:unit:12:text_note:unit-9-overview",
+      "status": "published",
+      "summary": "本单元主题：学校科目与偏好理由；核心标题表达为“My favorite subject is science.”。",
+      "title": "Unit 9 overview",
+      "type": "text_note"
+    },
+    {
+      "content": {
+        "chinese_meaning": "& n. （= favourite）特别喜爱的 ( 人或事物 )",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.49",
+          "raw_line_excerpt": "favorite /feIv@rIt/ adj. & n. （= favourite）特别喜爱的 ( 人或事物 ) p.49",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "favorite",
+        "part_of_speech": "adj.",
+        "phonetic": "/feIv@rIt/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 12,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:12",
+      "difficulty": 0.22,
+      "source_page": "P.49",
+      "stable_key": "pep-grade7-upper-2024:unit:12:vocabulary:favorite",
+      "status": "published",
+      "summary": "& n. （= favourite）特别喜爱的 ( 人或事物 )",
+      "title": "favorite",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "学科；科目",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.49",
+          "raw_line_excerpt": "subject /sVbdZIkt/ n. 学科；科目 p.49",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "subject",
+        "part_of_speech": "n.",
+        "phonetic": "/sVbdZIkt/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 12,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:12",
+      "difficulty": 0.22,
+      "source_page": "P.49",
+      "stable_key": "pep-grade7-upper-2024:unit:12:vocabulary:subject",
+      "status": "published",
+      "summary": "学科；科目",
+      "title": "subject",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "科学",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.49",
+          "raw_line_excerpt": "science /saI@ns/ n. 科学 p.49",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "science",
+        "part_of_speech": "n.",
+        "phonetic": "/saI@ns/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 12,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:12",
+      "difficulty": 0.22,
+      "source_page": "P.49",
+      "stable_key": "pep-grade7-upper-2024:unit:12:vocabulary:science",
+      "status": "published",
+      "summary": "科学",
+      "title": "science",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "（= physical education）体育",
+        "confidence": 0.95,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "P.49",
+          "raw_line_excerpt": "P .E. /pi: i:/ n. （= physical education）体育 p.49",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "P .E.",
+        "part_of_speech": "n.",
+        "phonetic": "/pi: i:/",
+        "requires_review": false,
+        "role": "unit_phrase",
+        "unit_order": 12,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:12",
+      "difficulty": 0.28,
+      "source_page": "P.49",
+      "stable_key": "pep-grade7-upper-2024:unit:12:phrase:p-e",
+      "status": "published",
+      "summary": "（= physical education）体育",
+      "title": "P .E.",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "chinese_meaning": "音乐；乐曲",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.49",
+          "raw_line_excerpt": "music /mju:zIk/ n. 音乐；乐曲 p.49",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "music",
+        "part_of_speech": "n.",
+        "phonetic": "/mju:zIk/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 12,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:12",
+      "difficulty": 0.22,
+      "source_page": "P.49",
+      "stable_key": "pep-grade7-upper-2024:unit:12:vocabulary:music",
+      "status": "published",
+      "summary": "音乐；乐曲",
+      "title": "music",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "（= maths）数学",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.49",
+          "raw_line_excerpt": "math /m{T/ n. （= maths）数学 p.49",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "math",
+        "part_of_speech": "n.",
+        "phonetic": "/m{T/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 12,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:12",
+      "difficulty": 0.22,
+      "source_page": "P.49",
+      "stable_key": "pep-grade7-upper-2024:unit:12:vocabulary:math",
+      "status": "published",
+      "summary": "（= maths）数学",
+      "title": "math",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "语文；汉语 adj. 汉语的；中国的",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.49",
+          "raw_line_excerpt": "Chinese /tSaIni:z/ n. 语文；汉语 adj. 汉语的；中国的 p.49",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "Chinese",
+        "part_of_speech": "n.",
+        "phonetic": "/tSaIni:z/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 12,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:12",
+      "difficulty": 0.22,
+      "source_page": "P.49",
+      "stable_key": "pep-grade7-upper-2024:unit:12:vocabulary:chinese",
+      "status": "published",
+      "summary": "语文；汉语 adj. 汉语的；中国的",
+      "title": "Chinese",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "地理（学）",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.49",
+          "raw_line_excerpt": "geography /dZiQgr@fi/, /dZiA:gr@fi/ n. 地理（学） p.49",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "geography",
+        "part_of_speech": "n.",
+        "phonetic": "/dZiQgr@fi/, /dZiA:gr@fi/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 12,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:12",
+      "difficulty": 0.22,
+      "source_page": "P.49",
+      "stable_key": "pep-grade7-upper-2024:unit:12:vocabulary:geography",
+      "status": "published",
+      "summary": "地理（学）",
+      "title": "geography",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "历史",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.49",
+          "raw_line_excerpt": "history /hIstri/ n. 历史 p.49",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "history",
+        "part_of_speech": "n.",
+        "phonetic": "/hIstri/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 12,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:12",
+      "difficulty": 0.22,
+      "source_page": "P.49",
+      "stable_key": "pep-grade7-upper-2024:unit:12:vocabulary:history",
+      "status": "published",
+      "summary": "历史",
+      "title": "history",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "为什么",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.50",
+          "raw_line_excerpt": "why /waI/ adv. 为什么 p.50",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "why",
+        "part_of_speech": "adv.",
+        "phonetic": "/waI/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 12,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:12",
+      "difficulty": 0.22,
+      "source_page": "P.50",
+      "stable_key": "pep-grade7-upper-2024:unit:12:vocabulary:why",
+      "status": "published",
+      "summary": "为什么",
+      "title": "why",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "因为",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.50",
+          "raw_line_excerpt": "because /bIkQz/, /bIkO:z/ conj. 因为 p.50",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "because",
+        "part_of_speech": "conj.",
+        "phonetic": "/bIkQz/, /bIkO:z/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 12,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:12",
+      "difficulty": 0.22,
+      "source_page": "P.50",
+      "stable_key": "pep-grade7-upper-2024:unit:12:vocabulary:because",
+      "status": "published",
+      "summary": "因为",
+      "title": "because",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "星期一",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.50",
+          "raw_line_excerpt": "Monday /mVndeI/ n. 星期一 p.50",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "Monday",
+        "part_of_speech": "n.",
+        "phonetic": "/mVndeI/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 12,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:12",
+      "difficulty": 0.22,
+      "source_page": "P.50",
+      "stable_key": "pep-grade7-upper-2024:unit:12:vocabulary:monday",
+      "status": "published",
+      "summary": "星期一",
+      "title": "Monday",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "星期五",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.50",
+          "raw_line_excerpt": "Friday /fraIdeI/ n. 星期五 p.50",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "Friday",
+        "part_of_speech": "n.",
+        "phonetic": "/fraIdeI/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 12,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:12",
+      "difficulty": 0.22,
+      "source_page": "P.50",
+      "stable_key": "pep-grade7-upper-2024:unit:12:vocabulary:friday",
+      "status": "published",
+      "summary": "星期五",
+      "title": "Friday",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "星期六",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.50",
+          "raw_line_excerpt": "Saturday /s{t@(r)deI/ n. 星期六 p.50",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "Saturday",
+        "part_of_speech": "n.",
+        "phonetic": "/s{t@(r)deI/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 12,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:12",
+      "difficulty": 0.22,
+      "source_page": "P.50",
+      "stable_key": "pep-grade7-upper-2024:unit:12:vocabulary:saturday",
+      "status": "published",
+      "summary": "星期六",
+      "title": "Saturday",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "无疑；肯定",
+        "confidence": 0.95,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "P.50",
+          "raw_line_excerpt": "for sure 无疑；肯定 p.50",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "for sure",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": false,
+        "role": "unit_phrase",
+        "unit_order": 12,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:12",
+      "difficulty": 0.28,
+      "source_page": "P.50",
+      "stable_key": "pep-grade7-upper-2024:unit:12:phrase:for-sure",
+      "status": "published",
+      "summary": "无疑；肯定",
+      "title": "for sure",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "chinese_meaning": "空闲的",
+        "confidence": 0.95,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "P.52",
+          "raw_line_excerpt": "Words and Expressions in Each Unit 103102 free /fri:/ adj. 空闲的 p.52",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "Words and Expressions in Each Unit 103102 free",
+        "part_of_speech": "adj.",
+        "phonetic": "/fri:/",
+        "requires_review": false,
+        "role": "unit_phrase",
+        "unit_order": 12,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:12",
+      "difficulty": 0.28,
+      "source_page": "P.52",
+      "stable_key": "pep-grade7-upper-2024:unit:12:phrase:words-and-expressions-in-each-unit-103102-free",
+      "status": "published",
+      "summary": "空闲的",
+      "title": "Words and Expressions in Each Unit 103102 free",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "chinese_meaning": "妙极的；酷的",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.52",
+          "raw_line_excerpt": "cool /ku:l/ adj. 妙极的；酷的 p.52",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "cool",
+        "part_of_speech": "adj.",
+        "phonetic": "/ku:l/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 12,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:12",
+      "difficulty": 0.22,
+      "source_page": "P.52",
+      "stable_key": "pep-grade7-upper-2024:unit:12:vocabulary:cool",
+      "status": "published",
+      "summary": "妙极的；酷的",
+      "title": "cool",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "星期二",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.52",
+          "raw_line_excerpt": "Tuesday /tju:zdeI/, /tu:zdeI/ n. 星期二 p.52",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "Tuesday",
+        "part_of_speech": "n.",
+        "phonetic": "/tju:zdeI/, /tu:zdeI/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 12,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:12",
+      "difficulty": 0.22,
+      "source_page": "P.52",
+      "stable_key": "pep-grade7-upper-2024:unit:12:vocabulary:tuesday",
+      "status": "published",
+      "summary": "星期二",
+      "title": "Tuesday",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "星期三",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.52",
+          "raw_line_excerpt": "Wednesday /wenzdeI/ n. 星期三 p.52",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "Wednesday",
+        "part_of_speech": "n.",
+        "phonetic": "/wenzdeI/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 12,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:12",
+      "difficulty": 0.22,
+      "source_page": "P.52",
+      "stable_key": "pep-grade7-upper-2024:unit:12:vocabulary:wednesday",
+      "status": "published",
+      "summary": "星期三",
+      "title": "Wednesday",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "星期四",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.52",
+          "raw_line_excerpt": "Thursday /T3:(r)zdeI/ n. 星期四 p.52",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "Thursday",
+        "part_of_speech": "n.",
+        "phonetic": "/T3:(r)zdeI/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 12,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:12",
+      "difficulty": 0.22,
+      "source_page": "P.52",
+      "stable_key": "pep-grade7-upper-2024:unit:12:vocabulary:thursday",
+      "status": "published",
+      "summary": "星期四",
+      "title": "Thursday",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "星期日",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.52",
+          "raw_line_excerpt": "Sunday /sVndeI/ n. 星期日 p.52",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "Sunday",
+        "part_of_speech": "n.",
+        "phonetic": "/sVndeI/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 12,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:12",
+      "difficulty": 0.22,
+      "source_page": "P.52",
+      "stable_key": "pep-grade7-upper-2024:unit:12:vocabulary:sunday",
+      "status": "published",
+      "summary": "星期日",
+      "title": "Sunday",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "（= a.m.）上午",
+        "confidence": 0.95,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "P.52",
+          "raw_line_excerpt": "A.M. /eI em/ （= a.m.）上午 p.52",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "A.M.",
+        "part_of_speech": null,
+        "phonetic": "/eI em/",
+        "requires_review": false,
+        "role": "unit_phrase",
+        "unit_order": 12,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:12",
+      "difficulty": 0.28,
+      "source_page": "P.52",
+      "stable_key": "pep-grade7-upper-2024:unit:12:phrase:a-m",
+      "status": "published",
+      "summary": "（= a.m.）上午",
+      "title": "A.M.",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "chinese_meaning": "（= p.m.）下午；午后",
+        "confidence": 0.95,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "P.52",
+          "raw_line_excerpt": "P. M . /pi: em/ （= p.m.）下午；午后 p.52",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "P. M .",
+        "part_of_speech": null,
+        "phonetic": "/pi: em/",
+        "requires_review": false,
+        "role": "unit_phrase",
+        "unit_order": 12,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:12",
+      "difficulty": 0.28,
+      "source_page": "P.52",
+      "stable_key": "pep-grade7-upper-2024:unit:12:phrase:p-m",
+      "status": "published",
+      "summary": "（= p.m.）下午；午后",
+      "title": "P. M .",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "chinese_meaning": "有用的；有益的",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.53",
+          "raw_line_excerpt": "useful /ju:sfl/ adj. 有用的；有益的 p.53",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "useful",
+        "part_of_speech": "adj.",
+        "phonetic": "/ju:sfl/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 12,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:12",
+      "difficulty": 0.22,
+      "source_page": "P.53",
+      "stable_key": "pep-grade7-upper-2024:unit:12:vocabulary:useful",
+      "status": "published",
+      "summary": "有用的；有益的",
+      "title": "useful",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "（表示 开始的时间）从……开始",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.53",
+          "raw_line_excerpt": "from /frQm/, /frA:m/ prep.（表示 开始的时间）从……开始 p.53",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "from",
+        "part_of_speech": "prep.",
+        "phonetic": "/frQm/, /frA:m/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 12,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:12",
+      "difficulty": 0.22,
+      "source_page": "P.53",
+      "stable_key": "pep-grade7-upper-2024:unit:12:vocabulary:from",
+      "status": "published",
+      "summary": "（表示 开始的时间）从……开始",
+      "title": "from",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "从……到……",
+        "confidence": 0.95,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "P.53",
+          "raw_line_excerpt": "from ... to ... 从……到…… p.53",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "from ... to ...",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": false,
+        "role": "unit_phrase",
+        "unit_order": 12,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:12",
+      "difficulty": 0.28,
+      "source_page": "P.53",
+      "stable_key": "pep-grade7-upper-2024:unit:12:phrase:from-to",
+      "status": "published",
+      "summary": "从……到……",
+      "title": "from ... to ...",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "chinese_meaning": "（用于女子的姓氏或 姓名前）太太；夫人",
+        "confidence": 0.95,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "P.53",
+          "raw_line_excerpt": "Mrs. /mIsIz/ （用于女子的姓氏或 姓名前）太太；夫人 p.53",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "Mrs.",
+        "part_of_speech": null,
+        "phonetic": "/mIsIz/",
+        "requires_review": false,
+        "role": "unit_phrase",
+        "unit_order": 12,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:12",
+      "difficulty": 0.28,
+      "source_page": "P.53",
+      "stable_key": "pep-grade7-upper-2024:unit:12:phrase:mrs",
+      "status": "published",
+      "summary": "（用于女子的姓氏或 姓名前）太太；夫人",
+      "title": "Mrs.",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "chinese_meaning": "完成；做好",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.53",
+          "raw_line_excerpt": "finish /fInIS/ v.完成；做好 p.53",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "finish",
+        "part_of_speech": "v.",
+        "phonetic": "/fInIS/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 12,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:12",
+      "difficulty": 0.22,
+      "source_page": "P.53",
+      "stable_key": "pep-grade7-upper-2024:unit:12:vocabulary:finish",
+      "status": "published",
+      "summary": "完成；做好",
+      "title": "finish",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "课 ；一节课",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.53",
+          "raw_line_excerpt": "lesson /lesn/ n. 课 ；一节课 p.53",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "lesson",
+        "part_of_speech": "n.",
+        "phonetic": "/lesn/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 12,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:12",
+      "difficulty": 0.22,
+      "source_page": "P.53",
+      "stable_key": "pep-grade7-upper-2024:unit:12:vocabulary:lesson",
+      "status": "published",
+      "summary": "课 ；一节课",
+      "title": "lesson",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "小时",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.53",
+          "raw_line_excerpt": "hour /aU@(r)/ n. 小时 p.53",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "hour",
+        "part_of_speech": "n.",
+        "phonetic": "/aU@(r)/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 12,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:12",
+      "difficulty": 0.22,
+      "source_page": "P.53",
+      "stable_key": "pep-grade7-upper-2024:unit:12:vocabulary:hour",
+      "status": "published",
+      "summary": "小时",
+      "title": "hour",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "confidence": 0.95,
+        "display_group": "sentence_patterns",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "pdf_curated_extract"
+        },
+        "pattern": "What's your favorite subject?",
+        "requires_review": false,
+        "role": "target_language",
+        "unit_order": 12,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:12",
+      "difficulty": 0.32,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-upper-2024:unit:12:sentence_pattern:whats-your-favorite-subject",
+      "status": "published",
+      "summary": "核心句式：What's your favorite subject?",
+      "title": "What's your favorite subject?",
+      "type": "sentence_pattern"
+    },
+    {
+      "content": {
+        "confidence": 0.95,
+        "display_group": "sentence_patterns",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "pdf_curated_extract"
+        },
+        "pattern": "Why do you like science?",
+        "requires_review": false,
+        "role": "target_language",
+        "unit_order": 12,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:12",
+      "difficulty": 0.32,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-upper-2024:unit:12:sentence_pattern:why-do-you-like-science",
+      "status": "published",
+      "summary": "核心句式：Why do you like science?",
+      "title": "Why do you like science?",
+      "type": "sentence_pattern"
+    },
+    {
+      "content": {
+        "confidence": 0.95,
+        "display_group": "sentence_patterns",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "pdf_curated_extract"
+        },
+        "pattern": "Because it's interesting.",
+        "requires_review": false,
+        "role": "target_language",
+        "unit_order": 12,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:12",
+      "difficulty": 0.32,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-upper-2024:unit:12:sentence_pattern:because-its-interesting",
+      "status": "published",
+      "summary": "核心句式：Because it's interesting.",
+      "title": "Because it's interesting.",
+      "type": "sentence_pattern"
+    },
+    {
+      "content": {
+        "confidence": 0.95,
+        "display_group": "sentence_patterns",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "pdf_curated_extract"
+        },
+        "pattern": "Who is your music teacher?",
+        "requires_review": false,
+        "role": "target_language",
+        "unit_order": 12,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:12",
+      "difficulty": 0.32,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-upper-2024:unit:12:sentence_pattern:who-is-your-music-teacher",
+      "status": "published",
+      "summary": "核心句式：Who is your music teacher?",
+      "title": "Who is your music teacher?",
+      "type": "sentence_pattern"
+    },
+    {
+      "content": {
+        "confidence": 0.95,
+        "display_group": "grammar",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "pdf_curated_extract"
+        },
+        "focus": "why/because 问答",
+        "related_units": [
+          "Unit 12"
+        ],
+        "requires_review": false,
+        "role": "grammar_focus",
+        "unit_order": 12,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:12",
+      "difficulty": 0.38,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-upper-2024:unit:12:grammar:why-because",
+      "status": "published",
+      "summary": "why/because 问答",
+      "title": "why/because 问答",
+      "type": "grammar"
+    },
+    {
+      "content": {
+        "confidence": 0.95,
+        "display_group": "grammar",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "pdf_curated_extract"
+        },
+        "focus": "favorite 表达偏好",
+        "related_units": [
+          "Unit 12"
+        ],
+        "requires_review": false,
+        "role": "grammar_focus",
+        "unit_order": 12,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:12",
+      "difficulty": 0.38,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-upper-2024:unit:12:grammar:favorite",
+      "status": "published",
+      "summary": "favorite 表达偏好",
+      "title": "favorite 表达偏好",
+      "type": "grammar"
+    },
+    {
+      "content": {
+        "confidence": 0.95,
+        "display_group": "grammar",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "pdf_curated_extract"
+        },
+        "focus": "星期与课程时间表达",
+        "related_units": [
+          "Unit 12"
+        ],
+        "requires_review": false,
+        "role": "grammar_focus",
+        "unit_order": 12,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:12",
+      "difficulty": 0.38,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-upper-2024:unit:12:grammar:zh-c46f39bc91",
+      "status": "published",
+      "summary": "星期与课程时间表达",
+      "title": "星期与课程时间表达",
+      "type": "grammar"
+    },
+    {
+      "content": {
+        "confidence": 0.95,
+        "display_group": "pronunciation",
+        "evidence": {
+          "page_label": "Pronunciation",
+          "raw_line_excerpt": null,
+          "source": "pdf_curated_extract"
+        },
+        "focus": "字母 o/ow/oo/ou 的常见读音；because 句子重音",
+        "requires_review": false,
+        "role": "pronunciation_note",
+        "unit_order": 12,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:12",
+      "difficulty": 0.28,
+      "source_page": "Pronunciation",
+      "stable_key": "pep-grade7-upper-2024:unit:12:pronunciation:o-ow-oo-ou-because",
+      "status": "published",
+      "summary": "语音关注点：字母 o/ow/oo/ou 的常见读音；because 句子重音。",
+      "title": "字母 o/ow/oo/ou 的常见读音；because 句子重音",
+      "type": "pronunciation"
+    }
+  ],
+  "schema_version": "public_textbook_unit.v2",
+  "source_stable_id": "pep-grade7-upper-2024",
+  "unit": {
+    "end_page": "P.66",
+    "ordinal": 12,
+    "start_page": "P.61",
+    "subtitle": "My favorite subject is science.",
+    "title": "Unit 9"
+  }
+}

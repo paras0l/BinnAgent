@@ -1,0 +1,1710 @@
+{
+  "curriculum_node_key": "pep-grade7-lower-2024:unit:12",
+  "exercise_questions": [
+    {
+      "answer": "扎营",
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:12",
+      "difficulty": 0.28,
+      "explanation": "camp 的本单元义项是：扎营。",
+      "knowledge_point_key": "pep-grade7-lower-2024:unit:12:vocabulary:camp",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:12",
+          "knowledge_point_key": "pep-grade7-lower-2024:unit:12:vocabulary:camp",
+          "source_stable_id": "pep-grade7-lower-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "requires_review": true,
+        "source": "curated_public_textbook_seed",
+        "warnings": [
+          "generated_from_lower_draft_content"
+        ]
+      },
+      "options": [
+        "扎营",
+        "湖",
+        "海滩",
+        "羽毛球"
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-lower-2024:unit:12:ex:01-camp",
+      "status": "draft",
+      "stem": "“camp”在本单元词表中的意思最接近哪一项？"
+    },
+    {
+      "answer": "What did you do last weekend?",
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:12",
+      "difficulty": 0.28,
+      "explanation": "本单元核心句式包括“What did you do last weekend?”。",
+      "knowledge_point_key": "pep-grade7-lower-2024:unit:12:sentence_pattern:what-did-you-do-last-weekend",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:12",
+          "knowledge_point_key": "pep-grade7-lower-2024:unit:12:sentence_pattern:what-did-you-do-last-weekend",
+          "source_stable_id": "pep-grade7-lower-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "requires_review": true,
+        "source": "curated_public_textbook_seed",
+        "warnings": [
+          "generated_from_lower_draft_content"
+        ]
+      },
+      "options": [
+        "What did you do last weekend?",
+        "stay up late",
+        "run away",
+        "camp"
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-lower-2024:unit:12:ex:02-what-did-you-do-last-weekend",
+      "status": "draft",
+      "stem": "围绕“周末活动与过去事件”，下列哪一句最贴近本单元核心句式？"
+    },
+    {
+      "answer": "一般过去时实义动词问答",
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:12",
+      "difficulty": 0.28,
+      "explanation": "本单元语法重点是：一般过去时实义动词问答。",
+      "knowledge_point_key": "pep-grade7-lower-2024:unit:12:grammar:zh-d1409edd72",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:12",
+          "knowledge_point_key": "pep-grade7-lower-2024:unit:12:grammar:zh-d1409edd72",
+          "source_stable_id": "pep-grade7-lower-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "requires_review": true,
+        "source": "curated_public_textbook_seed",
+        "warnings": [
+          "generated_from_lower_draft_content"
+        ]
+      },
+      "options": [
+        "一般过去时实义动词问答",
+        "过去完成时",
+        "定语从句",
+        "虚拟语气"
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-lower-2024:unit:12:ex:03-zh-d1409edd72",
+      "status": "draft",
+      "stem": "本单元语法重点最接近哪一项？"
+    },
+    {
+      "answer": "stay up late",
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:12",
+      "difficulty": 0.28,
+      "explanation": "“stay up late”属于本单元短语或功能表达。",
+      "knowledge_point_key": "pep-grade7-lower-2024:unit:12:phrase:stay-up-late",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:12",
+          "knowledge_point_key": "pep-grade7-lower-2024:unit:12:phrase:stay-up-late",
+          "source_stable_id": "pep-grade7-lower-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "requires_review": true,
+        "source": "curated_public_textbook_seed",
+        "warnings": [
+          "generated_from_lower_draft_content"
+        ]
+      },
+      "options": [
+        "stay up late",
+        "in conclusion",
+        "as soon as possible",
+        "by mistake"
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-lower-2024:unit:12:ex:04-stay-up-late",
+      "status": "draft",
+      "stem": "下列哪一项是本单元可迁移短语/功能表达？"
+    },
+    {
+      "answer": "羊",
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:12",
+      "difficulty": 0.28,
+      "explanation": "该题检查本单元词汇义项。",
+      "knowledge_point_key": "pep-grade7-lower-2024:unit:12:vocabulary:sheep",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:12",
+          "knowledge_point_key": "pep-grade7-lower-2024:unit:12:vocabulary:sheep",
+          "source_stable_id": "pep-grade7-lower-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "requires_review": true,
+        "source": "curated_public_textbook_seed",
+        "warnings": [
+          "generated_from_lower_draft_content"
+        ]
+      },
+      "options": [
+        "羊",
+        "机场",
+        "科学家",
+        "电影院"
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-lower-2024:unit:12:ex:05-sheep",
+      "status": "draft",
+      "stem": "选择与“sheep”对应的本单元中文义项。"
+    },
+    {
+      "answer": "I played badminton.",
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:12",
+      "difficulty": 0.28,
+      "explanation": "该句来自本单元目标语言框架的整理。",
+      "knowledge_point_key": "pep-grade7-lower-2024:unit:12:sentence_pattern:i-played-badminton",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:12",
+          "knowledge_point_key": "pep-grade7-lower-2024:unit:12:sentence_pattern:i-played-badminton",
+          "source_stable_id": "pep-grade7-lower-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "requires_review": true,
+        "source": "curated_public_textbook_seed",
+        "warnings": [
+          "generated_from_lower_draft_content"
+        ]
+      },
+      "options": [
+        "I played badminton.",
+        "I have finished the report.",
+        "Although it rained, we left.",
+        "The book was written in 1999."
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-lower-2024:unit:12:ex:06-i-played-badminton",
+      "status": "draft",
+      "stem": "下列哪一句也属于本单元目标语言？"
+    }
+  ],
+  "extraction_gaps": [
+    {
+      "description": "听力活动需要配套音频，暂不进入公共默认学习流。",
+      "gap_type": "audio_required",
+      "scope": "pep-grade7-lower-2024:unit:12",
+      "suggested_future_handling": "后续接入音频资源和听力题型后再结构化。"
+    },
+    {
+      "description": "结对/小组互动活动不适合直接作为稳定自动评分题。",
+      "gap_type": "pair_work",
+      "scope": "pep-grade7-lower-2024:unit:12",
+      "suggested_future_handling": "后续作为课堂互动或口语任务模板处理。"
+    },
+    {
+      "description": "长课文、整页练习或连续对话不写入 seed pack。",
+      "gap_type": "copyright_sensitive_long_text",
+      "scope": "pep-grade7-lower-2024:unit:12",
+      "suggested_future_handling": "仅保存短摘要和知识点，必要时通过受控证据摘录展示。"
+    },
+    {
+      "description": "该册 PDF 文本层为空，本单元短项来自人工整理，需后续 OCR/layout 校对。",
+      "gap_type": "low_confidence_layout",
+      "scope": "pep-grade7-lower-2024:unit:12",
+      "suggested_future_handling": "用 OCR/layout-aware pipeline 回填页内证据并复核词表。"
+    }
+  ],
+  "knowledge_points": [
+    {
+      "content": {
+        "confidence": 0.9,
+        "display_group": "unit_intro",
+        "evidence": {
+          "page_label": "P.67",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "requires_review": false,
+        "role": "unit_overview",
+        "source_unit_subtitle": "What did you do last weekend?",
+        "source_unit_title": "Unit 12",
+        "theme": "周末活动与过去事件",
+        "unit_order": 12,
+        "warnings": [
+          "lower_pdf_text_layer_empty"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:12",
+      "difficulty": 0.18,
+      "source_page": "P.67",
+      "stable_key": "pep-grade7-lower-2024:unit:12:text_note:unit-12-overview",
+      "status": "published",
+      "summary": "本单元主题：周末活动与过去事件；核心标题表达为“What did you do last weekend?”。",
+      "title": "Unit 12 overview",
+      "type": "text_note"
+    },
+    {
+      "content": {
+        "chinese_meaning": "扎营",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "camp ... 扎营",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "camp",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 12,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:12",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:12:vocabulary:camp",
+      "status": "draft",
+      "summary": "扎营",
+      "title": "camp",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "湖",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "lake ... 湖",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "lake",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 12,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:12",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:12:vocabulary:lake",
+      "status": "draft",
+      "summary": "湖",
+      "title": "lake",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "海滩",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "beach ... 海滩",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "beach",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 12,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:12",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:12:vocabulary:beach",
+      "status": "draft",
+      "summary": "海滩",
+      "title": "beach",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "羽毛球",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "badminton ... 羽毛球",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "badminton",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 12,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:12",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:12:vocabulary:badminton",
+      "status": "draft",
+      "summary": "羽毛球",
+      "title": "badminton",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "羊",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "sheep ... 羊",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "sheep",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 12,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:12",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:12:vocabulary:sheep",
+      "status": "draft",
+      "summary": "羊",
+      "title": "sheep",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "自然的",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "natural ... 自然的",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "natural",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 12,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:12",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:12:vocabulary:natural",
+      "status": "draft",
+      "summary": "自然的",
+      "title": "natural",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "游客",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "visitor ... 游客",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "visitor",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 12,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:12",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:12:vocabulary:visitor",
+      "status": "draft",
+      "summary": "游客",
+      "title": "visitor",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "疲倦的",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "tired ... 疲倦的",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "tired",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 12,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:12",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:12:vocabulary:tired",
+      "status": "draft",
+      "summary": "疲倦的",
+      "title": "tired",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "停留",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "stay ... 停留",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "stay",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 12,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:12",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:12:vocabulary:stay",
+      "status": "draft",
+      "summary": "停留",
+      "title": "stay",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "深夜不睡",
+        "confidence": 0.72,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "stay up late ... 深夜不睡",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "stay up late",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_phrase",
+        "unit_order": 12,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:12",
+      "difficulty": 0.28,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:12:phrase:stay-up-late",
+      "status": "draft",
+      "summary": "深夜不睡",
+      "title": "stay up late",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "chinese_meaning": "离开",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "away ... 离开",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "away",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 12,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:12",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:12:vocabulary:away",
+      "status": "draft",
+      "summary": "离开",
+      "title": "away",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "跑开",
+        "confidence": 0.72,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "run away ... 跑开",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "run away",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_phrase",
+        "unit_order": 12,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:12",
+      "difficulty": 0.28,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:12:phrase:run-away",
+      "status": "draft",
+      "summary": "跑开",
+      "title": "run away",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "chinese_meaning": "老鼠",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "mouse ... 老鼠",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "mouse",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 12,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:12",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:12:vocabulary:mouse",
+      "status": "draft",
+      "summary": "老鼠",
+      "title": "mouse",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "幼小的",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "baby ... 幼小的",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "baby",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 12,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:12",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:12:vocabulary:baby",
+      "status": "draft",
+      "summary": "幼小的",
+      "title": "baby",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "呼叫",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "shout ... 呼叫",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "shout",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 12,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:12",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:12:vocabulary:shout",
+      "status": "draft",
+      "summary": "呼叫",
+      "title": "shout",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "冲……大声叫嚷",
+        "confidence": 0.72,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "shout at ... 冲……大声叫嚷",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "shout at",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_phrase",
+        "unit_order": 12,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:12",
+      "difficulty": 0.28,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:12:phrase:shout-at",
+      "status": "draft",
+      "summary": "冲……大声叫嚷",
+      "title": "shout at",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "chinese_meaning": "语言",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "language ... 语言",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "language",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 12,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:12",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:12:vocabulary:language",
+      "status": "draft",
+      "summary": "语言",
+      "title": "language",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "飞",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "fly ... 飞",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "fly",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 12,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:12",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:12:vocabulary:fly",
+      "status": "draft",
+      "summary": "飞",
+      "title": "fly",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "风筝",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "kite ... 风筝",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "kite",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 12,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:12",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:12:vocabulary:kite",
+      "status": "draft",
+      "summary": "风筝",
+      "title": "kite",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "放风筝",
+        "confidence": 0.72,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "fly a kite ... 放风筝",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "fly a kite",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_phrase",
+        "unit_order": 12,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:12",
+      "difficulty": 0.28,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:12:phrase:fly-a-kite",
+      "status": "draft",
+      "summary": "放风筝",
+      "title": "fly a kite",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "chinese_meaning": "高的",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "high ... 高的",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "high",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 12,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:12",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:12:vocabulary:high",
+      "status": "draft",
+      "summary": "高的",
+      "title": "high",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "中学",
+        "confidence": 0.72,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "high school ... 中学",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "high school",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_phrase",
+        "unit_order": 12,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:12",
+      "difficulty": 0.28,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:12:phrase:high-school",
+      "status": "draft",
+      "summary": "中学",
+      "title": "high school",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "chinese_meaning": "以前",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "ago ... 以前",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "ago",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 12,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:12",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:12:vocabulary:ago",
+      "status": "draft",
+      "summary": "以前",
+      "title": "ago",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "印度",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "India ... 印度",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "India",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 12,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:12",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:12:vocabulary:india",
+      "status": "draft",
+      "summary": "印度",
+      "title": "India",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "帐篷",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "tent ... 帐篷",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "tent",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 12,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:12",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:12:vocabulary:tent",
+      "status": "draft",
+      "summary": "帐篷",
+      "title": "tent",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "搭起",
+        "confidence": 0.72,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "put up ... 搭起",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "put up",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_phrase",
+        "unit_order": 12,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:12",
+      "difficulty": 0.28,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:12:phrase:put-up",
+      "status": "draft",
+      "summary": "搭起",
+      "title": "put up",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "chinese_meaning": "月亮",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "moon ... 月亮",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "moon",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 12,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:12",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:12:vocabulary:moon",
+      "status": "draft",
+      "summary": "月亮",
+      "title": "moon",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "惊奇",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "surprise ... 惊奇",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "surprise",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 12,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:12",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:12:vocabulary:surprise",
+      "status": "draft",
+      "summary": "惊奇",
+      "title": "surprise",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "蛇",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "snake ... 蛇",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "snake",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 12,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:12",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:12:vocabulary:snake",
+      "status": "draft",
+      "summary": "蛇",
+      "title": "snake",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "惊慌的",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "scared ... 惊慌的",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "scared",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 12,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:12",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:12:vocabulary:scared",
+      "status": "draft",
+      "summary": "惊慌的",
+      "title": "scared",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "移动",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "move ... 移动",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "move",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 12,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:12",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:12:vocabulary:move",
+      "status": "draft",
+      "summary": "移动",
+      "title": "move",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "对……大声喊",
+        "confidence": 0.72,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "shout to ... 对……大声喊",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "shout to",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_phrase",
+        "unit_order": 12,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:12",
+      "difficulty": 0.28,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:12:phrase:shout-to",
+      "status": "draft",
+      "summary": "对……大声喊",
+      "title": "shout to",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "chinese_meaning": "开始",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "start ... 开始",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "start",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 12,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:12",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:12:vocabulary:start",
+      "status": "draft",
+      "summary": "开始",
+      "title": "start",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "跳",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "jump ... 跳",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "jump",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 12,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:12",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:12:vocabulary:jump",
+      "status": "draft",
+      "summary": "跳",
+      "title": "jump",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "弄醒",
+        "confidence": 0.72,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "wake up ... 弄醒",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "wake up",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_phrase",
+        "unit_order": 12,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:12",
+      "difficulty": 0.28,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:12:phrase:wake-up",
+      "status": "draft",
+      "summary": "弄醒",
+      "title": "wake up",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "chinese_meaning": "到……里面",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "into ... 到……里面",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "into",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 12,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:12",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:12:vocabulary:into",
+      "status": "draft",
+      "summary": "到……里面",
+      "title": "into",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "森林",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "forest ... 森林",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "forest",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 12,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:12",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:12:vocabulary:forest",
+      "status": "draft",
+      "summary": "森林",
+      "title": "forest",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "耳朵",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "ear ... 耳朵",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "ear",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 12,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:12",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:12:vocabulary:ear",
+      "status": "draft",
+      "summary": "耳朵",
+      "title": "ear",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "Unit pages",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "phrase": "get a surprise",
+        "requires_review": true,
+        "role": "unit_phrase",
+        "unit_order": 12,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:12",
+      "difficulty": 0.28,
+      "source_page": "Unit pages",
+      "stable_key": "pep-grade7-lower-2024:unit:12:phrase:get-a-surprise",
+      "status": "draft",
+      "summary": "本单元可迁移短语或功能表达：get a surprise。",
+      "title": "get a surprise",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "sentence_patterns",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "pattern": "What did you do last weekend?",
+        "requires_review": true,
+        "role": "target_language",
+        "unit_order": 12,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:12",
+      "difficulty": 0.32,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-lower-2024:unit:12:sentence_pattern:what-did-you-do-last-weekend",
+      "status": "draft",
+      "summary": "核心句式：What did you do last weekend?",
+      "title": "What did you do last weekend?",
+      "type": "sentence_pattern"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "sentence_patterns",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "pattern": "I played badminton.",
+        "requires_review": true,
+        "role": "target_language",
+        "unit_order": 12,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:12",
+      "difficulty": 0.32,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-lower-2024:unit:12:sentence_pattern:i-played-badminton",
+      "status": "draft",
+      "summary": "核心句式：I played badminton.",
+      "title": "I played badminton.",
+      "type": "sentence_pattern"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "sentence_patterns",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "pattern": "Who did she go with?",
+        "requires_review": true,
+        "role": "target_language",
+        "unit_order": 12,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:12",
+      "difficulty": 0.32,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-lower-2024:unit:12:sentence_pattern:who-did-she-go-with",
+      "status": "draft",
+      "summary": "核心句式：Who did she go with?",
+      "title": "Who did she go with?",
+      "type": "sentence_pattern"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "sentence_patterns",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "pattern": "I was so tired.",
+        "requires_review": true,
+        "role": "target_language",
+        "unit_order": 12,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:12",
+      "difficulty": 0.32,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-lower-2024:unit:12:sentence_pattern:i-was-so-tired",
+      "status": "draft",
+      "summary": "核心句式：I was so tired.",
+      "title": "I was so tired.",
+      "type": "sentence_pattern"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "grammar",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "focus": "一般过去时实义动词问答",
+        "related_units": [
+          "Unit 12"
+        ],
+        "requires_review": true,
+        "role": "grammar_focus",
+        "unit_order": 12,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:12",
+      "difficulty": 0.38,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-lower-2024:unit:12:grammar:zh-d1409edd72",
+      "status": "draft",
+      "summary": "一般过去时实义动词问答",
+      "title": "一般过去时实义动词问答",
+      "type": "grammar"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "grammar",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "focus": "what/who 引导过去时问句",
+        "related_units": [
+          "Unit 12"
+        ],
+        "requires_review": true,
+        "role": "grammar_focus",
+        "unit_order": 12,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:12",
+      "difficulty": 0.38,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-lower-2024:unit:12:grammar:what-who",
+      "status": "draft",
+      "summary": "what/who 引导过去时问句",
+      "title": "what/who 引导过去时问句",
+      "type": "grammar"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "grammar",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "focus": "时间状语 last weekend/ago",
+        "related_units": [
+          "Unit 12"
+        ],
+        "requires_review": true,
+        "role": "grammar_focus",
+        "unit_order": 12,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:12",
+      "difficulty": 0.38,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-lower-2024:unit:12:grammar:last-weekend-ago",
+      "status": "draft",
+      "summary": "时间状语 last weekend/ago",
+      "title": "时间状语 last weekend/ago",
+      "type": "grammar"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "pronunciation",
+        "evidence": {
+          "page_label": "Pronunciation",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "focus": "did 问句与过去时间短语重音",
+        "requires_review": true,
+        "role": "pronunciation_note",
+        "unit_order": 12,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:12",
+      "difficulty": 0.28,
+      "source_page": "Pronunciation",
+      "stable_key": "pep-grade7-lower-2024:unit:12:pronunciation:did",
+      "status": "draft",
+      "summary": "语音关注点：did 问句与过去时间短语重音。",
+      "title": "did 问句与过去时间短语重音",
+      "type": "pronunciation"
+    }
+  ],
+  "schema_version": "public_textbook_unit.v2",
+  "source_stable_id": "pep-grade7-lower-2024",
+  "unit": {
+    "end_page": "P.72",
+    "ordinal": 12,
+    "start_page": "P.67",
+    "subtitle": "What did you do last weekend?",
+    "title": "Unit 12"
+  }
+}

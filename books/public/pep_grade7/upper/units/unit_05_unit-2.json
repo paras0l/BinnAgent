@@ -1,0 +1,1531 @@
+{
+  "curriculum_node_key": "pep-grade7-upper-2024:unit:05",
+  "exercise_questions": [
+    {
+      "answer": "姐；妹",
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:05",
+      "difficulty": 0.28,
+      "explanation": "sister 的本单元义项是：姐；妹。",
+      "knowledge_point_key": "pep-grade7-upper-2024:unit:05:vocabulary:sister",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:05",
+          "knowledge_point_key": "pep-grade7-upper-2024:unit:05:vocabulary:sister",
+          "source_stable_id": "pep-grade7-upper-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "source": "curated_public_textbook_seed"
+      },
+      "options": [
+        "姐；妹",
+        "母亲；妈妈",
+        "父亲；爸爸",
+        "父（母）亲"
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-upper-2024:unit:05:ex:01-sister",
+      "status": "published",
+      "stem": "“sister”在本单元词表中的意思最接近哪一项？"
+    },
+    {
+      "answer": "This is my sister.",
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:05",
+      "difficulty": 0.28,
+      "explanation": "本单元核心句式包括“This is my sister.”。",
+      "knowledge_point_key": "pep-grade7-upper-2024:unit:05:sentence_pattern:this-is-my-sister",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:05",
+          "knowledge_point_key": "pep-grade7-upper-2024:unit:05:sentence_pattern:this-is-my-sister",
+          "source_stable_id": "pep-grade7-upper-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "source": "curated_public_textbook_seed"
+      },
+      "options": [
+        "This is my sister.",
+        "Have a good day!",
+        "family photo",
+        "sister"
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-upper-2024:unit:05:ex:02-this-is-my-sister",
+      "status": "published",
+      "stem": "围绕“家庭成员介绍”，下列哪一句最贴近本单元核心句式？"
+    },
+    {
+      "answer": "指示代词 this/that/these/those",
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:05",
+      "difficulty": 0.28,
+      "explanation": "本单元语法重点是：指示代词 this/that/these/those。",
+      "knowledge_point_key": "pep-grade7-upper-2024:unit:05:grammar:this-that-these-those",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:05",
+          "knowledge_point_key": "pep-grade7-upper-2024:unit:05:grammar:this-that-these-those",
+          "source_stable_id": "pep-grade7-upper-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "source": "curated_public_textbook_seed"
+      },
+      "options": [
+        "指示代词 this/that/these/those",
+        "过去完成时",
+        "定语从句",
+        "虚拟语气"
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-upper-2024:unit:05:ex:03-this-that-these-those",
+      "status": "published",
+      "stem": "本单元语法重点最接近哪一项？"
+    },
+    {
+      "answer": "Have a good day!",
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:05",
+      "difficulty": 0.28,
+      "explanation": "“Have a good day!”属于本单元短语或功能表达。",
+      "knowledge_point_key": "pep-grade7-upper-2024:unit:05:phrase:have-a-good-day",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:05",
+          "knowledge_point_key": "pep-grade7-upper-2024:unit:05:phrase:have-a-good-day",
+          "source_stable_id": "pep-grade7-upper-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "source": "curated_public_textbook_seed"
+      },
+      "options": [
+        "Have a good day!",
+        "in conclusion",
+        "as soon as possible",
+        "by mistake"
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-upper-2024:unit:05:ex:04-have-a-good-day",
+      "status": "published",
+      "stem": "下列哪一项是本单元可迁移短语/功能表达？"
+    },
+    {
+      "answer": "兄；弟",
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:05",
+      "difficulty": 0.28,
+      "explanation": "该题检查本单元词汇义项。",
+      "knowledge_point_key": "pep-grade7-upper-2024:unit:05:vocabulary:brother",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:05",
+          "knowledge_point_key": "pep-grade7-upper-2024:unit:05:vocabulary:brother",
+          "source_stable_id": "pep-grade7-upper-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "source": "curated_public_textbook_seed"
+      },
+      "options": [
+        "兄；弟",
+        "机场",
+        "科学家",
+        "电影院"
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-upper-2024:unit:05:ex:05-brother",
+      "status": "published",
+      "stem": "选择与“brother”对应的本单元中文义项。"
+    },
+    {
+      "answer": "These are my brothers.",
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:05",
+      "difficulty": 0.28,
+      "explanation": "该句来自本单元目标语言框架的整理。",
+      "knowledge_point_key": "pep-grade7-upper-2024:unit:05:sentence_pattern:these-are-my-brothers",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:05",
+          "knowledge_point_key": "pep-grade7-upper-2024:unit:05:sentence_pattern:these-are-my-brothers",
+          "source_stable_id": "pep-grade7-upper-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "source": "curated_public_textbook_seed"
+      },
+      "options": [
+        "These are my brothers.",
+        "I have finished the report.",
+        "Although it rained, we left.",
+        "The book was written in 1999."
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-upper-2024:unit:05:ex:06-these-are-my-brothers",
+      "status": "published",
+      "stem": "下列哪一句也属于本单元目标语言？"
+    }
+  ],
+  "extraction_gaps": [
+    {
+      "description": "听力活动需要配套音频，暂不进入公共默认学习流。",
+      "gap_type": "audio_required",
+      "scope": "pep-grade7-upper-2024:unit:05",
+      "suggested_future_handling": "后续接入音频资源和听力题型后再结构化。"
+    },
+    {
+      "description": "结对/小组互动活动不适合直接作为稳定自动评分题。",
+      "gap_type": "pair_work",
+      "scope": "pep-grade7-upper-2024:unit:05",
+      "suggested_future_handling": "后续作为课堂互动或口语任务模板处理。"
+    }
+  ],
+  "knowledge_points": [
+    {
+      "content": {
+        "confidence": 0.95,
+        "display_group": "unit_intro",
+        "evidence": {
+          "page_label": "P.19",
+          "raw_line_excerpt": null,
+          "source": "pdf_curated_extract"
+        },
+        "requires_review": false,
+        "role": "unit_overview",
+        "source_unit_subtitle": "This is my sister.",
+        "source_unit_title": "Unit 2",
+        "theme": "家庭成员介绍",
+        "unit_order": 5,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:05",
+      "difficulty": 0.18,
+      "source_page": "P.19",
+      "stable_key": "pep-grade7-upper-2024:unit:05:text_note:unit-2-overview",
+      "status": "published",
+      "summary": "本单元主题：家庭成员介绍；核心标题表达为“This is my sister.”。",
+      "title": "Unit 2 overview",
+      "type": "text_note"
+    },
+    {
+      "content": {
+        "chinese_meaning": "姐；妹",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.7",
+          "raw_line_excerpt": "sister /sIst@(r)/ n. 姐；妹 p.7",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "sister",
+        "part_of_speech": "n.",
+        "phonetic": "/sIst@(r)/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 5,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:05",
+      "difficulty": 0.22,
+      "source_page": "P.7",
+      "stable_key": "pep-grade7-upper-2024:unit:05:vocabulary:sister",
+      "status": "published",
+      "summary": "姐；妹",
+      "title": "sister",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "母亲；妈妈",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.7",
+          "raw_line_excerpt": "mother /mVD@(r)/ n. 母亲；妈妈 p.7",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "mother",
+        "part_of_speech": "n.",
+        "phonetic": "/mVD@(r)/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 5,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:05",
+      "difficulty": 0.22,
+      "source_page": "P.7",
+      "stable_key": "pep-grade7-upper-2024:unit:05:vocabulary:mother",
+      "status": "published",
+      "summary": "母亲；妈妈",
+      "title": "mother",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "父亲；爸爸",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.7",
+          "raw_line_excerpt": "father /fA:D@(r)/ n. 父亲；爸爸 p.7",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "father",
+        "part_of_speech": "n.",
+        "phonetic": "/fA:D@(r)/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 5,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:05",
+      "difficulty": 0.22,
+      "source_page": "P.7",
+      "stable_key": "pep-grade7-upper-2024:unit:05:vocabulary:father",
+      "status": "published",
+      "summary": "父亲；爸爸",
+      "title": "father",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "父（母）亲",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.7",
+          "raw_line_excerpt": "parent /pe@r@nt/, /per@nt/ n. 父（母）亲 p.7",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "parent",
+        "part_of_speech": "n.",
+        "phonetic": "/pe@r@nt/, /per@nt/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 5,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:05",
+      "difficulty": 0.22,
+      "source_page": "P.7",
+      "stable_key": "pep-grade7-upper-2024:unit:05:vocabulary:parent",
+      "status": "published",
+      "summary": "父（母）亲",
+      "title": "parent",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "兄；弟",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.7",
+          "raw_line_excerpt": "brother /brVD@(r)/ n. 兄；弟 p.7",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "brother",
+        "part_of_speech": "n.",
+        "phonetic": "/brVD@(r)/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 5,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:05",
+      "difficulty": 0.22,
+      "source_page": "P.7",
+      "stable_key": "pep-grade7-upper-2024:unit:05:vocabulary:brother",
+      "status": "published",
+      "summary": "兄；弟",
+      "title": "brother",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "（外）祖母；奶奶；外婆；姥姥",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.7",
+          "raw_line_excerpt": "grandmother /gr{nmVD@(r)/ n. （外）祖母；奶奶；外婆；姥姥 p.7",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "grandmother",
+        "part_of_speech": "n.",
+        "phonetic": "/gr{nmVD@(r)/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 5,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:05",
+      "difficulty": 0.22,
+      "source_page": "P.7",
+      "stable_key": "pep-grade7-upper-2024:unit:05:vocabulary:grandmother",
+      "status": "published",
+      "summary": "（外）祖母；奶奶；外婆；姥姥",
+      "title": "grandmother",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "（外）祖父；爷爷；外公；姥爷",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.7",
+          "raw_line_excerpt": "grandfather /gr{nfA:D@(r)/ n. （外）祖父；爷爷；外公；姥爷 p.7",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "grandfather",
+        "part_of_speech": "n.",
+        "phonetic": "/gr{nfA:D@(r)/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 5,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:05",
+      "difficulty": 0.22,
+      "source_page": "P.7",
+      "stable_key": "pep-grade7-upper-2024:unit:05:vocabulary:grandfather",
+      "status": "published",
+      "summary": "（外）祖父；爷爷；外公；姥爷",
+      "title": "grandfather",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "祖父（母） ；外祖父（母）",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.7",
+          "raw_line_excerpt": "grandparent /gr{npe@r@nt/, / gr{nper@nt/ n. 祖父（母） ；外祖父（母） p.7",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "grandparent",
+        "part_of_speech": "n.",
+        "phonetic": "/gr{npe@r@nt/, / gr{nper@nt/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 5,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:05",
+      "difficulty": 0.22,
+      "source_page": "P.7",
+      "stable_key": "pep-grade7-upper-2024:unit:05:vocabulary:grandparent",
+      "status": "published",
+      "summary": "祖父（母） ；外祖父（母）",
+      "title": "grandparent",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "家；家庭",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.7",
+          "raw_line_excerpt": "family /f{m@li/ n. 家；家庭 p.7",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "family",
+        "part_of_speech": "n.",
+        "phonetic": "/f{m@li/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 5,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:05",
+      "difficulty": 0.22,
+      "source_page": "P.7",
+      "stable_key": "pep-grade7-upper-2024:unit:05:vocabulary:family",
+      "status": "published",
+      "summary": "家；家庭",
+      "title": "family",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "那些",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.7",
+          "raw_line_excerpt": "those /D@Uz/ pron. 那些 p.7",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "those",
+        "part_of_speech": "pron.",
+        "phonetic": "/D@Uz/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 5,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:05",
+      "difficulty": 0.22,
+      "source_page": "P.7",
+      "stable_key": "pep-grade7-upper-2024:unit:05:vocabulary:those",
+      "status": "published",
+      "summary": "那些",
+      "title": "those",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "谁；什么人",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.7",
+          "raw_line_excerpt": "who /hu:/ pron. 谁；什么人 p.7",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "who",
+        "part_of_speech": "pron.",
+        "phonetic": "/hu:/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 5,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:05",
+      "difficulty": 0.22,
+      "source_page": "P.7",
+      "stable_key": "pep-grade7-upper-2024:unit:05:vocabulary:who",
+      "status": "published",
+      "summary": "谁；什么人",
+      "title": "who",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "哦；啊",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.7",
+          "raw_line_excerpt": "oh /@U/ interj. 哦；啊 p.7",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "oh",
+        "part_of_speech": "interj.",
+        "phonetic": "/@U/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 5,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:05",
+      "difficulty": 0.22,
+      "source_page": "P.7",
+      "stable_key": "pep-grade7-upper-2024:unit:05:vocabulary:oh",
+      "status": "published",
+      "summary": "哦；啊",
+      "title": "oh",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "这些",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.7",
+          "raw_line_excerpt": "these /Di:z/ pron. 这些 p.7",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "these",
+        "part_of_speech": "pron.",
+        "phonetic": "/Di:z/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 5,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:05",
+      "difficulty": 0.22,
+      "source_page": "P.7",
+      "stable_key": "pep-grade7-upper-2024:unit:05:vocabulary:these",
+      "status": "published",
+      "summary": "这些",
+      "title": "these",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "他（她、它）们",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.8",
+          "raw_line_excerpt": "they /DeI/ pron. 他（她、它）们 p.8",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "they",
+        "part_of_speech": "pron.",
+        "phonetic": "/DeI/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 5,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:05",
+      "difficulty": 0.22,
+      "source_page": "P.8",
+      "stable_key": "pep-grade7-upper-2024:unit:05:vocabulary:they",
+      "status": "published",
+      "summary": "他（她、它）们",
+      "title": "they",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "嗯；好吧",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.8",
+          "raw_line_excerpt": "well /wel/ interj. 嗯；好吧 p.8",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "well",
+        "part_of_speech": "interj.",
+        "phonetic": "/wel/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 5,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:05",
+      "difficulty": 0.22,
+      "source_page": "P.8",
+      "stable_key": "pep-grade7-upper-2024:unit:05:vocabulary:well",
+      "status": "published",
+      "summary": "嗯；好吧",
+      "title": "well",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "经受；经历",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.8",
+          "raw_line_excerpt": "have /h{v/ v. 经受；经历 p.8",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "have",
+        "part_of_speech": "v.",
+        "phonetic": "/h{v/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 5,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:05",
+      "difficulty": 0.22,
+      "source_page": "P.8",
+      "stable_key": "pep-grade7-upper-2024:unit:05:vocabulary:have",
+      "status": "published",
+      "summary": "经受；经历",
+      "title": "have",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "一天；一日；白天",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.8",
+          "raw_line_excerpt": "day /deI/ n. 一天；一日；白天 p.8",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "day",
+        "part_of_speech": "n.",
+        "phonetic": "/deI/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 5,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:05",
+      "difficulty": 0.22,
+      "source_page": "P.8",
+      "stable_key": "pep-grade7-upper-2024:unit:05:vocabulary:day",
+      "status": "published",
+      "summary": "一天；一日；白天",
+      "title": "day",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "（表示祝愿）过得愉快！",
+        "confidence": 0.95,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "P.8",
+          "raw_line_excerpt": "Have a good day! （表示祝愿）过得愉快！ p.8",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "Have a good day!",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": false,
+        "role": "unit_phrase",
+        "unit_order": 5,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:05",
+      "difficulty": 0.28,
+      "source_page": "P.8",
+      "stable_key": "pep-grade7-upper-2024:unit:05:phrase:have-a-good-day",
+      "status": "published",
+      "summary": "（表示祝愿）过得愉快！",
+      "title": "Have a good day!",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "chinese_meaning": "(= goodbye) 再见",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.8",
+          "raw_line_excerpt": "bye /baI/ interj. (= goodbye) 再见 p.8",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "bye",
+        "part_of_speech": "interj.",
+        "phonetic": "/baI/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 5,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:05",
+      "difficulty": 0.22,
+      "source_page": "P.8",
+      "stable_key": "pep-grade7-upper-2024:unit:05:vocabulary:bye",
+      "status": "published",
+      "summary": "(= goodbye) 再见",
+      "title": "bye",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "儿子",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.10",
+          "raw_line_excerpt": "son /sVn/ n. 儿子 p.10",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "son",
+        "part_of_speech": "n.",
+        "phonetic": "/sVn/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 5,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:05",
+      "difficulty": 0.22,
+      "source_page": "P.10",
+      "stable_key": "pep-grade7-upper-2024:unit:05:vocabulary:son",
+      "status": "published",
+      "summary": "儿子",
+      "title": "son",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "堂兄（弟、姊、 妹） ；表兄（弟、姊、妹）",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.10",
+          "raw_line_excerpt": "cousin /kVzn/ n. 堂兄（弟、姊、 妹） ；表兄（弟、姊、妹） p.10",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "cousin",
+        "part_of_speech": "n.",
+        "phonetic": "/kVzn/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 5,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:05",
+      "difficulty": 0.22,
+      "source_page": "P.10",
+      "stable_key": "pep-grade7-upper-2024:unit:05:vocabulary:cousin",
+      "status": "published",
+      "summary": "堂兄（弟、姊、 妹） ；表兄（弟、姊、妹）",
+      "title": "cousin",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "（外）祖父；爷爷；外公；姥爷",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.10",
+          "raw_line_excerpt": "grandpa /gr{npA:/ n. （外）祖父；爷爷；外公；姥爷 p.10",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "grandpa",
+        "part_of_speech": "n.",
+        "phonetic": "/gr{npA:/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 5,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:05",
+      "difficulty": 0.22,
+      "source_page": "P.10",
+      "stable_key": "pep-grade7-upper-2024:unit:05:vocabulary:grandpa",
+      "status": "published",
+      "summary": "（外）祖父；爷爷；外公；姥爷",
+      "title": "grandpa",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "（= mum）妈妈",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.10",
+          "raw_line_excerpt": "mom /mQm/, /mA:m/ n. （= mum）妈妈 p.10",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "mom",
+        "part_of_speech": "n.",
+        "phonetic": "/mQm/, /mA:m/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 5,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:05",
+      "difficulty": 0.22,
+      "source_page": "P.10",
+      "stable_key": "pep-grade7-upper-2024:unit:05:vocabulary:mom",
+      "status": "published",
+      "summary": "（= mum）妈妈",
+      "title": "mom",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "姑母；姨母； 伯母；婶母；舅母",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.10",
+          "raw_line_excerpt": "aunt /A:nt/, /{nt/ n. 姑母；姨母； 伯母；婶母；舅母 p.10",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "aunt",
+        "part_of_speech": "n.",
+        "phonetic": "/A:nt/, /{nt/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 5,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:05",
+      "difficulty": 0.22,
+      "source_page": "P.10",
+      "stable_key": "pep-grade7-upper-2024:unit:05:vocabulary:aunt",
+      "status": "published",
+      "summary": "姑母；姨母； 伯母；婶母；舅母",
+      "title": "aunt",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "（外）祖母；奶奶；外婆；姥姥",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.10",
+          "raw_line_excerpt": "grandma /gr{nmA:/ n. （外）祖母；奶奶；外婆；姥姥 p.10",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "grandma",
+        "part_of_speech": "n.",
+        "phonetic": "/gr{nmA:/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 5,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:05",
+      "difficulty": 0.22,
+      "source_page": "P.10",
+      "stable_key": "pep-grade7-upper-2024:unit:05:vocabulary:grandma",
+      "status": "published",
+      "summary": "（外）祖母；奶奶；外婆；姥姥",
+      "title": "grandma",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "爸爸",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.10",
+          "raw_line_excerpt": "dad /d{d/ n. 爸爸 p.10",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "dad",
+        "part_of_speech": "n.",
+        "phonetic": "/d{d/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 5,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:05",
+      "difficulty": 0.22,
+      "source_page": "P.10",
+      "stable_key": "pep-grade7-upper-2024:unit:05:vocabulary:dad",
+      "status": "published",
+      "summary": "爸爸",
+      "title": "dad",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "舅父；叔父；伯父； 姑父；姨父",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.10",
+          "raw_line_excerpt": "uncle /VNkl/ n. 舅父；叔父；伯父； 姑父；姨父 p.10",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "uncle",
+        "part_of_speech": "n.",
+        "phonetic": "/VNkl/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 5,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:05",
+      "difficulty": 0.22,
+      "source_page": "P.10",
+      "stable_key": "pep-grade7-upper-2024:unit:05:vocabulary:uncle",
+      "status": "published",
+      "summary": "舅父；叔父；伯父； 姑父；姨父",
+      "title": "uncle",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "女儿",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.10",
+          "raw_line_excerpt": "daughter /dO:t@(r)/ n. 女儿 p.10",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "daughter",
+        "part_of_speech": "n.",
+        "phonetic": "/dO:t@(r)/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 5,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:05",
+      "difficulty": 0.22,
+      "source_page": "P.10",
+      "stable_key": "pep-grade7-upper-2024:unit:05:vocabulary:daughter",
+      "status": "published",
+      "summary": "女儿",
+      "title": "daughter",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "（用以介绍 某人或某物）这就是；在这里",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.11",
+          "raw_line_excerpt": "here /hI@(r)/, /hIr/ adv. （用以介绍 某人或某物）这就是；在这里 p.11",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "here",
+        "part_of_speech": "adv.",
+        "phonetic": "/hI@(r)/, /hIr/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 5,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:05",
+      "difficulty": 0.22,
+      "source_page": "P.11",
+      "stable_key": "pep-grade7-upper-2024:unit:05:vocabulary:here",
+      "status": "published",
+      "summary": "（用以介绍 某人或某物）这就是；在这里",
+      "title": "here",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "照片",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.11",
+          "raw_line_excerpt": "photo /f@Ut@U/ n. 照片 p.11",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "photo",
+        "part_of_speech": "n.",
+        "phonetic": "/f@Ut@U/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 5,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:05",
+      "difficulty": 0.22,
+      "source_page": "P.11",
+      "stable_key": "pep-grade7-upper-2024:unit:05:vocabulary:photo",
+      "status": "published",
+      "summary": "照片",
+      "title": "photo",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "属于（某 人或某物） ； 关于（某人或某物）",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.11",
+          "raw_line_excerpt": "of /Qv; @v/, /Vv; @v/ prep. 属于（某 人或某物） ； 关于（某人或某物） p.11",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "of",
+        "part_of_speech": "prep.",
+        "phonetic": "/Qv; @v/, /Vv; @v/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 5,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:05",
+      "difficulty": 0.22,
+      "source_page": "P.11",
+      "stable_key": "pep-grade7-upper-2024:unit:05:vocabulary:of",
+      "status": "published",
+      "summary": "属于（某 人或某物） ； 关于（某人或某物）",
+      "title": "of",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "& n. 下一个（的） ； 接下来（的）",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.11",
+          "raw_line_excerpt": "next /nekst/ adj. & n. 下一个（的） ； 接下来（的） p.11",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "next",
+        "part_of_speech": "adj.",
+        "phonetic": "/nekst/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 5,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:05",
+      "difficulty": 0.22,
+      "source_page": "P.11",
+      "stable_key": "pep-grade7-upper-2024:unit:05:vocabulary:next",
+      "status": "published",
+      "summary": "& n. 下一个（的） ； 接下来（的）",
+      "title": "next",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "照片；图画",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.11",
+          "raw_line_excerpt": "picture /pIktS@(r)/ n. 照片；图画 p.11",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "picture",
+        "part_of_speech": "n.",
+        "phonetic": "/pIktS@(r)/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 5,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:05",
+      "difficulty": 0.22,
+      "source_page": "P.11",
+      "stable_key": "pep-grade7-upper-2024:unit:05:vocabulary:picture",
+      "status": "published",
+      "summary": "照片；图画",
+      "title": "picture",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "女孩",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.11",
+          "raw_line_excerpt": "girl /g3:(r)l/ n. 女孩 p.11",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "girl",
+        "part_of_speech": "n.",
+        "phonetic": "/g3:(r)l/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 5,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:05",
+      "difficulty": 0.22,
+      "source_page": "P.11",
+      "stable_key": "pep-grade7-upper-2024:unit:05:vocabulary:girl",
+      "status": "published",
+      "summary": "女孩",
+      "title": "girl",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "狗",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.11",
+          "raw_line_excerpt": "dog /dQg/, /dO:g/ n. 狗 p.11",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "dog",
+        "part_of_speech": "n.",
+        "phonetic": "/dQg/, /dO:g/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 5,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:05",
+      "difficulty": 0.22,
+      "source_page": "P.11",
+      "stable_key": "pep-grade7-upper-2024:unit:05:vocabulary:dog",
+      "status": "published",
+      "summary": "狗",
+      "title": "dog",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "萨莉（女名）",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.8",
+          "raw_line_excerpt": "Sally /s{li/ 萨莉（女名） p.8",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "Sally",
+        "part_of_speech": null,
+        "phonetic": "/s{li/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 5,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:05",
+      "difficulty": 0.22,
+      "source_page": "P.8",
+      "stable_key": "pep-grade7-upper-2024:unit:05:vocabulary:sally",
+      "status": "published",
+      "summary": "萨莉（女名）",
+      "title": "Sally",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "凯特（女名）",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.8",
+          "raw_line_excerpt": "Kate /keIt/ 凯特（女名） p.8",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "Kate",
+        "part_of_speech": null,
+        "phonetic": "/keIt/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 5,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:05",
+      "difficulty": 0.22,
+      "source_page": "P.8",
+      "stable_key": "pep-grade7-upper-2024:unit:05:vocabulary:kate",
+      "status": "published",
+      "summary": "凯特（女名）",
+      "title": "Kate",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "保罗（男名）",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.8",
+          "raw_line_excerpt": "Paul /pO:l/ 保罗（男名） p.8",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "Paul",
+        "part_of_speech": null,
+        "phonetic": "/pO:l/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 5,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:05",
+      "difficulty": 0.22,
+      "source_page": "P.8",
+      "stable_key": "pep-grade7-upper-2024:unit:05:vocabulary:paul",
+      "status": "published",
+      "summary": "保罗（男名）",
+      "title": "Paul",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "confidence": 0.95,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "Unit pages",
+          "raw_line_excerpt": null,
+          "source": "pdf_curated_extract"
+        },
+        "phrase": "family photo",
+        "requires_review": false,
+        "role": "unit_phrase",
+        "unit_order": 5,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:05",
+      "difficulty": 0.28,
+      "source_page": "Unit pages",
+      "stable_key": "pep-grade7-upper-2024:unit:05:phrase:family-photo",
+      "status": "published",
+      "summary": "本单元可迁移短语或功能表达：family photo。",
+      "title": "family photo",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "confidence": 0.95,
+        "display_group": "sentence_patterns",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "pdf_curated_extract"
+        },
+        "pattern": "This is my sister.",
+        "requires_review": false,
+        "role": "target_language",
+        "unit_order": 5,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:05",
+      "difficulty": 0.32,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-upper-2024:unit:05:sentence_pattern:this-is-my-sister",
+      "status": "published",
+      "summary": "核心句式：This is my sister.",
+      "title": "This is my sister.",
+      "type": "sentence_pattern"
+    },
+    {
+      "content": {
+        "confidence": 0.95,
+        "display_group": "sentence_patterns",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "pdf_curated_extract"
+        },
+        "pattern": "These are my brothers.",
+        "requires_review": false,
+        "role": "target_language",
+        "unit_order": 5,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:05",
+      "difficulty": 0.32,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-upper-2024:unit:05:sentence_pattern:these-are-my-brothers",
+      "status": "published",
+      "summary": "核心句式：These are my brothers.",
+      "title": "These are my brothers.",
+      "type": "sentence_pattern"
+    },
+    {
+      "content": {
+        "confidence": 0.95,
+        "display_group": "sentence_patterns",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "pdf_curated_extract"
+        },
+        "pattern": "Who's she?",
+        "requires_review": false,
+        "role": "target_language",
+        "unit_order": 5,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:05",
+      "difficulty": 0.32,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-upper-2024:unit:05:sentence_pattern:whos-she",
+      "status": "published",
+      "summary": "核心句式：Who's she?",
+      "title": "Who's she?",
+      "type": "sentence_pattern"
+    },
+    {
+      "content": {
+        "confidence": 0.95,
+        "display_group": "sentence_patterns",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "pdf_curated_extract"
+        },
+        "pattern": "Are those your parents?",
+        "requires_review": false,
+        "role": "target_language",
+        "unit_order": 5,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:05",
+      "difficulty": 0.32,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-upper-2024:unit:05:sentence_pattern:are-those-your-parents",
+      "status": "published",
+      "summary": "核心句式：Are those your parents?",
+      "title": "Are those your parents?",
+      "type": "sentence_pattern"
+    },
+    {
+      "content": {
+        "confidence": 0.95,
+        "display_group": "grammar",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "pdf_curated_extract"
+        },
+        "focus": "指示代词 this/that/these/those",
+        "related_units": [
+          "Unit 5"
+        ],
+        "requires_review": false,
+        "role": "grammar_focus",
+        "unit_order": 5,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:05",
+      "difficulty": 0.38,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-upper-2024:unit:05:grammar:this-that-these-those",
+      "status": "published",
+      "summary": "指示代词 this/that/these/those",
+      "title": "指示代词 this/that/these/those",
+      "type": "grammar"
+    },
+    {
+      "content": {
+        "confidence": 0.95,
+        "display_group": "grammar",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "pdf_curated_extract"
+        },
+        "focus": "名词复数与家庭成员表达",
+        "related_units": [
+          "Unit 5"
+        ],
+        "requires_review": false,
+        "role": "grammar_focus",
+        "unit_order": 5,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:05",
+      "difficulty": 0.38,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-upper-2024:unit:05:grammar:zh-81a3bfa6e2",
+      "status": "published",
+      "summary": "名词复数与家庭成员表达",
+      "title": "名词复数与家庭成员表达",
+      "type": "grammar"
+    },
+    {
+      "content": {
+        "confidence": 0.95,
+        "display_group": "grammar",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "pdf_curated_extract"
+        },
+        "focus": "who 引导的特殊疑问句",
+        "related_units": [
+          "Unit 5"
+        ],
+        "requires_review": false,
+        "role": "grammar_focus",
+        "unit_order": 5,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:05",
+      "difficulty": 0.38,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-upper-2024:unit:05:grammar:who",
+      "status": "published",
+      "summary": "who 引导的特殊疑问句",
+      "title": "who 引导的特殊疑问句",
+      "type": "grammar"
+    },
+    {
+      "content": {
+        "confidence": 0.95,
+        "display_group": "pronunciation",
+        "evidence": {
+          "page_label": "Pronunciation",
+          "raw_line_excerpt": null,
+          "source": "pdf_curated_extract"
+        },
+        "focus": "/uː/ /ʊ/、/ɔː(r)/ 与 /ʌ/ 对比",
+        "requires_review": false,
+        "role": "pronunciation_note",
+        "unit_order": 5,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:05",
+      "difficulty": 0.28,
+      "source_page": "Pronunciation",
+      "stable_key": "pep-grade7-upper-2024:unit:05:pronunciation:u-r",
+      "status": "published",
+      "summary": "语音关注点：/uː/ /ʊ/、/ɔː(r)/ 与 /ʌ/ 对比。",
+      "title": "/uː/ /ʊ/、/ɔː(r)/ 与 /ʌ/ 对比",
+      "type": "pronunciation"
+    }
+  ],
+  "schema_version": "public_textbook_unit.v2",
+  "source_stable_id": "pep-grade7-upper-2024",
+  "unit": {
+    "end_page": "P.24",
+    "ordinal": 5,
+    "start_page": "P.19",
+    "subtitle": "This is my sister.",
+    "title": "Unit 2"
+  }
+}

@@ -1,0 +1,1669 @@
+{
+  "curriculum_node_key": "pep-grade7-lower-2024:unit:10",
+  "exercise_questions": [
+    {
+      "answer": "面条",
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:10",
+      "difficulty": 0.28,
+      "explanation": "noodle 的本单元义项是：面条。",
+      "knowledge_point_key": "pep-grade7-lower-2024:unit:10:vocabulary:noodle",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:10",
+          "knowledge_point_key": "pep-grade7-lower-2024:unit:10:vocabulary:noodle",
+          "source_stable_id": "pep-grade7-lower-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "requires_review": true,
+        "source": "curated_public_textbook_seed",
+        "warnings": [
+          "generated_from_lower_draft_content"
+        ]
+      },
+      "options": [
+        "面条",
+        "羊肉",
+        "牛肉",
+        "卷心菜"
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-lower-2024:unit:10:ex:01-noodle",
+      "status": "draft",
+      "stem": "“noodle”在本单元词表中的意思最接近哪一项？"
+    },
+    {
+      "answer": "What would you like?",
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:10",
+      "difficulty": 0.28,
+      "explanation": "本单元核心句式包括“What would you like?”。",
+      "knowledge_point_key": "pep-grade7-lower-2024:unit:10:sentence_pattern:what-would-you-like",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:10",
+          "knowledge_point_key": "pep-grade7-lower-2024:unit:10:sentence_pattern:what-would-you-like",
+          "source_stable_id": "pep-grade7-lower-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "requires_review": true,
+        "source": "curated_public_textbook_seed",
+        "warnings": [
+          "generated_from_lower_draft_content"
+        ]
+      },
+      "options": [
+        "What would you like?",
+        "would like",
+        "take order",
+        "noodle"
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-lower-2024:unit:10:ex:02-what-would-you-like",
+      "status": "draft",
+      "stem": "围绕“点餐与食物规格”，下列哪一句最贴近本单元核心句式？"
+    },
+    {
+      "answer": "would like 表礼貌点餐",
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:10",
+      "difficulty": 0.28,
+      "explanation": "本单元语法重点是：would like 表礼貌点餐。",
+      "knowledge_point_key": "pep-grade7-lower-2024:unit:10:grammar:would-like",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:10",
+          "knowledge_point_key": "pep-grade7-lower-2024:unit:10:grammar:would-like",
+          "source_stable_id": "pep-grade7-lower-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "requires_review": true,
+        "source": "curated_public_textbook_seed",
+        "warnings": [
+          "generated_from_lower_draft_content"
+        ]
+      },
+      "options": [
+        "would like 表礼貌点餐",
+        "过去完成时",
+        "定语从句",
+        "虚拟语气"
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-lower-2024:unit:10:ex:03-would-like",
+      "status": "draft",
+      "stem": "本单元语法重点最接近哪一项？"
+    },
+    {
+      "answer": "would like",
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:10",
+      "difficulty": 0.28,
+      "explanation": "“would like”属于本单元短语或功能表达。",
+      "knowledge_point_key": "pep-grade7-lower-2024:unit:10:phrase:would-like",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:10",
+          "knowledge_point_key": "pep-grade7-lower-2024:unit:10:phrase:would-like",
+          "source_stable_id": "pep-grade7-lower-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "requires_review": true,
+        "source": "curated_public_textbook_seed",
+        "warnings": [
+          "generated_from_lower_draft_content"
+        ]
+      },
+      "options": [
+        "would like",
+        "in conclusion",
+        "as soon as possible",
+        "by mistake"
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-lower-2024:unit:10:ex:04-would-like",
+      "status": "draft",
+      "stem": "下列哪一项是本单元可迁移短语/功能表达？"
+    },
+    {
+      "answer": "土豆",
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:10",
+      "difficulty": 0.28,
+      "explanation": "该题检查本单元词汇义项。",
+      "knowledge_point_key": "pep-grade7-lower-2024:unit:10:vocabulary:potato",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:10",
+          "knowledge_point_key": "pep-grade7-lower-2024:unit:10:vocabulary:potato",
+          "source_stable_id": "pep-grade7-lower-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "requires_review": true,
+        "source": "curated_public_textbook_seed",
+        "warnings": [
+          "generated_from_lower_draft_content"
+        ]
+      },
+      "options": [
+        "土豆",
+        "机场",
+        "科学家",
+        "电影院"
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-lower-2024:unit:10:ex:05-potato",
+      "status": "draft",
+      "stem": "选择与“potato”对应的本单元中文义项。"
+    },
+    {
+      "answer": "I'd like some noodles.",
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:10",
+      "difficulty": 0.28,
+      "explanation": "该句来自本单元目标语言框架的整理。",
+      "knowledge_point_key": "pep-grade7-lower-2024:unit:10:sentence_pattern:id-like-some-noodles",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:10",
+          "knowledge_point_key": "pep-grade7-lower-2024:unit:10:sentence_pattern:id-like-some-noodles",
+          "source_stable_id": "pep-grade7-lower-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "requires_review": true,
+        "source": "curated_public_textbook_seed",
+        "warnings": [
+          "generated_from_lower_draft_content"
+        ]
+      },
+      "options": [
+        "I'd like some noodles.",
+        "I have finished the report.",
+        "Although it rained, we left.",
+        "The book was written in 1999."
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-lower-2024:unit:10:ex:06-id-like-some-noodles",
+      "status": "draft",
+      "stem": "下列哪一句也属于本单元目标语言？"
+    }
+  ],
+  "extraction_gaps": [
+    {
+      "description": "听力活动需要配套音频，暂不进入公共默认学习流。",
+      "gap_type": "audio_required",
+      "scope": "pep-grade7-lower-2024:unit:10",
+      "suggested_future_handling": "后续接入音频资源和听力题型后再结构化。"
+    },
+    {
+      "description": "结对/小组互动活动不适合直接作为稳定自动评分题。",
+      "gap_type": "pair_work",
+      "scope": "pep-grade7-lower-2024:unit:10",
+      "suggested_future_handling": "后续作为课堂互动或口语任务模板处理。"
+    },
+    {
+      "description": "该册 PDF 文本层为空，本单元短项来自人工整理，需后续 OCR/layout 校对。",
+      "gap_type": "low_confidence_layout",
+      "scope": "pep-grade7-lower-2024:unit:10",
+      "suggested_future_handling": "用 OCR/layout-aware pipeline 回填页内证据并复核词表。"
+    }
+  ],
+  "knowledge_points": [
+    {
+      "content": {
+        "confidence": 0.9,
+        "display_group": "unit_intro",
+        "evidence": {
+          "page_label": "P.55",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "requires_review": false,
+        "role": "unit_overview",
+        "source_unit_subtitle": "I'd like some noodles.",
+        "source_unit_title": "Unit 10",
+        "theme": "点餐与食物规格",
+        "unit_order": 10,
+        "warnings": [
+          "lower_pdf_text_layer_empty"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:10",
+      "difficulty": 0.18,
+      "source_page": "P.55",
+      "stable_key": "pep-grade7-lower-2024:unit:10:text_note:unit-10-overview",
+      "status": "published",
+      "summary": "本单元主题：点餐与食物规格；核心标题表达为“I'd like some noodles.”。",
+      "title": "Unit 10 overview",
+      "type": "text_note"
+    },
+    {
+      "content": {
+        "chinese_meaning": "面条",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "noodle ... 面条",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "noodle",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 10,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:10",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:10:vocabulary:noodle",
+      "status": "draft",
+      "summary": "面条",
+      "title": "noodle",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "羊肉",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "mutton ... 羊肉",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "mutton",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 10,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:10",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:10:vocabulary:mutton",
+      "status": "draft",
+      "summary": "羊肉",
+      "title": "mutton",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "牛肉",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "beef ... 牛肉",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "beef",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 10,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:10",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:10:vocabulary:beef",
+      "status": "draft",
+      "summary": "牛肉",
+      "title": "beef",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "卷心菜",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "cabbage ... 卷心菜",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "cabbage",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 10,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:10",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:10:vocabulary:cabbage",
+      "status": "draft",
+      "summary": "卷心菜",
+      "title": "cabbage",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "土豆",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "potato ... 土豆",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "potato",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 10,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:10",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:10:vocabulary:potato",
+      "status": "draft",
+      "summary": "土豆",
+      "title": "potato",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "特色菜",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "special ... 特色菜",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "special",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 10,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:10",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:10:vocabulary:special",
+      "status": "draft",
+      "summary": "特色菜",
+      "title": "special",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "愿意",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "would ... 愿意",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "would",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 10,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:10",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:10:vocabulary:would",
+      "status": "draft",
+      "summary": "愿意",
+      "title": "would",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "愿意；喜欢",
+        "confidence": 0.72,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "would like ... 愿意；喜欢",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "would like",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_phrase",
+        "unit_order": 10,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:10",
+      "difficulty": 0.28,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:10:phrase:would-like",
+      "status": "draft",
+      "summary": "愿意；喜欢",
+      "title": "would like",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "chinese_meaning": "还；仍然",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "yet ... 还；仍然",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "yet",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 10,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:10",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:10:vocabulary:yet",
+      "status": "draft",
+      "summary": "还；仍然",
+      "title": "yet",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "大号的",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "large ... 大号的",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "large",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 10,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:10",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:10:vocabulary:large",
+      "status": "draft",
+      "summary": "大号的",
+      "title": "large",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "点菜；命令",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "order ... 点菜；命令",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "order",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 10,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:10",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:10:vocabulary:order",
+      "status": "draft",
+      "summary": "点菜；命令",
+      "title": "order",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "点菜",
+        "confidence": 0.72,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "take order ... 点菜",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "take order",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_phrase",
+        "unit_order": 10,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:10",
+      "difficulty": 0.28,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:10:phrase:take-order",
+      "status": "draft",
+      "summary": "点菜",
+      "title": "take order",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "chinese_meaning": "大小",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "size ... 大小",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "size",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 10,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:10",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:10:vocabulary:size",
+      "status": "draft",
+      "summary": "大小",
+      "title": "size",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "碗",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "bowl ... 碗",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "bowl",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 10,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:10",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:10:vocabulary:bowl",
+      "status": "draft",
+      "summary": "碗",
+      "title": "bowl",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "豆腐",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "tofu ... 豆腐",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "tofu",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 10,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:10",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:10:vocabulary:tofu",
+      "status": "draft",
+      "summary": "豆腐",
+      "title": "tofu",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "肉",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "meat ... 肉",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "meat",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 10,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:10",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:10:vocabulary:meat",
+      "status": "draft",
+      "summary": "肉",
+      "title": "meat",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "饺子",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "dumpling ... 饺子",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "dumpling",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 10,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:10",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:10:vocabulary:dumpling",
+      "status": "draft",
+      "summary": "饺子",
+      "title": "dumpling",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "粥",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "porridge ... 粥",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "porridge",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 10,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:10",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:10:vocabulary:porridge",
+      "status": "draft",
+      "summary": "粥",
+      "title": "porridge",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "洋葱",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "onion ... 洋葱",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "onion",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 10,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:10",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:10:vocabulary:onion",
+      "status": "draft",
+      "summary": "洋葱",
+      "title": "onion",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "鱼",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "fish ... 鱼",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "fish",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 10,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:10",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:10:vocabulary:fish",
+      "status": "draft",
+      "summary": "鱼",
+      "title": "fish",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "烙饼",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "pancake ... 烙饼",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "pancake",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 10,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:10",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:10:vocabulary:pancake",
+      "status": "draft",
+      "summary": "烙饼",
+      "title": "pancake",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "世界",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "world ... 世界",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "world",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 10,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:10",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:10:vocabulary:world",
+      "status": "draft",
+      "summary": "世界",
+      "title": "world",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "答案；回答",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "answer ... 答案；回答",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "answer",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 10,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:10",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:10:vocabulary:answer",
+      "status": "draft",
+      "summary": "答案；回答",
+      "title": "answer",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "不同的",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "different ... 不同的",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "different",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 10,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:10",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:10:vocabulary:different",
+      "status": "draft",
+      "summary": "不同的",
+      "title": "different",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "蛋糕",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "cake ... 蛋糕",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "cake",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 10,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:10",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:10:vocabulary:cake",
+      "status": "draft",
+      "summary": "蛋糕",
+      "title": "cake",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "蜡烛",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "candle ... 蜡烛",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "candle",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 10,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:10",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:10:vocabulary:candle",
+      "status": "draft",
+      "summary": "蜡烛",
+      "title": "candle",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "年龄",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "age ... 年龄",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "age",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 10,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:10",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:10:vocabulary:age",
+      "status": "draft",
+      "summary": "年龄",
+      "title": "age",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "许愿",
+        "confidence": 0.72,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "make a wish ... 许愿",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "make a wish",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_phrase",
+        "unit_order": 10,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:10",
+      "difficulty": 0.28,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:10:phrase:make-a-wish",
+      "status": "draft",
+      "summary": "许愿",
+      "title": "make a wish",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "chinese_meaning": "吹灭",
+        "confidence": 0.72,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "blow out ... 吹灭",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "blow out",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_phrase",
+        "unit_order": 10,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:10",
+      "difficulty": 0.28,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:10:phrase:blow-out",
+      "status": "draft",
+      "summary": "吹灭",
+      "title": "blow out",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "chinese_meaning": "如果",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "if ... 如果",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "if",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 10,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:10",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:10:vocabulary:if",
+      "status": "draft",
+      "summary": "如果",
+      "title": "if",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "将要",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "will ... 将要",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "will",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 10,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:10",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:10:vocabulary:will",
+      "status": "draft",
+      "summary": "将要",
+      "title": "will",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "糖果",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "candy ... 糖果",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "candy",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 10,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:10",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:10:vocabulary:candy",
+      "status": "draft",
+      "summary": "糖果",
+      "title": "candy",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "幸运的",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "lucky ... 幸运的",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "lucky",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 10,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:10",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:10:vocabulary:lucky",
+      "status": "draft",
+      "summary": "幸运的",
+      "title": "lucky",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "受欢迎的",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "popular ... 受欢迎的",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "popular",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 10,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:10",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:10:vocabulary:popular",
+      "status": "draft",
+      "summary": "受欢迎的",
+      "title": "popular",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "切碎",
+        "confidence": 0.72,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "cut up ... 切碎",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "cut up",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_phrase",
+        "unit_order": 10,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:10",
+      "difficulty": 0.28,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:10:phrase:cut-up",
+      "status": "draft",
+      "summary": "切碎",
+      "title": "cut up",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "chinese_meaning": "想法",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "idea ... 想法",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "idea",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 10,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:10",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:10:vocabulary:idea",
+      "status": "draft",
+      "summary": "想法",
+      "title": "idea",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "Unit pages",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "phrase": "one large bowl of",
+        "requires_review": true,
+        "role": "unit_phrase",
+        "unit_order": 10,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:10",
+      "difficulty": 0.28,
+      "source_page": "Unit pages",
+      "stable_key": "pep-grade7-lower-2024:unit:10:phrase:one-large-bowl-of",
+      "status": "draft",
+      "summary": "本单元可迁移短语或功能表达：one large bowl of。",
+      "title": "one large bowl of",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "Unit pages",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "phrase": "around the world",
+        "requires_review": true,
+        "role": "unit_phrase",
+        "unit_order": 10,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:10",
+      "difficulty": 0.28,
+      "source_page": "Unit pages",
+      "stable_key": "pep-grade7-lower-2024:unit:10:phrase:around-the-world",
+      "status": "draft",
+      "summary": "本单元可迁移短语或功能表达：around the world。",
+      "title": "around the world",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "sentence_patterns",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "pattern": "What would you like?",
+        "requires_review": true,
+        "role": "target_language",
+        "unit_order": 10,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:10",
+      "difficulty": 0.32,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-lower-2024:unit:10:sentence_pattern:what-would-you-like",
+      "status": "draft",
+      "summary": "核心句式：What would you like?",
+      "title": "What would you like?",
+      "type": "sentence_pattern"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "sentence_patterns",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "pattern": "I'd like some noodles.",
+        "requires_review": true,
+        "role": "target_language",
+        "unit_order": 10,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:10",
+      "difficulty": 0.32,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-lower-2024:unit:10:sentence_pattern:id-like-some-noodles",
+      "status": "draft",
+      "summary": "核心句式：I'd like some noodles.",
+      "title": "I'd like some noodles.",
+      "type": "sentence_pattern"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "sentence_patterns",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "pattern": "What size would you like?",
+        "requires_review": true,
+        "role": "target_language",
+        "unit_order": 10,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:10",
+      "difficulty": 0.32,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-lower-2024:unit:10:sentence_pattern:what-size-would-you-like",
+      "status": "draft",
+      "summary": "核心句式：What size would you like?",
+      "title": "What size would you like?",
+      "type": "sentence_pattern"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "sentence_patterns",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "pattern": "Would you like a large bowl?",
+        "requires_review": true,
+        "role": "target_language",
+        "unit_order": 10,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:10",
+      "difficulty": 0.32,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-lower-2024:unit:10:sentence_pattern:would-you-like-a-large-bowl",
+      "status": "draft",
+      "summary": "核心句式：Would you like a large bowl?",
+      "title": "Would you like a large bowl?",
+      "type": "sentence_pattern"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "grammar",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "focus": "would like 表礼貌点餐",
+        "related_units": [
+          "Unit 10"
+        ],
+        "requires_review": true,
+        "role": "grammar_focus",
+        "unit_order": 10,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:10",
+      "difficulty": 0.38,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-lower-2024:unit:10:grammar:would-like",
+      "status": "draft",
+      "summary": "would like 表礼貌点餐",
+      "title": "would like 表礼貌点餐",
+      "type": "grammar"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "grammar",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "focus": "some/any 与可数/不可数名词",
+        "related_units": [
+          "Unit 10"
+        ],
+        "requires_review": true,
+        "role": "grammar_focus",
+        "unit_order": 10,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:10",
+      "difficulty": 0.38,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-lower-2024:unit:10:grammar:some-any",
+      "status": "draft",
+      "summary": "some/any 与可数/不可数名词",
+      "title": "some/any 与可数/不可数名词",
+      "type": "grammar"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "grammar",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "focus": "名词作定语的食物表达",
+        "related_units": [
+          "Unit 10"
+        ],
+        "requires_review": true,
+        "role": "grammar_focus",
+        "unit_order": 10,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:10",
+      "difficulty": 0.38,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-lower-2024:unit:10:grammar:zh-625bc67a9a",
+      "status": "draft",
+      "summary": "名词作定语的食物表达",
+      "title": "名词作定语的食物表达",
+      "type": "grammar"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "pronunciation",
+        "evidence": {
+          "page_label": "Pronunciation",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "focus": "礼貌请求的语调",
+        "requires_review": true,
+        "role": "pronunciation_note",
+        "unit_order": 10,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:10",
+      "difficulty": 0.28,
+      "source_page": "Pronunciation",
+      "stable_key": "pep-grade7-lower-2024:unit:10:pronunciation:zh-0b4c9b73e9",
+      "status": "draft",
+      "summary": "语音关注点：礼貌请求的语调。",
+      "title": "礼貌请求的语调",
+      "type": "pronunciation"
+    }
+  ],
+  "schema_version": "public_textbook_unit.v2",
+  "source_stable_id": "pep-grade7-lower-2024",
+  "unit": {
+    "end_page": "P.60",
+    "ordinal": 10,
+    "start_page": "P.55",
+    "subtitle": "I'd like some noodles.",
+    "title": "Unit 10"
+  }
+}

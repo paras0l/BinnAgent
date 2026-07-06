@@ -1,0 +1,1565 @@
+{
+  "curriculum_node_key": "pep-grade7-upper-2024:unit:09",
+  "exercise_questions": [
+    {
+      "answer": "香蕉",
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:09",
+      "difficulty": 0.28,
+      "explanation": "banana 的本单元义项是：香蕉。",
+      "knowledge_point_key": "pep-grade7-upper-2024:unit:09:vocabulary:banana",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:09",
+          "knowledge_point_key": "pep-grade7-upper-2024:unit:09:vocabulary:banana",
+          "source_stable_id": "pep-grade7-upper-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "source": "curated_public_textbook_seed"
+      },
+      "options": [
+        "香蕉",
+        "汉堡包",
+        "西红柿",
+        "冰激凌"
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-upper-2024:unit:09:ex:01-banana",
+      "status": "published",
+      "stem": "“banana”在本单元词表中的意思最接近哪一项？"
+    },
+    {
+      "answer": "Do you like bananas?",
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:09",
+      "difficulty": 0.28,
+      "explanation": "本单元核心句式包括“Do you like bananas?”。",
+      "knowledge_point_key": "pep-grade7-upper-2024:unit:09:sentence_pattern:do-you-like-bananas",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:09",
+          "knowledge_point_key": "pep-grade7-upper-2024:unit:09:sentence_pattern:do-you-like-bananas",
+          "source_stable_id": "pep-grade7-upper-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "source": "curated_public_textbook_seed"
+      },
+      "options": [
+        "Do you like bananas?",
+        "think about",
+        "How about ...?",
+        "banana"
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-upper-2024:unit:09:ex:02-do-you-like-bananas",
+      "status": "published",
+      "stem": "围绕“食物与饮食习惯”，下列哪一句最贴近本单元核心句式？"
+    },
+    {
+      "answer": "可数名词与不可数名词",
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:09",
+      "difficulty": 0.28,
+      "explanation": "本单元语法重点是：可数名词与不可数名词。",
+      "knowledge_point_key": "pep-grade7-upper-2024:unit:09:grammar:zh-ebf08c123a",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:09",
+          "knowledge_point_key": "pep-grade7-upper-2024:unit:09:grammar:zh-ebf08c123a",
+          "source_stable_id": "pep-grade7-upper-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "source": "curated_public_textbook_seed"
+      },
+      "options": [
+        "可数名词与不可数名词",
+        "过去完成时",
+        "定语从句",
+        "虚拟语气"
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-upper-2024:unit:09:ex:03-zh-ebf08c123a",
+      "status": "published",
+      "stem": "本单元语法重点最接近哪一项？"
+    },
+    {
+      "answer": "think about",
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:09",
+      "difficulty": 0.28,
+      "explanation": "“think about”属于本单元短语或功能表达。",
+      "knowledge_point_key": "pep-grade7-upper-2024:unit:09:phrase:think-about",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:09",
+          "knowledge_point_key": "pep-grade7-upper-2024:unit:09:phrase:think-about",
+          "source_stable_id": "pep-grade7-upper-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "source": "curated_public_textbook_seed"
+      },
+      "options": [
+        "think about",
+        "in conclusion",
+        "as soon as possible",
+        "by mistake"
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-upper-2024:unit:09:ex:04-think-about",
+      "status": "published",
+      "stem": "下列哪一项是本单元可迁移短语/功能表达？"
+    },
+    {
+      "answer": "沙拉",
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:09",
+      "difficulty": 0.28,
+      "explanation": "该题检查本单元词汇义项。",
+      "knowledge_point_key": "pep-grade7-upper-2024:unit:09:vocabulary:salad",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:09",
+          "knowledge_point_key": "pep-grade7-upper-2024:unit:09:vocabulary:salad",
+          "source_stable_id": "pep-grade7-upper-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "source": "curated_public_textbook_seed"
+      },
+      "options": [
+        "沙拉",
+        "机场",
+        "科学家",
+        "电影院"
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-upper-2024:unit:09:ex:05-salad",
+      "status": "published",
+      "stem": "选择与“salad”对应的本单元中文义项。"
+    },
+    {
+      "answer": "Does she like tomatoes?",
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:09",
+      "difficulty": 0.28,
+      "explanation": "该句来自本单元目标语言框架的整理。",
+      "knowledge_point_key": "pep-grade7-upper-2024:unit:09:sentence_pattern:does-she-like-tomatoes",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:09",
+          "knowledge_point_key": "pep-grade7-upper-2024:unit:09:sentence_pattern:does-she-like-tomatoes",
+          "source_stable_id": "pep-grade7-upper-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "source": "curated_public_textbook_seed"
+      },
+      "options": [
+        "Does she like tomatoes?",
+        "I have finished the report.",
+        "Although it rained, we left.",
+        "The book was written in 1999."
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-upper-2024:unit:09:ex:06-does-she-like-tomatoes",
+      "status": "published",
+      "stem": "下列哪一句也属于本单元目标语言？"
+    }
+  ],
+  "extraction_gaps": [
+    {
+      "description": "听力活动需要配套音频，暂不进入公共默认学习流。",
+      "gap_type": "audio_required",
+      "scope": "pep-grade7-upper-2024:unit:09",
+      "suggested_future_handling": "后续接入音频资源和听力题型后再结构化。"
+    },
+    {
+      "description": "结对/小组互动活动不适合直接作为稳定自动评分题。",
+      "gap_type": "pair_work",
+      "scope": "pep-grade7-upper-2024:unit:09",
+      "suggested_future_handling": "后续作为课堂互动或口语任务模板处理。"
+    },
+    {
+      "description": "长课文、整页练习或连续对话不写入 seed pack。",
+      "gap_type": "copyright_sensitive_long_text",
+      "scope": "pep-grade7-upper-2024:unit:09",
+      "suggested_future_handling": "仅保存短摘要和知识点，必要时通过受控证据摘录展示。"
+    }
+  ],
+  "knowledge_points": [
+    {
+      "content": {
+        "confidence": 0.95,
+        "display_group": "unit_intro",
+        "evidence": {
+          "page_label": "P.43",
+          "raw_line_excerpt": null,
+          "source": "pdf_curated_extract"
+        },
+        "requires_review": false,
+        "role": "unit_overview",
+        "source_unit_subtitle": "Do you like bananas?",
+        "source_unit_title": "Unit 6",
+        "theme": "食物与饮食习惯",
+        "unit_order": 9,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:09",
+      "difficulty": 0.18,
+      "source_page": "P.43",
+      "stable_key": "pep-grade7-upper-2024:unit:09:text_note:unit-6-overview",
+      "status": "published",
+      "summary": "本单元主题：食物与饮食习惯；核心标题表达为“Do you like bananas?”。",
+      "title": "Unit 6 overview",
+      "type": "text_note"
+    },
+    {
+      "content": {
+        "chinese_meaning": "香蕉",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.31",
+          "raw_line_excerpt": "banana /b@nA:n@/, /b@n{n@/ n.香蕉 p.31",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "banana",
+        "part_of_speech": "n.",
+        "phonetic": "/b@nA:n@/, /b@n{n@/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 9,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:09",
+      "difficulty": 0.22,
+      "source_page": "P.31",
+      "stable_key": "pep-grade7-upper-2024:unit:09:vocabulary:banana",
+      "status": "published",
+      "summary": "香蕉",
+      "title": "banana",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "汉堡包",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.31",
+          "raw_line_excerpt": "hamburger /h{mb3:(r)g@(r)/ n.汉堡包 p.31",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "hamburger",
+        "part_of_speech": "n.",
+        "phonetic": "/h{mb3:(r)g@(r)/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 9,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:09",
+      "difficulty": 0.22,
+      "source_page": "P.31",
+      "stable_key": "pep-grade7-upper-2024:unit:09:vocabulary:hamburger",
+      "status": "published",
+      "summary": "汉堡包",
+      "title": "hamburger",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "西红柿",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.31",
+          "raw_line_excerpt": "tomato /t@mA:t@U/, /t@meIt@U/ n.西红柿 p.31",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "tomato",
+        "part_of_speech": "n.",
+        "phonetic": "/t@mA:t@U/, /t@meIt@U/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 9,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:09",
+      "difficulty": 0.22,
+      "source_page": "P.31",
+      "stable_key": "pep-grade7-upper-2024:unit:09:vocabulary:tomato",
+      "status": "published",
+      "summary": "西红柿",
+      "title": "tomato",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "冰激凌",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.31",
+          "raw_line_excerpt": "ice-cream /aIs kri:m/ n. 冰激凌 p.31",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "ice-cream",
+        "part_of_speech": "n.",
+        "phonetic": "/aIs kri:m/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 9,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:09",
+      "difficulty": 0.22,
+      "source_page": "P.31",
+      "stable_key": "pep-grade7-upper-2024:unit:09:vocabulary:ice-cream",
+      "status": "published",
+      "summary": "冰激凌",
+      "title": "ice-cream",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "沙拉",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.31",
+          "raw_line_excerpt": "salad /s{l@d/ n. 沙拉 p.31",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "salad",
+        "part_of_speech": "n.",
+        "phonetic": "/s{l@d/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 9,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:09",
+      "difficulty": 0.22,
+      "source_page": "P.31",
+      "stable_key": "pep-grade7-upper-2024:unit:09:vocabulary:salad",
+      "status": "published",
+      "summary": "沙拉",
+      "title": "salad",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "草莓",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.31",
+          "raw_line_excerpt": "strawberry /strO:b@ri/, /strO:beri/ n.草莓 p.31",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "strawberry",
+        "part_of_speech": "n.",
+        "phonetic": "/strO:b@ri/, /strO:beri/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 9,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:09",
+      "difficulty": 0.22,
+      "source_page": "P.31",
+      "stable_key": "pep-grade7-upper-2024:unit:09:vocabulary:strawberry",
+      "status": "published",
+      "summary": "草莓",
+      "title": "strawberry",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "梨",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.31",
+          "raw_line_excerpt": "pear /pe@(r)/, /per/ n.梨 p.31",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "pear",
+        "part_of_speech": "n.",
+        "phonetic": "/pe@(r)/, /per/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 9,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:09",
+      "difficulty": 0.22,
+      "source_page": "P.31",
+      "stable_key": "pep-grade7-upper-2024:unit:09:vocabulary:pear",
+      "status": "published",
+      "summary": "梨",
+      "title": "pear",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "牛奶",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.31",
+          "raw_line_excerpt": "milk /mIlk/ n. 牛奶 p.31",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "milk",
+        "part_of_speech": "n.",
+        "phonetic": "/mIlk/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 9,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:09",
+      "difficulty": 0.22,
+      "source_page": "P.31",
+      "stable_key": "pep-grade7-upper-2024:unit:09:vocabulary:milk",
+      "status": "published",
+      "summary": "牛奶",
+      "title": "milk",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "面包",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.31",
+          "raw_line_excerpt": "bread /bred/ n. 面包 p.31",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "bread",
+        "part_of_speech": "n.",
+        "phonetic": "/bred/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 9,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:09",
+      "difficulty": 0.22,
+      "source_page": "P.31",
+      "stable_key": "pep-grade7-upper-2024:unit:09:vocabulary:bread",
+      "status": "published",
+      "summary": "面包",
+      "title": "bread",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "生日",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.32",
+          "raw_line_excerpt": "birthday /b3:(r)TdeI/ n. 生日 p.32",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "birthday",
+        "part_of_speech": "n.",
+        "phonetic": "/b3:(r)TdeI/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 9,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:09",
+      "difficulty": 0.22,
+      "source_page": "P.32",
+      "stable_key": "pep-grade7-upper-2024:unit:09:vocabulary:birthday",
+      "status": "published",
+      "summary": "生日",
+      "title": "birthday",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "（中午或晚上吃的） 正餐",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.32",
+          "raw_line_excerpt": "dinner /dIn@(r)/ n. （中午或晚上吃的） 正餐 p.32",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "dinner",
+        "part_of_speech": "n.",
+        "phonetic": "/dIn@(r)/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 9,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:09",
+      "difficulty": 0.22,
+      "source_page": "P.32",
+      "stable_key": "pep-grade7-upper-2024:unit:09:vocabulary:dinner",
+      "status": "published",
+      "summary": "（中午或晚上吃的） 正餐",
+      "title": "dinner",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "周；星期",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.32",
+          "raw_line_excerpt": "week /wi:k/ n. 周；星期 p.32",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "week",
+        "part_of_speech": "n.",
+        "phonetic": "/wi:k/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 9,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:09",
+      "difficulty": 0.22,
+      "source_page": "P.32",
+      "stable_key": "pep-grade7-upper-2024:unit:09:vocabulary:week",
+      "status": "published",
+      "summary": "周；星期",
+      "title": "week",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "思考；思索",
+        "confidence": 0.95,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "P.32",
+          "raw_line_excerpt": "think about 思考；思索 p.32",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "think about",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": false,
+        "role": "unit_phrase",
+        "unit_order": 9,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:09",
+      "difficulty": 0.28,
+      "source_page": "P.32",
+      "stable_key": "pep-grade7-upper-2024:unit:09:phrase:think-about",
+      "status": "published",
+      "summary": "思考；思索",
+      "title": "think about",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "chinese_meaning": "食物",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.32",
+          "raw_line_excerpt": "food /fu:d/ n. 食物 p.32",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "food",
+        "part_of_speech": "n.",
+        "phonetic": "/fu:d/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 9,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:09",
+      "difficulty": 0.22,
+      "source_page": "P.32",
+      "stable_key": "pep-grade7-upper-2024:unit:09:vocabulary:food",
+      "status": "published",
+      "summary": "食物",
+      "title": "food",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "当然；肯定；一定",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.32",
+          "raw_line_excerpt": "sure /SU@(r)/, /SUr/ adv. 当然；肯定；一定 p.32",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "sure",
+        "part_of_speech": "adv.",
+        "phonetic": "/SU@(r)/, /SUr/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 9,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:09",
+      "difficulty": 0.22,
+      "source_page": "P.32",
+      "stable_key": "pep-grade7-upper-2024:unit:09:vocabulary:sure",
+      "status": "published",
+      "summary": "当然；肯定；一定",
+      "title": "sure",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "（提出建议）……怎么样？",
+        "confidence": 0.95,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "P.32",
+          "raw_line_excerpt": "How about ...? （提出建议）……怎么样？ p.32",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "How about ...?",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": false,
+        "role": "unit_phrase",
+        "unit_order": 9,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:09",
+      "difficulty": 0.28,
+      "source_page": "P.32",
+      "stable_key": "pep-grade7-upper-2024:unit:09:phrase:how-about",
+      "status": "published",
+      "summary": "（提出建议）……怎么样？",
+      "title": "How about ...?",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "chinese_meaning": "（= hamburger）汉堡包",
+        "confidence": 0.95,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "P.32",
+          "raw_line_excerpt": "burg er /b3:(r)g@(r)/ n. （= hamburger）汉堡包 p.32",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "burg er",
+        "part_of_speech": "n.",
+        "phonetic": "/b3:(r)g@(r)/",
+        "requires_review": false,
+        "role": "unit_phrase",
+        "unit_order": 9,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:09",
+      "difficulty": 0.28,
+      "source_page": "P.32",
+      "stable_key": "pep-grade7-upper-2024:unit:09:phrase:burg-er",
+      "status": "published",
+      "summary": "（= hamburger）汉堡包",
+      "title": "burg er",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "chinese_meaning": "蔬菜",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.32",
+          "raw_line_excerpt": "vegetable /vedZt@bl/ n. 蔬菜 p.32",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "vegetable",
+        "part_of_speech": "n.",
+        "phonetic": "/vedZt@bl/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 9,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:09",
+      "difficulty": 0.22,
+      "source_page": "P.32",
+      "stable_key": "pep-grade7-upper-2024:unit:09:vocabulary:vegetable",
+      "status": "published",
+      "summary": "蔬菜",
+      "title": "vegetable",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "水果",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.32",
+          "raw_line_excerpt": "fruit /fru:t/ n. 水果 p.32",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "fruit",
+        "part_of_speech": "n.",
+        "phonetic": "/fru:t/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 9,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:09",
+      "difficulty": 0.22,
+      "source_page": "P.32",
+      "stable_key": "pep-grade7-upper-2024:unit:09:vocabulary:fruit",
+      "status": "published",
+      "summary": "水果",
+      "title": "fruit",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "正确的；适当的",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.32",
+          "raw_line_excerpt": "right /raIt/ adj. 正确的；适当的 p.32",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "right",
+        "part_of_speech": "adj.",
+        "phonetic": "/raIt/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 9,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:09",
+      "difficulty": 0.22,
+      "source_page": "P.32",
+      "stable_key": "pep-grade7-upper-2024:unit:09:vocabulary:right",
+      "status": "published",
+      "summary": "正确的；适当的",
+      "title": "right",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "苹果",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.32",
+          "raw_line_excerpt": "apple /{pl/ n. 苹果 p.32",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "apple",
+        "part_of_speech": "n.",
+        "phonetic": "/{pl/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 9,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:09",
+      "difficulty": 0.22,
+      "source_page": "P.32",
+      "stable_key": "pep-grade7-upper-2024:unit:09:vocabulary:apple",
+      "status": "published",
+      "summary": "苹果",
+      "title": "apple",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "那么",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.32",
+          "raw_line_excerpt": "then /Den/ adv. 那么 p.32",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "then",
+        "part_of_speech": "adv.",
+        "phonetic": "/Den/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 9,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:09",
+      "difficulty": 0.22,
+      "source_page": "P.32",
+      "stable_key": "pep-grade7-upper-2024:unit:09:vocabulary:then",
+      "status": "published",
+      "summary": "那么",
+      "title": "then",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "蛋；鸡蛋",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.33",
+          "raw_line_excerpt": "egg /eg/ n. 蛋；鸡蛋 p.33",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "egg",
+        "part_of_speech": "n.",
+        "phonetic": "/eg/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 9,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:09",
+      "difficulty": 0.22,
+      "source_page": "P.33",
+      "stable_key": "pep-grade7-upper-2024:unit:09:vocabulary:egg",
+      "status": "published",
+      "summary": "蛋；鸡蛋",
+      "title": "egg",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "胡萝卜",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.33",
+          "raw_line_excerpt": "carrot /k{r@t/ n. 胡萝卜 p.33",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "carrot",
+        "part_of_speech": "n.",
+        "phonetic": "/k{r@t/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 9,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:09",
+      "difficulty": 0.22,
+      "source_page": "P.33",
+      "stable_key": "pep-grade7-upper-2024:unit:09:vocabulary:carrot",
+      "status": "published",
+      "summary": "胡萝卜",
+      "title": "carrot",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "大米；米饭",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.33",
+          "raw_line_excerpt": "rice /raIs/ n. 大米；米饭 p.33",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "rice",
+        "part_of_speech": "n.",
+        "phonetic": "/raIs/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 9,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:09",
+      "difficulty": 0.22,
+      "source_page": "P.33",
+      "stable_key": "pep-grade7-upper-2024:unit:09:vocabulary:rice",
+      "status": "published",
+      "summary": "大米；米饭",
+      "title": "rice",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "鸡肉",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.33",
+          "raw_line_excerpt": "chicken /tSIkIn/ n. 鸡肉 p.33",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "chicken",
+        "part_of_speech": "n.",
+        "phonetic": "/tSIkIn/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 9,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:09",
+      "difficulty": 0.22,
+      "source_page": "P.33",
+      "stable_key": "pep-grade7-upper-2024:unit:09:vocabulary:chicken",
+      "status": "published",
+      "summary": "鸡肉",
+      "title": "chicken",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "（引出评论或问题）那么",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.33",
+          "raw_line_excerpt": "so /s@U/ conj. （引出评论或问题）那么 p.33",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "so",
+        "part_of_speech": "conj.",
+        "phonetic": "/s@U/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 9,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:09",
+      "difficulty": 0.22,
+      "source_page": "P.33",
+      "stable_key": "pep-grade7-upper-2024:unit:09:vocabulary:so",
+      "status": "published",
+      "summary": "（引出评论或问题）那么",
+      "title": "so",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "早餐；早饭",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.34",
+          "raw_line_excerpt": "breakfast /brekf@st/ n. 早餐；早饭 p.34",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "breakfast",
+        "part_of_speech": "n.",
+        "phonetic": "/brekf@st/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 9,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:09",
+      "difficulty": 0.22,
+      "source_page": "P.34",
+      "stable_key": "pep-grade7-upper-2024:unit:09:vocabulary:breakfast",
+      "status": "published",
+      "summary": "早餐；早饭",
+      "title": "breakfast",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "午餐",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.34",
+          "raw_line_excerpt": "lunch /lVntS/ n. 午餐 p.34",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "lunch",
+        "part_of_speech": "n.",
+        "phonetic": "/lVntS/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 9,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:09",
+      "difficulty": 0.22,
+      "source_page": "P.34",
+      "stable_key": "pep-grade7-upper-2024:unit:09:vocabulary:lunch",
+      "status": "published",
+      "summary": "午餐",
+      "title": "lunch",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "明星；星星",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.35",
+          "raw_line_excerpt": "star /stA:(r)/ n. 明星；星星 p.35",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "star",
+        "part_of_speech": "n.",
+        "phonetic": "/stA:(r)/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 9,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:09",
+      "difficulty": 0.22,
+      "source_page": "P.35",
+      "stable_key": "pep-grade7-upper-2024:unit:09:vocabulary:star",
+      "status": "published",
+      "summary": "明星；星星",
+      "title": "star",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "吃",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.35",
+          "raw_line_excerpt": "eat /i:t/ v. 吃 p.35",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "eat",
+        "part_of_speech": "v.",
+        "phonetic": "/i:t/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 9,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:09",
+      "difficulty": 0.22,
+      "source_page": "P.35",
+      "stable_key": "pep-grade7-upper-2024:unit:09:vocabulary:eat",
+      "status": "published",
+      "summary": "吃",
+      "title": "eat",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "好；令人满意地",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.35",
+          "raw_line_excerpt": "well /wel/ adv. 好；令人满意地 p.35",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "well",
+        "part_of_speech": "adv.",
+        "phonetic": "/wel/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 9,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:09",
+      "difficulty": 0.22,
+      "source_page": "P.35",
+      "stable_key": "pep-grade7-upper-2024:unit:09:vocabulary:well",
+      "status": "published",
+      "summary": "好；令人满意地",
+      "title": "well",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "习惯",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.35",
+          "raw_line_excerpt": "habit /h{bIt/ n. 习惯 p.35",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "habit",
+        "part_of_speech": "n.",
+        "phonetic": "/h{bIt/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 9,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:09",
+      "difficulty": 0.22,
+      "source_page": "P.35",
+      "stable_key": "pep-grade7-upper-2024:unit:09:vocabulary:habit",
+      "status": "published",
+      "summary": "习惯",
+      "title": "habit",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "健康的",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.35",
+          "raw_line_excerpt": "healthy /helTi/ adj. 健康的 p.35",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "healthy",
+        "part_of_speech": "adj.",
+        "phonetic": "/helTi/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 9,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:09",
+      "difficulty": 0.22,
+      "source_page": "P.35",
+      "stable_key": "pep-grade7-upper-2024:unit:09:vocabulary:healthy",
+      "status": "published",
+      "summary": "健康的",
+      "title": "healthy",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "真正地",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.35",
+          "raw_line_excerpt": "really /ri:@li/ adv. 真正地 p.35",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "really",
+        "part_of_speech": "adv.",
+        "phonetic": "/ri:@li/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 9,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:09",
+      "difficulty": 0.22,
+      "source_page": "P.35",
+      "stable_key": "pep-grade7-upper-2024:unit:09:vocabulary:really",
+      "status": "published",
+      "summary": "真正地",
+      "title": "really",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "问题",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.35",
+          "raw_line_excerpt": "question /kwestS@n/ n. 问题 p.35",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "question",
+        "part_of_speech": "n.",
+        "phonetic": "/kwestS@n/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 9,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:09",
+      "difficulty": 0.22,
+      "source_page": "P.35",
+      "stable_key": "pep-grade7-upper-2024:unit:09:vocabulary:question",
+      "status": "published",
+      "summary": "问题",
+      "title": "question",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "需要；想要",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.35",
+          "raw_line_excerpt": "want /wQnt/, /wA:nt/ v. 需要；想要 p.35",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "want",
+        "part_of_speech": "v.",
+        "phonetic": "/wQnt/, /wA:nt/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 9,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:09",
+      "difficulty": 0.22,
+      "source_page": "P.35",
+      "stable_key": "pep-grade7-upper-2024:unit:09:vocabulary:want",
+      "status": "published",
+      "summary": "需要；想要",
+      "title": "want",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "变成",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.35",
+          "raw_line_excerpt": "be /bi:, bi/ v. 变成 p.35",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "be",
+        "part_of_speech": "v.",
+        "phonetic": "/bi:, bi/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 9,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:09",
+      "difficulty": 0.22,
+      "source_page": "P.35",
+      "stable_key": "pep-grade7-upper-2024:unit:09:vocabulary:be",
+      "status": "published",
+      "summary": "变成",
+      "title": "be",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "肥的；肥胖的",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.35",
+          "raw_line_excerpt": "fat /f{t/ adj. 肥的；肥胖的 p.35",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "fat",
+        "part_of_speech": "adj.",
+        "phonetic": "/f{t/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 9,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:09",
+      "difficulty": 0.22,
+      "source_page": "P.35",
+      "stable_key": "pep-grade7-upper-2024:unit:09:vocabulary:fat",
+      "status": "published",
+      "summary": "肥的；肥胖的",
+      "title": "fat",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "confidence": 0.95,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "Unit pages",
+          "raw_line_excerpt": null,
+          "source": "pdf_curated_extract"
+        },
+        "phrase": "eating habits",
+        "requires_review": false,
+        "role": "unit_phrase",
+        "unit_order": 9,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:09",
+      "difficulty": 0.28,
+      "source_page": "Unit pages",
+      "stable_key": "pep-grade7-upper-2024:unit:09:phrase:eating-habits",
+      "status": "published",
+      "summary": "本单元可迁移短语或功能表达：eating habits。",
+      "title": "eating habits",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "confidence": 0.95,
+        "display_group": "sentence_patterns",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "pdf_curated_extract"
+        },
+        "pattern": "Do you like bananas?",
+        "requires_review": false,
+        "role": "target_language",
+        "unit_order": 9,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:09",
+      "difficulty": 0.32,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-upper-2024:unit:09:sentence_pattern:do-you-like-bananas",
+      "status": "published",
+      "summary": "核心句式：Do you like bananas?",
+      "title": "Do you like bananas?",
+      "type": "sentence_pattern"
+    },
+    {
+      "content": {
+        "confidence": 0.95,
+        "display_group": "sentence_patterns",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "pdf_curated_extract"
+        },
+        "pattern": "Does she like tomatoes?",
+        "requires_review": false,
+        "role": "target_language",
+        "unit_order": 9,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:09",
+      "difficulty": 0.32,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-upper-2024:unit:09:sentence_pattern:does-she-like-tomatoes",
+      "status": "published",
+      "summary": "核心句式：Does she like tomatoes?",
+      "title": "Does she like tomatoes?",
+      "type": "sentence_pattern"
+    },
+    {
+      "content": {
+        "confidence": 0.95,
+        "display_group": "sentence_patterns",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "pdf_curated_extract"
+        },
+        "pattern": "I like oranges.",
+        "requires_review": false,
+        "role": "target_language",
+        "unit_order": 9,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:09",
+      "difficulty": 0.32,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-upper-2024:unit:09:sentence_pattern:i-like-oranges",
+      "status": "published",
+      "summary": "核心句式：I like oranges.",
+      "title": "I like oranges.",
+      "type": "sentence_pattern"
+    },
+    {
+      "content": {
+        "confidence": 0.95,
+        "display_group": "sentence_patterns",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "pdf_curated_extract"
+        },
+        "pattern": "He doesn't like chicken.",
+        "requires_review": false,
+        "role": "target_language",
+        "unit_order": 9,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:09",
+      "difficulty": 0.32,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-upper-2024:unit:09:sentence_pattern:he-doesnt-like-chicken",
+      "status": "published",
+      "summary": "核心句式：He doesn't like chicken.",
+      "title": "He doesn't like chicken.",
+      "type": "sentence_pattern"
+    },
+    {
+      "content": {
+        "confidence": 0.95,
+        "display_group": "grammar",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "pdf_curated_extract"
+        },
+        "focus": "可数名词与不可数名词",
+        "related_units": [
+          "Unit 9"
+        ],
+        "requires_review": false,
+        "role": "grammar_focus",
+        "unit_order": 9,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:09",
+      "difficulty": 0.38,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-upper-2024:unit:09:grammar:zh-ebf08c123a",
+      "status": "published",
+      "summary": "可数名词与不可数名词",
+      "title": "可数名词与不可数名词",
+      "type": "grammar"
+    },
+    {
+      "content": {
+        "confidence": 0.95,
+        "display_group": "grammar",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "pdf_curated_extract"
+        },
+        "focus": "一般现在时 like/likes",
+        "related_units": [
+          "Unit 9"
+        ],
+        "requires_review": false,
+        "role": "grammar_focus",
+        "unit_order": 9,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:09",
+      "difficulty": 0.38,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-upper-2024:unit:09:grammar:like-likes",
+      "status": "published",
+      "summary": "一般现在时 like/likes",
+      "title": "一般现在时 like/likes",
+      "type": "grammar"
+    },
+    {
+      "content": {
+        "confidence": 0.95,
+        "display_group": "grammar",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "pdf_curated_extract"
+        },
+        "focus": "do/does 否定句",
+        "related_units": [
+          "Unit 9"
+        ],
+        "requires_review": false,
+        "role": "grammar_focus",
+        "unit_order": 9,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:09",
+      "difficulty": 0.38,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-upper-2024:unit:09:grammar:do-does",
+      "status": "published",
+      "summary": "do/does 否定句",
+      "title": "do/does 否定句",
+      "type": "grammar"
+    },
+    {
+      "content": {
+        "confidence": 0.95,
+        "display_group": "pronunciation",
+        "evidence": {
+          "page_label": "Pronunciation",
+          "raw_line_excerpt": null,
+          "source": "pdf_curated_extract"
+        },
+        "focus": "名词复数 -s/-es 读音；多音节词重音",
+        "requires_review": false,
+        "role": "pronunciation_note",
+        "unit_order": 9,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:09",
+      "difficulty": 0.28,
+      "source_page": "Pronunciation",
+      "stable_key": "pep-grade7-upper-2024:unit:09:pronunciation:s-es",
+      "status": "published",
+      "summary": "语音关注点：名词复数 -s/-es 读音；多音节词重音。",
+      "title": "名词复数 -s/-es 读音；多音节词重音",
+      "type": "pronunciation"
+    }
+  ],
+  "schema_version": "public_textbook_unit.v2",
+  "source_stable_id": "pep-grade7-upper-2024",
+  "unit": {
+    "end_page": "P.48",
+    "ordinal": 9,
+    "start_page": "P.43",
+    "subtitle": "Do you like bananas?",
+    "title": "Unit 6"
+  }
+}

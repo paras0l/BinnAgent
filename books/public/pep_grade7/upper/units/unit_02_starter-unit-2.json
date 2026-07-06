@@ -1,0 +1,1008 @@
+{
+  "curriculum_node_key": "pep-grade7-upper-2024:unit:02",
+  "exercise_questions": [
+    {
+      "answer": "& adj. 什么",
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:02",
+      "difficulty": 0.28,
+      "explanation": "what 的本单元义项是：& adj. 什么。",
+      "knowledge_point_key": "pep-grade7-upper-2024:unit:02:vocabulary:what",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:02",
+          "knowledge_point_key": "pep-grade7-upper-2024:unit:02:vocabulary:what",
+          "source_stable_id": "pep-grade7-upper-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "source": "curated_public_textbook_seed"
+      },
+      "options": [
+        "& adj. 什么",
+        "是",
+        "这；这个",
+        "（表示使用语言、材料等） 用；以"
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-upper-2024:unit:02:ex:01-what",
+      "status": "published",
+      "stem": "“what”在本单元词表中的意思最接近哪一项？"
+    },
+    {
+      "answer": "What's this in English?",
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:02",
+      "difficulty": 0.28,
+      "explanation": "本单元核心句式包括“What's this in English?”。",
+      "knowledge_point_key": "pep-grade7-upper-2024:unit:02:sentence_pattern:whats-this-in-english",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:02",
+          "knowledge_point_key": "pep-grade7-upper-2024:unit:02:sentence_pattern:whats-this-in-english",
+          "source_stable_id": "pep-grade7-upper-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "source": "curated_public_textbook_seed"
+      },
+      "options": [
+        "What's this in English?",
+        "in English",
+        "NBA",
+        "what"
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-upper-2024:unit:02:ex:02-whats-this-in-english",
+      "status": "published",
+      "stem": "围绕“用英语询问物品名称”，下列哪一句最贴近本单元核心句式？"
+    },
+    {
+      "answer": "指示代词 this/that 入门",
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:02",
+      "difficulty": 0.28,
+      "explanation": "本单元语法重点是：指示代词 this/that 入门。",
+      "knowledge_point_key": "pep-grade7-upper-2024:unit:02:grammar:this-that",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:02",
+          "knowledge_point_key": "pep-grade7-upper-2024:unit:02:grammar:this-that",
+          "source_stable_id": "pep-grade7-upper-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "source": "curated_public_textbook_seed"
+      },
+      "options": [
+        "指示代词 this/that 入门",
+        "过去完成时",
+        "定语从句",
+        "虚拟语气"
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-upper-2024:unit:02:ex:03-this-that",
+      "status": "published",
+      "stem": "本单元语法重点最接近哪一项？"
+    },
+    {
+      "answer": "in English",
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:02",
+      "difficulty": 0.28,
+      "explanation": "“in English”属于本单元短语或功能表达。",
+      "knowledge_point_key": "pep-grade7-upper-2024:unit:02:phrase:in-english",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:02",
+          "knowledge_point_key": "pep-grade7-upper-2024:unit:02:phrase:in-english",
+          "source_stable_id": "pep-grade7-upper-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "source": "curated_public_textbook_seed"
+      },
+      "options": [
+        "in English",
+        "in conclusion",
+        "as soon as possible",
+        "by mistake"
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-upper-2024:unit:02:ex:04-in-english",
+      "status": "published",
+      "stem": "下列哪一项是本单元可迁移短语/功能表达？"
+    },
+    {
+      "answer": "英语 adj. 英格兰的；英语的",
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:02",
+      "difficulty": 0.28,
+      "explanation": "该题检查本单元词汇义项。",
+      "knowledge_point_key": "pep-grade7-upper-2024:unit:02:vocabulary:english",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:02",
+          "knowledge_point_key": "pep-grade7-upper-2024:unit:02:vocabulary:english",
+          "source_stable_id": "pep-grade7-upper-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "source": "curated_public_textbook_seed"
+      },
+      "options": [
+        "英语 adj. 英格兰的；英语的",
+        "机场",
+        "科学家",
+        "电影院"
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-upper-2024:unit:02:ex:05-english",
+      "status": "published",
+      "stem": "选择与“English”对应的本单元中文义项。"
+    },
+    {
+      "answer": "It's a map.",
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:02",
+      "difficulty": 0.28,
+      "explanation": "该句来自本单元目标语言框架的整理。",
+      "knowledge_point_key": "pep-grade7-upper-2024:unit:02:sentence_pattern:its-a-map",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:02",
+          "knowledge_point_key": "pep-grade7-upper-2024:unit:02:sentence_pattern:its-a-map",
+          "source_stable_id": "pep-grade7-upper-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "source": "curated_public_textbook_seed"
+      },
+      "options": [
+        "It's a map.",
+        "I have finished the report.",
+        "Although it rained, we left.",
+        "The book was written in 1999."
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-upper-2024:unit:02:ex:06-its-a-map",
+      "status": "published",
+      "stem": "下列哪一句也属于本单元目标语言？"
+    }
+  ],
+  "extraction_gaps": [
+    {
+      "description": "听力活动需要配套音频，暂不进入公共默认学习流。",
+      "gap_type": "audio_required",
+      "scope": "pep-grade7-upper-2024:unit:02",
+      "suggested_future_handling": "后续接入音频资源和听力题型后再结构化。"
+    },
+    {
+      "description": "结对/小组互动活动不适合直接作为稳定自动评分题。",
+      "gap_type": "pair_work",
+      "scope": "pep-grade7-upper-2024:unit:02",
+      "suggested_future_handling": "后续作为课堂互动或口语任务模板处理。"
+    }
+  ],
+  "knowledge_points": [
+    {
+      "content": {
+        "confidence": 0.95,
+        "display_group": "unit_intro",
+        "evidence": {
+          "page_label": "P.5",
+          "raw_line_excerpt": null,
+          "source": "pdf_curated_extract"
+        },
+        "requires_review": false,
+        "role": "unit_overview",
+        "source_unit_subtitle": "What's this in English?",
+        "source_unit_title": "Starter Unit 2",
+        "theme": "用英语询问物品名称",
+        "unit_order": 2,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:02",
+      "difficulty": 0.18,
+      "source_page": "P.5",
+      "stable_key": "pep-grade7-upper-2024:unit:02:text_note:starter-unit-2-overview",
+      "status": "published",
+      "summary": "本单元主题：用英语询问物品名称；核心标题表达为“What's this in English?”。",
+      "title": "Starter Unit 2 overview",
+      "type": "text_note"
+    },
+    {
+      "content": {
+        "chinese_meaning": "& adj. 什么",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.S5",
+          "raw_line_excerpt": "what /wQt/, /wA:t/ pron. & adj. 什么 p.S5",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "what",
+        "part_of_speech": "pron.",
+        "phonetic": "/wQt/, /wA:t/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 2,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:02",
+      "difficulty": 0.22,
+      "source_page": "P.S5",
+      "stable_key": "pep-grade7-upper-2024:unit:02:vocabulary:what",
+      "status": "published",
+      "summary": "& adj. 什么",
+      "title": "what",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "是",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.S5",
+          "raw_line_excerpt": "is /Iz/ v. 是 p.S5",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "is",
+        "part_of_speech": "v.",
+        "phonetic": "/Iz/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 2,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:02",
+      "difficulty": 0.22,
+      "source_page": "P.S5",
+      "stable_key": "pep-grade7-upper-2024:unit:02:vocabulary:is",
+      "status": "published",
+      "summary": "是",
+      "title": "is",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "这；这个",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.S5",
+          "raw_line_excerpt": "this /DIs/ pron. 这；这个 p.S5",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "this",
+        "part_of_speech": "pron.",
+        "phonetic": "/DIs/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 2,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:02",
+      "difficulty": 0.22,
+      "source_page": "P.S5",
+      "stable_key": "pep-grade7-upper-2024:unit:02:vocabulary:this",
+      "status": "published",
+      "summary": "这；这个",
+      "title": "this",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "（表示使用语言、材料等） 用；以",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.S5",
+          "raw_line_excerpt": "in /In/ prep.（表示使用语言、材料等） 用；以 p.S5",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "in",
+        "part_of_speech": "prep.",
+        "phonetic": "/In/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 2,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:02",
+      "difficulty": 0.22,
+      "source_page": "P.S5",
+      "stable_key": "pep-grade7-upper-2024:unit:02:vocabulary:in",
+      "status": "published",
+      "summary": "（表示使用语言、材料等） 用；以",
+      "title": "in",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "英语 adj. 英格兰的；英语的",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.S5",
+          "raw_line_excerpt": "English /INglIS/ n. 英语 adj. 英格兰的；英语的 p.S5",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "English",
+        "part_of_speech": "n.",
+        "phonetic": "/INglIS/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 2,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:02",
+      "difficulty": 0.22,
+      "source_page": "P.S5",
+      "stable_key": "pep-grade7-upper-2024:unit:02:vocabulary:english",
+      "status": "published",
+      "summary": "英语 adj. 英格兰的；英语的",
+      "title": "English",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "用英语",
+        "confidence": 0.95,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "P.S5",
+          "raw_line_excerpt": "in English 用英语 p.S5",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "in English",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": false,
+        "role": "unit_phrase",
+        "unit_order": 2,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:02",
+      "difficulty": 0.28,
+      "source_page": "P.S5",
+      "stable_key": "pep-grade7-upper-2024:unit:02:phrase:in-english",
+      "status": "published",
+      "summary": "用英语",
+      "title": "in English",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "chinese_meaning": "地图",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.S5",
+          "raw_line_excerpt": "map /m{p/ n. 地图 p.S5",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "map",
+        "part_of_speech": "n.",
+        "phonetic": "/m{p/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 2,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:02",
+      "difficulty": 0.22,
+      "source_page": "P.S5",
+      "stable_key": "pep-grade7-upper-2024:unit:02:vocabulary:map",
+      "status": "published",
+      "summary": "地图",
+      "title": "map",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "杯子",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.S5",
+          "raw_line_excerpt": "cup /kVp/ n. 杯子 p.S5",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "cup",
+        "part_of_speech": "n.",
+        "phonetic": "/kVp/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 2,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:02",
+      "difficulty": 0.22,
+      "source_page": "P.S5",
+      "stable_key": "pep-grade7-upper-2024:unit:02:vocabulary:cup",
+      "status": "published",
+      "summary": "杯子",
+      "title": "cup",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "尺；直尺",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.S5",
+          "raw_line_excerpt": "ruler /ru:l@(r)/ n. 尺；直尺 p.S5",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "ruler",
+        "part_of_speech": "n.",
+        "phonetic": "/ru:l@(r)/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 2,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:02",
+      "difficulty": 0.22,
+      "source_page": "P.S5",
+      "stable_key": "pep-grade7-upper-2024:unit:02:vocabulary:ruler",
+      "status": "published",
+      "summary": "尺；直尺",
+      "title": "ruler",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "笔；钢笔",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.S5",
+          "raw_line_excerpt": "pen /pen/ n. 笔；钢笔 p.S5",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "pen",
+        "part_of_speech": "n.",
+        "phonetic": "/pen/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 2,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:02",
+      "difficulty": 0.22,
+      "source_page": "P.S5",
+      "stable_key": "pep-grade7-upper-2024:unit:02:vocabulary:pen",
+      "status": "published",
+      "summary": "笔；钢笔",
+      "title": "pen",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "橙子",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.S5",
+          "raw_line_excerpt": "orange /QrIndZ/, /O:rIndZ/ n. 橙子 p.S5",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "orange",
+        "part_of_speech": "n.",
+        "phonetic": "/QrIndZ/, /O:rIndZ/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 2,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:02",
+      "difficulty": 0.22,
+      "source_page": "P.S5",
+      "stable_key": "pep-grade7-upper-2024:unit:02:vocabulary:orange",
+      "status": "published",
+      "summary": "橙子",
+      "title": "orange",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "夹克衫；短上衣",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.S5",
+          "raw_line_excerpt": "jacket /dZ{kIt/ n. 夹克衫；短上衣 p.S5",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "jacket",
+        "part_of_speech": "n.",
+        "phonetic": "/dZ{kIt/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 2,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:02",
+      "difficulty": 0.22,
+      "source_page": "P.S5",
+      "stable_key": "pep-grade7-upper-2024:unit:02:vocabulary:jacket",
+      "status": "published",
+      "summary": "夹克衫；短上衣",
+      "title": "jacket",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "钥匙",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.S5",
+          "raw_line_excerpt": "key /ki:/ n. 钥匙 p.S5",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "key",
+        "part_of_speech": "n.",
+        "phonetic": "/ki:/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 2,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:02",
+      "difficulty": 0.22,
+      "source_page": "P.S5",
+      "stable_key": "pep-grade7-upper-2024:unit:02:vocabulary:key",
+      "status": "published",
+      "summary": "钥匙",
+      "title": "key",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "被子；床罩",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.S5",
+          "raw_line_excerpt": "quilt /kwIlt/ n. 被子；床罩 p.S5",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "quilt",
+        "part_of_speech": "n.",
+        "phonetic": "/kwIlt/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 2,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:02",
+      "difficulty": 0.22,
+      "source_page": "P.S5",
+      "stable_key": "pep-grade7-upper-2024:unit:02:vocabulary:quilt",
+      "status": "published",
+      "summary": "被子；床罩",
+      "title": "quilt",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "它",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.S5",
+          "raw_line_excerpt": "it /It/ pron. 它 p.S5",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "it",
+        "part_of_speech": "pron.",
+        "phonetic": "/It/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 2,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:02",
+      "difficulty": 0.22,
+      "source_page": "P.S5",
+      "stable_key": "pep-grade7-upper-2024:unit:02:vocabulary:it",
+      "status": "published",
+      "summary": "它",
+      "title": "it",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "（用于单数可数名词前，表示 未曾提到的）一（人、事、物）",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.S5",
+          "raw_line_excerpt": "a /eI; @/（an /{n; @n/） art. （用于单数可数名词前，表示 未曾提到的）一（人、事、物） p.S5",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "a",
+        "part_of_speech": "art.",
+        "phonetic": "/eI; @/, /{n; @n/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 2,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:02",
+      "difficulty": 0.22,
+      "source_page": "P.S5",
+      "stable_key": "pep-grade7-upper-2024:unit:02:vocabulary:a",
+      "status": "published",
+      "summary": "（用于单数可数名词前，表示 未曾提到的）一（人、事、物）",
+      "title": "a",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "那；那个",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.S5",
+          "raw_line_excerpt": "that /D{t/ pron. 那；那个 p.S5",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "that",
+        "part_of_speech": "pron.",
+        "phonetic": "/D{t/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 2,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:02",
+      "difficulty": 0.22,
+      "source_page": "P.S5",
+      "stable_key": "pep-grade7-upper-2024:unit:02:vocabulary:that",
+      "status": "published",
+      "summary": "那；那个",
+      "title": "that",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "用字母拼；拼写",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.S7",
+          "raw_line_excerpt": "spell /spel/ v. 用字母拼；拼写 p.S7",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "spell",
+        "part_of_speech": "v.",
+        "phonetic": "/spel/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 2,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:02",
+      "difficulty": 0.22,
+      "source_page": "P.S7",
+      "stable_key": "pep-grade7-upper-2024:unit:02:vocabulary:spell",
+      "status": "published",
+      "summary": "用字母拼；拼写",
+      "title": "spell",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "（用于客气地请 求或吩咐） 请",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.S7",
+          "raw_line_excerpt": "please /pli:z/ interj.（用于客气地请 求或吩咐） 请 p.S7",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "please",
+        "part_of_speech": "interj.",
+        "phonetic": "/pli:z/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 2,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:02",
+      "difficulty": 0.22,
+      "source_page": "P.S7",
+      "stable_key": "pep-grade7-upper-2024:unit:02:vocabulary:please",
+      "status": "published",
+      "summary": "（用于客气地请 求或吩咐） 请",
+      "title": "please",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "（美国）全国篮球协会",
+        "confidence": 0.95,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "P.S6",
+          "raw_line_excerpt": "NBA /en bi: eI/ （美国）全国篮球协会 p.S6",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "NBA",
+        "part_of_speech": null,
+        "phonetic": "/en bi: eI/",
+        "requires_review": false,
+        "role": "unit_phrase",
+        "unit_order": 2,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:02",
+      "difficulty": 0.28,
+      "source_page": "P.S6",
+      "stable_key": "pep-grade7-upper-2024:unit:02:phrase:nba",
+      "status": "published",
+      "summary": "（美国）全国篮球协会",
+      "title": "NBA",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "chinese_meaning": "停车场；停车位",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.S6",
+          "raw_line_excerpt": "P /pi:/ 停车场；停车位 p.S6",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "P",
+        "part_of_speech": null,
+        "phonetic": "/pi:/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 2,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:02",
+      "difficulty": 0.22,
+      "source_page": "P.S6",
+      "stable_key": "pep-grade7-upper-2024:unit:02:vocabulary:p",
+      "status": "published",
+      "summary": "停车场；停车位",
+      "title": "P",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "千克；公斤",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.S6",
+          "raw_line_excerpt": "kg /keI dZi:/ 千克；公斤 p.S6",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "kg",
+        "part_of_speech": null,
+        "phonetic": "/keI dZi:/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 2,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:02",
+      "difficulty": 0.22,
+      "source_page": "P.S6",
+      "stable_key": "pep-grade7-upper-2024:unit:02:vocabulary:kg",
+      "status": "published",
+      "summary": "千克；公斤",
+      "title": "kg",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "confidence": 0.95,
+        "display_group": "sentence_patterns",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "pdf_curated_extract"
+        },
+        "pattern": "What's this in English?",
+        "requires_review": false,
+        "role": "target_language",
+        "unit_order": 2,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:02",
+      "difficulty": 0.32,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-upper-2024:unit:02:sentence_pattern:whats-this-in-english",
+      "status": "published",
+      "summary": "核心句式：What's this in English?",
+      "title": "What's this in English?",
+      "type": "sentence_pattern"
+    },
+    {
+      "content": {
+        "confidence": 0.95,
+        "display_group": "sentence_patterns",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "pdf_curated_extract"
+        },
+        "pattern": "It's a map.",
+        "requires_review": false,
+        "role": "target_language",
+        "unit_order": 2,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:02",
+      "difficulty": 0.32,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-upper-2024:unit:02:sentence_pattern:its-a-map",
+      "status": "published",
+      "summary": "核心句式：It's a map.",
+      "title": "It's a map.",
+      "type": "sentence_pattern"
+    },
+    {
+      "content": {
+        "confidence": 0.95,
+        "display_group": "sentence_patterns",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "pdf_curated_extract"
+        },
+        "pattern": "Spell it, please.",
+        "requires_review": false,
+        "role": "target_language",
+        "unit_order": 2,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:02",
+      "difficulty": 0.32,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-upper-2024:unit:02:sentence_pattern:spell-it-please",
+      "status": "published",
+      "summary": "核心句式：Spell it, please.",
+      "title": "Spell it, please.",
+      "type": "sentence_pattern"
+    },
+    {
+      "content": {
+        "confidence": 0.95,
+        "display_group": "grammar",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "pdf_curated_extract"
+        },
+        "focus": "指示代词 this/that 入门",
+        "related_units": [
+          "Unit 2"
+        ],
+        "requires_review": false,
+        "role": "grammar_focus",
+        "unit_order": 2,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:02",
+      "difficulty": 0.38,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-upper-2024:unit:02:grammar:this-that",
+      "status": "published",
+      "summary": "指示代词 this/that 入门",
+      "title": "指示代词 this/that 入门",
+      "type": "grammar"
+    },
+    {
+      "content": {
+        "confidence": 0.95,
+        "display_group": "grammar",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "pdf_curated_extract"
+        },
+        "focus": "不定冠词 a/an 入门",
+        "related_units": [
+          "Unit 2"
+        ],
+        "requires_review": false,
+        "role": "grammar_focus",
+        "unit_order": 2,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:02",
+      "difficulty": 0.38,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-upper-2024:unit:02:grammar:a-an",
+      "status": "published",
+      "summary": "不定冠词 a/an 入门",
+      "title": "不定冠词 a/an 入门",
+      "type": "grammar"
+    },
+    {
+      "content": {
+        "confidence": 0.95,
+        "display_group": "pronunciation",
+        "evidence": {
+          "page_label": "Pronunciation",
+          "raw_line_excerpt": null,
+          "source": "pdf_curated_extract"
+        },
+        "focus": "字母 I-R 的名称音；/aɪ/ 与 /ɪ/ 对比",
+        "requires_review": false,
+        "role": "pronunciation_note",
+        "unit_order": 2,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:02",
+      "difficulty": 0.28,
+      "source_page": "Pronunciation",
+      "stable_key": "pep-grade7-upper-2024:unit:02:pronunciation:i-r-a",
+      "status": "published",
+      "summary": "语音关注点：字母 I-R 的名称音；/aɪ/ 与 /ɪ/ 对比。",
+      "title": "字母 I-R 的名称音；/aɪ/ 与 /ɪ/ 对比",
+      "type": "pronunciation"
+    }
+  ],
+  "schema_version": "public_textbook_unit.v2",
+  "source_stable_id": "pep-grade7-upper-2024",
+  "unit": {
+    "end_page": "P.8",
+    "ordinal": 2,
+    "start_page": "P.5",
+    "subtitle": "What's this in English?",
+    "title": "Starter Unit 2"
+  }
+}

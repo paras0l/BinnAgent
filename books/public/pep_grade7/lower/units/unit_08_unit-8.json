@@ -1,0 +1,1607 @@
+{
+  "curriculum_node_key": "pep-grade7-lower-2024:unit:08",
+  "exercise_questions": [
+    {
+      "answer": "警察",
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:08",
+      "difficulty": 0.28,
+      "explanation": "police 的本单元义项是：警察。",
+      "knowledge_point_key": "pep-grade7-lower-2024:unit:08:vocabulary:police",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:08",
+          "knowledge_point_key": "pep-grade7-lower-2024:unit:08:vocabulary:police",
+          "source_stable_id": "pep-grade7-lower-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "requires_review": true,
+        "source": "curated_public_textbook_seed",
+        "warnings": [
+          "generated_from_lower_draft_content"
+        ]
+      },
+      "options": [
+        "警察",
+        "旅馆",
+        "餐馆",
+        "银行"
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-lower-2024:unit:08:ex:01-police",
+      "status": "draft",
+      "stem": "“police”在本单元词表中的意思最接近哪一项？"
+    },
+    {
+      "answer": "Is there a post office near here?",
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:08",
+      "difficulty": 0.28,
+      "explanation": "本单元核心句式包括“Is there a post office near here?”。",
+      "knowledge_point_key": "pep-grade7-lower-2024:unit:08:sentence_pattern:is-there-a-post-office-near-here",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:08",
+          "knowledge_point_key": "pep-grade7-lower-2024:unit:08:sentence_pattern:is-there-a-post-office-near-here",
+          "source_stable_id": "pep-grade7-lower-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "requires_review": true,
+        "source": "curated_public_textbook_seed",
+        "warnings": [
+          "generated_from_lower_draft_content"
+        ]
+      },
+      "options": [
+        "Is there a post office near here?",
+        "post office",
+        "police station",
+        "police"
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-lower-2024:unit:08:ex:02-is-there-a-post-office-near-here",
+      "status": "draft",
+      "stem": "围绕“街区地点与问路”，下列哪一句最贴近本单元核心句式？"
+    },
+    {
+      "answer": "There be 结构",
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:08",
+      "difficulty": 0.28,
+      "explanation": "本单元语法重点是：There be 结构。",
+      "knowledge_point_key": "pep-grade7-lower-2024:unit:08:grammar:there-be",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:08",
+          "knowledge_point_key": "pep-grade7-lower-2024:unit:08:grammar:there-be",
+          "source_stable_id": "pep-grade7-lower-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "requires_review": true,
+        "source": "curated_public_textbook_seed",
+        "warnings": [
+          "generated_from_lower_draft_content"
+        ]
+      },
+      "options": [
+        "There be 结构",
+        "过去完成时",
+        "定语从句",
+        "虚拟语气"
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-lower-2024:unit:08:ex:03-there-be",
+      "status": "draft",
+      "stem": "本单元语法重点最接近哪一项？"
+    },
+    {
+      "answer": "post office",
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:08",
+      "difficulty": 0.28,
+      "explanation": "“post office”属于本单元短语或功能表达。",
+      "knowledge_point_key": "pep-grade7-lower-2024:unit:08:phrase:post-office",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:08",
+          "knowledge_point_key": "pep-grade7-lower-2024:unit:08:phrase:post-office",
+          "source_stable_id": "pep-grade7-lower-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "requires_review": true,
+        "source": "curated_public_textbook_seed",
+        "warnings": [
+          "generated_from_lower_draft_content"
+        ]
+      },
+      "options": [
+        "post office",
+        "in conclusion",
+        "as soon as possible",
+        "by mistake"
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-lower-2024:unit:08:ex:04-post-office",
+      "status": "draft",
+      "stem": "下列哪一项是本单元可迁移短语/功能表达？"
+    },
+    {
+      "answer": "医院",
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:08",
+      "difficulty": 0.28,
+      "explanation": "该题检查本单元词汇义项。",
+      "knowledge_point_key": "pep-grade7-lower-2024:unit:08:vocabulary:hospital",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:08",
+          "knowledge_point_key": "pep-grade7-lower-2024:unit:08:vocabulary:hospital",
+          "source_stable_id": "pep-grade7-lower-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "requires_review": true,
+        "source": "curated_public_textbook_seed",
+        "warnings": [
+          "generated_from_lower_draft_content"
+        ]
+      },
+      "options": [
+        "医院",
+        "机场",
+        "科学家",
+        "电影院"
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-lower-2024:unit:08:ex:05-hospital",
+      "status": "draft",
+      "stem": "选择与“hospital”对应的本单元中文义项。"
+    },
+    {
+      "answer": "Yes, there is.",
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:08",
+      "difficulty": 0.28,
+      "explanation": "该句来自本单元目标语言框架的整理。",
+      "knowledge_point_key": "pep-grade7-lower-2024:unit:08:sentence_pattern:yes-there-is",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:08",
+          "knowledge_point_key": "pep-grade7-lower-2024:unit:08:sentence_pattern:yes-there-is",
+          "source_stable_id": "pep-grade7-lower-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "requires_review": true,
+        "source": "curated_public_textbook_seed",
+        "warnings": [
+          "generated_from_lower_draft_content"
+        ]
+      },
+      "options": [
+        "Yes, there is.",
+        "I have finished the report.",
+        "Although it rained, we left.",
+        "The book was written in 1999."
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-lower-2024:unit:08:ex:06-yes-there-is",
+      "status": "draft",
+      "stem": "下列哪一句也属于本单元目标语言？"
+    }
+  ],
+  "extraction_gaps": [
+    {
+      "description": "听力活动需要配套音频，暂不进入公共默认学习流。",
+      "gap_type": "audio_required",
+      "scope": "pep-grade7-lower-2024:unit:08",
+      "suggested_future_handling": "后续接入音频资源和听力题型后再结构化。"
+    },
+    {
+      "description": "结对/小组互动活动不适合直接作为稳定自动评分题。",
+      "gap_type": "pair_work",
+      "scope": "pep-grade7-lower-2024:unit:08",
+      "suggested_future_handling": "后续作为课堂互动或口语任务模板处理。"
+    },
+    {
+      "description": "该册 PDF 文本层为空，本单元短项来自人工整理，需后续 OCR/layout 校对。",
+      "gap_type": "low_confidence_layout",
+      "scope": "pep-grade7-lower-2024:unit:08",
+      "suggested_future_handling": "用 OCR/layout-aware pipeline 回填页内证据并复核词表。"
+    }
+  ],
+  "knowledge_points": [
+    {
+      "content": {
+        "confidence": 0.9,
+        "display_group": "unit_intro",
+        "evidence": {
+          "page_label": "P.43",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "requires_review": false,
+        "role": "unit_overview",
+        "source_unit_subtitle": "Is there a post office near here?",
+        "source_unit_title": "Unit 8",
+        "theme": "街区地点与问路",
+        "unit_order": 8,
+        "warnings": [
+          "lower_pdf_text_layer_empty"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:08",
+      "difficulty": 0.18,
+      "source_page": "P.43",
+      "stable_key": "pep-grade7-lower-2024:unit:08:text_note:unit-8-overview",
+      "status": "published",
+      "summary": "本单元主题：街区地点与问路；核心标题表达为“Is there a post office near here?”。",
+      "title": "Unit 8 overview",
+      "type": "text_note"
+    },
+    {
+      "content": {
+        "chinese_meaning": "邮局",
+        "confidence": 0.72,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "post office ... 邮局",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "post office",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_phrase",
+        "unit_order": 8,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:08",
+      "difficulty": 0.28,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:08:phrase:post-office",
+      "status": "draft",
+      "summary": "邮局",
+      "title": "post office",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "chinese_meaning": "警察",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "police ... 警察",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "police",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 8,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:08",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:08:vocabulary:police",
+      "status": "draft",
+      "summary": "警察",
+      "title": "police",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "警察局",
+        "confidence": 0.72,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "police station ... 警察局",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "police station",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_phrase",
+        "unit_order": 8,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:08",
+      "difficulty": 0.28,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:08:phrase:police-station",
+      "status": "draft",
+      "summary": "警察局",
+      "title": "police station",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "chinese_meaning": "旅馆",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "hotel ... 旅馆",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "hotel",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 8,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:08",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:08:vocabulary:hotel",
+      "status": "draft",
+      "summary": "旅馆",
+      "title": "hotel",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "餐馆",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "restaurant ... 餐馆",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "restaurant",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 8,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:08",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:08:vocabulary:restaurant",
+      "status": "draft",
+      "summary": "餐馆",
+      "title": "restaurant",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "银行",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "bank ... 银行",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "bank",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 8,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:08",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:08:vocabulary:bank",
+      "status": "draft",
+      "summary": "银行",
+      "title": "bank",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "医院",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "hospital ... 医院",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "hospital",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 8,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:08",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:08:vocabulary:hospital",
+      "status": "draft",
+      "summary": "医院",
+      "title": "hospital",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "大街",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "street ... 大街",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "street",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 8,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:08",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:08:vocabulary:street",
+      "status": "draft",
+      "summary": "大街",
+      "title": "street",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "付费电话",
+        "confidence": 0.72,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "pay phone ... 付费电话",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "pay phone",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_phrase",
+        "unit_order": 8,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:08",
+      "difficulty": 0.28,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:08:phrase:pay-phone",
+      "status": "draft",
+      "summary": "付费电话",
+      "title": "pay phone",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "chinese_meaning": "在……附近",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "near ... 在……附近",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "near",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 8,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:08",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:08:vocabulary:near",
+      "status": "draft",
+      "summary": "在……附近",
+      "title": "near",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "在……对面",
+        "confidence": 0.72,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "across from ... 在……对面",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "across from",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_phrase",
+        "unit_order": 8,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:08",
+      "difficulty": 0.28,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:08:phrase:across-from",
+      "status": "draft",
+      "summary": "在……对面",
+      "title": "across from",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "chinese_meaning": "前面",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "front ... 前面",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "front",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 8,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:08",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:08:vocabulary:front",
+      "status": "draft",
+      "summary": "前面",
+      "title": "front",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "在……前面",
+        "confidence": 0.72,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "in front of ... 在……前面",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "in front of",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_phrase",
+        "unit_order": 8,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:08",
+      "difficulty": 0.28,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:08:phrase:in-front-of",
+      "status": "draft",
+      "summary": "在……前面",
+      "title": "in front of",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "chinese_meaning": "在……后面",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "behind ... 在……后面",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "behind",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 8,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:08",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:08:vocabulary:behind",
+      "status": "draft",
+      "summary": "在……后面",
+      "title": "behind",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "镇",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "town ... 镇",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "town",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 8,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:08",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:08:vocabulary:town",
+      "status": "draft",
+      "summary": "镇",
+      "title": "town",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "在周围",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "around ... 在周围",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "around",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 8,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:08",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:08:vocabulary:around",
+      "status": "draft",
+      "summary": "在周围",
+      "title": "around",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "北方",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "north ... 北方",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "north",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 8,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:08",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:08:vocabulary:north",
+      "status": "draft",
+      "summary": "北方",
+      "title": "north",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "沿着",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "along ... 沿着",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "along",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 8,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:08",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:08:vocabulary:along",
+      "status": "draft",
+      "summary": "沿着",
+      "title": "along",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "沿着走",
+        "confidence": 0.72,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "go along ... 沿着走",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "go along",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_phrase",
+        "unit_order": 8,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:08",
+      "difficulty": 0.28,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:08:phrase:go-along",
+      "status": "draft",
+      "summary": "沿着走",
+      "title": "go along",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "chinese_meaning": "转向",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "turn ... 转向",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "turn",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 8,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:08",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:08:vocabulary:turn",
+      "status": "draft",
+      "summary": "转向",
+      "title": "turn",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "右边",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "right ... 右边",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "right",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 8,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:08",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:08:vocabulary:right",
+      "status": "draft",
+      "summary": "右边",
+      "title": "right",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "左边",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "left ... 左边",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "left",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 8,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:08",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:08:vocabulary:left",
+      "status": "draft",
+      "summary": "左边",
+      "title": "left",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "十字路口",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "crossing ... 十字路口",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "crossing",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 8,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:08",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:08:vocabulary:crossing",
+      "status": "draft",
+      "summary": "十字路口",
+      "title": "crossing",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "街区",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "neighborhood ... 街区",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "neighborhood",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 8,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:08",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:08:vocabulary:neighborhood",
+      "status": "draft",
+      "summary": "街区",
+      "title": "neighborhood",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "花费",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "spend ... 花费",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "spend",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 8,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:08",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:08:vocabulary:spend",
+      "status": "draft",
+      "summary": "花费",
+      "title": "spend",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "爬",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "climb ... 爬",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "climb",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 8,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:08",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:08:vocabulary:climb",
+      "status": "draft",
+      "summary": "爬",
+      "title": "climb",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "路",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "road ... 路",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "road",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 8,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:08",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:08:vocabulary:road",
+      "status": "draft",
+      "summary": "路",
+      "title": "road",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "时常",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "often ... 时常",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "often",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 8,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:08",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:08:vocabulary:often",
+      "status": "draft",
+      "summary": "时常",
+      "title": "often",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "空气",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "air ... 空气",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "air",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 8,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:08",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:08:vocabulary:air",
+      "status": "draft",
+      "summary": "空气",
+      "title": "air",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "阳光",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "sunshine ... 阳光",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "sunshine",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 8,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:08",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:08:vocabulary:sunshine",
+      "status": "draft",
+      "summary": "阳光",
+      "title": "sunshine",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "免费的；空闲的",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "free ... 免费的；空闲的",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "free",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 8,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:08",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:08:vocabulary:free",
+      "status": "draft",
+      "summary": "免费的；空闲的",
+      "title": "free",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "享受",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "enjoy ... 享受",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "enjoy",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 8,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:08",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:08:vocabulary:enjoy",
+      "status": "draft",
+      "summary": "享受",
+      "title": "enjoy",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "容易地",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "easily ... 容易地",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "easily",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 8,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:08",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:08:vocabulary:easily",
+      "status": "draft",
+      "summary": "容易地",
+      "title": "easily",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "钱",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "money ... 钱",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "money",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 8,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:08",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:08:vocabulary:money",
+      "status": "draft",
+      "summary": "钱",
+      "title": "money",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "Unit pages",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "phrase": "turn right",
+        "requires_review": true,
+        "role": "unit_phrase",
+        "unit_order": 8,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:08",
+      "difficulty": 0.28,
+      "source_page": "Unit pages",
+      "stable_key": "pep-grade7-lower-2024:unit:08:phrase:turn-right",
+      "status": "draft",
+      "summary": "本单元可迁移短语或功能表达：turn right。",
+      "title": "turn right",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "Unit pages",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "phrase": "enjoy reading",
+        "requires_review": true,
+        "role": "unit_phrase",
+        "unit_order": 8,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:08",
+      "difficulty": 0.28,
+      "source_page": "Unit pages",
+      "stable_key": "pep-grade7-lower-2024:unit:08:phrase:enjoy-reading",
+      "status": "draft",
+      "summary": "本单元可迁移短语或功能表达：enjoy reading。",
+      "title": "enjoy reading",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "sentence_patterns",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "pattern": "Is there a post office near here?",
+        "requires_review": true,
+        "role": "target_language",
+        "unit_order": 8,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:08",
+      "difficulty": 0.32,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-lower-2024:unit:08:sentence_pattern:is-there-a-post-office-near-here",
+      "status": "draft",
+      "summary": "核心句式：Is there a post office near here?",
+      "title": "Is there a post office near here?",
+      "type": "sentence_pattern"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "sentence_patterns",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "pattern": "Yes, there is.",
+        "requires_review": true,
+        "role": "target_language",
+        "unit_order": 8,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:08",
+      "difficulty": 0.32,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-lower-2024:unit:08:sentence_pattern:yes-there-is",
+      "status": "draft",
+      "summary": "核心句式：Yes, there is.",
+      "title": "Yes, there is.",
+      "type": "sentence_pattern"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "sentence_patterns",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "pattern": "Where is the bank?",
+        "requires_review": true,
+        "role": "target_language",
+        "unit_order": 8,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:08",
+      "difficulty": 0.32,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-lower-2024:unit:08:sentence_pattern:where-is-the-bank",
+      "status": "draft",
+      "summary": "核心句式：Where is the bank?",
+      "title": "Where is the bank?",
+      "type": "sentence_pattern"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "sentence_patterns",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "pattern": "Turn right at the first crossing.",
+        "requires_review": true,
+        "role": "target_language",
+        "unit_order": 8,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:08",
+      "difficulty": 0.32,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-lower-2024:unit:08:sentence_pattern:turn-right-at-the-first-crossing",
+      "status": "draft",
+      "summary": "核心句式：Turn right at the first crossing.",
+      "title": "Turn right at the first crossing.",
+      "type": "sentence_pattern"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "grammar",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "focus": "There be 结构",
+        "related_units": [
+          "Unit 8"
+        ],
+        "requires_review": true,
+        "role": "grammar_focus",
+        "unit_order": 8,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:08",
+      "difficulty": 0.38,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-lower-2024:unit:08:grammar:there-be",
+      "status": "draft",
+      "summary": "There be 结构",
+      "title": "There be 结构",
+      "type": "grammar"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "grammar",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "focus": "方位介词 near/across from/behind",
+        "related_units": [
+          "Unit 8"
+        ],
+        "requires_review": true,
+        "role": "grammar_focus",
+        "unit_order": 8,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:08",
+      "difficulty": 0.38,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-lower-2024:unit:08:grammar:near-across-from-behind",
+      "status": "draft",
+      "summary": "方位介词 near/across from/behind",
+      "title": "方位介词 near/across from/behind",
+      "type": "grammar"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "grammar",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "focus": "祈使句用于问路指路",
+        "related_units": [
+          "Unit 8"
+        ],
+        "requires_review": true,
+        "role": "grammar_focus",
+        "unit_order": 8,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:08",
+      "difficulty": 0.38,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-lower-2024:unit:08:grammar:zh-e133508571",
+      "status": "draft",
+      "summary": "祈使句用于问路指路",
+      "title": "祈使句用于问路指路",
+      "type": "grammar"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "pronunciation",
+        "evidence": {
+          "page_label": "Pronunciation",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "focus": "地点短语中的重音",
+        "requires_review": true,
+        "role": "pronunciation_note",
+        "unit_order": 8,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:08",
+      "difficulty": 0.28,
+      "source_page": "Pronunciation",
+      "stable_key": "pep-grade7-lower-2024:unit:08:pronunciation:zh-b9a31993f8",
+      "status": "draft",
+      "summary": "语音关注点：地点短语中的重音。",
+      "title": "地点短语中的重音",
+      "type": "pronunciation"
+    }
+  ],
+  "schema_version": "public_textbook_unit.v2",
+  "source_stable_id": "pep-grade7-lower-2024",
+  "unit": {
+    "end_page": "P.48",
+    "ordinal": 8,
+    "start_page": "P.43",
+    "subtitle": "Is there a post office near here?",
+    "title": "Unit 8"
+  }
+}

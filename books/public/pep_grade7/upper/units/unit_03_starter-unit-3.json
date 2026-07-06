@@ -1,0 +1,982 @@
+{
+  "curriculum_node_key": "pep-grade7-upper-2024:unit:03",
+  "exercise_questions": [
+    {
+      "answer": "（= colour）颜色",
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:03",
+      "difficulty": 0.28,
+      "explanation": "color 的本单元义项是：（= colour）颜色。",
+      "knowledge_point_key": "pep-grade7-upper-2024:unit:03:vocabulary:color",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:03",
+          "knowledge_point_key": "pep-grade7-upper-2024:unit:03:vocabulary:color",
+          "source_stable_id": "pep-grade7-upper-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "source": "curated_public_textbook_seed"
+      },
+      "options": [
+        "（= colour）颜色",
+        "& n. 红色（的）",
+        "& n. 黄色 （的）",
+        "& n. 绿色（的）"
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-upper-2024:unit:03:ex:01-color",
+      "status": "published",
+      "stem": "“color”在本单元词表中的意思最接近哪一项？"
+    },
+    {
+      "answer": "What color is it?",
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:03",
+      "difficulty": 0.28,
+      "explanation": "本单元核心句式包括“What color is it?”。",
+      "knowledge_point_key": "pep-grade7-upper-2024:unit:03:sentence_pattern:what-color-is-it",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:03",
+          "knowledge_point_key": "pep-grade7-upper-2024:unit:03:sentence_pattern:what-color-is-it",
+          "source_stable_id": "pep-grade7-upper-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "source": "curated_public_textbook_seed"
+      },
+      "options": [
+        "What color is it?",
+        "CCTV",
+        "black and white",
+        "color"
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-upper-2024:unit:03:ex:02-what-color-is-it",
+      "status": "published",
+      "stem": "围绕“颜色与字母复习”，下列哪一句最贴近本单元核心句式？"
+    },
+    {
+      "answer": "what color 特殊疑问句",
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:03",
+      "difficulty": 0.28,
+      "explanation": "本单元语法重点是：what color 特殊疑问句。",
+      "knowledge_point_key": "pep-grade7-upper-2024:unit:03:grammar:what-color",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:03",
+          "knowledge_point_key": "pep-grade7-upper-2024:unit:03:grammar:what-color",
+          "source_stable_id": "pep-grade7-upper-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "source": "curated_public_textbook_seed"
+      },
+      "options": [
+        "what color 特殊疑问句",
+        "过去完成时",
+        "定语从句",
+        "虚拟语气"
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-upper-2024:unit:03:ex:03-what-color",
+      "status": "published",
+      "stem": "本单元语法重点最接近哪一项？"
+    },
+    {
+      "answer": "CCTV",
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:03",
+      "difficulty": 0.28,
+      "explanation": "“CCTV”属于本单元短语或功能表达。",
+      "knowledge_point_key": "pep-grade7-upper-2024:unit:03:phrase:cctv",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:03",
+          "knowledge_point_key": "pep-grade7-upper-2024:unit:03:phrase:cctv",
+          "source_stable_id": "pep-grade7-upper-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "source": "curated_public_textbook_seed"
+      },
+      "options": [
+        "CCTV",
+        "in conclusion",
+        "as soon as possible",
+        "by mistake"
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-upper-2024:unit:03:ex:04-cctv",
+      "status": "published",
+      "stem": "下列哪一项是本单元可迁移短语/功能表达？"
+    },
+    {
+      "answer": "& n. 蓝色（的）",
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:03",
+      "difficulty": 0.28,
+      "explanation": "该题检查本单元词汇义项。",
+      "knowledge_point_key": "pep-grade7-upper-2024:unit:03:vocabulary:blue",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:03",
+          "knowledge_point_key": "pep-grade7-upper-2024:unit:03:vocabulary:blue",
+          "source_stable_id": "pep-grade7-upper-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "source": "curated_public_textbook_seed"
+      },
+      "options": [
+        "& n. 蓝色（的）",
+        "机场",
+        "科学家",
+        "电影院"
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-upper-2024:unit:03:ex:05-blue",
+      "status": "published",
+      "stem": "选择与“blue”对应的本单元中文义项。"
+    },
+    {
+      "answer": "It's red.",
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:03",
+      "difficulty": 0.28,
+      "explanation": "该句来自本单元目标语言框架的整理。",
+      "knowledge_point_key": "pep-grade7-upper-2024:unit:03:sentence_pattern:its-red",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:03",
+          "knowledge_point_key": "pep-grade7-upper-2024:unit:03:sentence_pattern:its-red",
+          "source_stable_id": "pep-grade7-upper-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "source": "curated_public_textbook_seed"
+      },
+      "options": [
+        "It's red.",
+        "I have finished the report.",
+        "Although it rained, we left.",
+        "The book was written in 1999."
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-upper-2024:unit:03:ex:06-its-red",
+      "status": "published",
+      "stem": "下列哪一句也属于本单元目标语言？"
+    }
+  ],
+  "extraction_gaps": [
+    {
+      "description": "听力活动需要配套音频，暂不进入公共默认学习流。",
+      "gap_type": "audio_required",
+      "scope": "pep-grade7-upper-2024:unit:03",
+      "suggested_future_handling": "后续接入音频资源和听力题型后再结构化。"
+    },
+    {
+      "description": "结对/小组互动活动不适合直接作为稳定自动评分题。",
+      "gap_type": "pair_work",
+      "scope": "pep-grade7-upper-2024:unit:03",
+      "suggested_future_handling": "后续作为课堂互动或口语任务模板处理。"
+    },
+    {
+      "description": "长课文、整页练习或连续对话不写入 seed pack。",
+      "gap_type": "copyright_sensitive_long_text",
+      "scope": "pep-grade7-upper-2024:unit:03",
+      "suggested_future_handling": "仅保存短摘要和知识点，必要时通过受控证据摘录展示。"
+    }
+  ],
+  "knowledge_points": [
+    {
+      "content": {
+        "confidence": 0.95,
+        "display_group": "unit_intro",
+        "evidence": {
+          "page_label": "P.9",
+          "raw_line_excerpt": null,
+          "source": "pdf_curated_extract"
+        },
+        "requires_review": false,
+        "role": "unit_overview",
+        "source_unit_subtitle": "What color is it?",
+        "source_unit_title": "Starter Unit 3",
+        "theme": "颜色与字母复习",
+        "unit_order": 3,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:03",
+      "difficulty": 0.18,
+      "source_page": "P.9",
+      "stable_key": "pep-grade7-upper-2024:unit:03:text_note:starter-unit-3-overview",
+      "status": "published",
+      "summary": "本单元主题：颜色与字母复习；核心标题表达为“What color is it?”。",
+      "title": "Starter Unit 3 overview",
+      "type": "text_note"
+    },
+    {
+      "content": {
+        "chinese_meaning": "（= colour）颜色",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.S9",
+          "raw_line_excerpt": "color /kVl@(r)/ n.（= colour）颜色 p.S9",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "color",
+        "part_of_speech": "n.",
+        "phonetic": "/kVl@(r)/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 3,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:03",
+      "difficulty": 0.22,
+      "source_page": "P.S9",
+      "stable_key": "pep-grade7-upper-2024:unit:03:vocabulary:color",
+      "status": "published",
+      "summary": "（= colour）颜色",
+      "title": "color",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "& n. 红色（的）",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.S9",
+          "raw_line_excerpt": "red /red/ adj. & n. 红色（的） p.S9",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "red",
+        "part_of_speech": "adj.",
+        "phonetic": "/red/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 3,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:03",
+      "difficulty": 0.22,
+      "source_page": "P.S9",
+      "stable_key": "pep-grade7-upper-2024:unit:03:vocabulary:red",
+      "status": "published",
+      "summary": "& n. 红色（的）",
+      "title": "red",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "& n. 黄色 （的）",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.S9",
+          "raw_line_excerpt": "yellow /jel@U/ adj. & n. 黄色 （的） p.S9",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "yellow",
+        "part_of_speech": "adj.",
+        "phonetic": "/jel@U/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 3,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:03",
+      "difficulty": 0.22,
+      "source_page": "P.S9",
+      "stable_key": "pep-grade7-upper-2024:unit:03:vocabulary:yellow",
+      "status": "published",
+      "summary": "& n. 黄色 （的）",
+      "title": "yellow",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "& n. 绿色（的）",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.S9",
+          "raw_line_excerpt": "green /gri:n/ adj. & n. 绿色（的） p.S9",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "green",
+        "part_of_speech": "adj.",
+        "phonetic": "/gri:n/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 3,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:03",
+      "difficulty": 0.22,
+      "source_page": "P.S9",
+      "stable_key": "pep-grade7-upper-2024:unit:03:vocabulary:green",
+      "status": "published",
+      "summary": "& n. 绿色（的）",
+      "title": "green",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "& n. 蓝色（的）",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.S9",
+          "raw_line_excerpt": "blue /blu:/ adj. & n. 蓝色（的） p.S9",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "blue",
+        "part_of_speech": "adj.",
+        "phonetic": "/blu:/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 3,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:03",
+      "difficulty": 0.22,
+      "source_page": "P.S9",
+      "stable_key": "pep-grade7-upper-2024:unit:03:vocabulary:blue",
+      "status": "published",
+      "summary": "& n. 蓝色（的）",
+      "title": "blue",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "& n. 黑色（的）",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.S9",
+          "raw_line_excerpt": "black /bl{k/ adj. & n. 黑色（的） p.S9",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "black",
+        "part_of_speech": "adj.",
+        "phonetic": "/bl{k/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 3,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:03",
+      "difficulty": 0.22,
+      "source_page": "P.S9",
+      "stable_key": "pep-grade7-upper-2024:unit:03:vocabulary:black",
+      "status": "published",
+      "summary": "& n. 黑色（的）",
+      "title": "black",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "& n. 白色（的）",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.S9",
+          "raw_line_excerpt": "white /waIt/ adj. & n. 白色（的） p.S9",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "white",
+        "part_of_speech": "adj.",
+        "phonetic": "/waIt/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 3,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:03",
+      "difficulty": 0.22,
+      "source_page": "P.S9",
+      "stable_key": "pep-grade7-upper-2024:unit:03:vocabulary:white",
+      "status": "published",
+      "summary": "& n. 白色（的）",
+      "title": "white",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "& n. 紫色（的）",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.S9",
+          "raw_line_excerpt": "purple /p3:(r)pl/ adj. & n. 紫色（的） p.S9",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "purple",
+        "part_of_speech": "adj.",
+        "phonetic": "/p3:(r)pl/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 3,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:03",
+      "difficulty": 0.22,
+      "source_page": "P.S9",
+      "stable_key": "pep-grade7-upper-2024:unit:03:vocabulary:purple",
+      "status": "published",
+      "summary": "& n. 紫色（的）",
+      "title": "purple",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "& n. 棕色（的） ；褐色（的）",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.S9",
+          "raw_line_excerpt": "brown /braUn/ adj. & n. 棕色（的） ；褐色（的） p.S9",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "brown",
+        "part_of_speech": "adj.",
+        "phonetic": "/braUn/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 3,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:03",
+      "difficulty": 0.22,
+      "source_page": "P.S9",
+      "stable_key": "pep-grade7-upper-2024:unit:03:vocabulary:brown",
+      "status": "published",
+      "summary": "& n. 棕色（的） ；褐色（的）",
+      "title": "brown",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "指已提到或易领会 到的人或事物",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.S11",
+          "raw_line_excerpt": "the /Di; D@/ art. 指已提到或易领会 到的人或事物 p.S11",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "the",
+        "part_of_speech": "art.",
+        "phonetic": "/Di; D@/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 3,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:03",
+      "difficulty": 0.22,
+      "source_page": "P.S11",
+      "stable_key": "pep-grade7-upper-2024:unit:03:vocabulary:the",
+      "status": "published",
+      "summary": "指已提到或易领会 到的人或事物",
+      "title": "the",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "现在；目前",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.S12",
+          "raw_line_excerpt": "now /naU/ adv. 现在；目前 p.S12",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "now",
+        "part_of_speech": "adv.",
+        "phonetic": "/naU/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 3,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:03",
+      "difficulty": 0.22,
+      "source_page": "P.S12",
+      "stable_key": "pep-grade7-upper-2024:unit:03:vocabulary:now",
+      "status": "published",
+      "summary": "现在；目前",
+      "title": "now",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "理解；明白",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.S12",
+          "raw_line_excerpt": "see /si:/ v. 理解；明白 p.S12",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "see",
+        "part_of_speech": "v.",
+        "phonetic": "/si:/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 3,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:03",
+      "difficulty": 0.22,
+      "source_page": "P.S12",
+      "stable_key": "pep-grade7-upper-2024:unit:03:vocabulary:see",
+      "status": "published",
+      "summary": "理解；明白",
+      "title": "see",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "能；会",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.S12",
+          "raw_line_excerpt": "can /k{n; k@n/ modal v. 能；会 p.S12",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "can",
+        "part_of_speech": "modal v.",
+        "phonetic": "/k{n; k@n/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 3,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:03",
+      "difficulty": 0.22,
+      "source_page": "P.S12",
+      "stable_key": "pep-grade7-upper-2024:unit:03:vocabulary:can",
+      "status": "published",
+      "summary": "能；会",
+      "title": "can",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "说；讲",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.S12",
+          "raw_line_excerpt": "say /seI/ v. 说；讲 p.S12",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "say",
+        "part_of_speech": "v.",
+        "phonetic": "/seI/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 3,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:03",
+      "difficulty": 0.22,
+      "source_page": "P.S12",
+      "stable_key": "pep-grade7-upper-2024:unit:03:vocabulary:say",
+      "status": "published",
+      "summary": "说；讲",
+      "title": "say",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "我的",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.S12",
+          "raw_line_excerpt": "my /maI/ pron. 我的 p.S12",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "my",
+        "part_of_speech": "pron.",
+        "phonetic": "/maI/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 3,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:03",
+      "difficulty": 0.22,
+      "source_page": "P.S12",
+      "stable_key": "pep-grade7-upper-2024:unit:03:vocabulary:my",
+      "status": "published",
+      "summary": "我的",
+      "title": "my",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "（尤指服装的尺码）小号的",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.S10",
+          "raw_line_excerpt": "S /es/ （尤指服装的尺码）小号的 p.S10",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "S",
+        "part_of_speech": null,
+        "phonetic": "/es/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 3,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:03",
+      "difficulty": 0.22,
+      "source_page": "P.S10",
+      "stable_key": "pep-grade7-upper-2024:unit:03:vocabulary:s",
+      "status": "published",
+      "summary": "（尤指服装的尺码）小号的",
+      "title": "S",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "（尤指服装的尺码）中号的",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.S10",
+          "raw_line_excerpt": "M /em/ （尤指服装的尺码）中号的 p.S10",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "M",
+        "part_of_speech": null,
+        "phonetic": "/em/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 3,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:03",
+      "difficulty": 0.22,
+      "source_page": "P.S10",
+      "stable_key": "pep-grade7-upper-2024:unit:03:vocabulary:m",
+      "status": "published",
+      "summary": "（尤指服装的尺码）中号的",
+      "title": "M",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "（尤指服装的尺码）大号的",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.S10",
+          "raw_line_excerpt": "L /el/ （尤指服装的尺码）大号的 p.S10",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "L",
+        "part_of_speech": null,
+        "phonetic": "/el/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 3,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:03",
+      "difficulty": 0.22,
+      "source_page": "P.S10",
+      "stable_key": "pep-grade7-upper-2024:unit:03:vocabulary:l",
+      "status": "published",
+      "summary": "（尤指服装的尺码）大号的",
+      "title": "L",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "不明飞行物",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.S10",
+          "raw_line_excerpt": "UFO / ju: ef @U/ 不明飞行物 p.S10",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "UFO",
+        "part_of_speech": null,
+        "phonetic": "/ ju: ef @U/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 3,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:03",
+      "difficulty": 0.22,
+      "source_page": "P.S10",
+      "stable_key": "pep-grade7-upper-2024:unit:03:vocabulary:ufo",
+      "status": "published",
+      "summary": "不明飞行物",
+      "title": "UFO",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "中国中央电视台",
+        "confidence": 0.95,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "P.S10",
+          "raw_line_excerpt": "CCTV /si: si: ti: vi:/ 中国中央电视台 p.S10",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "CCTV",
+        "part_of_speech": null,
+        "phonetic": "/si: si: ti: vi:/",
+        "requires_review": false,
+        "role": "unit_phrase",
+        "unit_order": 3,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:03",
+      "difficulty": 0.28,
+      "source_page": "P.S10",
+      "stable_key": "pep-grade7-upper-2024:unit:03:phrase:cctv",
+      "status": "published",
+      "summary": "中国中央电视台",
+      "title": "CCTV",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "confidence": 0.95,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "Unit pages",
+          "raw_line_excerpt": null,
+          "source": "pdf_curated_extract"
+        },
+        "phrase": "black and white",
+        "requires_review": false,
+        "role": "unit_phrase",
+        "unit_order": 3,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:03",
+      "difficulty": 0.28,
+      "source_page": "Unit pages",
+      "stable_key": "pep-grade7-upper-2024:unit:03:phrase:black-and-white",
+      "status": "published",
+      "summary": "本单元可迁移短语或功能表达：black and white。",
+      "title": "black and white",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "confidence": 0.95,
+        "display_group": "sentence_patterns",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "pdf_curated_extract"
+        },
+        "pattern": "What color is it?",
+        "requires_review": false,
+        "role": "target_language",
+        "unit_order": 3,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:03",
+      "difficulty": 0.32,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-upper-2024:unit:03:sentence_pattern:what-color-is-it",
+      "status": "published",
+      "summary": "核心句式：What color is it?",
+      "title": "What color is it?",
+      "type": "sentence_pattern"
+    },
+    {
+      "content": {
+        "confidence": 0.95,
+        "display_group": "sentence_patterns",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "pdf_curated_extract"
+        },
+        "pattern": "It's red.",
+        "requires_review": false,
+        "role": "target_language",
+        "unit_order": 3,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:03",
+      "difficulty": 0.32,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-upper-2024:unit:03:sentence_pattern:its-red",
+      "status": "published",
+      "summary": "核心句式：It's red.",
+      "title": "It's red.",
+      "type": "sentence_pattern"
+    },
+    {
+      "content": {
+        "confidence": 0.95,
+        "display_group": "sentence_patterns",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "pdf_curated_extract"
+        },
+        "pattern": "Can you say it?",
+        "requires_review": false,
+        "role": "target_language",
+        "unit_order": 3,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:03",
+      "difficulty": 0.32,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-upper-2024:unit:03:sentence_pattern:can-you-say-it",
+      "status": "published",
+      "summary": "核心句式：Can you say it?",
+      "title": "Can you say it?",
+      "type": "sentence_pattern"
+    },
+    {
+      "content": {
+        "confidence": 0.95,
+        "display_group": "grammar",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "pdf_curated_extract"
+        },
+        "focus": "what color 特殊疑问句",
+        "related_units": [
+          "Unit 3"
+        ],
+        "requires_review": false,
+        "role": "grammar_focus",
+        "unit_order": 3,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:03",
+      "difficulty": 0.38,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-upper-2024:unit:03:grammar:what-color",
+      "status": "published",
+      "summary": "what color 特殊疑问句",
+      "title": "what color 特殊疑问句",
+      "type": "grammar"
+    },
+    {
+      "content": {
+        "confidence": 0.95,
+        "display_group": "grammar",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "pdf_curated_extract"
+        },
+        "focus": "can 表能力的入门用法",
+        "related_units": [
+          "Unit 3"
+        ],
+        "requires_review": false,
+        "role": "grammar_focus",
+        "unit_order": 3,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:03",
+      "difficulty": 0.38,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-upper-2024:unit:03:grammar:can",
+      "status": "published",
+      "summary": "can 表能力的入门用法",
+      "title": "can 表能力的入门用法",
+      "type": "grammar"
+    },
+    {
+      "content": {
+        "confidence": 0.95,
+        "display_group": "pronunciation",
+        "evidence": {
+          "page_label": "Pronunciation",
+          "raw_line_excerpt": null,
+          "source": "pdf_curated_extract"
+        },
+        "focus": "字母 S-Z 的名称音；/juː/ /uː/ /ʌ/ 对比",
+        "requires_review": false,
+        "role": "pronunciation_note",
+        "unit_order": 3,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:03",
+      "difficulty": 0.28,
+      "source_page": "Pronunciation",
+      "stable_key": "pep-grade7-upper-2024:unit:03:pronunciation:s-z-ju-u",
+      "status": "published",
+      "summary": "语音关注点：字母 S-Z 的名称音；/juː/ /uː/ /ʌ/ 对比。",
+      "title": "字母 S-Z 的名称音；/juː/ /uː/ /ʌ/ 对比",
+      "type": "pronunciation"
+    }
+  ],
+  "schema_version": "public_textbook_unit.v2",
+  "source_stable_id": "pep-grade7-upper-2024",
+  "unit": {
+    "end_page": "P.12",
+    "ordinal": 3,
+    "start_page": "P.9",
+    "subtitle": "What color is it?",
+    "title": "Starter Unit 3"
+  }
+}

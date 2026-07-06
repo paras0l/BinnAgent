@@ -1,0 +1,1700 @@
+{
+  "curriculum_node_key": "pep-grade7-lower-2024:unit:05",
+  "exercise_questions": [
+    {
+      "answer": "熊猫",
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:05",
+      "difficulty": 0.28,
+      "explanation": "panda 的本单元义项是：熊猫。",
+      "knowledge_point_key": "pep-grade7-lower-2024:unit:05:vocabulary:panda",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:05",
+          "knowledge_point_key": "pep-grade7-lower-2024:unit:05:vocabulary:panda",
+          "source_stable_id": "pep-grade7-lower-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "requires_review": true,
+        "source": "curated_public_textbook_seed",
+        "warnings": [
+          "generated_from_lower_draft_content"
+        ]
+      },
+      "options": [
+        "熊猫",
+        "动物园",
+        "老虎",
+        "大象"
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-lower-2024:unit:05:ex:01-panda",
+      "status": "draft",
+      "stem": "“panda”在本单元词表中的意思最接近哪一项？"
+    },
+    {
+      "answer": "Why do you like pandas?",
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:05",
+      "difficulty": 0.28,
+      "explanation": "本单元核心句式包括“Why do you like pandas?”。",
+      "knowledge_point_key": "pep-grade7-lower-2024:unit:05:sentence_pattern:why-do-you-like-pandas",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:05",
+          "knowledge_point_key": "pep-grade7-lower-2024:unit:05:sentence_pattern:why-do-you-like-pandas",
+          "source_stable_id": "pep-grade7-lower-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "requires_review": true,
+        "source": "curated_public_textbook_seed",
+        "warnings": [
+          "generated_from_lower_draft_content"
+        ]
+      },
+      "options": [
+        "Why do you like pandas?",
+        "kind of",
+        "South Africa",
+        "panda"
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-lower-2024:unit:05:ex:02-why-do-you-like-pandas",
+      "status": "draft",
+      "stem": "围绕“动物与喜好原因”，下列哪一句最贴近本单元核心句式？"
+    },
+    {
+      "answer": "why/because 原因问答",
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:05",
+      "difficulty": 0.28,
+      "explanation": "本单元语法重点是：why/because 原因问答。",
+      "knowledge_point_key": "pep-grade7-lower-2024:unit:05:grammar:why-because",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:05",
+          "knowledge_point_key": "pep-grade7-lower-2024:unit:05:grammar:why-because",
+          "source_stable_id": "pep-grade7-lower-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "requires_review": true,
+        "source": "curated_public_textbook_seed",
+        "warnings": [
+          "generated_from_lower_draft_content"
+        ]
+      },
+      "options": [
+        "why/because 原因问答",
+        "过去完成时",
+        "定语从句",
+        "虚拟语气"
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-lower-2024:unit:05:ex:03-why-because",
+      "status": "draft",
+      "stem": "本单元语法重点最接近哪一项？"
+    },
+    {
+      "answer": "kind of",
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:05",
+      "difficulty": 0.28,
+      "explanation": "“kind of”属于本单元短语或功能表达。",
+      "knowledge_point_key": "pep-grade7-lower-2024:unit:05:phrase:kind-of",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:05",
+          "knowledge_point_key": "pep-grade7-lower-2024:unit:05:phrase:kind-of",
+          "source_stable_id": "pep-grade7-lower-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "requires_review": true,
+        "source": "curated_public_textbook_seed",
+        "warnings": [
+          "generated_from_lower_draft_content"
+        ]
+      },
+      "options": [
+        "kind of",
+        "in conclusion",
+        "as soon as possible",
+        "by mistake"
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-lower-2024:unit:05:ex:04-kind-of",
+      "status": "draft",
+      "stem": "下列哪一项是本单元可迁移短语/功能表达？"
+    },
+    {
+      "answer": "考拉",
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:05",
+      "difficulty": 0.28,
+      "explanation": "该题检查本单元词汇义项。",
+      "knowledge_point_key": "pep-grade7-lower-2024:unit:05:vocabulary:koala",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:05",
+          "knowledge_point_key": "pep-grade7-lower-2024:unit:05:vocabulary:koala",
+          "source_stable_id": "pep-grade7-lower-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "requires_review": true,
+        "source": "curated_public_textbook_seed",
+        "warnings": [
+          "generated_from_lower_draft_content"
+        ]
+      },
+      "options": [
+        "考拉",
+        "机场",
+        "科学家",
+        "电影院"
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-lower-2024:unit:05:ex:05-koala",
+      "status": "draft",
+      "stem": "选择与“koala”对应的本单元中文义项。"
+    },
+    {
+      "answer": "Because they are cute.",
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:05",
+      "difficulty": 0.28,
+      "explanation": "该句来自本单元目标语言框架的整理。",
+      "knowledge_point_key": "pep-grade7-lower-2024:unit:05:sentence_pattern:because-they-are-cute",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:05",
+          "knowledge_point_key": "pep-grade7-lower-2024:unit:05:sentence_pattern:because-they-are-cute",
+          "source_stable_id": "pep-grade7-lower-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "requires_review": true,
+        "source": "curated_public_textbook_seed",
+        "warnings": [
+          "generated_from_lower_draft_content"
+        ]
+      },
+      "options": [
+        "Because they are cute.",
+        "I have finished the report.",
+        "Although it rained, we left.",
+        "The book was written in 1999."
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-lower-2024:unit:05:ex:06-because-they-are-cute",
+      "status": "draft",
+      "stem": "下列哪一句也属于本单元目标语言？"
+    }
+  ],
+  "extraction_gaps": [
+    {
+      "description": "听力活动需要配套音频，暂不进入公共默认学习流。",
+      "gap_type": "audio_required",
+      "scope": "pep-grade7-lower-2024:unit:05",
+      "suggested_future_handling": "后续接入音频资源和听力题型后再结构化。"
+    },
+    {
+      "description": "结对/小组互动活动不适合直接作为稳定自动评分题。",
+      "gap_type": "pair_work",
+      "scope": "pep-grade7-lower-2024:unit:05",
+      "suggested_future_handling": "后续作为课堂互动或口语任务模板处理。"
+    },
+    {
+      "description": "该册 PDF 文本层为空，本单元短项来自人工整理，需后续 OCR/layout 校对。",
+      "gap_type": "low_confidence_layout",
+      "scope": "pep-grade7-lower-2024:unit:05",
+      "suggested_future_handling": "用 OCR/layout-aware pipeline 回填页内证据并复核词表。"
+    }
+  ],
+  "knowledge_points": [
+    {
+      "content": {
+        "confidence": 0.9,
+        "display_group": "unit_intro",
+        "evidence": {
+          "page_label": "P.25",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "requires_review": false,
+        "role": "unit_overview",
+        "source_unit_subtitle": "Why do you like pandas?",
+        "source_unit_title": "Unit 5",
+        "theme": "动物与喜好原因",
+        "unit_order": 5,
+        "warnings": [
+          "lower_pdf_text_layer_empty"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:05",
+      "difficulty": 0.18,
+      "source_page": "P.25",
+      "stable_key": "pep-grade7-lower-2024:unit:05:text_note:unit-5-overview",
+      "status": "published",
+      "summary": "本单元主题：动物与喜好原因；核心标题表达为“Why do you like pandas?”。",
+      "title": "Unit 5 overview",
+      "type": "text_note"
+    },
+    {
+      "content": {
+        "chinese_meaning": "熊猫",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "panda ... 熊猫",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "panda",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 5,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:05",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:05:vocabulary:panda",
+      "status": "draft",
+      "summary": "熊猫",
+      "title": "panda",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "动物园",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "zoo ... 动物园",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "zoo",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 5,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:05",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:05:vocabulary:zoo",
+      "status": "draft",
+      "summary": "动物园",
+      "title": "zoo",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "老虎",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "tiger ... 老虎",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "tiger",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 5,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:05",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:05:vocabulary:tiger",
+      "status": "draft",
+      "summary": "老虎",
+      "title": "tiger",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "大象",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "elephant ... 大象",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "elephant",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 5,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:05",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:05:vocabulary:elephant",
+      "status": "draft",
+      "summary": "大象",
+      "title": "elephant",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "考拉",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "koala ... 考拉",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "koala",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 5,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:05",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:05:vocabulary:koala",
+      "status": "draft",
+      "summary": "考拉",
+      "title": "koala",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "狮子",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "lion ... 狮子",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "lion",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 5,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:05",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:05:vocabulary:lion",
+      "status": "draft",
+      "summary": "狮子",
+      "title": "lion",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "长颈鹿",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "giraffe ... 长颈鹿",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "giraffe",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 5,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:05",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:05:vocabulary:giraffe",
+      "status": "draft",
+      "summary": "长颈鹿",
+      "title": "giraffe",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "动物",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "animal ... 动物",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "animal",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 5,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:05",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:05:vocabulary:animal",
+      "status": "draft",
+      "summary": "动物",
+      "title": "animal",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "可爱的",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "cute ... 可爱的",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "cute",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 5,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:05",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:05:vocabulary:cute",
+      "status": "draft",
+      "summary": "可爱的",
+      "title": "cute",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "懒散的",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "lazy ... 懒散的",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "lazy",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 5,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:05",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:05:vocabulary:lazy",
+      "status": "draft",
+      "summary": "懒散的",
+      "title": "lazy",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "聪明的",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "smart ... 聪明的",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "smart",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 5,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:05",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:05:vocabulary:smart",
+      "status": "draft",
+      "summary": "聪明的",
+      "title": "smart",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "美丽的",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "beautiful ... 美丽的",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "beautiful",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 5,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:05",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:05:vocabulary:beautiful",
+      "status": "draft",
+      "summary": "美丽的",
+      "title": "beautiful",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "吓人的",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "scary ... 吓人的",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "scary",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 5,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:05",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:05:vocabulary:scary",
+      "status": "draft",
+      "summary": "吓人的",
+      "title": "scary",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "种类",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "kind ... 种类",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "kind",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 5,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:05",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:05:vocabulary:kind",
+      "status": "draft",
+      "summary": "种类",
+      "title": "kind",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "稍微；有点儿",
+        "confidence": 0.72,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "kind of ... 稍微；有点儿",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "kind of",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_phrase",
+        "unit_order": 5,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:05",
+      "difficulty": 0.28,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:05:phrase:kind-of",
+      "status": "draft",
+      "summary": "稍微；有点儿",
+      "title": "kind of",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "chinese_meaning": "澳大利亚",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "Australia ... 澳大利亚",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "Australia",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 5,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:05",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:05:vocabulary:australia",
+      "status": "draft",
+      "summary": "澳大利亚",
+      "title": "Australia",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "南方",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "south ... 南方",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "south",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 5,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:05",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:05:vocabulary:south",
+      "status": "draft",
+      "summary": "南方",
+      "title": "south",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "非洲",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "Africa ... 非洲",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "Africa",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 5,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:05",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:05:vocabulary:africa",
+      "status": "draft",
+      "summary": "非洲",
+      "title": "Africa",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "南非",
+        "confidence": 0.72,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "South Africa ... 南非",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "South Africa",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_phrase",
+        "unit_order": 5,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:05",
+      "difficulty": 0.28,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:05:phrase:south-africa",
+      "status": "draft",
+      "summary": "南非",
+      "title": "South Africa",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "chinese_meaning": "宠物",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "pet ... 宠物",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "pet",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 5,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:05",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:05:vocabulary:pet",
+      "status": "draft",
+      "summary": "宠物",
+      "title": "pet",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "腿",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "leg ... 腿",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "leg",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 5,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:05",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:05:vocabulary:leg",
+      "status": "draft",
+      "summary": "腿",
+      "title": "leg",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "猫",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "cat ... 猫",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "cat",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 5,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:05",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:05:vocabulary:cat",
+      "status": "draft",
+      "summary": "猫",
+      "title": "cat",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "睡觉",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "sleep ... 睡觉",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "sleep",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 5,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:05",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:05:vocabulary:sleep",
+      "status": "draft",
+      "summary": "睡觉",
+      "title": "sleep",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "友好的",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "friendly ... 友好的",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "friendly",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 5,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:05",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:05:vocabulary:friendly",
+      "status": "draft",
+      "summary": "友好的",
+      "title": "friendly",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "羞怯的",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "shy ... 羞怯的",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "shy",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 5,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:05",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:05:vocabulary:shy",
+      "status": "draft",
+      "summary": "羞怯的",
+      "title": "shy",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "救助",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "save ... 救助",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "save",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 5,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:05",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:05:vocabulary:save",
+      "status": "draft",
+      "summary": "救助",
+      "title": "save",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "象征",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "symbol ... 象征",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "symbol",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 5,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:05",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:05:vocabulary:symbol",
+      "status": "draft",
+      "summary": "象征",
+      "title": "symbol",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "旗帜",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "flag ... 旗帜",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "flag",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 5,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:05",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:05:vocabulary:flag",
+      "status": "draft",
+      "summary": "旗帜",
+      "title": "flag",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "忘记",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "forget ... 忘记",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "forget",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 5,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:05",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:05:vocabulary:forget",
+      "status": "draft",
+      "summary": "忘记",
+      "title": "forget",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "迷路",
+        "confidence": 0.72,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "get lost ... 迷路",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "get lost",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_phrase",
+        "unit_order": 5,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:05",
+      "difficulty": 0.28,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:05:phrase:get-lost",
+      "status": "draft",
+      "summary": "迷路",
+      "title": "get lost",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "chinese_meaning": "地点",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "place ... 地点",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "place",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 5,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:05",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:05:vocabulary:place",
+      "status": "draft",
+      "summary": "地点",
+      "title": "place",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "水",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "water ... 水",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "water",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 5,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:05",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:05:vocabulary:water",
+      "status": "draft",
+      "summary": "水",
+      "title": "water",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "危险",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "danger ... 危险",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "danger",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 5,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:05",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:05:vocabulary:danger",
+      "status": "draft",
+      "summary": "危险",
+      "title": "danger",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "砍倒",
+        "confidence": 0.72,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "cut down ... 砍倒",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "cut down",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_phrase",
+        "unit_order": 5,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:05",
+      "difficulty": 0.28,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:05:phrase:cut-down",
+      "status": "draft",
+      "summary": "砍倒",
+      "title": "cut down",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "chinese_meaning": "树",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "tree ... 树",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "tree",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 5,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:05",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:05:vocabulary:tree",
+      "status": "draft",
+      "summary": "树",
+      "title": "tree",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "杀死",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "kill ... 杀死",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "kill",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 5,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:05",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:05:vocabulary:kill",
+      "status": "draft",
+      "summary": "杀死",
+      "title": "kill",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "象牙",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "ivory ... 象牙",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "ivory",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 5,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:05",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:05:vocabulary:ivory",
+      "status": "draft",
+      "summary": "象牙",
+      "title": "ivory",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "Unit pages",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "phrase": "be in danger",
+        "requires_review": true,
+        "role": "unit_phrase",
+        "unit_order": 5,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:05",
+      "difficulty": 0.28,
+      "source_page": "Unit pages",
+      "stable_key": "pep-grade7-lower-2024:unit:05:phrase:be-in-danger",
+      "status": "draft",
+      "summary": "本单元可迁移短语或功能表达：be in danger。",
+      "title": "be in danger",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "Unit pages",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "phrase": "be made of",
+        "requires_review": true,
+        "role": "unit_phrase",
+        "unit_order": 5,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:05",
+      "difficulty": 0.28,
+      "source_page": "Unit pages",
+      "stable_key": "pep-grade7-lower-2024:unit:05:phrase:be-made-of",
+      "status": "draft",
+      "summary": "本单元可迁移短语或功能表达：be made of。",
+      "title": "be made of",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "sentence_patterns",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "pattern": "Why do you like pandas?",
+        "requires_review": true,
+        "role": "target_language",
+        "unit_order": 5,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:05",
+      "difficulty": 0.32,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-lower-2024:unit:05:sentence_pattern:why-do-you-like-pandas",
+      "status": "draft",
+      "summary": "核心句式：Why do you like pandas?",
+      "title": "Why do you like pandas?",
+      "type": "sentence_pattern"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "sentence_patterns",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "pattern": "Because they are cute.",
+        "requires_review": true,
+        "role": "target_language",
+        "unit_order": 5,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:05",
+      "difficulty": 0.32,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-lower-2024:unit:05:sentence_pattern:because-they-are-cute",
+      "status": "draft",
+      "summary": "核心句式：Because they are cute.",
+      "title": "Because they are cute.",
+      "type": "sentence_pattern"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "sentence_patterns",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "pattern": "Where are lions from?",
+        "requires_review": true,
+        "role": "target_language",
+        "unit_order": 5,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:05",
+      "difficulty": 0.32,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-lower-2024:unit:05:sentence_pattern:where-are-lions-from",
+      "status": "draft",
+      "summary": "核心句式：Where are lions from?",
+      "title": "Where are lions from?",
+      "type": "sentence_pattern"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "sentence_patterns",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "pattern": "They are from South Africa.",
+        "requires_review": true,
+        "role": "target_language",
+        "unit_order": 5,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:05",
+      "difficulty": 0.32,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-lower-2024:unit:05:sentence_pattern:they-are-from-south-africa",
+      "status": "draft",
+      "summary": "核心句式：They are from South Africa.",
+      "title": "They are from South Africa.",
+      "type": "sentence_pattern"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "grammar",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "focus": "why/because 原因问答",
+        "related_units": [
+          "Unit 5"
+        ],
+        "requires_review": true,
+        "role": "grammar_focus",
+        "unit_order": 5,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:05",
+      "difficulty": 0.38,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-lower-2024:unit:05:grammar:why-because",
+      "status": "draft",
+      "summary": "why/because 原因问答",
+      "title": "why/because 原因问答",
+      "type": "grammar"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "grammar",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "focus": "be from 表来源",
+        "related_units": [
+          "Unit 5"
+        ],
+        "requires_review": true,
+        "role": "grammar_focus",
+        "unit_order": 5,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:05",
+      "difficulty": 0.38,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-lower-2024:unit:05:grammar:be-from",
+      "status": "draft",
+      "summary": "be from 表来源",
+      "title": "be from 表来源",
+      "type": "grammar"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "grammar",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "focus": "描述性形容词修饰动物",
+        "related_units": [
+          "Unit 5"
+        ],
+        "requires_review": true,
+        "role": "grammar_focus",
+        "unit_order": 5,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:05",
+      "difficulty": 0.38,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-lower-2024:unit:05:grammar:zh-274419a9ba",
+      "status": "draft",
+      "summary": "描述性形容词修饰动物",
+      "title": "描述性形容词修饰动物",
+      "type": "grammar"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "pronunciation",
+        "evidence": {
+          "page_label": "Pronunciation",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "focus": "why 问句与 because 答语重音",
+        "requires_review": true,
+        "role": "pronunciation_note",
+        "unit_order": 5,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:05",
+      "difficulty": 0.28,
+      "source_page": "Pronunciation",
+      "stable_key": "pep-grade7-lower-2024:unit:05:pronunciation:why-because",
+      "status": "draft",
+      "summary": "语音关注点：why 问句与 because 答语重音。",
+      "title": "why 问句与 because 答语重音",
+      "type": "pronunciation"
+    }
+  ],
+  "schema_version": "public_textbook_unit.v2",
+  "source_stable_id": "pep-grade7-lower-2024",
+  "unit": {
+    "end_page": "P.30",
+    "ordinal": 5,
+    "start_page": "P.25",
+    "subtitle": "Why do you like pandas?",
+    "title": "Unit 5"
+  }
+}

@@ -5,7 +5,7 @@ import argparse
 import json
 import re
 import sys
-from collections import Counter
+from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any
 
@@ -32,6 +32,9 @@ FORBIDDEN_FIELD_NAMES = {
     "tapescripts",
 }
 MAX_LONG_TEXT_CHARS = 1200
+ORDINARY_UNIT_MIN_POINTS = 12
+STARTER_UNIT_MIN_POINTS = 8
+UNIT_MIN_VOCABULARY = 5
 
 
 class PackValidationError(Exception):
@@ -40,21 +43,36 @@ class PackValidationError(Exception):
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Validate a curated public textbook seed pack.")
-    parser.add_argument("pack", type=Path, help="Path to public_textbook_pack JSON.")
+    parser.add_argument("pack", type=Path, help="Path to v1 pack JSON or v2 split manifest.")
     return parser.parse_args(argv)
 
 
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
     try:
-        data = _load_json(args.pack)
-        _validate_json_schema(data)
-        _validate_pack(data)
+        aggregate, warnings = validate_public_textbook_pack(args.pack)
     except PackValidationError as exc:
         print(f"public textbook pack validation failed: {exc}", file=sys.stderr)
         return 1
-    print(f"public textbook pack validation passed: {args.pack}")
+    for warning in warnings:
+        print(f"warning: {warning}", file=sys.stderr)
+    source_count = len(aggregate["sources"])
+    print(f"public textbook pack validation passed: {args.pack} ({source_count} sources)")
     return 0
+
+
+def validate_public_textbook_pack(path: Path) -> tuple[dict[str, Any], list[str]]:
+    data = _load_json(path)
+    _validate_json_schema(data)
+    if data.get("schema_version") == "public_textbook_pack_manifest.v2":
+        aggregate = _load_split_pack(path, data)
+    elif data.get("schema_version") == "public_textbook_pack.v1":
+        aggregate = data
+    else:
+        raise PackValidationError(f"unsupported schema_version: {data.get('schema_version')}")
+    warnings: list[str] = []
+    _validate_pack(aggregate, warnings=warnings)
+    return aggregate, warnings
 
 
 def _load_json(path: Path) -> dict[str, Any]:
@@ -64,9 +82,9 @@ def _load_json(path: Path) -> dict[str, Any]:
     except FileNotFoundError as exc:
         raise PackValidationError(f"file not found: {path}") from exc
     except json.JSONDecodeError as exc:
-        raise PackValidationError(f"invalid JSON: {exc}") from exc
+        raise PackValidationError(f"invalid JSON: {path}: {exc}") from exc
     if not isinstance(data, dict):
-        raise PackValidationError("pack root must be a JSON object")
+        raise PackValidationError(f"JSON root must be an object: {path}")
     return data
 
 
@@ -84,9 +102,82 @@ def _validate_json_schema(data: dict[str, Any]) -> None:
         raise PackValidationError(f"schema error{suffix}: {exc.message}") from exc
 
 
-def _validate_pack(data: dict[str, Any]) -> None:
+def _load_split_pack(manifest_path: Path, manifest: dict[str, Any]) -> dict[str, Any]:
+    base_dir = manifest_path.resolve().parent
+    sources: list[dict[str, Any]] = []
+    global_gaps = _load_optional_gaps(base_dir, manifest)
+    for source_ref in manifest.get("sources", []):
+        source_path = _resolve_manifest_ref(base_dir, source_ref["source_path"])
+        curriculum_path = _resolve_manifest_ref(base_dir, source_ref["curriculum_path"])
+        source_file = _load_json(source_path)
+        curriculum_file = _load_json(curriculum_path)
+        _validate_json_schema(source_file)
+        _validate_json_schema(curriculum_file)
+        if source_file.get("stable_id") != source_ref["stable_id"]:
+            raise PackValidationError(f"source id mismatch in {source_path}")
+        if curriculum_file.get("source_stable_id") != source_ref["stable_id"]:
+            raise PackValidationError(f"curriculum source id mismatch in {curriculum_path}")
+        knowledge_points: list[dict[str, Any]] = []
+        exercise_questions: list[dict[str, Any]] = []
+        extraction_gaps: list[dict[str, Any]] = [
+            gap for gap in global_gaps if gap.get("scope") == source_ref["stable_id"]
+        ]
+        seen_units: set[str] = set()
+        for unit_path_text in source_ref.get("unit_paths", []):
+            unit_path = _resolve_manifest_ref(base_dir, unit_path_text)
+            unit_file = _load_json(unit_path)
+            _validate_json_schema(unit_file)
+            if unit_file.get("source_stable_id") != source_ref["stable_id"]:
+                raise PackValidationError(f"unit source id mismatch in {unit_path}")
+            unit_key = unit_file.get("curriculum_node_key")
+            if unit_key in seen_units:
+                raise PackValidationError(f"duplicate unit file for {unit_key}")
+            seen_units.add(unit_key)
+            knowledge_points.extend(unit_file.get("knowledge_points", []))
+            exercise_questions.extend(unit_file.get("exercise_questions", []))
+            extraction_gaps.extend(unit_file.get("extraction_gaps", []))
+        sources.append(
+            {
+                "stable_id": source_ref["stable_id"],
+                "source_seed": source_file["source_seed"],
+                "curriculum_nodes": curriculum_file["curriculum_nodes"],
+                "knowledge_points": knowledge_points,
+                "exercise_questions": exercise_questions,
+                "extraction_gaps": extraction_gaps,
+            }
+        )
+    return {
+        "schema_version": "public_textbook_pack.v1",
+        "generated_from": manifest.get("generated_from", {}),
+        "sources": sources,
+    }
+
+
+def _resolve_manifest_ref(base_dir: Path, ref: str) -> Path:
+    path = (base_dir / ref).resolve()
+    try:
+        path.relative_to(base_dir)
+    except ValueError as exc:
+        raise PackValidationError(f"manifest path escapes pack directory: {ref}") from exc
+    if not path.exists():
+        raise PackValidationError(f"manifest referenced file does not exist: {ref}")
+    return path
+
+
+def _load_optional_gaps(base_dir: Path, manifest: dict[str, Any]) -> list[dict[str, Any]]:
+    ref = manifest.get("extraction_gaps_path")
+    if not ref:
+        return []
+    path = _resolve_manifest_ref(base_dir, ref)
+    data = _load_json(path)
+    _validate_json_schema(data)
+    return list(data.get("extraction_gaps", []))
+
+
+def _validate_pack(data: dict[str, Any], warnings: list[str] | None = None) -> None:
+    warnings = warnings if warnings is not None else []
     if data.get("schema_version") != "public_textbook_pack.v1":
-        raise PackValidationError("schema_version must be public_textbook_pack.v1")
+        raise PackValidationError("aggregate schema_version must be public_textbook_pack.v1")
     _scan_for_forbidden_raw_text(data)
 
     sources = data.get("sources")
@@ -99,10 +190,14 @@ def _validate_pack(data: dict[str, Any]) -> None:
 
     manifest_units = _manifest_units()
     for source in sources:
-        _validate_source(source, manifest_units.get(source["stable_id"], []))
+        _validate_source(source, manifest_units.get(source["stable_id"], []), warnings)
 
 
-def _validate_source(source: dict[str, Any], expected_units: list[dict[str, Any]]) -> None:
+def _validate_source(
+    source: dict[str, Any],
+    expected_units: list[dict[str, Any]],
+    warnings: list[str],
+) -> None:
     stable_id = source["stable_id"]
     seed = source["source_seed"]
     if seed.get("visibility") != "public" or seed.get("owner_learner_id") is not None:
@@ -154,6 +249,7 @@ def _validate_source(source: dict[str, Any], expected_units: list[dict[str, Any]
     if seed.get("knowledge_count") != len(points):
         raise PackValidationError(f"{stable_id}: source_seed.knowledge_count must match knowledge_points")
 
+    points_by_unit: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for point in points:
         if point["curriculum_node_key"] not in node_by_key:
             raise PackValidationError(
@@ -167,8 +263,11 @@ def _validate_source(source: dict[str, Any], expected_units: list[dict[str, Any]
                 f"{stable_id}: review-required point must be draft: {point['stable_key']}"
             )
         if point["type"] == "text_note" and content.get("role") == "unit_overview":
-            if "unit_overview" in point["stable_key"] and point["type"] != "text_note":
+            if point["type"] != "text_note":
                 raise PackValidationError(f"{stable_id}: unit overview must use text_note")
+        points_by_unit[point["curriculum_node_key"]].append(point)
+
+    _validate_density(stable_id, nodes, points_by_unit, warnings)
 
     for question in questions:
         if question["curriculum_node_key"] not in node_by_key:
@@ -182,7 +281,10 @@ def _validate_source(source: dict[str, Any], expected_units: list[dict[str, Any]
             raise PackValidationError(
                 f"{stable_id}: multiple_choice must have at least two options: {question['stable_key']}"
             )
-        if question["answer"] not in question.get("options", []) and question["question_type"] == "multiple_choice":
+        if (
+            question["question_type"] == "multiple_choice"
+            and question["answer"] not in question.get("options", [])
+        ):
             raise PackValidationError(
                 f"{stable_id}: multiple_choice answer must be one of the options: {question['stable_key']}"
             )
@@ -199,7 +301,29 @@ def _validate_source(source: dict[str, Any], expected_units: list[dict[str, Any]
         raise PackValidationError(f"{stable_id}: lower scanned PDF must record layout gap")
     invalid_scopes = scopes - set(node_by_key) - {stable_id}
     if invalid_scopes:
-        raise PackValidationError(f"{stable_id}: extraction gap references unknown scope {sorted(invalid_scopes)}")
+        raise PackValidationError(
+            f"{stable_id}: extraction gap references unknown scope {sorted(invalid_scopes)}"
+        )
+
+
+def _validate_density(
+    stable_id: str,
+    nodes: list[dict[str, Any]],
+    points_by_unit: dict[str, list[dict[str, Any]]],
+    warnings: list[str],
+) -> None:
+    for node in nodes:
+        unit_points = points_by_unit.get(node["stable_key"], [])
+        threshold = STARTER_UNIT_MIN_POINTS if node["title"].startswith("Starter") else ORDINARY_UNIT_MIN_POINTS
+        if len(unit_points) < threshold:
+            warnings.append(
+                f"{stable_id}: {node['stable_key']} has {len(unit_points)} knowledge points; expected >= {threshold}"
+            )
+        vocabulary_count = sum(1 for point in unit_points if point["type"] == "vocabulary")
+        if vocabulary_count < UNIT_MIN_VOCABULARY:
+            warnings.append(
+                f"{stable_id}: {node['stable_key']} has {vocabulary_count} vocabulary points; expected >= {UNIT_MIN_VOCABULARY}"
+            )
 
 
 def _assert_unique(stable_id: str, label: str, values: list[str]) -> None:

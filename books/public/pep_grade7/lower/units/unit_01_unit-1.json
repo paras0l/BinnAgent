@@ -1,0 +1,1475 @@
+{
+  "curriculum_node_key": "pep-grade7-lower-2024:unit:01",
+  "exercise_questions": [
+    {
+      "answer": "吉他",
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:01",
+      "difficulty": 0.28,
+      "explanation": "guitar 的本单元义项是：吉他。",
+      "knowledge_point_key": "pep-grade7-lower-2024:unit:01:vocabulary:guitar",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:01",
+          "knowledge_point_key": "pep-grade7-lower-2024:unit:01:vocabulary:guitar",
+          "source_stable_id": "pep-grade7-lower-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "requires_review": true,
+        "source": "curated_public_textbook_seed",
+        "warnings": [
+          "generated_from_lower_draft_content"
+        ]
+      },
+      "options": [
+        "吉他",
+        "唱歌",
+        "游泳",
+        "跳舞"
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-lower-2024:unit:01:ex:01-guitar",
+      "status": "draft",
+      "stem": "“guitar”在本单元词表中的意思最接近哪一项？"
+    },
+    {
+      "answer": "Can you play the guitar?",
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:01",
+      "difficulty": 0.28,
+      "explanation": "本单元核心句式包括“Can you play the guitar?”。",
+      "knowledge_point_key": "pep-grade7-lower-2024:unit:01:sentence_pattern:can-you-play-the-guitar",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:01",
+          "knowledge_point_key": "pep-grade7-lower-2024:unit:01:sentence_pattern:can-you-play-the-guitar",
+          "source_stable_id": "pep-grade7-lower-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "requires_review": true,
+        "source": "curated_public_textbook_seed",
+        "warnings": [
+          "generated_from_lower_draft_content"
+        ]
+      },
+      "options": [
+        "Can you play the guitar?",
+        "speak English",
+        "kung fu",
+        "guitar"
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-lower-2024:unit:01:ex:02-can-you-play-the-guitar",
+      "status": "draft",
+      "stem": "围绕“能力表达与社团活动”，下列哪一句最贴近本单元核心句式？"
+    },
+    {
+      "answer": "情态动词 can 表能力",
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:01",
+      "difficulty": 0.28,
+      "explanation": "本单元语法重点是：情态动词 can 表能力。",
+      "knowledge_point_key": "pep-grade7-lower-2024:unit:01:grammar:can",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:01",
+          "knowledge_point_key": "pep-grade7-lower-2024:unit:01:grammar:can",
+          "source_stable_id": "pep-grade7-lower-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "requires_review": true,
+        "source": "curated_public_textbook_seed",
+        "warnings": [
+          "generated_from_lower_draft_content"
+        ]
+      },
+      "options": [
+        "情态动词 can 表能力",
+        "过去完成时",
+        "定语从句",
+        "虚拟语气"
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-lower-2024:unit:01:ex:03-can",
+      "status": "draft",
+      "stem": "本单元语法重点最接近哪一项？"
+    },
+    {
+      "answer": "speak English",
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:01",
+      "difficulty": 0.28,
+      "explanation": "“speak English”属于本单元短语或功能表达。",
+      "knowledge_point_key": "pep-grade7-lower-2024:unit:01:phrase:speak-english",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:01",
+          "knowledge_point_key": "pep-grade7-lower-2024:unit:01:phrase:speak-english",
+          "source_stable_id": "pep-grade7-lower-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "requires_review": true,
+        "source": "curated_public_textbook_seed",
+        "warnings": [
+          "generated_from_lower_draft_content"
+        ]
+      },
+      "options": [
+        "speak English",
+        "in conclusion",
+        "as soon as possible",
+        "by mistake"
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-lower-2024:unit:01:ex:04-speak-english",
+      "status": "draft",
+      "stem": "下列哪一项是本单元可迁移短语/功能表达？"
+    },
+    {
+      "answer": "画",
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:01",
+      "difficulty": 0.28,
+      "explanation": "该题检查本单元词汇义项。",
+      "knowledge_point_key": "pep-grade7-lower-2024:unit:01:vocabulary:draw",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:01",
+          "knowledge_point_key": "pep-grade7-lower-2024:unit:01:vocabulary:draw",
+          "source_stable_id": "pep-grade7-lower-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "requires_review": true,
+        "source": "curated_public_textbook_seed",
+        "warnings": [
+          "generated_from_lower_draft_content"
+        ]
+      },
+      "options": [
+        "画",
+        "机场",
+        "科学家",
+        "电影院"
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-lower-2024:unit:01:ex:05-draw",
+      "status": "draft",
+      "stem": "选择与“draw”对应的本单元中文义项。"
+    },
+    {
+      "answer": "Yes, I can.",
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:01",
+      "difficulty": 0.28,
+      "explanation": "该句来自本单元目标语言框架的整理。",
+      "knowledge_point_key": "pep-grade7-lower-2024:unit:01:sentence_pattern:yes-i-can",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:01",
+          "knowledge_point_key": "pep-grade7-lower-2024:unit:01:sentence_pattern:yes-i-can",
+          "source_stable_id": "pep-grade7-lower-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "requires_review": true,
+        "source": "curated_public_textbook_seed",
+        "warnings": [
+          "generated_from_lower_draft_content"
+        ]
+      },
+      "options": [
+        "Yes, I can.",
+        "I have finished the report.",
+        "Although it rained, we left.",
+        "The book was written in 1999."
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-lower-2024:unit:01:ex:06-yes-i-can",
+      "status": "draft",
+      "stem": "下列哪一句也属于本单元目标语言？"
+    }
+  ],
+  "extraction_gaps": [
+    {
+      "description": "听力活动需要配套音频，暂不进入公共默认学习流。",
+      "gap_type": "audio_required",
+      "scope": "pep-grade7-lower-2024:unit:01",
+      "suggested_future_handling": "后续接入音频资源和听力题型后再结构化。"
+    },
+    {
+      "description": "结对/小组互动活动不适合直接作为稳定自动评分题。",
+      "gap_type": "pair_work",
+      "scope": "pep-grade7-lower-2024:unit:01",
+      "suggested_future_handling": "后续作为课堂互动或口语任务模板处理。"
+    },
+    {
+      "description": "该册 PDF 文本层为空，本单元短项来自人工整理，需后续 OCR/layout 校对。",
+      "gap_type": "low_confidence_layout",
+      "scope": "pep-grade7-lower-2024:unit:01",
+      "suggested_future_handling": "用 OCR/layout-aware pipeline 回填页内证据并复核词表。"
+    }
+  ],
+  "knowledge_points": [
+    {
+      "content": {
+        "confidence": 0.9,
+        "display_group": "unit_intro",
+        "evidence": {
+          "page_label": "P.1",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "requires_review": false,
+        "role": "unit_overview",
+        "source_unit_subtitle": "Can you play the guitar?",
+        "source_unit_title": "Unit 1",
+        "theme": "能力表达与社团活动",
+        "unit_order": 1,
+        "warnings": [
+          "lower_pdf_text_layer_empty"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:01",
+      "difficulty": 0.18,
+      "source_page": "P.1",
+      "stable_key": "pep-grade7-lower-2024:unit:01:text_note:unit-1-overview",
+      "status": "published",
+      "summary": "本单元主题：能力表达与社团活动；核心标题表达为“Can you play the guitar?”。",
+      "title": "Unit 1 overview",
+      "type": "text_note"
+    },
+    {
+      "content": {
+        "chinese_meaning": "吉他",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "guitar ... 吉他",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "guitar",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 1,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:01",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:01:vocabulary:guitar",
+      "status": "draft",
+      "summary": "吉他",
+      "title": "guitar",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "唱歌",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "sing ... 唱歌",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "sing",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 1,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:01",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:01:vocabulary:sing",
+      "status": "draft",
+      "summary": "唱歌",
+      "title": "sing",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "游泳",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "swim ... 游泳",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "swim",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 1,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:01",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:01:vocabulary:swim",
+      "status": "draft",
+      "summary": "游泳",
+      "title": "swim",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "跳舞",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "dance ... 跳舞",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "dance",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 1,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:01",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:01:vocabulary:dance",
+      "status": "draft",
+      "summary": "跳舞",
+      "title": "dance",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "画",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "draw ... 画",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "draw",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 1,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:01",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:01:vocabulary:draw",
+      "status": "draft",
+      "summary": "画",
+      "title": "draw",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "国际象棋",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "chess ... 国际象棋",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "chess",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 1,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:01",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:01:vocabulary:chess",
+      "status": "draft",
+      "summary": "国际象棋",
+      "title": "chess",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "说",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "speak ... 说",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "speak",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 1,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:01",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:01:vocabulary:speak",
+      "status": "draft",
+      "summary": "说",
+      "title": "speak",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "说英语",
+        "confidence": 0.72,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "speak English ... 说英语",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "speak English",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_phrase",
+        "unit_order": 1,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:01",
+      "difficulty": 0.28,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:01:phrase:speak-english",
+      "status": "draft",
+      "summary": "说英语",
+      "title": "speak English",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "chinese_meaning": "参加；加入",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "join ... 参加；加入",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "join",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 1,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:01",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:01:vocabulary:join",
+      "status": "draft",
+      "summary": "参加；加入",
+      "title": "join",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "俱乐部",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "club ... 俱乐部",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "club",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 1,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:01",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:01:vocabulary:club",
+      "status": "draft",
+      "summary": "俱乐部",
+      "title": "club",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "讲述",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "tell ... 讲述",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "tell",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 1,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:01",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:01:vocabulary:tell",
+      "status": "draft",
+      "summary": "讲述",
+      "title": "tell",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "故事",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "story ... 故事",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "story",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 1,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:01",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:01:vocabulary:story",
+      "status": "draft",
+      "summary": "故事",
+      "title": "story",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "写作",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "write ... 写作",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "write",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 1,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:01",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:01:vocabulary:write",
+      "status": "draft",
+      "summary": "写作",
+      "title": "write",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "演出；展示",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "show ... 演出；展示",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "show",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 1,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:01",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:01:vocabulary:show",
+      "status": "draft",
+      "summary": "演出；展示",
+      "title": "show",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "说话",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "talk ... 说话",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "talk",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 1,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:01",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:01:vocabulary:talk",
+      "status": "draft",
+      "summary": "说话",
+      "title": "talk",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "功夫",
+        "confidence": 0.72,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "kung fu ... 功夫",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "kung fu",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_phrase",
+        "unit_order": 1,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:01",
+      "difficulty": 0.28,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:01:phrase:kung-fu",
+      "status": "draft",
+      "summary": "功夫",
+      "title": "kung fu",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "chinese_meaning": "鼓",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "drum ... 鼓",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "drum",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 1,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:01",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:01:vocabulary:drum",
+      "status": "draft",
+      "summary": "鼓",
+      "title": "drum",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "钢琴",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "piano ... 钢琴",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "piano",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 1,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:01",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:01:vocabulary:piano",
+      "status": "draft",
+      "summary": "钢琴",
+      "title": "piano",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "小提琴",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "violin ... 小提琴",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "violin",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 1,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:01",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:01:vocabulary:violin",
+      "status": "draft",
+      "summary": "小提琴",
+      "title": "violin",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "也",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "also ... 也",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "also",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 1,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:01",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:01:vocabulary:also",
+      "status": "draft",
+      "summary": "也",
+      "title": "also",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "人们",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "people ... 人们",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "people",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 1,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:01",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:01:vocabulary:people",
+      "status": "draft",
+      "summary": "人们",
+      "title": "people",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "家",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "home ... 家",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "home",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 1,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:01",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:01:vocabulary:home",
+      "status": "draft",
+      "summary": "家",
+      "title": "home",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "交朋友",
+        "confidence": 0.72,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "make friends ... 交朋友",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "make friends",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_phrase",
+        "unit_order": 1,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:01",
+      "difficulty": 0.28,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:01:phrase:make-friends",
+      "status": "draft",
+      "summary": "交朋友",
+      "title": "make friends",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "chinese_meaning": "今天",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "today ... 今天",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "today",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 1,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:01",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:01:vocabulary:today",
+      "status": "draft",
+      "summary": "今天",
+      "title": "today",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "中心",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "center ... 中心",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "center",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 1,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:01",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:01:vocabulary:center",
+      "status": "draft",
+      "summary": "中心",
+      "title": "center",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "周末",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "weekend ... 周末",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "weekend",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 1,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:01",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:01:vocabulary:weekend",
+      "status": "draft",
+      "summary": "周末",
+      "title": "weekend",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "教",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "teach ... 教",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "teach",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 1,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:01",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:01:vocabulary:teach",
+      "status": "draft",
+      "summary": "教",
+      "title": "teach",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "音乐家",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "musician ... 音乐家",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "musician",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 1,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:01",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:01:vocabulary:musician",
+      "status": "draft",
+      "summary": "音乐家",
+      "title": "musician",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "Unit pages",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "phrase": "play chess",
+        "requires_review": true,
+        "role": "unit_phrase",
+        "unit_order": 1,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:01",
+      "difficulty": 0.28,
+      "source_page": "Unit pages",
+      "stable_key": "pep-grade7-lower-2024:unit:01:phrase:play-chess",
+      "status": "draft",
+      "summary": "本单元可迁移短语或功能表达：play chess。",
+      "title": "play chess",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "Unit pages",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "phrase": "be good at",
+        "requires_review": true,
+        "role": "unit_phrase",
+        "unit_order": 1,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:01",
+      "difficulty": 0.28,
+      "source_page": "Unit pages",
+      "stable_key": "pep-grade7-lower-2024:unit:01:phrase:be-good-at",
+      "status": "draft",
+      "summary": "本单元可迁移短语或功能表达：be good at。",
+      "title": "be good at",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "Unit pages",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "phrase": "be good with",
+        "requires_review": true,
+        "role": "unit_phrase",
+        "unit_order": 1,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:01",
+      "difficulty": 0.28,
+      "source_page": "Unit pages",
+      "stable_key": "pep-grade7-lower-2024:unit:01:phrase:be-good-with",
+      "status": "draft",
+      "summary": "本单元可迁移短语或功能表达：be good with。",
+      "title": "be good with",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "Unit pages",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "phrase": "help with",
+        "requires_review": true,
+        "role": "unit_phrase",
+        "unit_order": 1,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:01",
+      "difficulty": 0.28,
+      "source_page": "Unit pages",
+      "stable_key": "pep-grade7-lower-2024:unit:01:phrase:help-with",
+      "status": "draft",
+      "summary": "本单元可迁移短语或功能表达：help with。",
+      "title": "help with",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "sentence_patterns",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "pattern": "Can you play the guitar?",
+        "requires_review": true,
+        "role": "target_language",
+        "unit_order": 1,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:01",
+      "difficulty": 0.32,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-lower-2024:unit:01:sentence_pattern:can-you-play-the-guitar",
+      "status": "draft",
+      "summary": "核心句式：Can you play the guitar?",
+      "title": "Can you play the guitar?",
+      "type": "sentence_pattern"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "sentence_patterns",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "pattern": "Yes, I can.",
+        "requires_review": true,
+        "role": "target_language",
+        "unit_order": 1,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:01",
+      "difficulty": 0.32,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-lower-2024:unit:01:sentence_pattern:yes-i-can",
+      "status": "draft",
+      "summary": "核心句式：Yes, I can.",
+      "title": "Yes, I can.",
+      "type": "sentence_pattern"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "sentence_patterns",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "pattern": "No, I can't.",
+        "requires_review": true,
+        "role": "target_language",
+        "unit_order": 1,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:01",
+      "difficulty": 0.32,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-lower-2024:unit:01:sentence_pattern:no-i-cant",
+      "status": "draft",
+      "summary": "核心句式：No, I can't.",
+      "title": "No, I can't.",
+      "type": "sentence_pattern"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "sentence_patterns",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "pattern": "What club do you want to join?",
+        "requires_review": true,
+        "role": "target_language",
+        "unit_order": 1,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:01",
+      "difficulty": 0.32,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-lower-2024:unit:01:sentence_pattern:what-club-do-you-want-to-join",
+      "status": "draft",
+      "summary": "核心句式：What club do you want to join?",
+      "title": "What club do you want to join?",
+      "type": "sentence_pattern"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "grammar",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "focus": "情态动词 can 表能力",
+        "related_units": [
+          "Unit 1"
+        ],
+        "requires_review": true,
+        "role": "grammar_focus",
+        "unit_order": 1,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:01",
+      "difficulty": 0.38,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-lower-2024:unit:01:grammar:can",
+      "status": "draft",
+      "summary": "情态动词 can 表能力",
+      "title": "情态动词 can 表能力",
+      "type": "grammar"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "grammar",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "focus": "play + 球类/棋类 与 play the + 乐器",
+        "related_units": [
+          "Unit 1"
+        ],
+        "requires_review": true,
+        "role": "grammar_focus",
+        "unit_order": 1,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:01",
+      "difficulty": 0.38,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-lower-2024:unit:01:grammar:play-play-the",
+      "status": "draft",
+      "summary": "play + 球类/棋类 与 play the + 乐器",
+      "title": "play + 球类/棋类 与 play the + 乐器",
+      "type": "grammar"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "grammar",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "focus": "want to do 表愿望",
+        "related_units": [
+          "Unit 1"
+        ],
+        "requires_review": true,
+        "role": "grammar_focus",
+        "unit_order": 1,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:01",
+      "difficulty": 0.38,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-lower-2024:unit:01:grammar:want-to-do",
+      "status": "draft",
+      "summary": "want to do 表愿望",
+      "title": "want to do 表愿望",
+      "type": "grammar"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "pronunciation",
+        "evidence": {
+          "page_label": "Pronunciation",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "focus": "can/can't 的重读与弱读",
+        "requires_review": true,
+        "role": "pronunciation_note",
+        "unit_order": 1,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:01",
+      "difficulty": 0.28,
+      "source_page": "Pronunciation",
+      "stable_key": "pep-grade7-lower-2024:unit:01:pronunciation:can-cant",
+      "status": "draft",
+      "summary": "语音关注点：can/can't 的重读与弱读。",
+      "title": "can/can't 的重读与弱读",
+      "type": "pronunciation"
+    }
+  ],
+  "schema_version": "public_textbook_unit.v2",
+  "source_stable_id": "pep-grade7-lower-2024",
+  "unit": {
+    "end_page": "P.6",
+    "ordinal": 1,
+    "start_page": "P.1",
+    "subtitle": "Can you play the guitar?",
+    "title": "Unit 1"
+  }
+}

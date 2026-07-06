@@ -1,0 +1,1758 @@
+{
+  "curriculum_node_key": "pep-grade7-lower-2024:unit:07",
+  "exercise_questions": [
+    {
+      "answer": "下雨；雨水",
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:07",
+      "difficulty": 0.28,
+      "explanation": "rain 的本单元义项是：下雨；雨水。",
+      "knowledge_point_key": "pep-grade7-lower-2024:unit:07:vocabulary:rain",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:07",
+          "knowledge_point_key": "pep-grade7-lower-2024:unit:07:vocabulary:rain",
+          "source_stable_id": "pep-grade7-lower-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "requires_review": true,
+        "source": "curated_public_textbook_seed",
+        "warnings": [
+          "generated_from_lower_draft_content"
+        ]
+      },
+      "options": [
+        "下雨；雨水",
+        "多风的",
+        "多云的",
+        "晴朗的"
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-lower-2024:unit:07:ex:01-rain",
+      "status": "draft",
+      "stem": "“rain”在本单元词表中的意思最接近哪一项？"
+    },
+    {
+      "answer": "How's the weather?",
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:07",
+      "difficulty": 0.28,
+      "explanation": "本单元核心句式包括“How's the weather?”。",
+      "knowledge_point_key": "pep-grade7-lower-2024:unit:07:sentence_pattern:hows-the-weather",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:07",
+          "knowledge_point_key": "pep-grade7-lower-2024:unit:07:sentence_pattern:hows-the-weather",
+          "source_stable_id": "pep-grade7-lower-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "requires_review": true,
+        "source": "curated_public_textbook_seed",
+        "warnings": [
+          "generated_from_lower_draft_content"
+        ]
+      },
+      "options": [
+        "How's the weather?",
+        "take a message",
+        "call back",
+        "rain"
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-lower-2024:unit:07:ex:02-hows-the-weather",
+      "status": "draft",
+      "stem": "围绕“天气与近况”，下列哪一句最贴近本单元核心句式？"
+    },
+    {
+      "answer": "How is the weather? 天气问句",
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:07",
+      "difficulty": 0.28,
+      "explanation": "本单元语法重点是：How is the weather? 天气问句。",
+      "knowledge_point_key": "pep-grade7-lower-2024:unit:07:grammar:how-is-the-weather",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:07",
+          "knowledge_point_key": "pep-grade7-lower-2024:unit:07:grammar:how-is-the-weather",
+          "source_stable_id": "pep-grade7-lower-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "requires_review": true,
+        "source": "curated_public_textbook_seed",
+        "warnings": [
+          "generated_from_lower_draft_content"
+        ]
+      },
+      "options": [
+        "How is the weather? 天气问句",
+        "过去完成时",
+        "定语从句",
+        "虚拟语气"
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-lower-2024:unit:07:ex:03-how-is-the-weather",
+      "status": "draft",
+      "stem": "本单元语法重点最接近哪一项？"
+    },
+    {
+      "answer": "take a message",
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:07",
+      "difficulty": 0.28,
+      "explanation": "“take a message”属于本单元短语或功能表达。",
+      "knowledge_point_key": "pep-grade7-lower-2024:unit:07:phrase:take-a-message",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:07",
+          "knowledge_point_key": "pep-grade7-lower-2024:unit:07:phrase:take-a-message",
+          "source_stable_id": "pep-grade7-lower-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "requires_review": true,
+        "source": "curated_public_textbook_seed",
+        "warnings": [
+          "generated_from_lower_draft_content"
+        ]
+      },
+      "options": [
+        "take a message",
+        "in conclusion",
+        "as soon as possible",
+        "by mistake"
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-lower-2024:unit:07:ex:04-take-a-message",
+      "status": "draft",
+      "stem": "下列哪一项是本单元可迁移短语/功能表达？"
+    },
+    {
+      "answer": "下雪；雪",
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:07",
+      "difficulty": 0.28,
+      "explanation": "该题检查本单元词汇义项。",
+      "knowledge_point_key": "pep-grade7-lower-2024:unit:07:vocabulary:snow",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:07",
+          "knowledge_point_key": "pep-grade7-lower-2024:unit:07:vocabulary:snow",
+          "source_stable_id": "pep-grade7-lower-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "requires_review": true,
+        "source": "curated_public_textbook_seed",
+        "warnings": [
+          "generated_from_lower_draft_content"
+        ]
+      },
+      "options": [
+        "下雪；雪",
+        "机场",
+        "科学家",
+        "电影院"
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-lower-2024:unit:07:ex:05-snow",
+      "status": "draft",
+      "stem": "选择与“snow”对应的本单元中文义项。"
+    },
+    {
+      "answer": "It's raining.",
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:07",
+      "difficulty": 0.28,
+      "explanation": "该句来自本单元目标语言框架的整理。",
+      "knowledge_point_key": "pep-grade7-lower-2024:unit:07:sentence_pattern:its-raining",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:07",
+          "knowledge_point_key": "pep-grade7-lower-2024:unit:07:sentence_pattern:its-raining",
+          "source_stable_id": "pep-grade7-lower-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "requires_review": true,
+        "source": "curated_public_textbook_seed",
+        "warnings": [
+          "generated_from_lower_draft_content"
+        ]
+      },
+      "options": [
+        "It's raining.",
+        "I have finished the report.",
+        "Although it rained, we left.",
+        "The book was written in 1999."
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-lower-2024:unit:07:ex:06-its-raining",
+      "status": "draft",
+      "stem": "下列哪一句也属于本单元目标语言？"
+    }
+  ],
+  "extraction_gaps": [
+    {
+      "description": "听力活动需要配套音频，暂不进入公共默认学习流。",
+      "gap_type": "audio_required",
+      "scope": "pep-grade7-lower-2024:unit:07",
+      "suggested_future_handling": "后续接入音频资源和听力题型后再结构化。"
+    },
+    {
+      "description": "结对/小组互动活动不适合直接作为稳定自动评分题。",
+      "gap_type": "pair_work",
+      "scope": "pep-grade7-lower-2024:unit:07",
+      "suggested_future_handling": "后续作为课堂互动或口语任务模板处理。"
+    },
+    {
+      "description": "该册 PDF 文本层为空，本单元短项来自人工整理，需后续 OCR/layout 校对。",
+      "gap_type": "low_confidence_layout",
+      "scope": "pep-grade7-lower-2024:unit:07",
+      "suggested_future_handling": "用 OCR/layout-aware pipeline 回填页内证据并复核词表。"
+    }
+  ],
+  "knowledge_points": [
+    {
+      "content": {
+        "confidence": 0.9,
+        "display_group": "unit_intro",
+        "evidence": {
+          "page_label": "P.37",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "requires_review": false,
+        "role": "unit_overview",
+        "source_unit_subtitle": "It's raining!",
+        "source_unit_title": "Unit 7",
+        "theme": "天气与近况",
+        "unit_order": 7,
+        "warnings": [
+          "lower_pdf_text_layer_empty"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:07",
+      "difficulty": 0.18,
+      "source_page": "P.37",
+      "stable_key": "pep-grade7-lower-2024:unit:07:text_note:unit-7-overview",
+      "status": "published",
+      "summary": "本单元主题：天气与近况；核心标题表达为“It's raining!”。",
+      "title": "Unit 7 overview",
+      "type": "text_note"
+    },
+    {
+      "content": {
+        "chinese_meaning": "下雨；雨水",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "rain ... 下雨；雨水",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "rain",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 7,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:07",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:07:vocabulary:rain",
+      "status": "draft",
+      "summary": "下雨；雨水",
+      "title": "rain",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "多风的",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "windy ... 多风的",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "windy",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 7,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:07",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:07:vocabulary:windy",
+      "status": "draft",
+      "summary": "多风的",
+      "title": "windy",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "多云的",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "cloudy ... 多云的",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "cloudy",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 7,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:07",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:07:vocabulary:cloudy",
+      "status": "draft",
+      "summary": "多云的",
+      "title": "cloudy",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "晴朗的",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "sunny ... 晴朗的",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "sunny",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 7,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:07",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:07:vocabulary:sunny",
+      "status": "draft",
+      "summary": "晴朗的",
+      "title": "sunny",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "下雪；雪",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "snow ... 下雪；雪",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "snow",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 7,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:07",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:07:vocabulary:snow",
+      "status": "draft",
+      "summary": "下雪；雪",
+      "title": "snow",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "天气",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "weather ... 天气",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "weather",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 7,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:07",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:07:vocabulary:weather",
+      "status": "draft",
+      "summary": "天气",
+      "title": "weather",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "做饭",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "cook ... 做饭",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "cook",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 7,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:07",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:07:vocabulary:cook",
+      "status": "draft",
+      "summary": "做饭",
+      "title": "cook",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "坏的",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "bad ... 坏的",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "bad",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 7,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:07",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:07:vocabulary:bad",
+      "status": "draft",
+      "summary": "坏的",
+      "title": "bad",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "公园",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "park ... 公园",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "park",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 7,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:07",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:07:vocabulary:park",
+      "status": "draft",
+      "summary": "公园",
+      "title": "park",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "信息",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "message ... 信息",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "message",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 7,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:07",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:07:vocabulary:message",
+      "status": "draft",
+      "summary": "信息",
+      "title": "message",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "捎口信",
+        "confidence": 0.72,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "take a message ... 捎口信",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "take a message",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_phrase",
+        "unit_order": 7,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:07",
+      "difficulty": 0.28,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:07:phrase:take-a-message",
+      "status": "draft",
+      "summary": "捎口信",
+      "title": "take a message",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "chinese_meaning": "他",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "him ... 他",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "him",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 7,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:07",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:07:vocabulary:him",
+      "status": "draft",
+      "summary": "他",
+      "title": "him",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "能；可以",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "could ... 能；可以",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "could",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 7,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:07",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:07:vocabulary:could",
+      "status": "draft",
+      "summary": "能；可以",
+      "title": "could",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "回来",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "back ... 回来",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "back",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 7,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:07",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:07:vocabulary:back",
+      "status": "draft",
+      "summary": "回来",
+      "title": "back",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "回电话",
+        "confidence": 0.72,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "call back ... 回电话",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "call back",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_phrase",
+        "unit_order": 7,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:07",
+      "difficulty": 0.28,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:07:phrase:call-back",
+      "status": "draft",
+      "summary": "回电话",
+      "title": "call back",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "chinese_meaning": "问题",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "problem ... 问题",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "problem",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 7,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:07",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:07:vocabulary:problem",
+      "status": "draft",
+      "summary": "问题",
+      "title": "problem",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "再一次",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "again ... 再一次",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "again",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 7,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:07",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:07:vocabulary:again",
+      "status": "draft",
+      "summary": "再一次",
+      "title": "again",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "干燥的",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "dry ... 干燥的",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "dry",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 7,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:07",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:07:vocabulary:dry",
+      "status": "draft",
+      "summary": "干燥的",
+      "title": "dry",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "寒冷的",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "cold ... 寒冷的",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "cold",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 7,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:07",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:07:vocabulary:cold",
+      "status": "draft",
+      "summary": "寒冷的",
+      "title": "cold",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "热的",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "hot ... 热的",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "hot",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 7,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:07",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:07:vocabulary:hot",
+      "status": "draft",
+      "summary": "热的",
+      "title": "hot",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "温暖的",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "warm ... 温暖的",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "warm",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 7,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:07",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:07:vocabulary:warm",
+      "status": "draft",
+      "summary": "温暖的",
+      "title": "warm",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "拜访",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "visit ... 拜访",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "visit",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 7,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:07",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:07:vocabulary:visit",
+      "status": "draft",
+      "summary": "拜访",
+      "title": "visit",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "加拿大",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "Canada ... 加拿大",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "Canada",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 7,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:07",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:07:vocabulary:canada",
+      "status": "draft",
+      "summary": "加拿大",
+      "title": "Canada",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "夏天",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "summer ... 夏天",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "summer",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 7,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:07",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:07:vocabulary:summer",
+      "status": "draft",
+      "summary": "夏天",
+      "title": "summer",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "坐",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "sit ... 坐",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "sit",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 7,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:07",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:07:vocabulary:sit",
+      "status": "draft",
+      "summary": "坐",
+      "title": "sit",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "果汁",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "juice ... 果汁",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "juice",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 7,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:07",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:07:vocabulary:juice",
+      "status": "draft",
+      "summary": "果汁",
+      "title": "juice",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "不久",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "soon ... 不久",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "soon",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 7,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:07",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:07:vocabulary:soon",
+      "status": "draft",
+      "summary": "不久",
+      "title": "soon",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "假期",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "vacation ... 假期",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "vacation",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 7,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:07",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:07:vocabulary:vacation",
+      "status": "draft",
+      "summary": "假期",
+      "title": "vacation",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "努力地",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "hard ... 努力地",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "hard",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 7,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:07",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:07:vocabulary:hard",
+      "status": "draft",
+      "summary": "努力地",
+      "title": "hard",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "欧洲",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "Europe ... 欧洲",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "Europe",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 7,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:07",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:07:vocabulary:europe",
+      "status": "draft",
+      "summary": "欧洲",
+      "title": "Europe",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "高山",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "mountain ... 高山",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "mountain",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 7,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:07",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:07:vocabulary:mountain",
+      "status": "draft",
+      "summary": "高山",
+      "title": "mountain",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "国家",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "country ... 国家",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "country",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 7,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:07",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:07:vocabulary:country",
+      "status": "draft",
+      "summary": "国家",
+      "title": "country",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "滑冰",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "skate ... 滑冰",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "skate",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 7,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:07",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:07:vocabulary:skate",
+      "status": "draft",
+      "summary": "滑冰",
+      "title": "skate",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "下雪的",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "snowy ... 下雪的",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "snowy",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 7,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:07",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:07:vocabulary:snowy",
+      "status": "draft",
+      "summary": "下雪的",
+      "title": "snowy",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "冬天",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "winter ... 冬天",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "winter",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 7,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:07",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:07:vocabulary:winter",
+      "status": "draft",
+      "summary": "冬天",
+      "title": "winter",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "俄罗斯的",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "Russian ... 俄罗斯的",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "Russian",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 7,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:07",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:07:vocabulary:russian",
+      "status": "draft",
+      "summary": "俄罗斯的",
+      "title": "Russian",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "雪人",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "snowman ... 雪人",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "snowman",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 7,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:07",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:07:vocabulary:snowman",
+      "status": "draft",
+      "summary": "雪人",
+      "title": "snowman",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "阴雨的",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "rainy ... 阴雨的",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "rainy",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 7,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:07",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:07:vocabulary:rainy",
+      "status": "draft",
+      "summary": "阴雨的",
+      "title": "rainy",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "Unit pages",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "phrase": "on vacation",
+        "requires_review": true,
+        "role": "unit_phrase",
+        "unit_order": 7,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:07",
+      "difficulty": 0.28,
+      "source_page": "Unit pages",
+      "stable_key": "pep-grade7-lower-2024:unit:07:phrase:on-vacation",
+      "status": "draft",
+      "summary": "本单元可迁移短语或功能表达：on vacation。",
+      "title": "on vacation",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "Unit pages",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "phrase": "right now",
+        "requires_review": true,
+        "role": "unit_phrase",
+        "unit_order": 7,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:07",
+      "difficulty": 0.28,
+      "source_page": "Unit pages",
+      "stable_key": "pep-grade7-lower-2024:unit:07:phrase:right-now",
+      "status": "draft",
+      "summary": "本单元可迁移短语或功能表达：right now。",
+      "title": "right now",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "Unit pages",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "phrase": "have a good time",
+        "requires_review": true,
+        "role": "unit_phrase",
+        "unit_order": 7,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:07",
+      "difficulty": 0.28,
+      "source_page": "Unit pages",
+      "stable_key": "pep-grade7-lower-2024:unit:07:phrase:have-a-good-time",
+      "status": "draft",
+      "summary": "本单元可迁移短语或功能表达：have a good time。",
+      "title": "have a good time",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "sentence_patterns",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "pattern": "How's the weather?",
+        "requires_review": true,
+        "role": "target_language",
+        "unit_order": 7,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:07",
+      "difficulty": 0.32,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-lower-2024:unit:07:sentence_pattern:hows-the-weather",
+      "status": "draft",
+      "summary": "核心句式：How's the weather?",
+      "title": "How's the weather?",
+      "type": "sentence_pattern"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "sentence_patterns",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "pattern": "It's raining.",
+        "requires_review": true,
+        "role": "target_language",
+        "unit_order": 7,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:07",
+      "difficulty": 0.32,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-lower-2024:unit:07:sentence_pattern:its-raining",
+      "status": "draft",
+      "summary": "核心句式：It's raining.",
+      "title": "It's raining.",
+      "type": "sentence_pattern"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "sentence_patterns",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "pattern": "What are you doing?",
+        "requires_review": true,
+        "role": "target_language",
+        "unit_order": 7,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:07",
+      "difficulty": 0.32,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-lower-2024:unit:07:sentence_pattern:what-are-you-doing",
+      "status": "draft",
+      "summary": "核心句式：What are you doing?",
+      "title": "What are you doing?",
+      "type": "sentence_pattern"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "sentence_patterns",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "pattern": "Could you take a message?",
+        "requires_review": true,
+        "role": "target_language",
+        "unit_order": 7,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:07",
+      "difficulty": 0.32,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-lower-2024:unit:07:sentence_pattern:could-you-take-a-message",
+      "status": "draft",
+      "summary": "核心句式：Could you take a message?",
+      "title": "Could you take a message?",
+      "type": "sentence_pattern"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "grammar",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "focus": "How is the weather? 天气问句",
+        "related_units": [
+          "Unit 7"
+        ],
+        "requires_review": true,
+        "role": "grammar_focus",
+        "unit_order": 7,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:07",
+      "difficulty": 0.38,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-lower-2024:unit:07:grammar:how-is-the-weather",
+      "status": "draft",
+      "summary": "How is the weather? 天气问句",
+      "title": "How is the weather? 天气问句",
+      "type": "grammar"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "grammar",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "focus": "现在进行时描述正在做的事",
+        "related_units": [
+          "Unit 7"
+        ],
+        "requires_review": true,
+        "role": "grammar_focus",
+        "unit_order": 7,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:07",
+      "difficulty": 0.38,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-lower-2024:unit:07:grammar:zh-177d8bc2a5",
+      "status": "draft",
+      "summary": "现在进行时描述正在做的事",
+      "title": "现在进行时描述正在做的事",
+      "type": "grammar"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "grammar",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "focus": "could 表礼貌请求",
+        "related_units": [
+          "Unit 7"
+        ],
+        "requires_review": true,
+        "role": "grammar_focus",
+        "unit_order": 7,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:07",
+      "difficulty": 0.38,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-lower-2024:unit:07:grammar:could",
+      "status": "draft",
+      "summary": "could 表礼貌请求",
+      "title": "could 表礼貌请求",
+      "type": "grammar"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "pronunciation",
+        "evidence": {
+          "page_label": "Pronunciation",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "focus": "感叹语气和电话用语语调",
+        "requires_review": true,
+        "role": "pronunciation_note",
+        "unit_order": 7,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:07",
+      "difficulty": 0.28,
+      "source_page": "Pronunciation",
+      "stable_key": "pep-grade7-lower-2024:unit:07:pronunciation:zh-a75db87acc",
+      "status": "draft",
+      "summary": "语音关注点：感叹语气和电话用语语调。",
+      "title": "感叹语气和电话用语语调",
+      "type": "pronunciation"
+    }
+  ],
+  "schema_version": "public_textbook_unit.v2",
+  "source_stable_id": "pep-grade7-lower-2024",
+  "unit": {
+    "end_page": "P.42",
+    "ordinal": 7,
+    "start_page": "P.37",
+    "subtitle": "It's raining!",
+    "title": "Unit 7"
+  }
+}

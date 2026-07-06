@@ -1,0 +1,1563 @@
+{
+  "curriculum_node_key": "pep-grade7-upper-2024:unit:10",
+  "exercise_questions": [
+    {
+      "answer": "& adj. 许多； 大量；多少",
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:10",
+      "difficulty": 0.28,
+      "explanation": "much 的本单元义项是：& adj. 许多； 大量；多少。",
+      "knowledge_point_key": "pep-grade7-upper-2024:unit:10:vocabulary:much",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:10",
+          "knowledge_point_key": "pep-grade7-upper-2024:unit:10:vocabulary:much",
+          "source_stable_id": "pep-grade7-upper-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "source": "curated_public_textbook_seed"
+      },
+      "options": [
+        "& adj. 许多； 大量；多少",
+        "短袜",
+        "T恤衫",
+        "(pl.) 短裤"
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-upper-2024:unit:10:ex:01-much",
+      "status": "published",
+      "stem": "“much”在本单元词表中的意思最接近哪一项？"
+    },
+    {
+      "answer": "How much is this T-shirt?",
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:10",
+      "difficulty": 0.28,
+      "explanation": "本单元核心句式包括“How much is this T-shirt?”。",
+      "knowledge_point_key": "pep-grade7-upper-2024:unit:10:sentence_pattern:how-much-is-this-t-shirt",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:10",
+          "knowledge_point_key": "pep-grade7-upper-2024:unit:10:sentence_pattern:how-much-is-this-t-shirt",
+          "source_stable_id": "pep-grade7-upper-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "source": "curated_public_textbook_seed"
+      },
+      "options": [
+        "How much is this T-shirt?",
+        "How much ...?",
+        "Can I help you?",
+        "much"
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-upper-2024:unit:10:ex:02-how-much-is-this-t-shirt",
+      "status": "published",
+      "stem": "围绕“购物与价格”，下列哪一句最贴近本单元核心句式？"
+    },
+    {
+      "answer": "how much 询问价格",
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:10",
+      "difficulty": 0.28,
+      "explanation": "本单元语法重点是：how much 询问价格。",
+      "knowledge_point_key": "pep-grade7-upper-2024:unit:10:grammar:how-much",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:10",
+          "knowledge_point_key": "pep-grade7-upper-2024:unit:10:grammar:how-much",
+          "source_stable_id": "pep-grade7-upper-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "source": "curated_public_textbook_seed"
+      },
+      "options": [
+        "how much 询问价格",
+        "过去完成时",
+        "定语从句",
+        "虚拟语气"
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-upper-2024:unit:10:ex:03-how-much",
+      "status": "published",
+      "stem": "本单元语法重点最接近哪一项？"
+    },
+    {
+      "answer": "How much ...?",
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:10",
+      "difficulty": 0.28,
+      "explanation": "“How much ...?”属于本单元短语或功能表达。",
+      "knowledge_point_key": "pep-grade7-upper-2024:unit:10:phrase:how-much",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:10",
+          "knowledge_point_key": "pep-grade7-upper-2024:unit:10:phrase:how-much",
+          "source_stable_id": "pep-grade7-upper-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "source": "curated_public_textbook_seed"
+      },
+      "options": [
+        "How much ...?",
+        "in conclusion",
+        "as soon as possible",
+        "by mistake"
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-upper-2024:unit:10:ex:04-how-much",
+      "status": "published",
+      "stem": "下列哪一项是本单元可迁移短语/功能表达？"
+    },
+    {
+      "answer": "毛衣",
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:10",
+      "difficulty": 0.28,
+      "explanation": "该题检查本单元词汇义项。",
+      "knowledge_point_key": "pep-grade7-upper-2024:unit:10:vocabulary:sweater",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:10",
+          "knowledge_point_key": "pep-grade7-upper-2024:unit:10:vocabulary:sweater",
+          "source_stable_id": "pep-grade7-upper-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "source": "curated_public_textbook_seed"
+      },
+      "options": [
+        "毛衣",
+        "机场",
+        "科学家",
+        "电影院"
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-upper-2024:unit:10:ex:05-sweater",
+      "status": "published",
+      "stem": "选择与“sweater”对应的本单元中文义项。"
+    },
+    {
+      "answer": "How much are these socks?",
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:10",
+      "difficulty": 0.28,
+      "explanation": "该句来自本单元目标语言框架的整理。",
+      "knowledge_point_key": "pep-grade7-upper-2024:unit:10:sentence_pattern:how-much-are-these-socks",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:10",
+          "knowledge_point_key": "pep-grade7-upper-2024:unit:10:sentence_pattern:how-much-are-these-socks",
+          "source_stable_id": "pep-grade7-upper-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "source": "curated_public_textbook_seed"
+      },
+      "options": [
+        "How much are these socks?",
+        "I have finished the report.",
+        "Although it rained, we left.",
+        "The book was written in 1999."
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-upper-2024:unit:10:ex:06-how-much-are-these-socks",
+      "status": "published",
+      "stem": "下列哪一句也属于本单元目标语言？"
+    }
+  ],
+  "extraction_gaps": [
+    {
+      "description": "听力活动需要配套音频，暂不进入公共默认学习流。",
+      "gap_type": "audio_required",
+      "scope": "pep-grade7-upper-2024:unit:10",
+      "suggested_future_handling": "后续接入音频资源和听力题型后再结构化。"
+    },
+    {
+      "description": "结对/小组互动活动不适合直接作为稳定自动评分题。",
+      "gap_type": "pair_work",
+      "scope": "pep-grade7-upper-2024:unit:10",
+      "suggested_future_handling": "后续作为课堂互动或口语任务模板处理。"
+    }
+  ],
+  "knowledge_points": [
+    {
+      "content": {
+        "confidence": 0.95,
+        "display_group": "unit_intro",
+        "evidence": {
+          "page_label": "P.49",
+          "raw_line_excerpt": null,
+          "source": "pdf_curated_extract"
+        },
+        "requires_review": false,
+        "role": "unit_overview",
+        "source_unit_subtitle": "How much are these socks?",
+        "source_unit_title": "Unit 7",
+        "theme": "购物与价格",
+        "unit_order": 10,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:10",
+      "difficulty": 0.18,
+      "source_page": "P.49",
+      "stable_key": "pep-grade7-upper-2024:unit:10:text_note:unit-7-overview",
+      "status": "published",
+      "summary": "本单元主题：购物与价格；核心标题表达为“How much are these socks?”。",
+      "title": "Unit 7 overview",
+      "type": "text_note"
+    },
+    {
+      "content": {
+        "chinese_meaning": "& adj. 许多； 大量；多少",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.37",
+          "raw_line_excerpt": "much /mVtS/ pron. & adj. 许多； 大量；多少 p.37",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "much",
+        "part_of_speech": "pron.",
+        "phonetic": "/mVtS/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 10,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:10",
+      "difficulty": 0.22,
+      "source_page": "P.37",
+      "stable_key": "pep-grade7-upper-2024:unit:10:vocabulary:much",
+      "status": "published",
+      "summary": "& adj. 许多； 大量；多少",
+      "title": "much",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "（购物时）……多少钱？",
+        "confidence": 0.95,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "P.37",
+          "raw_line_excerpt": "How much ...? （购物时）……多少钱？ p.37",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "How much ...?",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": false,
+        "role": "unit_phrase",
+        "unit_order": 10,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:10",
+      "difficulty": 0.28,
+      "source_page": "P.37",
+      "stable_key": "pep-grade7-upper-2024:unit:10:phrase:how-much",
+      "status": "published",
+      "summary": "（购物时）……多少钱？",
+      "title": "How much ...?",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "chinese_meaning": "短袜",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.37",
+          "raw_line_excerpt": "sock /sQk/, /sA:k/ n. 短袜 p.37",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "sock",
+        "part_of_speech": "n.",
+        "phonetic": "/sQk/, /sA:k/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 10,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:10",
+      "difficulty": 0.22,
+      "source_page": "P.37",
+      "stable_key": "pep-grade7-upper-2024:unit:10:vocabulary:sock",
+      "status": "published",
+      "summary": "短袜",
+      "title": "sock",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "T恤衫",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.37",
+          "raw_line_excerpt": "T-shirt /ti: S3:(r)t/ n. T恤衫 p.37",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "T-shirt",
+        "part_of_speech": "n.",
+        "phonetic": "/ti: S3:(r)t/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 10,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:10",
+      "difficulty": 0.22,
+      "source_page": "P.37",
+      "stable_key": "pep-grade7-upper-2024:unit:10:vocabulary:t-shirt",
+      "status": "published",
+      "summary": "T恤衫",
+      "title": "T-shirt",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "(pl.) 短裤",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.37",
+          "raw_line_excerpt": "shorts /SO:(r)ts/ n. (pl.) 短裤 p.37",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "shorts",
+        "part_of_speech": "n.",
+        "phonetic": "/SO:(r)ts/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 10,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:10",
+      "difficulty": 0.22,
+      "source_page": "P.37",
+      "stable_key": "pep-grade7-upper-2024:unit:10:vocabulary:shorts",
+      "status": "published",
+      "summary": "(pl.) 短裤",
+      "title": "shorts",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "毛衣",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.37",
+          "raw_line_excerpt": "sweater /swet@(r)/ n. 毛衣 p.37",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "sweater",
+        "part_of_speech": "n.",
+        "phonetic": "/swet@(r)/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 10,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:10",
+      "difficulty": 0.22,
+      "source_page": "P.37",
+      "stable_key": "pep-grade7-upper-2024:unit:10:vocabulary:sweater",
+      "status": "published",
+      "summary": "毛衣",
+      "title": "sweater",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "(pl.) 裤子",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.37",
+          "raw_line_excerpt": "trousers /traUz@(r)z/ n. (pl.) 裤子 p.37",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "trousers",
+        "part_of_speech": "n.",
+        "phonetic": "/traUz@(r)z/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 10,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:10",
+      "difficulty": 0.22,
+      "source_page": "P.37",
+      "stable_key": "pep-grade7-upper-2024:unit:10:vocabulary:trousers",
+      "status": "published",
+      "summary": "(pl.) 裤子",
+      "title": "trousers",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "鞋",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.37",
+          "raw_line_excerpt": "shoe /Su:/ n. 鞋 p.37",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "shoe",
+        "part_of_speech": "n.",
+        "phonetic": "/Su:/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 10,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:10",
+      "difficulty": 0.22,
+      "source_page": "P.37",
+      "stable_key": "pep-grade7-upper-2024:unit:10:vocabulary:shoe",
+      "status": "published",
+      "summary": "鞋",
+      "title": "shoe",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "裙子",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.37",
+          "raw_line_excerpt": "skirt /sk3:(r)t/ n. 裙子 p.37",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "skirt",
+        "part_of_speech": "n.",
+        "phonetic": "/sk3:(r)t/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 10,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:10",
+      "difficulty": 0.22,
+      "source_page": "P.37",
+      "stable_key": "pep-grade7-upper-2024:unit:10:vocabulary:skirt",
+      "status": "published",
+      "summary": "裙子",
+      "title": "skirt",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "元（美国、 加拿大等国的货币单位，符号为$）",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.37",
+          "raw_line_excerpt": "dollar /dQl@/, /dA:l@r/ n. 元（美国、 加拿大等国的货币单位，符号为$） p.37",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "dollar",
+        "part_of_speech": "n.",
+        "phonetic": "/dQl@/, /dA:l@r/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 10,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:10",
+      "difficulty": 0.22,
+      "source_page": "P.37",
+      "stable_key": "pep-grade7-upper-2024:unit:10:vocabulary:dollar",
+      "status": "published",
+      "summary": "元（美国、 加拿大等国的货币单位，符号为$）",
+      "title": "dollar",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "大的；大号的",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.38",
+          "raw_line_excerpt": "big /bIg/ adj. 大的；大号的 p.38",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "big",
+        "part_of_speech": "adj.",
+        "phonetic": "/bIg/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 10,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:10",
+      "difficulty": 0.22,
+      "source_page": "P.38",
+      "stable_key": "pep-grade7-upper-2024:unit:10:vocabulary:big",
+      "status": "published",
+      "summary": "大的；大号的",
+      "title": "big",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "小的；小号的",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.38",
+          "raw_line_excerpt": "small /smO:l/ adj. 小的；小号的 p.38",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "small",
+        "part_of_speech": "adj.",
+        "phonetic": "/smO:l/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 10,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:10",
+      "difficulty": 0.22,
+      "source_page": "P.38",
+      "stable_key": "pep-grade7-upper-2024:unit:10:vocabulary:small",
+      "status": "published",
+      "summary": "小的；小号的",
+      "title": "small",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "短的；矮的",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.38",
+          "raw_line_excerpt": "short /SO:(r)t/ adj. 短的；矮的 p.38",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "short",
+        "part_of_speech": "adj.",
+        "phonetic": "/SO:(r)t/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 10,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:10",
+      "difficulty": 0.22,
+      "source_page": "P.38",
+      "stable_key": "pep-grade7-upper-2024:unit:10:vocabulary:short",
+      "status": "published",
+      "summary": "短的；矮的",
+      "title": "short",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "长的",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.38",
+          "raw_line_excerpt": "long /lQN/, /lO:N/ adj. 长的 p.38",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "long",
+        "part_of_speech": "adj.",
+        "phonetic": "/lQN/, /lO:N/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 10,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:10",
+      "difficulty": 0.22,
+      "source_page": "P.38",
+      "stable_key": "pep-grade7-upper-2024:unit:10:vocabulary:long",
+      "status": "published",
+      "summary": "长的",
+      "title": "long",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": ") 女子",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.38",
+          "raw_line_excerpt": "woman /wUm@n/ n. (pl. women /wImIn/) 女子 p.38",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "woman",
+        "part_of_speech": null,
+        "phonetic": "/wUm@n/, /wImIn/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 10,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:10",
+      "difficulty": 0.22,
+      "source_page": "P.38",
+      "stable_key": "pep-grade7-upper-2024:unit:10:vocabulary:woman",
+      "status": "published",
+      "summary": ") 女子",
+      "title": "woman",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "我能帮您吗？",
+        "confidence": 0.95,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "P.38",
+          "raw_line_excerpt": "Can I help you? 我能帮您吗？ p.38",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "Can I help you?",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": false,
+        "role": "unit_phrase",
+        "unit_order": 10,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:10",
+      "difficulty": 0.28,
+      "source_page": "P.38",
+      "stable_key": "pep-grade7-upper-2024:unit:10:phrase:can-i-help-you",
+      "status": "published",
+      "summary": "我能帮您吗？",
+      "title": "Can I help you?",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "chinese_meaning": "需要",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.38",
+          "raw_line_excerpt": "need /ni:d/ v. 需要 p.38",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "need",
+        "part_of_speech": "v.",
+        "phonetic": "/ni:d/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 10,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:10",
+      "difficulty": 0.22,
+      "source_page": "P.38",
+      "stable_key": "pep-grade7-upper-2024:unit:10:vocabulary:need",
+      "status": "published",
+      "summary": "需要",
+      "title": "need",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "看；看上去",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.38",
+          "raw_line_excerpt": "look /lUk/ v. 看；看上去 p.38",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "look",
+        "part_of_speech": "v.",
+        "phonetic": "/lUk/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 10,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:10",
+      "difficulty": 0.22,
+      "source_page": "P.38",
+      "stable_key": "pep-grade7-upper-2024:unit:10:vocabulary:look",
+      "status": "published",
+      "summary": "看；看上去",
+      "title": "look",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "一双；一对",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.38",
+          "raw_line_excerpt": "pair /pe@(r)/, /per/ n. 一双；一对 p.38",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "pair",
+        "part_of_speech": "n.",
+        "phonetic": "/pe@(r)/, /per/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 10,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:10",
+      "difficulty": 0.22,
+      "source_page": "P.38",
+      "stable_key": "pep-grade7-upper-2024:unit:10:vocabulary:pair",
+      "status": "published",
+      "summary": "一双；一对",
+      "title": "pair",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "买下；拿；取",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.38",
+          "raw_line_excerpt": "take /teIk/ v. 买下；拿；取 p.38",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "take",
+        "part_of_speech": "v.",
+        "phonetic": "/teIk/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 10,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:10",
+      "difficulty": 0.22,
+      "source_page": "P.38",
+      "stable_key": "pep-grade7-upper-2024:unit:10:vocabulary:take",
+      "status": "published",
+      "summary": "买下；拿；取",
+      "title": "take",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "给你。",
+        "confidence": 0.95,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "P.38",
+          "raw_line_excerpt": "Here you are. 给你。 p.38",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "Here you are.",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": false,
+        "role": "unit_phrase",
+        "unit_order": 10,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:10",
+      "difficulty": 0.28,
+      "source_page": "P.38",
+      "stable_key": "pep-grade7-upper-2024:unit:10:phrase:here-you-are",
+      "status": "published",
+      "summary": "给你。",
+      "title": "Here you are.",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "chinese_meaning": "十",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.40",
+          "raw_line_excerpt": "ten /ten/ num. 十 p.40",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "ten",
+        "part_of_speech": "num.",
+        "phonetic": "/ten/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 10,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:10",
+      "difficulty": 0.22,
+      "source_page": "P.40",
+      "stable_key": "pep-grade7-upper-2024:unit:10:vocabulary:ten",
+      "status": "published",
+      "summary": "十",
+      "title": "ten",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "十一",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.40",
+          "raw_line_excerpt": "eleven /Ilev@n/ num. 十一 p.40",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "eleven",
+        "part_of_speech": "num.",
+        "phonetic": "/Ilev@n/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 10,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:10",
+      "difficulty": 0.22,
+      "source_page": "P.40",
+      "stable_key": "pep-grade7-upper-2024:unit:10:vocabulary:eleven",
+      "status": "published",
+      "summary": "十一",
+      "title": "eleven",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "十二",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.40",
+          "raw_line_excerpt": "twelve /twelv/ num. 十二 p.40",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "twelve",
+        "part_of_speech": "num.",
+        "phonetic": "/twelv/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 10,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:10",
+      "difficulty": 0.22,
+      "source_page": "P.40",
+      "stable_key": "pep-grade7-upper-2024:unit:10:vocabulary:twelve",
+      "status": "published",
+      "summary": "十二",
+      "title": "twelve",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "十三",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.40",
+          "raw_line_excerpt": "thirteen /T3:(r)ti:n/ num. 十三 p.40",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "thirteen",
+        "part_of_speech": "num.",
+        "phonetic": "/T3:(r)ti:n/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 10,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:10",
+      "difficulty": 0.22,
+      "source_page": "P.40",
+      "stable_key": "pep-grade7-upper-2024:unit:10:vocabulary:thirteen",
+      "status": "published",
+      "summary": "十三",
+      "title": "thirteen",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "十五",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.40",
+          "raw_line_excerpt": "fifteen /fIf ti:n/ num. 十五 p.40",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "fifteen",
+        "part_of_speech": "num.",
+        "phonetic": "/fIf ti:n/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 10,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:10",
+      "difficulty": 0.22,
+      "source_page": "P.40",
+      "stable_key": "pep-grade7-upper-2024:unit:10:vocabulary:fifteen",
+      "status": "published",
+      "summary": "十五",
+      "title": "fifteen",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "十八",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.40",
+          "raw_line_excerpt": "eighteen /eIti:n/ num. 十八 p.40",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "eighteen",
+        "part_of_speech": "num.",
+        "phonetic": "/eIti:n/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 10,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:10",
+      "difficulty": 0.22,
+      "source_page": "P.40",
+      "stable_key": "pep-grade7-upper-2024:unit:10:vocabulary:eighteen",
+      "status": "published",
+      "summary": "十八",
+      "title": "eighteen",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "二十",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.40",
+          "raw_line_excerpt": "twenty /twenti/ num. 二十 p.40",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "twenty",
+        "part_of_speech": "num.",
+        "phonetic": "/twenti/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 10,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:10",
+      "difficulty": 0.22,
+      "source_page": "P.40",
+      "stable_key": "pep-grade7-upper-2024:unit:10:vocabulary:twenty",
+      "status": "published",
+      "summary": "二十",
+      "title": "twenty",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "三十",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.40",
+          "raw_line_excerpt": "thirty / T3:(r)ti/ num. 三十 p.40",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "thirty",
+        "part_of_speech": "num.",
+        "phonetic": "/ T3:(r)ti/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 10,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:10",
+      "difficulty": 0.22,
+      "source_page": "P.40",
+      "stable_key": "pep-grade7-upper-2024:unit:10:vocabulary:thirty",
+      "status": "published",
+      "summary": "三十",
+      "title": "thirty",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "（用于男子的姓氏或 姓名前）先生",
+        "confidence": 0.95,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "P.41",
+          "raw_line_excerpt": "Mr. /mIst@(r)/ （用于男子的姓氏或 姓名前）先生 p.41",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "Mr.",
+        "part_of_speech": null,
+        "phonetic": "/mIst@(r)/",
+        "requires_review": false,
+        "role": "unit_phrase",
+        "unit_order": 10,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:10",
+      "difficulty": 0.28,
+      "source_page": "P.41",
+      "stable_key": "pep-grade7-upper-2024:unit:10:phrase:mr",
+      "status": "published",
+      "summary": "（用于男子的姓氏或 姓名前）先生",
+      "title": "Mr.",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "chinese_meaning": "(pl.) 衣服；服装",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.41",
+          "raw_line_excerpt": "clothes /kl@UDz, kl@Uz/ n. (pl.) 衣服；服装 p.41",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "clothes",
+        "part_of_speech": "n.",
+        "phonetic": "/kl@UDz, kl@Uz/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 10,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:10",
+      "difficulty": 0.22,
+      "source_page": "P.41",
+      "stable_key": "pep-grade7-upper-2024:unit:10:vocabulary:clothes",
+      "status": "published",
+      "summary": "(pl.) 衣服；服装",
+      "title": "clothes",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "商店",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.41",
+          "raw_line_excerpt": "store /stO:(r)/ n. 商店 p.41",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "store",
+        "part_of_speech": "n.",
+        "phonetic": "/stO:(r)/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 10,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:10",
+      "difficulty": 0.22,
+      "source_page": "P.41",
+      "stable_key": "pep-grade7-upper-2024:unit:10:vocabulary:store",
+      "status": "published",
+      "summary": "商店",
+      "title": "store",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "购买；买",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.41",
+          "raw_line_excerpt": "buy /baI/ v. 购买；买 p.41",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "buy",
+        "part_of_speech": "v.",
+        "phonetic": "/baI/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 10,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:10",
+      "difficulty": 0.22,
+      "source_page": "P.41",
+      "stable_key": "pep-grade7-upper-2024:unit:10:vocabulary:buy",
+      "status": "published",
+      "summary": "购买；买",
+      "title": "buy",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "特价销售；出售",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.41",
+          "raw_line_excerpt": "sale /seIl/ n. 特价销售；出售 p.41",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "sale",
+        "part_of_speech": "n.",
+        "phonetic": "/seIl/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 10,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:10",
+      "difficulty": 0.22,
+      "source_page": "P.41",
+      "stable_key": "pep-grade7-upper-2024:unit:10:vocabulary:sale",
+      "status": "published",
+      "summary": "特价销售；出售",
+      "title": "sale",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "出售；销售；卖",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.41",
+          "raw_line_excerpt": "sell /sel/ v. 出售；销售；卖 p.41",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "sell",
+        "part_of_speech": "v.",
+        "phonetic": "/sel/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 10,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:10",
+      "difficulty": 0.22,
+      "source_page": "P.41",
+      "stable_key": "pep-grade7-upper-2024:unit:10:vocabulary:sell",
+      "status": "published",
+      "summary": "出售；销售；卖",
+      "title": "sell",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "所有的；全部的",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.41",
+          "raw_line_excerpt": "all /O:l/ adj. 所有的；全部的 p.41",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "all",
+        "part_of_speech": "adj.",
+        "phonetic": "/O:l/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 10,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:10",
+      "difficulty": 0.22,
+      "source_page": "P.41",
+      "stable_key": "pep-grade7-upper-2024:unit:10:vocabulary:all",
+      "status": "published",
+      "summary": "所有的；全部的",
+      "title": "all",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "很；非常",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.41",
+          "raw_line_excerpt": "very /veri/ adv. 很；非常 p.41",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "very",
+        "part_of_speech": "adv.",
+        "phonetic": "/veri/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 10,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:10",
+      "difficulty": 0.22,
+      "source_page": "P.41",
+      "stable_key": "pep-grade7-upper-2024:unit:10:vocabulary:very",
+      "status": "published",
+      "summary": "很；非常",
+      "title": "very",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "价格",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.41",
+          "raw_line_excerpt": "price /praIs/ n. 价格 p.41",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "price",
+        "part_of_speech": "n.",
+        "phonetic": "/praIs/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 10,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:10",
+      "difficulty": 0.22,
+      "source_page": "P.41",
+      "stable_key": "pep-grade7-upper-2024:unit:10:vocabulary:price",
+      "status": "published",
+      "summary": "价格",
+      "title": "price",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "男孩",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.41",
+          "raw_line_excerpt": "boy /bOI/ n. 男孩 p.41",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "boy",
+        "part_of_speech": "n.",
+        "phonetic": "/bOI/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 10,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:10",
+      "difficulty": 0.22,
+      "source_page": "P.41",
+      "stable_key": "pep-grade7-upper-2024:unit:10:vocabulary:boy",
+      "status": "published",
+      "summary": "男孩",
+      "title": "boy",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "一双",
+        "confidence": 0.95,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "P.41",
+          "raw_line_excerpt": "a pair of 一双 p.41",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "a pair of",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": false,
+        "role": "unit_phrase",
+        "unit_order": 10,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:10",
+      "difficulty": 0.28,
+      "source_page": "P.41",
+      "stable_key": "pep-grade7-upper-2024:unit:10:phrase:a-pair-of",
+      "status": "published",
+      "summary": "一双",
+      "title": "a pair of",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "confidence": 0.95,
+        "display_group": "sentence_patterns",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "pdf_curated_extract"
+        },
+        "pattern": "How much is this T-shirt?",
+        "requires_review": false,
+        "role": "target_language",
+        "unit_order": 10,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:10",
+      "difficulty": 0.32,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-upper-2024:unit:10:sentence_pattern:how-much-is-this-t-shirt",
+      "status": "published",
+      "summary": "核心句式：How much is this T-shirt?",
+      "title": "How much is this T-shirt?",
+      "type": "sentence_pattern"
+    },
+    {
+      "content": {
+        "confidence": 0.95,
+        "display_group": "sentence_patterns",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "pdf_curated_extract"
+        },
+        "pattern": "How much are these socks?",
+        "requires_review": false,
+        "role": "target_language",
+        "unit_order": 10,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:10",
+      "difficulty": 0.32,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-upper-2024:unit:10:sentence_pattern:how-much-are-these-socks",
+      "status": "published",
+      "summary": "核心句式：How much are these socks?",
+      "title": "How much are these socks?",
+      "type": "sentence_pattern"
+    },
+    {
+      "content": {
+        "confidence": 0.95,
+        "display_group": "sentence_patterns",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "pdf_curated_extract"
+        },
+        "pattern": "Can I help you?",
+        "requires_review": false,
+        "role": "target_language",
+        "unit_order": 10,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:10",
+      "difficulty": 0.32,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-upper-2024:unit:10:sentence_pattern:can-i-help-you",
+      "status": "published",
+      "summary": "核心句式：Can I help you?",
+      "title": "Can I help you?",
+      "type": "sentence_pattern"
+    },
+    {
+      "content": {
+        "confidence": 0.95,
+        "display_group": "sentence_patterns",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "pdf_curated_extract"
+        },
+        "pattern": "I'll take it.",
+        "requires_review": false,
+        "role": "target_language",
+        "unit_order": 10,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:10",
+      "difficulty": 0.32,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-upper-2024:unit:10:sentence_pattern:ill-take-it",
+      "status": "published",
+      "summary": "核心句式：I'll take it.",
+      "title": "I'll take it.",
+      "type": "sentence_pattern"
+    },
+    {
+      "content": {
+        "confidence": 0.95,
+        "display_group": "grammar",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "pdf_curated_extract"
+        },
+        "focus": "how much 询问价格",
+        "related_units": [
+          "Unit 10"
+        ],
+        "requires_review": false,
+        "role": "grammar_focus",
+        "unit_order": 10,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:10",
+      "difficulty": 0.38,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-upper-2024:unit:10:grammar:how-much",
+      "status": "published",
+      "summary": "how much 询问价格",
+      "title": "how much 询问价格",
+      "type": "grammar"
+    },
+    {
+      "content": {
+        "confidence": 0.95,
+        "display_group": "grammar",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "pdf_curated_extract"
+        },
+        "focus": "基数词 10-31",
+        "related_units": [
+          "Unit 10"
+        ],
+        "requires_review": false,
+        "role": "grammar_focus",
+        "unit_order": 10,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:10",
+      "difficulty": 0.38,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-upper-2024:unit:10:grammar:10-31",
+      "status": "published",
+      "summary": "基数词 10-31",
+      "title": "基数词 10-31",
+      "type": "grammar"
+    },
+    {
+      "content": {
+        "confidence": 0.95,
+        "display_group": "grammar",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "pdf_curated_extract"
+        },
+        "focus": "this/that 与 these/those 的价格问答",
+        "related_units": [
+          "Unit 10"
+        ],
+        "requires_review": false,
+        "role": "grammar_focus",
+        "unit_order": 10,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:10",
+      "difficulty": 0.38,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-upper-2024:unit:10:grammar:this-that-these-those",
+      "status": "published",
+      "summary": "this/that 与 these/those 的价格问答",
+      "title": "this/that 与 these/those 的价格问答",
+      "type": "grammar"
+    },
+    {
+      "content": {
+        "confidence": 0.95,
+        "display_group": "pronunciation",
+        "evidence": {
+          "page_label": "Pronunciation",
+          "raw_line_excerpt": null,
+          "source": "pdf_curated_extract"
+        },
+        "focus": "字母 e/ea/ee/ear 的常见读音",
+        "requires_review": false,
+        "role": "pronunciation_note",
+        "unit_order": 10,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:10",
+      "difficulty": 0.28,
+      "source_page": "Pronunciation",
+      "stable_key": "pep-grade7-upper-2024:unit:10:pronunciation:e-ea-ee-ear",
+      "status": "published",
+      "summary": "语音关注点：字母 e/ea/ee/ear 的常见读音。",
+      "title": "字母 e/ea/ee/ear 的常见读音",
+      "type": "pronunciation"
+    }
+  ],
+  "schema_version": "public_textbook_unit.v2",
+  "source_stable_id": "pep-grade7-upper-2024",
+  "unit": {
+    "end_page": "P.54",
+    "ordinal": 10,
+    "start_page": "P.49",
+    "subtitle": "How much are these socks?",
+    "title": "Unit 7"
+  }
+}

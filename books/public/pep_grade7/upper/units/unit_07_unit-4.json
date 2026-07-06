@@ -1,0 +1,1311 @@
+{
+  "curriculum_node_key": "pep-grade7-upper-2024:unit:07",
+  "exercise_questions": [
+    {
+      "answer": "在哪里；到哪里",
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:07",
+      "difficulty": 0.28,
+      "explanation": "where 的本单元义项是：在哪里；到哪里。",
+      "knowledge_point_key": "pep-grade7-upper-2024:unit:07:vocabulary:where",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:07",
+          "knowledge_point_key": "pep-grade7-upper-2024:unit:07:vocabulary:where",
+          "source_stable_id": "pep-grade7-upper-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "source": "curated_public_textbook_seed"
+      },
+      "options": [
+        "在哪里；到哪里",
+        "桌子",
+        "床",
+        "书架；书柜"
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-upper-2024:unit:07:ex:01-where",
+      "status": "published",
+      "stem": "“where”在本单元词表中的意思最接近哪一项？"
+    },
+    {
+      "answer": "Where's my schoolbag?",
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:07",
+      "difficulty": 0.28,
+      "explanation": "本单元核心句式包括“Where's my schoolbag?”。",
+      "knowledge_point_key": "pep-grade7-upper-2024:unit:07:sentence_pattern:wheres-my-schoolbag",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:07",
+          "knowledge_point_key": "pep-grade7-upper-2024:unit:07:sentence_pattern:wheres-my-schoolbag",
+          "source_stable_id": "pep-grade7-upper-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "source": "curated_public_textbook_seed"
+      },
+      "options": [
+        "Where's my schoolbag?",
+        "come on",
+        "tape player",
+        "where"
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-upper-2024:unit:07:ex:02-wheres-my-schoolbag",
+      "status": "published",
+      "stem": "围绕“房间物品与位置”，下列哪一句最贴近本单元核心句式？"
+    },
+    {
+      "answer": "where 引导的特殊疑问句",
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:07",
+      "difficulty": 0.28,
+      "explanation": "本单元语法重点是：where 引导的特殊疑问句。",
+      "knowledge_point_key": "pep-grade7-upper-2024:unit:07:grammar:where",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:07",
+          "knowledge_point_key": "pep-grade7-upper-2024:unit:07:grammar:where",
+          "source_stable_id": "pep-grade7-upper-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "source": "curated_public_textbook_seed"
+      },
+      "options": [
+        "where 引导的特殊疑问句",
+        "过去完成时",
+        "定语从句",
+        "虚拟语气"
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-upper-2024:unit:07:ex:03-where",
+      "status": "published",
+      "stem": "本单元语法重点最接近哪一项？"
+    },
+    {
+      "answer": "come on",
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:07",
+      "difficulty": 0.28,
+      "explanation": "“come on”属于本单元短语或功能表达。",
+      "knowledge_point_key": "pep-grade7-upper-2024:unit:07:phrase:come-on",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:07",
+          "knowledge_point_key": "pep-grade7-upper-2024:unit:07:phrase:come-on",
+          "source_stable_id": "pep-grade7-upper-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "source": "curated_public_textbook_seed"
+      },
+      "options": [
+        "come on",
+        "in conclusion",
+        "as soon as possible",
+        "by mistake"
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-upper-2024:unit:07:ex:04-come-on",
+      "status": "published",
+      "stem": "下列哪一项是本单元可迁移短语/功能表达？"
+    },
+    {
+      "answer": "沙发",
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:07",
+      "difficulty": 0.28,
+      "explanation": "该题检查本单元词汇义项。",
+      "knowledge_point_key": "pep-grade7-upper-2024:unit:07:vocabulary:sofa",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:07",
+          "knowledge_point_key": "pep-grade7-upper-2024:unit:07:vocabulary:sofa",
+          "source_stable_id": "pep-grade7-upper-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "source": "curated_public_textbook_seed"
+      },
+      "options": [
+        "沙发",
+        "机场",
+        "科学家",
+        "电影院"
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-upper-2024:unit:07:ex:05-sofa",
+      "status": "published",
+      "stem": "选择与“sofa”对应的本单元中文义项。"
+    },
+    {
+      "answer": "It's under the table.",
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:07",
+      "difficulty": 0.28,
+      "explanation": "该句来自本单元目标语言框架的整理。",
+      "knowledge_point_key": "pep-grade7-upper-2024:unit:07:sentence_pattern:its-under-the-table",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:07",
+          "knowledge_point_key": "pep-grade7-upper-2024:unit:07:sentence_pattern:its-under-the-table",
+          "source_stable_id": "pep-grade7-upper-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "source": "curated_public_textbook_seed"
+      },
+      "options": [
+        "It's under the table.",
+        "I have finished the report.",
+        "Although it rained, we left.",
+        "The book was written in 1999."
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-upper-2024:unit:07:ex:06-its-under-the-table",
+      "status": "published",
+      "stem": "下列哪一句也属于本单元目标语言？"
+    }
+  ],
+  "extraction_gaps": [
+    {
+      "description": "听力活动需要配套音频，暂不进入公共默认学习流。",
+      "gap_type": "audio_required",
+      "scope": "pep-grade7-upper-2024:unit:07",
+      "suggested_future_handling": "后续接入音频资源和听力题型后再结构化。"
+    },
+    {
+      "description": "结对/小组互动活动不适合直接作为稳定自动评分题。",
+      "gap_type": "pair_work",
+      "scope": "pep-grade7-upper-2024:unit:07",
+      "suggested_future_handling": "后续作为课堂互动或口语任务模板处理。"
+    }
+  ],
+  "knowledge_points": [
+    {
+      "content": {
+        "confidence": 0.95,
+        "display_group": "unit_intro",
+        "evidence": {
+          "page_label": "P.31",
+          "raw_line_excerpt": null,
+          "source": "pdf_curated_extract"
+        },
+        "requires_review": false,
+        "role": "unit_overview",
+        "source_unit_subtitle": "Where's my schoolbag?",
+        "source_unit_title": "Unit 4",
+        "theme": "房间物品与位置",
+        "unit_order": 7,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:07",
+      "difficulty": 0.18,
+      "source_page": "P.31",
+      "stable_key": "pep-grade7-upper-2024:unit:07:text_note:unit-4-overview",
+      "status": "published",
+      "summary": "本单元主题：房间物品与位置；核心标题表达为“Where's my schoolbag?”。",
+      "title": "Unit 4 overview",
+      "type": "text_note"
+    },
+    {
+      "content": {
+        "chinese_meaning": "在哪里；到哪里",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.19",
+          "raw_line_excerpt": "where /we@(r)/, /wer/ adv. 在哪里；到哪里 p.19",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "where",
+        "part_of_speech": "adv.",
+        "phonetic": "/we@(r)/, /wer/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 7,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:07",
+      "difficulty": 0.22,
+      "source_page": "P.19",
+      "stable_key": "pep-grade7-upper-2024:unit:07:vocabulary:where",
+      "status": "published",
+      "summary": "在哪里；到哪里",
+      "title": "where",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "桌子",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.19",
+          "raw_line_excerpt": "table /teIbl/ n. 桌子 p.19",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "table",
+        "part_of_speech": "n.",
+        "phonetic": "/teIbl/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 7,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:07",
+      "difficulty": 0.22,
+      "source_page": "P.19",
+      "stable_key": "pep-grade7-upper-2024:unit:07:vocabulary:table",
+      "status": "published",
+      "summary": "桌子",
+      "title": "table",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "床",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.19",
+          "raw_line_excerpt": "bed /bed/ n. 床 p.19",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "bed",
+        "part_of_speech": "n.",
+        "phonetic": "/bed/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 7,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:07",
+      "difficulty": 0.22,
+      "source_page": "P.19",
+      "stable_key": "pep-grade7-upper-2024:unit:07:vocabulary:bed",
+      "status": "published",
+      "summary": "床",
+      "title": "bed",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "书架；书柜",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.19",
+          "raw_line_excerpt": "bookcase /bUkkeIs/ n. 书架；书柜 p.19",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "bookcase",
+        "part_of_speech": "n.",
+        "phonetic": "/bUkkeIs/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 7,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:07",
+      "difficulty": 0.22,
+      "source_page": "P.19",
+      "stable_key": "pep-grade7-upper-2024:unit:07:vocabulary:bookcase",
+      "status": "published",
+      "summary": "书架；书柜",
+      "title": "bookcase",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "沙发",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.19",
+          "raw_line_excerpt": "sofa /s@Uf@/ n. 沙发 p.19",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "sofa",
+        "part_of_speech": "n.",
+        "phonetic": "/s@Uf@/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 7,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:07",
+      "difficulty": 0.22,
+      "source_page": "P.19",
+      "stable_key": "pep-grade7-upper-2024:unit:07:vocabulary:sofa",
+      "status": "published",
+      "summary": "沙发",
+      "title": "sofa",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "椅子",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.19",
+          "raw_line_excerpt": "chair /tSe@(r)/, /tSer/ n. 椅子 p.19",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "chair",
+        "part_of_speech": "n.",
+        "phonetic": "/tSe@(r)/, /tSer/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 7,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:07",
+      "difficulty": 0.22,
+      "source_page": "P.19",
+      "stable_key": "pep-grade7-upper-2024:unit:07:vocabulary:chair",
+      "status": "published",
+      "summary": "椅子",
+      "title": "chair",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "在……上",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.19",
+          "raw_line_excerpt": "on /Qn/, /A:n/ prep. 在……上 p.19",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "on",
+        "part_of_speech": "prep.",
+        "phonetic": "/Qn/, /A:n/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 7,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:07",
+      "difficulty": 0.22,
+      "source_page": "P.19",
+      "stable_key": "pep-grade7-upper-2024:unit:07:vocabulary:on",
+      "status": "published",
+      "summary": "在……上",
+      "title": "on",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "在……下",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.19",
+          "raw_line_excerpt": "under /Vnd@(r)/ prep. 在……下 p.19",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "under",
+        "part_of_speech": "prep.",
+        "phonetic": "/Vnd@(r)/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 7,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:07",
+      "difficulty": 0.22,
+      "source_page": "P.19",
+      "stable_key": "pep-grade7-upper-2024:unit:07:vocabulary:under",
+      "status": "published",
+      "summary": "在……下",
+      "title": "under",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "来；来到",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.20",
+          "raw_line_excerpt": "come /kVm/ v. 来；来到 p.20",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "come",
+        "part_of_speech": "v.",
+        "phonetic": "/kVm/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 7,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:07",
+      "difficulty": 0.22,
+      "source_page": "P.20",
+      "stable_key": "pep-grade7-upper-2024:unit:07:vocabulary:come",
+      "status": "published",
+      "summary": "来；来到",
+      "title": "come",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "快点儿",
+        "confidence": 0.95,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "P.20",
+          "raw_line_excerpt": "come on 快点儿 p.20",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "come on",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": false,
+        "role": "unit_phrase",
+        "unit_order": 7,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:07",
+      "difficulty": 0.28,
+      "source_page": "P.20",
+      "stable_key": "pep-grade7-upper-2024:unit:07:phrase:come-on",
+      "status": "published",
+      "summary": "快点儿",
+      "title": "come on",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "chinese_meaning": "书桌",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.20",
+          "raw_line_excerpt": "desk /desk/ n. 书桌 p.20",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "desk",
+        "part_of_speech": "n.",
+        "phonetic": "/desk/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 7,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:07",
+      "difficulty": 0.22,
+      "source_page": "P.20",
+      "stable_key": "pep-grade7-upper-2024:unit:07:vocabulary:desk",
+      "status": "published",
+      "summary": "书桌",
+      "title": "desk",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "认为；想；思考",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.20",
+          "raw_line_excerpt": "think /INk/ v. 认为；想；思考 p.20",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "think",
+        "part_of_speech": "v.",
+        "phonetic": "/INk/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 7,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:07",
+      "difficulty": 0.22,
+      "source_page": "P.20",
+      "stable_key": "pep-grade7-upper-2024:unit:07:vocabulary:think",
+      "status": "published",
+      "summary": "认为；想；思考",
+      "title": "think",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "房间",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.20",
+          "raw_line_excerpt": "room /ru:m/ n. 房间 p.20",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "room",
+        "part_of_speech": "n.",
+        "phonetic": "/ru:m/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 7,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:07",
+      "difficulty": 0.22,
+      "source_page": "P.20",
+      "stable_key": "pep-grade7-upper-2024:unit:07:vocabulary:room",
+      "status": "published",
+      "summary": "房间",
+      "title": "room",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "他（她、它）们的",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.20",
+          "raw_line_excerpt": "their /De@(r)/, /Der/ pron. 他（她、它）们的 p.20",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "their",
+        "part_of_speech": "pron.",
+        "phonetic": "/De@(r)/, /Der/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 7,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:07",
+      "difficulty": 0.22,
+      "source_page": "P.20",
+      "stable_key": "pep-grade7-upper-2024:unit:07:vocabulary:their",
+      "status": "published",
+      "summary": "他（她、它）们的",
+      "title": "their",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "帽子",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.20",
+          "raw_line_excerpt": "hat /h{t/ n. 帽子 p.20",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "hat",
+        "part_of_speech": "n.",
+        "phonetic": "/h{t/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 7,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:07",
+      "difficulty": 0.22,
+      "source_page": "P.20",
+      "stable_key": "pep-grade7-upper-2024:unit:07:vocabulary:hat",
+      "status": "published",
+      "summary": "帽子",
+      "title": "hat",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "头",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.20",
+          "raw_line_excerpt": "head /hed/ n. 头 p.20",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "head",
+        "part_of_speech": "n.",
+        "phonetic": "/hed/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 7,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:07",
+      "difficulty": 0.22,
+      "source_page": "P.20",
+      "stable_key": "pep-grade7-upper-2024:unit:07:vocabulary:head",
+      "status": "published",
+      "summary": "头",
+      "title": "head",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "是的；对",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.20",
+          "raw_line_excerpt": "yeah /je@/ interj. 是的；对 p.20",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "yeah",
+        "part_of_speech": "interj.",
+        "phonetic": "/je@/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 7,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:07",
+      "difficulty": 0.22,
+      "source_page": "P.20",
+      "stable_key": "pep-grade7-upper-2024:unit:07:vocabulary:yeah",
+      "status": "published",
+      "summary": "是的；对",
+      "title": "yeah",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "知道；了解",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.21",
+          "raw_line_excerpt": "know /n@U/ v. 知道；了解 p.21",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "know",
+        "part_of_speech": "v.",
+        "phonetic": "/n@U/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 7,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:07",
+      "difficulty": 0.22,
+      "source_page": "P.21",
+      "stable_key": "pep-grade7-upper-2024:unit:07:vocabulary:know",
+      "status": "published",
+      "summary": "知道；了解",
+      "title": "know",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "收音机；无线电广播",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.22",
+          "raw_line_excerpt": "radio /reIdi@U/ n. 收音机；无线电广播 p.22",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "radio",
+        "part_of_speech": "n.",
+        "phonetic": "/reIdi@U/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 7,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:07",
+      "difficulty": 0.22,
+      "source_page": "P.22",
+      "stable_key": "pep-grade7-upper-2024:unit:07:vocabulary:radio",
+      "status": "published",
+      "summary": "收音机；无线电广播",
+      "title": "radio",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "时钟",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.22",
+          "raw_line_excerpt": "clock /klQk/, /klA:k/ n. 时钟 p.22",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "clock",
+        "part_of_speech": "n.",
+        "phonetic": "/klQk/, /klA:k/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 7,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:07",
+      "difficulty": 0.22,
+      "source_page": "P.22",
+      "stable_key": "pep-grade7-upper-2024:unit:07:vocabulary:clock",
+      "status": "published",
+      "summary": "时钟",
+      "title": "clock",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "磁带；录音带；录像带",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.22",
+          "raw_line_excerpt": "tape /teIp/ n. 磁带；录音带；录像带 p.22",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "tape",
+        "part_of_speech": "n.",
+        "phonetic": "/teIp/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 7,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:07",
+      "difficulty": 0.22,
+      "source_page": "P.22",
+      "stable_key": "pep-grade7-upper-2024:unit:07:vocabulary:tape",
+      "status": "published",
+      "summary": "磁带；录音带；录像带",
+      "title": "tape",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "播放机",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.22",
+          "raw_line_excerpt": "player /pleI@(r)/ n. 播放机 p.22",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "player",
+        "part_of_speech": "n.",
+        "phonetic": "/pleI@(r)/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 7,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:07",
+      "difficulty": 0.22,
+      "source_page": "P.22",
+      "stable_key": "pep-grade7-upper-2024:unit:07:vocabulary:player",
+      "status": "published",
+      "summary": "播放机",
+      "title": "player",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "磁带播放机",
+        "confidence": 0.95,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "P.22",
+          "raw_line_excerpt": "tape player 磁带播放机 p.22",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "tape player",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": false,
+        "role": "unit_phrase",
+        "unit_order": 7,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:07",
+      "difficulty": 0.28,
+      "source_page": "P.22",
+      "stable_key": "pep-grade7-upper-2024:unit:07:phrase:tape-player",
+      "status": "published",
+      "summary": "磁带播放机",
+      "title": "tape player",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "chinese_meaning": "模型",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.22",
+          "raw_line_excerpt": "model /mQdl/, /mA:dl/ n. 模型 p.22",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "model",
+        "part_of_speech": "n.",
+        "phonetic": "/mQdl/, /mA:dl/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 7,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:07",
+      "difficulty": 0.22,
+      "source_page": "P.22",
+      "stable_key": "pep-grade7-upper-2024:unit:07:vocabulary:model",
+      "status": "published",
+      "summary": "模型",
+      "title": "model",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "飞机",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.22",
+          "raw_line_excerpt": "plane /pleIn/ n. 飞机 p.22",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "plane",
+        "part_of_speech": "n.",
+        "phonetic": "/pleIn/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 7,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:07",
+      "difficulty": 0.22,
+      "source_page": "P.22",
+      "stable_key": "pep-grade7-upper-2024:unit:07:vocabulary:plane",
+      "status": "published",
+      "summary": "飞机",
+      "title": "plane",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "飞机模型",
+        "confidence": 0.95,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "P.22",
+          "raw_line_excerpt": "model plane 飞机模型 p.22",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "model plane",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": false,
+        "role": "unit_phrase",
+        "unit_order": 7,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:07",
+      "difficulty": 0.28,
+      "source_page": "P.22",
+      "stable_key": "pep-grade7-upper-2024:unit:07:phrase:model-plane",
+      "status": "published",
+      "summary": "飞机模型",
+      "title": "model plane",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "chinese_meaning": "整洁的；井井有条的",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.23",
+          "raw_line_excerpt": "tidy /taIdi/ adj. 整洁的；井井有条的 p.23",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "tidy",
+        "part_of_speech": "adj.",
+        "phonetic": "/taIdi/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 7,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:07",
+      "difficulty": 0.22,
+      "source_page": "P.23",
+      "stable_key": "pep-grade7-upper-2024:unit:07:vocabulary:tidy",
+      "status": "published",
+      "summary": "整洁的；井井有条的",
+      "title": "tidy",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "但是",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.23",
+          "raw_line_excerpt": "but /bVt; b@t/ conj. 但是 p.23",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "but",
+        "part_of_speech": "conj.",
+        "phonetic": "/bVt; b@t/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 7,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:07",
+      "difficulty": 0.22,
+      "source_page": "P.23",
+      "stable_key": "pep-grade7-upper-2024:unit:07:vocabulary:but",
+      "status": "published",
+      "summary": "但是",
+      "title": "but",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "我们的",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.23",
+          "raw_line_excerpt": "our /A:(r), aU@(r)/ pron. 我们的 p.23",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "our",
+        "part_of_speech": "pron.",
+        "phonetic": "/A:(r), aU@(r)/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 7,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:07",
+      "difficulty": 0.22,
+      "source_page": "P.23",
+      "stable_key": "pep-grade7-upper-2024:unit:07:vocabulary:our",
+      "status": "published",
+      "summary": "我们的",
+      "title": "our",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "处处；到处；各个地方",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.23",
+          "raw_line_excerpt": "everywhere /evriwe@(r)/, /evriwer/ adv. 处处；到处；各个地方 p.23",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "everywhere",
+        "part_of_speech": "adv.",
+        "phonetic": "/evriwe@(r)/, /evriwer/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 7,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:07",
+      "difficulty": 0.22,
+      "source_page": "P.23",
+      "stable_key": "pep-grade7-upper-2024:unit:07:vocabulary:everywhere",
+      "status": "published",
+      "summary": "处处；到处；各个地方",
+      "title": "everywhere",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "总是",
+        "confidence": 0.95,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "P.23",
+          "raw_line_excerpt": "always /O:lweIz/ adv. 总是 p.23",
+          "source": "pdf_curated_extract"
+        },
+        "example": null,
+        "lemma": "always",
+        "part_of_speech": "adv.",
+        "phonetic": "/O:lweIz/",
+        "requires_review": false,
+        "role": "unit_wordlist",
+        "unit_order": 7,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:07",
+      "difficulty": 0.22,
+      "source_page": "P.23",
+      "stable_key": "pep-grade7-upper-2024:unit:07:vocabulary:always",
+      "status": "published",
+      "summary": "总是",
+      "title": "always",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "confidence": 0.95,
+        "display_group": "sentence_patterns",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "pdf_curated_extract"
+        },
+        "pattern": "Where's my schoolbag?",
+        "requires_review": false,
+        "role": "target_language",
+        "unit_order": 7,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:07",
+      "difficulty": 0.32,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-upper-2024:unit:07:sentence_pattern:wheres-my-schoolbag",
+      "status": "published",
+      "summary": "核心句式：Where's my schoolbag?",
+      "title": "Where's my schoolbag?",
+      "type": "sentence_pattern"
+    },
+    {
+      "content": {
+        "confidence": 0.95,
+        "display_group": "sentence_patterns",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "pdf_curated_extract"
+        },
+        "pattern": "It's under the table.",
+        "requires_review": false,
+        "role": "target_language",
+        "unit_order": 7,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:07",
+      "difficulty": 0.32,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-upper-2024:unit:07:sentence_pattern:its-under-the-table",
+      "status": "published",
+      "summary": "核心句式：It's under the table.",
+      "title": "It's under the table.",
+      "type": "sentence_pattern"
+    },
+    {
+      "content": {
+        "confidence": 0.95,
+        "display_group": "sentence_patterns",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "pdf_curated_extract"
+        },
+        "pattern": "Where are my books?",
+        "requires_review": false,
+        "role": "target_language",
+        "unit_order": 7,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:07",
+      "difficulty": 0.32,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-upper-2024:unit:07:sentence_pattern:where-are-my-books",
+      "status": "published",
+      "summary": "核心句式：Where are my books?",
+      "title": "Where are my books?",
+      "type": "sentence_pattern"
+    },
+    {
+      "content": {
+        "confidence": 0.95,
+        "display_group": "sentence_patterns",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "pdf_curated_extract"
+        },
+        "pattern": "They're on the sofa.",
+        "requires_review": false,
+        "role": "target_language",
+        "unit_order": 7,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:07",
+      "difficulty": 0.32,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-upper-2024:unit:07:sentence_pattern:theyre-on-the-sofa",
+      "status": "published",
+      "summary": "核心句式：They're on the sofa.",
+      "title": "They're on the sofa.",
+      "type": "sentence_pattern"
+    },
+    {
+      "content": {
+        "confidence": 0.95,
+        "display_group": "grammar",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "pdf_curated_extract"
+        },
+        "focus": "where 引导的特殊疑问句",
+        "related_units": [
+          "Unit 7"
+        ],
+        "requires_review": false,
+        "role": "grammar_focus",
+        "unit_order": 7,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:07",
+      "difficulty": 0.38,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-upper-2024:unit:07:grammar:where",
+      "status": "published",
+      "summary": "where 引导的特殊疑问句",
+      "title": "where 引导的特殊疑问句",
+      "type": "grammar"
+    },
+    {
+      "content": {
+        "confidence": 0.95,
+        "display_group": "grammar",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "pdf_curated_extract"
+        },
+        "focus": "方位介词 in/on/under",
+        "related_units": [
+          "Unit 7"
+        ],
+        "requires_review": false,
+        "role": "grammar_focus",
+        "unit_order": 7,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:07",
+      "difficulty": 0.38,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-upper-2024:unit:07:grammar:in-on-under",
+      "status": "published",
+      "summary": "方位介词 in/on/under",
+      "title": "方位介词 in/on/under",
+      "type": "grammar"
+    },
+    {
+      "content": {
+        "confidence": 0.95,
+        "display_group": "grammar",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "pdf_curated_extract"
+        },
+        "focus": "单复数主语与 be 动词一致",
+        "related_units": [
+          "Unit 7"
+        ],
+        "requires_review": false,
+        "role": "grammar_focus",
+        "unit_order": 7,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:07",
+      "difficulty": 0.38,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-upper-2024:unit:07:grammar:be",
+      "status": "published",
+      "summary": "单复数主语与 be 动词一致",
+      "title": "单复数主语与 be 动词一致",
+      "type": "grammar"
+    },
+    {
+      "content": {
+        "confidence": 0.95,
+        "display_group": "pronunciation",
+        "evidence": {
+          "page_label": "Pronunciation",
+          "raw_line_excerpt": null,
+          "source": "pdf_curated_extract"
+        },
+        "focus": "清辅音/浊辅音和 /θ/ /ð/ 对比",
+        "requires_review": false,
+        "role": "pronunciation_note",
+        "unit_order": 7,
+        "warnings": []
+      },
+      "curriculum_node_key": "pep-grade7-upper-2024:unit:07",
+      "difficulty": 0.28,
+      "source_page": "Pronunciation",
+      "stable_key": "pep-grade7-upper-2024:unit:07:pronunciation:zh-0df5b5dd60",
+      "status": "published",
+      "summary": "语音关注点：清辅音/浊辅音和 /θ/ /ð/ 对比。",
+      "title": "清辅音/浊辅音和 /θ/ /ð/ 对比",
+      "type": "pronunciation"
+    }
+  ],
+  "schema_version": "public_textbook_unit.v2",
+  "source_stable_id": "pep-grade7-upper-2024",
+  "unit": {
+    "end_page": "P.36",
+    "ordinal": 7,
+    "start_page": "P.31",
+    "subtitle": "Where's my schoolbag?",
+    "title": "Unit 4"
+  }
+}

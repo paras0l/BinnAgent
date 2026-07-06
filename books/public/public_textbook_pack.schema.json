@@ -1,62 +1,126 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://binnagent.local/schemas/public_textbook_pack.v1.json",
+  "$id": "https://binnagent.local/schemas/public_textbook_pack.schema.json",
   "title": "BinnAgent Public Textbook Pack",
-  "type": "object",
-  "required": ["schema_version", "generated_from", "sources"],
-  "additionalProperties": false,
-  "properties": {
-    "schema_version": {
-      "const": "public_textbook_pack.v1"
-    },
-    "generated_from": {
+  "anyOf": [
+    { "$ref": "#/$defs/pack_v1" },
+    { "$ref": "#/$defs/manifest_v2" },
+    { "$ref": "#/$defs/source_v2" },
+    { "$ref": "#/$defs/curriculum_v2" },
+    { "$ref": "#/$defs/unit_v2" },
+    { "$ref": "#/$defs/gaps_v2" }
+  ],
+  "$defs": {
+    "pack_v1": {
       "type": "object",
-      "required": ["source", "notes"],
-      "additionalProperties": true,
+      "required": ["schema_version", "generated_from", "sources"],
+      "additionalProperties": false,
       "properties": {
-        "source": { "type": "string" },
-        "notes": { "type": "string", "maxLength": 500 }
+        "schema_version": { "const": "public_textbook_pack.v1" },
+        "generated_from": { "type": "object", "required": ["source", "notes"], "additionalProperties": true },
+        "sources": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/source_v1" } }
       }
     },
-    "sources": {
-      "type": "array",
-      "minItems": 1,
-      "items": { "$ref": "#/$defs/source" }
-    }
-  },
-  "$defs": {
-    "source": {
+    "manifest_v2": {
+      "type": "object",
+      "required": ["schema_version", "generated_from", "sources", "extraction_gaps_path"],
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": { "const": "public_textbook_pack_manifest.v2" },
+        "generated_from": { "type": "object", "required": ["source", "notes"], "additionalProperties": true },
+        "deprecated_artifacts": { "type": "array", "items": { "type": "string" } },
+        "extraction_gaps_path": { "type": "string", "minLength": 1 },
+        "sources": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["stable_id", "volume", "source_path", "curriculum_path", "unit_paths"],
+            "additionalProperties": false,
+            "properties": {
+              "stable_id": { "type": "string", "minLength": 1, "maxLength": 120 },
+              "volume": { "type": "string", "enum": ["upper", "lower"] },
+              "source_path": { "type": "string", "minLength": 1 },
+              "curriculum_path": { "type": "string", "minLength": 1 },
+              "unit_paths": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } }
+            }
+          }
+        }
+      }
+    },
+    "source_v2": {
+      "type": "object",
+      "required": ["schema_version", "stable_id", "source_seed"],
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": { "const": "public_textbook_source.v2" },
+        "stable_id": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "source_seed": { "$ref": "#/$defs/source_seed" }
+      }
+    },
+    "curriculum_v2": {
+      "type": "object",
+      "required": ["schema_version", "source_stable_id", "curriculum_nodes"],
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": { "const": "public_textbook_curriculum.v2" },
+        "source_stable_id": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "curriculum_nodes": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/curriculum_node" } }
+      }
+    },
+    "unit_v2": {
       "type": "object",
       "required": [
-        "stable_id",
-        "source_seed",
-        "curriculum_nodes",
+        "schema_version",
+        "source_stable_id",
+        "curriculum_node_key",
+        "unit",
         "knowledge_points",
         "exercise_questions",
         "extraction_gaps"
       ],
       "additionalProperties": false,
       "properties": {
+        "schema_version": { "const": "public_textbook_unit.v2" },
+        "source_stable_id": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "curriculum_node_key": { "type": "string", "minLength": 1, "maxLength": 255 },
+        "unit": {
+          "type": "object",
+          "required": ["title", "subtitle", "ordinal", "start_page", "end_page"],
+          "additionalProperties": false,
+          "properties": {
+            "title": { "type": "string", "minLength": 1, "maxLength": 255 },
+            "subtitle": { "type": "string", "maxLength": 255 },
+            "ordinal": { "type": "integer", "minimum": 1 },
+            "start_page": { "type": "string", "minLength": 1, "maxLength": 30 },
+            "end_page": { "type": "string", "minLength": 1, "maxLength": 30 }
+          }
+        },
+        "knowledge_points": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/knowledge_point" } },
+        "exercise_questions": { "type": "array", "items": { "$ref": "#/$defs/exercise_question" } },
+        "extraction_gaps": { "type": "array", "items": { "$ref": "#/$defs/extraction_gap" } }
+      }
+    },
+    "gaps_v2": {
+      "type": "object",
+      "required": ["schema_version", "extraction_gaps"],
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": { "const": "public_textbook_gaps.v2" },
+        "extraction_gaps": { "type": "array", "items": { "$ref": "#/$defs/extraction_gap" } }
+      }
+    },
+    "source_v1": {
+      "type": "object",
+      "required": ["stable_id", "source_seed", "curriculum_nodes", "knowledge_points", "exercise_questions", "extraction_gaps"],
+      "additionalProperties": false,
+      "properties": {
         "stable_id": { "type": "string", "minLength": 1, "maxLength": 120 },
         "source_seed": { "$ref": "#/$defs/source_seed" },
-        "curriculum_nodes": {
-          "type": "array",
-          "minItems": 1,
-          "items": { "$ref": "#/$defs/curriculum_node" }
-        },
-        "knowledge_points": {
-          "type": "array",
-          "minItems": 1,
-          "items": { "$ref": "#/$defs/knowledge_point" }
-        },
-        "exercise_questions": {
-          "type": "array",
-          "items": { "$ref": "#/$defs/exercise_question" }
-        },
-        "extraction_gaps": {
-          "type": "array",
-          "items": { "$ref": "#/$defs/extraction_gap" }
-        }
+        "curriculum_nodes": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/curriculum_node" } },
+        "knowledge_points": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/knowledge_point" } },
+        "exercise_questions": { "type": "array", "items": { "$ref": "#/$defs/exercise_question" } },
+        "extraction_gaps": { "type": "array", "items": { "$ref": "#/$defs/extraction_gap" } }
       }
     },
     "source_seed": {
@@ -99,18 +163,7 @@
     },
     "curriculum_node": {
       "type": "object",
-      "required": [
-        "stable_key",
-        "node_type",
-        "title",
-        "subtitle",
-        "ordinal",
-        "start_page",
-        "end_page",
-        "estimated_minutes",
-        "learning_objectives",
-        "front_end_blocks"
-      ],
+      "required": ["stable_key", "node_type", "title", "subtitle", "ordinal", "start_page", "end_page", "estimated_minutes", "learning_objectives", "front_end_blocks"],
       "additionalProperties": false,
       "properties": {
         "stable_key": { "type": "string", "minLength": 1, "maxLength": 255 },
@@ -123,41 +176,17 @@
         "end_page": { "type": "string", "minLength": 1, "maxLength": 30 },
         "estimated_minutes": { "type": "integer", "minimum": 1 },
         "learning_objectives": { "type": "array", "items": { "type": "string" } },
-        "front_end_blocks": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "required": ["block_type", "status"],
-            "additionalProperties": false,
-            "properties": {
-              "block_type": { "type": "string", "minLength": 1 },
-              "status": { "type": "string", "enum": ["ready", "ready_or_pending_review", "pending_review"] }
-            }
-          }
-        }
+        "front_end_blocks": { "type": "array", "items": { "type": "object", "required": ["block_type", "status"], "additionalProperties": false, "properties": { "block_type": { "type": "string", "minLength": 1 }, "status": { "type": "string", "enum": ["ready", "ready_or_pending_review", "pending_review"] } } } }
       }
     },
     "knowledge_point": {
       "type": "object",
-      "required": [
-        "stable_key",
-        "curriculum_node_key",
-        "type",
-        "title",
-        "summary",
-        "source_page",
-        "difficulty",
-        "status",
-        "content"
-      ],
+      "required": ["stable_key", "curriculum_node_key", "type", "title", "summary", "source_page", "difficulty", "status", "content"],
       "additionalProperties": false,
       "properties": {
         "stable_key": { "type": "string", "minLength": 1, "maxLength": 255 },
         "curriculum_node_key": { "type": "string", "minLength": 1, "maxLength": 255 },
-        "type": {
-          "type": "string",
-          "enum": ["vocabulary", "grammar", "phrase", "sentence_pattern", "pronunciation", "text_note"]
-        },
+        "type": { "type": "string", "enum": ["vocabulary", "grammar", "phrase", "sentence_pattern", "pronunciation", "text_note"] },
         "title": { "type": "string", "minLength": 1, "maxLength": 255 },
         "summary": { "type": "string", "minLength": 1, "maxLength": 1000 },
         "source_page": { "type": "string", "minLength": 1, "maxLength": 30 },
@@ -168,19 +197,7 @@
     },
     "exercise_question": {
       "type": "object",
-      "required": [
-        "stable_key",
-        "curriculum_node_key",
-        "knowledge_point_key",
-        "question_type",
-        "stem",
-        "options",
-        "answer",
-        "explanation",
-        "difficulty",
-        "status",
-        "metadata"
-      ],
+      "required": ["stable_key", "curriculum_node_key", "knowledge_point_key", "question_type", "stem", "options", "answer", "explanation", "difficulty", "status", "metadata"],
       "additionalProperties": false,
       "properties": {
         "stable_key": { "type": "string", "minLength": 1, "maxLength": 255 },
@@ -202,17 +219,7 @@
       "additionalProperties": false,
       "properties": {
         "scope": { "type": "string", "minLength": 1, "maxLength": 255 },
-        "gap_type": {
-          "type": "string",
-          "enum": [
-            "audio_required",
-            "image_required",
-            "long_text",
-            "pair_work",
-            "low_confidence_layout",
-            "copyright_sensitive_long_text"
-          ]
-        },
+        "gap_type": { "type": "string", "enum": ["audio_required", "image_required", "long_text", "pair_work", "low_confidence_layout", "copyright_sensitive_long_text"] },
         "description": { "type": "string", "minLength": 1, "maxLength": 500 },
         "suggested_future_handling": { "type": "string", "minLength": 1, "maxLength": 500 }
       }

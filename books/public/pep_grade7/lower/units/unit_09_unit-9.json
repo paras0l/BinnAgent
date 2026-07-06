@@ -1,0 +1,1645 @@
+{
+  "curriculum_node_key": "pep-grade7-lower-2024:unit:09",
+  "exercise_questions": [
+    {
+      "answer": "卷曲的",
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:09",
+      "difficulty": 0.28,
+      "explanation": "curly 的本单元义项是：卷曲的。",
+      "knowledge_point_key": "pep-grade7-lower-2024:unit:09:vocabulary:curly",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:09",
+          "knowledge_point_key": "pep-grade7-lower-2024:unit:09:vocabulary:curly",
+          "source_stable_id": "pep-grade7-lower-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "requires_review": true,
+        "source": "curated_public_textbook_seed",
+        "warnings": [
+          "generated_from_lower_draft_content"
+        ]
+      },
+      "options": [
+        "卷曲的",
+        "直的",
+        "高的",
+        "中等的"
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-lower-2024:unit:09:ex:01-curly",
+      "status": "draft",
+      "stem": "“curly”在本单元词表中的意思最接近哪一项？"
+    },
+    {
+      "answer": "What does he look like?",
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:09",
+      "difficulty": 0.28,
+      "explanation": "本单元核心句式包括“What does he look like?”。",
+      "knowledge_point_key": "pep-grade7-lower-2024:unit:09:sentence_pattern:what-does-he-look-like",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:09",
+          "knowledge_point_key": "pep-grade7-lower-2024:unit:09:sentence_pattern:what-does-he-look-like",
+          "source_stable_id": "pep-grade7-lower-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "requires_review": true,
+        "source": "curated_public_textbook_seed",
+        "warnings": [
+          "generated_from_lower_draft_content"
+        ]
+      },
+      "options": [
+        "What does he look like?",
+        "of medium height",
+        "of medium build",
+        "curly"
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-lower-2024:unit:09:ex:02-what-does-he-look-like",
+      "status": "draft",
+      "stem": "围绕“外貌描述”，下列哪一句最贴近本单元核心句式？"
+    },
+    {
+      "answer": "外貌描述 be/have 区分",
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:09",
+      "difficulty": 0.28,
+      "explanation": "本单元语法重点是：外貌描述 be/have 区分。",
+      "knowledge_point_key": "pep-grade7-lower-2024:unit:09:grammar:be-have",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:09",
+          "knowledge_point_key": "pep-grade7-lower-2024:unit:09:grammar:be-have",
+          "source_stable_id": "pep-grade7-lower-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "requires_review": true,
+        "source": "curated_public_textbook_seed",
+        "warnings": [
+          "generated_from_lower_draft_content"
+        ]
+      },
+      "options": [
+        "外貌描述 be/have 区分",
+        "过去完成时",
+        "定语从句",
+        "虚拟语气"
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-lower-2024:unit:09:ex:03-be-have",
+      "status": "draft",
+      "stem": "本单元语法重点最接近哪一项？"
+    },
+    {
+      "answer": "of medium height",
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:09",
+      "difficulty": 0.28,
+      "explanation": "“of medium height”属于本单元短语或功能表达。",
+      "knowledge_point_key": "pep-grade7-lower-2024:unit:09:phrase:of-medium-height",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:09",
+          "knowledge_point_key": "pep-grade7-lower-2024:unit:09:phrase:of-medium-height",
+          "source_stable_id": "pep-grade7-lower-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "requires_review": true,
+        "source": "curated_public_textbook_seed",
+        "warnings": [
+          "generated_from_lower_draft_content"
+        ]
+      },
+      "options": [
+        "of medium height",
+        "in conclusion",
+        "as soon as possible",
+        "by mistake"
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-lower-2024:unit:09:ex:04-of-medium-height",
+      "status": "draft",
+      "stem": "下列哪一项是本单元可迁移短语/功能表达？"
+    },
+    {
+      "answer": "身高",
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:09",
+      "difficulty": 0.28,
+      "explanation": "该题检查本单元词汇义项。",
+      "knowledge_point_key": "pep-grade7-lower-2024:unit:09:vocabulary:height",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:09",
+          "knowledge_point_key": "pep-grade7-lower-2024:unit:09:vocabulary:height",
+          "source_stable_id": "pep-grade7-lower-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "requires_review": true,
+        "source": "curated_public_textbook_seed",
+        "warnings": [
+          "generated_from_lower_draft_content"
+        ]
+      },
+      "options": [
+        "身高",
+        "机场",
+        "科学家",
+        "电影院"
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-lower-2024:unit:09:ex:05-height",
+      "status": "draft",
+      "stem": "选择与“height”对应的本单元中文义项。"
+    },
+    {
+      "answer": "He is of medium height.",
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:09",
+      "difficulty": 0.28,
+      "explanation": "该句来自本单元目标语言框架的整理。",
+      "knowledge_point_key": "pep-grade7-lower-2024:unit:09:sentence_pattern:he-is-of-medium-height",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:09",
+          "knowledge_point_key": "pep-grade7-lower-2024:unit:09:sentence_pattern:he-is-of-medium-height",
+          "source_stable_id": "pep-grade7-lower-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "requires_review": true,
+        "source": "curated_public_textbook_seed",
+        "warnings": [
+          "generated_from_lower_draft_content"
+        ]
+      },
+      "options": [
+        "He is of medium height.",
+        "I have finished the report.",
+        "Although it rained, we left.",
+        "The book was written in 1999."
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-lower-2024:unit:09:ex:06-he-is-of-medium-height",
+      "status": "draft",
+      "stem": "下列哪一句也属于本单元目标语言？"
+    }
+  ],
+  "extraction_gaps": [
+    {
+      "description": "听力活动需要配套音频，暂不进入公共默认学习流。",
+      "gap_type": "audio_required",
+      "scope": "pep-grade7-lower-2024:unit:09",
+      "suggested_future_handling": "后续接入音频资源和听力题型后再结构化。"
+    },
+    {
+      "description": "结对/小组互动活动不适合直接作为稳定自动评分题。",
+      "gap_type": "pair_work",
+      "scope": "pep-grade7-lower-2024:unit:09",
+      "suggested_future_handling": "后续作为课堂互动或口语任务模板处理。"
+    },
+    {
+      "description": "长课文、整页练习或连续对话不写入 seed pack。",
+      "gap_type": "copyright_sensitive_long_text",
+      "scope": "pep-grade7-lower-2024:unit:09",
+      "suggested_future_handling": "仅保存短摘要和知识点，必要时通过受控证据摘录展示。"
+    },
+    {
+      "description": "该册 PDF 文本层为空，本单元短项来自人工整理，需后续 OCR/layout 校对。",
+      "gap_type": "low_confidence_layout",
+      "scope": "pep-grade7-lower-2024:unit:09",
+      "suggested_future_handling": "用 OCR/layout-aware pipeline 回填页内证据并复核词表。"
+    }
+  ],
+  "knowledge_points": [
+    {
+      "content": {
+        "confidence": 0.9,
+        "display_group": "unit_intro",
+        "evidence": {
+          "page_label": "P.49",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "requires_review": false,
+        "role": "unit_overview",
+        "source_unit_subtitle": "What does he look like?",
+        "source_unit_title": "Unit 9",
+        "theme": "外貌描述",
+        "unit_order": 9,
+        "warnings": [
+          "lower_pdf_text_layer_empty"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:09",
+      "difficulty": 0.18,
+      "source_page": "P.49",
+      "stable_key": "pep-grade7-lower-2024:unit:09:text_note:unit-9-overview",
+      "status": "published",
+      "summary": "本单元主题：外貌描述；核心标题表达为“What does he look like?”。",
+      "title": "Unit 9 overview",
+      "type": "text_note"
+    },
+    {
+      "content": {
+        "chinese_meaning": "卷曲的",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "curly ... 卷曲的",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "curly",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 9,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:09",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:09:vocabulary:curly",
+      "status": "draft",
+      "summary": "卷曲的",
+      "title": "curly",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "直的",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "straight ... 直的",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "straight",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 9,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:09",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:09:vocabulary:straight",
+      "status": "draft",
+      "summary": "直的",
+      "title": "straight",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "高的",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "tall ... 高的",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "tall",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 9,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:09",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:09:vocabulary:tall",
+      "status": "draft",
+      "summary": "高的",
+      "title": "tall",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "中等的",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "medium ... 中等的",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "medium",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 9,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:09",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:09:vocabulary:medium",
+      "status": "draft",
+      "summary": "中等的",
+      "title": "medium",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "身高",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "height ... 身高",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "height",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 9,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:09",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:09:vocabulary:height",
+      "status": "draft",
+      "summary": "身高",
+      "title": "height",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "中等身高",
+        "confidence": 0.72,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "of medium height ... 中等身高",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "of medium height",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_phrase",
+        "unit_order": 9,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:09",
+      "difficulty": 0.28,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:09:phrase:of-medium-height",
+      "status": "draft",
+      "summary": "中等身高",
+      "title": "of medium height",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "chinese_meaning": "瘦的",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "thin ... 瘦的",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "thin",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 9,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:09",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:09:vocabulary:thin",
+      "status": "draft",
+      "summary": "瘦的",
+      "title": "thin",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "重的",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "heavy ... 重的",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "heavy",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 9,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:09",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:09:vocabulary:heavy",
+      "status": "draft",
+      "summary": "重的",
+      "title": "heavy",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "身材",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "build ... 身材",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "build",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 9,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:09",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:09:vocabulary:build",
+      "status": "draft",
+      "summary": "身材",
+      "title": "build",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "中等身材",
+        "confidence": 0.72,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "of medium build ... 中等身材",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "of medium build",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_phrase",
+        "unit_order": 9,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:09",
+      "difficulty": 0.28,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:09:phrase:of-medium-build",
+      "status": "draft",
+      "summary": "中等身材",
+      "title": "of medium build",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "chinese_meaning": "今晚",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "tonight ... 今晚",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "tonight",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 9,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:09",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:09:vocabulary:tonight",
+      "status": "draft",
+      "summary": "今晚",
+      "title": "tonight",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "小的",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "little ... 小的",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "little",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 9,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:09",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:09:vocabulary:little",
+      "status": "draft",
+      "summary": "小的",
+      "title": "little",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "一点",
+        "confidence": 0.72,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "a little ... 一点",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "a little",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_phrase",
+        "unit_order": 9,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:09",
+      "difficulty": 0.28,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:09:phrase:a-little",
+      "status": "draft",
+      "summary": "一点",
+      "title": "a little",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "chinese_meaning": "电影院",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "cinema ... 电影院",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "cinema",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 9,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:09",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:09:vocabulary:cinema",
+      "status": "draft",
+      "summary": "电影院",
+      "title": "cinema",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "眼镜",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "glasses ... 眼镜",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "glasses",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 9,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:09",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:09:vocabulary:glasses",
+      "status": "draft",
+      "summary": "眼镜",
+      "title": "glasses",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "以后",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "later ... 以后",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "later",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 9,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:09",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:09:vocabulary:later",
+      "status": "draft",
+      "summary": "以后",
+      "title": "later",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "英俊的",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "handsome ... 英俊的",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "handsome",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 9,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:09",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:09:vocabulary:handsome",
+      "status": "draft",
+      "summary": "英俊的",
+      "title": "handsome",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "演员",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "actor ... 演员",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "actor",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 9,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:09",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:09:vocabulary:actor",
+      "status": "draft",
+      "summary": "演员",
+      "title": "actor",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "女演员",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "actress ... 女演员",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "actress",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 9,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:09",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:09:vocabulary:actress",
+      "status": "draft",
+      "summary": "女演员",
+      "title": "actress",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "人",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "person ... 人",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "person",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 9,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:09",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:09:vocabulary:person",
+      "status": "draft",
+      "summary": "人",
+      "title": "person",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "鼻子",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "nose ... 鼻子",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "nose",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 9,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:09",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:09:vocabulary:nose",
+      "status": "draft",
+      "summary": "鼻子",
+      "title": "nose",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "金黄色的",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "blonde ... 金黄色的",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "blonde",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 9,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:09",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:09:vocabulary:blonde",
+      "status": "draft",
+      "summary": "金黄色的",
+      "title": "blonde",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "嘴",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "mouth ... 嘴",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "mouth",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 9,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:09",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:09:vocabulary:mouth",
+      "status": "draft",
+      "summary": "嘴",
+      "title": "mouth",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "圆形的",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "round ... 圆形的",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "round",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 9,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:09",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:09:vocabulary:round",
+      "status": "draft",
+      "summary": "圆形的",
+      "title": "round",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "脸",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "face ... 脸",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "face",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 9,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:09",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:09:vocabulary:face",
+      "status": "draft",
+      "summary": "脸",
+      "title": "face",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "眼睛",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "eye ... 眼睛",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "eye",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 9,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:09",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:09:vocabulary:eye",
+      "status": "draft",
+      "summary": "眼睛",
+      "title": "eye",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "歌手",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "singer ... 歌手",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "singer",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 9,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:09",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:09:vocabulary:singer",
+      "status": "draft",
+      "summary": "歌手",
+      "title": "singer",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "艺术家",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "artist ... 艺术家",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "artist",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 9,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:09",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:09:vocabulary:artist",
+      "status": "draft",
+      "summary": "艺术家",
+      "title": "artist",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "犯罪",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "crime ... 犯罪",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "crime",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 9,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:09",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:09:vocabulary:crime",
+      "status": "draft",
+      "summary": "犯罪",
+      "title": "crime",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "罪犯",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "criminal ... 罪犯",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "criminal",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 9,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:09",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:09:vocabulary:criminal",
+      "status": "draft",
+      "summary": "罪犯",
+      "title": "criminal",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "描述",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "describe ... 描述",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "describe",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 9,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:09",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:09:vocabulary:describe",
+      "status": "draft",
+      "summary": "描述",
+      "title": "describe",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "不同地",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "differently ... 不同地",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "differently",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 9,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:09",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:09:vocabulary:differently",
+      "status": "draft",
+      "summary": "不同地",
+      "title": "differently",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "另一",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "another ... 另一",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "another",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 9,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:09",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:09:vocabulary:another",
+      "status": "draft",
+      "summary": "另一",
+      "title": "another",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "结尾",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "end ... 结尾",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "end",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 9,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:09",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:09:vocabulary:end",
+      "status": "draft",
+      "summary": "结尾",
+      "title": "end",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "真正的",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "real ... 真正的",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "real",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 9,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:09",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:09:vocabulary:real",
+      "status": "draft",
+      "summary": "真正的",
+      "title": "real",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "牛仔裤",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "jeans ... 牛仔裤",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "jeans",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 9,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:09",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:09:vocabulary:jeans",
+      "status": "draft",
+      "summary": "牛仔裤",
+      "title": "jeans",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "Unit pages",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "phrase": "look like",
+        "requires_review": true,
+        "role": "unit_phrase",
+        "unit_order": 9,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:09",
+      "difficulty": 0.28,
+      "source_page": "Unit pages",
+      "stable_key": "pep-grade7-lower-2024:unit:09:phrase:look-like",
+      "status": "draft",
+      "summary": "本单元可迁移短语或功能表达：look like。",
+      "title": "look like",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "Unit pages",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "phrase": "in the end",
+        "requires_review": true,
+        "role": "unit_phrase",
+        "unit_order": 9,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:09",
+      "difficulty": 0.28,
+      "source_page": "Unit pages",
+      "stable_key": "pep-grade7-lower-2024:unit:09:phrase:in-the-end",
+      "status": "draft",
+      "summary": "本单元可迁移短语或功能表达：in the end。",
+      "title": "in the end",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "sentence_patterns",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "pattern": "What does he look like?",
+        "requires_review": true,
+        "role": "target_language",
+        "unit_order": 9,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:09",
+      "difficulty": 0.32,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-lower-2024:unit:09:sentence_pattern:what-does-he-look-like",
+      "status": "draft",
+      "summary": "核心句式：What does he look like?",
+      "title": "What does he look like?",
+      "type": "sentence_pattern"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "sentence_patterns",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "pattern": "He is of medium height.",
+        "requires_review": true,
+        "role": "target_language",
+        "unit_order": 9,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:09",
+      "difficulty": 0.32,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-lower-2024:unit:09:sentence_pattern:he-is-of-medium-height",
+      "status": "draft",
+      "summary": "核心句式：He is of medium height.",
+      "title": "He is of medium height.",
+      "type": "sentence_pattern"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "sentence_patterns",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "pattern": "Does he have straight hair?",
+        "requires_review": true,
+        "role": "target_language",
+        "unit_order": 9,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:09",
+      "difficulty": 0.32,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-lower-2024:unit:09:sentence_pattern:does-he-have-straight-hair",
+      "status": "draft",
+      "summary": "核心句式：Does he have straight hair?",
+      "title": "Does he have straight hair?",
+      "type": "sentence_pattern"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "sentence_patterns",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "pattern": "Is he tall or short?",
+        "requires_review": true,
+        "role": "target_language",
+        "unit_order": 9,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:09",
+      "difficulty": 0.32,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-lower-2024:unit:09:sentence_pattern:is-he-tall-or-short",
+      "status": "draft",
+      "summary": "核心句式：Is he tall or short?",
+      "title": "Is he tall or short?",
+      "type": "sentence_pattern"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "grammar",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "focus": "外貌描述 be/have 区分",
+        "related_units": [
+          "Unit 9"
+        ],
+        "requires_review": true,
+        "role": "grammar_focus",
+        "unit_order": 9,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:09",
+      "difficulty": 0.38,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-lower-2024:unit:09:grammar:be-have",
+      "status": "draft",
+      "summary": "外貌描述 be/have 区分",
+      "title": "外貌描述 be/have 区分",
+      "type": "grammar"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "grammar",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "focus": "选择疑问句",
+        "related_units": [
+          "Unit 9"
+        ],
+        "requires_review": true,
+        "role": "grammar_focus",
+        "unit_order": 9,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:09",
+      "difficulty": 0.38,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-lower-2024:unit:09:grammar:zh-6d99764467",
+      "status": "draft",
+      "summary": "选择疑问句",
+      "title": "选择疑问句",
+      "type": "grammar"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "pronunciation",
+        "evidence": {
+          "page_label": "Pronunciation",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "focus": "选择疑问句的升降调",
+        "requires_review": true,
+        "role": "pronunciation_note",
+        "unit_order": 9,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:09",
+      "difficulty": 0.28,
+      "source_page": "Pronunciation",
+      "stable_key": "pep-grade7-lower-2024:unit:09:pronunciation:zh-ddf0984e3e",
+      "status": "draft",
+      "summary": "语音关注点：选择疑问句的升降调。",
+      "title": "选择疑问句的升降调",
+      "type": "pronunciation"
+    }
+  ],
+  "schema_version": "public_textbook_unit.v2",
+  "source_stable_id": "pep-grade7-lower-2024",
+  "unit": {
+    "end_page": "P.54",
+    "ordinal": 9,
+    "start_page": "P.49",
+    "subtitle": "What does he look like?",
+    "title": "Unit 9"
+  }
+}

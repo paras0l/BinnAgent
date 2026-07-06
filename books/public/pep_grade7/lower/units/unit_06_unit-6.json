@@ -1,0 +1,1587 @@
+{
+  "curriculum_node_key": "pep-grade7-lower-2024:unit:06",
+  "exercise_questions": [
+    {
+      "answer": "报纸",
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:06",
+      "difficulty": 0.28,
+      "explanation": "newspaper 的本单元义项是：报纸。",
+      "knowledge_point_key": "pep-grade7-lower-2024:unit:06:vocabulary:newspaper",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:06",
+          "knowledge_point_key": "pep-grade7-lower-2024:unit:06:vocabulary:newspaper",
+          "source_stable_id": "pep-grade7-lower-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "requires_review": true,
+        "source": "curated_public_textbook_seed",
+        "warnings": [
+          "generated_from_lower_draft_content"
+        ]
+      },
+      "options": [
+        "报纸",
+        "使用",
+        "汤",
+        "洗"
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-lower-2024:unit:06:ex:01-newspaper",
+      "status": "draft",
+      "stem": "“newspaper”在本单元词表中的意思最接近哪一项？"
+    },
+    {
+      "answer": "What are you doing?",
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:06",
+      "difficulty": 0.28,
+      "explanation": "本单元核心句式包括“What are you doing?”。",
+      "knowledge_point_key": "pep-grade7-lower-2024:unit:06:sentence_pattern:what-are-you-doing",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:06",
+          "knowledge_point_key": "pep-grade7-lower-2024:unit:06:sentence_pattern:what-are-you-doing",
+          "source_stable_id": "pep-grade7-lower-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "requires_review": true,
+        "source": "curated_public_textbook_seed",
+        "warnings": [
+          "generated_from_lower_draft_content"
+        ]
+      },
+      "options": [
+        "What are you doing?",
+        "read a newspaper",
+        "make soup",
+        "newspaper"
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-lower-2024:unit:06:ex:02-what-are-you-doing",
+      "status": "draft",
+      "stem": "围绕“正在进行的活动”，下列哪一句最贴近本单元核心句式？"
+    },
+    {
+      "answer": "现在进行时 be + v-ing",
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:06",
+      "difficulty": 0.28,
+      "explanation": "本单元语法重点是：现在进行时 be + v-ing。",
+      "knowledge_point_key": "pep-grade7-lower-2024:unit:06:grammar:be-v-ing",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:06",
+          "knowledge_point_key": "pep-grade7-lower-2024:unit:06:grammar:be-v-ing",
+          "source_stable_id": "pep-grade7-lower-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "requires_review": true,
+        "source": "curated_public_textbook_seed",
+        "warnings": [
+          "generated_from_lower_draft_content"
+        ]
+      },
+      "options": [
+        "现在进行时 be + v-ing",
+        "过去完成时",
+        "定语从句",
+        "虚拟语气"
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-lower-2024:unit:06:ex:03-be-v-ing",
+      "status": "draft",
+      "stem": "本单元语法重点最接近哪一项？"
+    },
+    {
+      "answer": "read a newspaper",
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:06",
+      "difficulty": 0.28,
+      "explanation": "“read a newspaper”属于本单元短语或功能表达。",
+      "knowledge_point_key": "pep-grade7-lower-2024:unit:06:phrase:read-a-newspaper",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:06",
+          "knowledge_point_key": "pep-grade7-lower-2024:unit:06:phrase:read-a-newspaper",
+          "source_stable_id": "pep-grade7-lower-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "requires_review": true,
+        "source": "curated_public_textbook_seed",
+        "warnings": [
+          "generated_from_lower_draft_content"
+        ]
+      },
+      "options": [
+        "read a newspaper",
+        "in conclusion",
+        "as soon as possible",
+        "by mistake"
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-lower-2024:unit:06:ex:04-read-a-newspaper",
+      "status": "draft",
+      "stem": "下列哪一项是本单元可迁移短语/功能表达？"
+    },
+    {
+      "answer": "电影",
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:06",
+      "difficulty": 0.28,
+      "explanation": "该题检查本单元词汇义项。",
+      "knowledge_point_key": "pep-grade7-lower-2024:unit:06:vocabulary:movie",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:06",
+          "knowledge_point_key": "pep-grade7-lower-2024:unit:06:vocabulary:movie",
+          "source_stable_id": "pep-grade7-lower-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "requires_review": true,
+        "source": "curated_public_textbook_seed",
+        "warnings": [
+          "generated_from_lower_draft_content"
+        ]
+      },
+      "options": [
+        "电影",
+        "机场",
+        "科学家",
+        "电影院"
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-lower-2024:unit:06:ex:05-movie",
+      "status": "draft",
+      "stem": "选择与“movie”对应的本单元中文义项。"
+    },
+    {
+      "answer": "I'm watching TV.",
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:06",
+      "difficulty": 0.28,
+      "explanation": "该句来自本单元目标语言框架的整理。",
+      "knowledge_point_key": "pep-grade7-lower-2024:unit:06:sentence_pattern:im-watching-tv",
+      "metadata": {
+        "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+        "generated_from": {
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:06",
+          "knowledge_point_key": "pep-grade7-lower-2024:unit:06:sentence_pattern:im-watching-tv",
+          "source_stable_id": "pep-grade7-lower-2024"
+        },
+        "interaction": {
+          "allow_retry": true,
+          "input_mode": "choice",
+          "type": "single_choice"
+        },
+        "requires_review": true,
+        "source": "curated_public_textbook_seed",
+        "warnings": [
+          "generated_from_lower_draft_content"
+        ]
+      },
+      "options": [
+        "I'm watching TV.",
+        "I have finished the report.",
+        "Although it rained, we left.",
+        "The book was written in 1999."
+      ],
+      "question_type": "multiple_choice",
+      "stable_key": "pep-grade7-lower-2024:unit:06:ex:06-im-watching-tv",
+      "status": "draft",
+      "stem": "下列哪一句也属于本单元目标语言？"
+    }
+  ],
+  "extraction_gaps": [
+    {
+      "description": "听力活动需要配套音频，暂不进入公共默认学习流。",
+      "gap_type": "audio_required",
+      "scope": "pep-grade7-lower-2024:unit:06",
+      "suggested_future_handling": "后续接入音频资源和听力题型后再结构化。"
+    },
+    {
+      "description": "结对/小组互动活动不适合直接作为稳定自动评分题。",
+      "gap_type": "pair_work",
+      "scope": "pep-grade7-lower-2024:unit:06",
+      "suggested_future_handling": "后续作为课堂互动或口语任务模板处理。"
+    },
+    {
+      "description": "长课文、整页练习或连续对话不写入 seed pack。",
+      "gap_type": "copyright_sensitive_long_text",
+      "scope": "pep-grade7-lower-2024:unit:06",
+      "suggested_future_handling": "仅保存短摘要和知识点，必要时通过受控证据摘录展示。"
+    },
+    {
+      "description": "该册 PDF 文本层为空，本单元短项来自人工整理，需后续 OCR/layout 校对。",
+      "gap_type": "low_confidence_layout",
+      "scope": "pep-grade7-lower-2024:unit:06",
+      "suggested_future_handling": "用 OCR/layout-aware pipeline 回填页内证据并复核词表。"
+    }
+  ],
+  "knowledge_points": [
+    {
+      "content": {
+        "confidence": 0.9,
+        "display_group": "unit_intro",
+        "evidence": {
+          "page_label": "P.31",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "requires_review": false,
+        "role": "unit_overview",
+        "source_unit_subtitle": "I'm watching TV.",
+        "source_unit_title": "Unit 6",
+        "theme": "正在进行的活动",
+        "unit_order": 6,
+        "warnings": [
+          "lower_pdf_text_layer_empty"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:06",
+      "difficulty": 0.18,
+      "source_page": "P.31",
+      "stable_key": "pep-grade7-lower-2024:unit:06:text_note:unit-6-overview",
+      "status": "published",
+      "summary": "本单元主题：正在进行的活动；核心标题表达为“I'm watching TV.”。",
+      "title": "Unit 6 overview",
+      "type": "text_note"
+    },
+    {
+      "content": {
+        "chinese_meaning": "报纸",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "newspaper ... 报纸",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "newspaper",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 6,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:06",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:06:vocabulary:newspaper",
+      "status": "draft",
+      "summary": "报纸",
+      "title": "newspaper",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "看报纸",
+        "confidence": 0.72,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "read a newspaper ... 看报纸",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "read a newspaper",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_phrase",
+        "unit_order": 6,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:06",
+      "difficulty": 0.28,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:06:phrase:read-a-newspaper",
+      "status": "draft",
+      "summary": "看报纸",
+      "title": "read a newspaper",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "chinese_meaning": "使用",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "use ... 使用",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "use",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 6,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:06",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:06:vocabulary:use",
+      "status": "draft",
+      "summary": "使用",
+      "title": "use",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "汤",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "soup ... 汤",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "soup",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 6,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:06",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:06:vocabulary:soup",
+      "status": "draft",
+      "summary": "汤",
+      "title": "soup",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "做汤",
+        "confidence": 0.72,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "make soup ... 做汤",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "make soup",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_phrase",
+        "unit_order": 6,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:06",
+      "difficulty": 0.28,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:06:phrase:make-soup",
+      "status": "draft",
+      "summary": "做汤",
+      "title": "make soup",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "chinese_meaning": "洗",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "wash ... 洗",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "wash",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 6,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:06",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:06:vocabulary:wash",
+      "status": "draft",
+      "summary": "洗",
+      "title": "wash",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "电影",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "movie ... 电影",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "movie",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 6,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:06",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:06:vocabulary:movie",
+      "status": "draft",
+      "summary": "电影",
+      "title": "movie",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "看电影",
+        "confidence": 0.72,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "go to the movies ... 看电影",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "go to the movies",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_phrase",
+        "unit_order": 6,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:06",
+      "difficulty": 0.28,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:06:phrase:go-to-the-movies",
+      "status": "draft",
+      "summary": "看电影",
+      "title": "go to the movies",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "chinese_meaning": "只是；恰好",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "just ... 只是；恰好",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "just",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 6,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:06",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:06:vocabulary:just",
+      "status": "draft",
+      "summary": "只是；恰好",
+      "title": "just",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "出去吃饭",
+        "confidence": 0.72,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "eat out ... 出去吃饭",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "eat out",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_phrase",
+        "unit_order": 6,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:06",
+      "difficulty": 0.28,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:06:phrase:eat-out",
+      "status": "draft",
+      "summary": "出去吃饭",
+      "title": "eat out",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "chinese_meaning": "房子",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "house ... 房子",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "house",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 6,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:06",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:06:vocabulary:house",
+      "status": "draft",
+      "summary": "房子",
+      "title": "house",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "喝",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "drink ... 喝",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "drink",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 6,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:06",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:06:vocabulary:drink",
+      "status": "draft",
+      "summary": "喝",
+      "title": "drink",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "茶",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "tea ... 茶",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "tea",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 6,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:06",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:06:vocabulary:tea",
+      "status": "draft",
+      "summary": "茶",
+      "title": "tea",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "明天",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "tomorrow ... 明天",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "tomorrow",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 6,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:06",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:06:vocabulary:tomorrow",
+      "status": "draft",
+      "summary": "明天",
+      "title": "tomorrow",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "游泳池",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "pool ... 游泳池",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "pool",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 6,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:06",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:06:vocabulary:pool",
+      "status": "draft",
+      "summary": "游泳池",
+      "title": "pool",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "购物",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "shop ... 购物",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "shop",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 6,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:06",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:06:vocabulary:shop",
+      "status": "draft",
+      "summary": "购物",
+      "title": "shop",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "超市",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "supermarket ... 超市",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "supermarket",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 6,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:06",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:06:vocabulary:supermarket",
+      "status": "draft",
+      "summary": "超市",
+      "title": "supermarket",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "男人",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "man ... 男人",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "man",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 6,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:06",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:06:vocabulary:man",
+      "status": "draft",
+      "summary": "男人",
+      "title": "man",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "竞赛",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "race ... 竞赛",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "race",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 6,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:06",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:06:vocabulary:race",
+      "status": "draft",
+      "summary": "竞赛",
+      "title": "race",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "主人",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "host ... 主人",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "host",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 6,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:06",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:06:vocabulary:host",
+      "status": "draft",
+      "summary": "主人",
+      "title": "host",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "学习",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "study ... 学习",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "study",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 6,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:06",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:06:vocabulary:study",
+      "status": "draft",
+      "summary": "学习",
+      "title": "study",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "州",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "state ... 州",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "state",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 6,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:06",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:06:vocabulary:state",
+      "status": "draft",
+      "summary": "州",
+      "title": "state",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "美国",
+        "confidence": 0.72,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "the United States ... 美国",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "the United States",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_phrase",
+        "unit_order": 6,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:06",
+      "difficulty": 0.28,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:06:phrase:the-united-states",
+      "status": "draft",
+      "summary": "美国",
+      "title": "the United States",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "chinese_meaning": "美国的；美国人",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "American ... 美国的；美国人",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "American",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 6,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:06",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:06:vocabulary:american",
+      "status": "draft",
+      "summary": "美国的；美国人",
+      "title": "American",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "龙",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "dragon ... 龙",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "dragon",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 6,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:06",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:06:vocabulary:dragon",
+      "status": "draft",
+      "summary": "龙",
+      "title": "dragon",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "端午节",
+        "confidence": 0.72,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "Dragon Boat Festival ... 端午节",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "Dragon Boat Festival",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_phrase",
+        "unit_order": 6,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:06",
+      "difficulty": 0.28,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:06:phrase:dragon-boat-festival",
+      "status": "draft",
+      "summary": "端午节",
+      "title": "Dragon Boat Festival",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "chinese_meaning": "任何的",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "any ... 任何的",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "any",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 6,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:06",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:06:vocabulary:any",
+      "status": "draft",
+      "summary": "任何的",
+      "title": "any",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "其他的",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "other ... 其他的",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "other",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 6,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:06",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:06:vocabulary:other",
+      "status": "draft",
+      "summary": "其他的",
+      "title": "other",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "幼小的",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "young ... 幼小的",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "young",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 6,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:06",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:06:vocabulary:young",
+      "status": "draft",
+      "summary": "幼小的",
+      "title": "young",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "儿童",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "children ... 儿童",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "children",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 6,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:06",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:06:vocabulary:children",
+      "status": "draft",
+      "summary": "儿童",
+      "title": "children",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "怀念；错过",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "miss ... 怀念；错过",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "miss",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 6,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:06",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:06:vocabulary:miss",
+      "status": "draft",
+      "summary": "怀念；错过",
+      "title": "miss",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "希望",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "wish ... 希望",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "wish",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 6,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:06",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:06:vocabulary:wish",
+      "status": "draft",
+      "summary": "希望",
+      "title": "wish",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "可口的",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "delicious ... 可口的",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "delicious",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 6,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:06",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:06:vocabulary:delicious",
+      "status": "draft",
+      "summary": "可口的",
+      "title": "delicious",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "仍然",
+        "confidence": 0.72,
+        "display_group": "core_vocabulary",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "still ... 仍然",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "still",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_wordlist",
+        "unit_order": 6,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:06",
+      "difficulty": 0.22,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:06:vocabulary:still",
+      "status": "draft",
+      "summary": "仍然",
+      "title": "still",
+      "type": "vocabulary"
+    },
+    {
+      "content": {
+        "chinese_meaning": "客厅",
+        "confidence": 0.72,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "Words and Expressions",
+          "raw_line_excerpt": "living room ... 客厅",
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "example": null,
+        "lemma": "living room",
+        "part_of_speech": null,
+        "phonetic": null,
+        "requires_review": true,
+        "role": "unit_phrase",
+        "unit_order": 6,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:06",
+      "difficulty": 0.28,
+      "source_page": "Words and Expressions",
+      "stable_key": "pep-grade7-lower-2024:unit:06:phrase:living-room",
+      "status": "draft",
+      "summary": "客厅",
+      "title": "living room",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "phrases",
+        "evidence": {
+          "page_label": "Unit pages",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "phrase": "drink tea",
+        "requires_review": true,
+        "role": "unit_phrase",
+        "unit_order": 6,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:06",
+      "difficulty": 0.28,
+      "source_page": "Unit pages",
+      "stable_key": "pep-grade7-lower-2024:unit:06:phrase:drink-tea",
+      "status": "draft",
+      "summary": "本单元可迁移短语或功能表达：drink tea。",
+      "title": "drink tea",
+      "type": "phrase"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "sentence_patterns",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "pattern": "What are you doing?",
+        "requires_review": true,
+        "role": "target_language",
+        "unit_order": 6,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:06",
+      "difficulty": 0.32,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-lower-2024:unit:06:sentence_pattern:what-are-you-doing",
+      "status": "draft",
+      "summary": "核心句式：What are you doing?",
+      "title": "What are you doing?",
+      "type": "sentence_pattern"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "sentence_patterns",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "pattern": "I'm watching TV.",
+        "requires_review": true,
+        "role": "target_language",
+        "unit_order": 6,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:06",
+      "difficulty": 0.32,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-lower-2024:unit:06:sentence_pattern:im-watching-tv",
+      "status": "draft",
+      "summary": "核心句式：I'm watching TV.",
+      "title": "I'm watching TV.",
+      "type": "sentence_pattern"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "sentence_patterns",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "pattern": "Is he reading a newspaper?",
+        "requires_review": true,
+        "role": "target_language",
+        "unit_order": 6,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:06",
+      "difficulty": 0.32,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-lower-2024:unit:06:sentence_pattern:is-he-reading-a-newspaper",
+      "status": "draft",
+      "summary": "核心句式：Is he reading a newspaper?",
+      "title": "Is he reading a newspaper?",
+      "type": "sentence_pattern"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "sentence_patterns",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "pattern": "They are listening to a CD.",
+        "requires_review": true,
+        "role": "target_language",
+        "unit_order": 6,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:06",
+      "difficulty": 0.32,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-lower-2024:unit:06:sentence_pattern:they-are-listening-to-a-cd",
+      "status": "draft",
+      "summary": "核心句式：They are listening to a CD.",
+      "title": "They are listening to a CD.",
+      "type": "sentence_pattern"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "grammar",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "focus": "现在进行时 be + v-ing",
+        "related_units": [
+          "Unit 6"
+        ],
+        "requires_review": true,
+        "role": "grammar_focus",
+        "unit_order": 6,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:06",
+      "difficulty": 0.38,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-lower-2024:unit:06:grammar:be-v-ing",
+      "status": "draft",
+      "summary": "现在进行时 be + v-ing",
+      "title": "现在进行时 be + v-ing",
+      "type": "grammar"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "grammar",
+        "evidence": {
+          "page_label": "Grammar Focus",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "focus": "现在分词构成",
+        "related_units": [
+          "Unit 6"
+        ],
+        "requires_review": true,
+        "role": "grammar_focus",
+        "unit_order": 6,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:06",
+      "difficulty": 0.38,
+      "source_page": "Grammar Focus",
+      "stable_key": "pep-grade7-lower-2024:unit:06:grammar:zh-3d3d1bd828",
+      "status": "draft",
+      "summary": "现在分词构成",
+      "title": "现在分词构成",
+      "type": "grammar"
+    },
+    {
+      "content": {
+        "confidence": 0.72,
+        "display_group": "pronunciation",
+        "evidence": {
+          "page_label": "Pronunciation",
+          "raw_line_excerpt": null,
+          "source": "manual_curated_standard_pep_scope"
+        },
+        "focus": "-ing 结尾与进行时句子重音",
+        "requires_review": true,
+        "role": "pronunciation_note",
+        "unit_order": 6,
+        "warnings": [
+          "lower_pdf_text_layer_empty",
+          "requires_ocr_review"
+        ]
+      },
+      "curriculum_node_key": "pep-grade7-lower-2024:unit:06",
+      "difficulty": 0.28,
+      "source_page": "Pronunciation",
+      "stable_key": "pep-grade7-lower-2024:unit:06:pronunciation:ing",
+      "status": "draft",
+      "summary": "语音关注点：-ing 结尾与进行时句子重音。",
+      "title": "-ing 结尾与进行时句子重音",
+      "type": "pronunciation"
+    }
+  ],
+  "schema_version": "public_textbook_unit.v2",
+  "source_stable_id": "pep-grade7-lower-2024",
+  "unit": {
+    "end_page": "P.36",
+    "ordinal": 6,
+    "start_page": "P.31",
+    "subtitle": "I'm watching TV.",
+    "title": "Unit 6"
+  }
+}
