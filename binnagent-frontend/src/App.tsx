@@ -8,8 +8,8 @@ const ChatPage = lazy(() =>
   import('./pages/ChatPage').then((module) => ({ default: module.ChatPage }))
 )
 
-const DashboardPage = lazy(() =>
-  import('./pages/DashboardPage').then((module) => ({ default: module.DashboardPage }))
+const LearningCenterPage = lazy(() =>
+  import('./pages/LearningCenterPage').then((module) => ({ default: module.LearningCenterPage }))
 )
 
 const ExplorePage = lazy(() =>
@@ -213,14 +213,13 @@ function App() {
                 onOpenPronunciationWorkspace={openPronunciationWorkspace}
               />
             ) : (
-              <DashboardPage
+              <LearningCenterPage
                 learner={currentLearner}
                 onOpenDailyLearning={() => setLearningCenterView('daily-learning')}
                 onStartVocabularyPractice={(mode) => openVocabularyPractice(mode)}
               />
             )
-          )
-          }
+          )}
         </Suspense>
       </main>
     </div>
