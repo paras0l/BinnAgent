@@ -137,6 +137,14 @@ async def test_overview_returns_ordered_curriculum_and_knowledge(client, knowled
     assert data["sources"][0]["id"] == str(source.id)
     assert [item["ordinal"] for item in data["curriculum"]] == [1, 2]
     assert data["knowledge_points"][0]["title"] == "Good morning!"
+    assert data["unit_workspace"]["sections"][0]["id"] == "vocabulary"
+    assert data["unit_workspace"]["sections"][-1]["id"] == "practice"
+    assert data["unit_workspace"]["recommended_next_action"]["type"] in {
+        "vocabulary_new",
+        "grammar",
+        "exercise",
+        "review",
+    }
     assert data["daily_lesson"]["estimated_minutes"] == 20
     assert data["path"][0]["status"] == "current"
     assert data["review"]["pending_count"] == 0

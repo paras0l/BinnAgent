@@ -23,6 +23,7 @@ COPY pyproject.toml ./
 COPY alembic/ ./alembic/
 COPY alembic.ini ./
 COPY books/ ./books/
+COPY scripts/ ./scripts/
 COPY src/ ./src/
 
 # Install Python dependencies and project package

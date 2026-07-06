@@ -27,7 +27,7 @@ BinnAgent 前端是 `binnagent-frontend/` 下的 React 19 + TypeScript + Vite �
 - `DashboardPage`: 今日复习、学习目标、错因和学习统计。
 - `PronunciationPage`: 发音练习。
 - `GrammarPage`: 语法主题和缓存内容。
-- `KnowledgeBasePage`: 多教材知识库、教材切换、课程路径、课程/练习弹窗和解析校对工作台。
+- `KnowledgeBasePage`: 学习者教材入口、教材切换、今日单元、练习任务和课程/练习弹窗；解析治理移入 Dev Console。
 - `VocabularyPracticePage`: 单元词汇、review/spelling practice、富词典详情。
 - `VocabularyDetailPage`: 词汇详情页面。
 - `WordPartsPage`: 词根词缀方法入门、内置库、拆词练习和本地掌握记录。
@@ -66,7 +66,7 @@ AI对话 / 探索 / 学习中心 / 记忆
 - `ChatContainer` 的 Skill 状态使用 `StatusBanner`。
 - `MemoryCenterPage` 使用 `FeatureHero`、`ReasonCard`、`EvidencePanel` 和 `ConfirmDialog` 表达可解释、可控制记忆。
 - `GrammarPage`、`PronunciationPage`、`VocabularyDetailPage`、`LoginPage` 接入统一外壳和表单/按钮标准。
-- `KnowledgeBasePage` 保留全宽教材工作台，并拆成“教材结构 / 单元学习 / 练习任务 / 解析校对”四个 workspace；左侧支持多本教材切换，解析校对展示 `requires_review`、warnings、parser/ingest 证据、来源页码和低置信词条，可确认、修改发布或忽略。
+- `KnowledgeBasePage` 保留全宽教材学习页，并拆成“今日单元 / 练习任务”两个学习者 workspace；左侧支持多本教材切换，右侧只展示教材信息、学习路径和推荐理由。解析校对、解析质量、教材结构内部产物、parser/ingest 证据和调试表格统一放入 Dev Console 的 Textbook Parsing。
 - `VocabularyPracticePage` 保持沉浸式一屏一任务，并在顶部明确模式和来源；练习阶段按主任务区、学习辅助区和底部操作区组织，底部操作栏固定可见，中间内容内部滚动，避免用户上下翻动才能评分或进入下一题。
 - `WordPartsPage` 按“方法入门 / 词根词缀库 / 拆词练习 / 我的掌握”四个 workspace 组织，复用 `PageShell`、`FeatureHero`、`WorkspaceTabs`、`SurfaceCard`、`FilterChip` 和统一 `Button`。
 - `WritingPhrasebookPage` 继续作为专项资产库页面，保留 `PageShell`、`FeatureHero`、`WorkspaceTabs` 的既有较好实现，但不作为全局模板。

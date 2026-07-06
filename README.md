@@ -126,11 +126,11 @@ http://localhost:5174，可在 Learners / Recent Episodes 中直接选择 learne
 | 能力 | 状态 |
 |------|------|
 | Chat / Memory / Dashboard | 部分实现，Memory v2 已落地 Retain / Recall / Reflect、LearningEpisode、LearnerModelMemory、TeachingStrategyMemory；普通学习端只展示学习状态摘要，Memory Center 已移入 Dev Console |
-| 教材 Knowledge Base / RAG / Exercises | 部分实现，作为冷启动知识来源；已支持多教材切换、文档解析流水线第一阶段（MarkItDown baseline、pypdf fallback、免费本地 OCR、DocumentParseArtifact、质量指标、后台 ingest + 状态轮询）、ParserRun 审计、ParserReviewItem 队列、Parser Evidence 查询、Dev Console Textbook Parsing Report、低置信词条人工校对入口、统一 ExerciseItem / ExerciseAttempt 语义和 AI 生成练习可编辑保存 |
+| 教材 Knowledge Base / RAG / Exercises | 部分实现，作为冷启动知识来源；已支持 split public textbook pack v2 物化为 KnowledgeSource/CurriculumNode/KnowledgePoint/ExerciseQuestion、普通单元页 UnitLearningWorkspace 分组学习卡片、多教材切换、文档解析流水线第一阶段、ParserRun 审计、ParserReviewItem 队列、低置信词条人工校对入口、统一 ExerciseItem / ExerciseAttempt 语义和 AI 生成练习可编辑保存 |
 | Vocabulary Personal Cards / Practice / Spelling / Word Parts | 部分实现，已新增“词根与词缀”探索入口、四工作区学习页、内置词根词缀库、拆词练习、morphology 前端展示/降级和知识点配套练习验收 |
 | Writing Phrasebook | 基础版已实现 |
 | ExploreCapability 推荐 | 基础版已实现，Explore Tab 入口由后端 registry 统一管理；Daily Lesson 答题后可推荐 ready 学习能力，点击/忽略事件写入 Memory 和 episode trace |
-| Frontend UI/UX 统一标准 | Issue #20 首轮整改已落地，普通学习端主导航保留 AI对话 / 探索 / 学习中心，Debug/Memory/Runtime 页面移入 Dev Console；KnowledgeBase 已升级为教材解析校对工作台 |
+| Frontend UI/UX 统一标准 | Issue #20 首轮整改已落地，普通学习端主导航保留 AI对话 / 探索 / 学习中心，Debug/Memory/Runtime 页面移入 Dev Console；Dashboard 首页升级为今日学习驾驶舱，KnowledgeBase 普通端只保留今日单元和练习任务，教材解析治理集中到 Dev Console Textbook Parsing |
 | Prompt Registry / Schema-first Import / Parser Quality | 基础治理已实现；PromptExecutor 第一阶段、PromptExecutionRecord、结构化校验记录、Prompt Debug API、prompt eval CLI / eval sets、writing_phrase.import 迁移和教材解析质量门禁已落地 |
 | Agent Runtime / Harness | 第二阶段补强中，TaskSpec、AgentEpisode、LearningEvent、EvidenceRef、ToolCallRecord、VerificationReport、MasteryEngine、RecommendationEngine、LearningGraphCheckpoint 和 Dev Console 调试入口已接入；VerificationReport 已升级为 evidence-based deterministic/schema/business_rule/evidence checks，critical 失败会阻止静默 completed；EpisodeTraceView、Graph Runs 和 Textbook Parsing Report 可查看 checkpoint、events、tool calls、prompt execution summary、verification checks、parser evidence 和 review queue；Debug API 默认关闭并需 token |
 | Learner-scoped isolation | Issue #25 第一阶段已实现，新增 current user / current learner dependency、scoped resource helper，并加固 Runtime、Daily Lesson、Memory、Explore、ExerciseAttempt 和 Debug 高风险路径 |

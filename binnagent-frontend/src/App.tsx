@@ -210,6 +210,7 @@ function App() {
                 learner={currentLearner}
                 onBack={() => setLearningCenterView('home')}
                 onStartVocabularyPractice={openVocabularyPractice}
+                onOpenPronunciationWorkspace={openPronunciationWorkspace}
               />
             ) : (
               <DashboardPage

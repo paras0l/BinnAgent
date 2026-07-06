@@ -138,7 +138,7 @@ source 列表和详情统一返回：
 - `review_warning_count`
 - `parser_report_summary`
 
-`parser_evidence.report` 仍保留完整 report，用于 Dev Console 或解析校对工作台排查。
+`parser_evidence.report` 仍保留完整 report，用于 Dev Console Textbook Parsing 排查；普通学习端不展示解析校对工作台。
 
 ## Debug Textbook Parsing Report API
 

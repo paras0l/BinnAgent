@@ -1,17 +1,14 @@
-import { AlertTriangle, BookOpen, CheckCircle2, Info, Layers3, UploadCloud } from 'lucide-react'
-import { EvidencePanel } from '@/components/learning/EvidencePanel'
-import { ReasonCard } from '@/components/learning/ReasonCard'
-import type { KnowledgeBaseOverview, KnowledgeReviewItem } from '@/types'
+import { BookOpen, CheckCircle2, Info, Layers3, Target, TrendingUp, UploadCloud } from 'lucide-react'
+import type { KnowledgeBaseOverview } from '@/types'
 
 interface KnowledgeContextPanelProps {
   overview: KnowledgeBaseOverview
-  selectedReviewItem?: KnowledgeReviewItem | null
   onUpload: () => void
 }
 
-export function KnowledgeContextPanel({ overview, selectedReviewItem, onUpload }: KnowledgeContextPanelProps) {
+export function KnowledgeContextPanel({ overview, onUpload }: KnowledgeContextPanelProps) {
   const { source } = overview
-  const sourceStatus = sourceStatusLabel(source.status, overview.review.pending_count)
+  const sourceStatus = sourceStatusLabel(source.status)
   return (
     <aside className="knowledge-context space-y-5 border-l border-slate-200 bg-slate-50/40 px-5 py-7">
       <section className="rounded-2xl border border-slate-200 bg-white p-5">
@@ -41,9 +38,7 @@ export function KnowledgeContextPanel({ overview, selectedReviewItem, onUpload }
           <span className="flex items-center gap-2"><BookOpen className="size-4" />{source.unit_count} 个单元</span>
           <span className="flex items-center gap-2"><Layers3 className="size-4" />{source.knowledge_count} 个知识点</span>
           <span className="flex items-center gap-2">页数 {source.page_count ?? '—'}</span>
-          <span className={`flex items-center gap-2 ${overview.review.requires_review ? 'text-amber-700' : 'text-emerald-700'}`}>
-            <AlertTriangle className="size-4" />待校对 {overview.review.pending_count}
-          </span>
+          <span className="flex items-center gap-2 text-emerald-700"><CheckCircle2 className="size-4" />可练习</span>
         </div>
         <button
           type="button"
@@ -56,30 +51,48 @@ export function KnowledgeContextPanel({ overview, selectedReviewItem, onUpload }
       </section>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-5">
-        <h2 className="text-base font-extrabold text-slate-950">解析质量</h2>
-        <div className="mt-4 grid gap-2 text-xs leading-5 text-slate-600">
-          <p><span className="font-bold text-slate-800">解析方式：</span>{overview.parser_evidence.parser ?? '未记录'}</p>
-          <p><span className="font-bold text-slate-800">教材规则：</span>{overview.parser_evidence.parser_profile ?? '未记录'}</p>
-          <p><span className="font-bold text-slate-800">词汇导入：</span>{overview.parser_evidence.vocabulary_parser ?? '未记录'}</p>
-          <p><span className="font-bold text-slate-800">素材片段：</span>{overview.parser_evidence.rag_chunk_count}</p>
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-base font-extrabold text-slate-950">掌握度快照</h2>
+          <Target className="size-5 text-indigo-600" />
         </div>
-        <div className="mt-4">
-          <EvidencePanel
-            title="解析提示"
-            items={overview.parser_evidence.warnings}
-            emptyText="暂无解析提示"
-          />
+        <div className="mt-5 grid grid-cols-[92px_minmax(0,1fr)] items-center gap-4">
+          <div className="flex aspect-square items-center justify-center rounded-full border-[10px] border-emerald-500 bg-emerald-50 text-center">
+            <div>
+              <p className="text-2xl font-black text-slate-950">{masteryPercent(overview)}%</p>
+              <p className="text-xs font-bold text-slate-500">掌握度</p>
+            </div>
+          </div>
+          <div className="space-y-3">
+            {masteryRows(overview).map((row) => (
+              <div key={row.label} className="grid grid-cols-[44px_minmax(0,1fr)_38px] items-center gap-2 text-xs font-bold text-slate-500">
+                <span>{row.label}</span>
+                <span className="h-2 overflow-hidden rounded-full bg-slate-100">
+                  <span className={`block h-full rounded-full ${row.className}`} style={{ width: `${row.value}%` }} />
+                </span>
+                <span className="text-right text-slate-700">{row.value}%</span>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
-      {selectedReviewItem ? (
-        <ReasonCard
-          title="当前校对项"
-          reason={`${selectedReviewItem.title} 需要人工确认；已确认的教材内容可以先学习，校对后的条目会继续加入练习。`}
-          evidence={selectedReviewItem.evidence}
-          outcome={selectedReviewItem.confidence == null ? undefined : `置信度 ${Math.round(selectedReviewItem.confidence * 100)}%`}
-        />
-      ) : null}
+      <section className="rounded-2xl border border-slate-200 bg-white p-5">
+        <div className="flex items-center gap-2">
+          <TrendingUp className="size-5 text-amber-500" />
+          <h2 className="text-base font-extrabold text-slate-950">推荐原因</h2>
+        </div>
+        <div className="mt-4 rounded-xl bg-slate-50 px-3 py-3 text-sm leading-6 text-slate-600">
+          {overview.recommendation_reason}
+        </div>
+        <div className="mt-4 border-t border-slate-100 pt-4">
+          <p className="text-xs font-black uppercase text-slate-500">完成后会改善</p>
+          <div className="mt-3 grid grid-cols-3 gap-2 text-center text-xs font-bold text-slate-600">
+            <span className="rounded-lg bg-emerald-50 px-2 py-2 text-emerald-700">词汇记忆</span>
+            <span className="rounded-lg bg-indigo-50 px-2 py-2 text-indigo-700">语法准确</span>
+            <span className="rounded-lg bg-amber-50 px-2 py-2 text-amber-700">听力理解</span>
+          </div>
+        </div>
+      </section>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-5">
         <h2 className="text-base font-extrabold text-slate-950">学习路径</h2>
@@ -119,12 +132,32 @@ export function KnowledgeContextPanel({ overview, selectedReviewItem, onUpload }
   )
 }
 
-function sourceStatusLabel(status: string, pendingReviewCount: number) {
-  if (status === 'published' && pendingReviewCount === 0) {
-    return { label: '可学习', className: 'bg-emerald-50 text-emerald-700' }
+function masteryPercent(overview: KnowledgeBaseOverview) {
+  const average = overview.unit_workspace?.mastery_summary.average
+  if (typeof average === 'number') return Math.round(average * 100)
+  const points = overview.knowledge_points
+  if (!points.length) return 0
+  return Math.round((points.reduce((sum, item) => sum + (item.mastery ?? 0), 0) / points.length) * 100)
+}
+
+function masteryRows(overview: KnowledgeBaseOverview) {
+  const points = overview.knowledge_points
+  const byType = (type: string) => {
+    const items = points.filter((item) => item.type === type)
+    if (!items.length) return 0
+    return Math.round((items.reduce((sum, item) => sum + (item.mastery ?? 0), 0) / items.length) * 100)
   }
-  if (status === 'review_required' || status === 'partial_indexed' || pendingReviewCount > 0) {
-    return { label: '可先学习，待校对', className: 'bg-amber-50 text-amber-700' }
+  return [
+    { label: '词汇', value: byType('vocabulary'), className: 'bg-emerald-500' },
+    { label: '语法', value: byType('grammar'), className: 'bg-indigo-500' },
+    { label: '句式', value: byType('sentence_pattern'), className: 'bg-sky-500' },
+    { label: '听力', value: byType('pronunciation'), className: 'bg-amber-500' },
+  ]
+}
+
+function sourceStatusLabel(status: string) {
+  if (status === 'published' || status === 'review_required' || status === 'partial_indexed') {
+    return { label: '可学习', className: 'bg-emerald-50 text-emerald-700' }
   }
   if (status === 'failed' || status === 'index_failed') {
     return { label: '解析失败', className: 'bg-rose-50 text-rose-700' }

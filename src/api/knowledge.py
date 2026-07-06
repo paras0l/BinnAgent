@@ -708,6 +708,190 @@ def _unit_point_order():
     )
 
 
+def _knowledge_point_summary_payload(
+    point: KnowledgePoint,
+    states: dict[uuid.UUID, LearnerKnowledgeState],
+) -> dict[str, Any]:
+    content = point.content or {}
+    return {
+        "id": str(point.id),
+        "title": point.title,
+        "type": point.type,
+        "summary": point.summary,
+        "source_page": point.source_page,
+        "unit_order": content.get("unit_order"),
+        "requires_review": bool(content.get("requires_review", False)),
+        "warnings": content.get("warnings", []),
+        "confidence": content.get("confidence"),
+        "raw_line": content.get("raw_line"),
+        "evidence": [
+            f"来源页码：{point.source_page}",
+            f"解析器：{content.get('origin', 'unknown')}",
+        ],
+        "mastery": states.get(point.id).mastery_score if point.id in states else 0.0,
+    }
+
+
+def _workspace_item_payload(
+    point: KnowledgePoint,
+    states: dict[uuid.UUID, LearnerKnowledgeState],
+) -> dict[str, Any]:
+    content = point.content or {}
+    return {
+        "id": str(point.id),
+        "title": point.title,
+        "summary": point.summary,
+        "source_page": point.source_page,
+        "mastery": states.get(point.id).mastery_score if point.id in states else 0.0,
+        "unit_order": content.get("unit_order"),
+        "meta": {
+            key: value
+            for key, value in {
+                "phonetic": content.get("phonetic"),
+                "part_of_speech": content.get("part_of_speech"),
+                "chinese_meaning": content.get("chinese_meaning"),
+                "theme": content.get("theme"),
+            }.items()
+            if value
+        },
+    }
+
+
+def _workspace_section_action(section_id: str) -> dict[str, Any]:
+    actions = {
+        "vocabulary": {"type": "vocabulary_new", "label": "认识新词"},
+        "sentence_patterns": {"type": "daily_lesson", "label": "用 AI 每日题练句式"},
+        "grammar": {"type": "grammar", "label": "进入语法学习"},
+        "phrases": {"type": "daily_lesson", "label": "放进今日任务"},
+        "pronunciation": {"type": "pronunciation", "label": "练发音"},
+        "practice": {"type": "exercise", "label": "开始教材练习"},
+    }
+    return actions[section_id]
+
+
+def _build_unit_workspace(
+    *,
+    source: KnowledgeSource,
+    node: CurriculumNode,
+    points: list[KnowledgePoint],
+    review_points: list[KnowledgePoint],
+    states: dict[uuid.UUID, LearnerKnowledgeState],
+    recommendation_reason: str,
+) -> dict[str, Any]:
+    by_type: dict[str, list[KnowledgePoint]] = {
+        "vocabulary": [],
+        "sentence_pattern": [],
+        "grammar": [],
+        "phrase": [],
+        "pronunciation": [],
+        "text_note": [],
+    }
+    for point in points:
+        by_type.setdefault(point.type, []).append(point)
+
+    overview_point = next(
+        (
+            point
+            for point in by_type.get("text_note", [])
+            if (point.content or {}).get("role") == "unit_overview"
+        ),
+        None,
+    )
+    sections_config = [
+        ("vocabulary", "核心词汇", "vocabulary"),
+        ("sentence_patterns", "句式", "sentence_pattern"),
+        ("grammar", "语法", "grammar"),
+        ("phrases", "短语", "phrase"),
+        ("pronunciation", "语音", "pronunciation"),
+    ]
+    sections = []
+    for section_id, title, point_type in sections_config:
+        section_points = by_type.get(point_type, [])
+        sections.append(
+            {
+                "id": section_id,
+                "title": title,
+                "count": len(section_points),
+                "items": [_workspace_item_payload(point, states) for point in section_points[:8]],
+                "action": _workspace_section_action(section_id),
+                "empty": len(section_points) == 0,
+            }
+        )
+
+    mastery_values = [
+        states.get(point.id).mastery_score if point.id in states else 0.0
+        for point in points
+        if point.type != "text_note"
+    ]
+    mastered_count = sum(1 for value in mastery_values if value >= 0.8)
+    learning_count = sum(1 for value in mastery_values if 0 < value < 0.8)
+    new_count = sum(1 for value in mastery_values if value == 0)
+    average_mastery = sum(mastery_values) / len(mastery_values) if mastery_values else 0.0
+
+    if review_points:
+        recommended = {
+            "type": "review",
+            "label": "先校对低置信条目",
+            "reason": "当前单元有待校对条目，确认后再进入正式练习更稳。",
+        }
+    elif by_type.get("vocabulary") and new_count:
+        recommended = {
+            "type": "vocabulary_new",
+            "label": "先认识本单元新词",
+            "reason": recommendation_reason,
+        }
+    elif by_type.get("grammar"):
+        recommended = {
+            "type": "grammar",
+            "label": f"学习语法：{by_type['grammar'][0].title}",
+            "target": by_type["grammar"][0].title,
+            "reason": recommendation_reason,
+        }
+    else:
+        recommended = {
+            "type": "exercise",
+            "label": "开始教材练习",
+            "reason": recommendation_reason,
+        }
+
+    return {
+        "unit": {
+            "id": str(node.id),
+            "title": node.title,
+            "subtitle": node.subtitle or "",
+            "estimated_minutes": node.estimated_minutes or 20,
+            "source_id": str(source.id),
+            "source_title": source.title,
+        },
+        "overview": {
+            "title": overview_point.title if overview_point else f"{node.title} overview",
+            "summary": overview_point.summary
+            if overview_point
+            else f"{node.title} {node.subtitle or ''}".strip(),
+            "objectives": node.learning_objectives or [],
+        },
+        "sections": sections
+        + [
+            {
+                "id": "practice",
+                "title": "练习",
+                "count": len(points),
+                "items": [],
+                "action": _workspace_section_action("practice"),
+                "empty": False,
+            }
+        ],
+        "mastery_summary": {
+            "average": round(average_mastery, 4),
+            "mastered_count": mastered_count,
+            "learning_count": learning_count,
+            "new_count": new_count,
+            "total_count": len(mastery_values),
+        },
+        "recommended_next_action": recommended,
+    }
+
+
 @router.get("/api/learners/{learner_id}/knowledge-base")
 async def knowledge_base_overview(
     learner_id: uuid.UUID,
@@ -871,6 +1055,11 @@ async def knowledge_base_overview(
     except Exception:
         memory_items = []
 
+    recommendation_reason = MemoryExplainer().recommendation_reason(
+        memory_items,
+        f"已根据教材顺序和完成记录，为你推荐 {recommended_node.title}。",
+    )
+
     return {
         "source": _source_payload(
             source,
@@ -915,25 +1104,17 @@ async def knowledge_base_overview(
             "parts": _lesson_parts(points),
         },
         "knowledge_points": [
-            {
-                "id": str(point.id),
-                "title": point.title,
-                "type": point.type,
-                "summary": point.summary,
-                "source_page": point.source_page,
-                "unit_order": (point.content or {}).get("unit_order"),
-                "requires_review": bool((point.content or {}).get("requires_review", False)),
-                "warnings": (point.content or {}).get("warnings", []),
-                "confidence": (point.content or {}).get("confidence"),
-                "raw_line": (point.content or {}).get("raw_line"),
-                "evidence": [
-                    f"来源页码：{point.source_page}",
-                    f"解析器：{(point.content or {}).get('origin', 'unknown')}",
-                ],
-                "mastery": states.get(point.id).mastery_score if point.id in states else 0.0,
-            }
+            _knowledge_point_summary_payload(point, states)
             for point in points
         ],
+        "unit_workspace": _build_unit_workspace(
+            source=source,
+            node=display_node,
+            points=points,
+            review_points=review_points,
+            states=states,
+            recommendation_reason=recommendation_reason,
+        ),
         "review": {
             "requires_review": _quality_status_for_source(source) == "review_required" or bool(review_points),
             "pending_count": len(review_points),
@@ -945,10 +1126,7 @@ async def knowledge_base_overview(
         },
         "parser_evidence": _source_parser_payload(source),
         "path": path,
-        "recommendation_reason": MemoryExplainer().recommendation_reason(
-            memory_items,
-            f"已根据教材顺序和完成记录，为你推荐 {recommended_node.title}。",
-        ),
+        "recommendation_reason": recommendation_reason,
     }
 
 

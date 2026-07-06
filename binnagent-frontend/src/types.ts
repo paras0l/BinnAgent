@@ -102,6 +102,67 @@ export interface KnowledgePointSummary {
   mastery: number
 }
 
+export type UnitWorkspaceActionType =
+  | 'daily_lesson'
+  | 'exercise'
+  | 'grammar'
+  | 'pronunciation'
+  | 'review'
+  | 'vocabulary_new'
+  | 'vocabulary_spelling'
+
+export interface UnitWorkspaceItem {
+  id: string
+  title: string
+  summary: string
+  source_page: string
+  mastery: number
+  unit_order?: number | null
+  meta?: Record<string, string | number | boolean | null>
+}
+
+export interface UnitWorkspaceAction {
+  type: UnitWorkspaceActionType
+  label: string
+}
+
+export interface UnitWorkspaceSection {
+  id: 'vocabulary' | 'sentence_patterns' | 'grammar' | 'phrases' | 'pronunciation' | 'practice' | string
+  title: string
+  count: number
+  items: UnitWorkspaceItem[]
+  action: UnitWorkspaceAction
+  empty: boolean
+}
+
+export interface UnitLearningWorkspace {
+  unit: {
+    id: string
+    title: string
+    subtitle: string
+    estimated_minutes: number
+    source_id: string
+    source_title: string
+  }
+  overview: {
+    title: string
+    summary: string
+    objectives: string[]
+  }
+  sections: UnitWorkspaceSection[]
+  mastery_summary: {
+    average: number
+    mastered_count: number
+    learning_count: number
+    new_count: number
+    total_count: number
+  }
+  recommended_next_action: UnitWorkspaceAction & {
+    reason: string
+    target?: string | null
+  }
+}
+
 export interface KnowledgeReviewItem {
   id: string
   title: string
@@ -213,6 +274,7 @@ export interface KnowledgeBaseOverview {
     parts: DailyLessonPart[]
   }
   knowledge_points: KnowledgePointSummary[]
+  unit_workspace?: UnitLearningWorkspace
   review: {
     requires_review: boolean
     pending_count: number

@@ -481,12 +481,53 @@ function TextbookParsingDetailView({
         onSearch={() => void loadEvidence()}
       />
 
+      <TextbookArtifactSummaryPanel report={report} />
+
       <section className="grid gap-4 xl:grid-cols-2">
         <RawJsonPanel title="Quality Report JSON" data={report.quality_report} />
         <RawJsonPanel title="Parser Artifacts JSON" data={report.parser_artifacts} />
       </section>
     </section>
   )
+}
+
+function TextbookArtifactSummaryPanel({ report }: { report: TextbookParsingReport }) {
+  const artifacts = report.parser_artifacts ?? {}
+  const rows = Object.entries(artifacts).map(([key, value]) => ({
+    key,
+    summary: summarizeArtifact(value),
+  }))
+  return (
+    <SurfaceCard>
+      <div className="flex items-center gap-2">
+        <Database className="size-5 text-cyan-500" />
+        <h3 className="text-base font-black text-slate-950">Textbook Structure / Debug Views</h3>
+      </div>
+      <p className="mt-2 text-sm leading-6 text-slate-500">
+        Learner pages hide parsing review, quality, textbook structure internals, and raw debug tables. Use this panel with Review Queue, Evidence Browser, and raw artifacts to inspect parsing output.
+      </p>
+      {rows.length ? (
+        <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          {rows.map((row) => (
+            <MetricBlock key={row.key} label={row.key} value={row.summary} />
+          ))}
+        </div>
+      ) : (
+        <EmptyState
+          icon={<Database className="size-5" />}
+          title="No parser artifacts"
+          description="当前 report 没有返回 parser_artifacts。"
+        />
+      )}
+    </SurfaceCard>
+  )
+}
+
+function summarizeArtifact(value: unknown) {
+  if (Array.isArray(value)) return `${value.length} items`
+  if (value && typeof value === 'object') return `${Object.keys(value).length} keys`
+  if (value === null || value === undefined) return '-'
+  return String(value)
 }
 
 function SourceSummaryCard({ source }: { source: TextbookSourceDebugSummary }) {
