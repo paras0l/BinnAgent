@@ -125,12 +125,58 @@ def test_write_baseline_updates_metrics_and_preserves_thresholds(tmp_path) -> No
     assert payload["thresholds"] == {"vocabulary_recall": {"min": 0.9}}
 
 
-def test_real_golden_dataset_has_valid_expected_schema() -> None:
-    dataset = load_golden_dataset("pep_grade7_upper")
+def test_golden_dataset_loader_has_valid_expected_schema(tmp_path) -> None:
+    profile_dir = tmp_path / "golden" / "sample_profile"
+    profile_dir.mkdir(parents=True)
+    (profile_dir / "manifest.json").write_text(
+        json.dumps(
+            {
+                "profile_id": "sample_profile",
+                "book_title": "Sample",
+                "parser_profile_id": "",
+                "source_fixture": "sample.pdf",
+                "version": 1,
+            }
+        ),
+        encoding="utf-8",
+    )
+    (profile_dir / "units.expected.json").write_text(
+        json.dumps(
+            [
+                {
+                    "unit_id": "unit_a",
+                    "title": "Unit A",
+                    "order": 1,
+                    "expected_source_pages": ["P.1"],
+                }
+            ]
+        ),
+        encoding="utf-8",
+    )
+    (profile_dir / "vocabulary.expected.json").write_text(
+        json.dumps(
+            [
+                {
+                    "text": "hello",
+                    "normalized_text": "hello",
+                    "unit_id": "unit_a",
+                    "part_of_speech": "interj.",
+                    "chinese_meaning": "",
+                    "source_page": "P.1",
+                    "is_core": True,
+                }
+            ]
+        ),
+        encoding="utf-8",
+    )
+    for group in ("grammar", "phrases", "exercises"):
+        (profile_dir / f"{group}.expected.json").write_text("[]", encoding="utf-8")
 
-    assert dataset.manifest["parser_profile_id"] == "pep_grade7_upper_v1"
+    dataset = load_golden_dataset("sample_profile", golden_root=tmp_path / "golden")
+
+    assert dataset.manifest["profile_id"] == "sample_profile"
     assert validate_expected_schema(dataset.expected) == []
-    assert len(dataset.expected["units"]) == 12
+    assert len(dataset.expected["units"]) == 1
     assert dataset.expected["vocabulary"]
 
 

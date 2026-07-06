@@ -1,8 +1,0 @@
-{
-  "profile_id": "pep_grade7_upper",
-  "book_title": "PEP Grade 7 Upper",
-  "parser_profile_id": "pep_grade7_upper_v1",
-  "source_fixture": "docs/books/义务教育教科书·英语七年级上册.pdf",
-  "version": 1,
-  "notes": "Minimal golden dataset for parser regression. Stores structure and short expected items only."
-}

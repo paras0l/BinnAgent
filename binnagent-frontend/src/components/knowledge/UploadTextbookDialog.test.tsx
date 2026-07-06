@@ -1,8 +1,9 @@
 import { renderToString } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 import { UploadFailureDetails } from './UploadTextbookDialog'
-import { formatFailedIngestMessage, IngestStatusPanel } from '@/pages/KnowledgeBasePage'
+import { IngestStatusPanel } from '@/pages/KnowledgeBasePage'
 import type { KnowledgeIngestResult, KnowledgeIngestStatus } from '@/types'
+import { formatFailedIngestMessage } from '@/utils/knowledgeIngest'
 
 describe('UploadTextbookDialog failure details', () => {
   it('shows failed ingest blocking reasons and user suggestions', () => {
@@ -46,6 +47,9 @@ describe('UploadTextbookDialog failure details', () => {
       blocking_reasons: [],
       warnings: [],
       parser_report_summary: {},
+      quality_summary: {},
+      attempted_engines: [],
+      fallback_used: false,
       error_message: null,
       can_open_knowledge_base: false,
       next_action: 'wait',

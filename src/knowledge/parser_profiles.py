@@ -25,61 +25,13 @@ class BookManifest:
     unit_titles: tuple[str, ...] = ()
 
 
-PARSER_PROFILES: dict[str, ParserProfile] = {
-    "pep_grade7_upper_v1": ParserProfile(
-        id="pep_grade7_upper_v1",
-        page_offset=-23,
-        expected_unit_count=12,
-        min_vocabulary_count=250,
-        expected_unit_titles=(
-            "Starter Unit 1",
-            "Starter Unit 2",
-            "Starter Unit 3",
-            "Unit 1",
-            "Unit 2",
-            "Unit 3",
-            "Unit 4",
-            "Unit 5",
-            "Unit 6",
-            "Unit 7",
-            "Unit 8",
-            "Unit 9",
-        ),
-        expected_core_vocabulary=("first name", "last name", "telephone number"),
-    ),
-    "pep_grade7_lower_v1": ParserProfile(
-        id="pep_grade7_lower_v1",
-        expected_unit_count=12,
-        min_vocabulary_count=220,
-        expected_unit_titles=(
-            "Unit 1",
-            "Unit 2",
-            "Unit 3",
-            "Unit 4",
-            "Unit 5",
-            "Unit 6",
-            "Unit 7",
-            "Unit 8",
-            "Unit 9",
-            "Unit 10",
-            "Unit 11",
-            "Unit 12",
-        ),
-        expected_core_vocabulary=("guitar", "usually", "train", "rule", "panda"),
-    ),
-}
+PARSER_PROFILES: dict[str, ParserProfile] = {}
 
 
 def profile_for_source(filename: str, manifest_path: Path | None = None) -> tuple[BookManifest | None, ParserProfile | None]:
     manifest = find_book_manifest(filename, manifest_path=manifest_path)
     if manifest:
         return manifest, PARSER_PROFILES.get(manifest.parser_profile)
-    if "七年级上册" in filename:
-        profile = PARSER_PROFILES["pep_grade7_upper_v1"]
-        return None, profile
-    if "七年级下册" in filename:
-        profile = PARSER_PROFILES["pep_grade7_lower_v1"]
-        return None, profile
     return None, None
 
 

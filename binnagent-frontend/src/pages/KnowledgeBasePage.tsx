@@ -1,4 +1,4 @@
-import { AlertCircle, BookCheck, ChevronLeft, FileWarning, LoaderCircle, Search, Send, ShieldCheck, Wrench, X } from 'lucide-react'
+import { AlertCircle, BookCheck, ChevronLeft, FileWarning, LoaderCircle, Search, Send, ShieldCheck, UploadCloud, Wrench, X } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { EvidencePanel } from '@/components/learning/EvidencePanel'
 import {
@@ -20,6 +20,11 @@ import { StatusBanner } from '@/components/ui/StatusBanner'
 import { useToast } from '@/hooks/useToast'
 import { GrammarPage } from '@/pages/GrammarPage'
 import { exploreCapabilityEventUrl } from '@/services/exploreCapabilityApi'
+import {
+  formatFailedIngestMessage,
+  hasScannedPdfSignal,
+  normalizeBlockingReasons,
+} from '@/utils/knowledgeIngest'
 import type {
   ExerciseSession,
   FailedKnowledgeSourceDetail,
@@ -103,31 +108,12 @@ function readFailedSource(detail: KnowledgeOverviewError | null) {
   return null
 }
 
-export function formatFailedIngestMessage(result: KnowledgeIngestResult) {
-  const reasons = normalizeBlockingReasons(result.blocking_reasons ?? [])
-  const summary = result.parser_report_summary ?? {}
-  const metrics = [
-    typeof summary.page_count === 'number' ? `页数：${summary.page_count}` : null,
-    typeof summary.text_char_count === 'number' ? `可读取文字：${summary.text_char_count} 字` : null,
-    typeof summary.unit_count === 'number' ? `单元：${summary.unit_count}` : null,
-    typeof summary.rag_chunk_count === 'number' ? `素材片段：${summary.rag_chunk_count}` : null,
-  ].filter(Boolean)
-  const suggestions = hasScannedPdfSignal(result)
-    ? ['当前版本不支持扫描版 PDF/OCR。', '请换成可以复制文字的 PDF，或等待后续 OCR 支持。']
-    : ['请换成文字更清晰、可复制文字的 PDF，或稍后重试。']
-  return [
-    result.message || '教材解析失败，知识库暂不可用。',
-    reasons.length ? `失败原因：\n${reasons.map((reason) => `- ${reason}`).join('\n')}` : null,
-    metrics.length ? `解析信息：${metrics.join('，')}` : null,
-    `建议：\n${suggestions.map((item) => `- ${item}`).join('\n')}`,
-  ].filter(Boolean).join('\n\n')
-}
-
 function ingestResultToStatus(result: KnowledgeIngestResult): KnowledgeIngestStatus {
   return {
     source_id: result.source_id,
     parser_run_id: result.parser_run_id,
     processing_status: result.processing_status ?? result.status,
+    parse_quality_status: result.parse_quality_status,
     stage: result.processing_status ?? result.status,
     progress: 0,
     quality_status: result.quality_status,
@@ -135,35 +121,15 @@ function ingestResultToStatus(result: KnowledgeIngestResult): KnowledgeIngestSta
     blocking_reasons: result.blocking_reasons ?? [],
     warnings: [],
     parser_report_summary: result.parser_report_summary ?? {},
+    quality_summary: result.quality_summary ?? {},
+    selected_engine: result.selected_engine,
+    attempted_engines: result.attempted_engines ?? [],
+    fallback_used: result.fallback_used ?? false,
     error_message: null,
     can_open_knowledge_base: false,
     next_action: 'wait',
     message: result.message,
   }
-}
-
-function normalizeBlockingReasons(reasons: string[]) {
-  return reasons.map((reason) => {
-    const normalized = reason.toLowerCase()
-    if (normalized.includes('scanned') || normalized.includes('text layer')) {
-      return 'PDF 可能是扫描版，当前没有可用的文字层。'
-    }
-    if (normalized.includes('no textbook units')) return '没有识别到可用的教材单元。'
-    if (normalized.includes('parser run failed')) return '解析流程执行失败。'
-    return reason
-  })
-}
-
-function hasScannedPdfSignal(result: KnowledgeIngestResult | FailedKnowledgeSourceDetail) {
-  const reasons = result.blocking_reasons ?? []
-  const summary = result.parser_report_summary ?? {}
-  const joined = reasons.join(' ').toLowerCase()
-  return Boolean(
-    summary.is_scanned_pdf_suspected
-    || summary.has_text_layer === false
-    || joined.includes('scanned')
-    || joined.includes('text layer')
-  )
 }
 
 export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice }: KnowledgeBasePageProps) {
@@ -339,7 +305,8 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice }
         if (nextStatus.can_open_knowledge_base) {
           showToast(nextStatus.message, { variant: 'success', duration: 5000 })
           await loadOverview(sourceId)
-          setIngestStatus(null)
+          const needsOcr = nextStatus.parse_quality_status === 'needs_ocr' || nextStatus.quality_summary?.needs_ocr === true
+          if (!needsOcr) setIngestStatus(null)
         } else if (nextStatus.next_action === 'upload_text_pdf') {
           setFailedSource({
             source_id: nextStatus.source_id,
@@ -602,13 +569,40 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice }
   if (!overview || error) {
     return (
       <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center bg-white p-6">
-        <div className="max-w-lg text-center">
-          <AlertCircle className="mx-auto size-8 text-amber-500" />
-          <h1 className="mt-4 text-xl font-extrabold text-slate-950">知识库暂时不可用</h1>
-          <p className="mt-2 text-sm text-slate-500">{error}</p>
+        <div className="w-full max-w-lg text-center">
+          <div className="mx-auto flex size-12 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
+            <UploadCloud className="size-6" />
+          </div>
+          <h1 className="mt-4 text-xl font-extrabold text-slate-950">上传教材，生成知识库</h1>
+          <p className="mt-2 text-sm leading-6 text-slate-500">
+            {failedSource ? '最近上传的教材暂时不可用，可以重新上传一份可复制文字的 PDF。' : '当前还没有可用教材。上传 PDF 后会进入后台解析，并在这里显示解析进度。'}
+          </p>
           {ingestStatus ? <div className="mt-5"><IngestStatusPanel status={ingestStatus} compact /></div> : null}
           {failedSource ? <FailedSourceSummary source={failedSource} /> : null}
-          <button type="button" onClick={() => void loadOverview(selectedSourceId)} className="mt-5 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-bold text-white">重新加载</button>
+          {error && !failedSource ? (
+            <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-semibold leading-6 text-amber-800">
+              <AlertCircle className="mr-1 inline size-4 align-[-2px]" />
+              {error}
+            </div>
+          ) : null}
+          <div className="mt-5 flex flex-wrap justify-center gap-3">
+            <button
+              type="button"
+              onClick={() => setIsUploadOpen(true)}
+              className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-indigo-700"
+            >
+              <UploadCloud className="size-4" />
+              上传教材
+            </button>
+            <button
+              type="button"
+              onClick={() => void loadOverview(selectedSourceId)}
+              className="rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:bg-slate-50"
+            >
+              重新加载
+            </button>
+          </div>
+          <UploadTextbookDialog open={isUploadOpen} onClose={() => setIsUploadOpen(false)} onUpload={handleUpload} />
         </div>
       </div>
     )
@@ -863,7 +857,10 @@ function FailedSourceSummary({ source }: { source: FailedKnowledgeSourceDetail }
 
 export function IngestStatusPanel({ status, compact = false }: { status: KnowledgeIngestStatus; compact?: boolean }) {
   const isFailed = status.next_action === 'upload_text_pdf' || status.quality_status === 'failed'
+  const needsOcr = status.parse_quality_status === 'needs_ocr' || status.quality_summary?.needs_ocr === true
   const reasons = normalizeBlockingReasons(status.blocking_reasons ?? [])
+  const warnings = status.warnings ?? []
+  const quality = status.quality_summary ?? status.parser_report_summary ?? {}
   const progress = Math.max(0, Math.min(100, status.progress ?? 0))
   return (
     <section className={`w-full ${compact ? '' : 'max-w-lg'} rounded-2xl border ${isFailed ? 'border-red-200 bg-red-50' : 'border-indigo-200 bg-indigo-50'} p-5 text-left`}>
@@ -880,6 +877,17 @@ export function IngestStatusPanel({ status, compact = false }: { status: Knowled
                 <div className="h-full rounded-full bg-indigo-600 transition-all" style={{ width: `${progress}%` }} />
               </div>
               <p className="mt-2 text-xs font-bold text-indigo-700">{stageLabel(status.stage)} · {progress}%</p>
+              <div className="mt-3 flex flex-wrap gap-2 text-xs font-bold text-indigo-800">
+                {status.selected_engine ? <span className="rounded-full bg-white/70 px-2 py-1">engine {status.selected_engine}</span> : null}
+                {status.attempted_engines?.length ? <span className="rounded-full bg-white/70 px-2 py-1">attempted {status.attempted_engines.join(', ')}</span> : null}
+                {status.fallback_used ? <span className="rounded-full bg-white/70 px-2 py-1">fallback used</span> : null}
+              </div>
+              <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-indigo-800 sm:grid-cols-4">
+                {typeof quality.text_char_count === 'number' ? <MetricChip label="文字" value={`${quality.text_char_count}`} /> : null}
+                {typeof quality.text_coverage_score === 'number' ? <MetricChip label="覆盖" value={`${Math.round(quality.text_coverage_score * 100)}%`} /> : null}
+                {typeof quality.empty_page_ratio === 'number' ? <MetricChip label="空页" value={`${Math.round(quality.empty_page_ratio * 100)}%`} /> : null}
+                {typeof quality.block_count === 'number' ? <MetricChip label="块" value={`${quality.block_count}`} /> : null}
+              </div>
             </>
           ) : null}
           {isFailed && reasons.length ? (
@@ -887,9 +895,14 @@ export function IngestStatusPanel({ status, compact = false }: { status: Knowled
               {reasons.map((reason) => <li key={reason}>- {reason}</li>)}
             </ul>
           ) : null}
-          {isFailed && hasScannedPdfSignal(status) ? (
-            <p className="mt-3 rounded-xl bg-white/70 px-3 py-2 text-sm font-bold leading-6 text-red-800">
-              当前版本不支持扫描版 PDF，请上传可复制文字的 PDF。
+          {warnings.length ? (
+            <ul className={`mt-3 space-y-1 text-sm leading-6 ${isFailed ? 'text-red-700' : 'text-indigo-700'}`}>
+              {warnings.map((warning) => <li key={warning}>- {warning}</li>)}
+            </ul>
+          ) : null}
+          {(isFailed && hasScannedPdfSignal(status)) || needsOcr ? (
+            <p className={`mt-3 rounded-xl bg-white/70 px-3 py-2 text-sm font-bold leading-6 ${isFailed ? 'text-red-800' : 'text-indigo-800'}`}>
+              当前 PDF 文本层较弱，已完成基础解析，但可能需要 OCR 才能获得更完整内容。
             </p>
           ) : null}
         </div>
@@ -898,15 +911,22 @@ export function IngestStatusPanel({ status, compact = false }: { status: Knowled
   )
 }
 
+function MetricChip({ label, value }: { label: string; value: string }) {
+  return (
+    <span className="rounded-lg bg-white/70 px-2 py-1">
+      {label} {value}
+    </span>
+  )
+}
+
 function stageLabel(stage: string) {
   const labels: Record<string, string> = {
     queued: '等待开始',
     running: '正在解析',
-    extracting_text: '读取 PDF 文字',
-    detecting_structure: '识别教材结构',
-    extracting_vocabulary: '提取词汇',
-    building_knowledge: '生成知识点',
-    building_index: '建立索引',
+    parsing_document: '解析文档',
+    normalizing_artifact: '标准化解析结果',
+    extracting_textbook_structure: '提取教材结构',
+    building_chunks: '建立索引',
     quality_checking: '质量检查',
     completed: '解析完成',
     failed: '解析失败',

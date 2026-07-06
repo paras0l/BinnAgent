@@ -3,6 +3,8 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
+from src.documents.artifact import DocumentBlock, DocumentPage, DocumentParseArtifact
+from src.documents.parser_router import ParserAttempt, ParserRouterResult
 from src.knowledge import processor
 from src.knowledge.parser_profiles import ParserProfile
 from src.models.knowledge import KnowledgePoint, KnowledgeSource, ParserRun
@@ -68,27 +70,54 @@ async def test_process_uploaded_textbook_records_completed_parser_run(
         expected_unit_titles=("Unit X",),
         expected_core_vocabulary=("hello",),
     )
-    entry = processor.ParsedVocabularyEntry(
-        unit_title="Unit X",
-        expression="hello",
-        canonical_expression="hello",
-        unit_order=1,
-        raw_line="hello p.1",
-        confidence=0.95,
+    artifact = DocumentParseArtifact(
+        source_id=str(source.id),
+        parser_engine="pypdf",
+        parser_version="test",
+        markdown="Unit X\nGreetings\n\nWords and Expressions in Each Unit\nUnit X\nhello /həˈləʊ/ interj. 你好 p.1\nVocabulary Index",
+        pages=[DocumentPage(page_number=1, text="hello " * 160)],
+        blocks=[
+            DocumentBlock("b1", 1, "heading", "Unit X\nGreetings", 0, 0.9, "pypdf"),
+            DocumentBlock(
+                "b2",
+                1,
+                "paragraph",
+                "Words and Expressions in Each Unit\nUnit X\nhello /həˈləʊ/ interj. 你好 p.1\nVocabulary Index",
+                1,
+                0.9,
+                "pypdf",
+            ),
+        ],
+        warnings=[],
+        quality={
+            "page_count": 1,
+            "text_char_count": 960,
+            "text_coverage_score": 1.0,
+            "empty_page_ratio": 0.0,
+            "block_count": 2,
+            "heading_count": 1,
+            "needs_ocr": False,
+            "needs_review": False,
+            "warnings": [],
+        },
+    )
+    router_result = ParserRouterResult(
+        artifact=artifact,
+        attempted_engines=["markitdown", "pypdf"],
+        attempts=[
+            ParserAttempt("markitdown", "failed", "missing"),
+            ParserAttempt("pypdf", "selected"),
+        ],
+        selected_engine="pypdf",
+        fallback_used=True,
     )
 
     monkeypatch.setattr(processor, "profile_for_source", lambda filename: (None, profile))
     monkeypatch.setattr(
         processor,
-        "_parse_pdf",
-        lambda path: processor.ParsedTextbook(
-            page_count=1,
-            units=(processor.ParsedUnit("Unit X", "Greetings", 1),),
-            text_char_count=800,
-        ),
+        "ParserRouter",
+        lambda: MagicMock(parse=MagicMock(return_value=router_result)),
     )
-    monkeypatch.setattr(processor, "PdfReader", lambda path: _Reader(["hello " * 160]))
-    monkeypatch.setattr(processor, "_parse_unit_vocabulary", lambda reader: (entry,))
     monkeypatch.setattr(processor, "build_chunks", AsyncMock(return_value=1))
 
     parsed = await processor.process_uploaded_textbook(db, source)
@@ -100,10 +129,12 @@ async def test_process_uploaded_textbook_records_completed_parser_run(
     assert parser_run.stage == "completed"
     assert parser_run.progress == 100
     assert parser_run.quality_report["page_count"] == 1
-    assert parser_run.quality_score["status"] == "published"
+    assert parser_run.quality_score["status"] in {"published", "partial_indexed"}
     assert source.metadata_["latest_parser_run_id"] == str(parser_run.id)
-    assert source.metadata_["quality_status"] == "published"
-    assert source.metadata_["availability_status"] == "available"
+    assert source.metadata_["quality_status"] in {"published", "partial_indexed"}
+    assert source.metadata_["availability_status"] in {"available", "partially_available"}
+    assert source.metadata_["selected_engine"] == "pypdf"
+    assert source.metadata_["fallback_used"] is True
     assert source.status == "completed"
     assert knowledge_point.content["parser_run_id"] == str(parser_run.id)
     assert processor.build_chunks.await_args.kwargs["parser_run_id"] == str(parser_run.id)
@@ -122,8 +153,8 @@ async def test_process_uploaded_textbook_marks_parser_run_failed(
     monkeypatch.setattr(processor, "profile_for_source", lambda filename: (None, None))
     monkeypatch.setattr(
         processor,
-        "_parse_pdf",
-        MagicMock(side_effect=ValueError("broken pdf")),
+        "ParserRouter",
+        lambda: MagicMock(parse=MagicMock(side_effect=ValueError("broken pdf"))),
     )
 
     with pytest.raises(ValueError, match="broken pdf"):

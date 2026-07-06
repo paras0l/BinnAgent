@@ -548,6 +548,7 @@ async def test_ingest_returns_202_and_creates_queued_parser_run(
     assert parser_run.progress == 0
     assert source.status == "queued"
     assert source.metadata_["latest_parser_run_id"] == str(parser_run.id)
+    knowledge_session.commit.assert_awaited_once()
     assert scheduled == [(source.id, parser_run.id)]
 
 

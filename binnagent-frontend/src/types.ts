@@ -134,6 +134,12 @@ export interface KnowledgeParserEvidence {
 export interface ParserReportSummary {
   page_count?: number | null
   text_char_count?: number | null
+  text_coverage_score?: number | null
+  empty_page_ratio?: number | null
+  block_count?: number | null
+  heading_count?: number | null
+  needs_ocr?: boolean | null
+  needs_review?: boolean | null
   unit_count?: number | null
   rag_chunk_count?: number | null
   is_scanned_pdf_suspected?: boolean | null
@@ -235,6 +241,7 @@ export interface KnowledgeIngestResult {
   parser_run_id?: string | null
   status: string
   processing_status?: string | null
+  parse_quality_status?: string | null
   page_count: number
   unit_count: number
   knowledge_count: number
@@ -243,12 +250,17 @@ export interface KnowledgeIngestResult {
   availability_status?: string | null
   blocking_reasons?: string[]
   parser_report_summary?: ParserReportSummary
+  quality_summary?: ParserReportSummary
+  selected_engine?: string | null
+  attempted_engines?: string[]
+  fallback_used?: boolean
 }
 
 export interface KnowledgeIngestStatus {
   source_id: string
   parser_run_id?: string | null
   processing_status: string
+  parse_quality_status?: string | null
   stage: string
   progress: number
   quality_status?: string | null
@@ -256,6 +268,10 @@ export interface KnowledgeIngestStatus {
   blocking_reasons: string[]
   warnings: string[]
   parser_report_summary: ParserReportSummary
+  quality_summary: ParserReportSummary
+  selected_engine?: string | null
+  attempted_engines: string[]
+  fallback_used: boolean
   error_message?: string | null
   can_open_knowledge_base: boolean
   next_action: 'wait' | 'review' | 'upload_text_pdf' | 'open_knowledge_base'

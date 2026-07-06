@@ -10,11 +10,13 @@ from pypdf import PdfReader
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.documents.parser_router import ParserRouter
 from src.knowledge.parser_profiles import profile_for_source
 from src.knowledge.parser_report import build_parser_report
 from src.knowledge.quality import quality_summary, score_textbook_quality
 from src.knowledge.rag import build_chunks, split_text
 from src.knowledge.review_queue import queue_summary, replace_parser_review_items
+from src.knowledge.textbook_extractor import extract_textbook_candidates
 from src.models.knowledge import (
     CurriculumNode,
     KnowledgeChunk,
@@ -52,14 +54,6 @@ class ParsedVocabularyEntry:
     warnings: tuple[str, ...] = ()
 
 
-@dataclass(frozen=True)
-class ParsedAppendixSection:
-    unit_title: str | None
-    printed_pages: str
-    pdf_pages: tuple[int, ...]
-    text: str
-
-
 VOCABULARY_HEADING = "Words and Expressions in Each Unit"
 VOCABULARY_HEADINGS = (
     "Words and Expressions in Each Unit",
@@ -76,310 +70,24 @@ PART_OF_SPEECH_PATTERN = re.compile(
     re.IGNORECASE,
 )
 
-UPPER_UNIT_MARKER_PATTERN = re.compile(r"\b(Starter\s+Unit|Unit)\s+([1-9])\b", re.I)
-
-GRADE7_UPPER_NODE_TITLES = (
-    "Starter Unit 1",
-    "Starter Unit 2",
-    "Starter Unit 3",
-    "Unit 1",
-    "Unit 2",
-    "Unit 3",
-    "Unit 4",
-    "Unit 5",
-    "Unit 6",
-    "Unit 7",
-    "Unit 8",
-    "Unit 9",
-)
-
-# The appendix is organized by grammar category rather than unit. These mappings
-# follow the examples and target language in the unit pages, so learners see each
-# reference topic where it is first or most directly taught.
-GRADE7_UPPER_GRAMMAR_TOPICS: tuple[dict[str, object], ...] = (
-    {
-        "key": "parts-of-speech",
-        "title": "词类（Parts of Speech）",
-        "summary": "识别名词、代词、数词、动词、形容词、副词、冠词、介词、连词和感叹词。",
-        "page": "85",
-        "primary": "Starter Unit 1",
-        "related": list(GRADE7_UPPER_NODE_TITLES),
-    },
-    {
-        "key": "nouns-countability",
-        "title": "可数名词与不可数名词",
-        "summary": "区分可数名词和不可数名词，并正确使用单复数形式。",
-        "page": "85–86",
-        "primary": "Unit 6",
-        "related": ["Unit 2", "Unit 3", "Unit 6", "Unit 7"],
-    },
-    {
-        "key": "noun-plurals",
-        "title": "名词复数的构成与读音",
-        "summary": "掌握 -s/-es、辅音字母+y 等复数规则、读音及常见不规则复数。",
-        "page": "85–86",
-        "primary": "Unit 2",
-        "related": ["Unit 2", "Unit 3", "Unit 6", "Unit 7"],
-    },
-    {
-        "key": "noun-possessive",
-        "title": "名词所有格（Possessive Case）",
-        "summary": "使用 ’s、’ 表达所属关系。",
-        "page": "86",
-        "primary": "Unit 8",
-        "related": ["Unit 2", "Unit 8"],
-    },
-    {
-        "key": "articles",
-        "title": "冠词（Articles）",
-        "summary": "根据语境使用 the、a/an 或零冠词。",
-        "page": "87",
-        "primary": "Starter Unit 2",
-        "related": ["Starter Unit 2", "Unit 3", "Unit 5", "Unit 6"],
-    },
-    {
-        "key": "personal-pronouns",
-        "title": "人称代词（Personal Pronouns）",
-        "summary": "区分人称代词的主格和宾格，并保持人称与数一致。",
-        "page": "87",
-        "primary": "Unit 1",
-        "related": ["Unit 1", "Unit 2", "Unit 5", "Unit 9"],
-    },
-    {
-        "key": "possessive-pronouns",
-        "title": "物主代词（Possessive Pronouns）",
-        "summary": "区分形容词性物主代词与名词性物主代词。",
-        "page": "87–88",
-        "primary": "Unit 3",
-        "related": ["Unit 1", "Unit 3", "Unit 4"],
-    },
-    {
-        "key": "demonstratives",
-        "title": "指示代词（Demonstrative Pronouns）",
-        "summary": "根据远近和单复数使用 this、that、these、those。",
-        "page": "88",
-        "primary": "Unit 2",
-        "related": ["Unit 2", "Unit 3", "Unit 7"],
-    },
-    {
-        "key": "cardinal-numbers",
-        "title": "基数词（Cardinal Numbers）",
-        "summary": "使用基数词表达号码、数量、年龄和价格。",
-        "page": "88",
-        "primary": "Unit 1",
-        "related": ["Unit 1", "Unit 5", "Unit 7", "Unit 8"],
-    },
-    {
-        "key": "ordinal-numbers",
-        "title": "序数词（Ordinal Numbers）",
-        "summary": "掌握序数词的拼写与缩写，并用于日期表达。",
-        "page": "89",
-        "primary": "Unit 8",
-        "related": ["Unit 8"],
-    },
-    {
-        "key": "simple-present-be",
-        "title": "一般现在时：be 动词",
-        "summary": "使用 am/is/are 构成肯定句、否定句、疑问句和简略答语。",
-        "page": "89–90",
-        "primary": "Unit 1",
-        "related": ["Unit 1", "Unit 2", "Unit 4", "Unit 8", "Unit 9"],
-    },
-    {
-        "key": "simple-present-verbs",
-        "title": "一般现在时：实义动词",
-        "summary": "掌握第三人称单数变化以及 do/does 构成的否定句和疑问句。",
-        "page": "90–91",
-        "primary": "Unit 5",
-        "related": ["Unit 5", "Unit 6", "Unit 9"],
-    },
-    {
-        "key": "prepositions",
-        "title": "介词（Prepositions）",
-        "summary": "掌握本册 about、after、at、for、from、in、of、on、under、with 等常用介词短语。",
-        "page": "91–92",
-        "primary": "Unit 4",
-        "related": ["Starter Unit 2", "Unit 2", "Unit 3", "Unit 4", "Unit 7", "Unit 8", "Unit 9"],
-    },
-    {
-        "key": "sentence-types",
-        "title": "句子种类（Sentence Types）",
-        "summary": "区分陈述句、疑问句、祈使句和感叹句的用途与基本结构。",
-        "page": "92",
-        "primary": "Starter Unit 1",
-        "related": list(GRADE7_UPPER_NODE_TITLES),
-    },
-    {
-        "key": "yes-no-questions",
-        "title": "一般疑问句（Yes/No Questions）",
-        "summary": "用 be、do/does 提问，并使用 Yes/No 简略回答。",
-        "page": "93",
-        "primary": "Unit 3",
-        "related": ["Unit 1", "Unit 3", "Unit 5", "Unit 6"],
-    },
-    {
-        "key": "wh-questions",
-        "title": "特殊疑问句（Wh- Questions）",
-        "summary": "使用 what、who、where、when、why、how 获取具体信息。",
-        "page": "93",
-        "primary": "Unit 9",
-        "related": [
-            "Starter Unit 2",
-            "Starter Unit 3",
-            "Unit 1",
-            "Unit 2",
-            "Unit 4",
-            "Unit 7",
-            "Unit 8",
-            "Unit 9",
-        ],
-    },
-)
-
-
-PEP_GRADE7_LOWER_UNITS: tuple[ParsedUnit, ...] = (
-    ParsedUnit("Unit 1", "Can you play the guitar?", 1),
-    ParsedUnit("Unit 2", "What time do you go to school?", 7),
-    ParsedUnit("Unit 3", "How do you get to school?", 13),
-    ParsedUnit("Unit 4", "Don't eat in class.", 19),
-    ParsedUnit("Unit 5", "Why do you like pandas?", 25),
-    ParsedUnit("Unit 6", "I'm watching TV.", 31),
-    ParsedUnit("Unit 7", "It's raining!", 37),
-    ParsedUnit("Unit 8", "Is there a post office near here?", 43),
-    ParsedUnit("Unit 9", "What does he look like?", 49),
-    ParsedUnit("Unit 10", "I'd like some noodles.", 55),
-    ParsedUnit("Unit 11", "How was your school trip?", 61),
-    ParsedUnit("Unit 12", "What did you do last weekend?", 67),
-)
-
-PEP_GRADE7_LOWER_KNOWLEDGE: dict[str, tuple[str, str, str, str]] = {
-    "Unit 1": ("grammar.modal-can", "grammar", "Modal verb can", "用 can 表达能力。"),
-    "Unit 2": ("phrase.get-up", "phrase", "get up", "表示起床这一日常活动。"),
-    "Unit 3": (
-        "pattern.how-get-school",
-        "sentence_pattern",
-        "How do you get to school?",
-        "询问交通方式。",
-    ),
-    "Unit 4": ("grammar.imperatives", "grammar", "Imperatives", "使用祈使句表达规则。"),
-    "Unit 5": ("grammar.because", "grammar", "Because clauses", "使用 because 说明原因。"),
-    "Unit 6": (
-        "grammar.present-progressive-1",
-        "grammar",
-        "Present progressive tense (I)",
-        "描述正在进行的活动。",
-    ),
-    "Unit 7": (
-        "pattern.hows-weather",
-        "sentence_pattern",
-        "How's the weather?",
-        "询问天气情况。",
-    ),
-    "Unit 8": (
-        "grammar.there-be",
-        "grammar",
-        "There be structure",
-        "描述某处存在的人或事物。",
-    ),
-    "Unit 9": ("phrase.look-like", "phrase", "look like", "询问或描述外貌。"),
-    "Unit 10": (
-        "grammar.would-like",
-        "grammar",
-        "would like",
-        "礼貌表达想要的食物。",
-    ),
-    "Unit 11": (
-        "grammar.simple-past-1",
-        "grammar",
-        "Simple past tense (I)",
-        "谈论过去发生的事情。",
-    ),
-    "Unit 12": (
-        "grammar.simple-past-2",
-        "grammar",
-        "Simple past tense (II)",
-        "使用特殊疑问句谈论周末活动。",
-    ),
+STALE_INGEST_METADATA_KEYS = {
+    "blocking_reasons",
+    "document_quality",
+    "error",
+    "parser_report",
+    "parser_report_summary",
+    "parse_quality_status",
+    "quality_score",
+    "quality_status",
+    "warning",
 }
 
-PEP_GRADE7_LOWER_VOCABULARY: dict[str, tuple[str, ...]] = {
-    "Unit 1": ("guitar", "sing", "swim", "dance", "draw", "chess", "speak", "join"),
-    "Unit 2": ("up", "dress", "brush", "tooth", "shower", "usually", "forty", "never"),
-    "Unit 3": ("train", "bus", "subway", "ride", "bike", "sixty", "seventy", "minute"),
-    "Unit 4": ("rule", "arrive", "hallway", "fight", "sorry", "outside", "wear", "important"),
-    "Unit 5": ("panda", "zoo", "tiger", "elephant", "koala", "lion", "giraffe", "animal"),
-    "Unit 6": ("newspaper", "use", "soup", "wash", "movie", "just", "house", "drink"),
-    "Unit 7": ("rain", "windy", "cloudy", "sunny", "snow", "weather", "cook", "bad"),
-    "Unit 8": ("post", "office", "police", "hotel", "restaurant", "bank", "hospital", "street"),
-    "Unit 9": ("curly", "straight", "tall", "medium", "height", "thin", "heavy", "tonight"),
-    "Unit 10": ("noodle", "mutton", "beef", "cabbage", "potato", "special", "would", "large"),
-    "Unit 11": ("milk", "cow", "horse", "feed", "farmer", "quite", "anything", "grow"),
-    "Unit 12": ("camp", "lake", "beach", "badminton", "sheep", "visitor", "tired", "stay"),
-}
 
-PEP_GRADE7_UPPER_KNOWLEDGE: dict[str, tuple[str, str, str, str]] = {
-    "Starter Unit 2": (
-        "pattern.whats-this-english",
-        "sentence_pattern",
-        "What's this in English?",
-        "询问某个物品用英语怎么表达。",
-    ),
-    "Starter Unit 3": (
-        "pattern.what-color",
-        "sentence_pattern",
-        "What color is it?",
-        "询问并描述物品的颜色。",
-    ),
-    "Unit 1": ("grammar.be-verbs", "grammar", "am / is / are", "使用 be 动词介绍自己和他人。"),
-    "Unit 2": (
-        "grammar.demonstratives-family",
-        "grammar",
-        "this / that / these / those",
-        "使用指示代词介绍家人。",
-    ),
-    "Unit 3": (
-        "grammar.possessive-pronouns",
-        "grammar",
-        "Possessive pronouns",
-        "使用物主代词询问物品归属。",
-    ),
-    "Unit 4": (
-        "grammar.where-questions",
-        "grammar",
-        "Where questions",
-        "使用 where 询问物品的位置。",
-    ),
-    "Unit 5": (
-        "grammar.have-has",
-        "grammar",
-        "have / has",
-        "使用 have 和 has 谈论拥有的物品。",
-    ),
-    "Unit 6": (
-        "grammar.like-present",
-        "grammar",
-        "like in the simple present",
-        "使用一般现在时表达食物喜好。",
-    ),
-    "Unit 7": (
-        "pattern.how-much",
-        "sentence_pattern",
-        "How much ...?",
-        "询问商品价格并进行购物交流。",
-    ),
-    "Unit 8": (
-        "grammar.when-questions",
-        "grammar",
-        "When questions",
-        "使用 when 询问日期和生日。",
-    ),
-    "Unit 9": (
-        "pattern.favorite-subject",
-        "sentence_pattern",
-        "What's your favorite subject?",
-        "询问并说明最喜欢的学科及原因。",
-    ),
-}
+def _clear_stale_ingest_metadata(metadata: dict) -> dict:
+    cleaned = dict(metadata)
+    for key in STALE_INGEST_METADATA_KEYS:
+        cleaned.pop(key, None)
+    return cleaned
 
 
 def _parse_pdf(path: Path) -> ParsedTextbook:
@@ -532,267 +240,47 @@ def _parse_unit_vocabulary(reader: PdfReader) -> tuple[ParsedVocabularyEntry, ..
     return tuple(entries)
 
 
-def _known_lower_vocabulary_entries() -> tuple[ParsedVocabularyEntry, ...]:
-    entries: list[ParsedVocabularyEntry] = []
-    for unit_title, words in PEP_GRADE7_LOWER_VOCABULARY.items():
-        for index, word in enumerate(words, start=1):
-            entries.append(
-                ParsedVocabularyEntry(
-                    unit_title=unit_title,
-                    expression=word,
-                    canonical_expression=_canonical_expression(word),
-                    unit_order=index,
-                    raw_line=f"{unit_title} fallback vocabulary: {word}",
-                    confidence=0.7,
-                    warnings=("fallback_vocabulary",),
-                )
-            )
-    return tuple(entries)
-
-
-def _clean_appendix_text(text: str, heading: str) -> str:
-    text = text.replace("Page PB", " ").replace(heading, " ")
-    text = re.sub(r"(?<![A-Za-z])\d{2,3}(?![A-Za-z])", " ", text, count=1)
-    text = re.sub(r"\s+", " ", text)
-    return text.strip()
-
-
-def _appendix_pages(
-    reader: PdfReader,
-    heading: str,
-    stop_heading: str,
-) -> list[tuple[int, str]]:
-    pages: list[tuple[int, str]] = []
-    active = False
-    start_threshold = int(len(reader.pages) * 0.5)
-    for pdf_page, page in enumerate(reader.pages, start=1):
-        text = page.extract_text() or ""
-        if not active:
-            if pdf_page < start_threshold or heading not in text:
-                continue
-            active = True
-        if stop_heading in text:
-            break
-        pages.append((pdf_page, _clean_appendix_text(text, heading)))
-    return pages
-
-
-def _group_appendix_by_unit(
-    pages: list[tuple[int, str]],
-) -> tuple[ParsedAppendixSection, ...]:
-    fragments: dict[str | None, list[str]] = {None: []}
-    evidence: dict[str | None, set[int]] = {None: set()}
-    current_unit: str | None = None
-    for pdf_page, text in pages:
-        matches = list(UPPER_UNIT_MARKER_PATTERN.finditer(text))
-        cursor = 0
-        for match in matches:
-            prefix = text[cursor : match.start()].strip()
-            if prefix:
-                fragments.setdefault(current_unit, []).append(prefix)
-                evidence.setdefault(current_unit, set()).add(pdf_page)
-            current_unit = _normalize_unit_title(match.group(0))
-            cursor = match.end()
-        suffix = text[cursor:].strip()
-        if suffix:
-            fragments.setdefault(current_unit, []).append(suffix)
-            evidence.setdefault(current_unit, set()).add(pdf_page)
-
-    result: list[ParsedAppendixSection] = []
-    for unit_title, values in fragments.items():
-        if not values:
-            continue
-        pdf_pages = tuple(sorted(evidence[unit_title]))
-        # In this edition appendix printed pages are consistently PDF page - 23.
-        printed = tuple(page - 23 for page in pdf_pages)
-        page_label = str(printed[0]) if len(printed) == 1 else f"{printed[0]}–{printed[-1]}"
-        result.append(
-            ParsedAppendixSection(
-                unit_title=unit_title,
-                printed_pages=page_label,
-                pdf_pages=pdf_pages,
-                text=" ".join(values),
-            )
-        )
-    return tuple(result)
-
-
-def _parse_notes_on_the_text(reader: PdfReader) -> tuple[ParsedAppendixSection, ...]:
-    pages = _appendix_pages(reader, "Notes on the Text", "Tapescripts")
-    return tuple(section for section in _group_appendix_by_unit(pages) if section.unit_title)
-
-
-def _parse_pronunciation(reader: PdfReader) -> tuple[ParsedAppendixSection, ...]:
-    pages = _appendix_pages(reader, "Pronunciation", "Grammar")
-    return _group_appendix_by_unit(pages)
-
-
-def _appendix_knowledge(
-    source_id: uuid.UUID,
+def _node_for_candidate(
+    candidate_title: str,
+    page_number: int,
+    nodes: list[CurriculumNode],
     nodes_by_title: dict[str, CurriculumNode],
-    notes: tuple[ParsedAppendixSection, ...],
-    pronunciation: tuple[ParsedAppendixSection, ...],
-) -> list[KnowledgePoint]:
-    points: list[KnowledgePoint] = []
-    for section in notes:
-        node = nodes_by_title.get(section.unit_title or "")
-        if node is None:
-            continue
-        slug = (section.unit_title or "general").casefold().replace(" ", "-")
-        points.append(
-            KnowledgePoint(
-                source_id=source_id,
-                curriculum_node_id=node.id,
-                canonical_key=f"notes-on-text.{slug}.{str(source_id)[:8]}",
-                type="text_note",
-                title=f"{section.unit_title} Notes on the Text",
-                summary="教材注释：重点句式、语法用法与地道英语文化知识。",
-                source_page=f"P.{section.printed_pages}",
-                difficulty=0.3,
-                status="draft",
-                content={
-                    "origin": "notes_on_text_parser",
-                    "role": "unit_reference",
-                    "extracted_text": section.text,
-                    "evidence_pdf_pages": list(section.pdf_pages),
-                    "requires_review": True,
-                },
-            )
-        )
-
-    for section in pronunciation:
-        unit_title = section.unit_title or "Starter Unit 1"
-        node = nodes_by_title.get(unit_title)
-        if node is None:
-            continue
-        slug = (section.unit_title or "foundations").casefold().replace(" ", "-")
-        points.append(
-            KnowledgePoint(
-                source_id=source_id,
-                curriculum_node_id=node.id,
-                canonical_key=f"pronunciation.{slug}.{str(source_id)[:8]}",
-                type="pronunciation",
-                title=(
-                    f"{section.unit_title} Pronunciation" if section.unit_title else "英语语音基础"
-                ),
-                summary=(
-                    "本册核心语音训练：音素、拼读规则、重音、连读及英美音差异。"
-                    if section.unit_title is None
-                    else "本单元核心拼读规则、音素辨析与朗读训练。"
-                ),
-                source_page=f"P.{section.printed_pages}",
-                difficulty=0.35,
-                status="draft",
-                content={
-                    "origin": "pronunciation_appendix_parser",
-                    "role": "core_pronunciation",
-                    "priority": "core",
-                    "extracted_text": section.text,
-                    "evidence_pdf_pages": list(section.pdf_pages),
-                    "requires_review": True,
-                },
-            )
-        )
-
-    for topic in GRADE7_UPPER_GRAMMAR_TOPICS:
-        primary = str(topic["primary"])
-        node = nodes_by_title.get(primary)
-        if node is None:
-            continue
-        points.append(
-            KnowledgePoint(
-                source_id=source_id,
-                curriculum_node_id=node.id,
-                canonical_key=f"grammar-reference.{topic['key']}.{str(source_id)[:8]}",
-                type="grammar",
-                title=str(topic["title"]),
-                summary=str(topic["summary"]),
-                source_page=f"P.{topic['page']}",
-                difficulty=0.35,
-                status="draft",
-                content={
-                    "origin": "grammar_appendix_mapping",
-                    "role": "grammar_reference",
-                    "primary_unit": primary,
-                    "related_units": topic["related"],
-                    "mapping_basis": "教材单元目标语言、Grammar Focus 与附录例句",
-                    "requires_review": False,
-                },
-            )
-        )
-    return points
+) -> CurriculumNode | None:
+    normalized_title = candidate_title.replace(" overview", "")
+    node = nodes_by_title.get(_normalize_unit_title(normalized_title))
+    if node is not None:
+        return node
+    if not nodes:
+        return None
+    ordered = sorted(
+        nodes,
+        key=lambda item: abs(_safe_int(item.start_page, default=page_number) - page_number),
+    )
+    return ordered[0]
 
 
-def _known_knowledge(source_id: uuid.UUID, node_id: uuid.UUID, title: str) -> list[KnowledgePoint]:
-    lower_item = PEP_GRADE7_LOWER_KNOWLEDGE.get(title)
-    if lower_item:
-        key, point_type, point_title, summary = lower_item
-        return [
-            KnowledgePoint(
-                source_id=source_id,
-                curriculum_node_id=node_id,
-                canonical_key=f"{key}.{str(source_id)[:8]}",
-                type=point_type,
-                title=point_title,
-                summary=summary,
-                source_page="目录",
-                difficulty=0.3,
-                status="draft",
-                content={"origin": "verified_toc_fallback", "requires_review": True},
-            )
-        ]
-    upper_item = PEP_GRADE7_UPPER_KNOWLEDGE.get(title)
-    if upper_item:
-        key, point_type, point_title, summary = upper_item
-        return [
-            KnowledgePoint(
-                source_id=source_id,
-                curriculum_node_id=node_id,
-                canonical_key=f"{key}.{str(source_id)[:8]}",
-                type=point_type,
-                title=point_title,
-                summary=summary,
-                source_page="目录",
-                difficulty=0.3,
-                status="draft",
-                content={"origin": "verified_toc_fallback", "requires_review": True},
-            )
-        ]
-    if title.casefold() != "starter unit 1":
-        return []
-    values = [
-        ("phrase.good-morning", "phrase", "Good morning!", "用于早晨向他人问好。", "P.2"),
-        ("pattern.how-are-you", "sentence_pattern", "How are you?", "用于询问对方的近况。", "P.2"),
-        (
-            "vocabulary.letters-a-h",
-            "vocabulary",
-            "Letters A–H",
-            "字母 A 到 H 的读音与书写。",
-            "P.3–4",
-        ),
-        (
-            "pattern.im-fine-thanks",
-            "sentence_pattern",
-            "I'm fine, thanks.",
-            "用于回复对方的问候。",
-            "P.2",
-        ),
-    ]
-    return [
-        KnowledgePoint(
-            source_id=source_id,
-            curriculum_node_id=node_id,
-            canonical_key=f"{key}.{str(source_id)[:8]}",
-            type=point_type,
-            title=point_title,
-            summary=summary,
-            source_page=page,
-            difficulty=0.2,
-            status="draft",
-            content={"origin": "rule_based", "requires_review": True},
-        )
-        for key, point_type, point_title, summary, page in values
-    ]
+def _safe_int(value: str | None, *, default: int) -> int:
+    try:
+        return int(str(value))
+    except (TypeError, ValueError):
+        return default
+
+
+def _parse_quality_status(document_quality: dict, parser_status: str) -> str:
+    if parser_status == "failed":
+        return "failed"
+    if document_quality.get("needs_ocr"):
+        return "needs_ocr"
+    if document_quality.get("needs_review"):
+        return "needs_review"
+    return "good"
+
+
+def _db_label(value: str | None, *, max_length: int) -> str:
+    normalized = " ".join(str(value or "").split()).strip()
+    if len(normalized) <= max_length:
+        return normalized
+    return normalized[: max_length - 1].rstrip() + "…"
 
 
 async def _load_or_create_parser_run(
@@ -809,6 +297,8 @@ async def _load_or_create_parser_run(
         parser_run = result.scalar_one_or_none()
         if parser_run is None:
             raise ValueError("ParserRun not found")
+        parser_run.parser_id = "document-parser-router"
+        parser_run.parser_version = "v1"
         parser_run.parser_profile_id = parser_profile_id
         parser_run.book_manifest_id = book_manifest_id
         parser_run.pdf_sha256 = source.sha256
@@ -816,7 +306,7 @@ async def _load_or_create_parser_run(
         return parser_run
     parser_run = ParserRun(
         source_id=source.id,
-        parser_id="pypdf+manifest-profile",
+        parser_id="document-parser-router",
         parser_version="v1",
         parser_profile_id=parser_profile_id,
         book_manifest_id=book_manifest_id,
@@ -890,7 +380,7 @@ async def process_uploaded_textbook(
         source,
         parser_run,
         status="running",
-        stage="extracting_text",
+        stage="parsing_document",
         progress=5,
     )
     source.metadata_ = {
@@ -901,60 +391,75 @@ async def process_uploaded_textbook(
     }
 
     try:
-        parsed = await asyncio.to_thread(_parse_pdf, path)
-        await _set_parser_progress(db, source, parser_run, stage="detecting_structure", progress=20)
-        reader = PdfReader(path)
-        vocabulary_entries = await asyncio.to_thread(lambda: _parse_unit_vocabulary(reader))
-        await _set_parser_progress(db, source, parser_run, stage="extracting_vocabulary", progress=35)
-        is_grade7_upper = "七年级上册" in source.filename
-        is_grade7_lower = "七年级下册" in source.filename
-        if not vocabulary_entries and is_grade7_lower:
-            vocabulary_entries = _known_lower_vocabulary_entries()
-        notes = (
-            await asyncio.to_thread(lambda: _parse_notes_on_the_text(reader)) if is_grade7_upper else ()
+        router_result = await asyncio.to_thread(
+            lambda: ParserRouter().parse(
+                path,
+                {
+                    "source_id": str(source.id),
+                },
+            )
         )
-        pronunciation = (
-            await asyncio.to_thread(lambda: _parse_pronunciation(reader)) if is_grade7_upper else ()
+        artifact = router_result.artifact
+        document_quality = artifact.quality_dict()
+        parser_run.parser_id = "document-parser-router"
+        parser_run.parser_version = "v1"
+        parser_run.artifact_refs = {
+            "document_parse_artifact": artifact.to_dict(),
+            **router_result.metadata(),
+        }
+        await _set_parser_progress(db, source, parser_run, stage="normalizing_artifact", progress=20)
+        extraction = await asyncio.to_thread(lambda: extract_textbook_candidates(artifact))
+        await _set_parser_progress(
+            db,
+            source,
+            parser_run,
+            stage="extracting_textbook_structure",
+            progress=35,
         )
-        page_texts = [page.extract_text() or "" for page in reader.pages]
-        used_toc_fallback = False
-        if not parsed.units and is_grade7_lower:
-            parsed = ParsedTextbook(
-                page_count=parsed.page_count,
-                units=PEP_GRADE7_LOWER_UNITS,
-                text_char_count=parsed.text_char_count,
+        parsed = ParsedTextbook(
+            page_count=int(document_quality.get("page_count") or len(artifact.pages)),
+            units=tuple(
+                ParsedUnit(
+                    title=item.title,
+                    subtitle=item.subtitle,
+                    page_number=item.page_number,
+                )
+                for item in extraction.curriculum
             )
-            used_toc_fallback = True
-        if not parsed.units and manifest and manifest.unit_titles:
-            parsed = ParsedTextbook(
-                page_count=parsed.page_count,
-                units=tuple(
-                    ParsedUnit(title=title, subtitle="", page_number=index)
-                    for index, title in enumerate(manifest.unit_titles, start=1)
-                ),
-                text_char_count=parsed.text_char_count,
+            or (ParsedUnit(title="全册材料", subtitle=source.title, page_number=1),),
+            text_char_count=int(document_quality.get("text_char_count") or len(artifact.markdown)),
+        )
+        vocabulary_entries = tuple(
+            ParsedVocabularyEntry(
+                unit_title=item.unit_title,
+                expression=item.expression,
+                canonical_expression=item.canonical_expression,
+                unit_order=item.unit_order,
+                raw_line=item.raw_line,
+                confidence=item.confidence,
+                warnings=item.warnings,
             )
-            used_toc_fallback = True
-        if not parsed.units:
-            parsed = ParsedTextbook(
-                page_count=parsed.page_count,
-                units=(ParsedUnit(title="全册材料", subtitle=source.title, page_number=1),),
-                text_char_count=parsed.text_char_count,
-            )
-            used_toc_fallback = True
+            for item in extraction.vocabulary
+        )
+        vocabulary_evidence = {
+            (item.unit_title, item.canonical_expression, item.unit_order): item.evidence.to_dict()
+            for item in extraction.vocabulary
+        }
+        page_texts = [page.text for page in artifact.pages] or [artifact.markdown]
+        used_toc_fallback = bool(extraction.warnings)
 
         await db.execute(delete(KnowledgePoint).where(KnowledgePoint.source_id == source.id))
         await db.execute(delete(KnowledgeChunk).where(KnowledgeChunk.source_id == source.id))
         await db.execute(delete(CurriculumNode).where(CurriculumNode.source_id == source.id))
-        await _set_parser_progress(db, source, parser_run, stage="building_knowledge", progress=50)
+        await _set_parser_progress(db, source, parser_run, stage="building_chunks", progress=50)
 
         nodes: list[CurriculumNode] = []
         for ordinal, unit in enumerate(parsed.units, start=1):
             node = CurriculumNode(
                 source_id=source.id,
                 node_type="unit",
-                title=unit.title,
-                subtitle=unit.subtitle,
+                title=_db_label(unit.title, max_length=255),
+                subtitle=_db_label(unit.subtitle, max_length=255) or None,
                 ordinal=ordinal,
                 start_page=str(unit.page_number),
                 end_page=str(unit.page_number),
@@ -966,12 +471,30 @@ async def process_uploaded_textbook(
         await db.flush()
 
         knowledge_points: list[KnowledgePoint] = []
-        for node in nodes:
-            knowledge_points.extend(_known_knowledge(source.id, node.id, node.title))
         nodes_by_title = {_normalize_unit_title(node.title): node for node in nodes}
-        if is_grade7_upper:
-            knowledge_points.extend(
-                _appendix_knowledge(source.id, nodes_by_title, notes, pronunciation)
+        for candidate in extraction.knowledge:
+            node = _node_for_candidate(candidate.title, candidate.page_number, nodes, nodes_by_title)
+            if node is None:
+                continue
+            knowledge_points.append(
+                KnowledgePoint(
+                    source_id=source.id,
+                    curriculum_node_id=node.id,
+                    canonical_key=f"{candidate.canonical_key}.{str(source.id)[:8]}",
+                    type=candidate.type,
+                    title=candidate.title,
+                    summary=candidate.summary,
+                    source_page=str(candidate.page_number),
+                    difficulty=0.3,
+                    status="draft",
+                    content={
+                        "origin": "document_artifact_extractor",
+                        "requires_review": candidate.confidence < 0.8 or bool(candidate.warnings),
+                        "confidence": candidate.confidence,
+                        "warnings": list(candidate.warnings),
+                        "evidence": candidate.evidence.to_dict(),
+                    },
+                )
             )
         seen_vocabulary_keys: set[tuple[uuid.UUID, str]] = set()
         for entry in vocabulary_entries:
@@ -995,7 +518,7 @@ async def process_uploaded_textbook(
                     difficulty=0.2,
                     status="draft",
                     content={
-                        "origin": "unit_wordlist_sequence_parser",
+                        "origin": "document_artifact_extractor",
                         "role": "unit_wordlist",
                         "grade": source.grade,
                         "lemma": entry.canonical_expression,
@@ -1005,6 +528,10 @@ async def process_uploaded_textbook(
                         "warnings": list(entry.warnings),
                         "requires_review": entry.confidence < 0.75 or bool(entry.warnings),
                         "dictionary_status": "pending",
+                        "evidence": vocabulary_evidence.get(
+                            (entry.unit_title, entry.canonical_expression, entry.unit_order),
+                            {},
+                        ),
                     },
                 )
             )
@@ -1027,7 +554,7 @@ async def process_uploaded_textbook(
             for page_number, page_text in enumerate(page_texts, start=1)
             if split_text(page_text)
         }
-        await _set_parser_progress(db, source, parser_run, stage="building_index", progress=70)
+        await _set_parser_progress(db, source, parser_run, stage="building_chunks", progress=70)
         chunk_count = await build_chunks(
             db,
             source,
@@ -1037,12 +564,8 @@ async def process_uploaded_textbook(
             parser_run_id=parser_run_id_str,
         )
         await _set_parser_progress(db, source, parser_run, stage="quality_checking", progress=85)
-        rag_metadata = source.metadata_ or {}
-        section_count = (
-            len(notes)
-            + len(pronunciation)
-            + (len(GRADE7_UPPER_GRAMMAR_TOPICS) if is_grade7_upper else 0)
-        )
+        rag_metadata = _clear_stale_ingest_metadata(source.metadata_ or {})
+        section_count = len(extraction.knowledge)
         parser_report = build_parser_report(
             profile=parser_profile,
             unit_count=len(nodes),
@@ -1056,6 +579,27 @@ async def process_uploaded_textbook(
             chunk_char_counts=chunk_char_counts,
         )
         report_dict = parser_report.to_dict()
+        report_dict.update(
+            {
+                "document_quality": document_quality,
+                "attempted_engines": router_result.attempted_engines,
+                "selected_engine": router_result.selected_engine,
+                "fallback_used": router_result.fallback_used,
+                "needs_ocr": bool(document_quality.get("needs_ocr")),
+                "needs_review": bool(document_quality.get("needs_review")),
+                "page_count": parsed.page_count,
+                "text_char_count": parsed.text_char_count,
+                "warnings": list(
+                    dict.fromkeys(
+                        [
+                            *report_dict.get("warnings", []),
+                            *artifact.warnings,
+                            *extraction.warnings,
+                        ]
+                    )
+                ),
+            }
+        )
         quality_score = score_textbook_quality(report_dict)
         review_items = await replace_parser_review_items(
             db,
@@ -1072,7 +616,7 @@ async def process_uploaded_textbook(
         source.page_count = parsed.page_count
         source.unit_count = len(nodes)
         source.knowledge_count = len(knowledge_points)
-        source.status = "failed" if quality_score.status == "failed" else "completed"
+        source.status = "completed"
         parser_run.status = "completed"
         parser_run.stage = "completed"
         parser_run.progress = 100
@@ -1084,7 +628,33 @@ async def process_uploaded_textbook(
             "knowledge_point_count": len(knowledge_points),
             "rag_chunk_count": chunk_count,
             "review_item_count": len(review_items),
+            "document_parse_artifact": artifact.to_dict(),
+            **router_result.metadata(),
         }
+        parse_quality_status = _parse_quality_status(document_quality, parser_run.status)
+        availability_status = (
+            "partially_available"
+            if parse_quality_status in {"needs_review", "needs_ocr"}
+            else quality_summary(quality_score, report_dict).get("availability_status", "available")
+        )
+        summary_payload = quality_summary(quality_score, report_dict)
+        summary_payload.update(
+            {
+                "parse_quality_status": parse_quality_status,
+                "availability_status": availability_status,
+                "parser_report_summary": {
+                    **summary_payload.get("parser_report_summary", {}),
+                    "page_count": parsed.page_count,
+                    "text_char_count": parsed.text_char_count,
+                    "document_quality": document_quality,
+                    "attempted_engines": router_result.attempted_engines,
+                    "selected_engine": router_result.selected_engine,
+                    "fallback_used": router_result.fallback_used,
+                    "needs_ocr": bool(document_quality.get("needs_ocr")),
+                    "warnings": report_dict.get("warnings", []),
+                },
+            }
+        )
         source.metadata_ = {
             **rag_metadata,
             "stage": "validated",
@@ -1094,19 +664,24 @@ async def process_uploaded_textbook(
             "text_char_count": parsed.text_char_count,
             "book_manifest_id": manifest.id if manifest else None,
             "parser_profile": parser_profile.id if parser_profile else None,
-            "parser": "pypdf+manifest-profile-v1",
-            "vocabulary_parser": "unit-sequence-with-evidence-v1",
+            "parser": f"{router_result.selected_engine}-{artifact.parser_version}",
+            "selected_engine": router_result.selected_engine,
+            "attempted_engines": router_result.attempted_engines,
+            "fallback_used": router_result.fallback_used,
+            "document_quality": document_quality,
+            "parse_quality_status": parse_quality_status,
+            "vocabulary_parser": "document-artifact-v1",
             "dictionary_enrichment": "free_dictionary_api+mymemory",
             "vocabulary_entry_count": len(vocabulary_entries),
             "low_confidence_vocabulary_count": parser_report.low_confidence_entries,
-            "notes_section_count": len(notes),
-            "pronunciation_section_count": len(pronunciation),
-            "grammar_reference_count": len(GRADE7_UPPER_GRAMMAR_TOPICS) if is_grade7_upper else 0,
+            "notes_section_count": 0,
+            "pronunciation_section_count": 0,
+            "grammar_reference_count": 0,
             "rag_chunk_count": chunk_count,
             "toc_fallback": used_toc_fallback,
             "parser_report": report_dict,
             "warning": "; ".join(parser_report.warnings) if parser_report.warnings else None,
-            **quality_summary(quality_score, report_dict),
+            **summary_payload,
         }
         await db.flush()
         return parsed
@@ -1136,6 +711,7 @@ async def process_uploaded_textbook(
             "latest_parser_run_id": parser_run_id_str,
             "parser_status": "failed",
             "processing_status": "failed",
+            "parse_quality_status": "failed",
             "error": str(exc)[:500],
             "parser_report": failed_report,
             **quality_summary(failed_score, failed_report),

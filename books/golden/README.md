@@ -32,7 +32,7 @@ Expected file schemas:
 
 Current profiles:
 
-- `pep_grade7_upper`: minimal PEP 七年级上册 parser regression profile. It references the local fixture PDF through `manifest.json` and stores only short expected structures/items.
+- No checked-in textbook-specific golden profile is active. Add a small profile only after reviewing that it does not reintroduce textbook-specific fallback behavior.
 
 How to add a profile:
 
