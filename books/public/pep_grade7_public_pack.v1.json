@@ -1,0 +1,5251 @@
+{
+  "generated_from": {
+    "notes": "Curated public textbook seed data; not full textbook text. Stable keys are deterministic and derived from source id, unit ordinal, type, and title.",
+    "source": "checked_in_pdf"
+  },
+  "schema_version": "public_textbook_pack.v1",
+  "sources": [
+    {
+      "curriculum_nodes": [
+        {
+          "end_page": "P.4",
+          "estimated_minutes": 18,
+          "front_end_blocks": [
+            {
+              "block_type": "unit_hero",
+              "status": "ready"
+            },
+            {
+              "block_type": "core_vocabulary",
+              "status": "ready_or_pending_review"
+            },
+            {
+              "block_type": "sentence_patterns",
+              "status": "ready_or_pending_review"
+            },
+            {
+              "block_type": "practice",
+              "status": "ready_or_pending_review"
+            }
+          ],
+          "learning_objectives": [
+            "围绕“问候与简单寒暄”理解并使用本单元核心表达。",
+            "掌握可迁移到日常交流的词汇、短语和句式。"
+          ],
+          "node_type": "unit",
+          "ordinal": 1,
+          "parent_key": null,
+          "stable_key": "pep-grade7-upper-2024:unit:01",
+          "start_page": "P.1",
+          "subtitle": "Good morning!",
+          "title": "Starter Unit 1"
+        },
+        {
+          "end_page": "P.8",
+          "estimated_minutes": 18,
+          "front_end_blocks": [
+            {
+              "block_type": "unit_hero",
+              "status": "ready"
+            },
+            {
+              "block_type": "core_vocabulary",
+              "status": "ready_or_pending_review"
+            },
+            {
+              "block_type": "sentence_patterns",
+              "status": "ready_or_pending_review"
+            },
+            {
+              "block_type": "practice",
+              "status": "ready_or_pending_review"
+            }
+          ],
+          "learning_objectives": [
+            "围绕“用英语询问物品名称”理解并使用本单元核心表达。",
+            "掌握可迁移到日常交流的词汇、短语和句式。"
+          ],
+          "node_type": "unit",
+          "ordinal": 2,
+          "parent_key": null,
+          "stable_key": "pep-grade7-upper-2024:unit:02",
+          "start_page": "P.5",
+          "subtitle": "What's this in English?",
+          "title": "Starter Unit 2"
+        },
+        {
+          "end_page": "P.12",
+          "estimated_minutes": 18,
+          "front_end_blocks": [
+            {
+              "block_type": "unit_hero",
+              "status": "ready"
+            },
+            {
+              "block_type": "core_vocabulary",
+              "status": "ready_or_pending_review"
+            },
+            {
+              "block_type": "sentence_patterns",
+              "status": "ready_or_pending_review"
+            },
+            {
+              "block_type": "practice",
+              "status": "ready_or_pending_review"
+            }
+          ],
+          "learning_objectives": [
+            "围绕“颜色与字母复习”理解并使用本单元核心表达。",
+            "掌握可迁移到日常交流的词汇、短语和句式。"
+          ],
+          "node_type": "unit",
+          "ordinal": 3,
+          "parent_key": null,
+          "stable_key": "pep-grade7-upper-2024:unit:03",
+          "start_page": "P.9",
+          "subtitle": "What color is it?",
+          "title": "Starter Unit 3"
+        },
+        {
+          "end_page": "P.18",
+          "estimated_minutes": 24,
+          "front_end_blocks": [
+            {
+              "block_type": "unit_hero",
+              "status": "ready"
+            },
+            {
+              "block_type": "core_vocabulary",
+              "status": "ready_or_pending_review"
+            },
+            {
+              "block_type": "sentence_patterns",
+              "status": "ready_or_pending_review"
+            },
+            {
+              "block_type": "practice",
+              "status": "ready_or_pending_review"
+            }
+          ],
+          "learning_objectives": [
+            "围绕“自我介绍与电话号码”理解并使用本单元核心表达。",
+            "掌握可迁移到日常交流的词汇、短语和句式。"
+          ],
+          "node_type": "unit",
+          "ordinal": 4,
+          "parent_key": null,
+          "stable_key": "pep-grade7-upper-2024:unit:04",
+          "start_page": "P.13",
+          "subtitle": "My name's Gina.",
+          "title": "Unit 1"
+        },
+        {
+          "end_page": "P.24",
+          "estimated_minutes": 24,
+          "front_end_blocks": [
+            {
+              "block_type": "unit_hero",
+              "status": "ready"
+            },
+            {
+              "block_type": "core_vocabulary",
+              "status": "ready_or_pending_review"
+            },
+            {
+              "block_type": "sentence_patterns",
+              "status": "ready_or_pending_review"
+            },
+            {
+              "block_type": "practice",
+              "status": "ready_or_pending_review"
+            }
+          ],
+          "learning_objectives": [
+            "围绕“家庭成员介绍”理解并使用本单元核心表达。",
+            "掌握可迁移到日常交流的词汇、短语和句式。"
+          ],
+          "node_type": "unit",
+          "ordinal": 5,
+          "parent_key": null,
+          "stable_key": "pep-grade7-upper-2024:unit:05",
+          "start_page": "P.19",
+          "subtitle": "This is my sister.",
+          "title": "Unit 2"
+        },
+        {
+          "end_page": "P.30",
+          "estimated_minutes": 24,
+          "front_end_blocks": [
+            {
+              "block_type": "unit_hero",
+              "status": "ready"
+            },
+            {
+              "block_type": "core_vocabulary",
+              "status": "ready_or_pending_review"
+            },
+            {
+              "block_type": "sentence_patterns",
+              "status": "ready_or_pending_review"
+            },
+            {
+              "block_type": "practice",
+              "status": "ready_or_pending_review"
+            }
+          ],
+          "learning_objectives": [
+            "围绕“学习用品与失物招领”理解并使用本单元核心表达。",
+            "掌握可迁移到日常交流的词汇、短语和句式。"
+          ],
+          "node_type": "unit",
+          "ordinal": 6,
+          "parent_key": null,
+          "stable_key": "pep-grade7-upper-2024:unit:06",
+          "start_page": "P.25",
+          "subtitle": "Is this your pencil?",
+          "title": "Unit 3"
+        },
+        {
+          "end_page": "P.36",
+          "estimated_minutes": 24,
+          "front_end_blocks": [
+            {
+              "block_type": "unit_hero",
+              "status": "ready"
+            },
+            {
+              "block_type": "core_vocabulary",
+              "status": "ready_or_pending_review"
+            },
+            {
+              "block_type": "sentence_patterns",
+              "status": "ready_or_pending_review"
+            },
+            {
+              "block_type": "practice",
+              "status": "ready_or_pending_review"
+            }
+          ],
+          "learning_objectives": [
+            "围绕“房间物品与位置”理解并使用本单元核心表达。",
+            "掌握可迁移到日常交流的词汇、短语和句式。"
+          ],
+          "node_type": "unit",
+          "ordinal": 7,
+          "parent_key": null,
+          "stable_key": "pep-grade7-upper-2024:unit:07",
+          "start_page": "P.31",
+          "subtitle": "Where's my schoolbag?",
+          "title": "Unit 4"
+        },
+        {
+          "end_page": "P.42",
+          "estimated_minutes": 24,
+          "front_end_blocks": [
+            {
+              "block_type": "unit_hero",
+              "status": "ready"
+            },
+            {
+              "block_type": "core_vocabulary",
+              "status": "ready_or_pending_review"
+            },
+            {
+              "block_type": "sentence_patterns",
+              "status": "ready_or_pending_review"
+            },
+            {
+              "block_type": "practice",
+              "status": "ready_or_pending_review"
+            }
+          ],
+          "learning_objectives": [
+            "围绕“运动物品与喜好”理解并使用本单元核心表达。",
+            "掌握可迁移到日常交流的词汇、短语和句式。"
+          ],
+          "node_type": "unit",
+          "ordinal": 8,
+          "parent_key": null,
+          "stable_key": "pep-grade7-upper-2024:unit:08",
+          "start_page": "P.37",
+          "subtitle": "Do you have a soccer ball?",
+          "title": "Unit 5"
+        },
+        {
+          "end_page": "P.48",
+          "estimated_minutes": 24,
+          "front_end_blocks": [
+            {
+              "block_type": "unit_hero",
+              "status": "ready"
+            },
+            {
+              "block_type": "core_vocabulary",
+              "status": "ready_or_pending_review"
+            },
+            {
+              "block_type": "sentence_patterns",
+              "status": "ready_or_pending_review"
+            },
+            {
+              "block_type": "practice",
+              "status": "ready_or_pending_review"
+            }
+          ],
+          "learning_objectives": [
+            "围绕“食物与饮食习惯”理解并使用本单元核心表达。",
+            "掌握可迁移到日常交流的词汇、短语和句式。"
+          ],
+          "node_type": "unit",
+          "ordinal": 9,
+          "parent_key": null,
+          "stable_key": "pep-grade7-upper-2024:unit:09",
+          "start_page": "P.43",
+          "subtitle": "Do you like bananas?",
+          "title": "Unit 6"
+        },
+        {
+          "end_page": "P.54",
+          "estimated_minutes": 24,
+          "front_end_blocks": [
+            {
+              "block_type": "unit_hero",
+              "status": "ready"
+            },
+            {
+              "block_type": "core_vocabulary",
+              "status": "ready_or_pending_review"
+            },
+            {
+              "block_type": "sentence_patterns",
+              "status": "ready_or_pending_review"
+            },
+            {
+              "block_type": "practice",
+              "status": "ready_or_pending_review"
+            }
+          ],
+          "learning_objectives": [
+            "围绕“购物与价格”理解并使用本单元核心表达。",
+            "掌握可迁移到日常交流的词汇、短语和句式。"
+          ],
+          "node_type": "unit",
+          "ordinal": 10,
+          "parent_key": null,
+          "stable_key": "pep-grade7-upper-2024:unit:10",
+          "start_page": "P.49",
+          "subtitle": "How much are these socks?",
+          "title": "Unit 7"
+        },
+        {
+          "end_page": "P.60",
+          "estimated_minutes": 24,
+          "front_end_blocks": [
+            {
+              "block_type": "unit_hero",
+              "status": "ready"
+            },
+            {
+              "block_type": "core_vocabulary",
+              "status": "ready_or_pending_review"
+            },
+            {
+              "block_type": "sentence_patterns",
+              "status": "ready_or_pending_review"
+            },
+            {
+              "block_type": "practice",
+              "status": "ready_or_pending_review"
+            }
+          ],
+          "learning_objectives": [
+            "围绕“生日、月份与日期”理解并使用本单元核心表达。",
+            "掌握可迁移到日常交流的词汇、短语和句式。"
+          ],
+          "node_type": "unit",
+          "ordinal": 11,
+          "parent_key": null,
+          "stable_key": "pep-grade7-upper-2024:unit:11",
+          "start_page": "P.55",
+          "subtitle": "When is your birthday?",
+          "title": "Unit 8"
+        },
+        {
+          "end_page": "P.66",
+          "estimated_minutes": 24,
+          "front_end_blocks": [
+            {
+              "block_type": "unit_hero",
+              "status": "ready"
+            },
+            {
+              "block_type": "core_vocabulary",
+              "status": "ready_or_pending_review"
+            },
+            {
+              "block_type": "sentence_patterns",
+              "status": "ready_or_pending_review"
+            },
+            {
+              "block_type": "practice",
+              "status": "ready_or_pending_review"
+            }
+          ],
+          "learning_objectives": [
+            "围绕“学校科目与偏好理由”理解并使用本单元核心表达。",
+            "掌握可迁移到日常交流的词汇、短语和句式。"
+          ],
+          "node_type": "unit",
+          "ordinal": 12,
+          "parent_key": null,
+          "stable_key": "pep-grade7-upper-2024:unit:12",
+          "start_page": "P.61",
+          "subtitle": "My favorite subject is science.",
+          "title": "Unit 9"
+        }
+      ],
+      "exercise_questions": [
+        {
+          "answer": "Good morning!",
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:01",
+          "difficulty": 0.24,
+          "explanation": "“Good morning!”是 Starter Unit 1 的核心标题句式，可直接用于本单元主题交流。",
+          "knowledge_point_key": "pep-grade7-upper-2024:unit:01:sentence_pattern:good-morning",
+          "metadata": {
+            "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+            "generated_from": {
+              "curriculum_node_key": "pep-grade7-upper-2024:unit:01",
+              "knowledge_point_key": "pep-grade7-upper-2024:unit:01:sentence_pattern:good-morning",
+              "source_stable_id": "pep-grade7-upper-2024"
+            },
+            "interaction": {
+              "allow_retry": true,
+              "input_mode": "choice",
+              "type": "single_choice"
+            },
+            "source": "curated_public_textbook_seed"
+          },
+          "options": [
+            "Good morning!",
+            "How are you?",
+            "good",
+            "Thank you!"
+          ],
+          "question_type": "multiple_choice",
+          "stable_key": "pep-grade7-upper-2024:unit:01:ex:choose-pattern-01",
+          "status": "published",
+          "stem": "围绕“问候与简单寒暄”，下列哪一句最贴近本单元核心表达？"
+        },
+        {
+          "answer": "What's this in English?",
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:02",
+          "difficulty": 0.24,
+          "explanation": "“What's this in English?”是 Starter Unit 2 的核心标题句式，可直接用于本单元主题交流。",
+          "knowledge_point_key": "pep-grade7-upper-2024:unit:02:sentence_pattern:whats-this-in-english",
+          "metadata": {
+            "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+            "generated_from": {
+              "curriculum_node_key": "pep-grade7-upper-2024:unit:02",
+              "knowledge_point_key": "pep-grade7-upper-2024:unit:02:sentence_pattern:whats-this-in-english",
+              "source_stable_id": "pep-grade7-upper-2024"
+            },
+            "interaction": {
+              "allow_retry": true,
+              "input_mode": "choice",
+              "type": "single_choice"
+            },
+            "source": "curated_public_textbook_seed"
+          },
+          "options": [
+            "What's this in English?",
+            "in English",
+            "map",
+            "Thank you!"
+          ],
+          "question_type": "multiple_choice",
+          "stable_key": "pep-grade7-upper-2024:unit:02:ex:choose-pattern-01",
+          "status": "published",
+          "stem": "围绕“用英语询问物品名称”，下列哪一句最贴近本单元核心表达？"
+        },
+        {
+          "answer": "What color is it?",
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:03",
+          "difficulty": 0.24,
+          "explanation": "“What color is it?”是 Starter Unit 3 的核心标题句式，可直接用于本单元主题交流。",
+          "knowledge_point_key": "pep-grade7-upper-2024:unit:03:sentence_pattern:what-color-is-it",
+          "metadata": {
+            "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+            "generated_from": {
+              "curriculum_node_key": "pep-grade7-upper-2024:unit:03",
+              "knowledge_point_key": "pep-grade7-upper-2024:unit:03:sentence_pattern:what-color-is-it",
+              "source_stable_id": "pep-grade7-upper-2024"
+            },
+            "interaction": {
+              "allow_retry": true,
+              "input_mode": "choice",
+              "type": "single_choice"
+            },
+            "source": "curated_public_textbook_seed"
+          },
+          "options": [
+            "What color is it?",
+            "black and white",
+            "color",
+            "Thank you!"
+          ],
+          "question_type": "multiple_choice",
+          "stable_key": "pep-grade7-upper-2024:unit:03:ex:choose-pattern-01",
+          "status": "published",
+          "stem": "围绕“颜色与字母复习”，下列哪一句最贴近本单元核心表达？"
+        },
+        {
+          "answer": "My name's ...",
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:04",
+          "difficulty": 0.24,
+          "explanation": "“My name's ...”是 Unit 1 的核心标题句式，可直接用于本单元主题交流。",
+          "knowledge_point_key": "pep-grade7-upper-2024:unit:04:sentence_pattern:my-names",
+          "metadata": {
+            "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+            "generated_from": {
+              "curriculum_node_key": "pep-grade7-upper-2024:unit:04",
+              "knowledge_point_key": "pep-grade7-upper-2024:unit:04:sentence_pattern:my-names",
+              "source_stable_id": "pep-grade7-upper-2024"
+            },
+            "interaction": {
+              "allow_retry": true,
+              "input_mode": "choice",
+              "type": "single_choice"
+            },
+            "source": "curated_public_textbook_seed"
+          },
+          "options": [
+            "My name's ...",
+            "first name",
+            "name",
+            "Thank you!"
+          ],
+          "question_type": "multiple_choice",
+          "stable_key": "pep-grade7-upper-2024:unit:04:ex:choose-pattern-01",
+          "status": "published",
+          "stem": "围绕“自我介绍与电话号码”，下列哪一句最贴近本单元核心表达？"
+        },
+        {
+          "answer": "This is my sister.",
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:05",
+          "difficulty": 0.24,
+          "explanation": "“This is my sister.”是 Unit 2 的核心标题句式，可直接用于本单元主题交流。",
+          "knowledge_point_key": "pep-grade7-upper-2024:unit:05:sentence_pattern:this-is-my-sister",
+          "metadata": {
+            "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+            "generated_from": {
+              "curriculum_node_key": "pep-grade7-upper-2024:unit:05",
+              "knowledge_point_key": "pep-grade7-upper-2024:unit:05:sentence_pattern:this-is-my-sister",
+              "source_stable_id": "pep-grade7-upper-2024"
+            },
+            "interaction": {
+              "allow_retry": true,
+              "input_mode": "choice",
+              "type": "single_choice"
+            },
+            "source": "curated_public_textbook_seed"
+          },
+          "options": [
+            "This is my sister.",
+            "family photo",
+            "sister",
+            "Thank you!"
+          ],
+          "question_type": "multiple_choice",
+          "stable_key": "pep-grade7-upper-2024:unit:05:ex:choose-pattern-01",
+          "status": "published",
+          "stem": "围绕“家庭成员介绍”，下列哪一句最贴近本单元核心表达？"
+        },
+        {
+          "answer": "Is this your pencil?",
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:06",
+          "difficulty": 0.24,
+          "explanation": "“Is this your pencil?”是 Unit 3 的核心标题句式，可直接用于本单元主题交流。",
+          "knowledge_point_key": "pep-grade7-upper-2024:unit:06:sentence_pattern:is-this-your-pencil",
+          "metadata": {
+            "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+            "generated_from": {
+              "curriculum_node_key": "pep-grade7-upper-2024:unit:06",
+              "knowledge_point_key": "pep-grade7-upper-2024:unit:06:sentence_pattern:is-this-your-pencil",
+              "source_stable_id": "pep-grade7-upper-2024"
+            },
+            "interaction": {
+              "allow_retry": true,
+              "input_mode": "choice",
+              "type": "single_choice"
+            },
+            "source": "curated_public_textbook_seed"
+          },
+          "options": [
+            "Is this your pencil?",
+            "excuse me",
+            "pencil",
+            "Thank you!"
+          ],
+          "question_type": "multiple_choice",
+          "stable_key": "pep-grade7-upper-2024:unit:06:ex:choose-pattern-01",
+          "status": "published",
+          "stem": "围绕“学习用品与失物招领”，下列哪一句最贴近本单元核心表达？"
+        },
+        {
+          "answer": "Where's my schoolbag?",
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:07",
+          "difficulty": 0.24,
+          "explanation": "“Where's my schoolbag?”是 Unit 4 的核心标题句式，可直接用于本单元主题交流。",
+          "knowledge_point_key": "pep-grade7-upper-2024:unit:07:sentence_pattern:wheres-my-schoolbag",
+          "metadata": {
+            "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+            "generated_from": {
+              "curriculum_node_key": "pep-grade7-upper-2024:unit:07",
+              "knowledge_point_key": "pep-grade7-upper-2024:unit:07:sentence_pattern:wheres-my-schoolbag",
+              "source_stable_id": "pep-grade7-upper-2024"
+            },
+            "interaction": {
+              "allow_retry": true,
+              "input_mode": "choice",
+              "type": "single_choice"
+            },
+            "source": "curated_public_textbook_seed"
+          },
+          "options": [
+            "Where's my schoolbag?",
+            "come on",
+            "where",
+            "Thank you!"
+          ],
+          "question_type": "multiple_choice",
+          "stable_key": "pep-grade7-upper-2024:unit:07:ex:choose-pattern-01",
+          "status": "published",
+          "stem": "围绕“房间物品与位置”，下列哪一句最贴近本单元核心表达？"
+        },
+        {
+          "answer": "Do you have a soccer ball?",
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:08",
+          "difficulty": 0.24,
+          "explanation": "“Do you have a soccer ball?”是 Unit 5 的核心标题句式，可直接用于本单元主题交流。",
+          "knowledge_point_key": "pep-grade7-upper-2024:unit:08:sentence_pattern:do-you-have-a-soccer-ball",
+          "metadata": {
+            "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+            "generated_from": {
+              "curriculum_node_key": "pep-grade7-upper-2024:unit:08",
+              "knowledge_point_key": "pep-grade7-upper-2024:unit:08:sentence_pattern:do-you-have-a-soccer-ball",
+              "source_stable_id": "pep-grade7-upper-2024"
+            },
+            "interaction": {
+              "allow_retry": true,
+              "input_mode": "choice",
+              "type": "single_choice"
+            },
+            "source": "curated_public_textbook_seed"
+          },
+          "options": [
+            "Do you have a soccer ball?",
+            "let's",
+            "soccer ball",
+            "Thank you!"
+          ],
+          "question_type": "multiple_choice",
+          "stable_key": "pep-grade7-upper-2024:unit:08:ex:choose-pattern-01",
+          "status": "published",
+          "stem": "围绕“运动物品与喜好”，下列哪一句最贴近本单元核心表达？"
+        },
+        {
+          "answer": "Do you like bananas?",
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:09",
+          "difficulty": 0.24,
+          "explanation": "“Do you like bananas?”是 Unit 6 的核心标题句式，可直接用于本单元主题交流。",
+          "knowledge_point_key": "pep-grade7-upper-2024:unit:09:sentence_pattern:do-you-like-bananas",
+          "metadata": {
+            "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+            "generated_from": {
+              "curriculum_node_key": "pep-grade7-upper-2024:unit:09",
+              "knowledge_point_key": "pep-grade7-upper-2024:unit:09:sentence_pattern:do-you-like-bananas",
+              "source_stable_id": "pep-grade7-upper-2024"
+            },
+            "interaction": {
+              "allow_retry": true,
+              "input_mode": "choice",
+              "type": "single_choice"
+            },
+            "source": "curated_public_textbook_seed"
+          },
+          "options": [
+            "Do you like bananas?",
+            "think about",
+            "banana",
+            "Thank you!"
+          ],
+          "question_type": "multiple_choice",
+          "stable_key": "pep-grade7-upper-2024:unit:09:ex:choose-pattern-01",
+          "status": "published",
+          "stem": "围绕“食物与饮食习惯”，下列哪一句最贴近本单元核心表达？"
+        },
+        {
+          "answer": "How much are these socks?",
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:10",
+          "difficulty": 0.24,
+          "explanation": "“How much are these socks?”是 Unit 7 的核心标题句式，可直接用于本单元主题交流。",
+          "knowledge_point_key": "pep-grade7-upper-2024:unit:10:sentence_pattern:how-much-are-these-socks",
+          "metadata": {
+            "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+            "generated_from": {
+              "curriculum_node_key": "pep-grade7-upper-2024:unit:10",
+              "knowledge_point_key": "pep-grade7-upper-2024:unit:10:sentence_pattern:how-much-are-these-socks",
+              "source_stable_id": "pep-grade7-upper-2024"
+            },
+            "interaction": {
+              "allow_retry": true,
+              "input_mode": "choice",
+              "type": "single_choice"
+            },
+            "source": "curated_public_textbook_seed"
+          },
+          "options": [
+            "How much are these socks?",
+            "a pair of",
+            "sock",
+            "Thank you!"
+          ],
+          "question_type": "multiple_choice",
+          "stable_key": "pep-grade7-upper-2024:unit:10:ex:choose-pattern-01",
+          "status": "published",
+          "stem": "围绕“购物与价格”，下列哪一句最贴近本单元核心表达？"
+        },
+        {
+          "answer": "When is your birthday?",
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:11",
+          "difficulty": 0.24,
+          "explanation": "“When is your birthday?”是 Unit 8 的核心标题句式，可直接用于本单元主题交流。",
+          "knowledge_point_key": "pep-grade7-upper-2024:unit:11:sentence_pattern:when-is-your-birthday",
+          "metadata": {
+            "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+            "generated_from": {
+              "curriculum_node_key": "pep-grade7-upper-2024:unit:11",
+              "knowledge_point_key": "pep-grade7-upper-2024:unit:11:sentence_pattern:when-is-your-birthday",
+              "source_stable_id": "pep-grade7-upper-2024"
+            },
+            "interaction": {
+              "allow_retry": true,
+              "input_mode": "choice",
+              "type": "single_choice"
+            },
+            "source": "curated_public_textbook_seed"
+          },
+          "options": [
+            "When is your birthday?",
+            "Happy birthday!",
+            "January",
+            "Thank you!"
+          ],
+          "question_type": "multiple_choice",
+          "stable_key": "pep-grade7-upper-2024:unit:11:ex:choose-pattern-01",
+          "status": "published",
+          "stem": "围绕“生日、月份与日期”，下列哪一句最贴近本单元核心表达？"
+        },
+        {
+          "answer": "My favorite subject is science.",
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:12",
+          "difficulty": 0.24,
+          "explanation": "“My favorite subject is science.”是 Unit 9 的核心标题句式，可直接用于本单元主题交流。",
+          "knowledge_point_key": "pep-grade7-upper-2024:unit:12:sentence_pattern:my-favorite-subject-is-science",
+          "metadata": {
+            "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+            "generated_from": {
+              "curriculum_node_key": "pep-grade7-upper-2024:unit:12",
+              "knowledge_point_key": "pep-grade7-upper-2024:unit:12:sentence_pattern:my-favorite-subject-is-science",
+              "source_stable_id": "pep-grade7-upper-2024"
+            },
+            "interaction": {
+              "allow_retry": true,
+              "input_mode": "choice",
+              "type": "single_choice"
+            },
+            "source": "curated_public_textbook_seed"
+          },
+          "options": [
+            "My favorite subject is science.",
+            "for sure",
+            "science",
+            "Thank you!"
+          ],
+          "question_type": "multiple_choice",
+          "stable_key": "pep-grade7-upper-2024:unit:12:ex:choose-pattern-01",
+          "status": "published",
+          "stem": "围绕“学校科目与偏好理由”，下列哪一句最贴近本单元核心表达？"
+        }
+      ],
+      "extraction_gaps": [
+        {
+          "description": "听力活动需要配套音频，暂不进入公共默认学习流。",
+          "gap_type": "audio_required",
+          "scope": "pep-grade7-upper-2024:unit:01",
+          "suggested_future_handling": "后续接入音频资源和听力题型后再结构化。"
+        },
+        {
+          "description": "听力活动需要配套音频，暂不进入公共默认学习流。",
+          "gap_type": "audio_required",
+          "scope": "pep-grade7-upper-2024:unit:02",
+          "suggested_future_handling": "后续接入音频资源和听力题型后再结构化。"
+        },
+        {
+          "description": "听力活动需要配套音频，暂不进入公共默认学习流。",
+          "gap_type": "audio_required",
+          "scope": "pep-grade7-upper-2024:unit:03",
+          "suggested_future_handling": "后续接入音频资源和听力题型后再结构化。"
+        },
+        {
+          "description": "长课文、整页练习或连续对话不写入 seed pack。",
+          "gap_type": "copyright_sensitive_long_text",
+          "scope": "pep-grade7-upper-2024:unit:03",
+          "suggested_future_handling": "仅保存短摘要和知识点，必要时通过受控证据摘录展示。"
+        },
+        {
+          "description": "听力活动需要配套音频，暂不进入公共默认学习流。",
+          "gap_type": "audio_required",
+          "scope": "pep-grade7-upper-2024:unit:04",
+          "suggested_future_handling": "后续接入音频资源和听力题型后再结构化。"
+        },
+        {
+          "description": "听力活动需要配套音频，暂不进入公共默认学习流。",
+          "gap_type": "audio_required",
+          "scope": "pep-grade7-upper-2024:unit:05",
+          "suggested_future_handling": "后续接入音频资源和听力题型后再结构化。"
+        },
+        {
+          "description": "听力活动需要配套音频，暂不进入公共默认学习流。",
+          "gap_type": "audio_required",
+          "scope": "pep-grade7-upper-2024:unit:06",
+          "suggested_future_handling": "后续接入音频资源和听力题型后再结构化。"
+        },
+        {
+          "description": "长课文、整页练习或连续对话不写入 seed pack。",
+          "gap_type": "copyright_sensitive_long_text",
+          "scope": "pep-grade7-upper-2024:unit:06",
+          "suggested_future_handling": "仅保存短摘要和知识点，必要时通过受控证据摘录展示。"
+        },
+        {
+          "description": "听力活动需要配套音频，暂不进入公共默认学习流。",
+          "gap_type": "audio_required",
+          "scope": "pep-grade7-upper-2024:unit:07",
+          "suggested_future_handling": "后续接入音频资源和听力题型后再结构化。"
+        },
+        {
+          "description": "听力活动需要配套音频，暂不进入公共默认学习流。",
+          "gap_type": "audio_required",
+          "scope": "pep-grade7-upper-2024:unit:08",
+          "suggested_future_handling": "后续接入音频资源和听力题型后再结构化。"
+        },
+        {
+          "description": "听力活动需要配套音频，暂不进入公共默认学习流。",
+          "gap_type": "audio_required",
+          "scope": "pep-grade7-upper-2024:unit:09",
+          "suggested_future_handling": "后续接入音频资源和听力题型后再结构化。"
+        },
+        {
+          "description": "长课文、整页练习或连续对话不写入 seed pack。",
+          "gap_type": "copyright_sensitive_long_text",
+          "scope": "pep-grade7-upper-2024:unit:09",
+          "suggested_future_handling": "仅保存短摘要和知识点，必要时通过受控证据摘录展示。"
+        },
+        {
+          "description": "听力活动需要配套音频，暂不进入公共默认学习流。",
+          "gap_type": "audio_required",
+          "scope": "pep-grade7-upper-2024:unit:10",
+          "suggested_future_handling": "后续接入音频资源和听力题型后再结构化。"
+        },
+        {
+          "description": "听力活动需要配套音频，暂不进入公共默认学习流。",
+          "gap_type": "audio_required",
+          "scope": "pep-grade7-upper-2024:unit:11",
+          "suggested_future_handling": "后续接入音频资源和听力题型后再结构化。"
+        },
+        {
+          "description": "听力活动需要配套音频，暂不进入公共默认学习流。",
+          "gap_type": "audio_required",
+          "scope": "pep-grade7-upper-2024:unit:12",
+          "suggested_future_handling": "后续接入音频资源和听力题型后再结构化。"
+        },
+        {
+          "description": "长课文、整页练习或连续对话不写入 seed pack。",
+          "gap_type": "copyright_sensitive_long_text",
+          "scope": "pep-grade7-upper-2024:unit:12",
+          "suggested_future_handling": "仅保存短摘要和知识点，必要时通过受控证据摘录展示。"
+        },
+        {
+          "description": "结对/小组互动活动不适合直接作为稳定自动评分题。",
+          "gap_type": "pair_work",
+          "scope": "pep-grade7-upper-2024",
+          "suggested_future_handling": "后续作为课堂互动或口语任务模板处理。"
+        }
+      ],
+      "knowledge_points": [
+        {
+          "content": {
+            "confidence": 0.94,
+            "display_group": "unit_intro",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "pdf_curated_extract"
+            },
+            "requires_review": false,
+            "role": "unit_overview",
+            "source_unit_subtitle": "Good morning!",
+            "source_unit_title": "Starter Unit 1",
+            "theme": "问候与简单寒暄",
+            "unit_order": 1,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:01",
+          "difficulty": 0.18,
+          "source_page": "P.1",
+          "stable_key": "pep-grade7-upper-2024:unit:01:text_note:overview",
+          "status": "published",
+          "summary": "本单元主题：问候与简单寒暄；核心标题表达为“Good morning!”。",
+          "title": "Starter Unit 1 overview",
+          "type": "text_note"
+        },
+        {
+          "content": {
+            "chinese_meaning": "好的",
+            "confidence": 0.94,
+            "evidence": {
+              "page_label": "Words and Expressions",
+              "raw_line_excerpt": "good ... 好的",
+              "source": "pdf_curated_extract"
+            },
+            "example": null,
+            "lemma": "good",
+            "part_of_speech": null,
+            "phonetic": null,
+            "requires_review": false,
+            "role": "unit_wordlist",
+            "unit_order": 1,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:01",
+          "difficulty": 0.22,
+          "source_page": "Words and Expressions",
+          "stable_key": "pep-grade7-upper-2024:unit:01:vocabulary:good",
+          "status": "published",
+          "summary": "好的",
+          "title": "good",
+          "type": "vocabulary"
+        },
+        {
+          "content": {
+            "confidence": 0.94,
+            "display_group": "sentence_patterns",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "pdf_curated_extract"
+            },
+            "pattern": "Good morning!",
+            "requires_review": false,
+            "role": "target_language",
+            "teaching_note": "早晨问候：Good morning!",
+            "unit_order": 1,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:01",
+          "difficulty": 0.3,
+          "source_page": "P.1",
+          "stable_key": "pep-grade7-upper-2024:unit:01:sentence_pattern:good-morning",
+          "status": "published",
+          "summary": "早晨问候：Good morning!",
+          "title": "Good morning!",
+          "type": "sentence_pattern"
+        },
+        {
+          "content": {
+            "confidence": 0.94,
+            "display_group": "grammar",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "pdf_curated_extract"
+            },
+            "focus": "be 动词 am/are 的简单问答",
+            "related_units": [
+              "Starter Unit 1"
+            ],
+            "requires_review": false,
+            "role": "grammar_focus",
+            "unit_order": 1,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:01",
+          "difficulty": 0.36,
+          "source_page": "P.3",
+          "stable_key": "pep-grade7-upper-2024:unit:01:grammar:be-am-are",
+          "status": "published",
+          "summary": "be 动词 am/are 的简单问答",
+          "title": "be 动词 am/are 的简单问答",
+          "type": "grammar"
+        },
+        {
+          "content": {
+            "chinese_meaning": "本单元核心短语或功能表达。",
+            "confidence": 0.94,
+            "display_group": "phrases",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "pdf_curated_extract"
+            },
+            "phrase": "How are you?",
+            "requires_review": false,
+            "role": "unit_phrase",
+            "unit_order": 1,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:01",
+          "difficulty": 0.28,
+          "source_page": "P.1",
+          "stable_key": "pep-grade7-upper-2024:unit:01:phrase:how-are-you",
+          "status": "published",
+          "summary": "本单元可迁移短语：How are you?。",
+          "title": "How are you?",
+          "type": "phrase"
+        },
+        {
+          "content": {
+            "confidence": 0.94,
+            "display_group": "pronunciation",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "pdf_curated_extract"
+            },
+            "focus": "字母 A-H 的名称音",
+            "requires_review": false,
+            "role": "pronunciation_note",
+            "unit_order": 1,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:01",
+          "difficulty": 0.26,
+          "source_page": "Pronunciation",
+          "stable_key": "pep-grade7-upper-2024:unit:01:pronunciation:a-h",
+          "status": "published",
+          "summary": "语音关注点：字母 A-H 的名称音。",
+          "title": "字母 A-H 的名称音",
+          "type": "pronunciation"
+        },
+        {
+          "content": {
+            "confidence": 0.94,
+            "display_group": "unit_intro",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "pdf_curated_extract"
+            },
+            "requires_review": false,
+            "role": "unit_overview",
+            "source_unit_subtitle": "What's this in English?",
+            "source_unit_title": "Starter Unit 2",
+            "theme": "用英语询问物品名称",
+            "unit_order": 2,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:02",
+          "difficulty": 0.18,
+          "source_page": "P.5",
+          "stable_key": "pep-grade7-upper-2024:unit:02:text_note:overview",
+          "status": "published",
+          "summary": "本单元主题：用英语询问物品名称；核心标题表达为“What's this in English?”。",
+          "title": "Starter Unit 2 overview",
+          "type": "text_note"
+        },
+        {
+          "content": {
+            "chinese_meaning": "地图",
+            "confidence": 0.94,
+            "evidence": {
+              "page_label": "Words and Expressions",
+              "raw_line_excerpt": "map ... 地图",
+              "source": "pdf_curated_extract"
+            },
+            "example": null,
+            "lemma": "map",
+            "part_of_speech": null,
+            "phonetic": null,
+            "requires_review": false,
+            "role": "unit_wordlist",
+            "unit_order": 2,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:02",
+          "difficulty": 0.22,
+          "source_page": "Words and Expressions",
+          "stable_key": "pep-grade7-upper-2024:unit:02:vocabulary:map",
+          "status": "published",
+          "summary": "地图",
+          "title": "map",
+          "type": "vocabulary"
+        },
+        {
+          "content": {
+            "confidence": 0.94,
+            "display_group": "sentence_patterns",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "pdf_curated_extract"
+            },
+            "pattern": "What's this in English?",
+            "requires_review": false,
+            "role": "target_language",
+            "teaching_note": "询问物品：What is this/that in English?",
+            "unit_order": 2,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:02",
+          "difficulty": 0.3,
+          "source_page": "P.5",
+          "stable_key": "pep-grade7-upper-2024:unit:02:sentence_pattern:whats-this-in-english",
+          "status": "published",
+          "summary": "询问物品：What is this/that in English?",
+          "title": "What's this in English?",
+          "type": "sentence_pattern"
+        },
+        {
+          "content": {
+            "confidence": 0.94,
+            "display_group": "grammar",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "pdf_curated_extract"
+            },
+            "focus": "不定冠词 a/an 的入门使用",
+            "related_units": [
+              "Starter Unit 2"
+            ],
+            "requires_review": false,
+            "role": "grammar_focus",
+            "unit_order": 2,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:02",
+          "difficulty": 0.36,
+          "source_page": "P.7",
+          "stable_key": "pep-grade7-upper-2024:unit:02:grammar:a-an",
+          "status": "published",
+          "summary": "不定冠词 a/an 的入门使用",
+          "title": "不定冠词 a/an 的入门使用",
+          "type": "grammar"
+        },
+        {
+          "content": {
+            "chinese_meaning": "本单元核心短语或功能表达。",
+            "confidence": 0.94,
+            "display_group": "phrases",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "pdf_curated_extract"
+            },
+            "phrase": "in English",
+            "requires_review": false,
+            "role": "unit_phrase",
+            "unit_order": 2,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:02",
+          "difficulty": 0.28,
+          "source_page": "P.5",
+          "stable_key": "pep-grade7-upper-2024:unit:02:phrase:in-english",
+          "status": "published",
+          "summary": "本单元可迁移短语：in English。",
+          "title": "in English",
+          "type": "phrase"
+        },
+        {
+          "content": {
+            "confidence": 0.94,
+            "display_group": "pronunciation",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "pdf_curated_extract"
+            },
+            "focus": "字母 I-R 的名称音",
+            "requires_review": false,
+            "role": "pronunciation_note",
+            "unit_order": 2,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:02",
+          "difficulty": 0.26,
+          "source_page": "Pronunciation",
+          "stable_key": "pep-grade7-upper-2024:unit:02:pronunciation:i-r",
+          "status": "published",
+          "summary": "语音关注点：字母 I-R 的名称音。",
+          "title": "字母 I-R 的名称音",
+          "type": "pronunciation"
+        },
+        {
+          "content": {
+            "confidence": 0.94,
+            "display_group": "unit_intro",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "pdf_curated_extract"
+            },
+            "requires_review": false,
+            "role": "unit_overview",
+            "source_unit_subtitle": "What color is it?",
+            "source_unit_title": "Starter Unit 3",
+            "theme": "颜色与字母复习",
+            "unit_order": 3,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:03",
+          "difficulty": 0.18,
+          "source_page": "P.9",
+          "stable_key": "pep-grade7-upper-2024:unit:03:text_note:overview",
+          "status": "published",
+          "summary": "本单元主题：颜色与字母复习；核心标题表达为“What color is it?”。",
+          "title": "Starter Unit 3 overview",
+          "type": "text_note"
+        },
+        {
+          "content": {
+            "chinese_meaning": "颜色",
+            "confidence": 0.94,
+            "evidence": {
+              "page_label": "Words and Expressions",
+              "raw_line_excerpt": "color ... 颜色",
+              "source": "pdf_curated_extract"
+            },
+            "example": null,
+            "lemma": "color",
+            "part_of_speech": null,
+            "phonetic": null,
+            "requires_review": false,
+            "role": "unit_wordlist",
+            "unit_order": 3,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:03",
+          "difficulty": 0.22,
+          "source_page": "Words and Expressions",
+          "stable_key": "pep-grade7-upper-2024:unit:03:vocabulary:color",
+          "status": "published",
+          "summary": "颜色",
+          "title": "color",
+          "type": "vocabulary"
+        },
+        {
+          "content": {
+            "confidence": 0.94,
+            "display_group": "sentence_patterns",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "pdf_curated_extract"
+            },
+            "pattern": "What color is it?",
+            "requires_review": false,
+            "role": "target_language",
+            "teaching_note": "询问颜色：What color is it?",
+            "unit_order": 3,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:03",
+          "difficulty": 0.3,
+          "source_page": "P.9",
+          "stable_key": "pep-grade7-upper-2024:unit:03:sentence_pattern:what-color-is-it",
+          "status": "published",
+          "summary": "询问颜色：What color is it?",
+          "title": "What color is it?",
+          "type": "sentence_pattern"
+        },
+        {
+          "content": {
+            "confidence": 0.94,
+            "display_group": "grammar",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "pdf_curated_extract"
+            },
+            "focus": "can 表示能力的入门句",
+            "related_units": [
+              "Starter Unit 3"
+            ],
+            "requires_review": false,
+            "role": "grammar_focus",
+            "unit_order": 3,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:03",
+          "difficulty": 0.36,
+          "source_page": "P.11",
+          "stable_key": "pep-grade7-upper-2024:unit:03:grammar:can",
+          "status": "published",
+          "summary": "can 表示能力的入门句",
+          "title": "can 表示能力的入门句",
+          "type": "grammar"
+        },
+        {
+          "content": {
+            "chinese_meaning": "本单元核心短语或功能表达。",
+            "confidence": 0.94,
+            "display_group": "phrases",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "pdf_curated_extract"
+            },
+            "phrase": "black and white",
+            "requires_review": false,
+            "role": "unit_phrase",
+            "unit_order": 3,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:03",
+          "difficulty": 0.28,
+          "source_page": "P.9",
+          "stable_key": "pep-grade7-upper-2024:unit:03:phrase:black-and-white",
+          "status": "published",
+          "summary": "本单元可迁移短语：black and white。",
+          "title": "black and white",
+          "type": "phrase"
+        },
+        {
+          "content": {
+            "confidence": 0.94,
+            "display_group": "pronunciation",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "pdf_curated_extract"
+            },
+            "focus": "字母 S-Z 的名称音",
+            "requires_review": false,
+            "role": "pronunciation_note",
+            "unit_order": 3,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:03",
+          "difficulty": 0.26,
+          "source_page": "Pronunciation",
+          "stable_key": "pep-grade7-upper-2024:unit:03:pronunciation:s-z",
+          "status": "published",
+          "summary": "语音关注点：字母 S-Z 的名称音。",
+          "title": "字母 S-Z 的名称音",
+          "type": "pronunciation"
+        },
+        {
+          "content": {
+            "confidence": 0.94,
+            "display_group": "unit_intro",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "pdf_curated_extract"
+            },
+            "requires_review": false,
+            "role": "unit_overview",
+            "source_unit_subtitle": "My name's Gina.",
+            "source_unit_title": "Unit 1",
+            "theme": "自我介绍与电话号码",
+            "unit_order": 4,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:04",
+          "difficulty": 0.18,
+          "source_page": "P.13",
+          "stable_key": "pep-grade7-upper-2024:unit:04:text_note:overview",
+          "status": "published",
+          "summary": "本单元主题：自我介绍与电话号码；核心标题表达为“My name's Gina.”。",
+          "title": "Unit 1 overview",
+          "type": "text_note"
+        },
+        {
+          "content": {
+            "chinese_meaning": "名字；名称",
+            "confidence": 0.94,
+            "evidence": {
+              "page_label": "Words and Expressions",
+              "raw_line_excerpt": "name ... 名字；名称",
+              "source": "pdf_curated_extract"
+            },
+            "example": null,
+            "lemma": "name",
+            "part_of_speech": null,
+            "phonetic": null,
+            "requires_review": false,
+            "role": "unit_wordlist",
+            "unit_order": 4,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:04",
+          "difficulty": 0.22,
+          "source_page": "Words and Expressions",
+          "stable_key": "pep-grade7-upper-2024:unit:04:vocabulary:name",
+          "status": "published",
+          "summary": "名字；名称",
+          "title": "name",
+          "type": "vocabulary"
+        },
+        {
+          "content": {
+            "confidence": 0.94,
+            "display_group": "sentence_patterns",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "pdf_curated_extract"
+            },
+            "pattern": "My name's ...",
+            "requires_review": false,
+            "role": "target_language",
+            "teaching_note": "介绍姓名：My name is ... / I am ...",
+            "unit_order": 4,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:04",
+          "difficulty": 0.3,
+          "source_page": "P.13",
+          "stable_key": "pep-grade7-upper-2024:unit:04:sentence_pattern:my-names",
+          "status": "published",
+          "summary": "介绍姓名：My name is ... / I am ...",
+          "title": "My name's ...",
+          "type": "sentence_pattern"
+        },
+        {
+          "content": {
+            "confidence": 0.94,
+            "display_group": "grammar",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "pdf_curated_extract"
+            },
+            "focus": "形容词性物主代词 my/your/his/her",
+            "related_units": [
+              "Unit 1"
+            ],
+            "requires_review": false,
+            "role": "grammar_focus",
+            "unit_order": 4,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:04",
+          "difficulty": 0.36,
+          "source_page": "P.15",
+          "stable_key": "pep-grade7-upper-2024:unit:04:grammar:my-your-his-her",
+          "status": "published",
+          "summary": "形容词性物主代词 my/your/his/her",
+          "title": "形容词性物主代词 my/your/his/her",
+          "type": "grammar"
+        },
+        {
+          "content": {
+            "chinese_meaning": "本单元核心短语或功能表达。",
+            "confidence": 0.94,
+            "display_group": "phrases",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "pdf_curated_extract"
+            },
+            "phrase": "first name",
+            "requires_review": false,
+            "role": "unit_phrase",
+            "unit_order": 4,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:04",
+          "difficulty": 0.28,
+          "source_page": "P.13",
+          "stable_key": "pep-grade7-upper-2024:unit:04:phrase:first-name",
+          "status": "published",
+          "summary": "本单元可迁移短语：first name。",
+          "title": "first name",
+          "type": "phrase"
+        },
+        {
+          "content": {
+            "confidence": 0.94,
+            "display_group": "unit_intro",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "pdf_curated_extract"
+            },
+            "requires_review": false,
+            "role": "unit_overview",
+            "source_unit_subtitle": "This is my sister.",
+            "source_unit_title": "Unit 2",
+            "theme": "家庭成员介绍",
+            "unit_order": 5,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:05",
+          "difficulty": 0.18,
+          "source_page": "P.19",
+          "stable_key": "pep-grade7-upper-2024:unit:05:text_note:overview",
+          "status": "published",
+          "summary": "本单元主题：家庭成员介绍；核心标题表达为“This is my sister.”。",
+          "title": "Unit 2 overview",
+          "type": "text_note"
+        },
+        {
+          "content": {
+            "chinese_meaning": "姐；妹",
+            "confidence": 0.94,
+            "evidence": {
+              "page_label": "Words and Expressions",
+              "raw_line_excerpt": "sister ... 姐；妹",
+              "source": "pdf_curated_extract"
+            },
+            "example": null,
+            "lemma": "sister",
+            "part_of_speech": null,
+            "phonetic": null,
+            "requires_review": false,
+            "role": "unit_wordlist",
+            "unit_order": 5,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:05",
+          "difficulty": 0.22,
+          "source_page": "Words and Expressions",
+          "stable_key": "pep-grade7-upper-2024:unit:05:vocabulary:sister",
+          "status": "published",
+          "summary": "姐；妹",
+          "title": "sister",
+          "type": "vocabulary"
+        },
+        {
+          "content": {
+            "confidence": 0.94,
+            "display_group": "sentence_patterns",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "pdf_curated_extract"
+            },
+            "pattern": "This is my sister.",
+            "requires_review": false,
+            "role": "target_language",
+            "teaching_note": "介绍他人：This is/These are ...",
+            "unit_order": 5,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:05",
+          "difficulty": 0.3,
+          "source_page": "P.19",
+          "stable_key": "pep-grade7-upper-2024:unit:05:sentence_pattern:this-is-my-sister",
+          "status": "published",
+          "summary": "介绍他人：This is/These are ...",
+          "title": "This is my sister.",
+          "type": "sentence_pattern"
+        },
+        {
+          "content": {
+            "confidence": 0.94,
+            "display_group": "grammar",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "pdf_curated_extract"
+            },
+            "focus": "指示代词 this/that/these/those",
+            "related_units": [
+              "Unit 2"
+            ],
+            "requires_review": false,
+            "role": "grammar_focus",
+            "unit_order": 5,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:05",
+          "difficulty": 0.36,
+          "source_page": "P.21",
+          "stable_key": "pep-grade7-upper-2024:unit:05:grammar:this-that-these-those",
+          "status": "published",
+          "summary": "指示代词 this/that/these/those",
+          "title": "指示代词 this/that/these/those",
+          "type": "grammar"
+        },
+        {
+          "content": {
+            "chinese_meaning": "本单元核心短语或功能表达。",
+            "confidence": 0.94,
+            "display_group": "phrases",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "pdf_curated_extract"
+            },
+            "phrase": "family photo",
+            "requires_review": false,
+            "role": "unit_phrase",
+            "unit_order": 5,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:05",
+          "difficulty": 0.28,
+          "source_page": "P.19",
+          "stable_key": "pep-grade7-upper-2024:unit:05:phrase:family-photo",
+          "status": "published",
+          "summary": "本单元可迁移短语：family photo。",
+          "title": "family photo",
+          "type": "phrase"
+        },
+        {
+          "content": {
+            "confidence": 0.94,
+            "display_group": "unit_intro",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "pdf_curated_extract"
+            },
+            "requires_review": false,
+            "role": "unit_overview",
+            "source_unit_subtitle": "Is this your pencil?",
+            "source_unit_title": "Unit 3",
+            "theme": "学习用品与失物招领",
+            "unit_order": 6,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:06",
+          "difficulty": 0.18,
+          "source_page": "P.25",
+          "stable_key": "pep-grade7-upper-2024:unit:06:text_note:overview",
+          "status": "published",
+          "summary": "本单元主题：学习用品与失物招领；核心标题表达为“Is this your pencil?”。",
+          "title": "Unit 3 overview",
+          "type": "text_note"
+        },
+        {
+          "content": {
+            "chinese_meaning": "铅笔",
+            "confidence": 0.94,
+            "evidence": {
+              "page_label": "Words and Expressions",
+              "raw_line_excerpt": "pencil ... 铅笔",
+              "source": "pdf_curated_extract"
+            },
+            "example": null,
+            "lemma": "pencil",
+            "part_of_speech": null,
+            "phonetic": null,
+            "requires_review": false,
+            "role": "unit_wordlist",
+            "unit_order": 6,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:06",
+          "difficulty": 0.22,
+          "source_page": "Words and Expressions",
+          "stable_key": "pep-grade7-upper-2024:unit:06:vocabulary:pencil",
+          "status": "published",
+          "summary": "铅笔",
+          "title": "pencil",
+          "type": "vocabulary"
+        },
+        {
+          "content": {
+            "confidence": 0.94,
+            "display_group": "sentence_patterns",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "pdf_curated_extract"
+            },
+            "pattern": "Is this your pencil?",
+            "requires_review": false,
+            "role": "target_language",
+            "teaching_note": "确认物品归属：Is this/that your ...?",
+            "unit_order": 6,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:06",
+          "difficulty": 0.3,
+          "source_page": "P.25",
+          "stable_key": "pep-grade7-upper-2024:unit:06:sentence_pattern:is-this-your-pencil",
+          "status": "published",
+          "summary": "确认物品归属：Is this/that your ...?",
+          "title": "Is this your pencil?",
+          "type": "sentence_pattern"
+        },
+        {
+          "content": {
+            "confidence": 0.94,
+            "display_group": "grammar",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "pdf_curated_extract"
+            },
+            "focus": "名词性物主代词 mine/yours/hers",
+            "related_units": [
+              "Unit 3"
+            ],
+            "requires_review": false,
+            "role": "grammar_focus",
+            "unit_order": 6,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:06",
+          "difficulty": 0.36,
+          "source_page": "P.27",
+          "stable_key": "pep-grade7-upper-2024:unit:06:grammar:mine-yours-hers",
+          "status": "published",
+          "summary": "名词性物主代词 mine/yours/hers",
+          "title": "名词性物主代词 mine/yours/hers",
+          "type": "grammar"
+        },
+        {
+          "content": {
+            "chinese_meaning": "本单元核心短语或功能表达。",
+            "confidence": 0.94,
+            "display_group": "phrases",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "pdf_curated_extract"
+            },
+            "phrase": "excuse me",
+            "requires_review": false,
+            "role": "unit_phrase",
+            "unit_order": 6,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:06",
+          "difficulty": 0.28,
+          "source_page": "P.25",
+          "stable_key": "pep-grade7-upper-2024:unit:06:phrase:excuse-me",
+          "status": "published",
+          "summary": "本单元可迁移短语：excuse me。",
+          "title": "excuse me",
+          "type": "phrase"
+        },
+        {
+          "content": {
+            "confidence": 0.94,
+            "display_group": "pronunciation",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "pdf_curated_extract"
+            },
+            "focus": "一般疑问句升调",
+            "requires_review": false,
+            "role": "pronunciation_note",
+            "unit_order": 6,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:06",
+          "difficulty": 0.26,
+          "source_page": "Pronunciation",
+          "stable_key": "pep-grade7-upper-2024:unit:06:pronunciation:item",
+          "status": "published",
+          "summary": "语音关注点：一般疑问句升调。",
+          "title": "一般疑问句升调",
+          "type": "pronunciation"
+        },
+        {
+          "content": {
+            "confidence": 0.94,
+            "display_group": "unit_intro",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "pdf_curated_extract"
+            },
+            "requires_review": false,
+            "role": "unit_overview",
+            "source_unit_subtitle": "Where's my schoolbag?",
+            "source_unit_title": "Unit 4",
+            "theme": "房间物品与位置",
+            "unit_order": 7,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:07",
+          "difficulty": 0.18,
+          "source_page": "P.31",
+          "stable_key": "pep-grade7-upper-2024:unit:07:text_note:overview",
+          "status": "published",
+          "summary": "本单元主题：房间物品与位置；核心标题表达为“Where's my schoolbag?”。",
+          "title": "Unit 4 overview",
+          "type": "text_note"
+        },
+        {
+          "content": {
+            "chinese_meaning": "在哪里；到哪里",
+            "confidence": 0.94,
+            "evidence": {
+              "page_label": "Words and Expressions",
+              "raw_line_excerpt": "where ... 在哪里；到哪里",
+              "source": "pdf_curated_extract"
+            },
+            "example": null,
+            "lemma": "where",
+            "part_of_speech": null,
+            "phonetic": null,
+            "requires_review": false,
+            "role": "unit_wordlist",
+            "unit_order": 7,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:07",
+          "difficulty": 0.22,
+          "source_page": "Words and Expressions",
+          "stable_key": "pep-grade7-upper-2024:unit:07:vocabulary:where",
+          "status": "published",
+          "summary": "在哪里；到哪里",
+          "title": "where",
+          "type": "vocabulary"
+        },
+        {
+          "content": {
+            "confidence": 0.94,
+            "display_group": "sentence_patterns",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "pdf_curated_extract"
+            },
+            "pattern": "Where's my schoolbag?",
+            "requires_review": false,
+            "role": "target_language",
+            "teaching_note": "询问位置：Where is/are ...?",
+            "unit_order": 7,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:07",
+          "difficulty": 0.3,
+          "source_page": "P.31",
+          "stable_key": "pep-grade7-upper-2024:unit:07:sentence_pattern:wheres-my-schoolbag",
+          "status": "published",
+          "summary": "询问位置：Where is/are ...?",
+          "title": "Where's my schoolbag?",
+          "type": "sentence_pattern"
+        },
+        {
+          "content": {
+            "confidence": 0.94,
+            "display_group": "grammar",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "pdf_curated_extract"
+            },
+            "focus": "方位介词 on/in/under",
+            "related_units": [
+              "Unit 4"
+            ],
+            "requires_review": false,
+            "role": "grammar_focus",
+            "unit_order": 7,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:07",
+          "difficulty": 0.36,
+          "source_page": "P.33",
+          "stable_key": "pep-grade7-upper-2024:unit:07:grammar:on-in-under",
+          "status": "published",
+          "summary": "方位介词 on/in/under",
+          "title": "方位介词 on/in/under",
+          "type": "grammar"
+        },
+        {
+          "content": {
+            "chinese_meaning": "本单元核心短语或功能表达。",
+            "confidence": 0.94,
+            "display_group": "phrases",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "pdf_curated_extract"
+            },
+            "phrase": "come on",
+            "requires_review": false,
+            "role": "unit_phrase",
+            "unit_order": 7,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:07",
+          "difficulty": 0.28,
+          "source_page": "P.31",
+          "stable_key": "pep-grade7-upper-2024:unit:07:phrase:come-on",
+          "status": "published",
+          "summary": "本单元可迁移短语：come on。",
+          "title": "come on",
+          "type": "phrase"
+        },
+        {
+          "content": {
+            "confidence": 0.94,
+            "display_group": "unit_intro",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "pdf_curated_extract"
+            },
+            "requires_review": false,
+            "role": "unit_overview",
+            "source_unit_subtitle": "Do you have a soccer ball?",
+            "source_unit_title": "Unit 5",
+            "theme": "运动物品与喜好",
+            "unit_order": 8,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:08",
+          "difficulty": 0.18,
+          "source_page": "P.37",
+          "stable_key": "pep-grade7-upper-2024:unit:08:text_note:overview",
+          "status": "published",
+          "summary": "本单元主题：运动物品与喜好；核心标题表达为“Do you have a soccer ball?”。",
+          "title": "Unit 5 overview",
+          "type": "text_note"
+        },
+        {
+          "content": {
+            "chinese_meaning": "足球",
+            "confidence": 0.94,
+            "evidence": {
+              "page_label": "Words and Expressions",
+              "raw_line_excerpt": "soccer ball ... 足球",
+              "source": "pdf_curated_extract"
+            },
+            "example": null,
+            "lemma": "soccer ball",
+            "part_of_speech": null,
+            "phonetic": null,
+            "requires_review": false,
+            "role": "unit_wordlist",
+            "unit_order": 8,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:08",
+          "difficulty": 0.22,
+          "source_page": "Words and Expressions",
+          "stable_key": "pep-grade7-upper-2024:unit:08:vocabulary:soccer-ball",
+          "status": "published",
+          "summary": "足球",
+          "title": "soccer ball",
+          "type": "vocabulary"
+        },
+        {
+          "content": {
+            "confidence": 0.94,
+            "display_group": "sentence_patterns",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "pdf_curated_extract"
+            },
+            "pattern": "Do you have a soccer ball?",
+            "requires_review": false,
+            "role": "target_language",
+            "teaching_note": "询问拥有：Do/Does ... have ...?",
+            "unit_order": 8,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:08",
+          "difficulty": 0.3,
+          "source_page": "P.37",
+          "stable_key": "pep-grade7-upper-2024:unit:08:sentence_pattern:do-you-have-a-soccer-ball",
+          "status": "published",
+          "summary": "询问拥有：Do/Does ... have ...?",
+          "title": "Do you have a soccer ball?",
+          "type": "sentence_pattern"
+        },
+        {
+          "content": {
+            "confidence": 0.94,
+            "display_group": "grammar",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "pdf_curated_extract"
+            },
+            "focus": "一般现在时 have/has",
+            "related_units": [
+              "Unit 5"
+            ],
+            "requires_review": false,
+            "role": "grammar_focus",
+            "unit_order": 8,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:08",
+          "difficulty": 0.36,
+          "source_page": "P.39",
+          "stable_key": "pep-grade7-upper-2024:unit:08:grammar:have-has",
+          "status": "published",
+          "summary": "一般现在时 have/has",
+          "title": "一般现在时 have/has",
+          "type": "grammar"
+        },
+        {
+          "content": {
+            "chinese_meaning": "本单元核心短语或功能表达。",
+            "confidence": 0.94,
+            "display_group": "phrases",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "pdf_curated_extract"
+            },
+            "phrase": "let's",
+            "requires_review": false,
+            "role": "unit_phrase",
+            "unit_order": 8,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:08",
+          "difficulty": 0.28,
+          "source_page": "P.37",
+          "stable_key": "pep-grade7-upper-2024:unit:08:phrase:lets",
+          "status": "published",
+          "summary": "本单元可迁移短语：let's。",
+          "title": "let's",
+          "type": "phrase"
+        },
+        {
+          "content": {
+            "confidence": 0.94,
+            "display_group": "unit_intro",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "pdf_curated_extract"
+            },
+            "requires_review": false,
+            "role": "unit_overview",
+            "source_unit_subtitle": "Do you like bananas?",
+            "source_unit_title": "Unit 6",
+            "theme": "食物与饮食习惯",
+            "unit_order": 9,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:09",
+          "difficulty": 0.18,
+          "source_page": "P.43",
+          "stable_key": "pep-grade7-upper-2024:unit:09:text_note:overview",
+          "status": "published",
+          "summary": "本单元主题：食物与饮食习惯；核心标题表达为“Do you like bananas?”。",
+          "title": "Unit 6 overview",
+          "type": "text_note"
+        },
+        {
+          "content": {
+            "chinese_meaning": "香蕉",
+            "confidence": 0.94,
+            "evidence": {
+              "page_label": "Words and Expressions",
+              "raw_line_excerpt": "banana ... 香蕉",
+              "source": "pdf_curated_extract"
+            },
+            "example": null,
+            "lemma": "banana",
+            "part_of_speech": null,
+            "phonetic": null,
+            "requires_review": false,
+            "role": "unit_wordlist",
+            "unit_order": 9,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:09",
+          "difficulty": 0.22,
+          "source_page": "Words and Expressions",
+          "stable_key": "pep-grade7-upper-2024:unit:09:vocabulary:banana",
+          "status": "published",
+          "summary": "香蕉",
+          "title": "banana",
+          "type": "vocabulary"
+        },
+        {
+          "content": {
+            "confidence": 0.94,
+            "display_group": "sentence_patterns",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "pdf_curated_extract"
+            },
+            "pattern": "Do you like bananas?",
+            "requires_review": false,
+            "role": "target_language",
+            "teaching_note": "表达喜好：Do/Does ... like ...?",
+            "unit_order": 9,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:09",
+          "difficulty": 0.3,
+          "source_page": "P.43",
+          "stable_key": "pep-grade7-upper-2024:unit:09:sentence_pattern:do-you-like-bananas",
+          "status": "published",
+          "summary": "表达喜好：Do/Does ... like ...?",
+          "title": "Do you like bananas?",
+          "type": "sentence_pattern"
+        },
+        {
+          "content": {
+            "confidence": 0.94,
+            "display_group": "grammar",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "pdf_curated_extract"
+            },
+            "focus": "可数名词与不可数名词",
+            "related_units": [
+              "Unit 6"
+            ],
+            "requires_review": false,
+            "role": "grammar_focus",
+            "unit_order": 9,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:09",
+          "difficulty": 0.36,
+          "source_page": "P.45",
+          "stable_key": "pep-grade7-upper-2024:unit:09:grammar:item",
+          "status": "published",
+          "summary": "可数名词与不可数名词",
+          "title": "可数名词与不可数名词",
+          "type": "grammar"
+        },
+        {
+          "content": {
+            "chinese_meaning": "本单元核心短语或功能表达。",
+            "confidence": 0.94,
+            "display_group": "phrases",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "pdf_curated_extract"
+            },
+            "phrase": "think about",
+            "requires_review": false,
+            "role": "unit_phrase",
+            "unit_order": 9,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:09",
+          "difficulty": 0.28,
+          "source_page": "P.43",
+          "stable_key": "pep-grade7-upper-2024:unit:09:phrase:think-about",
+          "status": "published",
+          "summary": "本单元可迁移短语：think about。",
+          "title": "think about",
+          "type": "phrase"
+        },
+        {
+          "content": {
+            "confidence": 0.94,
+            "display_group": "pronunciation",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "pdf_curated_extract"
+            },
+            "focus": "可数名词复数读音",
+            "requires_review": false,
+            "role": "pronunciation_note",
+            "unit_order": 9,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:09",
+          "difficulty": 0.26,
+          "source_page": "Pronunciation",
+          "stable_key": "pep-grade7-upper-2024:unit:09:pronunciation:item",
+          "status": "published",
+          "summary": "语音关注点：可数名词复数读音。",
+          "title": "可数名词复数读音",
+          "type": "pronunciation"
+        },
+        {
+          "content": {
+            "confidence": 0.94,
+            "display_group": "unit_intro",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "pdf_curated_extract"
+            },
+            "requires_review": false,
+            "role": "unit_overview",
+            "source_unit_subtitle": "How much are these socks?",
+            "source_unit_title": "Unit 7",
+            "theme": "购物与价格",
+            "unit_order": 10,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:10",
+          "difficulty": 0.18,
+          "source_page": "P.49",
+          "stable_key": "pep-grade7-upper-2024:unit:10:text_note:overview",
+          "status": "published",
+          "summary": "本单元主题：购物与价格；核心标题表达为“How much are these socks?”。",
+          "title": "Unit 7 overview",
+          "type": "text_note"
+        },
+        {
+          "content": {
+            "chinese_meaning": "短袜",
+            "confidence": 0.94,
+            "evidence": {
+              "page_label": "Words and Expressions",
+              "raw_line_excerpt": "sock ... 短袜",
+              "source": "pdf_curated_extract"
+            },
+            "example": null,
+            "lemma": "sock",
+            "part_of_speech": null,
+            "phonetic": null,
+            "requires_review": false,
+            "role": "unit_wordlist",
+            "unit_order": 10,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:10",
+          "difficulty": 0.22,
+          "source_page": "Words and Expressions",
+          "stable_key": "pep-grade7-upper-2024:unit:10:vocabulary:sock",
+          "status": "published",
+          "summary": "短袜",
+          "title": "sock",
+          "type": "vocabulary"
+        },
+        {
+          "content": {
+            "confidence": 0.94,
+            "display_group": "sentence_patterns",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "pdf_curated_extract"
+            },
+            "pattern": "How much are these socks?",
+            "requires_review": false,
+            "role": "target_language",
+            "teaching_note": "询问价格：How much is/are ...?",
+            "unit_order": 10,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:10",
+          "difficulty": 0.3,
+          "source_page": "P.49",
+          "stable_key": "pep-grade7-upper-2024:unit:10:sentence_pattern:how-much-are-these-socks",
+          "status": "published",
+          "summary": "询问价格：How much is/are ...?",
+          "title": "How much are these socks?",
+          "type": "sentence_pattern"
+        },
+        {
+          "content": {
+            "confidence": 0.94,
+            "display_group": "grammar",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "pdf_curated_extract"
+            },
+            "focus": "基数词与购物问答",
+            "related_units": [
+              "Unit 7"
+            ],
+            "requires_review": false,
+            "role": "grammar_focus",
+            "unit_order": 10,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:10",
+          "difficulty": 0.36,
+          "source_page": "P.51",
+          "stable_key": "pep-grade7-upper-2024:unit:10:grammar:item",
+          "status": "published",
+          "summary": "基数词与购物问答",
+          "title": "基数词与购物问答",
+          "type": "grammar"
+        },
+        {
+          "content": {
+            "chinese_meaning": "本单元核心短语或功能表达。",
+            "confidence": 0.94,
+            "display_group": "phrases",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "pdf_curated_extract"
+            },
+            "phrase": "a pair of",
+            "requires_review": false,
+            "role": "unit_phrase",
+            "unit_order": 10,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:10",
+          "difficulty": 0.28,
+          "source_page": "P.49",
+          "stable_key": "pep-grade7-upper-2024:unit:10:phrase:a-pair-of",
+          "status": "published",
+          "summary": "本单元可迁移短语：a pair of。",
+          "title": "a pair of",
+          "type": "phrase"
+        },
+        {
+          "content": {
+            "confidence": 0.94,
+            "display_group": "unit_intro",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "pdf_curated_extract"
+            },
+            "requires_review": false,
+            "role": "unit_overview",
+            "source_unit_subtitle": "When is your birthday?",
+            "source_unit_title": "Unit 8",
+            "theme": "生日、月份与日期",
+            "unit_order": 11,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:11",
+          "difficulty": 0.18,
+          "source_page": "P.55",
+          "stable_key": "pep-grade7-upper-2024:unit:11:text_note:overview",
+          "status": "published",
+          "summary": "本单元主题：生日、月份与日期；核心标题表达为“When is your birthday?”。",
+          "title": "Unit 8 overview",
+          "type": "text_note"
+        },
+        {
+          "content": {
+            "chinese_meaning": "一月",
+            "confidence": 0.94,
+            "evidence": {
+              "page_label": "Words and Expressions",
+              "raw_line_excerpt": "January ... 一月",
+              "source": "pdf_curated_extract"
+            },
+            "example": null,
+            "lemma": "January",
+            "part_of_speech": null,
+            "phonetic": null,
+            "requires_review": false,
+            "role": "unit_wordlist",
+            "unit_order": 11,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:11",
+          "difficulty": 0.22,
+          "source_page": "Words and Expressions",
+          "stable_key": "pep-grade7-upper-2024:unit:11:vocabulary:january",
+          "status": "published",
+          "summary": "一月",
+          "title": "January",
+          "type": "vocabulary"
+        },
+        {
+          "content": {
+            "confidence": 0.94,
+            "display_group": "sentence_patterns",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "pdf_curated_extract"
+            },
+            "pattern": "When is your birthday?",
+            "requires_review": false,
+            "role": "target_language",
+            "teaching_note": "询问日期：When is ...?",
+            "unit_order": 11,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:11",
+          "difficulty": 0.3,
+          "source_page": "P.55",
+          "stable_key": "pep-grade7-upper-2024:unit:11:sentence_pattern:when-is-your-birthday",
+          "status": "published",
+          "summary": "询问日期：When is ...?",
+          "title": "When is your birthday?",
+          "type": "sentence_pattern"
+        },
+        {
+          "content": {
+            "confidence": 0.94,
+            "display_group": "grammar",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "pdf_curated_extract"
+            },
+            "focus": "序数词与日期表达",
+            "related_units": [
+              "Unit 8"
+            ],
+            "requires_review": false,
+            "role": "grammar_focus",
+            "unit_order": 11,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:11",
+          "difficulty": 0.36,
+          "source_page": "P.57",
+          "stable_key": "pep-grade7-upper-2024:unit:11:grammar:item",
+          "status": "published",
+          "summary": "序数词与日期表达",
+          "title": "序数词与日期表达",
+          "type": "grammar"
+        },
+        {
+          "content": {
+            "chinese_meaning": "本单元核心短语或功能表达。",
+            "confidence": 0.94,
+            "display_group": "phrases",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "pdf_curated_extract"
+            },
+            "phrase": "Happy birthday!",
+            "requires_review": false,
+            "role": "unit_phrase",
+            "unit_order": 11,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:11",
+          "difficulty": 0.28,
+          "source_page": "P.55",
+          "stable_key": "pep-grade7-upper-2024:unit:11:phrase:happy-birthday",
+          "status": "published",
+          "summary": "本单元可迁移短语：Happy birthday!。",
+          "title": "Happy birthday!",
+          "type": "phrase"
+        },
+        {
+          "content": {
+            "confidence": 0.94,
+            "display_group": "unit_intro",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "pdf_curated_extract"
+            },
+            "requires_review": false,
+            "role": "unit_overview",
+            "source_unit_subtitle": "My favorite subject is science.",
+            "source_unit_title": "Unit 9",
+            "theme": "学校科目与偏好理由",
+            "unit_order": 12,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:12",
+          "difficulty": 0.18,
+          "source_page": "P.61",
+          "stable_key": "pep-grade7-upper-2024:unit:12:text_note:overview",
+          "status": "published",
+          "summary": "本单元主题：学校科目与偏好理由；核心标题表达为“My favorite subject is science.”。",
+          "title": "Unit 9 overview",
+          "type": "text_note"
+        },
+        {
+          "content": {
+            "chinese_meaning": "科学",
+            "confidence": 0.94,
+            "evidence": {
+              "page_label": "Words and Expressions",
+              "raw_line_excerpt": "science ... 科学",
+              "source": "pdf_curated_extract"
+            },
+            "example": null,
+            "lemma": "science",
+            "part_of_speech": null,
+            "phonetic": null,
+            "requires_review": false,
+            "role": "unit_wordlist",
+            "unit_order": 12,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:12",
+          "difficulty": 0.22,
+          "source_page": "Words and Expressions",
+          "stable_key": "pep-grade7-upper-2024:unit:12:vocabulary:science",
+          "status": "published",
+          "summary": "科学",
+          "title": "science",
+          "type": "vocabulary"
+        },
+        {
+          "content": {
+            "confidence": 0.94,
+            "display_group": "sentence_patterns",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "pdf_curated_extract"
+            },
+            "pattern": "My favorite subject is science.",
+            "requires_review": false,
+            "role": "target_language",
+            "teaching_note": "表达偏好：My favorite ... is ...",
+            "unit_order": 12,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:12",
+          "difficulty": 0.3,
+          "source_page": "P.61",
+          "stable_key": "pep-grade7-upper-2024:unit:12:sentence_pattern:my-favorite-subject-is-science",
+          "status": "published",
+          "summary": "表达偏好：My favorite ... is ...",
+          "title": "My favorite subject is science.",
+          "type": "sentence_pattern"
+        },
+        {
+          "content": {
+            "confidence": 0.94,
+            "display_group": "grammar",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "pdf_curated_extract"
+            },
+            "focus": "why/because 引导的问答",
+            "related_units": [
+              "Unit 9"
+            ],
+            "requires_review": false,
+            "role": "grammar_focus",
+            "unit_order": 12,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:12",
+          "difficulty": 0.36,
+          "source_page": "P.63",
+          "stable_key": "pep-grade7-upper-2024:unit:12:grammar:why-because",
+          "status": "published",
+          "summary": "why/because 引导的问答",
+          "title": "why/because 引导的问答",
+          "type": "grammar"
+        },
+        {
+          "content": {
+            "chinese_meaning": "本单元核心短语或功能表达。",
+            "confidence": 0.94,
+            "display_group": "phrases",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "pdf_curated_extract"
+            },
+            "phrase": "for sure",
+            "requires_review": false,
+            "role": "unit_phrase",
+            "unit_order": 12,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:12",
+          "difficulty": 0.28,
+          "source_page": "P.61",
+          "stable_key": "pep-grade7-upper-2024:unit:12:phrase:for-sure",
+          "status": "published",
+          "summary": "本单元可迁移短语：for sure。",
+          "title": "for sure",
+          "type": "phrase"
+        },
+        {
+          "content": {
+            "confidence": 0.94,
+            "display_group": "pronunciation",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "pdf_curated_extract"
+            },
+            "focus": "星期词重音",
+            "requires_review": false,
+            "role": "pronunciation_note",
+            "unit_order": 12,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-upper-2024:unit:12",
+          "difficulty": 0.26,
+          "source_page": "Pronunciation",
+          "stable_key": "pep-grade7-upper-2024:unit:12:pronunciation:item",
+          "status": "published",
+          "summary": "语音关注点：星期词重音。",
+          "title": "星期词重音",
+          "type": "pronunciation"
+        }
+      ],
+      "source_seed": {
+        "edition": "人教版",
+        "file_size": 12005272,
+        "filename": "义务教育教科书·英语七年级上册.pdf",
+        "grade": "grade-7",
+        "knowledge_count": 66,
+        "metadata": {
+          "availability_status": "available",
+          "book_manifest_id": "pep-grade7-upper-2024",
+          "copyright_policy": "short structured facts only; no full page text or long textbook passages",
+          "parser_profile": "pep_grade7_upper_v1",
+          "parser_status": "curated",
+          "public_textbook_seed": true,
+          "quality_status": "published",
+          "source_kind": "public_textbook",
+          "text_layer_status": "usable_text_layer"
+        },
+        "owner_learner_id": null,
+        "page_count": 138,
+        "publisher": "人民教育出版社（PEP）",
+        "sha256": "4cdfd213e2c54164b6b97bcd6d15e93b71e6b243e8aea958f330e6bf8822f46e",
+        "status": "published",
+        "title": "英语 七年级上册",
+        "unit_count": 12,
+        "visibility": "public",
+        "volume": "upper"
+      },
+      "stable_id": "pep-grade7-upper-2024"
+    },
+    {
+      "curriculum_nodes": [
+        {
+          "end_page": "P.6",
+          "estimated_minutes": 24,
+          "front_end_blocks": [
+            {
+              "block_type": "unit_hero",
+              "status": "ready"
+            },
+            {
+              "block_type": "core_vocabulary",
+              "status": "ready_or_pending_review"
+            },
+            {
+              "block_type": "sentence_patterns",
+              "status": "ready_or_pending_review"
+            },
+            {
+              "block_type": "practice",
+              "status": "ready_or_pending_review"
+            }
+          ],
+          "learning_objectives": [
+            "围绕“能力表达与社团活动”理解并使用本单元核心表达。",
+            "掌握可迁移到日常交流的词汇、短语和句式。"
+          ],
+          "node_type": "unit",
+          "ordinal": 1,
+          "parent_key": null,
+          "stable_key": "pep-grade7-lower-2024:unit:01",
+          "start_page": "P.1",
+          "subtitle": "Can you play the guitar?",
+          "title": "Unit 1"
+        },
+        {
+          "end_page": "P.12",
+          "estimated_minutes": 24,
+          "front_end_blocks": [
+            {
+              "block_type": "unit_hero",
+              "status": "ready"
+            },
+            {
+              "block_type": "core_vocabulary",
+              "status": "ready_or_pending_review"
+            },
+            {
+              "block_type": "sentence_patterns",
+              "status": "ready_or_pending_review"
+            },
+            {
+              "block_type": "practice",
+              "status": "ready_or_pending_review"
+            }
+          ],
+          "learning_objectives": [
+            "围绕“日常作息与时间表达”理解并使用本单元核心表达。",
+            "掌握可迁移到日常交流的词汇、短语和句式。"
+          ],
+          "node_type": "unit",
+          "ordinal": 2,
+          "parent_key": null,
+          "stable_key": "pep-grade7-lower-2024:unit:02",
+          "start_page": "P.7",
+          "subtitle": "What time do you go to school?",
+          "title": "Unit 2"
+        },
+        {
+          "end_page": "P.18",
+          "estimated_minutes": 24,
+          "front_end_blocks": [
+            {
+              "block_type": "unit_hero",
+              "status": "ready"
+            },
+            {
+              "block_type": "core_vocabulary",
+              "status": "ready_or_pending_review"
+            },
+            {
+              "block_type": "sentence_patterns",
+              "status": "ready_or_pending_review"
+            },
+            {
+              "block_type": "practice",
+              "status": "ready_or_pending_review"
+            }
+          ],
+          "learning_objectives": [
+            "围绕“交通方式与通勤距离”理解并使用本单元核心表达。",
+            "掌握可迁移到日常交流的词汇、短语和句式。"
+          ],
+          "node_type": "unit",
+          "ordinal": 3,
+          "parent_key": null,
+          "stable_key": "pep-grade7-lower-2024:unit:03",
+          "start_page": "P.13",
+          "subtitle": "How do you get to school?",
+          "title": "Unit 3"
+        },
+        {
+          "end_page": "P.24",
+          "estimated_minutes": 24,
+          "front_end_blocks": [
+            {
+              "block_type": "unit_hero",
+              "status": "ready"
+            },
+            {
+              "block_type": "core_vocabulary",
+              "status": "ready_or_pending_review"
+            },
+            {
+              "block_type": "sentence_patterns",
+              "status": "ready_or_pending_review"
+            },
+            {
+              "block_type": "practice",
+              "status": "ready_or_pending_review"
+            }
+          ],
+          "learning_objectives": [
+            "围绕“校园规则与祈使句”理解并使用本单元核心表达。",
+            "掌握可迁移到日常交流的词汇、短语和句式。"
+          ],
+          "node_type": "unit",
+          "ordinal": 4,
+          "parent_key": null,
+          "stable_key": "pep-grade7-lower-2024:unit:04",
+          "start_page": "P.19",
+          "subtitle": "Don't eat in class.",
+          "title": "Unit 4"
+        },
+        {
+          "end_page": "P.30",
+          "estimated_minutes": 24,
+          "front_end_blocks": [
+            {
+              "block_type": "unit_hero",
+              "status": "ready"
+            },
+            {
+              "block_type": "core_vocabulary",
+              "status": "ready_or_pending_review"
+            },
+            {
+              "block_type": "sentence_patterns",
+              "status": "ready_or_pending_review"
+            },
+            {
+              "block_type": "practice",
+              "status": "ready_or_pending_review"
+            }
+          ],
+          "learning_objectives": [
+            "围绕“动物与喜好原因”理解并使用本单元核心表达。",
+            "掌握可迁移到日常交流的词汇、短语和句式。"
+          ],
+          "node_type": "unit",
+          "ordinal": 5,
+          "parent_key": null,
+          "stable_key": "pep-grade7-lower-2024:unit:05",
+          "start_page": "P.25",
+          "subtitle": "Why do you like pandas?",
+          "title": "Unit 5"
+        },
+        {
+          "end_page": "P.36",
+          "estimated_minutes": 24,
+          "front_end_blocks": [
+            {
+              "block_type": "unit_hero",
+              "status": "ready"
+            },
+            {
+              "block_type": "core_vocabulary",
+              "status": "ready_or_pending_review"
+            },
+            {
+              "block_type": "sentence_patterns",
+              "status": "ready_or_pending_review"
+            },
+            {
+              "block_type": "practice",
+              "status": "ready_or_pending_review"
+            }
+          ],
+          "learning_objectives": [
+            "围绕“正在进行的活动”理解并使用本单元核心表达。",
+            "掌握可迁移到日常交流的词汇、短语和句式。"
+          ],
+          "node_type": "unit",
+          "ordinal": 6,
+          "parent_key": null,
+          "stable_key": "pep-grade7-lower-2024:unit:06",
+          "start_page": "P.31",
+          "subtitle": "I'm watching TV.",
+          "title": "Unit 6"
+        },
+        {
+          "end_page": "P.42",
+          "estimated_minutes": 24,
+          "front_end_blocks": [
+            {
+              "block_type": "unit_hero",
+              "status": "ready"
+            },
+            {
+              "block_type": "core_vocabulary",
+              "status": "ready_or_pending_review"
+            },
+            {
+              "block_type": "sentence_patterns",
+              "status": "ready_or_pending_review"
+            },
+            {
+              "block_type": "practice",
+              "status": "ready_or_pending_review"
+            }
+          ],
+          "learning_objectives": [
+            "围绕“天气与近况”理解并使用本单元核心表达。",
+            "掌握可迁移到日常交流的词汇、短语和句式。"
+          ],
+          "node_type": "unit",
+          "ordinal": 7,
+          "parent_key": null,
+          "stable_key": "pep-grade7-lower-2024:unit:07",
+          "start_page": "P.37",
+          "subtitle": "It's raining!",
+          "title": "Unit 7"
+        },
+        {
+          "end_page": "P.48",
+          "estimated_minutes": 24,
+          "front_end_blocks": [
+            {
+              "block_type": "unit_hero",
+              "status": "ready"
+            },
+            {
+              "block_type": "core_vocabulary",
+              "status": "ready_or_pending_review"
+            },
+            {
+              "block_type": "sentence_patterns",
+              "status": "ready_or_pending_review"
+            },
+            {
+              "block_type": "practice",
+              "status": "ready_or_pending_review"
+            }
+          ],
+          "learning_objectives": [
+            "围绕“街区地点与问路”理解并使用本单元核心表达。",
+            "掌握可迁移到日常交流的词汇、短语和句式。"
+          ],
+          "node_type": "unit",
+          "ordinal": 8,
+          "parent_key": null,
+          "stable_key": "pep-grade7-lower-2024:unit:08",
+          "start_page": "P.43",
+          "subtitle": "Is there a post office near here?",
+          "title": "Unit 8"
+        },
+        {
+          "end_page": "P.54",
+          "estimated_minutes": 24,
+          "front_end_blocks": [
+            {
+              "block_type": "unit_hero",
+              "status": "ready"
+            },
+            {
+              "block_type": "core_vocabulary",
+              "status": "ready_or_pending_review"
+            },
+            {
+              "block_type": "sentence_patterns",
+              "status": "ready_or_pending_review"
+            },
+            {
+              "block_type": "practice",
+              "status": "ready_or_pending_review"
+            }
+          ],
+          "learning_objectives": [
+            "围绕“外貌描述”理解并使用本单元核心表达。",
+            "掌握可迁移到日常交流的词汇、短语和句式。"
+          ],
+          "node_type": "unit",
+          "ordinal": 9,
+          "parent_key": null,
+          "stable_key": "pep-grade7-lower-2024:unit:09",
+          "start_page": "P.49",
+          "subtitle": "What does he look like?",
+          "title": "Unit 9"
+        },
+        {
+          "end_page": "P.60",
+          "estimated_minutes": 24,
+          "front_end_blocks": [
+            {
+              "block_type": "unit_hero",
+              "status": "ready"
+            },
+            {
+              "block_type": "core_vocabulary",
+              "status": "ready_or_pending_review"
+            },
+            {
+              "block_type": "sentence_patterns",
+              "status": "ready_or_pending_review"
+            },
+            {
+              "block_type": "practice",
+              "status": "ready_or_pending_review"
+            }
+          ],
+          "learning_objectives": [
+            "围绕“点餐与食物规格”理解并使用本单元核心表达。",
+            "掌握可迁移到日常交流的词汇、短语和句式。"
+          ],
+          "node_type": "unit",
+          "ordinal": 10,
+          "parent_key": null,
+          "stable_key": "pep-grade7-lower-2024:unit:10",
+          "start_page": "P.55",
+          "subtitle": "I'd like some noodles.",
+          "title": "Unit 10"
+        },
+        {
+          "end_page": "P.66",
+          "estimated_minutes": 24,
+          "front_end_blocks": [
+            {
+              "block_type": "unit_hero",
+              "status": "ready"
+            },
+            {
+              "block_type": "core_vocabulary",
+              "status": "ready_or_pending_review"
+            },
+            {
+              "block_type": "sentence_patterns",
+              "status": "ready_or_pending_review"
+            },
+            {
+              "block_type": "practice",
+              "status": "ready_or_pending_review"
+            }
+          ],
+          "learning_objectives": [
+            "围绕“过去的学校旅行”理解并使用本单元核心表达。",
+            "掌握可迁移到日常交流的词汇、短语和句式。"
+          ],
+          "node_type": "unit",
+          "ordinal": 11,
+          "parent_key": null,
+          "stable_key": "pep-grade7-lower-2024:unit:11",
+          "start_page": "P.61",
+          "subtitle": "How was your school trip?",
+          "title": "Unit 11"
+        },
+        {
+          "end_page": "P.72",
+          "estimated_minutes": 24,
+          "front_end_blocks": [
+            {
+              "block_type": "unit_hero",
+              "status": "ready"
+            },
+            {
+              "block_type": "core_vocabulary",
+              "status": "ready_or_pending_review"
+            },
+            {
+              "block_type": "sentence_patterns",
+              "status": "ready_or_pending_review"
+            },
+            {
+              "block_type": "practice",
+              "status": "ready_or_pending_review"
+            }
+          ],
+          "learning_objectives": [
+            "围绕“周末活动与过去事件”理解并使用本单元核心表达。",
+            "掌握可迁移到日常交流的词汇、短语和句式。"
+          ],
+          "node_type": "unit",
+          "ordinal": 12,
+          "parent_key": null,
+          "stable_key": "pep-grade7-lower-2024:unit:12",
+          "start_page": "P.67",
+          "subtitle": "What did you do last weekend?",
+          "title": "Unit 12"
+        }
+      ],
+      "exercise_questions": [
+        {
+          "answer": "Can you play the guitar?",
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:01",
+          "difficulty": 0.24,
+          "explanation": "“Can you play the guitar?”是 Unit 1 的核心标题句式，可直接用于本单元主题交流。",
+          "knowledge_point_key": "pep-grade7-lower-2024:unit:01:sentence_pattern:can-you-play-the-guitar",
+          "metadata": {
+            "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+            "generated_from": {
+              "curriculum_node_key": "pep-grade7-lower-2024:unit:01",
+              "knowledge_point_key": "pep-grade7-lower-2024:unit:01:sentence_pattern:can-you-play-the-guitar",
+              "source_stable_id": "pep-grade7-lower-2024"
+            },
+            "interaction": {
+              "allow_retry": true,
+              "input_mode": "choice",
+              "type": "single_choice"
+            },
+            "source": "curated_public_textbook_seed"
+          },
+          "options": [
+            "Can you play the guitar?",
+            "play the guitar",
+            "guitar",
+            "Thank you!"
+          ],
+          "question_type": "multiple_choice",
+          "stable_key": "pep-grade7-lower-2024:unit:01:ex:choose-pattern-01",
+          "status": "published",
+          "stem": "围绕“能力表达与社团活动”，下列哪一句最贴近本单元核心表达？"
+        },
+        {
+          "answer": "What time do you go to school?",
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:02",
+          "difficulty": 0.24,
+          "explanation": "“What time do you go to school?”是 Unit 2 的核心标题句式，可直接用于本单元主题交流。",
+          "knowledge_point_key": "pep-grade7-lower-2024:unit:02:sentence_pattern:what-time-do-you-go-to-school",
+          "metadata": {
+            "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+            "generated_from": {
+              "curriculum_node_key": "pep-grade7-lower-2024:unit:02",
+              "knowledge_point_key": "pep-grade7-lower-2024:unit:02:sentence_pattern:what-time-do-you-go-to-school",
+              "source_stable_id": "pep-grade7-lower-2024"
+            },
+            "interaction": {
+              "allow_retry": true,
+              "input_mode": "choice",
+              "type": "single_choice"
+            },
+            "source": "curated_public_textbook_seed"
+          },
+          "options": [
+            "What time do you go to school?",
+            "take a shower",
+            "usually",
+            "Thank you!"
+          ],
+          "question_type": "multiple_choice",
+          "stable_key": "pep-grade7-lower-2024:unit:02:ex:choose-pattern-01",
+          "status": "published",
+          "stem": "围绕“日常作息与时间表达”，下列哪一句最贴近本单元核心表达？"
+        },
+        {
+          "answer": "How do you get to school?",
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:03",
+          "difficulty": 0.24,
+          "explanation": "“How do you get to school?”是 Unit 3 的核心标题句式，可直接用于本单元主题交流。",
+          "knowledge_point_key": "pep-grade7-lower-2024:unit:03:sentence_pattern:how-do-you-get-to-school",
+          "metadata": {
+            "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+            "generated_from": {
+              "curriculum_node_key": "pep-grade7-lower-2024:unit:03",
+              "knowledge_point_key": "pep-grade7-lower-2024:unit:03:sentence_pattern:how-do-you-get-to-school",
+              "source_stable_id": "pep-grade7-lower-2024"
+            },
+            "interaction": {
+              "allow_retry": true,
+              "input_mode": "choice",
+              "type": "single_choice"
+            },
+            "source": "curated_public_textbook_seed"
+          },
+          "options": [
+            "How do you get to school?",
+            "ride a bike",
+            "train",
+            "Thank you!"
+          ],
+          "question_type": "multiple_choice",
+          "stable_key": "pep-grade7-lower-2024:unit:03:ex:choose-pattern-01",
+          "status": "published",
+          "stem": "围绕“交通方式与通勤距离”，下列哪一句最贴近本单元核心表达？"
+        },
+        {
+          "answer": "Don't eat in class.",
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:04",
+          "difficulty": 0.24,
+          "explanation": "“Don't eat in class.”是 Unit 4 的核心标题句式，可直接用于本单元主题交流。",
+          "knowledge_point_key": "pep-grade7-lower-2024:unit:04:sentence_pattern:dont-eat-in-class",
+          "metadata": {
+            "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+            "generated_from": {
+              "curriculum_node_key": "pep-grade7-lower-2024:unit:04",
+              "knowledge_point_key": "pep-grade7-lower-2024:unit:04:sentence_pattern:dont-eat-in-class",
+              "source_stable_id": "pep-grade7-lower-2024"
+            },
+            "interaction": {
+              "allow_retry": true,
+              "input_mode": "choice",
+              "type": "single_choice"
+            },
+            "source": "curated_public_textbook_seed"
+          },
+          "options": [
+            "Don't eat in class.",
+            "on time",
+            "rule",
+            "Thank you!"
+          ],
+          "question_type": "multiple_choice",
+          "stable_key": "pep-grade7-lower-2024:unit:04:ex:choose-pattern-01",
+          "status": "published",
+          "stem": "围绕“校园规则与祈使句”，下列哪一句最贴近本单元核心表达？"
+        },
+        {
+          "answer": "Why do you like pandas?",
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:05",
+          "difficulty": 0.24,
+          "explanation": "“Why do you like pandas?”是 Unit 5 的核心标题句式，可直接用于本单元主题交流。",
+          "knowledge_point_key": "pep-grade7-lower-2024:unit:05:sentence_pattern:why-do-you-like-pandas",
+          "metadata": {
+            "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+            "generated_from": {
+              "curriculum_node_key": "pep-grade7-lower-2024:unit:05",
+              "knowledge_point_key": "pep-grade7-lower-2024:unit:05:sentence_pattern:why-do-you-like-pandas",
+              "source_stable_id": "pep-grade7-lower-2024"
+            },
+            "interaction": {
+              "allow_retry": true,
+              "input_mode": "choice",
+              "type": "single_choice"
+            },
+            "source": "curated_public_textbook_seed"
+          },
+          "options": [
+            "Why do you like pandas?",
+            "kind of",
+            "panda",
+            "Thank you!"
+          ],
+          "question_type": "multiple_choice",
+          "stable_key": "pep-grade7-lower-2024:unit:05:ex:choose-pattern-01",
+          "status": "published",
+          "stem": "围绕“动物与喜好原因”，下列哪一句最贴近本单元核心表达？"
+        },
+        {
+          "answer": "I'm watching TV.",
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:06",
+          "difficulty": 0.24,
+          "explanation": "“I'm watching TV.”是 Unit 6 的核心标题句式，可直接用于本单元主题交流。",
+          "knowledge_point_key": "pep-grade7-lower-2024:unit:06:sentence_pattern:im-watching-tv",
+          "metadata": {
+            "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+            "generated_from": {
+              "curriculum_node_key": "pep-grade7-lower-2024:unit:06",
+              "knowledge_point_key": "pep-grade7-lower-2024:unit:06:sentence_pattern:im-watching-tv",
+              "source_stable_id": "pep-grade7-lower-2024"
+            },
+            "interaction": {
+              "allow_retry": true,
+              "input_mode": "choice",
+              "type": "single_choice"
+            },
+            "source": "curated_public_textbook_seed"
+          },
+          "options": [
+            "I'm watching TV.",
+            "read a newspaper",
+            "watch",
+            "Thank you!"
+          ],
+          "question_type": "multiple_choice",
+          "stable_key": "pep-grade7-lower-2024:unit:06:ex:choose-pattern-01",
+          "status": "published",
+          "stem": "围绕“正在进行的活动”，下列哪一句最贴近本单元核心表达？"
+        },
+        {
+          "answer": "It's raining!",
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:07",
+          "difficulty": 0.24,
+          "explanation": "“It's raining!”是 Unit 7 的核心标题句式，可直接用于本单元主题交流。",
+          "knowledge_point_key": "pep-grade7-lower-2024:unit:07:sentence_pattern:its-raining",
+          "metadata": {
+            "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+            "generated_from": {
+              "curriculum_node_key": "pep-grade7-lower-2024:unit:07",
+              "knowledge_point_key": "pep-grade7-lower-2024:unit:07:sentence_pattern:its-raining",
+              "source_stable_id": "pep-grade7-lower-2024"
+            },
+            "interaction": {
+              "allow_retry": true,
+              "input_mode": "choice",
+              "type": "single_choice"
+            },
+            "source": "curated_public_textbook_seed"
+          },
+          "options": [
+            "It's raining!",
+            "take a message",
+            "rain",
+            "Thank you!"
+          ],
+          "question_type": "multiple_choice",
+          "stable_key": "pep-grade7-lower-2024:unit:07:ex:choose-pattern-01",
+          "status": "published",
+          "stem": "围绕“天气与近况”，下列哪一句最贴近本单元核心表达？"
+        },
+        {
+          "answer": "Is there a post office near here?",
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:08",
+          "difficulty": 0.24,
+          "explanation": "“Is there a post office near here?”是 Unit 8 的核心标题句式，可直接用于本单元主题交流。",
+          "knowledge_point_key": "pep-grade7-lower-2024:unit:08:sentence_pattern:is-there-a-post-office-near-here",
+          "metadata": {
+            "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+            "generated_from": {
+              "curriculum_node_key": "pep-grade7-lower-2024:unit:08",
+              "knowledge_point_key": "pep-grade7-lower-2024:unit:08:sentence_pattern:is-there-a-post-office-near-here",
+              "source_stable_id": "pep-grade7-lower-2024"
+            },
+            "interaction": {
+              "allow_retry": true,
+              "input_mode": "choice",
+              "type": "single_choice"
+            },
+            "source": "curated_public_textbook_seed"
+          },
+          "options": [
+            "Is there a post office near here?",
+            "across from",
+            "post office",
+            "Thank you!"
+          ],
+          "question_type": "multiple_choice",
+          "stable_key": "pep-grade7-lower-2024:unit:08:ex:choose-pattern-01",
+          "status": "published",
+          "stem": "围绕“街区地点与问路”，下列哪一句最贴近本单元核心表达？"
+        },
+        {
+          "answer": "What does he look like?",
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:09",
+          "difficulty": 0.24,
+          "explanation": "“What does he look like?”是 Unit 9 的核心标题句式，可直接用于本单元主题交流。",
+          "knowledge_point_key": "pep-grade7-lower-2024:unit:09:sentence_pattern:what-does-he-look-like",
+          "metadata": {
+            "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+            "generated_from": {
+              "curriculum_node_key": "pep-grade7-lower-2024:unit:09",
+              "knowledge_point_key": "pep-grade7-lower-2024:unit:09:sentence_pattern:what-does-he-look-like",
+              "source_stable_id": "pep-grade7-lower-2024"
+            },
+            "interaction": {
+              "allow_retry": true,
+              "input_mode": "choice",
+              "type": "single_choice"
+            },
+            "source": "curated_public_textbook_seed"
+          },
+          "options": [
+            "What does he look like?",
+            "look like",
+            "tall",
+            "Thank you!"
+          ],
+          "question_type": "multiple_choice",
+          "stable_key": "pep-grade7-lower-2024:unit:09:ex:choose-pattern-01",
+          "status": "published",
+          "stem": "围绕“外貌描述”，下列哪一句最贴近本单元核心表达？"
+        },
+        {
+          "answer": "I'd like some noodles.",
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:10",
+          "difficulty": 0.24,
+          "explanation": "“I'd like some noodles.”是 Unit 10 的核心标题句式，可直接用于本单元主题交流。",
+          "knowledge_point_key": "pep-grade7-lower-2024:unit:10:sentence_pattern:id-like-some-noodles",
+          "metadata": {
+            "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+            "generated_from": {
+              "curriculum_node_key": "pep-grade7-lower-2024:unit:10",
+              "knowledge_point_key": "pep-grade7-lower-2024:unit:10:sentence_pattern:id-like-some-noodles",
+              "source_stable_id": "pep-grade7-lower-2024"
+            },
+            "interaction": {
+              "allow_retry": true,
+              "input_mode": "choice",
+              "type": "single_choice"
+            },
+            "source": "curated_public_textbook_seed"
+          },
+          "options": [
+            "I'd like some noodles.",
+            "beef noodles",
+            "noodle",
+            "Thank you!"
+          ],
+          "question_type": "multiple_choice",
+          "stable_key": "pep-grade7-lower-2024:unit:10:ex:choose-pattern-01",
+          "status": "published",
+          "stem": "围绕“点餐与食物规格”，下列哪一句最贴近本单元核心表达？"
+        },
+        {
+          "answer": "How was your school trip?",
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:11",
+          "difficulty": 0.24,
+          "explanation": "“How was your school trip?”是 Unit 11 的核心标题句式，可直接用于本单元主题交流。",
+          "knowledge_point_key": "pep-grade7-lower-2024:unit:11:sentence_pattern:how-was-your-school-trip",
+          "metadata": {
+            "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+            "generated_from": {
+              "curriculum_node_key": "pep-grade7-lower-2024:unit:11",
+              "knowledge_point_key": "pep-grade7-lower-2024:unit:11:sentence_pattern:how-was-your-school-trip",
+              "source_stable_id": "pep-grade7-lower-2024"
+            },
+            "interaction": {
+              "allow_retry": true,
+              "input_mode": "choice",
+              "type": "single_choice"
+            },
+            "source": "curated_public_textbook_seed"
+          },
+          "options": [
+            "How was your school trip?",
+            "go for a walk",
+            "trip",
+            "Thank you!"
+          ],
+          "question_type": "multiple_choice",
+          "stable_key": "pep-grade7-lower-2024:unit:11:ex:choose-pattern-01",
+          "status": "published",
+          "stem": "围绕“过去的学校旅行”，下列哪一句最贴近本单元核心表达？"
+        },
+        {
+          "answer": "What did you do last weekend?",
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:12",
+          "difficulty": 0.24,
+          "explanation": "“What did you do last weekend?”是 Unit 12 的核心标题句式，可直接用于本单元主题交流。",
+          "knowledge_point_key": "pep-grade7-lower-2024:unit:12:sentence_pattern:what-did-you-do-last-weekend",
+          "metadata": {
+            "copyright_note": "Generated checking item; not copied from textbook exercise pages.",
+            "generated_from": {
+              "curriculum_node_key": "pep-grade7-lower-2024:unit:12",
+              "knowledge_point_key": "pep-grade7-lower-2024:unit:12:sentence_pattern:what-did-you-do-last-weekend",
+              "source_stable_id": "pep-grade7-lower-2024"
+            },
+            "interaction": {
+              "allow_retry": true,
+              "input_mode": "choice",
+              "type": "single_choice"
+            },
+            "source": "curated_public_textbook_seed"
+          },
+          "options": [
+            "What did you do last weekend?",
+            "stay up late",
+            "weekend",
+            "Thank you!"
+          ],
+          "question_type": "multiple_choice",
+          "stable_key": "pep-grade7-lower-2024:unit:12:ex:choose-pattern-01",
+          "status": "published",
+          "stem": "围绕“周末活动与过去事件”，下列哪一句最贴近本单元核心表达？"
+        }
+      ],
+      "extraction_gaps": [
+        {
+          "description": "听力活动需要配套音频，暂不进入公共默认学习流。",
+          "gap_type": "audio_required",
+          "scope": "pep-grade7-lower-2024:unit:01",
+          "suggested_future_handling": "后续接入音频资源和听力题型后再结构化。"
+        },
+        {
+          "description": "听力活动需要配套音频，暂不进入公共默认学习流。",
+          "gap_type": "audio_required",
+          "scope": "pep-grade7-lower-2024:unit:02",
+          "suggested_future_handling": "后续接入音频资源和听力题型后再结构化。"
+        },
+        {
+          "description": "听力活动需要配套音频，暂不进入公共默认学习流。",
+          "gap_type": "audio_required",
+          "scope": "pep-grade7-lower-2024:unit:03",
+          "suggested_future_handling": "后续接入音频资源和听力题型后再结构化。"
+        },
+        {
+          "description": "长课文、整页练习或连续对话不写入 seed pack。",
+          "gap_type": "copyright_sensitive_long_text",
+          "scope": "pep-grade7-lower-2024:unit:03",
+          "suggested_future_handling": "仅保存短摘要和知识点，必要时通过受控证据摘录展示。"
+        },
+        {
+          "description": "听力活动需要配套音频，暂不进入公共默认学习流。",
+          "gap_type": "audio_required",
+          "scope": "pep-grade7-lower-2024:unit:04",
+          "suggested_future_handling": "后续接入音频资源和听力题型后再结构化。"
+        },
+        {
+          "description": "听力活动需要配套音频，暂不进入公共默认学习流。",
+          "gap_type": "audio_required",
+          "scope": "pep-grade7-lower-2024:unit:05",
+          "suggested_future_handling": "后续接入音频资源和听力题型后再结构化。"
+        },
+        {
+          "description": "听力活动需要配套音频，暂不进入公共默认学习流。",
+          "gap_type": "audio_required",
+          "scope": "pep-grade7-lower-2024:unit:06",
+          "suggested_future_handling": "后续接入音频资源和听力题型后再结构化。"
+        },
+        {
+          "description": "长课文、整页练习或连续对话不写入 seed pack。",
+          "gap_type": "copyright_sensitive_long_text",
+          "scope": "pep-grade7-lower-2024:unit:06",
+          "suggested_future_handling": "仅保存短摘要和知识点，必要时通过受控证据摘录展示。"
+        },
+        {
+          "description": "听力活动需要配套音频，暂不进入公共默认学习流。",
+          "gap_type": "audio_required",
+          "scope": "pep-grade7-lower-2024:unit:07",
+          "suggested_future_handling": "后续接入音频资源和听力题型后再结构化。"
+        },
+        {
+          "description": "听力活动需要配套音频，暂不进入公共默认学习流。",
+          "gap_type": "audio_required",
+          "scope": "pep-grade7-lower-2024:unit:08",
+          "suggested_future_handling": "后续接入音频资源和听力题型后再结构化。"
+        },
+        {
+          "description": "听力活动需要配套音频，暂不进入公共默认学习流。",
+          "gap_type": "audio_required",
+          "scope": "pep-grade7-lower-2024:unit:09",
+          "suggested_future_handling": "后续接入音频资源和听力题型后再结构化。"
+        },
+        {
+          "description": "长课文、整页练习或连续对话不写入 seed pack。",
+          "gap_type": "copyright_sensitive_long_text",
+          "scope": "pep-grade7-lower-2024:unit:09",
+          "suggested_future_handling": "仅保存短摘要和知识点，必要时通过受控证据摘录展示。"
+        },
+        {
+          "description": "听力活动需要配套音频，暂不进入公共默认学习流。",
+          "gap_type": "audio_required",
+          "scope": "pep-grade7-lower-2024:unit:10",
+          "suggested_future_handling": "后续接入音频资源和听力题型后再结构化。"
+        },
+        {
+          "description": "听力活动需要配套音频，暂不进入公共默认学习流。",
+          "gap_type": "audio_required",
+          "scope": "pep-grade7-lower-2024:unit:11",
+          "suggested_future_handling": "后续接入音频资源和听力题型后再结构化。"
+        },
+        {
+          "description": "听力活动需要配套音频，暂不进入公共默认学习流。",
+          "gap_type": "audio_required",
+          "scope": "pep-grade7-lower-2024:unit:12",
+          "suggested_future_handling": "后续接入音频资源和听力题型后再结构化。"
+        },
+        {
+          "description": "长课文、整页练习或连续对话不写入 seed pack。",
+          "gap_type": "copyright_sensitive_long_text",
+          "scope": "pep-grade7-lower-2024:unit:12",
+          "suggested_future_handling": "仅保存短摘要和知识点，必要时通过受控证据摘录展示。"
+        },
+        {
+          "description": "该册 PDF 的 pypdf 文本层为空，公共 seed 只使用 manifest 单元结构和人工整理短项。",
+          "gap_type": "low_confidence_layout",
+          "scope": "pep-grade7-lower-2024",
+          "suggested_future_handling": "后续使用 OCR/layout-aware pipeline 校对词表、语法附录和页内活动。"
+        },
+        {
+          "description": "扫描图片中的看图、配图和版面定位题暂不进入默认学习流。",
+          "gap_type": "image_required",
+          "scope": "pep-grade7-lower-2024",
+          "suggested_future_handling": "引入图片裁剪证据和图片题组件后再处理。"
+        }
+      ],
+      "knowledge_points": [
+        {
+          "content": {
+            "confidence": 0.86,
+            "display_group": "unit_intro",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "manifest_curated_seed"
+            },
+            "requires_review": false,
+            "role": "unit_overview",
+            "source_unit_subtitle": "Can you play the guitar?",
+            "source_unit_title": "Unit 1",
+            "theme": "能力表达与社团活动",
+            "unit_order": 1,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:01",
+          "difficulty": 0.18,
+          "source_page": "P.1",
+          "stable_key": "pep-grade7-lower-2024:unit:01:text_note:overview",
+          "status": "published",
+          "summary": "本单元主题：能力表达与社团活动；核心标题表达为“Can you play the guitar?”。",
+          "title": "Unit 1 overview",
+          "type": "text_note"
+        },
+        {
+          "content": {
+            "chinese_meaning": "吉他",
+            "confidence": 0.86,
+            "evidence": {
+              "page_label": "Unit title / curated public scope",
+              "raw_line_excerpt": "guitar ... 吉他",
+              "source": "manifest_curated_seed"
+            },
+            "example": null,
+            "lemma": "guitar",
+            "part_of_speech": null,
+            "phonetic": null,
+            "requires_review": false,
+            "role": "unit_wordlist",
+            "unit_order": 1,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:01",
+          "difficulty": 0.22,
+          "source_page": "P.1",
+          "stable_key": "pep-grade7-lower-2024:unit:01:vocabulary:guitar",
+          "status": "published",
+          "summary": "吉他",
+          "title": "guitar",
+          "type": "vocabulary"
+        },
+        {
+          "content": {
+            "confidence": 0.86,
+            "display_group": "sentence_patterns",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "manifest_curated_seed"
+            },
+            "pattern": "Can you play the guitar?",
+            "requires_review": false,
+            "role": "target_language",
+            "teaching_note": "询问能力：Can you ...?",
+            "unit_order": 1,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:01",
+          "difficulty": 0.3,
+          "source_page": "P.1",
+          "stable_key": "pep-grade7-lower-2024:unit:01:sentence_pattern:can-you-play-the-guitar",
+          "status": "published",
+          "summary": "询问能力：Can you ...?",
+          "title": "Can you play the guitar?",
+          "type": "sentence_pattern"
+        },
+        {
+          "content": {
+            "confidence": 0.86,
+            "display_group": "grammar",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "manifest_curated_seed"
+            },
+            "focus": "情态动词 can 表能力",
+            "related_units": [
+              "Unit 1"
+            ],
+            "requires_review": false,
+            "role": "grammar_focus",
+            "unit_order": 1,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:01",
+          "difficulty": 0.36,
+          "source_page": "P.3",
+          "stable_key": "pep-grade7-lower-2024:unit:01:grammar:can",
+          "status": "published",
+          "summary": "情态动词 can 表能力",
+          "title": "情态动词 can 表能力",
+          "type": "grammar"
+        },
+        {
+          "content": {
+            "chinese_meaning": "本单元核心短语或功能表达。",
+            "confidence": 0.86,
+            "display_group": "phrases",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "manifest_curated_seed"
+            },
+            "phrase": "play the guitar",
+            "requires_review": false,
+            "role": "unit_phrase",
+            "unit_order": 1,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:01",
+          "difficulty": 0.28,
+          "source_page": "P.1",
+          "stable_key": "pep-grade7-lower-2024:unit:01:phrase:play-the-guitar",
+          "status": "published",
+          "summary": "本单元可迁移短语：play the guitar。",
+          "title": "play the guitar",
+          "type": "phrase"
+        },
+        {
+          "content": {
+            "confidence": 0.86,
+            "display_group": "pronunciation",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "manifest_curated_seed"
+            },
+            "focus": "can/can't 的弱读与重读",
+            "requires_review": true,
+            "role": "pronunciation_note",
+            "unit_order": 1,
+            "warnings": [
+              "lower_pdf_text_layer_empty"
+            ]
+          },
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:01",
+          "difficulty": 0.26,
+          "source_page": "P.1",
+          "stable_key": "pep-grade7-lower-2024:unit:01:pronunciation:can-cant",
+          "status": "draft",
+          "summary": "语音关注点：can/can't 的弱读与重读。",
+          "title": "can/can't 的弱读与重读",
+          "type": "pronunciation"
+        },
+        {
+          "content": {
+            "confidence": 0.86,
+            "display_group": "unit_intro",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "manifest_curated_seed"
+            },
+            "requires_review": false,
+            "role": "unit_overview",
+            "source_unit_subtitle": "What time do you go to school?",
+            "source_unit_title": "Unit 2",
+            "theme": "日常作息与时间表达",
+            "unit_order": 2,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:02",
+          "difficulty": 0.18,
+          "source_page": "P.7",
+          "stable_key": "pep-grade7-lower-2024:unit:02:text_note:overview",
+          "status": "published",
+          "summary": "本单元主题：日常作息与时间表达；核心标题表达为“What time do you go to school?”。",
+          "title": "Unit 2 overview",
+          "type": "text_note"
+        },
+        {
+          "content": {
+            "chinese_meaning": "通常地",
+            "confidence": 0.86,
+            "evidence": {
+              "page_label": "Unit title / curated public scope",
+              "raw_line_excerpt": "usually ... 通常地",
+              "source": "manifest_curated_seed"
+            },
+            "example": null,
+            "lemma": "usually",
+            "part_of_speech": null,
+            "phonetic": null,
+            "requires_review": false,
+            "role": "unit_wordlist",
+            "unit_order": 2,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:02",
+          "difficulty": 0.22,
+          "source_page": "P.7",
+          "stable_key": "pep-grade7-lower-2024:unit:02:vocabulary:usually",
+          "status": "published",
+          "summary": "通常地",
+          "title": "usually",
+          "type": "vocabulary"
+        },
+        {
+          "content": {
+            "confidence": 0.86,
+            "display_group": "sentence_patterns",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "manifest_curated_seed"
+            },
+            "pattern": "What time do you go to school?",
+            "requires_review": false,
+            "role": "target_language",
+            "teaching_note": "询问时间：What time do/does ...?",
+            "unit_order": 2,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:02",
+          "difficulty": 0.3,
+          "source_page": "P.7",
+          "stable_key": "pep-grade7-lower-2024:unit:02:sentence_pattern:what-time-do-you-go-to-school",
+          "status": "published",
+          "summary": "询问时间：What time do/does ...?",
+          "title": "What time do you go to school?",
+          "type": "sentence_pattern"
+        },
+        {
+          "content": {
+            "confidence": 0.86,
+            "display_group": "grammar",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "manifest_curated_seed"
+            },
+            "focus": "一般现在时与频度副词",
+            "related_units": [
+              "Unit 2"
+            ],
+            "requires_review": false,
+            "role": "grammar_focus",
+            "unit_order": 2,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:02",
+          "difficulty": 0.36,
+          "source_page": "P.9",
+          "stable_key": "pep-grade7-lower-2024:unit:02:grammar:item",
+          "status": "published",
+          "summary": "一般现在时与频度副词",
+          "title": "一般现在时与频度副词",
+          "type": "grammar"
+        },
+        {
+          "content": {
+            "chinese_meaning": "本单元核心短语或功能表达。",
+            "confidence": 0.86,
+            "display_group": "phrases",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "manifest_curated_seed"
+            },
+            "phrase": "take a shower",
+            "requires_review": false,
+            "role": "unit_phrase",
+            "unit_order": 2,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:02",
+          "difficulty": 0.28,
+          "source_page": "P.7",
+          "stable_key": "pep-grade7-lower-2024:unit:02:phrase:take-a-shower",
+          "status": "published",
+          "summary": "本单元可迁移短语：take a shower。",
+          "title": "take a shower",
+          "type": "phrase"
+        },
+        {
+          "content": {
+            "confidence": 0.86,
+            "display_group": "pronunciation",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "manifest_curated_seed"
+            },
+            "focus": "时间表达中的重音",
+            "requires_review": true,
+            "role": "pronunciation_note",
+            "unit_order": 2,
+            "warnings": [
+              "lower_pdf_text_layer_empty"
+            ]
+          },
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:02",
+          "difficulty": 0.26,
+          "source_page": "P.7",
+          "stable_key": "pep-grade7-lower-2024:unit:02:pronunciation:item",
+          "status": "draft",
+          "summary": "语音关注点：时间表达中的重音。",
+          "title": "时间表达中的重音",
+          "type": "pronunciation"
+        },
+        {
+          "content": {
+            "confidence": 0.86,
+            "display_group": "unit_intro",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "manifest_curated_seed"
+            },
+            "requires_review": false,
+            "role": "unit_overview",
+            "source_unit_subtitle": "How do you get to school?",
+            "source_unit_title": "Unit 3",
+            "theme": "交通方式与通勤距离",
+            "unit_order": 3,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:03",
+          "difficulty": 0.18,
+          "source_page": "P.13",
+          "stable_key": "pep-grade7-lower-2024:unit:03:text_note:overview",
+          "status": "published",
+          "summary": "本单元主题：交通方式与通勤距离；核心标题表达为“How do you get to school?”。",
+          "title": "Unit 3 overview",
+          "type": "text_note"
+        },
+        {
+          "content": {
+            "chinese_meaning": "火车",
+            "confidence": 0.86,
+            "evidence": {
+              "page_label": "Unit title / curated public scope",
+              "raw_line_excerpt": "train ... 火车",
+              "source": "manifest_curated_seed"
+            },
+            "example": null,
+            "lemma": "train",
+            "part_of_speech": null,
+            "phonetic": null,
+            "requires_review": false,
+            "role": "unit_wordlist",
+            "unit_order": 3,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:03",
+          "difficulty": 0.22,
+          "source_page": "P.13",
+          "stable_key": "pep-grade7-lower-2024:unit:03:vocabulary:train",
+          "status": "published",
+          "summary": "火车",
+          "title": "train",
+          "type": "vocabulary"
+        },
+        {
+          "content": {
+            "confidence": 0.86,
+            "display_group": "sentence_patterns",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "manifest_curated_seed"
+            },
+            "pattern": "How do you get to school?",
+            "requires_review": false,
+            "role": "target_language",
+            "teaching_note": "询问交通方式：How do/does ... get to ...?",
+            "unit_order": 3,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:03",
+          "difficulty": 0.3,
+          "source_page": "P.13",
+          "stable_key": "pep-grade7-lower-2024:unit:03:sentence_pattern:how-do-you-get-to-school",
+          "status": "published",
+          "summary": "询问交通方式：How do/does ... get to ...?",
+          "title": "How do you get to school?",
+          "type": "sentence_pattern"
+        },
+        {
+          "content": {
+            "confidence": 0.86,
+            "display_group": "grammar",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "manifest_curated_seed"
+            },
+            "focus": "how/how far/how long 问句",
+            "related_units": [
+              "Unit 3"
+            ],
+            "requires_review": false,
+            "role": "grammar_focus",
+            "unit_order": 3,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:03",
+          "difficulty": 0.36,
+          "source_page": "P.15",
+          "stable_key": "pep-grade7-lower-2024:unit:03:grammar:how-how-far-how-long",
+          "status": "published",
+          "summary": "how/how far/how long 问句",
+          "title": "how/how far/how long 问句",
+          "type": "grammar"
+        },
+        {
+          "content": {
+            "chinese_meaning": "本单元核心短语或功能表达。",
+            "confidence": 0.86,
+            "display_group": "phrases",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "manifest_curated_seed"
+            },
+            "phrase": "ride a bike",
+            "requires_review": false,
+            "role": "unit_phrase",
+            "unit_order": 3,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:03",
+          "difficulty": 0.28,
+          "source_page": "P.13",
+          "stable_key": "pep-grade7-lower-2024:unit:03:phrase:ride-a-bike",
+          "status": "published",
+          "summary": "本单元可迁移短语：ride a bike。",
+          "title": "ride a bike",
+          "type": "phrase"
+        },
+        {
+          "content": {
+            "confidence": 0.86,
+            "display_group": "pronunciation",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "manifest_curated_seed"
+            },
+            "focus": "连读 get to",
+            "requires_review": true,
+            "role": "pronunciation_note",
+            "unit_order": 3,
+            "warnings": [
+              "lower_pdf_text_layer_empty"
+            ]
+          },
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:03",
+          "difficulty": 0.26,
+          "source_page": "P.13",
+          "stable_key": "pep-grade7-lower-2024:unit:03:pronunciation:get-to",
+          "status": "draft",
+          "summary": "语音关注点：连读 get to。",
+          "title": "连读 get to",
+          "type": "pronunciation"
+        },
+        {
+          "content": {
+            "confidence": 0.86,
+            "display_group": "unit_intro",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "manifest_curated_seed"
+            },
+            "requires_review": false,
+            "role": "unit_overview",
+            "source_unit_subtitle": "Don't eat in class.",
+            "source_unit_title": "Unit 4",
+            "theme": "校园规则与祈使句",
+            "unit_order": 4,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:04",
+          "difficulty": 0.18,
+          "source_page": "P.19",
+          "stable_key": "pep-grade7-lower-2024:unit:04:text_note:overview",
+          "status": "published",
+          "summary": "本单元主题：校园规则与祈使句；核心标题表达为“Don't eat in class.”。",
+          "title": "Unit 4 overview",
+          "type": "text_note"
+        },
+        {
+          "content": {
+            "chinese_meaning": "规则；规章",
+            "confidence": 0.86,
+            "evidence": {
+              "page_label": "Unit title / curated public scope",
+              "raw_line_excerpt": "rule ... 规则；规章",
+              "source": "manifest_curated_seed"
+            },
+            "example": null,
+            "lemma": "rule",
+            "part_of_speech": null,
+            "phonetic": null,
+            "requires_review": false,
+            "role": "unit_wordlist",
+            "unit_order": 4,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:04",
+          "difficulty": 0.22,
+          "source_page": "P.19",
+          "stable_key": "pep-grade7-lower-2024:unit:04:vocabulary:rule",
+          "status": "published",
+          "summary": "规则；规章",
+          "title": "rule",
+          "type": "vocabulary"
+        },
+        {
+          "content": {
+            "confidence": 0.86,
+            "display_group": "sentence_patterns",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "manifest_curated_seed"
+            },
+            "pattern": "Don't eat in class.",
+            "requires_review": false,
+            "role": "target_language",
+            "teaching_note": "表达规则：Do not ... / You must ...",
+            "unit_order": 4,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:04",
+          "difficulty": 0.3,
+          "source_page": "P.19",
+          "stable_key": "pep-grade7-lower-2024:unit:04:sentence_pattern:dont-eat-in-class",
+          "status": "published",
+          "summary": "表达规则：Do not ... / You must ...",
+          "title": "Don't eat in class.",
+          "type": "sentence_pattern"
+        },
+        {
+          "content": {
+            "confidence": 0.86,
+            "display_group": "grammar",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "manifest_curated_seed"
+            },
+            "focus": "祈使句和 must/have to",
+            "related_units": [
+              "Unit 4"
+            ],
+            "requires_review": false,
+            "role": "grammar_focus",
+            "unit_order": 4,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:04",
+          "difficulty": 0.36,
+          "source_page": "P.21",
+          "stable_key": "pep-grade7-lower-2024:unit:04:grammar:must-have-to",
+          "status": "published",
+          "summary": "祈使句和 must/have to",
+          "title": "祈使句和 must/have to",
+          "type": "grammar"
+        },
+        {
+          "content": {
+            "chinese_meaning": "本单元核心短语或功能表达。",
+            "confidence": 0.86,
+            "display_group": "phrases",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "manifest_curated_seed"
+            },
+            "phrase": "on time",
+            "requires_review": false,
+            "role": "unit_phrase",
+            "unit_order": 4,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:04",
+          "difficulty": 0.28,
+          "source_page": "P.19",
+          "stable_key": "pep-grade7-lower-2024:unit:04:phrase:on-time",
+          "status": "published",
+          "summary": "本单元可迁移短语：on time。",
+          "title": "on time",
+          "type": "phrase"
+        },
+        {
+          "content": {
+            "confidence": 0.86,
+            "display_group": "unit_intro",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "manifest_curated_seed"
+            },
+            "requires_review": false,
+            "role": "unit_overview",
+            "source_unit_subtitle": "Why do you like pandas?",
+            "source_unit_title": "Unit 5",
+            "theme": "动物与喜好原因",
+            "unit_order": 5,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:05",
+          "difficulty": 0.18,
+          "source_page": "P.25",
+          "stable_key": "pep-grade7-lower-2024:unit:05:text_note:overview",
+          "status": "published",
+          "summary": "本单元主题：动物与喜好原因；核心标题表达为“Why do you like pandas?”。",
+          "title": "Unit 5 overview",
+          "type": "text_note"
+        },
+        {
+          "content": {
+            "chinese_meaning": "熊猫",
+            "confidence": 0.86,
+            "evidence": {
+              "page_label": "Unit title / curated public scope",
+              "raw_line_excerpt": "panda ... 熊猫",
+              "source": "manifest_curated_seed"
+            },
+            "example": null,
+            "lemma": "panda",
+            "part_of_speech": null,
+            "phonetic": null,
+            "requires_review": false,
+            "role": "unit_wordlist",
+            "unit_order": 5,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:05",
+          "difficulty": 0.22,
+          "source_page": "P.25",
+          "stable_key": "pep-grade7-lower-2024:unit:05:vocabulary:panda",
+          "status": "published",
+          "summary": "熊猫",
+          "title": "panda",
+          "type": "vocabulary"
+        },
+        {
+          "content": {
+            "confidence": 0.86,
+            "display_group": "sentence_patterns",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "manifest_curated_seed"
+            },
+            "pattern": "Why do you like pandas?",
+            "requires_review": false,
+            "role": "target_language",
+            "teaching_note": "询问原因：Why do/does ... like ...?",
+            "unit_order": 5,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:05",
+          "difficulty": 0.3,
+          "source_page": "P.25",
+          "stable_key": "pep-grade7-lower-2024:unit:05:sentence_pattern:why-do-you-like-pandas",
+          "status": "published",
+          "summary": "询问原因：Why do/does ... like ...?",
+          "title": "Why do you like pandas?",
+          "type": "sentence_pattern"
+        },
+        {
+          "content": {
+            "confidence": 0.86,
+            "display_group": "grammar",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "manifest_curated_seed"
+            },
+            "focus": "why/because 问答复现",
+            "related_units": [
+              "Unit 5"
+            ],
+            "requires_review": false,
+            "role": "grammar_focus",
+            "unit_order": 5,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:05",
+          "difficulty": 0.36,
+          "source_page": "P.27",
+          "stable_key": "pep-grade7-lower-2024:unit:05:grammar:why-because",
+          "status": "published",
+          "summary": "why/because 问答复现",
+          "title": "why/because 问答复现",
+          "type": "grammar"
+        },
+        {
+          "content": {
+            "chinese_meaning": "本单元核心短语或功能表达。",
+            "confidence": 0.86,
+            "display_group": "phrases",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "manifest_curated_seed"
+            },
+            "phrase": "kind of",
+            "requires_review": false,
+            "role": "unit_phrase",
+            "unit_order": 5,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:05",
+          "difficulty": 0.28,
+          "source_page": "P.25",
+          "stable_key": "pep-grade7-lower-2024:unit:05:phrase:kind-of",
+          "status": "published",
+          "summary": "本单元可迁移短语：kind of。",
+          "title": "kind of",
+          "type": "phrase"
+        },
+        {
+          "content": {
+            "confidence": 0.86,
+            "display_group": "unit_intro",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "manifest_curated_seed"
+            },
+            "requires_review": false,
+            "role": "unit_overview",
+            "source_unit_subtitle": "I'm watching TV.",
+            "source_unit_title": "Unit 6",
+            "theme": "正在进行的活动",
+            "unit_order": 6,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:06",
+          "difficulty": 0.18,
+          "source_page": "P.31",
+          "stable_key": "pep-grade7-lower-2024:unit:06:text_note:overview",
+          "status": "published",
+          "summary": "本单元主题：正在进行的活动；核心标题表达为“I'm watching TV.”。",
+          "title": "Unit 6 overview",
+          "type": "text_note"
+        },
+        {
+          "content": {
+            "chinese_meaning": "观看；注视",
+            "confidence": 0.86,
+            "evidence": {
+              "page_label": "Unit title / curated public scope",
+              "raw_line_excerpt": "watch ... 观看；注视",
+              "source": "manifest_curated_seed"
+            },
+            "example": null,
+            "lemma": "watch",
+            "part_of_speech": null,
+            "phonetic": null,
+            "requires_review": false,
+            "role": "unit_wordlist",
+            "unit_order": 6,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:06",
+          "difficulty": 0.22,
+          "source_page": "P.31",
+          "stable_key": "pep-grade7-lower-2024:unit:06:vocabulary:watch",
+          "status": "published",
+          "summary": "观看；注视",
+          "title": "watch",
+          "type": "vocabulary"
+        },
+        {
+          "content": {
+            "confidence": 0.86,
+            "display_group": "sentence_patterns",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "manifest_curated_seed"
+            },
+            "pattern": "I'm watching TV.",
+            "requires_review": false,
+            "role": "target_language",
+            "teaching_note": "描述正在发生：be + v-ing",
+            "unit_order": 6,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:06",
+          "difficulty": 0.3,
+          "source_page": "P.31",
+          "stable_key": "pep-grade7-lower-2024:unit:06:sentence_pattern:im-watching-tv",
+          "status": "published",
+          "summary": "描述正在发生：be + v-ing",
+          "title": "I'm watching TV.",
+          "type": "sentence_pattern"
+        },
+        {
+          "content": {
+            "confidence": 0.86,
+            "display_group": "grammar",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "manifest_curated_seed"
+            },
+            "focus": "现在进行时",
+            "related_units": [
+              "Unit 6"
+            ],
+            "requires_review": false,
+            "role": "grammar_focus",
+            "unit_order": 6,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:06",
+          "difficulty": 0.36,
+          "source_page": "P.33",
+          "stable_key": "pep-grade7-lower-2024:unit:06:grammar:item",
+          "status": "published",
+          "summary": "现在进行时",
+          "title": "现在进行时",
+          "type": "grammar"
+        },
+        {
+          "content": {
+            "chinese_meaning": "本单元核心短语或功能表达。",
+            "confidence": 0.86,
+            "display_group": "phrases",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "manifest_curated_seed"
+            },
+            "phrase": "read a newspaper",
+            "requires_review": false,
+            "role": "unit_phrase",
+            "unit_order": 6,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:06",
+          "difficulty": 0.28,
+          "source_page": "P.31",
+          "stable_key": "pep-grade7-lower-2024:unit:06:phrase:read-a-newspaper",
+          "status": "published",
+          "summary": "本单元可迁移短语：read a newspaper。",
+          "title": "read a newspaper",
+          "type": "phrase"
+        },
+        {
+          "content": {
+            "confidence": 0.86,
+            "display_group": "pronunciation",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "manifest_curated_seed"
+            },
+            "focus": "现在分词 -ing 读音",
+            "requires_review": true,
+            "role": "pronunciation_note",
+            "unit_order": 6,
+            "warnings": [
+              "lower_pdf_text_layer_empty"
+            ]
+          },
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:06",
+          "difficulty": 0.26,
+          "source_page": "P.31",
+          "stable_key": "pep-grade7-lower-2024:unit:06:pronunciation:ing",
+          "status": "draft",
+          "summary": "语音关注点：现在分词 -ing 读音。",
+          "title": "现在分词 -ing 读音",
+          "type": "pronunciation"
+        },
+        {
+          "content": {
+            "confidence": 0.86,
+            "display_group": "unit_intro",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "manifest_curated_seed"
+            },
+            "requires_review": false,
+            "role": "unit_overview",
+            "source_unit_subtitle": "It's raining!",
+            "source_unit_title": "Unit 7",
+            "theme": "天气与近况",
+            "unit_order": 7,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:07",
+          "difficulty": 0.18,
+          "source_page": "P.37",
+          "stable_key": "pep-grade7-lower-2024:unit:07:text_note:overview",
+          "status": "published",
+          "summary": "本单元主题：天气与近况；核心标题表达为“It's raining!”。",
+          "title": "Unit 7 overview",
+          "type": "text_note"
+        },
+        {
+          "content": {
+            "chinese_meaning": "下雨；雨水",
+            "confidence": 0.86,
+            "evidence": {
+              "page_label": "Unit title / curated public scope",
+              "raw_line_excerpt": "rain ... 下雨；雨水",
+              "source": "manifest_curated_seed"
+            },
+            "example": null,
+            "lemma": "rain",
+            "part_of_speech": null,
+            "phonetic": null,
+            "requires_review": false,
+            "role": "unit_wordlist",
+            "unit_order": 7,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:07",
+          "difficulty": 0.22,
+          "source_page": "P.37",
+          "stable_key": "pep-grade7-lower-2024:unit:07:vocabulary:rain",
+          "status": "published",
+          "summary": "下雨；雨水",
+          "title": "rain",
+          "type": "vocabulary"
+        },
+        {
+          "content": {
+            "confidence": 0.86,
+            "display_group": "sentence_patterns",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "manifest_curated_seed"
+            },
+            "pattern": "It's raining!",
+            "requires_review": false,
+            "role": "target_language",
+            "teaching_note": "谈论天气：How is the weather? / It is ...",
+            "unit_order": 7,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:07",
+          "difficulty": 0.3,
+          "source_page": "P.37",
+          "stable_key": "pep-grade7-lower-2024:unit:07:sentence_pattern:its-raining",
+          "status": "published",
+          "summary": "谈论天气：How is the weather? / It is ...",
+          "title": "It's raining!",
+          "type": "sentence_pattern"
+        },
+        {
+          "content": {
+            "confidence": 0.86,
+            "display_group": "grammar",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "manifest_curated_seed"
+            },
+            "focus": "现在进行时描述天气和活动",
+            "related_units": [
+              "Unit 7"
+            ],
+            "requires_review": false,
+            "role": "grammar_focus",
+            "unit_order": 7,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:07",
+          "difficulty": 0.36,
+          "source_page": "P.39",
+          "stable_key": "pep-grade7-lower-2024:unit:07:grammar:item",
+          "status": "published",
+          "summary": "现在进行时描述天气和活动",
+          "title": "现在进行时描述天气和活动",
+          "type": "grammar"
+        },
+        {
+          "content": {
+            "chinese_meaning": "本单元核心短语或功能表达。",
+            "confidence": 0.86,
+            "display_group": "phrases",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "manifest_curated_seed"
+            },
+            "phrase": "take a message",
+            "requires_review": false,
+            "role": "unit_phrase",
+            "unit_order": 7,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:07",
+          "difficulty": 0.28,
+          "source_page": "P.37",
+          "stable_key": "pep-grade7-lower-2024:unit:07:phrase:take-a-message",
+          "status": "published",
+          "summary": "本单元可迁移短语：take a message。",
+          "title": "take a message",
+          "type": "phrase"
+        },
+        {
+          "content": {
+            "confidence": 0.86,
+            "display_group": "unit_intro",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "manifest_curated_seed"
+            },
+            "requires_review": false,
+            "role": "unit_overview",
+            "source_unit_subtitle": "Is there a post office near here?",
+            "source_unit_title": "Unit 8",
+            "theme": "街区地点与问路",
+            "unit_order": 8,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:08",
+          "difficulty": 0.18,
+          "source_page": "P.43",
+          "stable_key": "pep-grade7-lower-2024:unit:08:text_note:overview",
+          "status": "published",
+          "summary": "本单元主题：街区地点与问路；核心标题表达为“Is there a post office near here?”。",
+          "title": "Unit 8 overview",
+          "type": "text_note"
+        },
+        {
+          "content": {
+            "chinese_meaning": "邮局",
+            "confidence": 0.86,
+            "evidence": {
+              "page_label": "Unit title / curated public scope",
+              "raw_line_excerpt": "post office ... 邮局",
+              "source": "manifest_curated_seed"
+            },
+            "example": null,
+            "lemma": "post office",
+            "part_of_speech": null,
+            "phonetic": null,
+            "requires_review": false,
+            "role": "unit_wordlist",
+            "unit_order": 8,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:08",
+          "difficulty": 0.22,
+          "source_page": "P.43",
+          "stable_key": "pep-grade7-lower-2024:unit:08:vocabulary:post-office",
+          "status": "published",
+          "summary": "邮局",
+          "title": "post office",
+          "type": "vocabulary"
+        },
+        {
+          "content": {
+            "confidence": 0.86,
+            "display_group": "sentence_patterns",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "manifest_curated_seed"
+            },
+            "pattern": "Is there a post office near here?",
+            "requires_review": false,
+            "role": "target_language",
+            "teaching_note": "询问地点：Is there ... near here?",
+            "unit_order": 8,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:08",
+          "difficulty": 0.3,
+          "source_page": "P.43",
+          "stable_key": "pep-grade7-lower-2024:unit:08:sentence_pattern:is-there-a-post-office-near-here",
+          "status": "published",
+          "summary": "询问地点：Is there ... near here?",
+          "title": "Is there a post office near here?",
+          "type": "sentence_pattern"
+        },
+        {
+          "content": {
+            "confidence": 0.86,
+            "display_group": "grammar",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "manifest_curated_seed"
+            },
+            "focus": "There be 结构与方位介词",
+            "related_units": [
+              "Unit 8"
+            ],
+            "requires_review": false,
+            "role": "grammar_focus",
+            "unit_order": 8,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:08",
+          "difficulty": 0.36,
+          "source_page": "P.45",
+          "stable_key": "pep-grade7-lower-2024:unit:08:grammar:there-be",
+          "status": "published",
+          "summary": "There be 结构与方位介词",
+          "title": "There be 结构与方位介词",
+          "type": "grammar"
+        },
+        {
+          "content": {
+            "chinese_meaning": "本单元核心短语或功能表达。",
+            "confidence": 0.86,
+            "display_group": "phrases",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "manifest_curated_seed"
+            },
+            "phrase": "across from",
+            "requires_review": false,
+            "role": "unit_phrase",
+            "unit_order": 8,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:08",
+          "difficulty": 0.28,
+          "source_page": "P.43",
+          "stable_key": "pep-grade7-lower-2024:unit:08:phrase:across-from",
+          "status": "published",
+          "summary": "本单元可迁移短语：across from。",
+          "title": "across from",
+          "type": "phrase"
+        },
+        {
+          "content": {
+            "confidence": 0.86,
+            "display_group": "unit_intro",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "manifest_curated_seed"
+            },
+            "requires_review": false,
+            "role": "unit_overview",
+            "source_unit_subtitle": "What does he look like?",
+            "source_unit_title": "Unit 9",
+            "theme": "外貌描述",
+            "unit_order": 9,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:09",
+          "difficulty": 0.18,
+          "source_page": "P.49",
+          "stable_key": "pep-grade7-lower-2024:unit:09:text_note:overview",
+          "status": "published",
+          "summary": "本单元主题：外貌描述；核心标题表达为“What does he look like?”。",
+          "title": "Unit 9 overview",
+          "type": "text_note"
+        },
+        {
+          "content": {
+            "chinese_meaning": "高的",
+            "confidence": 0.86,
+            "evidence": {
+              "page_label": "Unit title / curated public scope",
+              "raw_line_excerpt": "tall ... 高的",
+              "source": "manifest_curated_seed"
+            },
+            "example": null,
+            "lemma": "tall",
+            "part_of_speech": null,
+            "phonetic": null,
+            "requires_review": false,
+            "role": "unit_wordlist",
+            "unit_order": 9,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:09",
+          "difficulty": 0.22,
+          "source_page": "P.49",
+          "stable_key": "pep-grade7-lower-2024:unit:09:vocabulary:tall",
+          "status": "published",
+          "summary": "高的",
+          "title": "tall",
+          "type": "vocabulary"
+        },
+        {
+          "content": {
+            "confidence": 0.86,
+            "display_group": "sentence_patterns",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "manifest_curated_seed"
+            },
+            "pattern": "What does he look like?",
+            "requires_review": false,
+            "role": "target_language",
+            "teaching_note": "询问外貌：What does ... look like?",
+            "unit_order": 9,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:09",
+          "difficulty": 0.3,
+          "source_page": "P.49",
+          "stable_key": "pep-grade7-lower-2024:unit:09:sentence_pattern:what-does-he-look-like",
+          "status": "published",
+          "summary": "询问外貌：What does ... look like?",
+          "title": "What does he look like?",
+          "type": "sentence_pattern"
+        },
+        {
+          "content": {
+            "confidence": 0.86,
+            "display_group": "grammar",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "manifest_curated_seed"
+            },
+            "focus": "描述性形容词与选择疑问句",
+            "related_units": [
+              "Unit 9"
+            ],
+            "requires_review": false,
+            "role": "grammar_focus",
+            "unit_order": 9,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:09",
+          "difficulty": 0.36,
+          "source_page": "P.51",
+          "stable_key": "pep-grade7-lower-2024:unit:09:grammar:item",
+          "status": "published",
+          "summary": "描述性形容词与选择疑问句",
+          "title": "描述性形容词与选择疑问句",
+          "type": "grammar"
+        },
+        {
+          "content": {
+            "chinese_meaning": "本单元核心短语或功能表达。",
+            "confidence": 0.86,
+            "display_group": "phrases",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "manifest_curated_seed"
+            },
+            "phrase": "look like",
+            "requires_review": false,
+            "role": "unit_phrase",
+            "unit_order": 9,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:09",
+          "difficulty": 0.28,
+          "source_page": "P.49",
+          "stable_key": "pep-grade7-lower-2024:unit:09:phrase:look-like",
+          "status": "published",
+          "summary": "本单元可迁移短语：look like。",
+          "title": "look like",
+          "type": "phrase"
+        },
+        {
+          "content": {
+            "confidence": 0.86,
+            "display_group": "pronunciation",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "manifest_curated_seed"
+            },
+            "focus": "选择疑问句语调",
+            "requires_review": true,
+            "role": "pronunciation_note",
+            "unit_order": 9,
+            "warnings": [
+              "lower_pdf_text_layer_empty"
+            ]
+          },
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:09",
+          "difficulty": 0.26,
+          "source_page": "P.49",
+          "stable_key": "pep-grade7-lower-2024:unit:09:pronunciation:item",
+          "status": "draft",
+          "summary": "语音关注点：选择疑问句语调。",
+          "title": "选择疑问句语调",
+          "type": "pronunciation"
+        },
+        {
+          "content": {
+            "confidence": 0.86,
+            "display_group": "unit_intro",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "manifest_curated_seed"
+            },
+            "requires_review": false,
+            "role": "unit_overview",
+            "source_unit_subtitle": "I'd like some noodles.",
+            "source_unit_title": "Unit 10",
+            "theme": "点餐与食物规格",
+            "unit_order": 10,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:10",
+          "difficulty": 0.18,
+          "source_page": "P.55",
+          "stable_key": "pep-grade7-lower-2024:unit:10:text_note:overview",
+          "status": "published",
+          "summary": "本单元主题：点餐与食物规格；核心标题表达为“I'd like some noodles.”。",
+          "title": "Unit 10 overview",
+          "type": "text_note"
+        },
+        {
+          "content": {
+            "chinese_meaning": "面条",
+            "confidence": 0.86,
+            "evidence": {
+              "page_label": "Unit title / curated public scope",
+              "raw_line_excerpt": "noodle ... 面条",
+              "source": "manifest_curated_seed"
+            },
+            "example": null,
+            "lemma": "noodle",
+            "part_of_speech": null,
+            "phonetic": null,
+            "requires_review": false,
+            "role": "unit_wordlist",
+            "unit_order": 10,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:10",
+          "difficulty": 0.22,
+          "source_page": "P.55",
+          "stable_key": "pep-grade7-lower-2024:unit:10:vocabulary:noodle",
+          "status": "published",
+          "summary": "面条",
+          "title": "noodle",
+          "type": "vocabulary"
+        },
+        {
+          "content": {
+            "confidence": 0.86,
+            "display_group": "sentence_patterns",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "manifest_curated_seed"
+            },
+            "pattern": "I'd like some noodles.",
+            "requires_review": false,
+            "role": "target_language",
+            "teaching_note": "点餐表达：I would like ...",
+            "unit_order": 10,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:10",
+          "difficulty": 0.3,
+          "source_page": "P.55",
+          "stable_key": "pep-grade7-lower-2024:unit:10:sentence_pattern:id-like-some-noodles",
+          "status": "published",
+          "summary": "点餐表达：I would like ...",
+          "title": "I'd like some noodles.",
+          "type": "sentence_pattern"
+        },
+        {
+          "content": {
+            "confidence": 0.86,
+            "display_group": "grammar",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "manifest_curated_seed"
+            },
+            "focus": "would like 与 some/any",
+            "related_units": [
+              "Unit 10"
+            ],
+            "requires_review": false,
+            "role": "grammar_focus",
+            "unit_order": 10,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:10",
+          "difficulty": 0.36,
+          "source_page": "P.57",
+          "stable_key": "pep-grade7-lower-2024:unit:10:grammar:would-like-some-any",
+          "status": "published",
+          "summary": "would like 与 some/any",
+          "title": "would like 与 some/any",
+          "type": "grammar"
+        },
+        {
+          "content": {
+            "chinese_meaning": "本单元核心短语或功能表达。",
+            "confidence": 0.86,
+            "display_group": "phrases",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "manifest_curated_seed"
+            },
+            "phrase": "beef noodles",
+            "requires_review": false,
+            "role": "unit_phrase",
+            "unit_order": 10,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:10",
+          "difficulty": 0.28,
+          "source_page": "P.55",
+          "stable_key": "pep-grade7-lower-2024:unit:10:phrase:beef-noodles",
+          "status": "published",
+          "summary": "本单元可迁移短语：beef noodles。",
+          "title": "beef noodles",
+          "type": "phrase"
+        },
+        {
+          "content": {
+            "confidence": 0.86,
+            "display_group": "unit_intro",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "manifest_curated_seed"
+            },
+            "requires_review": false,
+            "role": "unit_overview",
+            "source_unit_subtitle": "How was your school trip?",
+            "source_unit_title": "Unit 11",
+            "theme": "过去的学校旅行",
+            "unit_order": 11,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:11",
+          "difficulty": 0.18,
+          "source_page": "P.61",
+          "stable_key": "pep-grade7-lower-2024:unit:11:text_note:overview",
+          "status": "published",
+          "summary": "本单元主题：过去的学校旅行；核心标题表达为“How was your school trip?”。",
+          "title": "Unit 11 overview",
+          "type": "text_note"
+        },
+        {
+          "content": {
+            "chinese_meaning": "旅行",
+            "confidence": 0.86,
+            "evidence": {
+              "page_label": "Unit title / curated public scope",
+              "raw_line_excerpt": "trip ... 旅行",
+              "source": "manifest_curated_seed"
+            },
+            "example": null,
+            "lemma": "trip",
+            "part_of_speech": null,
+            "phonetic": null,
+            "requires_review": false,
+            "role": "unit_wordlist",
+            "unit_order": 11,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:11",
+          "difficulty": 0.22,
+          "source_page": "P.61",
+          "stable_key": "pep-grade7-lower-2024:unit:11:vocabulary:trip",
+          "status": "published",
+          "summary": "旅行",
+          "title": "trip",
+          "type": "vocabulary"
+        },
+        {
+          "content": {
+            "confidence": 0.86,
+            "display_group": "sentence_patterns",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "manifest_curated_seed"
+            },
+            "pattern": "How was your school trip?",
+            "requires_review": false,
+            "role": "target_language",
+            "teaching_note": "询问过去经历：How was/were ...?",
+            "unit_order": 11,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:11",
+          "difficulty": 0.3,
+          "source_page": "P.61",
+          "stable_key": "pep-grade7-lower-2024:unit:11:sentence_pattern:how-was-your-school-trip",
+          "status": "published",
+          "summary": "询问过去经历：How was/were ...?",
+          "title": "How was your school trip?",
+          "type": "sentence_pattern"
+        },
+        {
+          "content": {
+            "confidence": 0.86,
+            "display_group": "grammar",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "manifest_curated_seed"
+            },
+            "focus": "一般过去时 be 动词",
+            "related_units": [
+              "Unit 11"
+            ],
+            "requires_review": false,
+            "role": "grammar_focus",
+            "unit_order": 11,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:11",
+          "difficulty": 0.36,
+          "source_page": "P.63",
+          "stable_key": "pep-grade7-lower-2024:unit:11:grammar:be",
+          "status": "published",
+          "summary": "一般过去时 be 动词",
+          "title": "一般过去时 be 动词",
+          "type": "grammar"
+        },
+        {
+          "content": {
+            "chinese_meaning": "本单元核心短语或功能表达。",
+            "confidence": 0.86,
+            "display_group": "phrases",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "manifest_curated_seed"
+            },
+            "phrase": "go for a walk",
+            "requires_review": false,
+            "role": "unit_phrase",
+            "unit_order": 11,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:11",
+          "difficulty": 0.28,
+          "source_page": "P.61",
+          "stable_key": "pep-grade7-lower-2024:unit:11:phrase:go-for-a-walk",
+          "status": "published",
+          "summary": "本单元可迁移短语：go for a walk。",
+          "title": "go for a walk",
+          "type": "phrase"
+        },
+        {
+          "content": {
+            "confidence": 0.86,
+            "display_group": "unit_intro",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "manifest_curated_seed"
+            },
+            "requires_review": false,
+            "role": "unit_overview",
+            "source_unit_subtitle": "What did you do last weekend?",
+            "source_unit_title": "Unit 12",
+            "theme": "周末活动与过去事件",
+            "unit_order": 12,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:12",
+          "difficulty": 0.18,
+          "source_page": "P.67",
+          "stable_key": "pep-grade7-lower-2024:unit:12:text_note:overview",
+          "status": "published",
+          "summary": "本单元主题：周末活动与过去事件；核心标题表达为“What did you do last weekend?”。",
+          "title": "Unit 12 overview",
+          "type": "text_note"
+        },
+        {
+          "content": {
+            "chinese_meaning": "周末",
+            "confidence": 0.86,
+            "evidence": {
+              "page_label": "Unit title / curated public scope",
+              "raw_line_excerpt": "weekend ... 周末",
+              "source": "manifest_curated_seed"
+            },
+            "example": null,
+            "lemma": "weekend",
+            "part_of_speech": null,
+            "phonetic": null,
+            "requires_review": false,
+            "role": "unit_wordlist",
+            "unit_order": 12,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:12",
+          "difficulty": 0.22,
+          "source_page": "P.67",
+          "stable_key": "pep-grade7-lower-2024:unit:12:vocabulary:weekend",
+          "status": "published",
+          "summary": "周末",
+          "title": "weekend",
+          "type": "vocabulary"
+        },
+        {
+          "content": {
+            "confidence": 0.86,
+            "display_group": "sentence_patterns",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "manifest_curated_seed"
+            },
+            "pattern": "What did you do last weekend?",
+            "requires_review": false,
+            "role": "target_language",
+            "teaching_note": "询问过去活动：What did ... do ...?",
+            "unit_order": 12,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:12",
+          "difficulty": 0.3,
+          "source_page": "P.67",
+          "stable_key": "pep-grade7-lower-2024:unit:12:sentence_pattern:what-did-you-do-last-weekend",
+          "status": "published",
+          "summary": "询问过去活动：What did ... do ...?",
+          "title": "What did you do last weekend?",
+          "type": "sentence_pattern"
+        },
+        {
+          "content": {
+            "confidence": 0.86,
+            "display_group": "grammar",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "manifest_curated_seed"
+            },
+            "focus": "一般过去时实义动词",
+            "related_units": [
+              "Unit 12"
+            ],
+            "requires_review": false,
+            "role": "grammar_focus",
+            "unit_order": 12,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:12",
+          "difficulty": 0.36,
+          "source_page": "P.69",
+          "stable_key": "pep-grade7-lower-2024:unit:12:grammar:item",
+          "status": "published",
+          "summary": "一般过去时实义动词",
+          "title": "一般过去时实义动词",
+          "type": "grammar"
+        },
+        {
+          "content": {
+            "chinese_meaning": "本单元核心短语或功能表达。",
+            "confidence": 0.86,
+            "display_group": "phrases",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "manifest_curated_seed"
+            },
+            "phrase": "stay up late",
+            "requires_review": false,
+            "role": "unit_phrase",
+            "unit_order": 12,
+            "warnings": []
+          },
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:12",
+          "difficulty": 0.28,
+          "source_page": "P.67",
+          "stable_key": "pep-grade7-lower-2024:unit:12:phrase:stay-up-late",
+          "status": "published",
+          "summary": "本单元可迁移短语：stay up late。",
+          "title": "stay up late",
+          "type": "phrase"
+        },
+        {
+          "content": {
+            "confidence": 0.86,
+            "display_group": "pronunciation",
+            "evidence": {
+              "page_label": "Unit pages",
+              "raw_line_excerpt": null,
+              "source": "manifest_curated_seed"
+            },
+            "focus": "did 问句重音",
+            "requires_review": true,
+            "role": "pronunciation_note",
+            "unit_order": 12,
+            "warnings": [
+              "lower_pdf_text_layer_empty"
+            ]
+          },
+          "curriculum_node_key": "pep-grade7-lower-2024:unit:12",
+          "difficulty": 0.26,
+          "source_page": "P.67",
+          "stable_key": "pep-grade7-lower-2024:unit:12:pronunciation:did",
+          "status": "draft",
+          "summary": "语音关注点：did 问句重音。",
+          "title": "did 问句重音",
+          "type": "pronunciation"
+        }
+      ],
+      "source_seed": {
+        "edition": "人教版",
+        "file_size": 17821241,
+        "filename": "义务教育教科书·英语七年级下册.pdf",
+        "grade": "grade-7",
+        "knowledge_count": 66,
+        "metadata": {
+          "availability_status": "available",
+          "book_manifest_id": "pep-grade7-lower-2024",
+          "copyright_policy": "short structured facts only; no full page text or long textbook passages",
+          "parser_profile": "pep_grade7_lower_v1",
+          "parser_status": "curated",
+          "public_textbook_seed": true,
+          "quality_status": "published",
+          "source_kind": "public_textbook",
+          "text_layer_status": "empty_text_layer_detected"
+        },
+        "owner_learner_id": null,
+        "page_count": 152,
+        "publisher": "人民教育出版社（PEP）",
+        "sha256": "7041d787738bdf5f4f556765acdfe8033ac2f69d03e67ccc62516375f6a46f37",
+        "status": "published",
+        "title": "英语 七年级下册",
+        "unit_count": 12,
+        "visibility": "public",
+        "volume": "lower"
+      },
+      "stable_id": "pep-grade7-lower-2024"
+    }
+  ]
+}

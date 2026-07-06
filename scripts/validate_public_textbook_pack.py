@@ -1,0 +1,291 @@
+#!/usr/bin/env python
+from __future__ import annotations
+
+import argparse
+import json
+import re
+import sys
+from collections import Counter
+from pathlib import Path
+from typing import Any
+
+ROOT_DIR = Path(__file__).resolve().parents[1]
+SCHEMA_PATH = ROOT_DIR / "books" / "public" / "public_textbook_pack.schema.json"
+MANIFEST_PATH = ROOT_DIR / "books" / "manifest.yaml"
+
+ALLOWED_KNOWLEDGE_TYPES = {
+    "vocabulary",
+    "grammar",
+    "phrase",
+    "sentence_pattern",
+    "pronunciation",
+    "text_note",
+}
+EXPECTED_SOURCE_IDS = {"pep-grade7-upper-2024", "pep-grade7-lower-2024"}
+FORBIDDEN_FIELD_NAMES = {
+    "page_text",
+    "raw_page_text",
+    "full_text",
+    "raw_pdf_text",
+    "raw_pages",
+    "tapescript",
+    "tapescripts",
+}
+MAX_LONG_TEXT_CHARS = 1200
+
+
+class PackValidationError(Exception):
+    pass
+
+
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Validate a curated public textbook seed pack.")
+    parser.add_argument("pack", type=Path, help="Path to public_textbook_pack JSON.")
+    return parser.parse_args(argv)
+
+
+def main(argv: list[str] | None = None) -> int:
+    args = parse_args(argv)
+    try:
+        data = _load_json(args.pack)
+        _validate_json_schema(data)
+        _validate_pack(data)
+    except PackValidationError as exc:
+        print(f"public textbook pack validation failed: {exc}", file=sys.stderr)
+        return 1
+    print(f"public textbook pack validation passed: {args.pack}")
+    return 0
+
+
+def _load_json(path: Path) -> dict[str, Any]:
+    try:
+        with path.open(encoding="utf-8") as file:
+            data = json.load(file)
+    except FileNotFoundError as exc:
+        raise PackValidationError(f"file not found: {path}") from exc
+    except json.JSONDecodeError as exc:
+        raise PackValidationError(f"invalid JSON: {exc}") from exc
+    if not isinstance(data, dict):
+        raise PackValidationError("pack root must be a JSON object")
+    return data
+
+
+def _validate_json_schema(data: dict[str, Any]) -> None:
+    try:
+        import jsonschema
+    except ImportError:
+        return
+    schema = _load_json(SCHEMA_PATH)
+    try:
+        jsonschema.validate(instance=data, schema=schema)
+    except jsonschema.ValidationError as exc:
+        location = ".".join(str(part) for part in exc.absolute_path)
+        suffix = f" at {location}" if location else ""
+        raise PackValidationError(f"schema error{suffix}: {exc.message}") from exc
+
+
+def _validate_pack(data: dict[str, Any]) -> None:
+    if data.get("schema_version") != "public_textbook_pack.v1":
+        raise PackValidationError("schema_version must be public_textbook_pack.v1")
+    _scan_for_forbidden_raw_text(data)
+
+    sources = data.get("sources")
+    if not isinstance(sources, list):
+        raise PackValidationError("sources must be a list")
+    source_ids = {source.get("stable_id") for source in sources if isinstance(source, dict)}
+    missing_sources = EXPECTED_SOURCE_IDS - source_ids
+    if missing_sources:
+        raise PackValidationError(f"missing expected sources: {sorted(missing_sources)}")
+
+    manifest_units = _manifest_units()
+    for source in sources:
+        _validate_source(source, manifest_units.get(source["stable_id"], []))
+
+
+def _validate_source(source: dict[str, Any], expected_units: list[dict[str, Any]]) -> None:
+    stable_id = source["stable_id"]
+    seed = source["source_seed"]
+    if seed.get("visibility") != "public" or seed.get("owner_learner_id") is not None:
+        raise PackValidationError(f"{stable_id}: public source must not have an owner")
+    if seed.get("metadata", {}).get("public_textbook_seed") is not True:
+        raise PackValidationError(f"{stable_id}: metadata.public_textbook_seed must be true")
+
+    nodes = source["curriculum_nodes"]
+    points = source["knowledge_points"]
+    questions = source["exercise_questions"]
+    gaps = source["extraction_gaps"]
+
+    _assert_unique(stable_id, "curriculum node", [node["stable_key"] for node in nodes])
+    _assert_unique(stable_id, "knowledge point", [point["stable_key"] for point in points])
+    _assert_unique(stable_id, "exercise question", [item["stable_key"] for item in questions])
+
+    node_by_key = {node["stable_key"]: node for node in nodes}
+    point_by_key = {point["stable_key"]: point for point in points}
+
+    if expected_units:
+        if len(nodes) != len(expected_units):
+            raise PackValidationError(
+                f"{stable_id}: expected {len(expected_units)} units, found {len(nodes)}"
+            )
+        for index, (node, expected) in enumerate(zip(nodes, expected_units, strict=True), start=1):
+            if node["ordinal"] != index:
+                raise PackValidationError(f"{stable_id}: unit ordinal mismatch at {node['title']}")
+            for field in ("title", "subtitle"):
+                if node.get(field) != expected.get(field):
+                    raise PackValidationError(
+                        f"{stable_id}: unit {index} {field} mismatch: {node.get(field)!r}"
+                    )
+            if node.get("start_page") != f"P.{expected['start_printed_page']}":
+                raise PackValidationError(f"{stable_id}: unit {index} start_page mismatch")
+            if node.get("end_page") != f"P.{expected['end_printed_page']}":
+                raise PackValidationError(f"{stable_id}: unit {index} end_page mismatch")
+
+    overview_units = {
+        point["curriculum_node_key"]
+        for point in points
+        if point["type"] == "text_note" and point.get("content", {}).get("role") == "unit_overview"
+    }
+    missing_overview = set(node_by_key) - overview_units
+    if missing_overview:
+        raise PackValidationError(f"{stable_id}: missing unit overview for {sorted(missing_overview)}")
+
+    if seed.get("unit_count") != len(nodes):
+        raise PackValidationError(f"{stable_id}: source_seed.unit_count must match curriculum_nodes")
+    if seed.get("knowledge_count") != len(points):
+        raise PackValidationError(f"{stable_id}: source_seed.knowledge_count must match knowledge_points")
+
+    for point in points:
+        if point["curriculum_node_key"] not in node_by_key:
+            raise PackValidationError(
+                f"{stable_id}: knowledge point references missing node {point['curriculum_node_key']}"
+            )
+        if point["type"] not in ALLOWED_KNOWLEDGE_TYPES:
+            raise PackValidationError(f"{stable_id}: unsupported knowledge type {point['type']}")
+        content = point.get("content") or {}
+        if content.get("requires_review") is True and point["status"] != "draft":
+            raise PackValidationError(
+                f"{stable_id}: review-required point must be draft: {point['stable_key']}"
+            )
+        if point["type"] == "text_note" and content.get("role") == "unit_overview":
+            if "unit_overview" in point["stable_key"] and point["type"] != "text_note":
+                raise PackValidationError(f"{stable_id}: unit overview must use text_note")
+
+    for question in questions:
+        if question["curriculum_node_key"] not in node_by_key:
+            raise PackValidationError(
+                f"{stable_id}: exercise references missing node {question['curriculum_node_key']}"
+            )
+        point_key = question.get("knowledge_point_key")
+        if point_key is not None and point_key not in point_by_key:
+            raise PackValidationError(f"{stable_id}: exercise references missing point {point_key}")
+        if question["question_type"] == "multiple_choice" and len(question.get("options", [])) < 2:
+            raise PackValidationError(
+                f"{stable_id}: multiple_choice must have at least two options: {question['stable_key']}"
+            )
+        if question["answer"] not in question.get("options", []) and question["question_type"] == "multiple_choice":
+            raise PackValidationError(
+                f"{stable_id}: multiple_choice answer must be one of the options: {question['stable_key']}"
+            )
+        interaction = question.get("metadata", {}).get("interaction", {})
+        if interaction.get("input_mode") not in {"choice", "text"}:
+            raise PackValidationError(
+                f"{stable_id}: exercise missing stable interaction metadata: {question['stable_key']}"
+            )
+
+    scopes = {gap["scope"] for gap in gaps}
+    if stable_id.endswith("lower-2024") and not any(
+        gap.get("gap_type") == "low_confidence_layout" for gap in gaps
+    ):
+        raise PackValidationError(f"{stable_id}: lower scanned PDF must record layout gap")
+    invalid_scopes = scopes - set(node_by_key) - {stable_id}
+    if invalid_scopes:
+        raise PackValidationError(f"{stable_id}: extraction gap references unknown scope {sorted(invalid_scopes)}")
+
+
+def _assert_unique(stable_id: str, label: str, values: list[str]) -> None:
+    duplicates = [key for key, count in Counter(values).items() if count > 1]
+    if duplicates:
+        raise PackValidationError(f"{stable_id}: duplicate {label} stable_key values: {duplicates}")
+
+
+def _scan_for_forbidden_raw_text(value: Any, path: str = "$") -> None:
+    if isinstance(value, dict):
+        for key, child in value.items():
+            normalized_key = key.lower()
+            if normalized_key in FORBIDDEN_FIELD_NAMES:
+                raise PackValidationError(f"forbidden raw text field at {path}.{key}")
+            _scan_for_forbidden_raw_text(child, f"{path}.{key}")
+    elif isinstance(value, list):
+        for index, child in enumerate(value):
+            _scan_for_forbidden_raw_text(child, f"{path}[{index}]")
+    elif isinstance(value, str):
+        if len(value) > MAX_LONG_TEXT_CHARS:
+            raise PackValidationError(f"long text value at {path} exceeds {MAX_LONG_TEXT_CHARS} chars")
+        if _looks_like_page_dump(value):
+            raise PackValidationError(f"value at {path} looks like raw page text")
+
+
+def _looks_like_page_dump(value: str) -> bool:
+    if len(value) < 500:
+        return False
+    unit_hits = len(re.findall(r"\b(?:Unit|Starter Unit|Grammar Focus|Listen and|Role-play)\b", value))
+    page_ref_hits = len(re.findall(r"\bp\.(?:S?\d+|\d+)\b", value, flags=re.I))
+    return unit_hits >= 4 or page_ref_hits >= 10
+
+
+def _manifest_units() -> dict[str, list[dict[str, Any]]]:
+    text = MANIFEST_PATH.read_text(encoding="utf-8")
+    books: dict[str, list[dict[str, Any]]] = {}
+    current_id: str | None = None
+    in_units = False
+    current_unit: dict[str, Any] | None = None
+    for raw_line in text.splitlines():
+        if not raw_line.strip() or raw_line.lstrip().startswith("#"):
+            continue
+        indent = len(raw_line) - len(raw_line.lstrip(" "))
+        line = raw_line.strip()
+        if indent == 2 and line.startswith("- "):
+            current_id = None
+            in_units = False
+            key, value = _split_key_value(line[2:])
+            if key == "id":
+                current_id = str(value)
+                books[current_id] = []
+            continue
+        if current_id is None:
+            continue
+        if indent == 4 and line.startswith("id:"):
+            _, value = _split_key_value(line)
+            current_id = str(value)
+            books.setdefault(current_id, [])
+            continue
+        if indent == 4 and line == "units:":
+            in_units = True
+            continue
+        if indent == 4 and not line.startswith("units:"):
+            in_units = False
+            continue
+        if in_units and indent == 6 and line.startswith("- "):
+            current_unit = {}
+            books[current_id].append(current_unit)
+            key, value = _split_key_value(line[2:])
+            current_unit[key] = value
+            continue
+        if in_units and indent == 8 and current_unit is not None:
+            key, value = _split_key_value(line)
+            current_unit[key] = value
+    return books
+
+
+def _split_key_value(line: str) -> tuple[str, Any]:
+    key, _, raw_value = line.partition(":")
+    value = raw_value.strip()
+    if value.startswith('"') and value.endswith('"'):
+        return key.strip(), value[1:-1]
+    if value.isdigit():
+        return key.strip(), int(value)
+    return key.strip(), value
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
