@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   ArrowLeft,
   BookMarked,
@@ -26,6 +26,16 @@ import { Button } from '@/components/ui/Button'
 import { FilterChip } from '@/components/ui/FilterChip'
 import { StatusBanner } from '@/components/ui/StatusBanner'
 import { useToast } from '@/hooks/useToast'
+import {
+  deleteGroupLearningSignal,
+  listGroupLearningSignals,
+  listGroupLearningSources,
+  updateGroupLearningSource,
+  updateGroupLearningSignal,
+  type GroupLearningSignal as ApiGroupLearningSignal,
+  type GroupLearningSource,
+} from '@/services/groupLearningApi'
+import type { Learner } from '@/types'
 
 type SignalStatus = 'candidate' | 'accepted' | 'dismissed'
 type SignalCategory =
@@ -65,110 +75,50 @@ const filters: Array<{ id: SignalCategory; label: string }> = [
   { id: 'dismissed', label: '已忽略' },
 ]
 
-const initialSignals: GroupLearningSignal[] = [
-  {
-    id: 'sig-expression-absolute',
-    type: 'expression_gap',
-    category: 'expression_gap',
-    status: 'candidate',
-    title: '委婉反驳 / hedging',
-    sourceText: '这个观点太绝对了',
-    explanation: '这像是一个中文表达缺口，适合沉淀成英语观点表达。',
-    recommendation: 'That claim may be too strong. / I think this view needs more nuance.',
-    target: '写入好句候选、语法推荐和表达练习',
-    confidence: 0.86,
-    sourceTime: '今天 20:31',
-    actionLabel: '加入学习计划',
-    accentClass: 'border-indigo-200 bg-indigo-50 text-indigo-800',
-  },
-  {
-    id: 'sig-grammar-agree',
-    type: 'grammar_error',
-    category: 'grammar',
-    status: 'candidate',
-    title: 'agree 不需要 be',
-    sourceText: 'I am agree with you.',
-    explanation: 'agree 是动词，这里不需要 be。这个错误适合作为轻量复习证据。',
-    recommendation: 'I agree with you. / I am in agreement with you.',
-    target: '写入学习画像弱点和 GrammarPage 推荐',
-    confidence: 0.93,
-    sourceTime: '今天 20:18',
-    actionLabel: '加入语法推荐',
-    accentClass: 'border-rose-200 bg-rose-50 text-rose-800',
-  },
-  {
-    id: 'sig-vocab-nuance',
-    type: 'desired_vocabulary',
-    category: 'vocabulary',
-    status: 'candidate',
-    title: 'nuance',
-    sourceText: '#单词 nuance',
-    explanation: '用户主动标记了想学单词，可信度高，可以直接进入词汇候选。',
-    recommendation: 'nuance: 细微差别；可搭配 subtle nuance / add nuance。',
-    target: '写入词汇候选和词汇详解入口',
-    confidence: 0.98,
-    sourceTime: '昨天 22:07',
-    actionLabel: '加入词汇候选',
-    accentClass: 'border-indigo-200 bg-indigo-50 text-indigo-800',
-  },
-  {
-    id: 'sig-sentence-consistent',
-    type: 'good_sentence',
-    category: 'sentence',
-    status: 'candidate',
-    title: 'What matters most is not A, but B.',
-    sourceText: '#收藏 What matters most is not how fast you learn, but how consistently you practice.',
-    explanation: '这是可迁移的作文句式，适合进入好句收藏候选。',
-    recommendation: '强调重点 / 对比结构，可用于观点强调和学习反思。',
-    target: '写入好句收藏馆和写作短语本',
-    confidence: 0.91,
-    sourceTime: '昨天 21:42',
-    actionLabel: '加入好句',
-    accentClass: 'border-amber-200 bg-amber-50 text-amber-800',
-  },
-  {
-    id: 'sig-grammar-perfect',
-    type: 'grammar_correct_usage',
-    category: 'grammar',
-    status: 'candidate',
-    title: '现在完成进行时正确使用',
-    sourceText: 'I have been learning English for two months.',
-    explanation: '自然聊天里的正确使用证据，权重低于正式练习，但可辅助画像判断。',
-    recommendation: 'present perfect continuous +1；for + 时间段 +1；自然证据权重 0.3。',
-    target: '写入语法熟练度弱证据',
-    confidence: 0.79,
-    sourceTime: '周一 19:11',
-    actionLabel: '记录证据',
-    accentClass: 'border-emerald-200 bg-emerald-50 text-emerald-800',
-  },
-  {
-    id: 'sig-note-simple',
-    type: 'note_candidate',
-    category: 'note',
-    status: 'dismissed',
-    title: '口语主题笔记',
-    sourceText: '下次想聊电影和旅行主题',
-    explanation: '可以作为泛读与口语话题候选，但这条暂时被忽略。',
-    recommendation: '旅行经历、电影评价、偏好表达。',
-    target: '写入个人笔记候选',
-    confidence: 0.64,
-    sourceTime: '上周五 18:02',
-    actionLabel: '恢复线索',
-    accentClass: 'border-slate-200 bg-slate-50 text-slate-700',
-  },
-]
-
 interface GroupLearningSignalsPageProps {
+  learner: Learner
   onBack: () => void
   onOpenSettings: () => void
 }
 
-export function GroupLearningSignalsPage({ onBack, onOpenSettings }: GroupLearningSignalsPageProps) {
+export function GroupLearningSignalsPage({ learner, onBack, onOpenSettings }: GroupLearningSignalsPageProps) {
   const { showToast } = useToast()
-  const [signals, setSignals] = useState<GroupLearningSignal[]>(initialSignals)
+  const [signals, setSignals] = useState<GroupLearningSignal[]>([])
+  const [sources, setSources] = useState<GroupLearningSource[]>([])
   const [activeFilter, setActiveFilter] = useState<SignalCategory>('all')
   const [query, setQuery] = useState('')
   const [isPaused, setIsPaused] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+
+  const loadSignals = useCallback(async () => {
+    setIsLoading(true)
+    try {
+      const items = await listGroupLearningSignals(learner.id, 'all')
+      setSignals(items.filter((item) => item.status !== 'deleted').map(toSignalCard))
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : '加载群聊学习线索失败。', { variant: 'error' })
+    } finally {
+      setIsLoading(false)
+    }
+  }, [learner.id, showToast])
+
+  const loadSources = useCallback(async () => {
+    try {
+      const items = await listGroupLearningSources(learner.id)
+      setSources(items)
+      setIsPaused(items.length > 0 && items.every((source) => source.status !== 'active'))
+    } catch {
+      setSources([])
+    }
+  }, [learner.id])
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      void loadSignals()
+      void loadSources()
+    }, 0)
+    return () => window.clearTimeout(timer)
+  }, [loadSignals, loadSources])
 
   const stats = useMemo(() => {
     const candidates = signals.filter((signal) => signal.status === 'candidate')
@@ -197,19 +147,51 @@ export function GroupLearningSignalsPage({ onBack, onOpenSettings }: GroupLearni
     })
   }, [activeFilter, query, signals])
 
-  const updateSignalStatus = (id: string, status: SignalStatus) => {
-    setSignals((items) => items.map((item) => item.id === id ? { ...item, status } : item))
+  const sourceSummary = useMemo(() => {
+    const participantCount = sources.reduce((sum, source) => sum + source.participant_count, 0)
+    const retentionDays = sources[0]?.raw_retention_days ?? 7
+    const latestSeen = sources
+      .map((source) => source.last_seen_at)
+      .filter((value): value is string => Boolean(value))
+      .sort()
+      .at(-1)
+    return {
+      boundaryItems: [
+        `白名单群组 ${sources.length} 个`,
+        `已发现成员 ${participantCount} 位`,
+        `原始消息保留 ${retentionDays} 天`,
+        '未映射成员默认忽略',
+      ],
+      latestSeenLabel: latestSeen ? formatSignalTime(latestSeen) : '尚未同步',
+    }
+  }, [sources])
+
+  const updateSignalStatus = async (id: string, status: SignalStatus) => {
+    const action = status === 'accepted' ? 'accept' : status === 'dismissed' ? 'dismiss' : 'restore'
+    try {
+      const updated = await updateGroupLearningSignal(learner.id, id, action)
+      setSignals((items) => items.map((item) => item.id === id ? toSignalCard(updated) : item))
+      return true
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : '更新线索失败。', { variant: 'error' })
+      return false
+    }
   }
 
-  const deleteSignal = (id: string) => {
-    setSignals((items) => items.filter((item) => item.id !== id))
-    showToast('已删除这条群聊学习线索。', { variant: 'success' })
+  const deleteSignal = async (id: string) => {
+    try {
+      await deleteGroupLearningSignal(learner.id, id)
+      setSignals((items) => items.filter((item) => item.id !== id))
+      showToast('已删除这条群聊学习线索。', { variant: 'success' })
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : '删除线索失败。', { variant: 'error' })
+    }
   }
 
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-[#f6f7f9]">
-      <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-5 px-4 py-5 sm:px-6 lg:px-8">
-        <section className="overflow-hidden rounded-[28px] border border-slate-200 bg-white text-slate-950 shadow-sm">
+      <div className="mx-auto box-border flex w-full max-w-[1440px] flex-col gap-5 px-4 py-5 sm:px-6 lg:px-8">
+        <section className="overflow-hidden rounded-lg border border-slate-200 bg-white text-slate-950 shadow-sm">
           <div className="grid gap-8 p-5 sm:p-7 lg:grid-cols-[minmax(0,1fr)_420px] lg:p-8">
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
@@ -236,7 +218,7 @@ export function GroupLearningSignalsPage({ onBack, onOpenSettings }: GroupLearni
               </div>
             </div>
 
-            <div className="rounded-[24px] border border-slate-200 bg-slate-50 p-4">
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <p className="text-sm font-black text-slate-950">读取边界</p>
@@ -245,8 +227,8 @@ export function GroupLearningSignalsPage({ onBack, onOpenSettings }: GroupLearni
                 <ShieldCheck className="size-6 text-primary" />
               </div>
               <div className="mt-4 grid gap-2">
-                {['只读取 2 个白名单群', '只分析 1 个已绑定成员', '原始消息保留 7 天', '未映射成员默认忽略'].map((item) => (
-                  <div key={item} className="flex items-center gap-2 rounded-xl border border-slate-100 bg-white px-3 py-2 text-sm text-slate-700">
+                {sourceSummary.boundaryItems.map((item) => (
+                  <div key={item} className="flex items-center gap-2 rounded-lg border border-slate-100 bg-white px-3 py-2 text-sm text-slate-700">
                     <Check className="size-4 text-primary" />
                     {item}
                   </div>
@@ -265,10 +247,18 @@ export function GroupLearningSignalsPage({ onBack, onOpenSettings }: GroupLearni
                   variant="secondary"
                   className="flex-1"
                   onClick={() => {
-                    setIsPaused((value) => !value)
-                    showToast(isPaused ? '已恢复群聊线索读取。' : '已暂停群聊线索读取。', {
-                      variant: isPaused ? 'success' : 'warning',
-                    })
+                    const nextStatus = isPaused ? 'active' : 'paused'
+                    void Promise.all(sources.map((source) => updateGroupLearningSource(learner.id, source.id, { status: nextStatus })))
+                      .then(() => {
+                        setIsPaused(!isPaused)
+                        void loadSources()
+                        showToast(isPaused ? '已恢复群聊线索读取。' : '已暂停群聊线索读取。', {
+                          variant: isPaused ? 'success' : 'warning',
+                        })
+                      })
+                      .catch((error: unknown) => {
+                        showToast(error instanceof Error ? error.message : '更新读取状态失败。', { variant: 'error' })
+                      })
                   }}
                 >
                   <CirclePause className="size-4" />
@@ -284,12 +274,12 @@ export function GroupLearningSignalsPage({ onBack, onOpenSettings }: GroupLearni
           title={isPaused ? '读取已暂停' : '同步正常'}
           action={<Button variant="secondary" onClick={() => showToast('已发起一次手动同步。', { variant: 'success' })}><RefreshCw className="size-4" />同步一次</Button>}
         >
-          {isPaused ? '系统不会读取新群消息，已有线索仍可确认或删除。' : '最后同步：今天 20:42。新消息会先去重，再进入线索抽取。'}
+          {isPaused ? '系统不会读取新群消息，已有线索仍可确认或删除。' : `最后同步：${sourceSummary.latestSeenLabel}。新消息会先去重，再进入线索抽取。`}
         </StatusBanner>
 
-        <section className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_380px]">
-          <div className="space-y-4">
-            <div className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm">
+        <section className="grid min-w-0 items-start gap-5 xl:grid-cols-[minmax(0,1fr)_380px]">
+          <div className="min-w-0 space-y-4">
+            <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
               <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
@@ -303,7 +293,7 @@ export function GroupLearningSignalsPage({ onBack, onOpenSettings }: GroupLearni
                   <input
                     value={query}
                     onChange={(event) => setQuery(event.target.value)}
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-9 pr-3 text-sm outline-none transition focus:border-primary focus:bg-white focus:ring-2 focus:ring-primary/20"
+                    className="min-h-10 w-full rounded-lg border border-slate-200 bg-slate-50 py-2.5 pl-9 pr-3 text-sm outline-none transition focus:border-primary focus:bg-white focus:ring-2 focus:ring-primary/20"
                     placeholder="搜索线索、原文或推荐..."
                     aria-label="搜索群聊学习线索"
                   />
@@ -325,31 +315,34 @@ export function GroupLearningSignalsPage({ onBack, onOpenSettings }: GroupLearni
                   key={signal.id}
                   signal={signal}
                   onAccept={() => {
-                    updateSignalStatus(signal.id, 'accepted')
-                    showToast(`已${signal.actionLabel}。`, { variant: 'success' })
+                    void updateSignalStatus(signal.id, 'accepted').then((ok) => {
+                      if (ok) showToast(`已${signal.actionLabel}。`, { variant: 'success' })
+                    })
                   }}
-                  onDelete={() => deleteSignal(signal.id)}
+                  onDelete={() => void deleteSignal(signal.id)}
                   onDismiss={() => {
-                    updateSignalStatus(signal.id, 'dismissed')
-                    showToast('已忽略这条线索。', { variant: 'success' })
+                    void updateSignalStatus(signal.id, 'dismissed').then((ok) => {
+                      if (ok) showToast('已忽略这条线索。', { variant: 'success' })
+                    })
                   }}
                   onRestore={() => {
-                    updateSignalStatus(signal.id, 'candidate')
-                    showToast('已恢复到待确认。', { variant: 'success' })
+                    void updateSignalStatus(signal.id, 'candidate').then((ok) => {
+                      if (ok) showToast('已恢复到待确认。', { variant: 'success' })
+                    })
                   }}
                 />
               )) : (
-                <div className="rounded-[24px] border border-dashed border-slate-300 bg-white p-10 text-center">
+                <div className="rounded-lg border border-dashed border-slate-300 bg-white p-10 text-center">
                   <Filter className="mx-auto size-8 text-slate-400" />
-                  <p className="mt-3 text-sm font-black text-slate-950">没有匹配的线索</p>
-                  <p className="mt-1 text-sm text-slate-500">换一个分组或关键词看看。</p>
+                  <p className="mt-3 text-sm font-black text-slate-950">{isLoading ? '正在加载线索' : '没有匹配的线索'}</p>
+                  <p className="mt-1 text-sm text-slate-500">{isLoading ? '稍等一下，正在读取后端收件箱。' : '导入已映射成员的群消息后，这里会出现候选线索。'}</p>
                 </div>
               )}
             </div>
           </div>
 
           <aside className="space-y-4">
-            <SourceSetupPanel />
+            <SourceSetupPanel sources={sources} />
             <PipelinePanel />
           </aside>
         </section>
@@ -375,7 +368,7 @@ function SignalCard({
   const isAccepted = signal.status === 'accepted'
 
   return (
-    <article className="overflow-hidden rounded-[24px] border border-slate-200 bg-white shadow-sm transition hover:border-indigo-200 hover:shadow-md">
+    <article className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm transition hover:border-indigo-200 hover:shadow-md">
       <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_260px]">
         <div className="p-4 sm:p-5">
           <div className="flex flex-wrap items-center gap-2">
@@ -393,7 +386,7 @@ function SignalCard({
           </div>
 
           <h3 className="mt-4 text-xl font-black leading-tight text-slate-950">{signal.title}</h3>
-          <div className="mt-3 rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3">
+          <div className="mt-3 rounded-lg border border-slate-100 bg-slate-50 px-4 py-3">
             <p className="text-xs font-black uppercase tracking-wide text-slate-400">来源消息</p>
             <p className="mt-2 text-base font-bold leading-7 text-slate-900">“{signal.sourceText}”</p>
           </div>
@@ -432,9 +425,14 @@ function SignalCard({
   )
 }
 
-function SourceSetupPanel() {
+function SourceSetupPanel({ sources }: { sources: GroupLearningSource[] }) {
+  const activeSources = sources.filter((source) => source.status === 'active')
+  const participantCount = sources.reduce((sum, source) => sum + source.participant_count, 0)
+  const retentionDays = sources[0]?.raw_retention_days ?? 7
+  const sourceNames = sources.map((source) => source.display_name).join(' / ') || '还没有白名单群组'
+
   return (
-    <section className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm">
+    <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
       <div className="flex items-center justify-between gap-3">
         <div>
           <p className="text-base font-black text-slate-950">来源与成员</p>
@@ -444,9 +442,9 @@ function SourceSetupPanel() {
       </div>
 
       <div className="mt-4 space-y-3">
-        <SetupRow icon={<ShieldCheck className="size-4" />} label="白名单群组" value="七年级英语学习搭子群 / 写作互助群" />
-        <SetupRow icon={<UserRoundCheck className="size-4" />} label="成员映射" value="小林 -> 当前 learner；2 位成员仅作上下文" />
-        <SetupRow icon={<Database className="size-4" />} label="原始消息保留" value="7 天后自动清理，可随时删除缓存" />
+        <SetupRow icon={<ShieldCheck className="size-4" />} label="白名单群组" value={`${sourceNames}；${activeSources.length} 个活跃`} />
+        <SetupRow icon={<UserRoundCheck className="size-4" />} label="成员映射" value={`${participantCount} 位已发现成员，只有 learner 且开启分析才会抽取`} />
+        <SetupRow icon={<Database className="size-4" />} label="原始消息保留" value={`${retentionDays} 天后自动清理，可随时删除缓存`} />
         <SetupRow icon={<Tags className="size-4" />} label="标签识别" value="#单词 #语法 #收藏 #怎么说 #纠错" />
       </div>
     </section>
@@ -463,14 +461,14 @@ function PipelinePanel() {
   ]
 
   return (
-    <section className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm">
+    <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
       <div className="flex items-center gap-2">
         <FileText className="size-5 text-primary" />
         <h2 className="text-base font-black text-slate-950">处理 Pipeline</h2>
       </div>
       <div className="mt-4 grid gap-2">
         {steps.map((step, index) => (
-          <div key={step.label} className="flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50 px-3 py-2">
+          <div key={step.label} className="flex items-center gap-3 rounded-lg border border-slate-100 bg-slate-50 px-3 py-2">
             <span className="flex size-8 items-center justify-center rounded-lg bg-white text-primary shadow-sm">{step.icon}</span>
             <span className="min-w-0 flex-1 text-sm font-bold text-slate-800">{step.label}</span>
             <span className="text-xs font-black text-slate-400">{index + 1}</span>
@@ -498,7 +496,7 @@ function HeroMetric({
   }[tone]
 
   return (
-    <div className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3">
+    <div className="rounded-lg border border-slate-100 bg-slate-50 px-4 py-3">
       <p className="text-xs font-bold text-slate-500">{label}</p>
       <p className={`mt-1 text-3xl font-black ${toneClass}`}>{value}</p>
     </div>
@@ -507,7 +505,7 @@ function HeroMetric({
 
 function InfoBlock({ icon, text, title }: { icon: React.ReactNode; text: string; title: string }) {
   return (
-    <div className="rounded-2xl border border-slate-100 bg-white p-3">
+    <div className="rounded-lg border border-slate-100 bg-white p-3">
       <div className="flex items-center gap-2 text-primary">
         {icon}
         <p className="text-xs font-black uppercase tracking-wide">{title}</p>
@@ -519,7 +517,7 @@ function InfoBlock({ icon, text, title }: { icon: React.ReactNode; text: string;
 
 function SetupRow({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
-    <div className="grid grid-cols-[32px_minmax(0,1fr)] gap-3 rounded-xl border border-slate-100 bg-slate-50 p-3">
+    <div className="grid grid-cols-[32px_minmax(0,1fr)] gap-3 rounded-lg border border-slate-100 bg-slate-50 p-3">
       <span className="flex size-8 items-center justify-center rounded-lg bg-white text-primary shadow-sm">{icon}</span>
       <span className="min-w-0">
         <span className="block text-xs font-black text-slate-500">{label}</span>
@@ -540,4 +538,73 @@ function getSignalTypeLabel(type: GroupLearningSignal['type']) {
     note_candidate: '笔记候选',
   }
   return labels[type]
+}
+
+function toSignalCard(signal: ApiGroupLearningSignal): GroupLearningSignal {
+  return {
+    id: signal.id,
+    type: toSignalType(signal.signal_type),
+    category: toSignalCategory(signal.category),
+    status: signal.status === 'accepted' ? 'accepted' : signal.status === 'dismissed' ? 'dismissed' : 'candidate',
+    title: signal.target_label,
+    sourceText: signal.evidence_text,
+    explanation: signal.normalized_note || signal.recommendation_reason,
+    recommendation: signal.recommendation_reason,
+    target: targetDescription(signal),
+    confidence: signal.confidence,
+    sourceTime: formatSignalTime(signal.source_time || signal.created_at),
+    actionLabel: actionLabel(signal.signal_type),
+    accentClass: accentClass(signal.signal_type),
+  }
+}
+
+function toSignalType(value: string): GroupLearningSignal['type'] {
+  if (value === 'grammar_error' || value === 'grammar_correct_usage' || value === 'expression_gap' || value === 'desired_vocabulary' || value === 'desired_grammar' || value === 'good_sentence' || value === 'note_candidate') {
+    return value
+  }
+  return 'note_candidate'
+}
+
+function toSignalCategory(value: string): GroupLearningSignal['category'] {
+  if (value === 'expression_gap' || value === 'grammar' || value === 'intent' || value === 'vocabulary' || value === 'sentence' || value === 'note') {
+    return value
+  }
+  return 'intent'
+}
+
+function targetDescription(signal: ApiGroupLearningSignal) {
+  if (signal.applied_target_type) return `已写入 ${signal.applied_target_type}`
+  if (signal.signal_type === 'desired_vocabulary') return '写入词汇候选和词汇详解入口'
+  if (signal.signal_type === 'good_sentence' || signal.signal_type === 'expression_gap') return '写入好句候选和表达练习'
+  if (signal.signal_type === 'grammar_error') return '写入语法推荐和学习画像弱点'
+  if (signal.signal_type === 'grammar_correct_usage') return '写入语法熟练度弱证据'
+  return '写入个人笔记候选'
+}
+
+function actionLabel(signalType: string) {
+  if (signalType === 'desired_vocabulary') return '加入词汇候选'
+  if (signalType === 'good_sentence') return '加入好句'
+  if (signalType === 'grammar_error' || signalType === 'desired_grammar') return '加入语法推荐'
+  if (signalType === 'grammar_correct_usage') return '记录证据'
+  return '加入学习计划'
+}
+
+function accentClass(signalType: string) {
+  if (signalType === 'grammar_error') return 'border-rose-200 bg-rose-50 text-rose-800'
+  if (signalType === 'grammar_correct_usage') return 'border-emerald-200 bg-emerald-50 text-emerald-800'
+  if (signalType === 'good_sentence') return 'border-amber-200 bg-amber-50 text-amber-800'
+  if (signalType === 'note_candidate') return 'border-slate-200 bg-slate-50 text-slate-700'
+  return 'border-indigo-200 bg-indigo-50 text-indigo-800'
+}
+
+function formatSignalTime(value?: string | null) {
+  if (!value) return '时间未知'
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return value
+  return date.toLocaleString('zh-CN', {
+    month: 'numeric',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
 }

@@ -15,6 +15,8 @@ from src.api.explore import router as explore_router
 from src.api.exercises import router as exercises_router
 from src.api.exercise_attempts import router as exercise_attempts_router
 from src.api.grammar import router as grammar_router
+from src.api.group_learning import import_router as group_learning_import_router
+from src.api.group_learning import router as group_learning_router
 from src.api.health import router as health_router
 from src.api.knowledge import router as knowledge_router
 from src.api.learners import router as learners_router
@@ -63,6 +65,8 @@ app.include_router(essay_review_router)
 app.include_router(exercises_router)
 app.include_router(exercise_attempts_router)
 app.include_router(grammar_router)
+app.include_router(group_learning_router)
+app.include_router(group_learning_import_router)
 app.include_router(learning_progress_router)
 app.include_router(memory_router)
 app.include_router(prompts_router)

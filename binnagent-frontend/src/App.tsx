@@ -188,6 +188,7 @@ function App() {
         onTabChange={handleTabChange}
       />
       <GroupLearningSettingsDialog
+        learner={currentLearner}
         open={isGroupLearningSettingsOpen}
         onClose={() => setIsGroupLearningSettingsOpen(false)}
       />

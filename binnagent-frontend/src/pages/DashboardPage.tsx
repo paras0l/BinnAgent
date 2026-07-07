@@ -304,6 +304,7 @@ export function DashboardPage({
   if (activeWorkspace === 'group-signals') {
     return (
       <GroupLearningSignalsPage
+        learner={learner}
         onBack={() => setActiveWorkspace('home')}
         onOpenSettings={onOpenGroupLearningSettings}
       />

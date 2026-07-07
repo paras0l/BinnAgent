@@ -1,4 +1,4 @@
-import { useId, useMemo, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useId, useMemo, useState, type ReactNode } from 'react'
 import {
   AlertTriangle,
   ChevronDown,
@@ -24,6 +24,20 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { IconButton } from '@/components/ui/IconButton'
 import { useFocusTrap } from '@/hooks/useFocusTrap'
 import { useToast } from '@/hooks/useToast'
+import {
+  cleanupGroupLearningSource,
+  createGroupLearningSource,
+  deleteGroupLearningSource,
+  importGroupLearningMessages,
+  listGroupLearningParticipants,
+  listGroupLearningSources,
+  updateGroupLearningParticipant,
+  updateGroupLearningSource,
+  type GroupLearningParticipant,
+  type ImportGroupLearningMessage,
+  type GroupLearningSource,
+} from '@/services/groupLearningApi'
+import type { Learner } from '@/types'
 
 type SourceStatus = 'active' | 'paused' | 'revoked'
 type ParticipantRole = 'learner' | 'partner' | 'unknown'
@@ -47,6 +61,7 @@ interface ParticipantMapping {
   sourceId: string
   displayName: string
   externalMemberKey: string
+  learnerId: string | null
   learnerName: string | null
   role: ParticipantRole
   analysisEnabled: boolean
@@ -63,87 +78,31 @@ type DangerAction =
 const RETENTION_OPTIONS = [1, 3, 7, 14, 30]
 const CONFIDENCE_OPTIONS = [0.7, 0.8, 0.9]
 const CURRENT_LEARNER_LABEL = '当前 learner'
-
-const INITIAL_SOURCES: GroupSourceConfig[] = [
-  {
-    id: 'source-study-partner',
-    displayName: '七年级英语学习搭子群',
-    externalGroupKey: 'wechat-grade7-study-partner',
-    status: 'active',
-    rawRetentionDays: 7,
-    lastSeenAt: '今天 20:42',
-    pendingSignals: 4,
-    autoGenerateRecommendations: true,
-    autoWriteCandidates: true,
-    autoApplyHighConfidenceTaggedSignals: false,
-    confidenceThreshold: 0.8,
-  },
-  {
-    id: 'source-writing',
-    displayName: '写作互助群',
-    externalGroupKey: 'wechat-writing-workshop',
-    status: 'paused',
-    rawRetentionDays: 14,
-    lastSeenAt: '昨天 22:10',
-    pendingSignals: 1,
-    autoGenerateRecommendations: true,
-    autoWriteCandidates: false,
-    autoApplyHighConfidenceTaggedSignals: false,
-    confidenceThreshold: 0.9,
-  },
-]
-
-const INITIAL_PARTICIPANTS: ParticipantMapping[] = [
-  {
-    id: 'participant-xiaolin',
-    sourceId: 'source-study-partner',
-    displayName: '小林',
-    externalMemberKey: 'wechat-member-xiaolin',
-    learnerName: CURRENT_LEARNER_LABEL,
-    role: 'learner',
-    analysisEnabled: true,
-    lastMessageAt: '今天 20:31',
-  },
-  {
-    id: 'participant-may',
-    sourceId: 'source-study-partner',
-    displayName: 'May',
-    externalMemberKey: 'wechat-member-may',
-    learnerName: null,
-    role: 'partner',
-    analysisEnabled: false,
-    lastMessageAt: '今天 20:28',
-  },
-  {
-    id: 'participant-writing-host',
-    sourceId: 'source-writing',
-    displayName: '作文打卡主持人',
-    externalMemberKey: 'wechat-member-writing-host',
-    learnerName: null,
-    role: 'unknown',
-    analysisEnabled: false,
-    lastMessageAt: '昨天 21:55',
-  },
-]
+const TEXT_INPUT_CLASS =
+  'min-h-10 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20'
+const SELECT_INPUT_CLASS =
+  'min-h-10 appearance-none rounded-lg border border-slate-200 bg-white py-2 pl-3 pr-11 text-sm font-bold text-slate-800 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20'
+const SELECT_CHEVRON_CLASS = 'pointer-events-none absolute bottom-3 right-4 size-4 text-slate-400'
 
 interface GroupLearningSettingsDialogProps {
+  learner: Learner
   open: boolean
   onClose: () => void
 }
 
 export function GroupLearningSettingsDialog({
+  learner,
   open,
   onClose,
 }: GroupLearningSettingsDialogProps) {
   const titleId = useId()
   const { showToast } = useToast()
   const [isEnabled, setIsEnabled] = useState(true)
-  const [sources, setSources] = useState<GroupSourceConfig[]>(() => INITIAL_SOURCES)
-  const [participants, setParticipants] = useState<ParticipantMapping[]>(() => INITIAL_PARTICIPANTS)
-  const [selectedSourceId, setSelectedSourceId] = useState(INITIAL_SOURCES[0]?.id ?? '')
+  const [sources, setSources] = useState<GroupSourceConfig[]>([])
+  const [participants, setParticipants] = useState<ParticipantMapping[]>([])
+  const [selectedSourceId, setSelectedSourceId] = useState('')
   const [editingSourceId, setEditingSourceId] = useState<string | null>(null)
   const [sourceDraft, setSourceDraft] = useState<SourceDraft>(() => createEmptySourceDraft())
-  const [nextSourceIndex, setNextSourceIndex] = useState(1)
   const [memberQuery, setMemberQuery] = useState('')
   const [dangerAction, setDangerAction] = useState<DangerAction>(null)
   const [lastImportSummary, setLastImportSummary] = useState('尚未导入本地 JSON。')
@@ -154,6 +113,7 @@ export function GroupLearningSettingsDialog({
   })
 
   const selectedSource = sources.find((source) => source.id === selectedSourceId) ?? sources[0] ?? null
+
   const selectedParticipants = useMemo(() => {
     const query = memberQuery.trim().toLowerCase()
     return participants.filter((participant) => {
@@ -166,6 +126,38 @@ export function GroupLearningSettingsDialog({
 
   const activeSourceCount = sources.filter((source) => source.status === 'active').length
   const mappedParticipantCount = participants.filter((participant) => participant.role === 'learner' && participant.analysisEnabled).length
+
+  const loadSources = useCallback(async () => {
+    try {
+      const nextSources = (await listGroupLearningSources(learner.id)).map(toSourceConfig)
+      setSources(nextSources)
+      setSelectedSourceId((current) => (
+        nextSources.some((source) => source.id === current) ? current : nextSources[0]?.id ?? ''
+      ))
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : '加载群聊学习线索设置失败。', { variant: 'error' })
+    }
+  }, [learner.id, showToast])
+
+  const loadParticipants = useCallback(async (sourceId: string) => {
+    try {
+      setParticipants((await listGroupLearningParticipants(learner.id, sourceId)).map((item) => toParticipantMapping(item, learner)))
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : '加载成员映射失败。', { variant: 'error' })
+    }
+  }, [learner, showToast])
+
+  useEffect(() => {
+    if (!open) return
+    const timer = window.setTimeout(() => { void loadSources() }, 0)
+    return () => window.clearTimeout(timer)
+  }, [open, loadSources])
+
+  useEffect(() => {
+    if (!open || !selectedSource?.id) return
+    const timer = window.setTimeout(() => { void loadParticipants(selectedSource.id) }, 0)
+    return () => window.clearTimeout(timer)
+  }, [open, selectedSource?.id, loadParticipants])
 
   if (!open) return null
 
@@ -184,7 +176,7 @@ export function GroupLearningSettingsDialog({
     })
   }
 
-  const saveSourceDraft = () => {
+  const saveSourceDraft = async () => {
     const displayName = sourceDraft.displayName.trim()
     const externalGroupKey = sourceDraft.externalGroupKey.trim()
     if (!displayName || !externalGroupKey) {
@@ -195,73 +187,96 @@ export function GroupLearningSettingsDialog({
       showToast('原始消息保留天数只能选择 1、3、7、14 或 30 天。', { variant: 'warning' })
       return
     }
-    const duplicated = sources.some((source) => {
-      return source.externalGroupKey === externalGroupKey && source.id !== editingSourceId
-    })
-    if (duplicated) {
-      showToast('这个群标识已经在白名单里。', { variant: 'warning' })
-      return
-    }
-
-    if (editingSourceId === 'new') {
-      const nextSource: GroupSourceConfig = {
-        id: `source-custom-${nextSourceIndex}`,
-        displayName,
-        externalGroupKey,
-        status: sourceDraft.status,
-        rawRetentionDays: sourceDraft.rawRetentionDays,
-        lastSeenAt: '尚未同步',
-        pendingSignals: 0,
-        autoGenerateRecommendations: true,
-        autoWriteCandidates: true,
-        autoApplyHighConfidenceTaggedSignals: false,
-        confidenceThreshold: 0.8,
+    try {
+      if (editingSourceId === 'new') {
+        const nextSource = await createGroupLearningSource(learner.id, {
+          display_name: displayName,
+          external_group_key: externalGroupKey,
+          status: sourceDraft.status,
+          raw_retention_days: sourceDraft.rawRetentionDays,
+          auto_generate_recommendations: true,
+          auto_write_candidates: true,
+          auto_apply_high_confidence_tagged_signals: false,
+          confidence_threshold: 0.8,
+        })
+        setSources((items) => [...items, toSourceConfig(nextSource)])
+        setSelectedSourceId(nextSource.id)
+        markSaved('白名单群组已添加')
+      } else if (editingSourceId) {
+        const updated = await updateGroupLearningSource(learner.id, editingSourceId, {
+          display_name: displayName,
+          external_group_key: externalGroupKey,
+          status: sourceDraft.status,
+          raw_retention_days: sourceDraft.rawRetentionDays,
+        })
+        setSources((items) => items.map((source) => source.id === updated.id ? toSourceConfig(updated) : source))
+        markSaved('白名单群组已保存')
       }
-      setSources((items) => [...items, nextSource])
-      setNextSourceIndex((value) => value + 1)
-      setSelectedSourceId(nextSource.id)
-      markSaved('白名单群组已添加')
-    } else {
-      setSources((items) => items.map((source) => (
-        source.id === editingSourceId
-          ? { ...source, displayName, externalGroupKey, status: sourceDraft.status, rawRetentionDays: sourceDraft.rawRetentionDays }
-          : source
-      )))
-      markSaved('白名单群组已保存')
+      setEditingSourceId(null)
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : '保存白名单群组失败。', { variant: 'error' })
     }
-
-    setEditingSourceId(null)
   }
 
-  const updateSource = (sourceId: string, patch: Partial<GroupSourceConfig>, message?: string) => {
-    setSources((items) => items.map((source) => source.id === sourceId ? { ...source, ...patch } : source))
-    if (message) markSaved(message)
+  const updateSource = async (sourceId: string, patch: Partial<GroupSourceConfig>, message?: string) => {
+    try {
+      const updated = await updateGroupLearningSource(learner.id, sourceId, toSourcePatch(patch))
+      setSources((items) => items.map((source) => source.id === sourceId ? toSourceConfig(updated) : source))
+      if (message) markSaved(message)
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : '保存群组设置失败。', { variant: 'error' })
+    }
   }
 
-  const updateParticipant = (participantId: string, patch: Partial<ParticipantMapping>) => {
+  const updateParticipant = async (participantId: string, patch: Partial<ParticipantMapping>) => {
     setParticipants((items) => items.map((participant) => (
       participant.id === participantId ? { ...participant, ...patch } : participant
     )))
+    try {
+      const current = participants.find((participant) => participant.id === participantId)
+      if (!current) return
+      const next = { ...current, ...patch }
+      const updated = await updateGroupLearningParticipant(learner.id, participantId, {
+        display_name: next.displayName,
+        learner_id: next.learnerId,
+        role: next.role,
+        analysis_enabled: next.analysisEnabled,
+      })
+      setParticipants((items) => items.map((participant) => (
+        participant.id === participantId ? toParticipantMapping(updated, learner) : participant
+      )))
+      markSaved('成员映射已保存')
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : '保存成员映射失败。', { variant: 'error' })
+      if (selectedSource) void loadParticipants(selectedSource.id)
+    }
   }
 
   const saveParticipants = () => {
     markSaved('成员映射已保存')
   }
 
-  const confirmDangerAction = () => {
+  const confirmDangerAction = async () => {
     if (!dangerAction) return
-    if (dangerAction.type === 'remove-source') {
-      setSources((items) => {
-        const next = items.filter((source) => source.id !== dangerAction.sourceId)
-        if (!next.some((source) => source.id === selectedSourceId)) {
-          setSelectedSourceId(next[0]?.id ?? '')
-        }
-        return next
-      })
-      setParticipants((items) => items.filter((participant) => participant.sourceId !== dangerAction.sourceId))
-      markSaved('已移除白名单群组')
-    } else {
-      updateSource(dangerAction.sourceId, { lastSeenAt: '原始缓存已删除' }, '已删除该群原始消息缓存')
+    try {
+      if (dangerAction.type === 'remove-source') {
+        await deleteGroupLearningSource(learner.id, dangerAction.sourceId)
+        setSources((items) => {
+          const next = items.filter((source) => source.id !== dangerAction.sourceId)
+          if (!next.some((source) => source.id === selectedSourceId)) {
+            setSelectedSourceId(next[0]?.id ?? '')
+          }
+          return next
+        })
+        setParticipants((items) => items.filter((participant) => participant.sourceId !== dangerAction.sourceId))
+        markSaved('已移除白名单群组')
+      } else {
+        await cleanupGroupLearningSource(learner.id, dangerAction.sourceId, 'all_raw_messages')
+        await loadSources()
+        markSaved('已删除该群原始消息缓存')
+      }
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : '危险操作失败，请重试。', { variant: 'error' })
     }
     setDangerAction(null)
   }
@@ -272,11 +287,19 @@ export function GroupLearningSettingsDialog({
     reader.onload = () => {
       try {
         const parsed = JSON.parse(String(reader.result ?? '{}')) as unknown
-        const messageCount = countImportedMessages(parsed)
-        const ignoredCount = Math.max(0, Math.round(messageCount * 0.35))
-        const generatedCount = Math.max(0, Math.round((messageCount - ignoredCount) * 0.55))
-        setLastImportSummary(`导入成功 ${messageCount} 条 · 重复跳过 0 条 · 生成候选线索 ${generatedCount} 条 · 成员规则忽略 ${ignoredCount} 条`)
-        markSaved('本地 JSON 已导入')
+        if (!selectedSource) {
+          showToast('请先选择一个白名单群组。', { variant: 'warning' })
+          return
+        }
+        const messages = normalizeImportedMessages(parsed)
+        void importGroupLearningMessages(selectedSource.id, messages).then((summary) => {
+          setLastImportSummary(`导入成功 ${summary.imported_count} 条 · 重复跳过 ${summary.duplicate_count} 条 · 生成候选线索 ${summary.generated_signal_count} 条 · 成员规则忽略 ${summary.ignored_count} 条`)
+          void loadSources()
+          void loadParticipants(selectedSource.id)
+          markSaved('本地 JSON 已导入')
+        }).catch((error: unknown) => {
+          showToast(error instanceof Error ? error.message : '导入本地 JSON 失败。', { variant: 'error' })
+        })
       } catch {
         showToast('JSON 格式无法解析，请检查导出的消息文件。', { variant: 'error' })
       }
@@ -405,19 +428,19 @@ export function GroupLearningSettingsDialog({
                       <select
                         value={selectedSource.id}
                         onChange={(event) => setSelectedSourceId(event.currentTarget.value)}
-                        className="appearance-none rounded-lg border border-slate-200 bg-white py-2 pl-3 pr-10 text-sm font-bold text-slate-800 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                        className={SELECT_INPUT_CLASS}
                       >
                         {sources.map((source) => <option key={source.id} value={source.id}>{source.displayName}</option>)}
                       </select>
-                      <ChevronDown className="pointer-events-none absolute bottom-2.5 right-3.5 size-4 text-slate-400" />
+                      <ChevronDown className={SELECT_CHEVRON_CLASS} />
                     </label>
                     <label className="relative grid gap-1">
                       <span className="text-xs font-bold text-slate-500">搜索成员</span>
-                      <Search className="pointer-events-none absolute bottom-2.5 left-3 size-4 text-slate-400" />
+                      <Search className="pointer-events-none absolute bottom-3 left-3 size-4 text-slate-400" />
                       <input
                         value={memberQuery}
                         onChange={(event) => setMemberQuery(event.currentTarget.value)}
-                        className="rounded-lg border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                        className="min-h-10 rounded-lg border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
                         placeholder="搜索显示名或 external_member_key"
                       />
                     </label>
@@ -426,6 +449,7 @@ export function GroupLearningSettingsDialog({
                     {selectedParticipants.map((participant) => (
                       <ParticipantRow
                         key={participant.id}
+                        currentLearnerId={learner.id}
                         participant={participant}
                         onChange={(patch) => updateParticipant(participant.id, patch)}
                       />
@@ -465,17 +489,21 @@ export function GroupLearningSettingsDialog({
                         { rawRetentionDays: Number(event.currentTarget.value) },
                         '原始消息保留天数已保存',
                       )}
-                      className="appearance-none rounded-lg border border-slate-200 bg-white py-2 pl-3 pr-10 text-sm font-bold text-slate-800 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                      className={SELECT_INPUT_CLASS}
                     >
                       {RETENTION_OPTIONS.map((days) => <option key={days} value={days}>{days} 天</option>)}
                     </select>
-                    <ChevronDown className="pointer-events-none absolute bottom-2.5 right-3.5 size-4 text-slate-400" />
+                    <ChevronDown className={SELECT_CHEVRON_CLASS} />
                   </label>
                   <div className="grid gap-2">
                     <Button
                       variant="secondary"
                       className="justify-between"
-                      onClick={() => markSaved('已清理过期原始消息缓存')}
+                      onClick={() => {
+                        void cleanupGroupLearningSource(learner.id, selectedSource.id, 'expired')
+                          .then(({ deleted_raw_message_count }) => markSaved(`已清理 ${deleted_raw_message_count} 条过期原始消息缓存`))
+                          .catch((error: unknown) => showToast(error instanceof Error ? error.message : '清理过期缓存失败。', { variant: 'error' }))
+                      }}
                     >
                       清理过期缓存<RefreshCw className="size-4" />
                     </Button>
@@ -528,11 +556,11 @@ export function GroupLearningSettingsDialog({
                         { confidenceThreshold: Number(event.currentTarget.value) },
                         '可信度阈值已保存',
                       )}
-                      className="appearance-none rounded-lg border border-slate-200 bg-white py-2 pl-3 pr-10 text-sm font-bold text-slate-800 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                      className={SELECT_INPUT_CLASS}
                     >
                       {CONFIDENCE_OPTIONS.map((value) => <option key={value} value={value}>{Math.round(value * 100)}%</option>)}
                     </select>
-                    <ChevronDown className="pointer-events-none absolute bottom-2.5 right-3.5 size-4 text-slate-400" />
+                    <ChevronDown className={SELECT_CHEVRON_CLASS} />
                   </label>
                 </>
               ) : null}
@@ -730,9 +758,11 @@ function SourceRow({
 }
 
 function ParticipantRow({
+  currentLearnerId,
   onChange,
   participant,
 }: {
+  currentLearnerId: string
   onChange: (patch: Partial<ParticipantMapping>) => void
   participant: ParticipantMapping
 }) {
@@ -746,17 +776,27 @@ function ParticipantRow({
         </div>
         <SelectField
           label="映射 learner"
-          value={participant.learnerName ?? ''}
-          onChange={(value) => onChange({ learnerName: value || null, role: value ? 'learner' : 'unknown', analysisEnabled: Boolean(value) })}
+          value={participant.learnerId ?? ''}
+          onChange={(value) => onChange({
+            learnerId: value || null,
+            learnerName: value ? CURRENT_LEARNER_LABEL : null,
+            role: value ? 'learner' : 'unknown',
+            analysisEnabled: Boolean(value),
+          })}
           options={[
             { label: '未映射', value: '' },
-            { label: CURRENT_LEARNER_LABEL, value: CURRENT_LEARNER_LABEL },
+            { label: CURRENT_LEARNER_LABEL, value: currentLearnerId },
           ]}
         />
         <SelectField
           label="角色"
           value={participant.role}
-          onChange={(role) => onChange({ role: role as ParticipantRole, analysisEnabled: role === 'learner' ? participant.analysisEnabled : false })}
+          onChange={(role) => onChange({
+            role: role as ParticipantRole,
+            learnerId: role === 'learner' ? (participant.learnerId ?? currentLearnerId) : null,
+            learnerName: role === 'learner' ? CURRENT_LEARNER_LABEL : null,
+            analysisEnabled: role === 'learner' ? participant.analysisEnabled : false,
+          })}
           options={[
             { label: 'learner', value: 'learner' },
             { label: 'partner', value: 'partner' },
@@ -801,7 +841,7 @@ function TextInput({
       <input
         value={value}
         onChange={(event) => onChange(event.currentTarget.value)}
-        className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+        className={TEXT_INPUT_CLASS}
         placeholder={placeholder}
       />
     </label>
@@ -825,11 +865,11 @@ function SelectField({
       <select
         value={value}
         onChange={(event) => onChange(event.currentTarget.value)}
-        className="appearance-none rounded-lg border border-slate-200 bg-white py-2 pl-3 pr-10 text-sm font-bold text-slate-800 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+        className={SELECT_INPUT_CLASS}
       >
         {options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
       </select>
-      <ChevronDown className="pointer-events-none absolute bottom-2.5 right-3.5 size-4 text-slate-400" />
+      <ChevronDown className={SELECT_CHEVRON_CLASS} />
     </label>
   )
 }
@@ -906,11 +946,84 @@ function createEmptySourceDraft(): SourceDraft {
   }
 }
 
-function countImportedMessages(value: unknown): number {
-  if (Array.isArray(value)) return value.length
-  if (value && typeof value === 'object' && 'messages' in value) {
-    const messages = (value as { messages?: unknown }).messages
-    return Array.isArray(messages) ? messages.length : 0
+function toSourceConfig(source: GroupLearningSource): GroupSourceConfig {
+  return {
+    id: source.id,
+    displayName: source.display_name,
+    externalGroupKey: source.external_group_key,
+    status: source.status,
+    rawRetentionDays: source.raw_retention_days,
+    lastSeenAt: formatDateTime(source.last_seen_at),
+    pendingSignals: source.pending_signal_count,
+    autoGenerateRecommendations: source.auto_generate_recommendations,
+    autoWriteCandidates: source.auto_write_candidates,
+    autoApplyHighConfidenceTaggedSignals: source.auto_apply_high_confidence_tagged_signals,
+    confidenceThreshold: source.confidence_threshold,
   }
-  return 0
+}
+
+function toSourcePatch(patch: Partial<GroupSourceConfig>) {
+  return {
+    ...(patch.displayName !== undefined ? { display_name: patch.displayName } : {}),
+    ...(patch.externalGroupKey !== undefined ? { external_group_key: patch.externalGroupKey } : {}),
+    ...(patch.status !== undefined ? { status: patch.status } : {}),
+    ...(patch.rawRetentionDays !== undefined ? { raw_retention_days: patch.rawRetentionDays } : {}),
+    ...(patch.autoGenerateRecommendations !== undefined ? { auto_generate_recommendations: patch.autoGenerateRecommendations } : {}),
+    ...(patch.autoWriteCandidates !== undefined ? { auto_write_candidates: patch.autoWriteCandidates } : {}),
+    ...(patch.autoApplyHighConfidenceTaggedSignals !== undefined ? { auto_apply_high_confidence_tagged_signals: patch.autoApplyHighConfidenceTaggedSignals } : {}),
+    ...(patch.confidenceThreshold !== undefined ? { confidence_threshold: patch.confidenceThreshold } : {}),
+  }
+}
+
+function toParticipantMapping(participant: GroupLearningParticipant, learner: Learner): ParticipantMapping {
+  return {
+    id: participant.id,
+    sourceId: participant.source_id,
+    displayName: participant.display_name,
+    externalMemberKey: participant.external_member_key,
+    learnerId: participant.learner_id ?? null,
+    learnerName: participant.learner_id === learner.id ? CURRENT_LEARNER_LABEL : null,
+    role: participant.role,
+    analysisEnabled: participant.analysis_enabled,
+    lastMessageAt: formatDateTime(participant.last_message_at),
+  }
+}
+
+function formatDateTime(value?: string | null) {
+  if (!value) return '尚未同步'
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return value
+  return date.toLocaleString('zh-CN', {
+    month: 'numeric',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
+function normalizeImportedMessages(value: unknown): ImportGroupLearningMessage[] {
+  const rawMessages = Array.isArray(value)
+    ? value
+    : value && typeof value === 'object' && 'messages' in value
+      ? (value as { messages?: unknown }).messages
+      : []
+  if (!Array.isArray(rawMessages)) return []
+  return rawMessages.map((item, index) => {
+    const record = item && typeof item === 'object' ? item as Record<string, unknown> : {}
+    const content = stringField(record, 'content_text') || stringField(record, 'text') || stringField(record, 'content')
+    const occurredAt = stringField(record, 'occurred_at') || stringField(record, 'created_at') || stringField(record, 'time') || new Date().toISOString()
+    return {
+      external_message_id: stringField(record, 'external_message_id') || stringField(record, 'message_id') || `local-${Date.now()}-${index}`,
+      external_member_key: stringField(record, 'external_member_key') || stringField(record, 'member_key') || stringField(record, 'sender_id') || 'unknown-member',
+      display_name: stringField(record, 'display_name') || stringField(record, 'sender_name') || null,
+      content_text: content || '',
+      occurred_at: new Date(occurredAt).toISOString(),
+      message_type: stringField(record, 'message_type') || 'text',
+    }
+  }).filter((message) => message.content_text.trim())
+}
+
+function stringField(record: Record<string, unknown>, key: string) {
+  const value = record[key]
+  return typeof value === 'string' ? value.trim() : ''
 }

@@ -5,6 +5,7 @@ import path from 'path'
 
 export default defineConfig(() => {
   const appTarget = process.env.VITE_APP_TARGET === 'dev-console' ? 'dev-console' : 'learner'
+  const apiTarget = process.env.VITE_API_TARGET || 'http://127.0.0.1:8000'
 
   return {
     plugins: [appEntryPlugin(appTarget), react(), tailwindcss()],
@@ -20,7 +21,7 @@ export default defineConfig(() => {
       port: appTarget === 'dev-console' ? 5174 : 5173,
       proxy: {
         '/api': {
-          target: 'http://127.0.0.1:8000',
+          target: apiTarget,
           changeOrigin: true,
         },
       },

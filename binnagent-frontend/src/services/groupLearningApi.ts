@@ -1,0 +1,241 @@
+export type GroupLearningSourceStatus = 'active' | 'paused' | 'revoked'
+export type GroupLearningParticipantRole = 'learner' | 'partner' | 'unknown'
+export type GroupLearningSignalStatus = 'candidate' | 'accepted' | 'dismissed' | 'deleted'
+
+export interface GroupLearningSource {
+  id: string
+  learner_id: string
+  platform: string
+  source_type: string
+  display_name: string
+  external_group_key: string
+  status: GroupLearningSourceStatus
+  last_cursor?: string | null
+  last_seen_at?: string | null
+  last_import_summary: Record<string, unknown>
+  raw_retention_days: number
+  auto_generate_recommendations: boolean
+  auto_write_candidates: boolean
+  auto_apply_high_confidence_tagged_signals: boolean
+  confidence_threshold: number
+  pending_signal_count: number
+  participant_count: number
+  created_at: string
+  updated_at: string
+}
+
+export interface GroupLearningSourcePayload {
+  display_name: string
+  external_group_key: string
+  status: GroupLearningSourceStatus
+  raw_retention_days: number
+  auto_generate_recommendations?: boolean
+  auto_write_candidates?: boolean
+  auto_apply_high_confidence_tagged_signals?: boolean
+  confidence_threshold?: number
+}
+
+export interface GroupLearningParticipant {
+  id: string
+  source_id: string
+  external_member_key: string
+  display_name: string
+  learner_id?: string | null
+  role: GroupLearningParticipantRole
+  analysis_enabled: boolean
+  last_message_at?: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface GroupLearningParticipantPayload {
+  external_member_key: string
+  display_name: string
+  learner_id?: string | null
+  role: GroupLearningParticipantRole
+  analysis_enabled: boolean
+}
+
+export interface GroupLearningSignal {
+  id: string
+  message_id: string
+  learner_id: string
+  signal_type: string
+  category: string
+  target_type: string
+  target_label: string
+  confidence: number
+  evidence_text: string
+  normalized_note?: string | null
+  recommendation_reason: string
+  status: GroupLearningSignalStatus
+  applied_target_type?: string | null
+  applied_target_id?: string | null
+  metadata: Record<string, unknown>
+  source_display_name?: string | null
+  source_time?: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface ImportGroupLearningMessage {
+  external_message_id: string
+  external_member_key: string
+  display_name?: string | null
+  content_text: string
+  occurred_at: string
+  message_type?: string
+}
+
+export interface ImportGroupLearningSummary {
+  source_id: string
+  learner_id: string
+  imported_count: number
+  duplicate_count: number
+  generated_signal_count: number
+  ignored_count: number
+  participant_count: number
+}
+
+export async function listGroupLearningSources(learnerId: string) {
+  return apiJson<GroupLearningSource[]>(`/api/learners/${learnerId}/group-learning/sources`)
+}
+
+export async function createGroupLearningSource(
+  learnerId: string,
+  payload: GroupLearningSourcePayload,
+) {
+  return apiJson<GroupLearningSource>(`/api/learners/${learnerId}/group-learning/sources`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
+}
+
+export async function updateGroupLearningSource(
+  learnerId: string,
+  sourceId: string,
+  payload: Partial<GroupLearningSourcePayload>,
+) {
+  return apiJson<GroupLearningSource>(`/api/learners/${learnerId}/group-learning/sources/${sourceId}`, {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+  })
+}
+
+export async function deleteGroupLearningSource(learnerId: string, sourceId: string) {
+  await apiVoid(`/api/learners/${learnerId}/group-learning/sources/${sourceId}`, { method: 'DELETE' })
+}
+
+export async function listGroupLearningParticipants(
+  learnerId: string,
+  sourceId: string,
+  query?: string,
+) {
+  const params = query?.trim() ? `?q=${encodeURIComponent(query.trim())}` : ''
+  return apiJson<GroupLearningParticipant[]>(
+    `/api/learners/${learnerId}/group-learning/sources/${sourceId}/participants${params}`,
+  )
+}
+
+export async function upsertGroupLearningParticipant(
+  learnerId: string,
+  sourceId: string,
+  payload: GroupLearningParticipantPayload,
+) {
+  return apiJson<GroupLearningParticipant>(
+    `/api/learners/${learnerId}/group-learning/sources/${sourceId}/participants`,
+    { method: 'POST', body: JSON.stringify(payload) },
+  )
+}
+
+export async function updateGroupLearningParticipant(
+  learnerId: string,
+  participantId: string,
+  payload: Partial<Omit<GroupLearningParticipantPayload, 'external_member_key'>>,
+) {
+  return apiJson<GroupLearningParticipant>(
+    `/api/learners/${learnerId}/group-learning/participants/${participantId}`,
+    { method: 'PATCH', body: JSON.stringify(payload) },
+  )
+}
+
+export async function cleanupGroupLearningSource(
+  learnerId: string,
+  sourceId: string,
+  mode: 'expired' | 'all_raw_messages',
+) {
+  return apiJson<{ deleted_raw_message_count: number }>(
+    `/api/learners/${learnerId}/group-learning/sources/${sourceId}/cleanup`,
+    { method: 'POST', body: JSON.stringify({ mode, keep_signal_evidence: true }) },
+  )
+}
+
+export async function importGroupLearningMessages(
+  sourceId: string,
+  messages: ImportGroupLearningMessage[],
+) {
+  return apiJson<ImportGroupLearningSummary>('/api/group-learning/wechat/messages/import', {
+    method: 'POST',
+    body: JSON.stringify({ source_id: sourceId, messages }),
+  })
+}
+
+export async function listGroupLearningSignals(
+  learnerId: string,
+  status: 'all' | GroupLearningSignalStatus = 'all',
+  query?: string,
+) {
+  const params = new URLSearchParams({ status })
+  if (query?.trim()) params.set('q', query.trim())
+  return apiJson<GroupLearningSignal[]>(
+    `/api/learners/${learnerId}/group-learning/signals?${params.toString()}`,
+  )
+}
+
+export async function updateGroupLearningSignal(
+  learnerId: string,
+  signalId: string,
+  action: 'accept' | 'dismiss' | 'restore' | 'delete',
+) {
+  return apiJson<GroupLearningSignal>(
+    `/api/learners/${learnerId}/group-learning/signals/${signalId}`,
+    { method: 'PATCH', body: JSON.stringify({ action }) },
+  )
+}
+
+export async function deleteGroupLearningSignal(learnerId: string, signalId: string) {
+  await apiVoid(`/api/learners/${learnerId}/group-learning/signals/${signalId}`, {
+    method: 'DELETE',
+  })
+}
+
+async function apiJson<T>(input: string, init: RequestInit = {}): Promise<T> {
+  const response = await fetch(input, jsonInit(init))
+  if (!response.ok) throw new Error(await errorMessage(response))
+  return response.json() as Promise<T>
+}
+
+async function apiVoid(input: string, init: RequestInit = {}) {
+  const response = await fetch(input, jsonInit(init))
+  if (!response.ok) throw new Error(await errorMessage(response))
+}
+
+function jsonInit(init: RequestInit): RequestInit {
+  return {
+    ...init,
+    headers: {
+      'Content-Type': 'application/json',
+      ...init.headers,
+    },
+  }
+}
+
+async function errorMessage(response: Response) {
+  try {
+    const data = await response.json() as { detail?: unknown }
+    if (typeof data.detail === 'string') return data.detail
+  } catch {
+    // Fall through to status text.
+  }
+  return response.statusText || '请求失败'
+}

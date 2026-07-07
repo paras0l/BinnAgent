@@ -31,7 +31,7 @@ def test_alembic_migrations_have_single_head_revision() -> None:
             parents.update(item for item in down_revision if isinstance(item, str))
 
     heads = revisions - parents
-    assert heads == {"l2g3h4i5j6k7"}
+    assert heads == {"m3n4o5p6q7r8"}
 
 
 def test_initial_migration_enables_pgcrypto_for_gen_random_uuid() -> None:
@@ -222,3 +222,17 @@ def test_parser_run_progress_migration_adds_stage_and_progress() -> None:
     assert "token" not in migration
     assert "cost" not in migration
     assert "latency" not in migration
+
+
+def test_group_learning_migration_adds_sources_messages_and_signals() -> None:
+    migration = Path("alembic/versions/m3n4o5p6q7r8_add_group_learning_tables.py").read_text()
+
+    assert "group_learning_sources" in migration
+    assert "group_learning_participants" in migration
+    assert "group_learning_messages" in migration
+    assert "group_learning_signals" in migration
+    assert "fk_group_learning_sources_learner_id" in migration
+    assert "uq_group_learning_source_learner_external_key" in migration
+    assert "uq_group_learning_message_source_external" in migration
+    assert "uq_group_learning_message_source_hash" in migration
+    assert "ix_group_learning_signals_learner_status" in migration
