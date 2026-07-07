@@ -1,10 +1,6 @@
-import { AlertCircle, BookCheck, BookOpen, ChevronLeft, Dumbbell, GraduationCap, Languages, LoaderCircle, PanelLeftOpen, PanelRightOpen, Send, Sparkles, Target, Trash2, UploadCloud, X } from 'lucide-react'
-import { useCallback, useEffect, useId, useMemo, useState, type ReactNode } from 'react'
-import {
-  CapabilityRecommendationCard,
-  type CapabilityRecommendation,
-} from '@/components/learning/CapabilityRecommendationCard'
-import { ReasonCard } from '@/components/learning/ReasonCard'
+import { AlertCircle, ArrowRight, BookCheck, BookMarked, BookOpen, CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, Clock3, Dumbbell, FileText, GraduationCap, Languages, Layers3, LibraryBig, ListChecks, ListTree, LoaderCircle, Send, Sparkles, Trash2, UploadCloud, X } from 'lucide-react'
+import { useCallback, useEffect, useId, useMemo, useState, type KeyboardEventHandler, type ReactNode, type Ref } from 'react'
+import type { CapabilityRecommendation } from '@/components/learning/CapabilityRecommendationCard'
 import { PageShell } from '@/components/layout/PageShell'
 import { CurriculumRail } from '@/components/knowledge/CurriculumRail'
 import { ExerciseSessionDialog } from '@/components/knowledge/ExerciseSessionDialog'
@@ -16,7 +12,6 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { IconButton } from '@/components/ui/IconButton'
 import { StatusBanner } from '@/components/ui/StatusBanner'
 import { useFocusTrap } from '@/hooks/useFocusTrap'
-import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { useToast } from '@/hooks/useToast'
 import { GrammarPage } from '@/pages/GrammarPage'
 import { deleteKnowledgeSource } from '@/api/knowledge'
@@ -40,6 +35,7 @@ import type {
   PronunciationWorkspace,
   UnitLearningWorkspace,
   UnitWorkspaceActionType,
+  UnitWorkspaceItem,
   UnitWorkspaceSection,
   UnitVocabularySummary,
 } from '@/types'
@@ -51,8 +47,6 @@ interface KnowledgeBasePageProps {
   onStartVocabularyPractice: (mode: VocabularyPracticeMode, nodeId: string, sourceLabel: string) => void
   onOpenPronunciationWorkspace: (workspace: PronunciationWorkspace) => void
 }
-
-type KnowledgeWorkspace = 'today' | 'unit' | 'exercises'
 
 interface KnowledgeOverviewError {
   detail?: string | {
@@ -103,12 +97,6 @@ interface DeleteSourceTarget {
   title: string
 }
 
-const WORKSPACES: Array<{ id: KnowledgeWorkspace; label: string }> = [
-  { id: 'today', label: '今日任务' },
-  { id: 'unit', label: '单元内容' },
-  { id: 'exercises', label: '练习任务' },
-]
-
 function readFailedSource(detail: KnowledgeOverviewError | null) {
   const payload = detail?.detail
   if (payload && typeof payload === 'object' && !Array.isArray(payload)) {
@@ -141,14 +129,13 @@ function ingestResultToStatus(result: KnowledgeIngestResult): KnowledgeIngestSta
   }
 }
 
-export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice }: KnowledgeBasePageProps) {
+export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice, onOpenPronunciationWorkspace }: KnowledgeBasePageProps) {
   const { showToast } = useToast()
   const [overview, setOverview] = useState<KnowledgeBaseOverview | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [failedSource, setFailedSource] = useState<FailedKnowledgeSourceDetail | null>(null)
   const [ingestStatus, setIngestStatus] = useState<KnowledgeIngestStatus | null>(null)
-  const [workspace, setWorkspace] = useState<KnowledgeWorkspace>('today')
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null)
   const [selectedSourceId, setSelectedSourceId] = useState<string | null>(null)
   const [isUploadOpen, setIsUploadOpen] = useState(false)
@@ -165,21 +152,27 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice }
   const [isStartingDailyLesson, setIsStartingDailyLesson] = useState(false)
   const [isCurriculumRailOpen, setIsCurriculumRailOpen] = useState(false)
   const [isContextPanelOpen, setIsContextPanelOpen] = useState(false)
+  const [isCapabilityDrawerOpen, setIsCapabilityDrawerOpen] = useState(false)
+  const [isSourceManagerOpen, setIsSourceManagerOpen] = useState(false)
   const [isSubmittingDailyAnswer, setIsSubmittingDailyAnswer] = useState(false)
   const [dismissedDailyRecommendationIds, setDismissedDailyRecommendationIds] = useState<Set<string>>(() => new Set())
   const [busyDailyRecommendationId, setBusyDailyRecommendationId] = useState<string | null>(null)
-  const isKnowledgePanelDrawer = useMediaQuery('(max-width: 767px)')
   const curriculumPanelId = useId()
   const curriculumTitleId = useId()
   const contextPanelId = useId()
   const contextTitleId = useId()
+  const capabilityDrawerTitleId = useId()
   const { containerRef: curriculumPanelRef, handleKeyDown: handleCurriculumPanelKeyDown } = useFocusTrap<HTMLElement>({
-    isActive: isKnowledgePanelDrawer && isCurriculumRailOpen,
+    isActive: isCurriculumRailOpen,
     onEscape: () => setIsCurriculumRailOpen(false),
   })
   const { containerRef: contextPanelRef, handleKeyDown: handleContextPanelKeyDown } = useFocusTrap<HTMLElement>({
-    isActive: isKnowledgePanelDrawer && isContextPanelOpen,
+    isActive: isContextPanelOpen,
     onEscape: () => setIsContextPanelOpen(false),
+  })
+  const { containerRef: capabilityDrawerRef, handleKeyDown: handleCapabilityDrawerKeyDown } = useFocusTrap<HTMLElement>({
+    isActive: isCapabilityDrawerOpen,
+    onEscape: () => setIsCapabilityDrawerOpen(false),
   })
 
   const loadOverview = useCallback(async (sourceId?: string | null, nodeId?: string | null) => {
@@ -427,15 +420,10 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice }
       { method: 'POST' },
     )
     if (!response.ok) throw new Error('课程完成状态保存失败，请重试。')
-    const result = await response.json() as KnowledgeLessonCompleteResult
+    await response.json() as KnowledgeLessonCompleteResult
     setLessonSession(null)
-    if (result.next_node_id) {
-      showToast(`本单元已完成，接下来学习「${result.next_unit_title}」。`, { variant: 'success', duration: 6000 })
-      await loadOverview(selectedSourceId ?? overview?.source.id, result.next_node_id)
-    } else {
-      showToast('恭喜，你已经完成本册全部课程！', { variant: 'success', duration: 6000 })
-      await loadOverview(selectedSourceId ?? overview?.source.id)
-    }
+    showToast('单元导学已记录，当前单元进度已更新。', { variant: 'success', duration: 5000 })
+    await loadOverview(selectedSourceId ?? overview?.source.id, selectedNodeId ?? overview?.current_unit.id)
   }
 
   const handleStartDailyLesson = async () => {
@@ -467,8 +455,9 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice }
     }
   }
 
-  const handleSubmitDailyAnswer = async () => {
-    if (!dailyLesson || !dailyAnswer.trim()) {
+  const handleSubmitDailyAnswer = async (answerOverride?: string) => {
+    const submittedAnswer = (answerOverride ?? dailyAnswer).trim()
+    if (!dailyLesson || !submittedAnswer) {
       showToast('请先填写答案。', { variant: 'warning' })
       return
     }
@@ -479,9 +468,15 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice }
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ answer: dailyAnswer.trim(), metadata: {} }),
+          body: JSON.stringify({ answer: submittedAnswer, metadata: {} }),
         },
       )
+      if (response.status === 409) {
+        window.localStorage.removeItem(dailyLessonStorageKey)
+        setDailyLesson(null)
+        showToast('这道每日题已过期，已为你清理。请重新开始。', { variant: 'warning' })
+        return
+      }
       if (!response.ok) throw new Error('答案提交失败，请重试。')
       const result = await response.json() as DailyLessonRuntime
       window.localStorage.removeItem(dailyLessonStorageKey)
@@ -517,21 +512,25 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice }
     if (!response.ok) throw new Error('推荐事件记录失败。')
   }
 
-  const handleOpenDailyCapabilityRecommendation = async (recommendation: CapabilityRecommendation) => {
+  const handleOpenCapabilityRecommendation = async (recommendation: CapabilityRecommendation) => {
     setBusyDailyRecommendationId(recommendation.recommendation_id)
     try {
-      await recordDailyCapabilityEvent(recommendation, 'clicked')
+      if (recommendation.source !== 'fallback') {
+        await recordDailyCapabilityEvent(recommendation, 'clicked')
+      }
       setDailyLesson(null)
+      setIsCapabilityDrawerOpen(false)
       if (recommendation.tool_target === 'grammar') {
-        setGrammarTopic(null)
-        setGrammarTopic('grammar')
+        setGrammarTopic(readRecommendationTarget(recommendation) ?? 'grammar')
+      } else if (recommendation.tool_target === 'pronunciation') {
+        onOpenPronunciationWorkspace('phonetic')
       } else if (recommendation.tool_target === 'reading-workshop') {
         showToast('请在探索页打开精读与泛读入口。', { variant: 'info' })
       } else if (recommendation.tool_target === 'writing-phrasebook') {
         showToast('请在探索页打开好句收藏馆入口。', { variant: 'info' })
       } else if (recommendation.tool_target === 'word-parts') {
         showToast('请在探索页打开词根与词缀入口。', { variant: 'info' })
-      } else if (recommendation.action === 'vocabulary-detail') {
+      } else if (recommendation.action === 'vocabulary-detail' || recommendation.tool_target === 'vocabulary-detail') {
         showToast('请在探索页打开词汇详解入口。', { variant: 'info' })
       } else {
         showToast('已记录你的选择，可从探索页继续打开该学习入口。', { variant: 'success' })
@@ -547,7 +546,9 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice }
     setDismissedDailyRecommendationIds((current) => new Set(current).add(recommendation.recommendation_id))
     setBusyDailyRecommendationId(recommendation.recommendation_id)
     try {
-      await recordDailyCapabilityEvent(recommendation, 'dismissed')
+      if (recommendation.source !== 'fallback') {
+        await recordDailyCapabilityEvent(recommendation, 'dismissed')
+      }
     } catch (eventError) {
       console.error('Daily capability dismiss event failed:', eventError)
     } finally {
@@ -646,19 +647,18 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice }
 
   const activeUnitVocabulary = unitVocabulary?.unit_id === overview.current_unit.id ? unitVocabulary : null
   const currentSourceLabel = `${overview.source.title} · ${overview.current_unit.title}`
-  const sourceProgressPercent = normalizePercent(overview.source.progress)
-  const knowledgeShellStyle = {
-    gridTemplateColumns: isCurriculumRailOpen
-      ? '280px minmax(0, 1fr)'
-      : isContextPanelOpen
-        ? 'minmax(0, 1fr) 310px'
-        : 'minmax(0, 1fr)',
-  }
+  const unitWorkspace = overview.unit_workspace ?? fallbackUnitWorkspace(overview)
+  const unitProgressPercent = normalizePercent(unitWorkspace.mastery_summary.average)
+  const capabilityRecommendations = buildCapabilityRecommendations(
+    overview,
+    dailyLesson?.next_capability_recommendations ?? [],
+    dismissedDailyRecommendationIds,
+  )
   const curriculumRailClassName = isCurriculumRailOpen
-    ? 'max-md:fixed max-md:bottom-0 max-md:left-0 max-md:top-16 max-md:z-40 max-md:w-[min(86vw,22rem)] max-md:min-h-0 max-md:overflow-y-auto max-md:shadow-2xl max-md:transition-[transform,opacity] max-md:duration-200 max-md:motion-reduce:transition-none'
+    ? 'fixed bottom-0 left-0 top-16 z-40 w-[min(88vw,22rem)] min-h-0 overflow-y-auto shadow-2xl transition-[transform,opacity] duration-200 motion-reduce:transition-none'
     : 'hidden'
   const contextPanelClassName = isContextPanelOpen
-    ? 'max-md:fixed max-md:bottom-0 max-md:right-0 max-md:top-16 max-md:z-40 max-md:w-[min(88vw,23rem)] max-md:overflow-y-auto max-md:shadow-2xl max-md:transition-[transform,opacity] max-md:duration-200 max-md:motion-reduce:transition-none'
+    ? 'fixed bottom-0 right-0 top-16 z-40 w-[min(90vw,24rem)] overflow-y-auto shadow-2xl transition-[transform,opacity] duration-200 motion-reduce:transition-none'
     : 'hidden'
 
   if (grammarTopic) {
@@ -689,24 +689,24 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice }
           <span className="mx-2 text-slate-300">/</span>
           <span className="hidden sm:inline">{overview.current_unit.title} · {overview.current_unit.subtitle}</span>
         </div>
-        <div className="knowledge-shell grid min-h-[calc(100vh-7rem)] bg-white" style={knowledgeShellStyle}>
-      {isKnowledgePanelDrawer && isCurriculumRailOpen ? (
+        <div className="knowledge-shell min-h-[calc(100vh-7rem)] bg-slate-50/70">
+      {isCurriculumRailOpen ? (
         <button
           type="button"
           aria-label="收起教材目录"
           onClick={() => setIsCurriculumRailOpen(false)}
-          className="fixed inset-x-0 bottom-0 top-16 z-30 bg-slate-950/30 transition-opacity duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 motion-reduce:transition-none md:hidden"
+          className="fixed inset-x-0 bottom-0 top-16 z-30 bg-slate-950/25 transition-opacity duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 motion-reduce:transition-none"
         />
       ) : null}
       <CurriculumRail
         panelId={curriculumPanelId}
         titleId={curriculumTitleId}
-        panelRef={isKnowledgePanelDrawer ? curriculumPanelRef : undefined}
-        role={isKnowledgePanelDrawer ? 'dialog' : undefined}
-        ariaModal={isKnowledgePanelDrawer ? true : undefined}
-        ariaLabelledby={isKnowledgePanelDrawer ? curriculumTitleId : undefined}
-        tabIndex={isKnowledgePanelDrawer ? -1 : undefined}
-        onKeyDown={isKnowledgePanelDrawer ? handleCurriculumPanelKeyDown : undefined}
+        panelRef={curriculumPanelRef}
+        role="dialog"
+        ariaModal
+        ariaLabelledby={curriculumTitleId}
+        tabIndex={-1}
+        onKeyDown={handleCurriculumPanelKeyDown}
         nodes={overview.curriculum}
         currentNodeId={selectedNodeId ?? overview.current_node_id}
         sourceTitle={overview.source.title}
@@ -733,123 +733,66 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice }
         }}
       />
 
-      <main className="min-w-0 px-6 py-8 xl:px-8">
-        <div className="mx-auto max-w-4xl">
-          <div className="mb-5 grid gap-2 sm:grid-cols-2">
-            <button
-              type="button"
-              onClick={() => {
-                setIsCurriculumRailOpen((current) => {
-                  const next = !current
-                  if (next) setIsContextPanelOpen(false)
-                  return next
-                })
-              }}
-              aria-expanded={isCurriculumRailOpen}
-              aria-controls={curriculumPanelId}
-              className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition-colors hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
-            >
-              <PanelLeftOpen className="size-4" />
-              {isCurriculumRailOpen ? '收起教材目录' : '展开教材目录'}
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setIsContextPanelOpen((current) => {
-                  const next = !current
-                  if (next) setIsCurriculumRailOpen(false)
-                  return next
-                })
-              }}
-              aria-expanded={isContextPanelOpen}
-              aria-controls={contextPanelId}
-              className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition-colors hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
-            >
-              <PanelRightOpen className="size-4" />
-              {isContextPanelOpen ? '收起学习概览' : '展开学习概览'}
-            </button>
-          </div>
-
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div>
-              <h1 className="text-3xl font-black tracking-tight text-slate-950">今日学习</h1>
-              <p className="mt-2 text-sm text-slate-500">围绕当前单元完成一组清晰任务：先学、再练、最后复习。</p>
-            </div>
-            <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-right shadow-sm">
-              <p className="text-xs font-bold text-slate-500">当前进度</p>
-              <p className="mt-1 text-2xl font-black text-indigo-600">{sourceProgressPercent}%</p>
-            </div>
-          </div>
-
-          <div className="mt-6 flex gap-2 overflow-x-auto border-b border-slate-200" role="tablist" aria-label="教材工作区">
-            {WORKSPACES.map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                role="tab"
-                aria-selected={workspace === item.id}
-                onClick={() => setWorkspace(item.id)}
-                className={`relative shrink-0 px-1 pb-3 text-sm font-bold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 ${
-                  workspace === item.id ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-900'
-                }`}
-              >
-                {item.label}
-                {workspace === item.id ? <span className="absolute inset-x-0 bottom-0 h-0.5 rounded-full bg-indigo-600" /> : null}
-              </button>
-            ))}
-          </div>
-
-          <div className="mt-5">
-            {ingestStatus ? (
-              <div className="mb-4">
-                <IngestStatusPanel status={ingestStatus} compact />
-              </div>
-            ) : null}
-          </div>
-
-          {workspace === 'today' ? (
-            <TodayLearningPlan
-              overview={overview}
-              vocabulary={activeUnitVocabulary}
-              isStartingExercise={isStartingExercise}
-              isStartingDailyLesson={isStartingDailyLesson}
-              onStartVocabulary={(mode) => onStartVocabularyPractice(mode, overview.current_unit.id, currentSourceLabel)}
-              onStartExercise={() => void handleStartExercise()}
-              onStartDailyLesson={() => void handleStartDailyLesson()}
-            />
+      <main className="min-w-0 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+        <div className="mx-auto max-w-6xl space-y-6">
+          {ingestStatus ? <IngestStatusPanel status={ingestStatus} compact /> : null}
+          {overview.review.requires_review || overview.review.warning_count > 0 ? (
+            <StatusBanner tone="warning" title="教材内容需要留意">
+              已发现 {overview.review.pending_count} 个待确认项、{overview.review.warning_count} 条提醒；当前不影响继续学习。
+            </StatusBanner>
           ) : null}
 
-          {workspace === 'unit' ? (
-            <div className="mt-6">
-              <UnitLearningWorkspaceView
-                workspace={overview.unit_workspace}
-                overview={overview}
-                vocabulary={activeUnitVocabulary}
-                sourceLabel={currentSourceLabel}
-                isStartingLesson={isStartingLesson}
-                isStartingDailyLesson={isStartingDailyLesson}
-                isStartingExercise={isStartingExercise}
-                onStartLesson={() => void handleStartLesson()}
-                onStartDailyLesson={() => void handleStartDailyLesson()}
-                onStartExercise={() => void handleStartExercise()}
-                onStartVocabulary={(mode) => onStartVocabularyPractice(mode, overview.current_unit.id, currentSourceLabel)}
-                onStartGrammar={setGrammarTopic}
-              />
-            </div>
-          ) : null}
+          <CourseHero
+            overview={overview}
+            workspace={unitWorkspace}
+            vocabulary={activeUnitVocabulary}
+            progressPercent={unitProgressPercent}
+            capabilityCount={capabilityRecommendations.length}
+            isStartingLesson={isStartingLesson}
+            onBack={onBack}
+            onStartLesson={() => void handleStartLesson()}
+            onViewMaterials={() => document.getElementById('unit-materials')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+            onOpenCapabilities={() => setIsCapabilityDrawerOpen(true)}
+            onOpenCurriculum={() => {
+              setIsContextPanelOpen(false)
+              setIsCurriculumRailOpen(true)
+            }}
+            onOpenContext={() => {
+              setIsCurriculumRailOpen(false)
+              setIsContextPanelOpen(true)
+            }}
+          />
 
-          {workspace === 'exercises' ? (
-            <ExerciseWorkspace
-              overview={overview}
-              isStartingExercise={isStartingExercise}
-              onStartExercise={() => void handleStartExercise()}
-              onStartSpelling={() => onStartVocabularyPractice('spelling', overview.current_unit.id, currentSourceLabel)}
-            />
-          ) : null}
+          <TodayCourseTasks
+            overview={overview}
+            vocabulary={activeUnitVocabulary}
+            isStartingLesson={isStartingLesson}
+            isStartingExercise={isStartingExercise}
+            isStartingDailyLesson={isStartingDailyLesson}
+            onStartLesson={() => void handleStartLesson()}
+            onStartVocabulary={(mode) => onStartVocabularyPractice(mode, overview.current_unit.id, currentSourceLabel)}
+            onStartExercise={() => void handleStartExercise()}
+            onStartDailyLesson={() => void handleStartDailyLesson()}
+          />
 
-          <details className="mt-5 rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_4px_14px_rgba(15,23,42,0.05)]">
-            <summary className="cursor-pointer text-sm font-black text-slate-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500">
-              切换教材或添加资料
+          <UnitMaterialsSection
+            overview={overview}
+            workspace={unitWorkspace}
+            vocabulary={activeUnitVocabulary}
+            onStartVocabulary={(mode) => onStartVocabularyPractice(mode, overview.current_unit.id, currentSourceLabel)}
+            onStartDailyLesson={() => void handleStartDailyLesson()}
+            onStartExercise={() => void handleStartExercise()}
+            onStartGrammar={setGrammarTopic}
+          />
+
+          <details
+            open={isSourceManagerOpen}
+            onToggle={(event) => setIsSourceManagerOpen(event.currentTarget.open)}
+            className="mt-5 rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_4px_14px_rgba(15,23,42,0.05)]"
+          >
+            <summary className="flex cursor-pointer items-center gap-2 text-sm font-black text-slate-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500">
+              {isSourceManagerOpen ? <ChevronDown className="size-4 text-slate-500" /> : <ChevronRight className="size-4 text-slate-500" />}
+              教材管理
             </summary>
             <LearningSourceTiles
               sources={overview.sources}
@@ -862,28 +805,53 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice }
         </div>
       </main>
 
-      {isKnowledgePanelDrawer && isContextPanelOpen ? (
+      {!isCapabilityDrawerOpen ? (
+        <button
+          type="button"
+          onClick={() => setIsCapabilityDrawerOpen(true)}
+          className="fixed right-0 top-1/2 z-20 hidden -translate-y-1/2 rounded-l-lg border border-r-0 border-indigo-200 bg-white px-3 py-4 text-sm font-black text-indigo-700 shadow-lg transition hover:bg-indigo-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 lg:inline-flex [writing-mode:vertical-rl]"
+        >
+          能力加练
+        </button>
+      ) : null}
+
+      {isContextPanelOpen ? (
         <button
           type="button"
           aria-label="收起学习概览"
           onClick={() => setIsContextPanelOpen(false)}
-          className="fixed inset-x-0 bottom-0 top-16 z-30 bg-slate-950/30 transition-opacity duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 motion-reduce:transition-none md:hidden"
+          className="fixed inset-x-0 bottom-0 top-16 z-30 bg-slate-950/25 transition-opacity duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 motion-reduce:transition-none"
         />
       ) : null}
       <KnowledgeContextPanel
         overview={overview}
         panelId={contextPanelId}
         titleId={contextTitleId}
-        panelRef={isKnowledgePanelDrawer ? contextPanelRef : undefined}
-        role={isKnowledgePanelDrawer ? 'dialog' : undefined}
-        ariaModal={isKnowledgePanelDrawer ? true : undefined}
-        ariaLabelledby={isKnowledgePanelDrawer ? contextTitleId : undefined}
-        tabIndex={isKnowledgePanelDrawer ? -1 : undefined}
-        onKeyDown={isKnowledgePanelDrawer ? handleContextPanelKeyDown : undefined}
+        panelRef={contextPanelRef}
+        role="dialog"
+        ariaModal
+        ariaLabelledby={contextTitleId}
+        tabIndex={-1}
+        onKeyDown={handleContextPanelKeyDown}
         className={contextPanelClassName}
         onUpload={() => {
           setIsContextPanelOpen(false)
           setIsUploadOpen(true)
+        }}
+      />
+      <CapabilityBoosterDrawer
+        open={isCapabilityDrawerOpen}
+        titleId={capabilityDrawerTitleId}
+        drawerRef={capabilityDrawerRef}
+        onKeyDown={handleCapabilityDrawerKeyDown}
+        recommendations={capabilityRecommendations}
+        busyRecommendationId={busyDailyRecommendationId}
+        onOpenRecommendation={(item) => void handleOpenCapabilityRecommendation(item)}
+        onDismissRecommendation={(item) => void handleDismissDailyCapabilityRecommendation(item)}
+        onClose={() => setIsCapabilityDrawerOpen(false)}
+        onExploreMore={() => {
+          setIsCapabilityDrawerOpen(false)
+          showToast('更多能力入口可以从顶部「探索」页打开。', { variant: 'info' })
         }}
       />
       <UploadTextbookDialog open={isUploadOpen} onClose={() => setIsUploadOpen(false)} onUpload={handleUpload} />
@@ -908,14 +876,16 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice }
         onComplete={handleCompleteLesson}
       />
       <DailyLessonRuntimeDialog
+        key={dailyLesson?.episode_id ?? 'closed-daily-lesson'}
         lesson={dailyLesson}
         answer={dailyAnswer}
         isSubmitting={isSubmittingDailyAnswer}
         dismissedRecommendationIds={dismissedDailyRecommendationIds}
         busyRecommendationId={busyDailyRecommendationId}
         onAnswerChange={setDailyAnswer}
-        onSubmit={() => void handleSubmitDailyAnswer()}
-        onOpenRecommendation={(item) => void handleOpenDailyCapabilityRecommendation(item)}
+        onSubmit={(value) => void handleSubmitDailyAnswer(value)}
+        boosterCount={capabilityRecommendations.length}
+        onOpenBoosterDrawer={() => setIsCapabilityDrawerOpen(true)}
         onDismissRecommendation={(item) => void handleDismissDailyCapabilityRecommendation(item)}
         onClose={() => setDailyLesson(null)}
       />
@@ -931,99 +901,271 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice }
   )
 }
 
-function TodayLearningPlan({
+function CourseHero({
+  overview,
+  workspace,
+  vocabulary,
+  progressPercent,
+  capabilityCount,
+  isStartingLesson,
+  onBack,
+  onStartLesson,
+  onViewMaterials,
+  onOpenCapabilities,
+  onOpenCurriculum,
+  onOpenContext,
+}: {
+  overview: KnowledgeBaseOverview
+  workspace: UnitLearningWorkspace
+  vocabulary: UnitVocabularySummary | null
+  progressPercent: number
+  capabilityCount: number
+  isStartingLesson: boolean
+  onBack: () => void
+  onStartLesson: () => void
+  onViewMaterials: () => void
+  onOpenCapabilities: () => void
+  onOpenCurriculum: () => void
+  onOpenContext: () => void
+}) {
+  const objectives = workspace.overview.objectives.length
+    ? workspace.overview.objectives.slice(0, 3)
+    : [`完成 ${overview.current_unit.title} 的导学与练习`, '掌握本单元核心词汇和语法', '用教材题检查薄弱点']
+
+  return (
+    <section className="overflow-hidden rounded-2xl border border-indigo-100 bg-gradient-to-br from-white via-white to-sky-50 shadow-[0_18px_50px_rgba(15,23,42,0.08)]">
+      <div className="grid gap-6 p-5 sm:p-6 lg:grid-cols-[220px_minmax(0,1fr)] lg:p-8">
+        <TextbookCover overview={overview} />
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-xs font-black uppercase tracking-wide text-indigo-600">{overview.source.publisher || '教材来源'} · {overview.source.title}</p>
+              <h1 className="mt-3 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">
+                {workspace.unit.title}
+              </h1>
+              {workspace.unit.subtitle ? <p className="mt-2 text-lg font-bold text-slate-600">{workspace.unit.subtitle}</p> : null}
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={onOpenCurriculum}
+                aria-label="打开教材目录"
+                className="inline-flex size-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
+                title="教材目录"
+              >
+                <ListTree className="size-4" />
+              </button>
+              <button
+                type="button"
+                onClick={onOpenContext}
+                aria-label="打开学习概览"
+                className="inline-flex size-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
+                title="学习概览"
+              >
+                <Layers3 className="size-4" />
+              </button>
+            </div>
+          </div>
+
+          <p className="mt-4 max-w-3xl text-sm leading-6 text-slate-600">
+            {workspace.overview.summary || `${overview.current_unit.title} ${overview.current_unit.subtitle}`.trim()}
+          </p>
+
+          <div className="mt-5 grid gap-2 sm:grid-cols-3">
+            {objectives.map((objective) => (
+              <div key={objective} className="rounded-lg border border-slate-200 bg-white/80 px-3 py-2 text-sm font-bold leading-6 text-slate-700">
+                <CheckCircle2 className="mr-2 inline size-4 align-[-3px] text-emerald-600" />
+                {objective}
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,1fr)_180px] lg:items-end">
+            <div>
+              <div className="flex items-center justify-between gap-3 text-sm font-bold text-slate-600">
+                <span>当前单元进度</span>
+                <span>{progressPercent}%</span>
+              </div>
+              <UnitProgressBar value={progressPercent} />
+              <p className="mt-2 text-xs font-semibold text-slate-500">
+                {vocabulary ? unitVocabularySummaryText(vocabulary) : `${overview.knowledge_points.length} 个知识点已整理`}
+              </p>
+            </div>
+            <div className="rounded-xl border border-white/80 bg-white/85 px-4 py-3 text-sm font-bold text-slate-600 shadow-sm">
+              <p className="text-xs text-slate-500">预计完成</p>
+              <p className="mt-1 text-2xl font-black text-slate-950">{workspace.unit.estimated_minutes || overview.current_unit.estimated_minutes}<span className="ml-1 text-sm text-slate-500">分钟</span></p>
+            </div>
+          </div>
+
+          <div className="mt-6 flex flex-wrap gap-3">
+            <Button onClick={onStartLesson} disabled={isStartingLesson} className="min-w-36">
+              {isStartingLesson ? <LoaderCircle className="size-4 animate-spin" /> : <BookOpen className="size-4" />}
+              继续学习
+            </Button>
+            <Button variant="secondary" onClick={onViewMaterials}>
+              <BookMarked className="size-4" />
+              查看单元材料
+            </Button>
+            <Button variant="secondary" onClick={onOpenCapabilities} className="border-indigo-200 text-indigo-700 hover:bg-indigo-50">
+              <Sparkles className="size-4" />
+              能力加练 {capabilityCount}
+            </Button>
+            <Button variant="ghost" onClick={onBack}>
+              返回学习中心
+            </Button>
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function TodayCourseTasks({
   overview,
   vocabulary,
+  isStartingLesson,
   isStartingExercise,
   isStartingDailyLesson,
+  onStartLesson,
   onStartVocabulary,
   onStartExercise,
   onStartDailyLesson,
 }: {
   overview: KnowledgeBaseOverview
   vocabulary: UnitVocabularySummary | null
+  isStartingLesson: boolean
   isStartingExercise: boolean
   isStartingDailyLesson: boolean
+  onStartLesson: () => void
   onStartVocabulary: (mode: VocabularyPracticeMode) => void
   onStartExercise: () => void
   onStartDailyLesson: () => void
 }) {
-  const due = vocabulary?.due ?? 0
-  const steps = [
+  const vocabularyEntry = vocabularyPracticeEntry(vocabulary)
+  const canPracticeSpelling = Boolean(vocabulary && vocabulary.total > vocabulary.mastered)
+  const tasks: CourseTaskCardProps[] = [
     {
-      title: due > 0 ? '复习到期词汇' : '预习本单元词汇',
-      meta: due > 0 ? `${due} 个待复习` : `${vocabulary?.new ?? 0} 个新词`,
       icon: <BookOpen className="size-5" />,
-      active: due > 0,
-      action: () => onStartVocabulary(due > 0 ? 'review' : 'new'),
-      busy: false,
+      title: '单元导学',
+      description: '先过一遍本单元目标、重点和例句。',
+      meta: `预计 ${overview.current_unit.estimated_minutes || 12} 分钟`,
+      status: 'continue',
+      actionLabel: '继续',
+      isLoading: isStartingLesson,
+      onAction: onStartLesson,
     },
     {
-      title: '练一道教材题',
+      icon: <Languages className="size-5" />,
+      title: vocabularyEntry.kind === 'review' ? '词汇复习' : vocabularyEntry.kind === 'continue' ? '继续词汇' : '新词预习',
+      description: vocabularyEntry.kind === 'review'
+        ? '把到期词汇先拉回稳定记忆。'
+        : vocabularyEntry.kind === 'new'
+          ? '认识本单元的新词和核心表达。'
+          : vocabularyEntry.kind === 'continue'
+            ? '本单元词汇还在学习中，可以继续巩固。'
+          : '本单元暂时没有可练习的词汇。',
+      meta: vocabularyEntry.meta,
+      status: vocabularyEntry.mode ? (vocabularyEntry.kind === 'review' || vocabularyEntry.kind === 'continue' ? 'continue' : 'not-started') : 'completed',
+      actionLabel: vocabularyEntry.kind === 'review' ? '去复习' : vocabularyEntry.kind === 'continue' ? '继续' : vocabularyEntry.kind === 'new' ? '去预习' : '暂无可练',
+      disabled: !vocabularyEntry.mode,
+      onAction: () => {
+        if (vocabularyEntry.mode) onStartVocabulary(vocabularyEntry.mode)
+      },
+    },
+    {
+      icon: <Dumbbell className="size-5" />,
+      title: '教材练习',
+      description: '用本单元知识点生成混合题，检查掌握情况。',
       meta: `预计 ${overview.daily_lesson.estimated_minutes} 分钟`,
-      icon: <Target className="size-5" />,
-      active: due === 0,
-      action: onStartExercise,
-      busy: isStartingExercise,
+      status: 'not-started',
+      actionLabel: '开始练习',
+      isLoading: isStartingExercise,
+      onAction: onStartExercise,
     },
     {
-      title: 'AI 每日题',
-      meta: '完成后给出下一步',
-      icon: <Sparkles className="size-5" />,
-      active: false,
-      action: onStartDailyLesson,
-      busy: isStartingDailyLesson,
+      icon: <BookCheck className="size-5" />,
+      title: '拼写巩固',
+      description: '针对本单元单词做一次拼写检查。',
+      meta: `${vocabulary?.total ?? overview.knowledge_points.filter((item) => item.type === 'vocabulary').length} 个词`,
+      status: canPracticeSpelling ? 'not-started' : 'completed',
+      actionLabel: canPracticeSpelling ? '练拼写' : '暂无可练',
+      disabled: !canPracticeSpelling,
+      onAction: () => {
+        if (canPracticeSpelling) onStartVocabulary('spelling')
+      },
     },
   ]
 
   return (
-    <section className="mt-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_4px_14px_rgba(15,23,42,0.05)]">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+    <section aria-labelledby="today-course-tasks-title">
+      <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <div className="flex items-center gap-2">
-            <span className="flex size-9 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700">
-              <Sparkles className="size-5" />
-            </span>
-            <h2 className="text-xl font-black text-slate-950">今天先做什么</h2>
-          </div>
-          <p className="mt-2 text-sm leading-6 text-slate-500">
-            根据当前单元和复习计划，今天只保留三步：词汇、教材题、AI 每日题。
-          </p>
+          <h2 id="today-course-tasks-title" className="text-xl font-black text-slate-950">今日课程任务</h2>
+          <p className="mt-1 text-sm text-slate-500">主线任务只围绕当前单元推进，完成后再看能力加练。</p>
         </div>
-        <div className="rounded-lg bg-emerald-50 px-3 py-2 text-sm font-black text-emerald-700">
-          今日 3 步
-        </div>
+        <Button variant="secondary" onClick={onStartDailyLesson} disabled={isStartingDailyLesson}>
+          {isStartingDailyLesson ? <LoaderCircle className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
+          AI 每日题
+        </Button>
       </div>
-
-      <div className="mt-5 grid gap-3 lg:grid-cols-3">
-        {steps.map((step, index) => (
-          <button
-            key={step.title}
-            type="button"
-            onClick={step.action}
-            disabled={step.busy}
-            className={`group grid grid-cols-[32px_minmax(0,1fr)] gap-3 rounded-xl border px-4 py-4 text-left transition disabled:cursor-not-allowed disabled:opacity-70 ${
-              step.active
-                ? 'border-emerald-300 bg-emerald-50 text-emerald-950 shadow-sm'
-                : 'border-slate-200 bg-white text-slate-800 hover:border-indigo-200 hover:bg-indigo-50/40'
-            } focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500`}
-          >
-            <span className={`flex size-8 items-center justify-center rounded-full text-sm font-black ${
-              step.active ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-500 group-hover:bg-indigo-100 group-hover:text-indigo-700'
-            }`}>
-              {step.busy ? <LoaderCircle className="size-4 animate-spin" /> : index + 1}
-            </span>
-            <span className="min-w-0">
-              <span className="flex items-center gap-2">
-                <span className={step.active ? 'text-emerald-700' : 'text-indigo-600'}>{step.icon}</span>
-                <span className="truncate text-sm font-black">{step.title}</span>
-              </span>
-              <span className="mt-1 block text-xs font-semibold text-slate-500">{step.meta}</span>
-            </span>
-          </button>
-        ))}
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        {tasks.map((task) => <CourseTaskCard key={task.title} {...task} />)}
       </div>
     </section>
+  )
+}
+
+interface CourseTaskCardProps {
+  icon: ReactNode
+  title: string
+  description: string
+  meta: string
+  status: 'completed' | 'continue' | 'not-started'
+  actionLabel: string
+  isLoading?: boolean
+  disabled?: boolean
+  onAction: () => void
+}
+
+function CourseTaskCard({
+  icon,
+  title,
+  description,
+  meta,
+  status,
+  actionLabel,
+  isLoading = false,
+  disabled = false,
+  onAction,
+}: CourseTaskCardProps) {
+  const statusLabel = status === 'completed' ? '已完成' : status === 'continue' ? '继续' : '未开始'
+  const statusClassName = status === 'completed'
+    ? 'bg-emerald-50 text-emerald-700'
+    : status === 'continue'
+      ? 'bg-indigo-50 text-indigo-700'
+      : 'bg-slate-100 text-slate-600'
+
+  return (
+    <article className="group flex min-h-[210px] flex-col rounded-xl border border-slate-200 bg-white p-4 shadow-[0_4px_14px_rgba(15,23,42,0.04)] transition hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-[0_14px_30px_rgba(15,23,42,0.08)] focus-within:border-indigo-300">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex size-11 items-center justify-center rounded-lg bg-slate-100 text-slate-700 transition group-hover:bg-indigo-50 group-hover:text-indigo-700">
+          {icon}
+        </div>
+        <span className={`rounded-md px-2 py-1 text-xs font-black ${statusClassName}`}>{statusLabel}</span>
+      </div>
+      <h3 className="mt-4 text-base font-black text-slate-950">{title}</h3>
+      <p className="mt-2 line-clamp-2 flex-1 text-sm leading-6 text-slate-600">{description}</p>
+      <div className="mt-4 flex items-center justify-between gap-3">
+        <span className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500">
+          <Clock3 className="size-3.5" />
+          {meta}
+        </span>
+        <Button variant={status === 'continue' ? 'primary' : 'secondary'} onClick={onAction} disabled={disabled || isLoading} className="px-3 py-2">
+          {isLoading ? <LoaderCircle className="size-4 animate-spin" /> : <ArrowRight className="size-4" />}
+          {isLoading ? '准备中' : actionLabel}
+        </Button>
+      </div>
+    </article>
   )
 }
 
@@ -1074,138 +1216,255 @@ function LearningSourceTiles({
   )
 }
 
-function UnitLearningWorkspaceView({
-  workspace,
+function UnitMaterialsSection({
   overview,
+  workspace,
   vocabulary,
-  sourceLabel,
-  isStartingLesson,
-  isStartingDailyLesson,
-  isStartingExercise,
-  onStartLesson,
-  onStartDailyLesson,
   onStartExercise,
+  onStartDailyLesson,
   onStartVocabulary,
   onStartGrammar,
 }: {
-  workspace?: UnitLearningWorkspace
   overview: KnowledgeBaseOverview
+  workspace: UnitLearningWorkspace
   vocabulary: UnitVocabularySummary | null
-  sourceLabel: string
-  isStartingLesson: boolean
-  isStartingDailyLesson: boolean
-  isStartingExercise: boolean
-  onStartLesson: () => void
-  onStartDailyLesson: () => void
   onStartExercise: () => void
+  onStartDailyLesson: () => void
   onStartVocabulary: (mode: VocabularyPracticeMode) => void
   onStartGrammar: (topic: string) => void
 }) {
-  const unitWorkspace = workspace ?? fallbackUnitWorkspace(overview)
-  const recommended = unitWorkspace.recommended_next_action
-  const recommendedType = recommended.type === 'pronunciation' ? 'exercise' : recommended.type
-  const recommendedLabel = recommended.type === 'pronunciation' ? '练一道教材题' : recommended.label
-  const recommendedReason = recommended.type === 'pronunciation'
-    ? '先用教材题检查本单元掌握情况。'
-    : recommended.reason
-  const visibleSections = unitWorkspace.sections.filter((section) => section.id !== 'pronunciation')
-  const handleAction = (type: UnitWorkspaceActionType, section?: UnitWorkspaceSection) => {
+  const [detail, setDetail] = useState<MaterialDetail | null>(null)
+  const sectionById = new Map(workspace.sections.map((section) => [section.id, section]))
+  const firstGrammarTopic = sectionById.get('grammar')?.items[0]?.title ?? overview.knowledge_points.find((item) => item.type === 'grammar')?.title ?? 'grammar'
+  const expressionItems = [
+    ...(sectionById.get('sentence_patterns')?.items ?? []),
+    ...(sectionById.get('phrases')?.items ?? []),
+  ]
+  const vocabularyEntry = vocabularyPracticeEntry(vocabulary)
+  const materialCards = [
+    {
+      id: 'vocabulary',
+      icon: <Languages className="size-5" />,
+      title: '单词表',
+      description: vocabularyEntry.mode
+        ? vocabularyEntry.kind === 'continue'
+          ? '继续巩固本单元学习中的词汇。'
+          : '进入本单元词汇预习或到期复习。'
+        : '本单元暂时没有可练习的词汇。',
+      meta: vocabularyEntry.meta || `${sectionById.get('vocabulary')?.count ?? 0} 个词`,
+      actionLabel: vocabularyEntry.kind === 'review' ? '复习词汇' : vocabularyEntry.kind === 'continue' ? '继续词汇' : vocabularyEntry.kind === 'new' ? '打开词汇' : '暂无可练',
+      actionType: (vocabularyEntry.mode === 'review' ? 'review' : 'vocabulary_new') as UnitWorkspaceActionType,
+      disabled: !vocabularyEntry.mode,
+      detailItems: sectionById.get('vocabulary')?.items ?? [],
+      emptyDetail: '本单元暂时没有词汇条目。',
+    },
+    {
+      id: 'grammar',
+      icon: <GraduationCap className="size-5" />,
+      title: '语法要点',
+      description: '查看本单元语法微知识点和例句。',
+      meta: `${sectionById.get('grammar')?.count ?? 0} 项`,
+      actionType: 'details',
+      detailItems: sectionById.get('grammar')?.items ?? [],
+      emptyDetail: '本单元暂时没有语法要点。',
+      itemActionLabel: '进入语法',
+    },
+    {
+      id: 'sentence_patterns',
+      icon: <FileText className="size-5" />,
+      title: '句型短语',
+      description: '保留教材中的重点句型、短语和表达。',
+      meta: `${(sectionById.get('sentence_patterns')?.count ?? 0) + (sectionById.get('phrases')?.count ?? 0)} 项`,
+      actionType: 'details',
+      detailItems: expressionItems,
+      emptyDetail: '本单元暂时没有句型短语。',
+      itemActionLabel: '练这个表达',
+    },
+    {
+      id: 'practice',
+      icon: <Dumbbell className="size-5" />,
+      title: '教材题库',
+      description: '用当前单元材料生成练习题。',
+      meta: `${overview.knowledge_points.length} 个知识点`,
+      actionLabel: '开始练习',
+      actionType: 'exercise' as UnitWorkspaceActionType,
+    },
+  ]
+
+  const handleAction = (type: UnitWorkspaceActionType, targetTopic?: string) => {
     if (type === 'vocabulary_new') onStartVocabulary('new')
+    else if (type === 'review') onStartVocabulary('review')
     else if (type === 'vocabulary_spelling') onStartVocabulary('spelling')
     else if (type === 'daily_lesson') onStartDailyLesson()
     else if (type === 'exercise') onStartExercise()
-    else if (type === 'grammar') {
-      const topic = recommended.target ?? section?.items[0]?.title
-      if (topic) onStartGrammar(topic)
-    }
+    else if (type === 'grammar') onStartGrammar(targetTopic ?? firstGrammarTopic)
+  }
+
+  const openDetails = (card: (typeof materialCards)[number]) => {
+    if (!('detailItems' in card)) return
+    setDetail({
+      title: card.title,
+      subtitle: `${overview.current_unit.title} · ${overview.current_unit.subtitle}`,
+      items: card.detailItems ?? [],
+      emptyMessage: card.emptyDetail ?? '暂无详情。',
+      itemActionLabel: card.itemActionLabel,
+      onItemAction: card.itemActionLabel
+        ? (item) => {
+          setDetail(null)
+          onStartGrammar(item.title)
+        }
+        : undefined,
+    })
   }
 
   return (
-    <section className="space-y-5">
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
-        <div className="rounded-2xl border border-indigo-200 bg-white p-5 shadow-[0_4px_14px_rgba(15,23,42,0.05)]">
-          <div className="grid gap-5 md:grid-cols-[190px_minmax(0,1fr)]">
-            <TextbookCover overview={overview} />
-            <div className="min-w-0">
-              <div className="flex flex-wrap items-start justify-between gap-4">
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <p className="text-xs font-black uppercase tracking-wide text-indigo-600">{sourceLabel}</p>
-                    <span className="rounded-md bg-indigo-50 px-2 py-1 text-xs font-black text-indigo-700">当前学习</span>
-                  </div>
-                  <h2 className="mt-3 text-2xl font-black tracking-tight text-slate-950">
-                    {unitWorkspace.unit.title} · {unitWorkspace.unit.subtitle}
-                  </h2>
-                  <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">{unitWorkspace.overview.summary}</p>
-                </div>
-                <Button onClick={onStartLesson} disabled={isStartingLesson}>
-                  {isStartingLesson ? <LoaderCircle className="size-4 animate-spin" /> : <BookOpen className="size-4" />}
-                  继续学习
-                </Button>
-              </div>
-
-              {unitWorkspace.overview.objectives.length ? (
-                <div className="mt-4 flex flex-wrap gap-2">
-                  {unitWorkspace.overview.objectives.slice(0, 3).map((objective) => (
-                    <span key={objective} className="rounded-md border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold leading-5 text-slate-700">
-                      {objective}
-                    </span>
-                  ))}
-                </div>
-              ) : null}
-
-              <div className="mt-5 grid gap-3 sm:grid-cols-[90px_minmax(0,1fr)_56px] sm:items-center">
-                <p className="text-sm font-black text-slate-700">学习进度</p>
-                <UnitProgressBar value={Math.round(unitWorkspace.mastery_summary.average * 100)} />
-                <p className="text-sm font-black text-slate-500">{Math.round(unitWorkspace.mastery_summary.average * 100)}%</p>
-              </div>
-
-              <div className="mt-5 grid gap-3 border-t border-slate-100 pt-4 sm:grid-cols-4">
-                <UnitShortcut icon={<BookOpen className="size-4" />} label="单元导学" onClick={onStartLesson} />
-                <UnitShortcut icon={<Languages className="size-4" />} label={`单词表 ${vocabulary?.total ?? '—'}`} onClick={() => onStartVocabulary('new')} />
-                <UnitShortcut icon={<GraduationCap className="size-4" />} label="语法要点" onClick={() => handleAction('grammar')} />
-                <UnitShortcut icon={<Dumbbell className="size-4" />} label="教材题库" onClick={onStartExercise} />
-              </div>
-            </div>
-          </div>
+    <section id="unit-materials" className="scroll-mt-24" aria-labelledby="unit-materials-title">
+      <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h2 id="unit-materials-title" className="text-xl font-black text-slate-950">本单元材料</h2>
+          <p className="mt-1 text-sm text-slate-500">这里只保留入口，不在课程主页展开全部知识点。</p>
         </div>
-
-        <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-5">
-          <div className="flex items-start gap-3">
-            <Sparkles className="mt-0.5 size-5 shrink-0 text-indigo-600" />
-            <div>
-              <p className="text-sm font-black text-indigo-950">推荐下一步</p>
-              <h3 className="mt-1 text-lg font-black text-slate-950">{recommendedLabel}</h3>
-              <p className="mt-2 text-sm leading-6 text-indigo-800">{recommendedReason}</p>
-              <Button className="mt-4 w-full" onClick={() => handleAction(recommendedType)}>
-                {recommendedLabel}
-              </Button>
-            </div>
-          </div>
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-lg bg-white px-3 py-2 text-xs font-bold text-slate-500 shadow-sm" aria-label="本单元词汇统计">
+          <span className="text-slate-800">共 {vocabulary?.total ?? sectionById.get('vocabulary')?.count ?? '—'} 词</span>
+          <span>新词 {vocabulary?.new ?? '—'}</span>
+          <span>学习中 {vocabulary?.learning ?? '—'}</span>
+          <span>待复习 {vocabulary?.due ?? '—'}</span>
         </div>
       </div>
-
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-xl bg-slate-50 px-4 py-3 text-xs font-bold text-slate-500" aria-label="本单元词汇统计">
-        <span className="text-slate-800">本单元共 {vocabulary?.total ?? '—'} 词</span>
-        <span>新词 {vocabulary?.new ?? '—'}</span>
-        <span>待复习 {vocabulary?.due ?? '—'}</span>
-        <span>已掌握 {vocabulary?.mastered ?? '—'}</span>
-      </div>
-
-      <div className="grid gap-4 xl:grid-cols-2">
-        {visibleSections.map((section) => (
-          <WorkspaceSectionCard
-            key={section.id}
-            section={section}
-            isBusy={
-              (section.action.type === 'exercise' && isStartingExercise)
-              || (section.action.type === 'daily_lesson' && isStartingDailyLesson)
-            }
-            onAction={(type) => handleAction(type, section)}
-          />
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        {materialCards.map((card) => (
+          <div
+            key={card.id}
+            className="relative rounded-xl border border-slate-200 bg-white shadow-[0_4px_14px_rgba(15,23,42,0.04)] transition hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-[0_14px_30px_rgba(15,23,42,0.08)]"
+          >
+            {'detailItems' in card ? (
+              <button
+                type="button"
+                onClick={() => openDetails(card)}
+                aria-label={`查看${card.title}详情`}
+                className="absolute right-3 top-3 z-10 inline-flex size-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
+                title="详情"
+              >
+                <ListChecks className="size-4" />
+              </button>
+            ) : null}
+            <div className="flex min-h-[178px] w-full flex-col rounded-xl p-4 pr-12 text-left">
+              <span className="flex size-11 items-center justify-center rounded-lg bg-slate-100 text-slate-700">
+                {card.icon}
+              </span>
+              <span className="mt-4 text-base font-black text-slate-950">{card.title}</span>
+              <span className="mt-2 line-clamp-2 flex-1 text-sm leading-6 text-slate-600">{card.description}</span>
+              <span className="mt-4 flex items-center justify-between gap-3 text-xs font-bold text-slate-500">
+                <span>{card.meta}</span>
+                {card.actionType !== 'details' ? (
+                  <button
+                    type="button"
+                    onClick={() => handleAction(card.actionType as UnitWorkspaceActionType, 'targetTopic' in card && typeof card.targetTopic === 'string' ? card.targetTopic : undefined)}
+                    disabled={card.disabled}
+                    className="inline-flex items-center gap-1 rounded-lg bg-indigo-50 px-2.5 py-1.5 text-indigo-700 transition hover:bg-indigo-600 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 active:scale-[0.98] disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+                  >
+                    {card.actionLabel}
+                    <ArrowRight className="size-3.5" />
+                  </button>
+                ) : null}
+              </span>
+            </div>
+          </div>
         ))}
       </div>
+      <MaterialDetailDialog detail={detail} onClose={() => setDetail(null)} />
     </section>
+  )
+}
+
+interface MaterialDetail {
+  title: string
+  subtitle: string
+  items: UnitWorkspaceItem[]
+  emptyMessage: string
+  itemActionLabel?: string
+  onItemAction?: (item: UnitWorkspaceItem) => void
+}
+
+function MaterialDetailDialog({ detail, onClose }: { detail: MaterialDetail | null; onClose: () => void }) {
+  const titleId = useId()
+  const { containerRef, handleKeyDown } = useFocusTrap<HTMLElement>({
+    isActive: Boolean(detail),
+    onEscape: onClose,
+  })
+
+  if (!detail) return null
+
+  return (
+    <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
+      <button
+        type="button"
+        aria-label="关闭详情"
+        onClick={onClose}
+        className="absolute inset-0 bg-slate-950/35 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+      />
+      <section
+        ref={containerRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        tabIndex={-1}
+        onKeyDown={handleKeyDown}
+        className="relative flex max-h-[calc(100dvh-2rem)] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-white p-6 shadow-2xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+      >
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h2 id={titleId} className="text-xl font-extrabold text-slate-950">{detail.title}详情</h2>
+            <p className="mt-1 text-sm font-semibold text-slate-500">{detail.subtitle}</p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            aria-label="关闭详情"
+          >
+            <X className="size-5" />
+          </button>
+        </div>
+
+        <div className="mt-5 min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain pr-1">
+          {detail.items.length ? (
+            detail.items.map((item, index) => (
+              <article key={item.id} className="rounded-xl border border-slate-200 bg-slate-50/70 p-4">
+                <div className="flex items-start gap-3">
+                  <span className="mt-0.5 inline-flex size-7 shrink-0 items-center justify-center rounded-lg bg-white text-xs font-black text-indigo-700 shadow-sm">
+                    {index + 1}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="min-w-0">
+                        <h3 className="font-extrabold text-slate-900">{item.title}</h3>
+                        {item.summary ? <p className="mt-1 text-sm leading-6 text-slate-600">{item.summary}</p> : null}
+                        <p className="mt-2 text-xs font-bold text-slate-400">{item.source_page || '教材条目'}</p>
+                      </div>
+                      {detail.itemActionLabel && detail.onItemAction ? (
+                        <button
+                          type="button"
+                          onClick={() => detail.onItemAction?.(item)}
+                          className="inline-flex shrink-0 items-center justify-center gap-1 rounded-lg bg-indigo-50 px-3 py-2 text-xs font-extrabold text-indigo-700 transition hover:bg-indigo-600 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 active:scale-[0.98]"
+                        >
+                          {detail.itemActionLabel}
+                          <ArrowRight className="size-3.5" />
+                        </button>
+                      ) : null}
+                    </div>
+                  </div>
+                </div>
+              </article>
+            ))
+          ) : (
+            <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-6 text-sm font-semibold text-slate-500">
+              {detail.emptyMessage}
+            </div>
+          )}
+        </div>
+      </section>
+    </div>
   )
 }
 
@@ -1231,19 +1490,6 @@ function TextbookCover({ overview }: { overview: KnowledgeBaseOverview }) {
   )
 }
 
-function UnitShortcut({ icon, label, onClick }: { icon: ReactNode; label: string; onClick: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-700 transition-colors hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
-    >
-      {icon}
-      {label}
-    </button>
-  )
-}
-
 function UnitProgressBar({ value }: { value: number }) {
   return (
     <div className="h-2 overflow-hidden rounded-full bg-slate-200">
@@ -1253,62 +1499,6 @@ function UnitProgressBar({ value }: { value: number }) {
       />
     </div>
   )
-}
-
-function WorkspaceSectionCard({
-  section,
-  isBusy,
-  onAction,
-}: {
-  section: UnitWorkspaceSection
-  isBusy: boolean
-  onAction: (type: UnitWorkspaceActionType) => void
-}) {
-  return (
-    <article className="rounded-xl border border-slate-200 bg-white p-5">
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex min-w-0 items-start gap-3">
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-700">
-            {sectionIcon(section.id)}
-          </div>
-          <div className="min-w-0">
-            <h3 className="font-black text-slate-950">{section.title}</h3>
-            <p className="mt-1 text-xs font-bold text-slate-500">{section.count} 项</p>
-          </div>
-        </div>
-        <Button variant="secondary" onClick={() => onAction(section.action.type)} disabled={isBusy || section.empty}>
-          {isBusy ? <LoaderCircle className="size-4 animate-spin" /> : null}
-          {section.action.label}
-        </Button>
-      </div>
-      {section.items.length ? (
-        <div className="mt-4 grid gap-2">
-          {section.items.map((item) => (
-            <div key={item.id} className="rounded-lg bg-slate-50 px-3 py-2">
-              <div className="flex items-center justify-between gap-3">
-                <p className="min-w-0 truncate text-sm font-black text-slate-900">{item.title}</p>
-                <span className="shrink-0 text-xs font-bold text-slate-500">{Math.round(item.mastery * 100)}%</span>
-              </div>
-              <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-600">{item.summary}</p>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className="mt-4 rounded-lg bg-slate-50 px-3 py-6 text-center text-sm font-semibold text-slate-500">
-          {section.id === 'practice' ? '使用本单元结构化知识生成检查题。' : '本单元暂无这一类条目。'}
-        </div>
-      )}
-    </article>
-  )
-}
-
-function sectionIcon(sectionId: string) {
-  if (sectionId === 'vocabulary') return <Languages className="size-5" />
-  if (sectionId === 'sentence_patterns') return <BookCheck className="size-5" />
-  if (sectionId === 'grammar') return <GraduationCap className="size-5" />
-  if (sectionId === 'phrases') return <BookOpen className="size-5" />
-  if (sectionId === 'practice') return <Dumbbell className="size-5" />
-  return <BookOpen className="size-5" />
 }
 
 function fallbackUnitWorkspace(overview: KnowledgeBaseOverview): UnitLearningWorkspace {
@@ -1363,6 +1553,237 @@ function fallbackUnitWorkspace(overview: KnowledgeBaseOverview): UnitLearningWor
 function normalizePercent(value: number) {
   const normalized = value <= 1 ? value * 100 : value
   return Math.round(Math.max(0, Math.min(100, normalized)))
+}
+
+function vocabularyPracticeEntry(vocabulary: UnitVocabularySummary | null): {
+  mode: Extract<VocabularyPracticeMode, 'new' | 'review'> | null
+  meta: string
+  kind: 'loading' | 'new' | 'continue' | 'review' | 'empty'
+} {
+  if (!vocabulary) return { mode: null, meta: '词汇统计加载中', kind: 'loading' }
+  if (vocabulary.due > 0) return { mode: 'review', meta: `${vocabulary.due} 个待复习`, kind: 'review' }
+  if (vocabulary.new > 0) return { mode: 'new', meta: `${vocabulary.new} 个新词`, kind: 'new' }
+  if (vocabulary.learning > 0) return { mode: 'new', meta: `${vocabulary.learning} 个学习中`, kind: 'continue' }
+  if (vocabulary.total > 0) return { mode: null, meta: `${vocabulary.total} 个词已安排`, kind: 'empty' }
+  return { mode: null, meta: '暂无词表', kind: 'empty' }
+}
+
+function unitVocabularySummaryText(vocabulary: UnitVocabularySummary) {
+  const parts = [`本单元 ${vocabulary.total} 个词`]
+  if (vocabulary.new > 0) parts.push(`${vocabulary.new} 个新词`)
+  if (vocabulary.learning > 0) parts.push(`${vocabulary.learning} 个学习中`)
+  if (vocabulary.due > 0) parts.push(`${vocabulary.due} 个待复习`)
+  return parts.join('，')
+}
+
+function buildCapabilityRecommendations(
+  overview: KnowledgeBaseOverview,
+  dailyRecommendations: CapabilityRecommendation[],
+  dismissedIds: Set<string>,
+) {
+  const activeDailyRecommendations = dailyRecommendations
+    .filter((item) => !dismissedIds.has(item.recommendation_id))
+    .slice(0, 3)
+  if (activeDailyRecommendations.length) return activeDailyRecommendations
+  return fallbackCapabilityRecommendations(overview)
+    .filter((item) => !dismissedIds.has(item.recommendation_id))
+    .slice(0, 3)
+}
+
+function fallbackCapabilityRecommendations(overview: KnowledgeBaseOverview): CapabilityRecommendation[] {
+  const workspace = overview.unit_workspace ?? fallbackUnitWorkspace(overview)
+  const byType = (type: string) => overview.knowledge_points.filter((item) => item.type === type)
+  const grammarItems = byType('grammar')
+  const vocabularyItems = byType('vocabulary')
+  const phraseItems = byType('phrase')
+  const sentenceItems = byType('sentence_pattern')
+  const pronunciationItems = byType('pronunciation')
+  const unitTarget = `${overview.current_unit.title} ${overview.current_unit.subtitle}`.trim()
+  const evidence = `${overview.current_unit.title} ${workspace.overview.title || '教材材料'}`.trim()
+  const recommendations: CapabilityRecommendation[] = []
+
+  if (grammarItems.length || workspace.sections.some((section) => section.id === 'grammar' && section.count > 0)) {
+    recommendations.push(makeFallbackRecommendation({
+      id: 'grammar',
+      capabilityId: 'grammar-micro-knowledge',
+      featureId: 'grammar-page',
+      title: '语法微知识点',
+      category: 'grammar',
+      target: grammarItems[0]?.title ?? unitTarget,
+      reason: '本单元包含可独立巩固的语法点，先做微知识点能让教材练习更稳。',
+      evidence: grammarItems[0]?.source_page || evidence,
+      toolTarget: 'grammar',
+      priorityScore: 0.94,
+    }))
+  }
+
+  if (vocabularyItems.length >= 6) {
+    recommendations.push(makeFallbackRecommendation({
+      id: 'word-parts',
+      capabilityId: 'word-parts',
+      featureId: 'word-parts-page',
+      title: '词根与词缀',
+      category: 'vocabulary',
+      target: vocabularyItems[0]?.title ?? unitTarget,
+      reason: '本单元新词较多，拆词形和构词线索能降低记忆负担。',
+      evidence: vocabularyItems[0]?.source_page || evidence,
+      toolTarget: 'word-parts',
+      priorityScore: 0.88,
+    }))
+  }
+
+  if (vocabularyItems.length > 0) {
+    recommendations.push(makeFallbackRecommendation({
+      id: 'vocabulary-detail',
+      capabilityId: 'vocabulary-detail',
+      featureId: 'vocabulary-detail-page',
+      title: '词汇详解',
+      category: 'vocabulary',
+      target: vocabularyItems[0]?.title ?? unitTarget,
+      reason: '挑一个本单元高频词做搭配、例句和近义辨析，会帮助后续阅读和写作。',
+      evidence: vocabularyItems[0]?.source_page || evidence,
+      toolTarget: 'vocabulary-detail',
+      priorityScore: 0.82,
+      action: 'vocabulary-detail',
+    }))
+  }
+
+  if (sentenceItems.length || overview.knowledge_points.some((item) => item.summary.length > 80)) {
+    recommendations.push(makeFallbackRecommendation({
+      id: 'reading-workshop',
+      capabilityId: 'reading-workshop',
+      featureId: 'reading-workshop-page',
+      title: '精读与泛读',
+      category: 'reading',
+      target: sentenceItems[0]?.title ?? unitTarget,
+      reason: '本单元有句型或较长文本材料，适合做一次阅读策略加练。',
+      evidence: sentenceItems[0]?.source_page || evidence,
+      toolTarget: 'reading-workshop',
+      priorityScore: 0.78,
+    }))
+  }
+
+  if (pronunciationItems.length) {
+    recommendations.push(makeFallbackRecommendation({
+      id: 'pronunciation',
+      capabilityId: 'pronunciation',
+      featureId: 'pronunciation-page',
+      title: '发音训练',
+      category: 'speaking',
+      target: pronunciationItems[0]?.title ?? unitTarget,
+      reason: '本单元出现发音或拼读信号，适合单独做一次听辨和跟读。',
+      evidence: pronunciationItems[0]?.source_page || evidence,
+      toolTarget: 'pronunciation',
+      priorityScore: 0.76,
+    }))
+  }
+
+  if (phraseItems.length) {
+    recommendations.push(makeFallbackRecommendation({
+      id: 'writing-phrasebook',
+      capabilityId: 'writing-phrasebook',
+      featureId: 'writing-phrasebook-page',
+      title: '好句收藏馆',
+      category: 'writing',
+      target: phraseItems[0]?.title ?? unitTarget,
+      reason: '本单元有可迁移到表达中的短语和句型，适合收藏后做仿写。',
+      evidence: phraseItems[0]?.source_page || evidence,
+      toolTarget: 'writing-phrasebook',
+      priorityScore: 0.72,
+    }))
+  }
+
+  if (!recommendations.length) {
+    recommendations.push(makeFallbackRecommendation({
+      id: 'grammar-default',
+      capabilityId: 'grammar-micro-knowledge',
+      featureId: 'grammar-page',
+      title: '语法微知识点',
+      category: 'grammar',
+      target: unitTarget,
+      reason: '先用一个微知识点把本单元语言结构梳理清楚，再回到教材任务。',
+      evidence,
+      toolTarget: 'grammar',
+      priorityScore: 0.7,
+    }))
+  }
+
+  return recommendations
+}
+
+function makeFallbackRecommendation({
+  id,
+  capabilityId,
+  featureId,
+  title,
+  category,
+  target,
+  reason,
+  evidence,
+  toolTarget,
+  priorityScore,
+  action = 'tool',
+}: {
+  id: string
+  capabilityId: string
+  featureId: string
+  title: string
+  category: string
+  target: string
+  reason: string
+  evidence: string
+  toolTarget: string
+  priorityScore: number
+  action?: string
+}): CapabilityRecommendation {
+  return {
+    recommendation_id: `fallback-${id}`,
+    capability_id: capabilityId,
+    feature_id: featureId,
+    title,
+    reason,
+    priority_score: priorityScore,
+    category,
+    action,
+    tool_target: toolTarget,
+    route_hint: featureId,
+    input_payload: { target },
+    evidence_refs: [evidence],
+    source: 'fallback',
+  }
+}
+
+function readRecommendationTarget(recommendation: CapabilityRecommendation) {
+  const target = recommendation.input_payload?.target
+  if (typeof target === 'string' && target.trim()) return target
+  const promptSeed = recommendation.prompt_seed
+  if (typeof promptSeed === 'string' && promptSeed.trim()) return promptSeed
+  return null
+}
+
+function readRecommendationEvidence(recommendation: CapabilityRecommendation) {
+  const firstEvidence = recommendation.evidence_refs?.[0]
+  if (typeof firstEvidence === 'string' && firstEvidence.trim()) return firstEvidence
+  if (isRecord(firstEvidence)) {
+    for (const key of ['title', 'source', 'label', 'evidence']) {
+      const value = firstEvidence[key]
+      if (typeof value === 'string' && value.trim()) return value
+    }
+  }
+  return recommendation.source === 'fallback' ? '当前单元材料' : `${recommendation.evidence_refs?.length ?? 0} 条学习证据`
+}
+
+function labelForCategory(category: string) {
+  const labels: Record<string, string> = {
+    listening: '听力',
+    speaking: '口语',
+    reading: '阅读',
+    writing: '写作',
+    vocabulary: '词汇',
+    grammar: '语法',
+    exam: '考试冲刺',
+  }
+  return labels[category] ?? category
 }
 
 function FailedSourceSummary({ source, onDelete }: { source: FailedKnowledgeSourceDetail; onDelete?: () => void }) {
@@ -1448,6 +1869,133 @@ function stageLabel(stage: string) {
   return labels[stage] ?? stage
 }
 
+function CapabilityBoosterDrawer({
+  open,
+  titleId,
+  drawerRef,
+  onKeyDown,
+  recommendations,
+  busyRecommendationId,
+  onOpenRecommendation,
+  onDismissRecommendation,
+  onClose,
+  onExploreMore,
+}: {
+  open: boolean
+  titleId: string
+  drawerRef: Ref<HTMLElement>
+  onKeyDown: KeyboardEventHandler<HTMLElement>
+  recommendations: CapabilityRecommendation[]
+  busyRecommendationId: string | null
+  onOpenRecommendation: (recommendation: CapabilityRecommendation) => void
+  onDismissRecommendation: (recommendation: CapabilityRecommendation) => void
+  onClose: () => void
+  onExploreMore: () => void
+}) {
+  if (!open) return null
+
+  return (
+    <div className="fixed inset-0 z-50">
+      <button
+        type="button"
+        aria-label="关闭能力加练"
+        onClick={onClose}
+        className="absolute inset-0 bg-slate-950/30 transition-opacity focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
+      />
+      <section
+        ref={drawerRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        tabIndex={-1}
+        onKeyDown={onKeyDown}
+        className="absolute bottom-0 left-0 right-0 flex max-h-[70dvh] flex-col overflow-hidden rounded-t-2xl bg-white shadow-2xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary sm:left-auto sm:top-0 sm:h-full sm:max-h-none sm:w-[min(400px,92vw)] sm:rounded-none"
+      >
+        <header className="flex items-start justify-between gap-3 border-b border-slate-200 px-5 py-4">
+          <div className="min-w-0">
+            <p className="text-xs font-black uppercase tracking-wide text-indigo-600">Capability Booster</p>
+            <h2 id={titleId} className="mt-1 text-lg font-black text-slate-950">适合本单元的能力加练</h2>
+            <p className="mt-1 text-sm leading-6 text-slate-500">根据当前单元知识点、练习结果和近期薄弱点推荐。</p>
+          </div>
+          <IconButton
+            label="关闭能力加练"
+            onClick={onClose}
+            className="border-transparent text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+          >
+            <X className="size-4" />
+          </IconButton>
+        </header>
+
+        <div className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain px-5 py-5">
+          {recommendations.slice(0, 3).map((recommendation) => (
+            <CapabilityBoosterCard
+              key={recommendation.recommendation_id}
+              recommendation={recommendation}
+              isBusy={busyRecommendationId === recommendation.recommendation_id}
+              onOpen={onOpenRecommendation}
+              onDismiss={onDismissRecommendation}
+            />
+          ))}
+        </div>
+
+        <footer className="border-t border-slate-200 bg-white px-5 py-4">
+          <Button variant="secondary" onClick={onExploreMore} className="w-full">
+            <LibraryBig className="size-4" />
+            查看更多能力
+          </Button>
+        </footer>
+      </section>
+    </div>
+  )
+}
+
+function CapabilityBoosterCard({
+  recommendation,
+  isBusy,
+  onOpen,
+  onDismiss,
+}: {
+  recommendation: CapabilityRecommendation
+  isBusy: boolean
+  onOpen: (recommendation: CapabilityRecommendation) => void
+  onDismiss: (recommendation: CapabilityRecommendation) => void
+}) {
+  const target = readRecommendationTarget(recommendation)
+  const evidence = readRecommendationEvidence(recommendation)
+
+  return (
+    <article className="rounded-xl border border-slate-200 bg-white p-4 shadow-[0_4px_14px_rgba(15,23,42,0.04)]">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-xs font-black uppercase tracking-wide text-indigo-600">{labelForCategory(recommendation.category)}</p>
+          <h3 className="mt-1 text-base font-black text-slate-950">{recommendation.title}</h3>
+        </div>
+        <span className="rounded-md bg-indigo-50 px-2 py-1 text-xs font-black text-indigo-700">
+          {Math.round(recommendation.priority_score * 100)}%
+        </span>
+      </div>
+      {target ? (
+        <p className="mt-3 rounded-lg bg-slate-50 px-3 py-2 text-sm font-bold text-slate-800">
+          目标：{target}
+        </p>
+      ) : null}
+      <p className="mt-3 text-sm leading-6 text-slate-600">{recommendation.reason}</p>
+      <p className="mt-3 text-xs font-bold text-slate-500">
+        证据：{evidence}
+      </p>
+      <div className="mt-4 grid grid-cols-2 gap-2">
+        <Button onClick={() => onOpen(recommendation)} disabled={isBusy} className="px-3">
+          {isBusy ? <LoaderCircle className="size-4 animate-spin" /> : <ArrowRight className="size-4" />}
+          去学习
+        </Button>
+        <Button variant="ghost" onClick={() => onDismiss(recommendation)} disabled={isBusy} className="px-3">
+          稍后
+        </Button>
+      </div>
+    </article>
+  )
+}
+
 function DailyLessonRuntimeDialog({
   lesson,
   answer,
@@ -1456,7 +2004,8 @@ function DailyLessonRuntimeDialog({
   busyRecommendationId,
   onAnswerChange,
   onSubmit,
-  onOpenRecommendation,
+  boosterCount,
+  onOpenBoosterDrawer,
   onDismissRecommendation,
   onClose,
 }: {
@@ -1466,17 +2015,24 @@ function DailyLessonRuntimeDialog({
   dismissedRecommendationIds: Set<string>
   busyRecommendationId: string | null
   onAnswerChange: (value: string) => void
-  onSubmit: () => void
-  onOpenRecommendation: (recommendation: CapabilityRecommendation) => void
+  onSubmit: (answer: string) => void
+  boosterCount: number
+  onOpenBoosterDrawer: () => void
   onDismissRecommendation: (recommendation: CapabilityRecommendation) => void
   onClose: () => void
 }) {
   const titleId = useId()
+  const [draftAnswer, setDraftAnswer] = useState(answer)
   const { containerRef, handleKeyDown } = useFocusTrap<HTMLElement>({
     isActive: Boolean(lesson),
     onEscape: onClose,
     isEscapeEnabled: !isSubmitting,
   })
+
+  const handleDraftChange = (value: string) => {
+    setDraftAnswer(value)
+    onAnswerChange(value)
+  }
 
   if (!lesson) return null
   const prompt = lesson.prompt ?? readPrompt(lesson.initial_payload) ?? '完成这道学习任务。'
@@ -1485,7 +2041,7 @@ function DailyLessonRuntimeDialog({
   const recommendations = (lesson.next_capability_recommendations ?? [])
     .filter((item) => !dismissedRecommendationIds.has(item.recommendation_id))
   const statusLabel = isCompleted ? '已完成' : '待作答'
-  const canSubmit = Boolean(answer.trim()) && !isSubmitting
+  const canSubmit = Boolean(draftAnswer.trim()) && !isSubmitting
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 px-3 py-4 motion-reduce:transition-none sm:px-4 sm:py-6">
@@ -1527,10 +2083,10 @@ function DailyLessonRuntimeDialog({
                     <button
                       key={option}
                       type="button"
-                      onClick={() => onAnswerChange(option)}
-                      aria-pressed={answer === option}
+                      onClick={() => handleDraftChange(option)}
+                      aria-pressed={draftAnswer === option}
                       className={`rounded-xl border px-4 py-3 text-left text-sm font-bold transition-[background-color,border-color,box-shadow,transform,color] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-200 ${
-                        answer === option
+                        draftAnswer === option
                           ? 'border-indigo-500 bg-indigo-50 text-indigo-700 shadow-sm'
                           : 'border-slate-200 text-slate-700 hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-sm'
                       }`}
@@ -1544,8 +2100,8 @@ function DailyLessonRuntimeDialog({
                 name="daily_lesson_answer"
                 autoComplete="off"
                 aria-label="AI 每日题答案"
-                value={answer}
-                onChange={(event) => onAnswerChange(event.target.value)}
+                value={draftAnswer}
+                onChange={(event) => handleDraftChange(event.target.value)}
                 className="min-h-32 w-full resize-y rounded-xl border border-slate-200 px-4 py-3 text-sm leading-6 text-slate-900 transition-colors focus-visible:border-indigo-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-100"
                 placeholder="输入你的答案…"
               />
@@ -1556,17 +2112,30 @@ function DailyLessonRuntimeDialog({
                 {readLearningFeedback(lesson.feedback) ?? '已经记录本次练习，接下来可以按推荐继续巩固。'}
               </StatusBanner>
               {recommendations.length ? (
-                <div className="space-y-3">
-                  <p className="text-sm font-black text-slate-950">接下来适合你的学习入口</p>
-                  {recommendations.map((recommendation) => (
-                    <CapabilityRecommendationCard
-                      key={recommendation.recommendation_id}
-                      recommendation={recommendation}
-                      isBusy={busyRecommendationId === recommendation.recommendation_id}
-                      onOpen={onOpenRecommendation}
-                      onDismiss={onDismissRecommendation}
-                    />
-                  ))}
+                <div className="rounded-xl border border-indigo-100 bg-indigo-50/70 p-4">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <p className="text-sm font-black text-indigo-950">发现 {boosterCount} 个能力加练</p>
+                      <p className="mt-1 text-sm leading-6 text-indigo-800">这些入口已放到右侧抽屉，主线任务和加练分开处理。</p>
+                    </div>
+                    <Button onClick={onOpenBoosterDrawer}>
+                      <Sparkles className="size-4" />
+                      打开能力加练
+                    </Button>
+                  </div>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {recommendations.slice(0, 3).map((recommendation) => (
+                      <button
+                        key={recommendation.recommendation_id}
+                        type="button"
+                        onClick={() => onDismissRecommendation(recommendation)}
+                        disabled={busyRecommendationId === recommendation.recommendation_id}
+                        className="rounded-md bg-white px-2.5 py-1.5 text-xs font-bold text-indigo-700 shadow-sm transition hover:bg-indigo-100 disabled:opacity-60"
+                      >
+                        {recommendation.title} · 稍后
+                      </button>
+                    ))}
+                  </div>
                 </div>
               ) : null}
             </div>
@@ -1578,7 +2147,7 @@ function DailyLessonRuntimeDialog({
             {isCompleted ? '本次练习已写入学习记录。' : '提交后会生成反馈、掌握度和下一步推荐。'}
           </p>
           {!isCompleted ? (
-            <Button onClick={onSubmit} disabled={!canSubmit} className="w-full sm:w-auto">
+            <Button onClick={() => onSubmit(draftAnswer)} disabled={!canSubmit} className="w-full sm:w-auto">
               {isSubmitting ? <LoaderCircle className="size-4 animate-spin" /> : <Send className="size-4" />}
               {isSubmitting ? '提交中…' : '提交答案'}
             </Button>
@@ -1640,54 +2209,4 @@ function readInputMaterials(payload?: Record<string, unknown> | null): Array<Rec
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value)
-}
-
-function ExerciseWorkspace({
-  overview,
-  isStartingExercise,
-  onStartExercise,
-  onStartSpelling,
-}: {
-  overview: KnowledgeBaseOverview
-  isStartingExercise: boolean
-  onStartExercise: () => void
-  onStartSpelling: () => void
-}) {
-  return (
-    <section className="mt-6 space-y-5">
-      <ReasonCard
-        title={`${overview.current_unit.title} 练习任务`}
-        reason="练习会使用本单元知识点生成混合题型，答题结果会写入教材掌握度、错因和下次复习信号。"
-        evidence={[
-          `当前单元：${overview.current_unit.title} ${overview.current_unit.subtitle}`,
-          `知识点数量：${overview.knowledge_points.length}`,
-          `推荐依据：${overview.recommendation_reason}`,
-        ]}
-        outcome="完成后更新知识点状态、词汇复习计划和学习记录。"
-        action={(
-          <div className="flex flex-wrap gap-2">
-            <Button onClick={onStartExercise} disabled={isStartingExercise}>
-              {isStartingExercise ? '正在准备…' : '开始教材练习'}
-            </Button>
-            <Button variant="secondary" onClick={onStartSpelling}>练习本单元拼写</Button>
-          </div>
-        )}
-      />
-      <div className="grid gap-3 sm:grid-cols-2">
-        {overview.daily_lesson.parts.map((part) => (
-          <article key={part.id} className="rounded-2xl border border-slate-200 bg-white p-5">
-            <div className="flex items-center gap-3">
-              <div className="flex size-10 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
-                <BookCheck className="size-5" />
-              </div>
-              <div>
-                <h3 className="font-black text-slate-950">{part.title}</h3>
-                <p className="mt-1 text-xs font-semibold text-slate-500">预计 {part.estimated_minutes} 分钟</p>
-              </div>
-            </div>
-          </article>
-        ))}
-      </div>
-    </section>
-  )
 }

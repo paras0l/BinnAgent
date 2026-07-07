@@ -160,7 +160,12 @@ class LearningOrchestrator:
         if graph_state.get("answer_required"):
             snapshot_state = _json_safe(graph_state)
             checkpoint_key = f"{episode.id}:{graph_state.get('current_task_id') or task_spec.task_id}"
-            checkpoint = await GraphCheckpointStore(self.db).create_waiting_checkpoint(
+            checkpoint_store = GraphCheckpointStore(self.db)
+            await checkpoint_store.abandon_waiting_checkpoints_for_learner(
+                learner_id,
+                except_episode_id=episode.id,
+            )
+            checkpoint = await checkpoint_store.create_waiting_checkpoint(
                 learner_id=learner_id,
                 episode_id=episode.id,
                 thread_id=thread_id,
@@ -265,8 +270,27 @@ class LearningOrchestrator:
     ) -> dict[str, Any]:
         episode = await get_episode_for_learner(self.db, learner_id, episode_id)
 
-        checkpoints = await GraphCheckpointStore(self.db).list_checkpoints_for_episode(episode.id)
+        checkpoint_store = GraphCheckpointStore(self.db)
+        checkpoints = await checkpoint_store.list_checkpoints_for_episode(episode.id)
         checkpoint = checkpoints[0] if checkpoints else None
+        if checkpoint is not None and checkpoint.status == "waiting_user" and checkpoint.created_at:
+            has_newer_checkpoint = await checkpoint_store.has_newer_checkpoint_for_learner(
+                learner_id,
+                created_after=checkpoint.created_at,
+                except_checkpoint_id=checkpoint.id,
+            )
+            if has_newer_checkpoint:
+                checkpoint = await checkpoint_store.mark_abandoned(
+                    checkpoint.id,
+                    "superseded_by_newer_daily_lesson",
+                )
+                if episode.status == "waiting_user":
+                    episode.status = "abandoned"
+                    snapshot = dict(episode.context_snapshot or {})
+                    snapshot["checkpoint_status"] = "abandoned"
+                    snapshot["abandoned_reason"] = "superseded_by_newer_daily_lesson"
+                    episode.context_snapshot = snapshot
+                    await self.db.flush()
         event_count_result = await self.db.execute(
             select(func.count()).select_from(LearningEvent).where(LearningEvent.episode_id == episode.id)
         )
@@ -611,6 +635,8 @@ class LearningOrchestrator:
             target_id=target_id,
             payload={"task_id": task_spec.task_id},
         )
+        await self.db.flush()
+        await self.db.refresh(episode)
         trace = EpisodeTraceView(
             episode=episode_to_view(episode),
             events=[event_to_view(event) for event in runtime_events],

@@ -151,7 +151,16 @@ async def test_start_daily_lesson_selects_task_and_creates_episode():
     learner_id = uuid.uuid4()
     node = _node()
     question = _question(node)
-    db.execute = AsyncMock(side_effect=[_many([]), _many([]), _one(node), _one(question), _one(None)])
+    db.execute = AsyncMock(
+        side_effect=[
+            _many([]),
+            _many([]),
+            _one(node),
+            _one(question),
+            _many([]),
+            _one(None),
+        ]
+    )
 
     plan = await LearningOrchestrator(db).build_learning_plan(
         LearningPlanRequest(
@@ -338,6 +347,7 @@ async def test_get_daily_lesson_status_returns_waiting_checkpoint():
         side_effect=[
             _one(episode),
             _many([checkpoint]),
+            _one(None),
             _count(3),
             _count(1),
         ]
@@ -352,3 +362,43 @@ async def test_get_daily_lesson_status_returns_waiting_checkpoint():
     assert result["checkpoint"]["checkpoint_id"] == str(checkpoint.id)
     assert result["checkpoint"]["status"] == "waiting_user"
     assert result["trace_summary"]["event_count"] == 3
+
+
+@pytest.mark.asyncio
+async def test_get_daily_lesson_status_abandons_stale_waiting_checkpoint():
+    db = _db()
+    learner_id = uuid.uuid4()
+    node = _node()
+    question = _question(node)
+    episode = AgentEpisode(
+        learner_id=learner_id,
+        source="recommendation",
+        entrypoint="daily_lesson.start",
+        status="waiting_user",
+        task_spec={},
+        context_snapshot={},
+        tool_call_ids=[],
+        started_at=datetime.now(timezone.utc),
+    )
+    episode.id = uuid.uuid4()
+    checkpoint = _checkpoint(learner_id, episode.id, question)
+    db.execute = AsyncMock(
+        side_effect=[
+            _one(episode),
+            _many([checkpoint]),
+            _one(uuid.uuid4()),
+            _one(checkpoint),
+            _count(0),
+            _count(0),
+        ]
+    )
+
+    result = await LearningOrchestrator(db).get_daily_lesson_status(
+        learner_id=learner_id,
+        episode_id=episode.id,
+    )
+
+    assert result["episode_status"] == "abandoned"
+    assert result["checkpoint"]["status"] == "abandoned"
+    assert result["checkpoint"]["answer_required"] is False
+    assert checkpoint.consumed_at is not None

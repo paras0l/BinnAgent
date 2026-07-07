@@ -126,7 +126,7 @@ export function LessonSessionDialog({ session, onClose, onAttempt, onComplete }:
         <div className="mt-5 flex justify-end">
           <button type="button" disabled={isBusy} onClick={() => void handleFinish()} className={`inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-extrabold text-white transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-60 ${allCompleted ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-slate-700 hover:bg-slate-800'}`}>
             {isCompleting ? <LoaderCircle className="size-4 animate-spin" /> : null}
-            {allCompleted ? '完成并进入下一单元' : '稍后继续'}
+            {allCompleted ? '完成导学' : '稍后继续'}
           </button>
         </div>
       </section>

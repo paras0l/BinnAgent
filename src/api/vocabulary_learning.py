@@ -336,11 +336,13 @@ async def start_practice_session(
         )
         if body.mode == "new":
             query = query.where(VocabularyItem.review_count == 0)
-        elif body.mode in {"review", "spelling"}:
+        elif body.mode == "review":
             query = query.where(
                 VocabularyItem.status != "mastered",
                 VocabularyItem.next_review_at <= now,
             )
+        elif body.mode == "spelling":
+            query = query.where(VocabularyItem.status != "mastered")
         if excluded_ids:
             query = query.where(VocabularyItem.id.not_in(excluded_ids))
         source_item_result = await db.execute(
@@ -351,12 +353,38 @@ async def start_practice_session(
             ).limit(body.limit)
         )
         items = list(source_item_result.scalars().unique().all())
+        if not items and body.mode == "new":
+            fallback_query = (
+                select(VocabularyItem)
+                .join(
+                    VocabularyItemSource,
+                    VocabularyItemSource.vocabulary_item_id == VocabularyItem.id,
+                )
+                .where(
+                    VocabularyItem.learner_id == learner_id,
+                    VocabularyItemSource.curriculum_node_id == body.curriculum_node_id,
+                    VocabularyItemSource.active.is_(True),
+                    VocabularyItem.status != "mastered",
+                )
+            )
+            if excluded_ids:
+                fallback_query = fallback_query.where(VocabularyItem.id.not_in(excluded_ids))
+            fallback_result = await db.execute(
+                fallback_query.order_by(
+                    VocabularyItem.review_count.asc(),
+                    VocabularyItem.next_review_at.asc().nullsfirst(),
+                    VocabularyItem.created_at.asc(),
+                ).limit(body.limit)
+            )
+            items = list(fallback_result.scalars().unique().all())
     else:
         conditions = [VocabularyItem.learner_id == learner_id]
         if body.mode == "new":
             conditions.append(VocabularyItem.review_count == 0)
-        else:
+        elif body.mode == "review":
             conditions.extend([VocabularyItem.status != "mastered", VocabularyItem.next_review_at <= now])
+        else:
+            conditions.append(VocabularyItem.status != "mastered")
         if excluded_ids:
             conditions.append(VocabularyItem.id.not_in(excluded_ids))
         item_result = await db.execute(

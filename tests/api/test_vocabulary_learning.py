@@ -5,9 +5,17 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 from src.api import deps
-from src.api.vocabulary_learning import StartPracticeRequest, _first_text, _part_of_speech
+from src.api import vocabulary_learning as vocabulary_learning_api
+from src.api.vocabulary_learning import (
+    StartPracticeRequest,
+    start_practice_session,
+    _first_text,
+    _part_of_speech,
+)
 from src.main import app
+from src.models.knowledge import CurriculumNode
 from src.models.vocabulary import VocabularyItem, VocabularyItemSource
+from src.vocabulary.learning import EnrollmentResult
 
 
 def _one(value):
@@ -25,6 +33,15 @@ def _scalar(value):
 def _rows(values):
     result = MagicMock()
     result.all.return_value = values
+    return result
+
+
+def _items(values):
+    scalar_result = MagicMock()
+    scalar_result.all.return_value = values
+    scalar_result.unique.return_value.all.return_value = values
+    result = MagicMock()
+    result.scalars.return_value = scalar_result
     return result
 
 
@@ -91,3 +108,60 @@ def test_practice_limit_supports_source_bounded_custom_value() -> None:
     assert StartPracticeRequest(mode="spelling", limit=51).limit == 51
     with pytest.raises(ValueError):
         StartPracticeRequest(mode="spelling", limit=501)
+
+
+@pytest.mark.asyncio
+async def test_unit_new_session_falls_back_to_learning_words(monkeypatch) -> None:
+    learner_id = uuid.uuid4()
+    node_id = uuid.uuid4()
+    node = CurriculumNode(
+        source_id=uuid.uuid4(),
+        node_type="unit",
+        title="Starter Unit 1",
+        ordinal=1,
+    )
+    node.id = node_id
+    item = VocabularyItem(
+        learner_id=learner_id,
+        word="good",
+        canonical_key="good",
+        entry_kind="word",
+        status="learning",
+        confidence=0.18,
+        review_count=1,
+        next_review_at=datetime.now(timezone.utc),
+    )
+    item.id = uuid.uuid4()
+    db = AsyncMock()
+    added: list[object] = []
+    db.add = MagicMock(side_effect=added.append)
+
+    async def flush() -> None:
+        for value in added:
+            if getattr(value, "id", None) is None:
+                value.id = uuid.uuid4()
+
+    db.flush = AsyncMock(side_effect=flush)
+    db.execute = AsyncMock(
+        side_effect=[
+            _one(learner_id),
+            _one(node),
+            _items([]),
+            _items([item]),
+        ]
+    )
+    monkeypatch.setattr(vocabulary_learning_api, "excluded_item_ids", AsyncMock(return_value=[]))
+    monkeypatch.setattr(
+        vocabulary_learning_api,
+        "enroll_unit_vocabulary",
+        AsyncMock(return_value=EnrollmentResult(total=1, newly_added=0, source_linked=0, already_known=1)),
+    )
+
+    result = await start_practice_session(
+        learner_id,
+        StartPracticeRequest(mode="new", prompt_mode="meaning", curriculum_node_id=node_id),
+        db,
+    )
+
+    assert result.total == 1
+    assert result.mode == "new"

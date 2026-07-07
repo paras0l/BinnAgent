@@ -45,6 +45,46 @@ class GraphCheckpointStore:
             checkpoint.id = uuid.uuid4()
         return checkpoint
 
+    async def abandon_waiting_checkpoints_for_learner(
+        self,
+        learner_id: str | uuid.UUID,
+        *,
+        except_episode_id: str | uuid.UUID | None = None,
+        reason: str = "superseded_by_new_daily_lesson",
+    ) -> list[LearningGraphCheckpoint]:
+        query = select(LearningGraphCheckpoint).where(
+            LearningGraphCheckpoint.learner_id == _as_uuid(learner_id),
+            LearningGraphCheckpoint.status == "waiting_user",
+        )
+        if except_episode_id is not None:
+            query = query.where(LearningGraphCheckpoint.episode_id != _as_uuid(except_episode_id))
+        result = await self.db.execute(query.order_by(LearningGraphCheckpoint.created_at.desc()))
+        checkpoints = list(result.scalars().all())
+        for checkpoint in checkpoints:
+            _abandon_checkpoint(checkpoint, reason)
+        if checkpoints:
+            await self.db.flush()
+        return checkpoints
+
+    async def has_newer_checkpoint_for_learner(
+        self,
+        learner_id: str | uuid.UUID,
+        *,
+        created_after: datetime,
+        except_checkpoint_id: str | uuid.UUID,
+    ) -> bool:
+        result = await self.db.execute(
+            select(LearningGraphCheckpoint.id)
+            .where(
+                LearningGraphCheckpoint.learner_id == _as_uuid(learner_id),
+                LearningGraphCheckpoint.id != _as_uuid(except_checkpoint_id),
+                LearningGraphCheckpoint.created_at > created_after,
+            )
+            .order_by(LearningGraphCheckpoint.created_at.desc())
+            .limit(1)
+        )
+        return result.scalar_one_or_none() is not None
+
     async def get_active_checkpoint(
         self,
         episode_id: str | uuid.UUID,
@@ -79,6 +119,16 @@ class GraphCheckpointStore:
         checkpoint = await self._get_checkpoint(checkpoint_id)
         checkpoint.status = "completed"
         checkpoint.consumed_at = checkpoint.consumed_at or datetime.now(timezone.utc)
+        await self.db.flush()
+        return checkpoint
+
+    async def mark_abandoned(
+        self,
+        checkpoint_id: str | uuid.UUID,
+        reason: str,
+    ) -> LearningGraphCheckpoint:
+        checkpoint = await self._get_checkpoint(checkpoint_id)
+        _abandon_checkpoint(checkpoint, reason)
         await self.db.flush()
         return checkpoint
 
@@ -126,3 +176,11 @@ def _as_uuid(value: str | uuid.UUID) -> uuid.UUID:
     if isinstance(value, uuid.UUID):
         return value
     return uuid.UUID(str(value))
+
+
+def _abandon_checkpoint(checkpoint: LearningGraphCheckpoint, reason: str) -> None:
+    snapshot = dict(checkpoint.state_snapshot or {})
+    snapshot["abandoned_reason"] = reason
+    checkpoint.state_snapshot = snapshot
+    checkpoint.status = "abandoned"
+    checkpoint.consumed_at = checkpoint.consumed_at or datetime.now(timezone.utc)
