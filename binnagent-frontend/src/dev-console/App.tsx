@@ -1,6 +1,7 @@
 import { lazy, Suspense, useCallback, useEffect, useState } from 'react'
 import {
   Activity,
+  BarChart3,
   BookOpenCheck,
   BrainCircuit,
   Database,
@@ -8,6 +9,7 @@ import {
   FileJson,
   FlaskConical,
   KeyRound,
+  Layers3,
   LockKeyhole,
   RefreshCw,
   Route,
@@ -40,6 +42,14 @@ const EpisodeDebugPage = lazy(() =>
 
 const DEV_LEARNER_ID_KEY = 'BINNAGENT_DEV_LEARNER_ID'
 const DEV_LEARNER_NAME_KEY = 'BINNAGENT_DEV_LEARNER_NAME'
+const DEBUG_INPUT_CLASS =
+  'w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 transition-colors placeholder:text-slate-400 focus-visible:border-cyan-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300'
+const DEBUG_MONO_INPUT_CLASS = `${DEBUG_INPUT_CLASS} font-mono`
+const DEBUG_TEXTAREA_CLASS =
+  'w-full rounded-lg border border-slate-200 p-3 text-sm text-slate-900 transition-colors placeholder:text-slate-400 focus-visible:border-cyan-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300'
+const DEBUG_MONO_TEXTAREA_CLASS = `${DEBUG_TEXTAREA_CLASS} font-mono`
+const DEBUG_DARK_INPUT_CLASS =
+  'rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white transition-colors placeholder:text-slate-500 focus-visible:border-cyan-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300'
 
 interface ToolSpec {
   name: string
@@ -331,13 +341,18 @@ function TokenSetup({ onSaved }: { onSaved: () => void }) {
             <p className="mt-1 text-sm text-slate-400">需要 DEBUG_CONSOLE_TOKEN 才会请求内部 API。</p>
           </div>
         </div>
-        <input
-          value={token}
-          onChange={(event) => setToken(event.target.value)}
-          placeholder="例如 dev"
-          className="mt-5 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none focus:border-cyan-300"
-        />
-        <Button className="mt-4 w-full justify-center" disabled={!token.trim()}>
+        <label className="mt-5 block">
+          <span className="text-xs font-bold uppercase text-slate-400">debug token</span>
+          <input
+            name="debug_console_token"
+            autoComplete="off"
+            value={token}
+            onChange={(event) => setToken(event.target.value)}
+            placeholder="例如 dev…"
+            className={`mt-1 w-full ${DEBUG_DARK_INPUT_CLASS}`}
+          />
+        </label>
+        <Button type="submit" className="mt-4 w-full justify-center" disabled={!token.trim()}>
           保存并进入
         </Button>
       </form>
@@ -364,16 +379,22 @@ function ContextBar({
     <div className="mt-4 grid gap-3 rounded-lg border border-slate-800 bg-slate-900/70 p-3 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
       <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_160px_auto_auto]">
         <input
+          name="dev_learner_id"
+          autoComplete="off"
+          aria-label="learner_id for Memory Debug"
           value={learnerIdDraft}
           onChange={(event) => setLearnerIdDraft(event.target.value)}
-          placeholder="learner_id for Memory Debug"
-          className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none focus:border-cyan-300"
+          placeholder="learner_id for Memory Debug…"
+          className={DEBUG_DARK_INPUT_CLASS}
         />
         <input
+          name="dev_learner_name"
+          autoComplete="off"
+          aria-label="learner nickname"
           value={learnerNameDraft}
           onChange={(event) => setLearnerNameDraft(event.target.value)}
-          placeholder="nickname"
-          className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none focus:border-cyan-300"
+          placeholder="nickname…"
+          className={DEBUG_DARK_INPUT_CLASS}
         />
         <Button
           type="button"
@@ -391,10 +412,13 @@ function ContextBar({
       </div>
       <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
         <input
+          name="dev_episode_id"
+          autoComplete="off"
+          aria-label="episode_id for Episode or Verification"
           value={episodeIdDraft}
           onChange={(event) => setEpisodeIdDraft(event.target.value)}
-          placeholder="episode_id for Episode / Verification"
-          className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none focus:border-cyan-300"
+          placeholder="episode_id for Episode / Verification…"
+          className={DEBUG_DARK_INPUT_CLASS}
         />
         <Button
           type="button"
@@ -607,40 +631,70 @@ function RagDebugPage({ learner }: { learner: Learner | null }) {
   return (
     <section className="space-y-4">
       <SurfaceCard>
-        <div className="flex items-center gap-2">
-          <Database className="size-5 text-cyan-500" />
-          <h2 className="text-lg font-black text-slate-950">RAG Debug</h2>
-        </div>
-        <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-          <input
-            value={learnerId}
-            onChange={(event) => setLearnerId(event.target.value)}
-            placeholder="learner_id"
-            className="rounded-lg border border-slate-200 px-3 py-2 font-mono text-sm text-slate-900 outline-none focus:border-cyan-400"
-          />
-          <input
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="query"
-            className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 outline-none focus:border-cyan-400"
-          />
-          <input
-            value={sourceId}
-            onChange={(event) => setSourceId(event.target.value)}
-            placeholder="source_id optional"
-            className="rounded-lg border border-slate-200 px-3 py-2 font-mono text-sm text-slate-900 outline-none focus:border-cyan-400"
-          />
-          <input
-            value={nodeId}
-            onChange={(event) => setNodeId(event.target.value)}
-            placeholder="node_id optional"
-            className="rounded-lg border border-slate-200 px-3 py-2 font-mono text-sm text-slate-900 outline-none focus:border-cyan-400"
-          />
-        </div>
-        <Button className="mt-4" onClick={() => void search()} disabled={!query.trim() || isLoading}>
-          <Search className="size-4" />
-          {isLoading ? 'Searching...' : 'Search'}
-        </Button>
+        <form
+          onSubmit={(event) => {
+            event.preventDefault()
+            void search()
+          }}
+        >
+          <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
+            <div className="flex items-start gap-3">
+              <Database className="mt-1 size-5 text-cyan-500" />
+              <div>
+                <h2 className="text-lg font-black text-slate-950">RAG Debug</h2>
+                <p className="mt-1 text-sm leading-6 text-slate-500">
+                  Inspect retrieval quality before opening raw chunk JSON.
+                </p>
+              </div>
+            </div>
+            <Button type="submit" disabled={!query.trim() || isLoading}>
+              <Search className="size-4" />
+              {isLoading ? 'Searching…' : 'Search'}
+            </Button>
+          </div>
+          <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+            <DebugField label="learner_id">
+              <input
+                name="rag_learner_id"
+                autoComplete="off"
+                value={learnerId}
+                onChange={(event) => setLearnerId(event.target.value)}
+                placeholder="learner id…"
+                className={DEBUG_MONO_INPUT_CLASS}
+              />
+            </DebugField>
+            <DebugField label="query">
+              <input
+                name="rag_query"
+                autoComplete="off"
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="grammar evidence query…"
+                className={DEBUG_INPUT_CLASS}
+              />
+            </DebugField>
+            <DebugField label="source_id">
+              <input
+                name="rag_source_id"
+                autoComplete="off"
+                value={sourceId}
+                onChange={(event) => setSourceId(event.target.value)}
+                placeholder="optional source id…"
+                className={DEBUG_MONO_INPUT_CLASS}
+              />
+            </DebugField>
+            <DebugField label="node_id">
+              <input
+                name="rag_node_id"
+                autoComplete="off"
+                value={nodeId}
+                onChange={(event) => setNodeId(event.target.value)}
+                placeholder="optional curriculum node id…"
+                className={DEBUG_MONO_INPUT_CLASS}
+              />
+            </DebugField>
+          </div>
+        </form>
         {error ? <StatusBanner tone="warning" title="Request failed">{error}</StatusBanner> : null}
       </SurfaceCard>
 
@@ -654,6 +708,7 @@ function RagDebugPage({ learner }: { learner: Learner | null }) {
               <MetricBlock label="chunk version" value={result.chunk_version ?? '-'} />
             </div>
           </SurfaceCard>
+          <RagDebugInsights result={result} />
           <section className="grid gap-4 xl:grid-cols-2">
             {result.results.map((chunk) => (
               <SurfaceCard key={chunk.chunk_id}>
@@ -676,6 +731,143 @@ function RagDebugPage({ learner }: { learner: Learner | null }) {
           <RawJsonPanel title="Raw RAG JSON" data={result} />
         </>
       ) : null}
+    </section>
+  )
+}
+
+function RagDebugInsights({ result }: { result: RagDebugResponse }) {
+  const topChunks = result.results.slice(0, 8)
+  const sourceRows = aggregateRagSources(result.results)
+  const modeRows = aggregateRagModes(result.results, result.retrieval_mode)
+  const scoreBuckets = bucketRagScores(result.results)
+  const scoredResults = result.results.filter((chunk) => typeof chunk.score === 'number')
+  const maxScore = Math.max(...scoredResults.map((chunk) => chunk.score ?? 0), 1)
+  const averageScore = scoredResults.length
+    ? scoredResults.reduce((sum, chunk) => sum + (chunk.score ?? 0), 0) / scoredResults.length
+    : null
+
+  return (
+    <SurfaceCard>
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-2">
+          <BarChart3 className="size-5 text-cyan-500" />
+          <h3 className="text-base font-black text-slate-950">Retrieval Overview</h3>
+        </div>
+        <p className="font-mono text-xs font-bold text-slate-500">
+          avg score {averageScore === null ? '-' : formatScore(averageScore)}
+        </p>
+      </div>
+
+      <div className="mt-4 grid gap-4 2xl:grid-cols-[minmax(0,1.1fr)_minmax(320px,0.9fr)]">
+        <div className="space-y-4">
+          <section aria-labelledby="rag-top-k-heading">
+            <div className="flex items-center gap-2">
+              <Layers3 className="size-4 text-slate-500" />
+              <h4 id="rag-top-k-heading" className="text-sm font-black text-slate-950">Top-K Score Bars</h4>
+            </div>
+            <div className="mt-3 space-y-2">
+              {topChunks.map((chunk, index) => (
+                <RagScoreRow
+                  key={chunk.chunk_id}
+                  index={index}
+                  chunk={chunk}
+                  maxScore={maxScore}
+                  fallbackMode={result.retrieval_mode}
+                />
+              ))}
+              {topChunks.length === 0 ? <p className="text-sm text-slate-500">No retrieved chunks.</p> : null}
+            </div>
+          </section>
+
+          <section aria-labelledby="rag-score-buckets-heading">
+            <h4 id="rag-score-buckets-heading" className="text-sm font-black text-slate-950">Score Distribution</h4>
+            <div className="mt-3 grid gap-2 sm:grid-cols-3">
+              {scoreBuckets.map((bucket) => (
+                <div key={bucket.label} className="rounded-lg border border-slate-100 bg-slate-50 p-3">
+                  <p className="text-xs font-bold uppercase text-slate-500">{bucket.label}</p>
+                  <div className="mt-2 h-2 overflow-hidden rounded-full bg-white">
+                    <div
+                      className={bucket.className}
+                      style={{ width: `${clampPercent(result.results.length ? (bucket.count / result.results.length) * 100 : 0)}%` }}
+                    />
+                  </div>
+                  <p className="mt-2 font-mono text-sm font-black text-slate-950">{bucket.count}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+        </div>
+
+        <div className="space-y-4">
+          <RagDistributionPanel title="Chunk Source Distribution" rows={sourceRows} emptyLabel="No sources" />
+          <RagDistributionPanel title="Retrieval Mode Mix" rows={modeRows} emptyLabel="No modes" />
+        </div>
+      </div>
+    </SurfaceCard>
+  )
+}
+
+function RagScoreRow({
+  index,
+  chunk,
+  maxScore,
+  fallbackMode,
+}: {
+  index: number
+  chunk: RagDebugResult
+  maxScore: number
+  fallbackMode: string
+}) {
+  const score = chunk.score ?? 0
+  const width = maxScore > 0 ? (score / maxScore) * 100 : 0
+  return (
+    <div className="grid gap-2 rounded-lg border border-slate-100 bg-slate-50 p-3 sm:grid-cols-[72px_minmax(0,1fr)_96px] sm:items-center">
+      <div className="font-mono text-xs font-black text-slate-500">#{index + 1}</div>
+      <div className="min-w-0">
+        <div className="h-2 overflow-hidden rounded-full bg-white">
+          <div
+            className="h-full rounded-full bg-cyan-500 transition-[width] duration-300 ease-out"
+            style={{ width: `${clampPercent(width)}%` }}
+          />
+        </div>
+        <p className="mt-2 truncate font-mono text-xs font-bold text-slate-500">
+          {formatShortId(chunk.chunk_id)} · {chunk.retrieval_mode ?? fallbackMode} · page {chunk.page_number ?? '-'}
+        </p>
+      </div>
+      <p className="font-mono text-sm font-black text-slate-950">{formatScore(chunk.score)}</p>
+    </div>
+  )
+}
+
+function RagDistributionPanel({
+  title,
+  rows,
+  emptyLabel,
+}: {
+  title: string
+  rows: Array<{ label: string; count: number; percent: number }>
+  emptyLabel: string
+}) {
+  return (
+    <section aria-label={title}>
+      <h4 className="text-sm font-black text-slate-950">{title}</h4>
+      <div className="mt-3 space-y-2">
+        {rows.map((row) => (
+          <div key={row.label} className="rounded-lg border border-slate-100 bg-slate-50 p-3">
+            <div className="flex items-center justify-between gap-3">
+              <p className="min-w-0 truncate font-mono text-xs font-black text-slate-700">{row.label}</p>
+              <p className="font-mono text-xs font-bold text-slate-500">{row.count}</p>
+            </div>
+            <div className="mt-2 h-2 overflow-hidden rounded-full bg-white">
+              <div
+                className="h-full rounded-full bg-emerald-500 transition-[width] duration-300 ease-out"
+                style={{ width: `${clampPercent(row.percent)}%` }}
+              />
+            </div>
+          </div>
+        ))}
+        {rows.length === 0 ? <p className="text-sm text-slate-500">{emptyLabel}</p> : null}
+      </div>
     </section>
   )
 }
@@ -713,10 +905,13 @@ function EvidenceDebugPage() {
       result={result}
     >
       <textarea
+        name="evidence_refs_json"
+        autoComplete="off"
+        aria-label="Evidence refs JSON"
         value={refsText}
         onChange={(event) => setRefsText(event.target.value)}
         rows={8}
-        className="w-full rounded-lg border border-slate-200 p-3 font-mono text-sm text-slate-900 outline-none focus:border-cyan-400"
+        className={DEBUG_MONO_TEXTAREA_CLASS}
       />
     </DebugFormShell>
   )
@@ -756,15 +951,21 @@ function PromptDebugPage() {
       result={result}
     >
       <input
+        name="prompt_id"
+        autoComplete="off"
+        aria-label="Prompt ID"
         value={promptId}
         onChange={(event) => setPromptId(event.target.value)}
-        className="mb-3 w-full rounded-lg border border-slate-200 px-3 py-2 font-mono text-sm text-slate-900 outline-none focus:border-cyan-400"
+        className={`mb-3 ${DEBUG_MONO_INPUT_CLASS}`}
       />
       <textarea
+        name="prompt_variables_json"
+        autoComplete="off"
+        aria-label="Prompt variables JSON"
         value={variablesText}
         onChange={(event) => setVariablesText(event.target.value)}
         rows={8}
-        className="w-full rounded-lg border border-slate-200 p-3 font-mono text-sm text-slate-900 outline-none focus:border-cyan-400"
+        className={DEBUG_MONO_TEXTAREA_CLASS}
       />
     </DebugFormShell>
   )
@@ -807,10 +1008,12 @@ function VerificationReportPage({
       result={result}
     >
       <input
+        name="verification_episode_id"
+        autoComplete="off"
         value={draft}
         onChange={(event) => setDraft(event.target.value)}
-        placeholder="episode_id"
-        className="w-full rounded-lg border border-slate-200 px-3 py-2 font-mono text-sm text-slate-900 outline-none focus:border-cyan-400"
+        placeholder="episode_id…"
+        className={DEBUG_MONO_INPUT_CLASS}
       />
     </DebugFormShell>
   )
@@ -856,7 +1059,7 @@ function SimulationReportPage() {
   }, [loadSimulationState])
 
   if (isLoading && scenarios.length === 0 && !latestReport) {
-    return <LoadingState title="正在读取 Simulation Report" description="正在请求 simulation artifacts..." />
+    return <LoadingState title="正在读取 Simulation Report" description="正在请求 simulation artifacts…" />
   }
   if (error) {
     return (
@@ -964,6 +1167,61 @@ function RawJsonPanel({ title, data }: { title: string; data: unknown }) {
 function formatScore(score?: number) {
   if (typeof score !== 'number') return '-'
   return score.toFixed(3)
+}
+
+function DebugField({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <label className="min-w-0">
+      <span className="text-xs font-bold uppercase text-slate-500">{label}</span>
+      <span className="mt-1 block">{children}</span>
+    </label>
+  )
+}
+
+function aggregateRagSources(results: RagDebugResult[]) {
+  return aggregateRagRows(results.map((chunk) => chunk.source_id || 'unknown'))
+}
+
+function aggregateRagModes(results: RagDebugResult[], fallbackMode: string) {
+  return aggregateRagRows(results.map((chunk) => chunk.retrieval_mode || fallbackMode || 'unknown'))
+}
+
+function aggregateRagRows(values: string[]) {
+  const counts = new Map<string, number>()
+  values.forEach((value) => counts.set(value, (counts.get(value) ?? 0) + 1))
+  const total = values.length || 1
+  return Array.from(counts.entries())
+    .map(([label, count]) => ({ label, count, percent: (count / total) * 100 }))
+    .sort((first, second) => second.count - first.count || first.label.localeCompare(second.label))
+    .slice(0, 6)
+}
+
+function bucketRagScores(results: RagDebugResult[]) {
+  const buckets = [
+    { label: '>= 0.80', count: 0, className: 'h-full rounded-full bg-emerald-500 transition-[width] duration-300 ease-out' },
+    { label: '0.50-0.79', count: 0, className: 'h-full rounded-full bg-cyan-500 transition-[width] duration-300 ease-out' },
+    { label: '< 0.50 / n/a', count: 0, className: 'h-full rounded-full bg-amber-400 transition-[width] duration-300 ease-out' },
+  ]
+  results.forEach((chunk) => {
+    if (typeof chunk.score !== 'number' || chunk.score < 0.5) {
+      buckets[2].count += 1
+    } else if (chunk.score >= 0.8) {
+      buckets[0].count += 1
+    } else {
+      buckets[1].count += 1
+    }
+  })
+  return buckets
+}
+
+function clampPercent(value: number) {
+  if (!Number.isFinite(value) || value <= 0) return 0
+  return Math.min(100, Math.max(4, value))
+}
+
+function formatShortId(value: string) {
+  if (value.length <= 18) return value
+  return `${value.slice(0, 8)}…${value.slice(-6)}`
 }
 
 function DebugFormShell({

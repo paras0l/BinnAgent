@@ -9,7 +9,7 @@ import {
   RefreshCw,
   X,
 } from 'lucide-react'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useId, useMemo, useState } from 'react'
 import { useToast } from '@/hooks/useToast'
 import type { Learner } from '@/types'
 import { FeatureHero } from '@/components/layout/FeatureHero'
@@ -24,6 +24,7 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { FormField } from '@/components/ui/FormField'
 import { IconButton } from '@/components/ui/IconButton'
 import { SurfaceCard } from '@/components/ui/SurfaceCard'
+import { useFocusTrap } from '@/hooks/useFocusTrap'
 import {
   CORE_VOCABULARY_EXERCISE_TARGET,
   getExercisesForTarget,
@@ -107,6 +108,11 @@ export function VocabularyDetailPage({
     : localStorage.getItem(storageKey) ?? ''
   const [isCopied, setIsCopied] = useState(false)
   const [isImmersiveReading, setIsImmersiveReading] = useState(false)
+  const immersiveTitleId = useId()
+  const { containerRef: immersiveReaderRef, handleKeyDown: handleImmersiveReaderKeyDown } = useFocusTrap<HTMLDivElement>({
+    isActive: isImmersiveReading,
+    onEscape: () => setIsImmersiveReading(false),
+  })
   const [workspace, setWorkspace] = useState<VocabularyDetailWorkspace>('term')
   const [cardDetail, setCardDetail] = useState<PersonalCardDetail | null>(null)
   const activeMorphology = useMemo(
@@ -169,15 +175,6 @@ export function VocabularyDetailPage({
     window.addEventListener('message', handleReturnedHtml)
     return () => window.removeEventListener('message', handleReturnedHtml)
   }, [showToast, updateHtml])
-
-  useEffect(() => {
-    if (!isImmersiveReading) return
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setIsImmersiveReading(false)
-    }
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [isImmersiveReading])
 
   useEffect(() => {
     if (!learner || !activeTerm.trim()) {
@@ -620,11 +617,19 @@ export function VocabularyDetailPage({
         )}
 
         {isImmersiveReading && safeHtml && (
-          <div className="fixed inset-0 z-[80] flex flex-col bg-white">
+          <div
+            ref={immersiveReaderRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={immersiveTitleId}
+            tabIndex={-1}
+            onKeyDown={handleImmersiveReaderKeyDown}
+            className="fixed inset-0 z-[80] flex flex-col overscroll-contain bg-white focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-primary"
+          >
             <div className="shrink-0 border-b border-slate-200 bg-white px-4 py-3 shadow-sm sm:px-6">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-black text-slate-950">{activeTerm || '词汇详解'}</p>
+                  <p id={immersiveTitleId} className="truncate text-sm font-black text-slate-950">{activeTerm || '词汇详解'}</p>
                   <p className="text-xs text-slate-500">沉浸式阅读，按 Esc 退出</p>
                 </div>
                 <Button

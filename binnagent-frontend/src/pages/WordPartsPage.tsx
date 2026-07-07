@@ -216,9 +216,11 @@ export function WordPartsPage({ learner, onBack }: WordPartsPageProps) {
               <div className="relative w-full lg:max-w-sm">
                 <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
                 <input
+                  name="word_part_search"
+                  autoComplete="off"
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}
-                  className="w-full rounded-lg border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm outline-none transition-colors focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
+                  className="w-full rounded-lg border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm transition-colors focus-visible:border-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                   placeholder="搜索 re-、port、prediction…"
                 />
               </div>
@@ -243,6 +245,7 @@ export function WordPartsPage({ learner, onBack }: WordPartsPageProps) {
                 <button
                   key={item.id}
                   type="button"
+                  aria-pressed={selectedPart?.id === item.id}
                   onClick={() => setSelectedPartId(item.id)}
                   className={`rounded-xl border p-4 text-left transition-[border-color,box-shadow,background-color] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
                     selectedPart?.id === item.id
@@ -328,6 +331,7 @@ export function WordPartsPage({ learner, onBack }: WordPartsPageProps) {
                 <button
                   key={exercise.id}
                   type="button"
+                  aria-pressed={selectedExercise?.id === exercise.id}
                   onClick={() => {
                     setSelectedExerciseId(exercise.id)
                     setVisibleHintCount(1)
@@ -362,7 +366,12 @@ export function WordPartsPage({ learner, onBack }: WordPartsPageProps) {
                   >
                     <Lightbulb className="size-4" />显示提示
                   </Button>
-                  <Button variant="secondary" onClick={() => setIsAnswerVisible((value) => !value)}>
+                  <Button
+                    variant="secondary"
+                    aria-expanded={isAnswerVisible}
+                    aria-controls="word-part-answer-panel"
+                    onClick={() => setIsAnswerVisible((value) => !value)}
+                  >
                     <Eye className="size-4" />{isAnswerVisible ? '隐藏答案' : '显示答案'}
                   </Button>
                 </div>
@@ -383,6 +392,9 @@ export function WordPartsPage({ learner, onBack }: WordPartsPageProps) {
 
                   <div className="rounded-xl border border-indigo-100 bg-indigo-50/70 p-4">
                     <p className="text-sm font-black text-indigo-900">提示</p>
+                    <p className="mt-1 text-xs font-bold text-indigo-900/60" aria-live="polite">
+                      已显示 {visibleHintCount}/{selectedExercise.hints.length} 条提示
+                    </p>
                     <ol className="mt-3 space-y-2">
                       {selectedExercise.hints.slice(0, visibleHintCount).map((hint, index) => (
                         <li key={hint} className="text-sm font-semibold leading-6 text-indigo-900/80">
@@ -392,15 +404,11 @@ export function WordPartsPage({ learner, onBack }: WordPartsPageProps) {
                     </ol>
                   </div>
 
-                  {isAnswerVisible ? (
-                    <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
-                      <p className="text-sm font-black text-emerald-900">答案解释</p>
-                      <p className="mt-2 text-sm leading-7 text-emerald-900/80">{selectedExercise.explanation}</p>
-                      <p className="mt-3 rounded-lg bg-white/70 px-3 py-2 text-sm font-semibold text-emerald-900">
-                        {selectedExercise.example}
-                      </p>
-                    </div>
-                  ) : null}
+                  <AnswerRevealPanel
+                    open={isAnswerVisible}
+                    explanation={selectedExercise.explanation}
+                    example={selectedExercise.example}
+                  />
                 </div>
 
                 <div className="space-y-4">
@@ -546,6 +554,36 @@ function ExampleBreakdown({ word, parts, lines }: { word: string; parts: string[
         {lines.map((line) => (
           <p key={line} className="text-sm leading-6 text-slate-600">{line}</p>
         ))}
+      </div>
+    </div>
+  )
+}
+
+function AnswerRevealPanel({
+  open,
+  explanation,
+  example,
+}: {
+  open: boolean
+  explanation: string
+  example: string
+}) {
+  return (
+    <div
+      id="word-part-answer-panel"
+      aria-hidden={!open}
+      className={`grid transition-[grid-template-rows,opacity] duration-300 ease-out motion-reduce:transition-none ${
+        open ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+      }`}
+    >
+      <div className="overflow-hidden">
+        <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
+          <p className="text-sm font-black text-emerald-900">答案解释</p>
+          <p className="mt-2 text-sm leading-7 text-emerald-900/80">{explanation}</p>
+          <p className="mt-3 rounded-lg bg-white/70 px-3 py-2 text-sm font-semibold text-emerald-900">
+            {example}
+          </p>
+        </div>
       </div>
     </div>
   )

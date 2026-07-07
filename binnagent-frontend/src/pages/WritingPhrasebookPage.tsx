@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useId, useMemo, useState, type ReactNode } from 'react'
 import {
   Archive,
   BookMarked,
@@ -25,9 +25,12 @@ import { FeatureHero } from '@/components/layout/FeatureHero'
 import { PageShell } from '@/components/layout/PageShell'
 import { WorkspaceTabs, type WorkspaceTab } from '@/components/layout/WorkspaceTabs'
 import { Button } from '@/components/ui/Button'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { FilterChip } from '@/components/ui/FilterChip'
 import { IconButton } from '@/components/ui/IconButton'
 import { SurfaceCard } from '@/components/ui/SurfaceCard'
+import { useFocusTrap } from '@/hooks/useFocusTrap'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { useToast } from '@/hooks/useToast'
 import type { Learner } from '@/types'
 
@@ -212,6 +215,13 @@ const QUICK_FILTERS: Array<{ id: QuickFilter; label: string }> = [
   { id: 'archived', label: '已归档' },
 ]
 
+const WRITING_POSITIONS = [
+  { id: 'opening', label: '开头', hint: '引出话题、提出背景、呈现争议' },
+  { id: 'body', label: '主体', hint: '递进、转折、举例、强调重点' },
+  { id: 'closing', label: '结尾', hint: '总结观点、升华意义、提出建议' },
+  { id: 'translation', label: '翻译', hint: '翻译题常用衔接、强调和高级替换' },
+]
+
 export function WritingPhrasebookPage({ learner, onBack }: WritingPhrasebookPageProps) {
   const { showToast } = useToast()
   const [workspace, setWorkspace] = useState<Workspace>('library')
@@ -225,6 +235,7 @@ export function WritingPhrasebookPage({ learner, onBack }: WritingPhrasebookPage
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [isEditOpen, setIsEditOpen] = useState(false)
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false)
   const [importText, setImportText] = useState('')
   const [importTopic, setImportTopic] = useState('online learning')
   const [selectedPromptId, setSelectedPromptId] = useState(PROMPTS[0].id)
@@ -672,11 +683,26 @@ export function WritingPhrasebookPage({ learner, onBack }: WritingPhrasebookPage
           isSaving={isSaving}
           isSelected={Boolean(selectedPhrase)}
           onChange={setForm}
-          onClose={() => setIsEditOpen(false)}
-          onDelete={() => void handleDelete()}
+          onClose={() => {
+            setIsEditOpen(false)
+            setIsDeleteConfirmOpen(false)
+          }}
+          onDelete={() => setIsDeleteConfirmOpen(true)}
           onSave={() => void handleSave()}
         />
       )}
+      <ConfirmDialog
+        open={isDeleteConfirmOpen}
+        title="删除这条句式？"
+        description="删除后这条好句、例句和练习入口都会从收藏馆移除。"
+        confirmLabel="删除"
+        danger
+        onCancel={() => setIsDeleteConfirmOpen(false)}
+        onConfirm={() => {
+          setIsDeleteConfirmOpen(false)
+          void handleDelete()
+        }}
+      />
     </PageShell>
   )
 }
@@ -1128,6 +1154,13 @@ function PracticeWorkspace({
   const progressPercent = exercises.length > 0 ? Math.round(((activeExerciseIndex + 1) / exercises.length) * 100) : 0
   const answeredCount = exercises.filter((exercise) => Boolean(answers[exercise.id]?.trim())).length
   const [isPhraseListOpen, setIsPhraseListOpen] = useState(false)
+  const isPhraseListDrawer = useMediaQuery('(max-width: 1023px)')
+  const phraseListPanelId = useId()
+  const phraseListTitleId = useId()
+  const { containerRef: phraseListPanelRef, handleKeyDown: handlePhraseListPanelKeyDown } = useFocusTrap<HTMLDivElement>({
+    isActive: isPhraseListDrawer && isPhraseListOpen,
+    onEscape: () => setIsPhraseListOpen(false),
+  })
   const selectPhraseForPractice = (phraseId: string) => {
     onSelectPhrase(phraseId)
     setIsPhraseListOpen(false)
@@ -1137,36 +1170,61 @@ function PracticeWorkspace({
       <Button
         variant="secondary"
         className="lg:hidden"
+        aria-controls={phraseListPanelId}
+        aria-expanded={isPhraseListOpen}
         onClick={() => setIsPhraseListOpen((current) => !current)}
       >
         <PanelLeftOpen className="h-4 w-4" />
         {isPhraseListOpen ? '收起句式列表' : '展开句式列表'}
       </Button>
-      <SurfaceCard className={`${isPhraseListOpen ? 'block' : 'hidden'} space-y-4 lg:block`}>
-        <div>
-          <h2 className="text-base font-semibold text-slate-950">选择练习句式</h2>
-          <p className="mt-1 text-sm text-slate-500">优先练习已加入复习或最近收藏的表达。</p>
-        </div>
-        <div className="space-y-2 lg:max-h-[520px] lg:overflow-y-auto">
-          {phrases.map((phrase) => (
-            <button
-              key={phrase.id}
-              type="button"
-              onClick={() => selectPhraseForPractice(phrase.id)}
-              className={`w-full rounded-[13px] border p-3 text-left text-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
-                selectedPhrase?.id === phrase.id ? 'border-primary bg-primary/5' : 'border-slate-200 hover:border-indigo-200'
-              }`}
-            >
-              <p className="font-semibold text-slate-950">{phrase.text}</p>
-              <p className="mt-1 line-clamp-1 text-slate-500">{phrase.chinese_meaning || phrase.usage_scene}</p>
-            </button>
-          ))}
-        </div>
-        <Button onClick={onGenerate} disabled={!selectedPhrase} className="w-full">
-          <Target className="h-4 w-4" />
-          生成三类练习
-        </Button>
-      </SurfaceCard>
+
+      {isPhraseListDrawer && isPhraseListOpen && (
+        <button
+          type="button"
+          aria-label="关闭句式列表"
+          className="fixed inset-0 z-40 bg-slate-950/40 backdrop-blur-[2px] lg:hidden"
+          onClick={() => setIsPhraseListOpen(false)}
+        />
+      )}
+
+      <div
+        id={phraseListPanelId}
+        ref={isPhraseListDrawer ? phraseListPanelRef : undefined}
+        role={isPhraseListDrawer ? 'dialog' : undefined}
+        aria-modal={isPhraseListDrawer ? true : undefined}
+        aria-labelledby={phraseListTitleId}
+        tabIndex={isPhraseListDrawer ? -1 : undefined}
+        onKeyDown={isPhraseListDrawer ? handlePhraseListPanelKeyDown : undefined}
+        className={`${
+          isPhraseListOpen ? 'fixed inset-y-0 left-0 z-50 flex w-[min(88vw,340px)] p-3' : 'hidden'
+        } lg:static lg:z-auto lg:block lg:w-auto lg:p-0`}
+      >
+        <SurfaceCard className="flex min-h-full w-full flex-col space-y-4 overflow-hidden lg:min-h-0">
+          <div>
+            <h2 id={phraseListTitleId} className="text-base font-semibold text-slate-950">选择练习句式</h2>
+            <p className="mt-1 text-sm text-slate-500">优先练习已加入复习或最近收藏的表达。</p>
+          </div>
+          <div className="min-h-0 flex-1 space-y-2 overflow-y-auto lg:max-h-[520px]">
+            {phrases.map((phrase) => (
+              <button
+                key={phrase.id}
+                type="button"
+                onClick={() => selectPhraseForPractice(phrase.id)}
+                className={`w-full rounded-[13px] border p-3 text-left text-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
+                  selectedPhrase?.id === phrase.id ? 'border-primary bg-primary/5' : 'border-slate-200 hover:border-indigo-200'
+                }`}
+              >
+                <p className="font-semibold text-slate-950">{phrase.text}</p>
+                <p className="mt-1 line-clamp-1 text-slate-500">{phrase.chinese_meaning || phrase.usage_scene}</p>
+              </button>
+            ))}
+          </div>
+          <Button onClick={onGenerate} disabled={!selectedPhrase} className="w-full">
+            <Target className="h-4 w-4" />
+            生成三类练习
+          </Button>
+        </SurfaceCard>
+      </div>
 
       <SurfaceCard className="min-h-[520px]">
         {!activeExercise ? (
@@ -1280,23 +1338,23 @@ function PracticeProgressPanel({
 }
 
 function WritingAssistWorkspace({ phrasesByPosition }: { phrasesByPosition: Record<string, WritingPhrase[]> }) {
-  const sections = [
-    { id: 'opening', label: '开头', hint: '引出话题、提出背景、呈现争议' },
-    { id: 'body', label: '主体', hint: '递进、转折、举例、强调重点' },
-    { id: 'closing', label: '结尾', hint: '总结观点、升华意义、提出建议' },
-  ]
+  const activePhrases = WRITING_POSITIONS.flatMap((position) => phrasesByPosition[position.id] ?? [])
   return (
-    <SurfaceCard className="space-y-5">
-      <div>
-        <h2 className="text-base font-semibold text-slate-950">写作调用</h2>
-        <p className="mt-1 text-sm leading-6 text-slate-500">按作文位置快速挑选可用句式。后续可以接入作文主题推荐和插入草稿。</p>
-      </div>
-      <div className="grid gap-4 md:grid-cols-3">
-        {sections.map((section) => (
-          <div key={section.id} className="rounded-[13px] border border-slate-200 p-4">
+    <div className="space-y-5">
+      <SurfaceCard className="space-y-5">
+        <div>
+          <h2 className="text-base font-semibold text-slate-950">写作调用</h2>
+          <p className="mt-1 text-sm leading-6 text-slate-500">按作文位置快速挑选可用句式，同时检查收藏资产是否覆盖常用功能、难度和作文位置。</p>
+        </div>
+        <WritingAssetOverview phrases={activePhrases} phrasesByPosition={phrasesByPosition} />
+      </SurfaceCard>
+
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        {WRITING_POSITIONS.map((section) => (
+          <SurfaceCard key={section.id} className="space-y-4">
             <p className="font-semibold text-slate-950">{section.label}</p>
             <p className="mt-1 text-sm leading-6 text-slate-500">{section.hint}</p>
-            <div className="mt-4 space-y-3">
+            <div className="space-y-3">
               {(phrasesByPosition[section.id] ?? []).slice(0, 4).map((phrase) => (
                 <div key={phrase.id} className="rounded-lg bg-slate-50 p-3">
                   <p className="text-sm font-semibold leading-6 text-slate-950">{phrase.text}</p>
@@ -1305,10 +1363,118 @@ function WritingAssistWorkspace({ phrasesByPosition }: { phrasesByPosition: Reco
               ))}
               {(phrasesByPosition[section.id] ?? []).length === 0 && <p className="text-sm text-slate-400">暂无该位置句式。</p>}
             </div>
+          </SurfaceCard>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function WritingAssetOverview({
+  phrases,
+  phrasesByPosition,
+}: {
+  phrases: WritingPhrase[]
+  phrasesByPosition: Record<string, WritingPhrase[]>
+}) {
+  const coveredPositions = WRITING_POSITIONS.filter((position) => (phrasesByPosition[position.id] ?? []).length > 0).length
+  const coveragePercent = Math.round((coveredPositions / WRITING_POSITIONS.length) * 100)
+  return (
+    <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_320px]">
+      <PositionCoveragePanel phrasesByPosition={phrasesByPosition} coveragePercent={coveragePercent} />
+      <FunctionTagDistribution phrases={phrases} />
+      <DifficultyDistribution phrases={phrases} />
+    </div>
+  )
+}
+
+function PositionCoveragePanel({
+  phrasesByPosition,
+  coveragePercent,
+}: {
+  phrasesByPosition: Record<string, WritingPhrase[]>
+  coveragePercent: number
+}) {
+  return (
+    <section className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h3 className="text-sm font-semibold text-slate-950">写作位置覆盖</h3>
+          <p className="mt-1 text-xs leading-5 text-slate-500">查看开头、主体、结尾和翻译表达是否都有可调用句式。</p>
+        </div>
+        <span className="text-2xl font-black text-slate-950">{coveragePercent}%</span>
+      </div>
+      <div className="mt-4 h-2 overflow-hidden rounded-full bg-white">
+        <div className="h-full rounded-full bg-primary transition-[width] duration-500" style={{ width: `${coveragePercent}%` }} />
+      </div>
+      <div className="mt-4 grid grid-cols-2 gap-2">
+        {WRITING_POSITIONS.map((position) => {
+          const count = phrasesByPosition[position.id]?.length ?? 0
+          return (
+            <div key={position.id} className={`rounded-lg px-3 py-2 ${count > 0 ? 'bg-white text-slate-950' : 'bg-white/60 text-slate-400'}`}>
+              <p className="text-xs font-bold">{position.label}</p>
+              <p className="mt-1 text-lg font-black tabular-nums">{count}</p>
+            </div>
+          )
+        })}
+      </div>
+    </section>
+  )
+}
+
+function FunctionTagDistribution({ phrases }: { phrases: WritingPhrase[] }) {
+  const rows = getFunctionTagRows(phrases)
+  const maxCount = Math.max(1, ...rows.map((row) => row.count))
+  return (
+    <section className="rounded-xl border border-slate-200 bg-white p-4">
+      <h3 className="text-sm font-semibold text-slate-950">句式功能分布</h3>
+      <p className="mt-1 text-xs leading-5 text-slate-500">根据收藏标签统计最常用的写作功能。</p>
+      <div className="mt-4 space-y-3">
+        {rows.length === 0 ? (
+          <p className="rounded-lg bg-slate-50 p-3 text-sm text-slate-500">还没有功能标签，先导入或编辑几条句式。</p>
+        ) : (
+          rows.map((row) => (
+            <div key={row.label}>
+              <div className="mb-1 flex items-center justify-between gap-3 text-xs">
+                <span className="min-w-0 truncate font-semibold text-slate-700">{row.label}</span>
+                <span className="font-black tabular-nums text-slate-950">{row.count}</span>
+              </div>
+              <div className="h-2 overflow-hidden rounded-full bg-slate-100">
+                <div className="h-full rounded-full bg-indigo-500 transition-[width] duration-500" style={{ width: `${Math.max(8, (row.count / maxCount) * 100)}%` }} />
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+    </section>
+  )
+}
+
+function DifficultyDistribution({ phrases }: { phrases: WritingPhrase[] }) {
+  const rows = [1, 2, 3, 4, 5].map((level) => ({
+    level,
+    count: phrases.filter((phrase) => phrase.difficulty === level).length,
+  }))
+  const maxCount = Math.max(1, ...rows.map((row) => row.count))
+  return (
+    <section className="rounded-xl border border-slate-200 bg-white p-4">
+      <h3 className="text-sm font-semibold text-slate-950">难度分布</h3>
+      <p className="mt-1 text-xs leading-5 text-slate-500">检查收藏是否只有基础句，或是否缺少进阶表达。</p>
+      <div className="mt-5 flex h-36 items-end gap-2">
+        {rows.map((row) => (
+          <div key={row.level} className="flex min-w-0 flex-1 flex-col items-center justify-end gap-2">
+            <span className="text-xs font-black tabular-nums text-slate-700">{row.count}</span>
+            <div className="flex h-24 w-full items-end rounded-lg bg-slate-100">
+              <div
+                className="w-full rounded-lg bg-emerald-500 transition-[height] duration-500"
+                style={{ height: row.count > 0 ? `${Math.max(12, (row.count / maxCount) * 100)}%` : '0%' }}
+              />
+            </div>
+            <span className="text-xs font-semibold text-slate-500">D{row.level}</span>
           </div>
         ))}
       </div>
-    </SurfaceCard>
+    </section>
   )
 }
 
@@ -1330,13 +1496,24 @@ function PhraseEditDrawer({
   onSave: () => void
 }) {
   const update = (payload: Partial<PhraseForm>) => onChange({ ...form, ...payload })
+  const titleId = useId()
+  const { containerRef, handleKeyDown } = useFocusTrap<HTMLDivElement>({ isActive: true, onEscape: onClose })
+
   return (
     <div className="fixed inset-0 z-[60] overscroll-contain bg-slate-950/35">
-      <div className="ml-auto flex h-full w-full max-w-2xl flex-col bg-white shadow-2xl">
+      <div
+        ref={containerRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        tabIndex={-1}
+        onKeyDown={handleKeyDown}
+        className="ml-auto flex h-full w-full max-w-2xl flex-col bg-white shadow-2xl focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-primary"
+      >
         <div className="flex items-center justify-between border-b border-slate-200 p-5">
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-primary">Edit Phrase</p>
-            <h2 className="mt-1 text-xl font-black text-slate-950">{isSelected ? '编辑句式' : '新增句式'}</h2>
+            <h2 id={titleId} className="mt-1 text-xl font-black text-slate-950">{isSelected ? '编辑句式' : '新增句式'}</h2>
           </div>
           <IconButton label="关闭编辑抽屉" onClick={onClose}>
             <X className="h-5 w-5" />
@@ -1549,4 +1726,18 @@ function getExerciseTypeCounts(exercises: PhraseExercise[]) {
     counts[exercise.exercise_type] += 1
     return counts
   }, { recognition: 0, blank: 0, replacement: 0 })
+}
+
+function getFunctionTagRows(phrases: WritingPhrase[]) {
+  const counts = new Map<string, number>()
+  for (const phrase of phrases) {
+    for (const tag of phrase.tags) {
+      if (!FUNCTION_TAGS.includes(tag)) continue
+      counts.set(tag, (counts.get(tag) ?? 0) + 1)
+    }
+  }
+  return [...counts.entries()]
+    .map(([label, count]) => ({ label, count }))
+    .sort((first, second) => second.count - first.count)
+    .slice(0, 6)
 }

@@ -65,23 +65,24 @@ AI对话 / 探索 / 学习中心
 - `PageShell` 支持 `standard/full` 变体，标准宽度统一为 `max-w-[1180px]`。
 - `DashboardPage` 从数据面板升级为今日学习入口页：`FeatureHero`、今日主推荐、复习队列、继续学习、学习记录、学习者画像和推荐原因；画像页包含能力雷达、掌握度分布和薄弱点排行，记录页包含活动热力、每日完成趋势、正确率/复习负荷趋势；词汇工作区已补统一练习入口卡、词汇搜索/新增表单状态和可键盘访问的词汇行，Dashboard 共享统计卡、学习目标进度条和词汇复习卡已清理伪按钮与 `transition-all`。
 - `ExplorePage` 改为学习能力工作台：优先展示后端 ExploreCapability 推荐，保留固定入口、收藏、搜索和分类筛选；搜索框已补可访问属性和 focus-visible，能力卡与收藏按钮已补基础 hover/focus/disabled 状态。
-- `ChatContainer` 的 Skill 状态使用 `StatusBanner`；顶部操作、历史侧栏、记忆面板、欢迎入口和发送/停止操作已接入统一 `Button` / `IconButton`，聊天输入补齐 `name` / `autocomplete` / focus-visible，streaming/typing 使用 `aria-live` 并尊重 reduced-motion。
+- `ChatContainer` 的 Skill 状态使用 `StatusBanner`；顶部操作、历史侧栏、记忆面板、欢迎入口和发送/停止操作已接入统一 `Button` / `IconButton`，聊天输入补齐 `name` / `autocomplete` / focus-visible，streaming/typing 使用 `aria-live` 并尊重 reduced-motion；移动端历史对话 / 学习状态侧栏已补遮罩、dialog 语义、ESC 关闭、焦点恢复和 Tab 循环。
 - Header 右侧改为学习者菜单，包含学习设置、当前学习者摘要和登出/切换学习者；裸退出 icon 不再常驻导航。
-- 新增 learner-scoped 本地学习设置，覆盖词汇练习默认模式、数量、英/美音、是否显示 setup、自动播放、拼写填满自动检查、答对后自动进入下一题和单元词汇范围。
+- 新增 learner-scoped 本地学习设置，覆盖词汇练习默认模式、数量、英/美音、是否显示 setup、自动播放、拼写填满自动检查、答对后自动进入下一题和单元词汇范围；设置弹层具备 dialog 语义、ESC 关闭、焦点恢复、Tab 循环，恢复默认需要二次确认。
 - `MemoryCenterPage` 不在用户端主导航出现；Dev Console 可继续复用它查看和管理 memory/debug evidence。
 - `GrammarPage`、`PronunciationPage`、`VocabularyDetailPage`、`LoginPage` 接入统一外壳和表单/按钮标准；`LoginPage` 登录字段已补 `name` / `autocomplete` / `spellCheck`，产品能力卡已有 hover elevation/translate。
-- `VocabularyDetailPage` 已补生成-回填-保存四步 stepper，生成指令、HTML 回填、个人词卡和构词笔记表单已统一 `name` / `autocomplete` / focus-visible 与省略号占位文案。
-- `GrammarPage` 已补知识点分类矩阵、已打开/已学习/已缓存/喜爱状态卡、难度掌握分布和生成链路状态卡；重新生成、清空 HTML、删除目标网站使用确认弹窗。
-- `KnowledgeBasePage` 保留全宽教材学习页，并拆成“今日单元 / 练习任务”两个学习者 workspace；左侧支持多本教材切换，右侧只展示教材信息、学习路径和推荐理由，移动端可展开/收起教材目录和学习概览。主学习区已补教材学习概览图表，覆盖教材单元、知识点、RAG 片段、待校对、单元掌握、知识点类型、教材路径和解析索引覆盖。解析校对、解析质量、教材结构内部产物、parser/ingest 证据和调试表格统一放入 Dev Console 的 Textbook Parsing。
-- 共享练习组件 `AddExerciseForm` / `ExerciseRenderer` 已补练习表单 `name` / `autocomplete` / focus-visible、选项 pressed/focus 状态、提交与生成 loading 文案、练习进度条；`ExerciseSessionDialog` 改为固定高度弹层和内部滚动，让教材练习入口更接近 TaskShell。
-- `DailyLessonRuntimeDialog` 已改为固定头部、内部滚动内容和固定底部 ActionBar，选项补 pressed/focus 状态，提交按钮有 loading 文案，并支持 ESC 关闭和焦点恢复。
-- `VocabularyPracticePage` 保持沉浸式一屏一任务，并在顶部明确模式和来源；练习阶段按主任务区、学习辅助区和底部操作区组织，底部操作栏固定可见，中间内容内部滚动，避免用户上下翻动才能评分或进入下一题；核心按钮、进度条和拼写输入已补 `type` / focus-visible / `name` / `autocomplete` 与显式 transition。
+- `VocabularyDetailPage` 已补生成-回填-保存四步 stepper，生成指令、HTML 回填、个人词卡和构词笔记表单已统一 `name` / `autocomplete` / focus-visible 与省略号占位文案；沉浸阅读具备 dialog 语义、ESC 关闭、焦点恢复和 Tab 循环。
+- `GrammarPage` 已补知识点分类矩阵、已打开/已学习/已缓存/喜爱状态卡、难度掌握分布和生成链路状态卡；预览页 HTML 输入可折叠，沉浸阅读具备 dialog 语义、ESC 关闭、焦点恢复和 Tab 循环；重新生成、清空 HTML、删除目标网站使用确认弹窗。
+- `KnowledgeBasePage` 保留全宽教材学习页，并拆成“今日单元 / 练习任务”两个学习者 workspace；左侧支持多本教材切换，右侧只展示教材信息、学习路径和推荐理由，移动端教材目录和学习概览已升级为带遮罩、dialog 语义、ESC 关闭、焦点恢复和 Tab 循环的抽屉，教材上传 / 课程学习 / 练习弹层也已补同样的键盘与焦点行为。主学习区已补教材学习概览图表，覆盖教材单元、知识点、RAG 片段、待校对、单元掌握、知识点类型、教材路径和解析索引覆盖。解析校对、解析质量、教材结构内部产物、parser/ingest 证据和调试表格统一放入 Dev Console 的 Textbook Parsing。
+- 共享练习组件 `AddExerciseForm` / `ExerciseRenderer` 已补练习表单 `name` / `autocomplete` / focus-visible、选项 pressed/focus 状态、提交与生成 loading 文案、练习进度条；`ExerciseSessionDialog` 改为固定高度弹层和内部滚动，并具备 ESC 关闭、焦点恢复和 Tab 循环，让教材练习入口更接近 TaskShell。
+- `DailyLessonRuntimeDialog` 已改为固定头部、内部滚动内容和固定底部 ActionBar，选项补 pressed/focus 状态，提交按钮有 loading 文案，并支持 ESC 关闭、焦点恢复和 Tab 循环。
+- `VocabularyPracticePage` 保持沉浸式一屏一任务，并在顶部明确模式和来源；练习阶段按主任务区、学习辅助区和底部操作区组织，底部操作栏固定可见，中间内容内部滚动，避免用户上下翻动才能评分或进入下一题；核心按钮、进度条和拼写输入已补 `type` / focus-visible / `name` / `autocomplete` 与显式 transition；summary 已补答对率环、本组结果分布和复习负荷条。
 - `WordPartsPage` 按“方法入门 / 词根词缀库 / 拆词练习 / 我的掌握”四个 workspace 组织，复用 `PageShell`、`FeatureHero`、`WorkspaceTabs`、`SurfaceCard`、`FilterChip` 和统一 `Button`。
-- `WordPartsPage` 的“我的掌握”已补整体掌握堆叠条、prefix/root/suffix 掌握条和练习次数趋势；重置本地记录使用确认弹窗。
-- `ReadingWorkshopPage` 的材料历史和精读句子列表已支持移动端折叠；复盘页已补关键词频次条、句子难度热力图和语法卡点分布，泛读/精读沉淀可图形化回看。
-- `WritingPhrasebookPage` 继续作为专项资产库页面，保留 `PageShell`、`FeatureHero`、`WorkspaceTabs` 的既有较好实现；主操作、详情操作、导入操作、练习推进和编辑抽屉关键按钮已接入统一 `Button` / `IconButton`，练习页补充进度条、题型分布、已填写统计和移动端句式列表折叠，编辑抽屉表单已补基础可访问属性。
-- `PronunciationPage` 的 Minimal Pairs / Records 已从占位页升级为可用工作区，支持易混音组练习、本地自评记录、音标完成度、shadowing 自评分布和最小对立音清晰率图表；Shadowing 工作区已补移动端句子列表折叠、原句播放状态、节奏条和重音词可视化。
+- `WordPartsPage` 的“我的掌握”已补整体掌握堆叠条、prefix/root/suffix 掌握条和练习次数趋势；拆词练习答案已补展开/收起动效、`aria-expanded` 和提示计数 live 状态；重置本地记录使用确认弹窗。
+- `ReadingWorkshopPage` 的材料历史和精读句子列表已支持移动端抽屉，具备遮罩、dialog 语义、ESC 关闭、焦点恢复和 Tab 循环；复盘页已补关键词频次条、句子难度热力图、语法卡点分布、阅读流程进度和正文高亮覆盖，泛读/精读沉淀可图形化回看。
+- `WritingPhrasebookPage` 继续作为专项资产库页面，保留 `PageShell`、`FeatureHero`、`WorkspaceTabs` 的既有较好实现；主操作、详情操作、导入操作、练习推进和编辑抽屉关键按钮已接入统一 `Button` / `IconButton`，练习页补充进度条、题型分布、已填写统计和移动端句式列表抽屉，写作调用页已补写作位置覆盖、句式功能分布和难度分布，编辑抽屉和练习句式列表都具备 dialog 语义、ESC 关闭、焦点恢复、Tab 循环和必要的删除确认。
+- `PronunciationPage` 的 Minimal Pairs / Records 已从占位页升级为可用工作区，支持易混音组练习、本地自评记录、音标完成度、shadowing 自评分布、shadowing 练习次数趋势和最小对立音清晰率图表；音标详情移动端 bottom sheet 与 Shadowing 句子列表抽屉都具备遮罩、dialog 语义、ESC 关闭、焦点恢复和 Tab 循环，当前句已补原句播放状态、节奏条、重音词可视化、本地麦克风录音、实时波形、回放和重录。
 - Dev Console 的 `EpisodeDebugPage` 已补 Graph Run Overview、Node Waterfall、Event Rhythm、Tool Latency 和 Verification Map，Graph Runs 可先通过图形化链路扫读，再下钻表格/JSON。
+- Dev Console 的 `RAG Debug` 已补语义化检索表单、Top-K score bar、score bucket、chunk source distribution 和 retrieval mode mix；检索结果可以先看召回质量概览，再下钻 chunk cards / raw JSON。
 
 ## 当前目录结构
 
@@ -144,7 +145,7 @@ binnagent-frontend/
 - 空状态中的明确下一步引导。
 - Dashboard 区分“今日待复习”“今日新学”“最近薄弱点”。
 - Chat 与 Agent Skill / 词汇练习之间的跳转闭环。
-- RAG 调试模式显示检索模式、chunk、页码和证据。
+- Dev Console / RAG 调试深化暂缓，后续如重新开启 Dev Console 优化，再补 query 版本对比、召回覆盖率和 chunk diff。
 - morphology 后端持久化、AI HTML 构词区域解析入库、LearningProgress / Memory 联动。
 
 ## 快速开始

@@ -1,4 +1,5 @@
 import { BookMarked, Check, Circle, Trash2 } from 'lucide-react'
+import type { KeyboardEventHandler, Ref } from 'react'
 import type { CurriculumNode, KnowledgeBaseOverview } from '@/types'
 
 interface CurriculumRailProps {
@@ -9,6 +10,14 @@ interface CurriculumRailProps {
   currentSourceId: string
   progress: number
   className?: string
+  panelId?: string
+  titleId?: string
+  panelRef?: Ref<HTMLElement>
+  role?: 'dialog'
+  ariaModal?: boolean
+  ariaLabelledby?: string
+  tabIndex?: number
+  onKeyDown?: KeyboardEventHandler<HTMLElement>
   canDelete?: boolean
   onSourceChange: (sourceId: string) => void
   onSelect: (nodeId: string) => void
@@ -24,6 +33,14 @@ export function CurriculumRail({
   currentSourceId,
   progress,
   className = '',
+  panelId,
+  titleId,
+  panelRef,
+  role,
+  ariaModal,
+  ariaLabelledby,
+  tabIndex,
+  onKeyDown,
   canDelete = false,
   onSourceChange,
   onSelect,
@@ -31,9 +48,18 @@ export function CurriculumRail({
   onDelete,
 }: CurriculumRailProps) {
   return (
-    <aside className={`knowledge-rail flex min-h-[calc(100vh-4rem)] flex-col border-r border-slate-200 bg-white px-5 py-7 ${className}`}>
+    <aside
+      id={panelId}
+      ref={panelRef}
+      role={role}
+      aria-modal={ariaModal}
+      aria-labelledby={ariaLabelledby}
+      tabIndex={tabIndex}
+      onKeyDown={onKeyDown}
+      className={`knowledge-rail flex min-h-[calc(100vh-4rem)] flex-col border-r border-slate-200 bg-white px-5 py-7 ${className}`}
+    >
       <div>
-        <h2 className="text-lg font-extrabold tracking-tight text-slate-950">{sourceTitle}</h2>
+        <h2 id={titleId} className="text-lg font-extrabold tracking-tight text-slate-950">{sourceTitle}</h2>
         {sources.length > 1 ? (
           <label className="mt-4 block">
             <span className="text-xs font-bold text-slate-500">切换教材</span>

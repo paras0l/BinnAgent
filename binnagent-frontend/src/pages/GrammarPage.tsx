@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useId, useMemo, useState } from 'react'
 import {
   ArrowLeft,
   Check,
@@ -35,6 +35,7 @@ import { Button } from '@/components/ui/Button'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { IconButton } from '@/components/ui/IconButton'
 import { SurfaceCard } from '@/components/ui/SurfaceCard'
+import { useFocusTrap } from '@/hooks/useFocusTrap'
 import type { ExerciseTarget } from '@/types/exercises'
 
 type CategoryFilter = 'all' | GrammarCategory
@@ -164,9 +165,15 @@ export function GrammarPage({ learner, onBack, backLabel = '返回探索', initi
   const [isCopied, setIsCopied] = useState(false)
   const [isExtensionPathCopied, setIsExtensionPathCopied] = useState(false)
   const [isImmersiveReading, setIsImmersiveReading] = useState(false)
+  const [isPreviewInputOpen, setIsPreviewInputOpen] = useState(true)
   const [pendingAction, setPendingAction] = useState<PendingGrammarAction>(null)
   const [workspace, setWorkspace] = useState<GrammarWorkspace>('topics')
   const [renderedPrompt, setRenderedPrompt] = useState<{ topicId: string; prompt: string; prompt_hash: string; version: string } | null>(null)
+  const immersiveTitleId = useId()
+  const { containerRef: immersiveReaderRef, handleKeyDown: handleImmersiveReaderKeyDown } = useFocusTrap<HTMLDivElement>({
+    isActive: isImmersiveReading,
+    onEscape: () => setIsImmersiveReading(false),
+  })
 
   const selectedTopic = useMemo(
     () => topicOptions.find((topic) => topic.id === selectedTopicId) ?? topicOptions[0],
@@ -429,15 +436,6 @@ export function GrammarPage({ learner, onBack, backLabel = '返回探索', initi
     window.addEventListener('message', handleReturnedHtml)
     return () => window.removeEventListener('message', handleReturnedHtml)
   }, [selectedTopic.id, setTopicHtml, showToast])
-
-  useEffect(() => {
-    if (!isImmersiveReading) return
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setIsImmersiveReading(false)
-    }
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [isImmersiveReading])
 
   const visibleTopics = useMemo(() => {
     const normalized = query.trim().toLowerCase()
@@ -895,7 +893,8 @@ export function GrammarPage({ learner, onBack, backLabel = '返回探索', initi
       )}
 
       {workspace === 'preview' && (
-        <section className="grid gap-5 xl:grid-cols-[420px_minmax(0,1fr)]">
+        <section className={`grid gap-5 ${isPreviewInputOpen ? 'xl:grid-cols-[420px_minmax(0,1fr)]' : 'xl:grid-cols-1'}`}>
+        {isPreviewInputOpen ? (
         <SurfaceCard>
           <div className="flex items-center justify-between gap-3">
             <div>
@@ -910,6 +909,14 @@ export function GrammarPage({ learner, onBack, backLabel = '返回探索', initi
               <RefreshCw className="h-4 w-4" />
             </IconButton>
           </div>
+          <Button
+            variant="secondary"
+            onClick={() => setIsPreviewInputOpen(false)}
+            className="mt-4 w-full"
+            disabled={!currentHtml.trim()}
+          >
+            收起输入区
+          </Button>
           <textarea
             name="grammar_html_input"
             autoComplete="off"
@@ -920,6 +927,7 @@ export function GrammarPage({ learner, onBack, backLabel = '返回探索', initi
             placeholder="把 AI 返回的 HTML 片段粘贴到这里，或使用浏览器扩展发送回 BinnAgent…"
           />
         </SurfaceCard>
+        ) : null}
 
         <SurfaceCard>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -934,7 +942,15 @@ export function GrammarPage({ learner, onBack, backLabel = '返回探索', initi
             </div>
             <Button
               variant="secondary"
+              onClick={() => setIsPreviewInputOpen((current) => !current)}
+            >
+              <FileInput className="h-4 w-4" />
+              {isPreviewInputOpen ? '收起输入' : '编辑 HTML'}
+            </Button>
+            <Button
+              variant="secondary"
               onClick={() => setIsImmersiveReading(true)}
+              disabled={!currentHtml.trim()}
             >
               <Maximize2 className="h-4 w-4" />
               沉浸阅读
@@ -951,11 +967,19 @@ export function GrammarPage({ learner, onBack, backLabel = '返回探索', initi
       )}
 
       {isImmersiveReading && (
-        <div className="fixed inset-0 z-[80] flex flex-col bg-white">
+        <div
+          ref={immersiveReaderRef}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby={immersiveTitleId}
+          tabIndex={-1}
+          onKeyDown={handleImmersiveReaderKeyDown}
+          className="fixed inset-0 z-[80] flex flex-col overscroll-contain bg-white focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-primary"
+        >
           <div className="shrink-0 border-b border-border bg-background px-4 py-3 shadow-sm sm:px-6">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="min-w-0">
-                <p className="truncate text-sm font-semibold text-foreground">{selectedTopic.title}</p>
+                <p id={immersiveTitleId} className="truncate text-sm font-semibold text-foreground">{selectedTopic.title}</p>
                 <p className="text-xs text-muted-foreground">沉浸式阅读，按 Esc 退出</p>
               </div>
               <Button

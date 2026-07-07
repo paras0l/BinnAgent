@@ -48,6 +48,7 @@ interface ExplorePageProps {
   onLockedAction?: () => void
   onTabChange: (tab: AppTab) => void
   onDraftPrompt: (prompt: string, skillFocus?: string | null) => void
+  onOpenVocabularyManager: () => void
   onOpenPronunciationWorkspace: (workspace: PronunciationWorkspace) => void
 }
 
@@ -61,7 +62,7 @@ interface ExploreFeature {
   status: FeatureStatus
   action: FeatureAction
   prompt?: string
-  toolTarget?: 'dashboard' | 'pronunciation' | 'grammar' | 'writing-phrasebook' | 'word-parts' | 'reading-workshop'
+  toolTarget?: 'dashboard' | 'vocabulary-manager' | 'pronunciation' | 'grammar' | 'writing-phrasebook' | 'word-parts' | 'reading-workshop'
   pronunciationWorkspace?: PronunciationWorkspace
 }
 
@@ -170,7 +171,7 @@ const FEATURES: ExploreFeature[] = [
     outcome: '手动创建真实词卡，并通过学习中心进行复习评分。',
     status: 'ready',
     action: 'tool',
-    toolTarget: 'dashboard',
+    toolTarget: 'vocabulary-manager',
   },
   {
     id: 'cet-reading',
@@ -321,6 +322,7 @@ export function ExplorePage({
   onLockedAction,
   onTabChange,
   onDraftPrompt,
+  onOpenVocabularyManager,
   onOpenPronunciationWorkspace,
 }: ExplorePageProps) {
   const { showToast } = useToast()
@@ -516,6 +518,10 @@ export function ExplorePage({
       }
       if (feature.toolTarget === 'word-parts') {
         setIsWordPartsOpen(true)
+        return
+      }
+      if (feature.toolTarget === 'vocabulary-manager') {
+        onOpenVocabularyManager()
         return
       }
       if (feature.toolTarget === 'pronunciation') {
@@ -851,7 +857,7 @@ function capabilityToFeature(capability: ExploreCapabilitySpec): ExploreFeature 
     status: capability.status,
     action: capability.action,
     prompt,
-    toolTarget: capability.tool_target ?? undefined,
+    toolTarget: normalizeToolTarget(capability.feature_id || capability.capability_id, capability.tool_target),
     pronunciationWorkspace,
   }
 }
@@ -867,8 +873,13 @@ function recommendationToFeature(recommendation: CapabilityRecommendation): Expl
     status: 'ready',
     action: recommendation.action as FeatureAction,
     prompt: recommendation.prompt_seed ?? undefined,
-    toolTarget: (recommendation.tool_target ?? undefined) as ExploreFeature['toolTarget'],
+    toolTarget: normalizeToolTarget(recommendation.feature_id || recommendation.capability_id, recommendation.tool_target),
   }
+}
+
+function normalizeToolTarget(featureId: string, toolTarget?: string | null): ExploreFeature['toolTarget'] {
+  if (featureId === 'vocabulary-manager') return 'vocabulary-manager'
+  return (toolTarget ?? undefined) as ExploreFeature['toolTarget']
 }
 
 function labelForCategory(category: ExploreFeature['category']) {

@@ -516,7 +516,7 @@ export function VocabularyPracticePage({
             <SetupGroup label="本组数量">
               {counts.filter((count) => availableTotal === null || count <= availableTotal).map((count) => <Choice key={count} selected={!isCustomLimit && limit === count} onClick={() => { setLimit(count); setIsCustomLimit(false) }}>{count} 个</Choice>)}
               <Choice selected={isCustomLimit} onClick={() => { setLimit((current) => Math.min(current, availableTotal ?? current)); setIsCustomLimit(true) }}>自定义</Choice>
-              {isCustomLimit ? <label className="inline-flex items-center gap-2 rounded-xl border border-indigo-300 bg-white px-3 py-1.5 text-sm font-bold text-slate-600 focus-within:ring-2 focus-within:ring-indigo-100"><input type="number" name="vocabulary_practice_limit" autoComplete="off" inputMode="numeric" min={1} max={availableTotal ?? undefined} value={limit} onChange={(event) => setLimit(Math.max(1, Math.min(availableTotal ?? Number.MAX_SAFE_INTEGER, Number(event.target.value) || 1)))} className="w-14 bg-transparent text-center text-slate-950 outline-none" aria-label="自定义本组数量" />个{availableTotal !== null ? <span className="text-xs text-slate-400">（1–{availableTotal}）</span> : null}</label> : null}
+              {isCustomLimit ? <label className="inline-flex items-center gap-2 rounded-xl border border-indigo-300 bg-white px-3 py-1.5 text-sm font-bold text-slate-600 focus-within:ring-2 focus-within:ring-indigo-100"><input type="number" name="vocabulary_practice_limit" autoComplete="off" inputMode="numeric" min={1} max={availableTotal ?? undefined} value={limit} onChange={(event) => setLimit(Math.max(1, Math.min(availableTotal ?? Number.MAX_SAFE_INTEGER, Number(event.target.value) || 1)))} className="w-14 bg-transparent text-center text-slate-950 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500" aria-label="自定义本组数量" />个{availableTotal !== null ? <span className="text-xs text-slate-400">（1–{availableTotal}）</span> : null}</label> : null}
             </SetupGroup>
             <SetupGroup label="发音偏好">
               <Choice selected={accent === 'uk'} onClick={() => setAccent('uk')}>英音</Choice>
@@ -538,15 +538,18 @@ export function VocabularyPracticePage({
   if (phase === 'summary' && summary) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#f7f8fc] p-4">
-        <section className="w-full max-w-xl rounded-[28px] border border-slate-200 bg-white p-8 text-center shadow-[0_20px_60px_rgba(30,41,59,0.08)] sm:p-12">
+        <section className="w-full max-w-4xl rounded-[28px] border border-slate-200 bg-white p-6 shadow-[0_20px_60px_rgba(30,41,59,0.08)] sm:p-10">
           <div className="mx-auto flex size-16 items-center justify-center rounded-full bg-emerald-50 text-emerald-600"><Check className="size-8" /></div>
-          <h1 className="mt-6 text-3xl font-black text-slate-950">本组完成</h1>
-          <p className="mt-3 text-slate-500">完成 {summary.total} 个词，独立答对 {summary.correct} 个。</p>
+          <div className="text-center">
+            <h1 className="mt-6 text-3xl font-black text-slate-950">本组完成</h1>
+            <p className="mt-3 text-slate-500">完成 {summary.total} 个词，独立答对 {summary.correct} 个。</p>
+          </div>
           <div className="mt-8 grid grid-cols-3 gap-3">
             <SummaryMetric label="答对" value={summary.correct} />
             <SummaryMetric label="用过提示" value={summary.hinted} />
             <SummaryMetric label="查看答案" value={summary.revealed} />
           </div>
+          <VocabularySummaryCharts summary={summary} />
           <button type="button" onClick={onExit} className="mt-8 w-full rounded-xl bg-indigo-600 px-5 py-3.5 text-sm font-black text-white hover:bg-indigo-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500">返回背单词</button>
         </section>
       </div>
@@ -944,6 +947,118 @@ function Celebration() {
 
 function SummaryMetric({ label, value }: { label: string; value: number }) {
   return <div className="rounded-xl bg-slate-50 px-3 py-4"><strong className="text-2xl font-black text-slate-950">{value}</strong><p className="mt-1 text-xs font-bold text-slate-500">{label}</p></div>
+}
+
+function VocabularySummaryCharts({ summary }: { summary: SessionSummary }) {
+  const total = Math.max(summary.total, 1)
+  const correctPercent = Math.round((summary.correct / total) * 100)
+  const hintedPercent = Math.round((summary.hinted / total) * 100)
+  const revealedPercent = Math.round((summary.revealed / total) * 100)
+  const independentCount = Math.max(summary.correct - summary.hinted - summary.revealed, 0)
+  const reviewLoadPercent = Math.min(100, Math.round((summary.due_next / total) * 100))
+  const outcomeRows = [
+    { label: '独立答对', value: independentCount, className: 'bg-emerald-500' },
+    { label: '用过提示', value: summary.hinted, className: 'bg-amber-400' },
+    { label: '查看答案', value: summary.revealed, className: 'bg-rose-400' },
+  ].filter((row) => row.value > 0)
+  const safeOutcomeRows = outcomeRows.length
+    ? outcomeRows
+    : [{ label: '本组完成', value: summary.completed, className: 'bg-indigo-500' }]
+
+  return (
+    <div className="mt-8 grid gap-4 text-left lg:grid-cols-[260px_minmax(0,1fr)]">
+      <section className="rounded-2xl border border-slate-200 bg-slate-50 p-5 text-center">
+        <div className="relative mx-auto size-40">
+          <svg viewBox="0 0 120 120" className="size-40 -rotate-90" role="img" aria-label={`本组答对率 ${correctPercent}%`}>
+            <circle cx="60" cy="60" r="48" fill="none" stroke="#e2e8f0" strokeWidth="12" />
+            <circle
+              cx="60"
+              cy="60"
+              r="48"
+              fill="none"
+              stroke="#10b981"
+              strokeDasharray={`${correctPercent * 3.02} 302`}
+              strokeLinecap="round"
+              strokeWidth="12"
+            />
+          </svg>
+          <div className="absolute inset-0 flex flex-col items-center justify-center">
+            <p className="text-3xl font-black text-slate-950">{correctPercent}%</p>
+            <p className="mt-1 text-xs font-bold text-slate-500">答对率</p>
+          </div>
+        </div>
+        <p className="mt-4 text-sm font-semibold leading-6 text-slate-600">
+          {summary.correct} / {summary.total} 个词已答对。
+        </p>
+      </section>
+
+      <section className="rounded-2xl border border-slate-200 p-5">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <h2 className="text-base font-black text-slate-950">本组复盘图</h2>
+            <p className="mt-1 text-sm leading-6 text-slate-500">按本次提交结果展示提示依赖、查看答案和下次复习负荷。</p>
+          </div>
+          <span className="rounded-lg bg-indigo-50 px-3 py-1 text-xs font-black text-indigo-700">
+            下次复习 {summary.due_next}
+          </span>
+        </div>
+
+        <div className="mt-5 flex h-4 overflow-hidden rounded-full bg-slate-100" aria-label="本组答题结果分布">
+          {safeOutcomeRows.map((row) => (
+            <div
+              key={row.label}
+              className={`h-full ${row.className}`}
+              style={{ width: `${Math.max((row.value / total) * 100, 5)}%` }}
+              title={`${row.label}：${row.value}`}
+            />
+          ))}
+        </div>
+        <div className="mt-3 grid gap-2 sm:grid-cols-3">
+          <SummaryLegend label="独立答对" percent={correctPercent} value={independentCount} tone="success" />
+          <SummaryLegend label="提示依赖" percent={hintedPercent} value={summary.hinted} tone="warning" />
+          <SummaryLegend label="查看答案" percent={revealedPercent} value={summary.revealed} tone="danger" />
+        </div>
+
+        <div className="mt-5 rounded-xl bg-slate-50 p-4">
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-sm font-black text-slate-800">复习负荷</p>
+            <p className="text-xs font-bold text-slate-500">{summary.due_next} 个词进入下次复习</p>
+          </div>
+          <div className="mt-3 h-2 overflow-hidden rounded-full bg-white">
+            <div
+              className="h-full rounded-full bg-indigo-500 transition-[width] duration-500 motion-reduce:transition-none"
+              style={{ width: `${reviewLoadPercent}%` }}
+            />
+          </div>
+        </div>
+      </section>
+    </div>
+  )
+}
+
+function SummaryLegend({
+  label,
+  percent,
+  tone,
+  value,
+}: {
+  label: string
+  percent: number
+  tone: 'success' | 'warning' | 'danger'
+  value: number
+}) {
+  const toneClass = {
+    success: 'bg-emerald-50 text-emerald-700',
+    warning: 'bg-amber-50 text-amber-700',
+    danger: 'bg-rose-50 text-rose-700',
+  }[tone]
+
+  return (
+    <div className={`rounded-xl px-3 py-3 ${toneClass}`}>
+      <p className="text-lg font-black">{value}</p>
+      <p className="mt-1 text-xs font-bold">{label} · {percent}%</p>
+    </div>
+  )
 }
 
 function RatingButton({ label, shortcut, primary, disabled, onClick }: { label: string; shortcut: string; primary?: boolean; disabled?: boolean; onClick: () => void }) {

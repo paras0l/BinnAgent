@@ -69,7 +69,7 @@ describe('Dashboard learning profile workspaces', () => {
 
     expect(html).toContain('我的学习画像')
     expect(html).toContain('画像正在建立中')
-    expect(html).toContain('当前学习状态摘要')
+    expect(html).toContain('状态摘要')
     expect(html).toContain('最近表现')
     expect(html).toContain('下一步建议')
     expect(html).not.toContain('数据控制说明')
@@ -103,6 +103,19 @@ describe('Dashboard learning profile workspaces', () => {
   it('does not use scrollIntoView for learning records navigation anymore', () => {
     expect(dashboardSource).not.toContain('scrollIntoView')
     expect(dashboardSource).toContain("setActiveWorkspace('records')")
-    expect(dashboardSource).toContain('查看我的学习画像')
+    expect(dashboardSource).toContain('学习画像')
+  })
+
+  it('keeps a direct vocabulary manager entry available', () => {
+    expect(dashboardSource).toContain('词汇本管理')
+    expect(dashboardSource).toContain('initialVocabularyListOpen')
+    expect(dashboardSource).toContain("setActiveWorkspace('vocabulary')")
+  })
+
+  it('keeps the vocabulary manager list bounded and paged', () => {
+    expect(dashboardSource).toContain('VOCABULARY_PAGE_SIZE = 12')
+    expect(dashboardSource).toContain('pagedVocabulary')
+    expect(dashboardSource).toContain('max-h-[min(64vh,760px)] overflow-y-auto')
+    expect(dashboardSource).toContain('VocabularyListPagination')
   })
 })

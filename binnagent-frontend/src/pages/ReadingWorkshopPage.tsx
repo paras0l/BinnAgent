@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useId, useMemo, useState } from 'react'
 import {
   ArrowLeft,
   BookOpenCheck,
@@ -25,6 +25,8 @@ import { ExerciseBlock } from '@/components/exercise/ExerciseBlock'
 import { Button } from '@/components/ui/Button'
 import { FormField } from '@/components/ui/FormField'
 import { SurfaceCard } from '@/components/ui/SurfaceCard'
+import { useFocusTrap } from '@/hooks/useFocusTrap'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
 import {
   READING_GOAL_LABELS,
   READING_GRAMMAR_OPTIONS,
@@ -96,7 +98,7 @@ const EMPTY_INTENSIVE_NOTES: IntensiveNotes = {
   evidenceNote: '',
 }
 
-const SELECT_CLASS = 'w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none transition-colors focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20'
+const SELECT_CLASS = 'w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm transition-colors focus-visible:border-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary'
 
 const WORKSPACE_TABS: WorkspaceTab<ReadingWorkspace>[] = [
   { id: 'input', label: '材料输入', description: '标题与原文', icon: <FileText className="h-4 w-4" /> },
@@ -485,6 +487,13 @@ function InputWorkspace({
   titleSuggestionStatus: TitleSuggestionStatus
 }) {
   const [isHistoryOpen, setIsHistoryOpen] = useState(false)
+  const isHistoryDrawer = useMediaQuery('(max-width: 1279px)')
+  const historyPanelId = useId()
+  const historyTitleId = useId()
+  const { containerRef: historyPanelRef, handleKeyDown: handleHistoryPanelKeyDown } = useFocusTrap<HTMLDivElement>({
+    isActive: isHistoryDrawer && isHistoryOpen,
+    onEscape: () => setIsHistoryOpen(false),
+  })
   const titleDescription = {
     idle: '可选；粘贴完整材料后会自动建议标题，仍可手动修改。',
     checking: '正在根据材料建议标题，仍可手动填写。',
@@ -581,68 +590,95 @@ function InputWorkspace({
         variant="secondary"
         className="xl:hidden"
         onClick={() => setIsHistoryOpen((current) => !current)}
+        aria-expanded={isHistoryOpen}
+        aria-controls={historyPanelId}
       >
         <PanelLeftOpen className="h-4 w-4" />
         {isHistoryOpen ? '收起材料历史' : '展开材料历史'}
       </Button>
 
-      <SurfaceCard className={`${isHistoryOpen ? 'flex' : 'hidden'} flex-col justify-between xl:flex`}>
-        <div>
-          <div className="flex items-center gap-2">
-            <Layers3 className="h-5 w-5 text-success" />
-            <h2 className="text-lg font-black text-slate-950">训练顺序</h2>
-          </div>
-          <div className="mt-5 space-y-3">
-            <ModeStep title="泛读" text="先限制时间，判断主旨、态度和段落功能。" />
-            <ModeStep title="精读" text="再选择难句，拆主干、修饰语和语法卡点。" />
-            <ModeStep title="沉淀" text="最后留下本次材料、句子和去学过的语法点。" />
-          </div>
-        </div>
-        <div className="mt-5 rounded-lg border border-primary/20 bg-primary/5 p-4 text-sm leading-6 text-primary">
-          精读和泛读处理同一篇材料，但训练目标不同：泛读少看细节，精读少求速度。
-        </div>
-
-        <div className="mt-5 border-t border-slate-200 pt-5">
-          <div className="flex items-center justify-between gap-3">
+      {isHistoryDrawer && isHistoryOpen ? (
+        <button
+          type="button"
+          aria-label="收起材料历史"
+          onClick={() => setIsHistoryOpen(false)}
+          className="fixed inset-x-0 bottom-0 top-16 z-30 bg-slate-950/30 transition-opacity duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary motion-reduce:transition-none xl:hidden"
+        />
+      ) : null}
+      <div
+        id={historyPanelId}
+        ref={isHistoryDrawer ? historyPanelRef : undefined}
+        role={isHistoryDrawer ? 'dialog' : undefined}
+        aria-modal={isHistoryDrawer ? 'true' : undefined}
+        aria-labelledby={isHistoryDrawer ? historyTitleId : undefined}
+        tabIndex={isHistoryDrawer ? -1 : undefined}
+        onKeyDown={isHistoryDrawer ? handleHistoryPanelKeyDown : undefined}
+        className={isHistoryOpen
+          ? 'fixed bottom-0 right-0 top-16 z-40 w-[min(88vw,24rem)] overflow-y-auto overscroll-contain transition-[transform,opacity] duration-200 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-primary motion-reduce:transition-none xl:static xl:w-auto xl:overflow-visible'
+          : 'hidden xl:block'
+        }
+      >
+        <SurfaceCard className="flex min-h-full flex-col justify-between">
+          <div>
             <div className="flex items-center gap-2">
-              <History className="h-5 w-5 text-primary" />
-              <h2 className="text-lg font-black text-slate-950">材料历史</h2>
+              <Layers3 className="h-5 w-5 text-success" />
+              <h2 className="text-lg font-black text-slate-950">训练顺序</h2>
             </div>
-            <button
-              type="button"
-              aria-label="刷新历史记录"
-              className="rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-              onClick={onRefreshHistory}
-              title="刷新历史记录"
-            >
-              <RotateCw className="h-4 w-4" />
-            </button>
+            <div className="mt-5 space-y-3">
+              <ModeStep title="泛读" text="先限制时间，判断主旨、态度和段落功能。" />
+              <ModeStep title="精读" text="再选择难句，拆主干、修饰语和语法卡点。" />
+              <ModeStep title="沉淀" text="最后留下本次材料、句子和去学过的语法点。" />
+            </div>
           </div>
-          <div className="mt-4 max-h-[420px] space-y-3 overflow-y-auto pr-1">
-            {historyStatus === 'loading' ? (
-              <p className="rounded-lg border border-dashed border-slate-200 p-3 text-sm text-muted-foreground">
-                正在加载历史材料…
-              </p>
-            ) : historyStatus === 'error' ? (
-              <p className="rounded-lg border border-dashed border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">
-                历史材料暂时无法加载。
-              </p>
-            ) : historyItems.length > 0 ? (
-              historyItems.map((item) => (
-                <HistoryItem
-                  key={item.id}
-                  item={item}
-                  onRestore={() => onRestoreHistory(item)}
-                />
-              ))
-            ) : (
-              <p className="rounded-lg border border-dashed border-slate-200 p-3 text-sm leading-6 text-muted-foreground">
-                还没有历史材料。开始训练或点击保存后会出现在这里。
-              </p>
-            )}
+          <div className="mt-5 rounded-lg border border-primary/20 bg-primary/5 p-4 text-sm leading-6 text-primary">
+            精读和泛读处理同一篇材料，但训练目标不同：泛读少看细节，精读少求速度。
           </div>
-        </div>
-      </SurfaceCard>
+
+          <div className="mt-5 border-t border-slate-200 pt-5">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <History className="h-5 w-5 text-primary" />
+                <h2 id={historyTitleId} className="text-lg font-black text-slate-950">材料历史</h2>
+              </div>
+              <button
+                type="button"
+                aria-label="刷新历史记录"
+                className="rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                onClick={onRefreshHistory}
+                title="刷新历史记录"
+              >
+                <RotateCw className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="mt-4 max-h-[420px] space-y-3 overflow-y-auto pr-1">
+              {historyStatus === 'loading' ? (
+                <p className="rounded-lg border border-dashed border-slate-200 p-3 text-sm text-muted-foreground">
+                  正在加载历史材料…
+                </p>
+              ) : historyStatus === 'error' ? (
+                <p className="rounded-lg border border-dashed border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">
+                  历史材料暂时无法加载。
+                </p>
+              ) : historyItems.length > 0 ? (
+                historyItems.map((item) => (
+                  <HistoryItem
+                    key={item.id}
+                    item={item}
+                    onRestore={() => {
+                      onRestoreHistory(item)
+                      setIsHistoryOpen(false)
+                    }}
+                  />
+                ))
+              ) : (
+                <p className="rounded-lg border border-dashed border-slate-200 p-3 text-sm leading-6 text-muted-foreground">
+                  还没有历史材料。开始训练或点击保存后会出现在这里。
+                </p>
+              )}
+            </div>
+          </div>
+        </SurfaceCard>
+      </div>
     </section>
   )
 }
@@ -791,6 +827,13 @@ function IntensiveWorkspace({
   onToggleGrammarOption: (optionId: string) => void
 }) {
   const [isSentenceListOpen, setIsSentenceListOpen] = useState(false)
+  const isSentenceListDrawer = useMediaQuery('(max-width: 1279px)')
+  const sentenceListPanelId = useId()
+  const sentenceListTitleId = useId()
+  const { containerRef: sentenceListPanelRef, handleKeyDown: handleSentenceListPanelKeyDown } = useFocusTrap<HTMLDivElement>({
+    isActive: isSentenceListDrawer && isSentenceListOpen,
+    onEscape: () => setIsSentenceListOpen(false),
+  })
   if (!canUseMaterial) {
     return <EmptyMaterialCard onOpenInput={() => onOpenWorkspace('input')} />
   }
@@ -805,37 +848,61 @@ function IntensiveWorkspace({
         variant="secondary"
         className="xl:hidden"
         onClick={() => setIsSentenceListOpen((current) => !current)}
+        aria-expanded={isSentenceListOpen}
+        aria-controls={sentenceListPanelId}
       >
         <PanelLeftOpen className="h-4 w-4" />
         {isSentenceListOpen ? '收起句子列表' : '展开句子列表'}
       </Button>
 
-      <SurfaceCard className={isSentenceListOpen ? '' : 'hidden xl:block'}>
-        <div className="flex items-center gap-2">
-          <ListChecks className="h-5 w-5 text-primary" />
-          <h2 className="text-lg font-black text-slate-950">选择精读句子</h2>
-        </div>
-        <div className="mt-4 max-h-[620px] space-y-2 overflow-y-auto pr-1">
-          {sentences.map((sentence) => (
-            <button
-              key={sentence.id}
-              type="button"
-              onClick={() => {
-                onSelectSentence(sentence)
-                setIsSentenceListOpen(false)
-              }}
-              className={`w-full rounded-lg border p-3 text-left text-sm leading-6 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
-                selectedSentenceId === sentence.id
-                  ? 'border-primary bg-primary/5 text-primary'
-                  : 'border-slate-200 bg-white text-slate-600 hover:border-primary/30 hover:text-slate-950'
-              }`}
-            >
-              <span className="mb-1 block text-xs font-black">Sentence {sentence.order}</span>
-              {sentence.text}
-            </button>
-          ))}
-        </div>
-      </SurfaceCard>
+      {isSentenceListDrawer && isSentenceListOpen ? (
+        <button
+          type="button"
+          aria-label="收起句子列表"
+          onClick={() => setIsSentenceListOpen(false)}
+          className="fixed inset-x-0 bottom-0 top-16 z-30 bg-slate-950/30 transition-opacity duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary motion-reduce:transition-none xl:hidden"
+        />
+      ) : null}
+      <div
+        id={sentenceListPanelId}
+        ref={isSentenceListDrawer ? sentenceListPanelRef : undefined}
+        role={isSentenceListDrawer ? 'dialog' : undefined}
+        aria-modal={isSentenceListDrawer ? 'true' : undefined}
+        aria-labelledby={isSentenceListDrawer ? sentenceListTitleId : undefined}
+        tabIndex={isSentenceListDrawer ? -1 : undefined}
+        onKeyDown={isSentenceListDrawer ? handleSentenceListPanelKeyDown : undefined}
+        className={isSentenceListOpen
+          ? 'fixed bottom-0 left-0 top-16 z-40 w-[min(88vw,24rem)] overflow-y-auto overscroll-contain transition-[transform,opacity] duration-200 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-primary motion-reduce:transition-none xl:static xl:w-auto xl:overflow-visible'
+          : 'hidden xl:block'
+        }
+      >
+        <SurfaceCard className="min-h-full">
+          <div className="flex items-center gap-2">
+            <ListChecks className="h-5 w-5 text-primary" />
+            <h2 id={sentenceListTitleId} className="text-lg font-black text-slate-950">选择精读句子</h2>
+          </div>
+          <div className="mt-4 max-h-[620px] space-y-2 overflow-y-auto pr-1">
+            {sentences.map((sentence) => (
+              <button
+                key={sentence.id}
+                type="button"
+                onClick={() => {
+                  onSelectSentence(sentence)
+                  setIsSentenceListOpen(false)
+                }}
+                className={`w-full rounded-lg border p-3 text-left text-sm leading-6 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
+                  selectedSentenceId === sentence.id
+                    ? 'border-primary bg-primary/5 text-primary'
+                    : 'border-slate-200 bg-white text-slate-600 hover:border-primary/30 hover:text-slate-950'
+                }`}
+              >
+                <span className="mb-1 block text-xs font-black">Sentence {sentence.order}</span>
+                {sentence.text}
+              </button>
+            ))}
+          </div>
+        </SurfaceCard>
+      </div>
 
       <div className="grid gap-5">
         <SurfaceCard>
@@ -981,6 +1048,18 @@ function ReviewWorkspace({
           />
         </div>
 
+        <div className="mt-5 grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
+          <ReadingFlowProgress
+            extensiveNotes={extensiveNotes}
+            intensiveNotes={intensiveNotes}
+            openedGrammarTopics={openedGrammarTopics}
+            selectedGrammarOptions={selectedGrammarOptions}
+            selectedSentences={selectedSentences}
+            sentences={sentences}
+          />
+          <ReadingCoveragePanel selectedSentences={selectedSentences} sentences={sentences} />
+        </div>
+
         <div className="mt-5 grid gap-4 lg:grid-cols-2">
           <ReviewBlock
             title="泛读记录"
@@ -1116,6 +1195,113 @@ function GrammarOptionCard({
         <ExternalLink className="h-4 w-4" />
         去学{option.label}
       </Button>
+    </div>
+  )
+}
+
+function ReadingFlowProgress({
+  extensiveNotes,
+  intensiveNotes,
+  openedGrammarTopics,
+  selectedGrammarOptions,
+  selectedSentences,
+  sentences,
+}: {
+  extensiveNotes: ExtensiveNotes
+  intensiveNotes: IntensiveNotes
+  openedGrammarTopics: string[]
+  selectedGrammarOptions: ReadingGrammarOption[]
+  selectedSentences: ReadingSentence[]
+  sentences: ReadingSentence[]
+}) {
+  const steps = [
+    { label: '主旨', done: Boolean(extensiveNotes.gist.trim()) },
+    { label: '态度', done: Boolean(extensiveNotes.attitude.trim()) },
+    { label: '中心句', done: Boolean(extensiveNotes.centralSentence.trim()) },
+    { label: '精读句', done: selectedSentences.length > 0 },
+    { label: '主干', done: Boolean(intensiveNotes.mainStructure.trim()) },
+    { label: '语法卡点', done: selectedGrammarOptions.length > 0 || openedGrammarTopics.length > 0 },
+  ]
+  const completed = steps.filter((step) => step.done).length
+  const percent = steps.length > 0 ? Math.round((completed / steps.length) * 100) : 0
+  const sentenceCoverage = sentences.length > 0 ? Math.round((selectedSentences.length / sentences.length) * 100) : 0
+
+  return (
+    <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <p className="text-sm font-black text-slate-950">阅读流程进度</p>
+          <p className="mt-1 text-xs leading-5 text-muted-foreground">
+            泛读、精读和语法沉淀的完成状态会集中到这里。
+          </p>
+        </div>
+        <span className="text-2xl font-black text-slate-950">{percent}%</span>
+      </div>
+      <div className="mt-4 h-3 overflow-hidden rounded-full bg-white">
+        <div className="h-full rounded-full bg-primary transition-[width] duration-500" style={{ width: `${percent}%` }} />
+      </div>
+      <div className="mt-4 grid gap-2 sm:grid-cols-3">
+        {steps.map((step) => (
+          <div
+            key={step.label}
+            className={`rounded-lg border px-3 py-2 text-xs font-bold ${
+              step.done
+                ? 'border-success/20 bg-success/10 text-success'
+                : 'border-slate-200 bg-white text-slate-500'
+            }`}
+          >
+            {step.done ? '已完成' : '待补'} · {step.label}
+          </div>
+        ))}
+      </div>
+      <p className="mt-3 text-xs font-semibold text-muted-foreground">
+        精读覆盖 {selectedSentences.length}/{sentences.length} 句，约 {sentenceCoverage}%。
+      </p>
+    </div>
+  )
+}
+
+function ReadingCoveragePanel({
+  selectedSentences,
+  sentences,
+}: {
+  selectedSentences: ReadingSentence[]
+  sentences: ReadingSentence[]
+}) {
+  const selectedIds = new Set(selectedSentences.map((sentence) => sentence.id))
+  const percent = sentences.length > 0 ? Math.round((selectedSentences.length / sentences.length) * 100) : 0
+  return (
+    <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+      <p className="text-sm font-black text-slate-950">正文高亮覆盖</p>
+      <p className="mt-1 text-xs leading-5 text-muted-foreground">
+        深色块表示已经进入精读的句子位置。
+      </p>
+      <div className="mt-4 flex h-12 overflow-hidden rounded-xl border border-slate-200 bg-white p-1">
+        {sentences.length > 0 ? (
+          sentences.map((sentence) => {
+            const isSelected = selectedIds.has(sentence.id)
+            return (
+              <span
+                key={sentence.id}
+                className={`mx-0.5 flex min-w-3 flex-1 items-center justify-center rounded-lg text-[10px] font-black transition-colors ${
+                  isSelected ? 'bg-primary text-primary-foreground' : 'bg-slate-100 text-slate-400'
+                }`}
+                title={`Sentence ${sentence.order}${isSelected ? '，已精读' : '，未精读'}`}
+              >
+                {sentence.order}
+              </span>
+            )
+          })
+        ) : (
+          <span className="flex flex-1 items-center justify-center text-xs font-semibold text-slate-400">
+            还没有可分析的句子
+          </span>
+        )}
+      </div>
+      <div className="mt-4 grid grid-cols-2 gap-2">
+        <MetricTile label="覆盖率" value={`${percent}%`} />
+        <MetricTile label="已精读" value={`${selectedSentences.length}/${sentences.length}`} />
+      </div>
     </div>
   )
 }

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import {
   ArrowLeft,
   ArrowRight,
@@ -35,6 +35,8 @@ import { WorkspaceTabs, type WorkspaceTab } from '@/components/layout/WorkspaceT
 import { Button } from '@/components/ui/Button'
 import { FilterChip } from '@/components/ui/FilterChip'
 import { SurfaceCard } from '@/components/ui/SurfaceCard'
+import { useFocusTrap } from '@/hooks/useFocusTrap'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
 
 type PhonemeCategory = 'monophthong' | 'diphthong' | 'consonant'
 type CategoryFilter = 'all' | PhonemeCategory
@@ -1086,7 +1088,7 @@ export function PronunciationPage({ learner, initialWorkspace = 'phonetic' }: Pr
                   autoComplete="off"
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}
-                  className="w-full rounded-lg border bg-background py-2 pl-9 pr-3 text-sm outline-none transition-colors focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
+                  className="w-full rounded-lg border bg-background py-2 pl-9 pr-3 text-sm transition-colors focus-visible:border-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                   placeholder="搜索 /iː/、cat、猫…"
                 />
               </div>
@@ -1111,6 +1113,8 @@ export function PronunciationPage({ learner, initialWorkspace = 'phonetic' }: Pr
                   <button
                     key={item.id}
                     type="button"
+                    aria-pressed={selected?.id === item.id}
+                    aria-label={`打开音标 ${item.symbol} ${item.word} 详情`}
                     onClick={() => rememberOpened(item)}
                     className={`group flex min-h-40 flex-col rounded-xl border bg-card p-4 text-left transition-[border-color,box-shadow,transform] duration-150 hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
                       selected?.id === item.id ? 'border-primary ring-2 ring-primary/15' : ''
@@ -1244,6 +1248,13 @@ function ShadowingWorkspace({
   onToggleHints: () => void
 }) {
   const [isListOpen, setIsListOpen] = useState(false)
+  const isListDrawer = useMediaQuery('(max-width: 1279px)')
+  const listPanelId = useId()
+  const listTitleId = useId()
+  const { containerRef: listPanelRef, handleKeyDown: handleListPanelKeyDown } = useFocusTrap<HTMLDivElement>({
+    isActive: isListDrawer && isListOpen,
+    onEscape: () => setIsListOpen(false),
+  })
   const ratingOptions: ShadowingSelfRating[] = ['smooth', 'okay', 'needs-practice']
   const recentRecords = items
     .map((item) => ({ item, record: getShadowingRecord(records, item.id) }))
@@ -1256,57 +1267,81 @@ function ShadowingWorkspace({
       <Button
         variant="secondary"
         className="xl:hidden"
+        aria-controls={listPanelId}
+        aria-expanded={isListOpen}
         onClick={() => setIsListOpen((current) => !current)}
       >
         <PanelLeftOpen className="h-4 w-4" />
         {isListOpen ? '收起句子列表' : '展开句子列表'}
       </Button>
 
-      <SurfaceCard className={`${isListOpen ? 'block' : 'hidden'} space-y-4 self-start xl:sticky xl:top-20 xl:block`}>
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-primary">Shadowing List</p>
-          <h2 className="mt-1 text-lg font-black text-foreground">句子列表</h2>
-          <p className="mt-1 text-sm leading-6 text-muted-foreground">
-            选择一句，先看分块，再按原句节奏开口跟读。
-          </p>
-        </div>
+      {isListDrawer && isListOpen && (
+        <button
+          type="button"
+          aria-label="关闭句子列表"
+          className="fixed inset-0 z-40 bg-slate-950/40 backdrop-blur-[2px] xl:hidden"
+          onClick={() => setIsListOpen(false)}
+        />
+      )}
 
-        <div className="max-h-[360px] space-y-2 overflow-y-auto pr-1 xl:max-h-[620px]">
-          {items.map((item, index) => {
-            const record = getShadowingRecord(records, item.id)
-            const isSelected = item.id === selectedItem.id
-            return (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => {
-                  onSelectItem(item.id)
-                  setIsListOpen(false)
-                }}
-                className={`w-full rounded-xl border p-3 text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
-                  isSelected
-                    ? 'border-primary bg-primary/5 ring-2 ring-primary/10'
-                    : 'border-slate-200 bg-white hover:border-primary/40 hover:bg-slate-50'
-                }`}
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <p className="text-xs font-semibold text-primary">#{index + 1}</p>
-                  <span className="rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600">
-                    {record.practiceCount > 0 ? `${record.practiceCount} 次` : '未练'}
-                  </span>
-                </div>
-                <p className="mt-2 text-sm font-bold leading-5 text-foreground">{item.sentence}</p>
-                <p className="mt-1 text-xs leading-5 text-muted-foreground">{item.meaning}</p>
-                {record.rating && (
-                  <p className="mt-2 text-xs font-semibold text-success">
-                    最近自评：{SHADOWING_RATING_LABELS[record.rating]}
-                  </p>
-                )}
-              </button>
-            )
-          })}
-        </div>
-      </SurfaceCard>
+      <div
+        id={listPanelId}
+        ref={isListDrawer ? listPanelRef : undefined}
+        role={isListDrawer ? 'dialog' : undefined}
+        aria-modal={isListDrawer ? true : undefined}
+        aria-labelledby={listTitleId}
+        tabIndex={isListDrawer ? -1 : undefined}
+        onKeyDown={isListDrawer ? handleListPanelKeyDown : undefined}
+        className={`${
+          isListOpen ? 'fixed inset-y-0 left-0 z-50 flex w-[min(88vw,360px)] p-3' : 'hidden'
+        } xl:sticky xl:top-20 xl:z-auto xl:block xl:w-auto xl:p-0`}
+      >
+        <SurfaceCard className="flex min-h-full w-full flex-col space-y-4 overflow-hidden xl:min-h-0">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-primary">Shadowing List</p>
+            <h2 id={listTitleId} className="mt-1 text-lg font-black text-foreground">句子列表</h2>
+            <p className="mt-1 text-sm leading-6 text-muted-foreground">
+              选择一句，先看分块，再按原句节奏开口跟读。
+            </p>
+          </div>
+
+          <div className="min-h-0 flex-1 space-y-2 overflow-y-auto pr-1 xl:max-h-[620px]">
+            {items.map((item, index) => {
+              const record = getShadowingRecord(records, item.id)
+              const isSelected = item.id === selectedItem.id
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => {
+                    onSelectItem(item.id)
+                    setIsListOpen(false)
+                  }}
+                  className={`w-full rounded-xl border p-3 text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
+                    isSelected
+                      ? 'border-primary bg-primary/5 ring-2 ring-primary/10'
+                      : 'border-slate-200 bg-white hover:border-primary/40 hover:bg-slate-50'
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <p className="text-xs font-semibold text-primary">#{index + 1}</p>
+                    <span className="rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600">
+                      {record.practiceCount > 0 ? `${record.practiceCount} 次` : '未练'}
+                    </span>
+                  </div>
+                  <p className="mt-2 text-sm font-bold leading-5 text-foreground">{item.sentence}</p>
+                  <p className="mt-1 text-xs leading-5 text-muted-foreground">{item.meaning}</p>
+                  {record.rating && (
+                    <p className="mt-2 text-xs font-semibold text-success">
+                      最近自评：{SHADOWING_RATING_LABELS[record.rating]}
+                    </p>
+                  )}
+                </button>
+              )
+            })}
+          </div>
+        </SurfaceCard>
+      </div>
 
       <section className="space-y-5">
         <SurfaceCard className="space-y-5">
@@ -1367,6 +1402,8 @@ function ShadowingWorkspace({
           </div>
 
           <ShadowingRhythmPanel item={selectedItem} isSpeaking={isSpeaking} />
+
+          <ShadowingRecorder key={selectedItem.id} item={selectedItem} />
 
           {areHintsVisible ? (
             <div className="grid gap-4 lg:grid-cols-2">
@@ -1458,6 +1495,216 @@ function ShadowingWorkspace({
           )}
         </SurfaceCard>
       </section>
+    </div>
+  )
+}
+
+type RecordingStatus = 'idle' | 'recording' | 'ready' | 'unsupported' | 'error'
+
+const IDLE_WAVEFORM_LEVELS = [18, 34, 22, 48, 30, 56, 26, 42, 20, 50, 28, 38]
+
+function ShadowingRecorder({ item }: { item: ShadowingItem }) {
+  const [status, setStatus] = useState<RecordingStatus>('idle')
+  const [audioUrl, setAudioUrl] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [levels, setLevels] = useState<number[]>(IDLE_WAVEFORM_LEVELS)
+  const chunksRef = useRef<Blob[]>([])
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null)
+  const streamRef = useRef<MediaStream | null>(null)
+  const audioContextRef = useRef<AudioContext | null>(null)
+  const animationFrameRef = useRef<number | null>(null)
+
+  const stopWaveform = () => {
+    if (animationFrameRef.current !== null) {
+      window.cancelAnimationFrame(animationFrameRef.current)
+      animationFrameRef.current = null
+    }
+    void audioContextRef.current?.close()
+    audioContextRef.current = null
+  }
+
+  const stopStream = () => {
+    streamRef.current?.getTracks().forEach((track) => track.stop())
+    streamRef.current = null
+  }
+
+  const resetRecording = () => {
+    if (audioUrl) URL.revokeObjectURL(audioUrl)
+    setAudioUrl(null)
+    setStatus('idle')
+    setError(null)
+    setLevels(IDLE_WAVEFORM_LEVELS)
+    chunksRef.current = []
+  }
+
+  const startWaveform = (stream: MediaStream) => {
+    if (typeof AudioContext === 'undefined') return
+    const audioContext = new AudioContext()
+    const analyser = audioContext.createAnalyser()
+    const source = audioContext.createMediaStreamSource(stream)
+    const data = new Uint8Array(analyser.frequencyBinCount)
+    analyser.fftSize = 128
+    source.connect(analyser)
+    audioContextRef.current = audioContext
+
+    const tick = () => {
+      analyser.getByteTimeDomainData(data)
+      const average = data.reduce((sum, value) => sum + Math.abs(value - 128), 0) / data.length
+      const nextLevel = Math.max(10, Math.min(96, Math.round(average * 4)))
+      setLevels((current) => [...current.slice(-23), nextLevel])
+      animationFrameRef.current = window.requestAnimationFrame(tick)
+    }
+    tick()
+  }
+
+  const startRecording = async () => {
+    if (typeof navigator === 'undefined' || !navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
+      setStatus('unsupported')
+      setError('当前浏览器不支持录音，可以继续用播放和自评完成练习。')
+      return
+    }
+
+    try {
+      resetRecording()
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      chunksRef.current = []
+      streamRef.current = stream
+      const recorder = new MediaRecorder(stream)
+      mediaRecorderRef.current = recorder
+      recorder.ondataavailable = (event) => {
+        if (event.data.size > 0) chunksRef.current.push(event.data)
+      }
+      recorder.onstop = () => {
+        stopWaveform()
+        stopStream()
+        const blob = new Blob(chunksRef.current, { type: recorder.mimeType || 'audio/webm' })
+        setAudioUrl(URL.createObjectURL(blob))
+        setStatus('ready')
+      }
+      recorder.onerror = () => {
+        stopWaveform()
+        stopStream()
+        setStatus('error')
+        setError('录音中断了，请检查麦克风权限后重试。')
+      }
+      recorder.start()
+      startWaveform(stream)
+      setStatus('recording')
+    } catch (recordingError) {
+      console.error('Shadowing recording error:', recordingError)
+      stopWaveform()
+      stopStream()
+      setStatus('error')
+      setError('无法启动麦克风，请允许浏览器录音权限后再试。')
+    }
+  }
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current?.state === 'recording') {
+      mediaRecorderRef.current.stop()
+    }
+  }
+
+  useEffect(() => {
+    return () => {
+      if (mediaRecorderRef.current?.state === 'recording') {
+        mediaRecorderRef.current.stop()
+      }
+      stopWaveform()
+      stopStream()
+      if (audioUrl) URL.revokeObjectURL(audioUrl)
+    }
+  }, [audioUrl])
+
+  const statusLabel = status === 'recording'
+    ? '录音中'
+    : status === 'ready'
+      ? '可回放'
+      : status === 'unsupported'
+        ? '不支持录音'
+        : status === 'error'
+          ? '录音失败'
+          : '等待录音'
+
+  return (
+    <div className="rounded-xl border border-slate-200 bg-white p-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <p className="text-sm font-bold text-foreground">本地录音回放</p>
+          <p className="mt-1 text-xs leading-5 text-muted-foreground">
+            录一遍当前句子，听自己的节奏、重音和停顿，再决定自评结果。
+          </p>
+        </div>
+        <span className={`inline-flex w-fit items-center gap-1 rounded-md px-2 py-1 text-xs font-bold ${
+          status === 'recording'
+            ? 'bg-rose-50 text-rose-700'
+            : status === 'ready'
+              ? 'bg-success/10 text-success'
+              : status === 'error' || status === 'unsupported'
+                ? 'bg-warning/10 text-warning'
+                : 'bg-slate-100 text-slate-500'
+        }`}>
+          <Mic2 className={`h-3.5 w-3.5 ${status === 'recording' ? 'animate-pulse' : ''}`} />
+          {statusLabel}
+        </span>
+      </div>
+
+      <WaveformPreview levels={levels} isActive={status === 'recording'} />
+
+      {error ? (
+        <p className="mt-3 rounded-lg border border-warning/20 bg-warning/10 px-3 py-2 text-sm font-semibold text-warning" aria-live="polite">
+          {error}
+        </p>
+      ) : null}
+
+      <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+        {status === 'recording' ? (
+          <Button variant="danger" onClick={stopRecording} className="justify-center">
+            <Mic2 className="h-4 w-4" />
+            停止录音
+          </Button>
+        ) : (
+          <Button onClick={() => void startRecording()} className="justify-center">
+            <Mic2 className="h-4 w-4" />
+            {audioUrl ? '重新录音' : '开始录音'}
+          </Button>
+        )}
+        <Button
+          variant="secondary"
+          onClick={resetRecording}
+          disabled={!audioUrl && status !== 'error' && status !== 'unsupported'}
+          className="justify-center"
+        >
+          <Repeat2 className="h-4 w-4" />
+          清空
+        </Button>
+      </div>
+
+      {audioUrl ? (
+        <div className="mt-4 rounded-xl border border-slate-100 bg-slate-50 p-3">
+          <p className="text-xs font-bold text-slate-500">回放：{item.sentence}</p>
+          <audio className="mt-2 w-full" controls src={audioUrl} />
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
+function WaveformPreview({ levels, isActive }: { levels: number[]; isActive: boolean }) {
+  return (
+    <div
+      className="mt-4 flex h-20 items-center gap-1 rounded-xl border border-slate-100 bg-slate-50 px-3"
+      aria-label={isActive ? '正在显示录音波形' : '录音波形预览'}
+    >
+      {levels.map((level, index) => (
+        <span
+          key={`${index}-${level}`}
+          className={`flex-1 rounded-full transition-[height,background-color] duration-150 motion-reduce:transition-none ${
+            isActive ? 'bg-primary' : 'bg-slate-300'
+          }`}
+          style={{ height: `${level}%` }}
+        />
+      ))}
     </div>
   )
 }
@@ -1748,6 +1995,11 @@ function PronunciationRecordsWorkspace({
     .filter(({ record }) => record.practiceCount > 0)
     .sort((left, right) => Date.parse(right.record.lastPracticedAt ?? '') - Date.parse(left.record.lastPracticedAt ?? ''))
     .slice(0, 4)
+  const shadowingTrendRows = shadowingItems
+    .map((item) => ({ item, record: getShadowingRecord(shadowingRecords, item.id) }))
+    .filter(({ record }) => record.practiceCount > 0)
+    .sort((left, right) => Date.parse(left.record.lastPracticedAt ?? '') - Date.parse(right.record.lastPracticedAt ?? ''))
+    .slice(-8)
 
   return (
     <section className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
@@ -1784,6 +2036,17 @@ function PronunciationRecordsWorkspace({
             <span className="text-sm font-bold text-muted-foreground">{openedCount} 个音标打开过</span>
           </div>
           <RecordBarChart rows={shadowingRows} />
+        </SurfaceCard>
+
+        <SurfaceCard>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-primary">Shadowing Trend</p>
+              <h2 className="mt-1 text-lg font-black text-foreground">近期跟读次数</h2>
+            </div>
+            <span className="text-xs font-bold text-muted-foreground">最近 {shadowingTrendRows.length || 0} 句</span>
+          </div>
+          <ShadowingPracticeTrend rows={shadowingTrendRows} />
         </SurfaceCard>
       </div>
 
@@ -1824,6 +2087,54 @@ function PronunciationRecordsWorkspace({
         </SurfaceCard>
       </div>
     </section>
+  )
+}
+
+function ShadowingPracticeTrend({
+  rows,
+}: {
+  rows: Array<{ item: ShadowingItem; record: ShadowingPracticeRecord }>
+}) {
+  if (rows.length === 0) {
+    return (
+      <div className="mt-4 rounded-xl border border-dashed border-slate-300 p-6 text-center text-sm text-muted-foreground">
+        还没有趋势数据。完成几次 shadowing 自评后，这里会显示最近练习节奏。
+      </div>
+    )
+  }
+
+  const maxValue = Math.max(...rows.map(({ record }) => record.practiceCount), 1)
+
+  return (
+    <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
+      <div className="flex h-40 items-end gap-2">
+        {rows.map(({ item, record }, index) => {
+          const height = Math.max(10, Math.round((record.practiceCount / maxValue) * 112))
+          return (
+            <div key={item.id} className="flex min-w-0 flex-1 flex-col items-center gap-2">
+              <div className="flex h-28 w-full items-end justify-center">
+                <div
+                  className="w-full max-w-9 rounded-t-md bg-primary transition-[height] duration-500 motion-reduce:transition-none"
+                  style={{ height: `${height}px` }}
+                  title={`${item.sentence}：${record.practiceCount} 次`}
+                />
+              </div>
+              <span className="text-[10px] font-black text-slate-400">{index + 1}</span>
+            </div>
+          )
+        })}
+      </div>
+      <div className="mt-3 grid gap-2 sm:grid-cols-2">
+        {rows.slice(-4).map(({ item, record }) => (
+          <div key={`trend-label-${item.id}`} className="min-w-0 rounded-lg bg-white px-3 py-2">
+            <p className="truncate text-xs font-bold text-foreground">{item.sentence}</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {record.practiceCount} 次 · {formatShadowingPracticeTime(record.lastPracticedAt)}
+            </p>
+          </div>
+        ))}
+      </div>
+    </div>
   )
 }
 
@@ -1874,12 +2185,36 @@ function PhonemeDetailPanel({
   onSpeak: () => void
   onSpeakPractice: (example: PracticeExample) => void
 }) {
+  const isDetailSheet = useMediaQuery('(max-width: 1279px)')
+  const detailTitleId = useId()
+  const { containerRef: detailPanelRef, handleKeyDown: handleDetailPanelKeyDown } = useFocusTrap<HTMLElement>({
+    isActive: isDetailSheet,
+    onEscape: onClose,
+  })
+
   return (
-    <aside className="sticky top-20 self-start rounded-xl border bg-card shadow-sm max-xl:fixed max-xl:inset-x-3 max-xl:bottom-3 max-xl:z-40 max-xl:max-h-[86vh] max-xl:overflow-y-auto">
+    <>
+      {isDetailSheet && (
+        <button
+          type="button"
+          aria-label="关闭音标详情"
+          className="fixed inset-0 z-40 bg-slate-950/40 backdrop-blur-[2px] xl:hidden"
+          onClick={onClose}
+        />
+      )}
+      <aside
+        ref={isDetailSheet ? detailPanelRef : undefined}
+        role={isDetailSheet ? 'dialog' : undefined}
+        aria-modal={isDetailSheet ? true : undefined}
+        aria-labelledby={detailTitleId}
+        tabIndex={isDetailSheet ? -1 : undefined}
+        onKeyDown={isDetailSheet ? handleDetailPanelKeyDown : undefined}
+        className="sticky top-20 self-start rounded-xl border bg-card shadow-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary max-xl:fixed max-xl:inset-x-3 max-xl:bottom-3 max-xl:z-50 max-xl:max-h-[86vh] max-xl:overflow-y-auto max-xl:overscroll-contain max-xl:pb-[max(1rem,env(safe-area-inset-bottom))]"
+      >
       <div className="flex items-center justify-between border-b p-4">
         <div>
           <p className="text-xs text-muted-foreground">{CATEGORY_META[phoneme.category].label}</p>
-          <h2 className="text-lg font-bold text-foreground">音标详情</h2>
+          <h2 id={detailTitleId} className="text-lg font-bold text-foreground">音标详情</h2>
         </div>
         <button
           type="button"
@@ -1963,7 +2298,8 @@ function PhonemeDetailPanel({
           </button>
         </div>
       </div>
-    </aside>
+      </aside>
+    </>
   )
 }
 

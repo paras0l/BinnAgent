@@ -130,6 +130,10 @@ class TestExploreCapabilities:
         assert all(item["title"] for item in capabilities)
         assert all(item["category"] for item in capabilities)
         assert all(item["status"] for item in capabilities)
+        vocabulary_manager = next(
+            item for item in capabilities if item["capability_id"] == "vocabulary-manager"
+        )
+        assert vocabulary_manager["tool_target"] == "vocabulary-manager"
 
     @pytest.mark.asyncio
     async def test_old_explore_skills_endpoint_removed(self, client):

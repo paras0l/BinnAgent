@@ -33,15 +33,25 @@ import { useToast } from '@/hooks/useToast'
 import type { VocabularyPracticeMode } from '@/pages/VocabularyPracticePage'
 import { VocabularyPracticePage } from '@/pages/VocabularyPracticePage'
 
-type DashboardWorkspace = 'home' | 'vocabulary' | 'profile' | 'records'
+const VOCABULARY_PAGE_SIZE = 12
+
+export type DashboardWorkspace = 'home' | 'vocabulary' | 'profile' | 'records'
 
 interface DashboardPageProps {
   learner: Learner
+  initialWorkspace?: DashboardWorkspace
+  initialVocabularyListOpen?: boolean
   onOpenDailyLearning: () => void
   onStartVocabularyPractice: (mode?: VocabularyPracticeMode) => void
 }
 
-export function DashboardPage({ learner, onOpenDailyLearning, onStartVocabularyPractice }: DashboardPageProps) {
+export function DashboardPage({
+  learner,
+  initialVocabularyListOpen = false,
+  initialWorkspace = 'home',
+  onOpenDailyLearning,
+  onStartVocabularyPractice,
+}: DashboardPageProps) {
   const { showToast } = useToast()
   const [summary, setSummary] = useState<DashboardSummary | null>(null)
   const [memorySummary, setMemorySummary] = useState<MemorySummary | null>(null)
@@ -49,16 +59,17 @@ export function DashboardPage({ learner, onOpenDailyLearning, onStartVocabularyP
   const [isLoading, setIsLoading] = useState(true)
   const [isReviewing, setIsReviewing] = useState(false)
   const [isAddingWord, setIsAddingWord] = useState(false)
-  const [isVocabListOpen, setIsVocabListOpen] = useState(false)
+  const [isVocabListOpen, setIsVocabListOpen] = useState(initialVocabularyListOpen)
   const [isLoadingVocabulary, setIsLoadingVocabulary] = useState(false)
   const [deletingWordId, setDeletingWordId] = useState<string | null>(null)
   const [wordPendingDelete, setWordPendingDelete] = useState<VocabularyListItem | null>(null)
   const [vocabularyItems, setVocabularyItems] = useState<VocabularyListItem[]>([])
+  const [vocabPage, setVocabPage] = useState(1)
   const [vocabQuery, setVocabQuery] = useState('')
   const [newWord, setNewWord] = useState('')
   const [newPhonetic, setNewPhonetic] = useState('')
   const [newMeaning, setNewMeaning] = useState('')
-  const [activeWorkspace, setActiveWorkspace] = useState<DashboardWorkspace>('home')
+  const [activeWorkspace, setActiveWorkspace] = useState<DashboardWorkspace>(initialWorkspace)
   const [detailItemId, setDetailItemId] = useState<string | null>(null)
 
   const loadDashboard = useCallback(async () => {
@@ -118,11 +129,30 @@ export function DashboardPage({ learner, onOpenDailyLearning, onStartVocabularyP
       )
     })
   }, [vocabQuery, vocabularyItems])
+  const vocabularyTotalPages = Math.max(1, Math.ceil(filteredVocabulary.length / VOCABULARY_PAGE_SIZE))
+  const safeVocabularyPage = Math.min(vocabPage, vocabularyTotalPages)
+  const pagedVocabulary = useMemo(() => {
+    const start = (safeVocabularyPage - 1) * VOCABULARY_PAGE_SIZE
+    return filteredVocabulary.slice(start, start + VOCABULARY_PAGE_SIZE)
+  }, [filteredVocabulary, safeVocabularyPage])
 
   const handleOpenVocabularyList = () => {
     setIsVocabListOpen(true)
+    setVocabPage(1)
     void loadVocabularyList()
   }
+
+  const handleOpenVocabularyManager = () => {
+    setActiveWorkspace('vocabulary')
+    handleOpenVocabularyList()
+  }
+
+  useEffect(() => {
+    if (initialWorkspace === 'vocabulary' && initialVocabularyListOpen) {
+      const timer = window.setTimeout(() => void loadVocabularyList(), 0)
+      return () => window.clearTimeout(timer)
+    }
+  }, [initialVocabularyListOpen, initialWorkspace, loadVocabularyList])
 
   const handleRate = async (rating: 1 | 2 | 3 | 4) => {
     if (!currentVocab) return
@@ -234,6 +264,7 @@ export function DashboardPage({ learner, onOpenDailyLearning, onStartVocabularyP
         learnerName={learner.nickname}
         summary={summary}
         onOpenDailyLearning={onOpenDailyLearning}
+        onOpenVocabularyManager={handleOpenVocabularyManager}
         onOpenProfile={() => setActiveWorkspace('profile')}
         onOpenRecords={() => setActiveWorkspace('records')}
         onStartVocabularyPractice={onStartVocabularyPractice}
@@ -323,7 +354,10 @@ export function DashboardPage({ learner, onOpenDailyLearning, onStartVocabularyP
                   autoComplete="off"
                   aria-label="搜索词汇本"
                   value={vocabQuery}
-                  onChange={(event) => setVocabQuery(event.target.value)}
+                  onChange={(event) => {
+                    setVocabQuery(event.target.value)
+                    setVocabPage(1)
+                  }}
                   className="w-full rounded-lg border bg-background py-2 pl-9 pr-3 text-sm outline-none transition-colors focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20 md:w-64"
                   placeholder="搜索单词、音标或释义…"
                 />
@@ -356,16 +390,27 @@ export function DashboardPage({ learner, onOpenDailyLearning, onStartVocabularyP
                 没有匹配的词汇。
               </div>
             ) : (
-              <div className="grid gap-3 md:grid-cols-2">
-                {filteredVocabulary.map((item) => (
-                  <VocabularyListRow
-                    key={item.id}
-                    item={item}
-                    isDeleting={deletingWordId === item.id}
-                    onDelete={setWordPendingDelete}
-                    onOpen={(selected) => setDetailItemId(selected.id)}
-                  />
-                ))}
+              <div className="space-y-3">
+                <div className="max-h-[min(64vh,760px)] overflow-y-auto rounded-xl border border-slate-100 bg-slate-50/60 p-2">
+                  <div className="grid gap-3 md:grid-cols-2">
+                    {pagedVocabulary.map((item) => (
+                      <VocabularyListRow
+                        key={item.id}
+                        item={item}
+                        isDeleting={deletingWordId === item.id}
+                        onDelete={setWordPendingDelete}
+                        onOpen={(selected) => setDetailItemId(selected.id)}
+                      />
+                    ))}
+                  </div>
+                </div>
+                <VocabularyListPagination
+                  currentPage={safeVocabularyPage}
+                  pageSize={VOCABULARY_PAGE_SIZE}
+                  totalItems={filteredVocabulary.length}
+                  totalPages={vocabularyTotalPages}
+                  onPageChange={setVocabPage}
+                />
               </div>
             )}
           </div>
@@ -466,6 +511,7 @@ function LearningCenterHome({
   learnerName,
   summary,
   onOpenDailyLearning,
+  onOpenVocabularyManager,
   onOpenProfile,
   onOpenRecords,
   onStartVocabularyPractice,
@@ -473,6 +519,7 @@ function LearningCenterHome({
   learnerName: string
   summary: DashboardSummary
   onOpenDailyLearning: () => void
+  onOpenVocabularyManager: () => void
   onOpenProfile: () => void
   onOpenRecords: () => void
   onStartVocabularyPractice: (mode?: VocabularyPracticeMode) => void
@@ -480,152 +527,205 @@ function LearningCenterHome({
   const todayPercent = toPercent(summary.today_goal.completed, summary.today_goal.total)
   const dueCount = summary.stats.today_reviews
   const focusReasons = buildFocusReasons(summary)
+  const nextActionLabel = dueCount > 0 ? `先复习 ${dueCount} 个词` : '开始今日学习'
 
   return (
     <PageShell>
-        <FeatureHero
-          eyebrow="今日学习"
-          title="今天先完成一组小闭环"
-          description={`${learnerName}，按推荐顺序学 15 分钟：先回忆，再进教材，最后用一道题确认掌握。`}
-          actions={
-            <>
-              <Button onClick={onOpenDailyLearning}><BookOpen className="size-4" />开始学习</Button>
-              <Button variant="secondary" onClick={() => onStartVocabularyPractice('review')}><Clock3 className="size-4" />先复习词汇</Button>
-            </>
-          }
-          stats={[
-            { label: '今日目标', value: `${summary.today_goal.completed}/${summary.today_goal.total}`, tone: todayPercent >= 100 ? 'success' : 'primary' },
-            { label: '待复习', value: dueCount, tone: dueCount > 0 ? 'warning' : 'success' },
-            { label: '连续学习', value: `${summary.stats.streak_days} 天` },
-            { label: '正确率', value: `${summary.stats.accuracy}%` },
-          ]}
-        />
+      <section className="rounded-[2rem] border border-slate-200 bg-white px-5 py-6 shadow-sm sm:px-7 lg:px-8">
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_300px] lg:items-end">
+          <div>
+            <p className="text-xs font-black uppercase text-primary">学习中心</p>
+            <h1 className="mt-3 text-3xl font-black leading-tight text-slate-950 sm:text-4xl">
+              {learnerName}，今天从这里开始
+            </h1>
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-500">
+              先完成当前最该做的一步，再继续教材。系统会按复习、学习、检查题的顺序带你往前走。
+            </p>
+          </div>
+          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-1">
+            <Button className="justify-between" onClick={dueCount > 0 ? () => onStartVocabularyPractice('review') : onOpenDailyLearning}>
+              {nextActionLabel}<ArrowRight className="size-4" />
+            </Button>
+            {dueCount > 0 ? (
+              <Button variant="secondary" className="justify-between" onClick={onOpenDailyLearning}>
+                进入教材学习<ArrowRight className="size-4" />
+              </Button>
+            ) : null}
+          </div>
+        </div>
 
-        <section className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
-          <PrimaryLearningRoute
-            reasons={focusReasons}
-            summary={summary}
-            todayPercent={todayPercent}
-            onOpenDailyLearning={onOpenDailyLearning}
-            onStartVocabularyPractice={onStartVocabularyPractice}
-          />
-          <aside className="space-y-4">
-            <TodayReviewCard summary={summary} onStartVocabularyPractice={onStartVocabularyPractice} />
-            <ActivityCalendarCard summary={summary} onOpenRecords={onOpenRecords} />
-          </aside>
-        </section>
+        <div className="mt-6 grid gap-3 border-t border-slate-100 pt-5 sm:grid-cols-3">
+          <LearningPulseItem label={summary.today_goal.label} value={`${summary.today_goal.completed}/${summary.today_goal.total}`} detail={`${todayPercent}%`} tone={todayPercent >= 100 ? 'success' : 'primary'} />
+          <LearningPulseItem label="待复习" value={dueCount} detail={dueCount > 0 ? '建议先清' : '无积压'} tone={dueCount > 0 ? 'warning' : 'success'} />
+          <LearningPulseItem label="连续学习" value={`${summary.stats.streak_days} 天`} detail={`${summary.weekly_goal.completed}/${summary.weekly_goal.total} 本周`} tone="neutral" />
+        </div>
+      </section>
 
-        <LearningRouteGrid
+      <section className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
+        <TodayLearningFlow
+          reasons={focusReasons}
           summary={summary}
-          onOpenProfile={onOpenProfile}
-          onOpenRecords={onOpenRecords}
           onOpenDailyLearning={onOpenDailyLearning}
           onStartVocabularyPractice={onStartVocabularyPractice}
         />
-
-        <LearningStatusStrip summary={summary} reasons={focusReasons} onOpenProfile={onOpenProfile} />
+        <LearningSideRail
+          summary={summary}
+          onOpenVocabularyManager={onOpenVocabularyManager}
+          onOpenProfile={onOpenProfile}
+          onOpenRecords={onOpenRecords}
+          onStartVocabularyPractice={onStartVocabularyPractice}
+        />
+      </section>
     </PageShell>
   )
 }
 
-function PrimaryLearningRoute({
+function TodayLearningFlow({
   reasons,
   summary,
-  todayPercent,
   onOpenDailyLearning,
   onStartVocabularyPractice,
 }: {
   reasons: string[]
   summary: DashboardSummary
-  todayPercent: number
   onOpenDailyLearning: () => void
   onStartVocabularyPractice: (mode?: VocabularyPracticeMode) => void
 }) {
   const steps = buildTodaySteps(summary)
   return (
-    <SurfaceCard className="border-primary/20 p-0">
-      <div className="grid gap-0 xl:grid-cols-[minmax(0,1fr)_260px]">
-        <div className="p-5 sm:p-6">
-        <div className="min-w-0">
-          <p className="text-xs font-bold uppercase tracking-wide text-primary">主学习路线</p>
-          <h2 className="mt-2 text-2xl font-black text-slate-950">继续教材主线，把今天的任务做完</h2>
+    <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <p className="text-xs font-black uppercase text-primary">今日学习流</p>
+          <h2 className="mt-2 text-2xl font-black text-slate-950">按顺序完成，不用挑入口</h2>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
-            预计 15-20 分钟。系统会优先处理到期复习，再回到当前教材单元完成一组短练习。
+            建议 15-20 分钟。按复习、教材、检查题推进，今天只完成一组清晰任务。
           </p>
-
-          <div className="mt-5 grid gap-3">
-            {steps.map((step, index) => (
-              <button
-                key={step.title}
-                type="button"
-                onClick={step.action === 'review' ? () => onStartVocabularyPractice('review') : onOpenDailyLearning}
-                className="grid grid-cols-[34px_minmax(0,1fr)_auto] items-start gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-left transition hover:border-indigo-200 hover:bg-indigo-50/40"
-              >
-                <span className={`flex size-8 items-center justify-center rounded-lg text-sm font-black ${
-                  step.state === 'done' ? 'bg-emerald-100 text-emerald-700' : index === 0 ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-600'
-                }`}>
-                  {index + 1}
-                </span>
-                <span className="min-w-0">
-                  <span className="block text-sm font-black text-slate-950">{step.title}</span>
-                  <span className="mt-1 block text-xs leading-5 text-slate-500">{step.description}</span>
-                </span>
-                <ArrowRight className="mt-2 size-4 text-slate-400" />
-              </button>
-            ))}
-          </div>
         </div>
-        </div>
-
-        <div className="border-t border-slate-100 bg-slate-50 p-5 xl:border-l xl:border-t-0">
-          <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
-            <div className="flex items-center justify-between text-sm">
-              <span className="font-bold text-slate-600">{summary.today_goal.label}</span>
-              <span className="font-black text-slate-950">{summary.today_goal.completed}/{summary.today_goal.total}</span>
-            </div>
-            <ProgressBar value={todayPercent} className="mt-3" />
-          </div>
-          <div className="mt-4 rounded-xl bg-white px-4 py-3 text-sm leading-6 text-slate-600 shadow-sm ring-1 ring-slate-200">
-            <p className="text-xs font-black uppercase text-slate-500">推荐原因</p>
-            <ul className="mt-2 space-y-1">
-              {reasons.slice(0, 3).map((reason) => <li key={reason}>{reason}</li>)}
-            </ul>
-          </div>
-          <Button className="mt-4 w-full" onClick={onOpenDailyLearning}>开始今日学习</Button>
-        </div>
+        <Button className="shrink-0" onClick={onOpenDailyLearning}>
+          开始今日学习<ArrowRight className="size-4" />
+        </Button>
       </div>
-    </SurfaceCard>
+
+      <div className="mt-6 grid gap-3">
+        {steps.map((step, index) => (
+          <button
+            key={step.title}
+            type="button"
+            onClick={step.action === 'review' ? () => onStartVocabularyPractice('review') : onOpenDailyLearning}
+            className="grid grid-cols-[34px_minmax(0,1fr)] items-start gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-left transition hover:border-primary/40 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          >
+            <span className={`flex size-8 items-center justify-center rounded-lg text-sm font-black ${
+              step.state === 'done' ? 'bg-emerald-100 text-emerald-700' : index === 0 ? 'bg-primary text-primary-foreground' : 'bg-slate-100 text-slate-600'
+            }`}>
+              {step.state === 'done' ? '✓' : index + 1}
+            </span>
+            <span className="min-w-0">
+              <span className="flex flex-wrap items-center gap-2">
+                <span className="text-sm font-black text-slate-950">{step.title}</span>
+                {step.badge ? <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-bold text-slate-500">{step.badge}</span> : null}
+              </span>
+              <span className="mt-1 block text-xs leading-5 text-slate-500">{step.description}</span>
+            </span>
+          </button>
+        ))}
+      </div>
+
+      <div className="mt-5 rounded-xl bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-600">
+        <p className="text-xs font-black uppercase text-slate-500">为什么现在这样排</p>
+        <ul className="mt-2 grid gap-1 sm:grid-cols-2">
+          {reasons.slice(0, 2).map((reason) => <li key={reason}>{reason}</li>)}
+        </ul>
+      </div>
+    </section>
   )
 }
 
-function TodayReviewCard({
+function LearningSideRail({
   summary,
+  onOpenVocabularyManager,
+  onOpenProfile,
+  onOpenRecords,
   onStartVocabularyPractice,
 }: {
   summary: DashboardSummary
+  onOpenVocabularyManager: () => void
+  onOpenProfile: () => void
+  onOpenRecords: () => void
   onStartVocabularyPractice: (mode?: VocabularyPracticeMode) => void
 }) {
-  const due = summary.stats.today_reviews
+  const latestActivity = summary.daily_activity.slice(-7)
+  const maxLearningAmount = Math.max(...latestActivity.map((item) => item.count), 1)
+
   return (
-    <SurfaceCard>
-      <div className="flex items-center justify-between gap-3">
-        <SectionHeading icon={<Clock3 className="size-4" />} title="复习队列" />
-        <span className={`rounded-lg px-2 py-1 text-xs font-black ${due > 0 ? 'bg-amber-50 text-amber-700' : 'bg-emerald-50 text-emerald-700'}`}>
-          {due > 0 ? `${due} 个到期` : '已清空'}
-        </span>
+    <aside className="space-y-3">
+      <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div className="flex items-center justify-between gap-3">
+          <SectionHeading icon={<CalendarDays className="size-4" />} title="最近 7 天" />
+          <span className="text-xs font-bold text-slate-500">{summary.stats.streak_days} 天连续</span>
+        </div>
+        <div className="mt-4 grid grid-cols-7 gap-2" aria-label="最近 7 天学习活跃度">
+          {latestActivity.map((item) => {
+            const intensity = item.count === 0 ? 0 : 0.18 + (item.count / maxLearningAmount) * 0.82
+            return (
+              <div
+                key={item.date}
+                className="aspect-square rounded-[4px] bg-slate-100 ring-1 ring-inset ring-slate-200/70"
+                style={item.count === 0 ? undefined : { backgroundColor: `rgb(79 70 229 / ${intensity.toFixed(2)})` }}
+                title={`${formatActivityDate(item.date)}，学习量 ${item.count}`}
+              />
+            )
+          })}
+        </div>
+      </section>
+
+      <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <p className="text-sm font-black text-slate-950">辅助入口</p>
+        <div className="mt-3 grid gap-2">
+          <Button variant="secondary" className="justify-between" onClick={() => onStartVocabularyPractice()}>
+            词汇训练<ArrowRight className="size-4" />
+          </Button>
+          <Button variant="secondary" className="justify-between" onClick={onOpenVocabularyManager}>
+            词汇本管理<ArrowRight className="size-4" />
+          </Button>
+          <Button variant="secondary" className="justify-between" onClick={onOpenProfile}>
+            学习画像<ArrowRight className="size-4" />
+          </Button>
+          <Button variant="secondary" className="justify-between" onClick={onOpenRecords}>
+            学习记录<ArrowRight className="size-4" />
+          </Button>
+        </div>
+      </section>
+    </aside>
+  )
+}
+
+function LearningPulseItem({
+  detail,
+  label,
+  tone,
+  value,
+}: {
+  detail: string
+  label: string
+  tone: 'neutral' | 'primary' | 'success' | 'warning'
+  value: string | number
+}) {
+  const toneClass = {
+    neutral: 'bg-slate-50 text-slate-600',
+    primary: 'bg-indigo-50 text-indigo-700',
+    success: 'bg-emerald-50 text-emerald-700',
+    warning: 'bg-amber-50 text-amber-700',
+  }[tone]
+
+  return (
+    <div className="rounded-xl bg-slate-50 px-4 py-3">
+      <p className="text-xs font-bold text-slate-500">{label}</p>
+      <div className="mt-2 flex items-end justify-between gap-3">
+        <p className="text-2xl font-black text-slate-950">{value}</p>
+        <span className={`rounded-md px-2 py-1 text-xs font-black ${toneClass}`}>{detail}</span>
       </div>
-      <p className="mt-3 text-sm leading-6 text-slate-500">
-        {due > 0 ? '先主动回忆到期词汇，可以降低后面教材练习的负担。' : '今天没有积压词汇，可以直接进入教材任务。'}
-      </p>
-      <div className="mt-4 grid gap-2">
-        <Button variant={due > 0 ? 'primary' : 'secondary'} className="w-full justify-between" onClick={() => onStartVocabularyPractice('review')}>
-          开始复习 <ArrowRight className="size-4" />
-        </Button>
-        <Button variant="secondary" className="w-full justify-between" onClick={() => onStartVocabularyPractice('spelling')}>
-          拼写练习 <ArrowRight className="size-4" />
-        </Button>
-      </div>
-    </SurfaceCard>
+    </div>
   )
 }
 
@@ -678,115 +778,6 @@ function ActivityCalendarCard({
           </div>
         ) : null}
       </SurfaceCard>
-    </section>
-  )
-}
-
-function LearningRouteGrid({
-  summary,
-  onOpenProfile,
-  onOpenRecords,
-  onOpenDailyLearning,
-  onStartVocabularyPractice,
-}: {
-  summary: DashboardSummary
-  onOpenProfile: () => void
-  onOpenRecords: () => void
-  onOpenDailyLearning: () => void
-  onStartVocabularyPractice: (mode?: VocabularyPracticeMode) => void
-}) {
-  return (
-    <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-      <LearningRouteCard
-        icon={BookOpen}
-        title="教材学习"
-        description="沿着当前单元完成今日课程。"
-        status={`${summary.today_goal.completed}/${summary.today_goal.total} 项`}
-        action="继续"
-        onAction={onOpenDailyLearning}
-      />
-      <LearningRouteCard
-        icon={Clock3}
-        title="词汇练习"
-        description="按默认设置进入新词、复习或拼写任务。"
-        status={`${summary.stats.today_reviews} 个待复习`}
-        action="开始"
-        onAction={() => onStartVocabularyPractice()}
-      />
-      <LearningRouteCard
-        icon={Target}
-        title="错因复盘"
-        description="查看近期薄弱点，安排下一组短练习。"
-        status={summary.error_patterns.length > 0 ? `${summary.error_patterns.length} 类薄弱点` : '暂无明显薄弱点'}
-        action="查看"
-        onAction={onOpenProfile}
-      />
-      <LearningRouteCard
-        icon={CalendarDays}
-        title="学习记录"
-        description="回顾最近 14 天活跃度和学习节奏。"
-        status={`${summary.stats.streak_days} 天连续学习`}
-        action="查看"
-        onAction={onOpenRecords}
-      />
-    </section>
-  )
-}
-
-function LearningRouteCard({
-  action,
-  description,
-  icon: Icon,
-  onAction,
-  status,
-  title,
-}: {
-  action: string
-  description: string
-  icon: typeof BookOpen
-  onAction: () => void
-  status: string
-  title: string
-}) {
-  return (
-    <SurfaceCard className="flex min-h-[220px] flex-col">
-      <div className="flex size-11 items-center justify-center rounded-xl border border-indigo-200 bg-indigo-50 text-indigo-600">
-        <Icon className="size-5" />
-      </div>
-      <h3 className="mt-4 text-lg font-black text-slate-950">{title}</h3>
-      <p className="mt-2 min-h-12 text-sm leading-6 text-slate-500">{description}</p>
-      <p className="mt-3 text-sm font-black text-primary">{status}</p>
-      <div className="mt-auto pt-4">
-        <Button variant="secondary" className="w-full justify-between" onClick={onAction}>{action}<ArrowRight className="size-4" /></Button>
-      </div>
-    </SurfaceCard>
-  )
-}
-
-function LearningStatusStrip({
-  summary,
-  reasons,
-  onOpenProfile,
-}: {
-  summary: DashboardSummary
-  reasons: string[]
-  onOpenProfile: () => void
-}) {
-  const leadingReason = reasons[0] ?? '今天从一个小任务开始，保持学习连续性。'
-  return (
-    <section className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm shadow-sm lg:flex-row lg:items-center lg:justify-between">
-      <div className="flex min-w-0 items-start gap-3">
-        <BrainCircuit className="mt-0.5 size-4 shrink-0 text-primary" />
-        <p className="min-w-0 text-slate-600">
-          <span className="font-black text-slate-900">我的学习画像：</span>{leadingReason}
-        </p>
-      </div>
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-        <p className="shrink-0 font-bold text-slate-500">正确率 {summary.stats.accuracy}% · 词汇 {summary.stats.total_vocab}</p>
-        <Button variant="secondary" className="shrink-0" onClick={onOpenProfile}>
-          查看我的学习画像 <ArrowRight className="size-4" />
-        </Button>
-      </div>
     </section>
   )
 }
@@ -1326,18 +1317,21 @@ function buildTodaySteps(summary: DashboardSummary) {
       title: summary.stats.today_reviews > 0 ? `复习 ${summary.stats.today_reviews} 个到期词汇` : '快速热身',
       description: summary.stats.today_reviews > 0 ? '先遮住答案主动回忆，再根据熟练度评分。' : '用一两个已学词汇进入状态。',
       action: 'review',
+      badge: summary.stats.today_reviews > 0 ? '建议优先' : '完成',
       state: summary.stats.today_reviews === 0 ? 'done' : 'next',
     },
     {
       title: '继续当前教材单元',
       description: '按课本单元查看词汇、句式、语法和语音要点。',
       action: 'lesson',
+      badge: summary.today_goal.completed >= summary.today_goal.total ? '已完成' : '主线',
       state: summary.today_goal.completed >= summary.today_goal.total ? 'done' : 'next',
     },
     {
       title: '完成一道检查题',
       description: '用教材语境确认今天学到的内容能不能用出来。',
       action: 'lesson',
+      badge: '收口',
       state: 'next',
     },
   ] as const
@@ -1397,6 +1391,52 @@ function VocabularyModeCard({
       <span className="block text-base font-black">{title}</span>
       <span className={`mt-1 block text-xs leading-5 ${descriptionClass}`}>{description}</span>
     </button>
+  )
+}
+
+function VocabularyListPagination({
+  currentPage,
+  onPageChange,
+  pageSize,
+  totalItems,
+  totalPages,
+}: {
+  currentPage: number
+  onPageChange: (page: number) => void
+  pageSize: number
+  totalItems: number
+  totalPages: number
+}) {
+  const start = totalItems === 0 ? 0 : (currentPage - 1) * pageSize + 1
+  const end = Math.min(totalItems, currentPage * pageSize)
+
+  return (
+    <div className="flex flex-col gap-2 rounded-xl border border-slate-100 bg-white px-3 py-2 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+      <p>
+        显示 {start}-{end} / {totalItems} 个词
+      </p>
+      <div className="flex items-center gap-2">
+        <Button
+          variant="secondary"
+          disabled={currentPage <= 1}
+          onClick={() => onPageChange(Math.max(1, currentPage - 1))}
+        >
+          <ArrowLeft className="size-4" />
+          上一页
+        </Button>
+        <span className="min-w-16 text-center font-bold text-slate-600">
+          {currentPage}/{totalPages}
+        </span>
+        <Button
+          variant="secondary"
+          disabled={currentPage >= totalPages}
+          onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
+        >
+          下一页
+          <ArrowRight className="size-4" />
+        </Button>
+      </div>
+    </div>
   )
 }
 

@@ -1,20 +1,50 @@
 import { BookOpen, CheckCircle2, Info, Layers3, Target, TrendingUp, UploadCloud } from 'lucide-react'
+import type { KeyboardEventHandler, Ref } from 'react'
 import { Button } from '@/components/ui/Button'
 import type { KnowledgeBaseOverview } from '@/types'
 
 interface KnowledgeContextPanelProps {
   overview: KnowledgeBaseOverview
   className?: string
+  panelId?: string
+  titleId?: string
+  panelRef?: Ref<HTMLElement>
+  role?: 'dialog'
+  ariaModal?: boolean
+  ariaLabelledby?: string
+  tabIndex?: number
+  onKeyDown?: KeyboardEventHandler<HTMLElement>
   onUpload: () => void
 }
 
-export function KnowledgeContextPanel({ overview, className = '', onUpload }: KnowledgeContextPanelProps) {
+export function KnowledgeContextPanel({
+  overview,
+  className = '',
+  panelId,
+  titleId,
+  panelRef,
+  role,
+  ariaModal,
+  ariaLabelledby,
+  tabIndex,
+  onKeyDown,
+  onUpload,
+}: KnowledgeContextPanelProps) {
   const { source } = overview
   const sourceStatus = sourceStatusLabel(source.status)
   return (
-    <aside className={`knowledge-context space-y-5 border-l border-slate-200 bg-slate-50/40 px-5 py-7 ${className}`}>
+    <aside
+      id={panelId}
+      ref={panelRef}
+      role={role}
+      aria-modal={ariaModal}
+      aria-labelledby={ariaLabelledby}
+      tabIndex={tabIndex}
+      onKeyDown={onKeyDown}
+      className={`knowledge-context space-y-5 border-l border-slate-200 bg-slate-50/40 px-5 py-7 ${className}`}
+    >
       <section className="rounded-2xl border border-slate-200 bg-white p-5">
-        <h2 className="text-base font-extrabold text-slate-950">教材信息</h2>
+        <h2 id={titleId} className="text-base font-extrabold text-slate-950">教材信息</h2>
         <div className="mt-5 flex gap-4">
           {source.grade === 'grade-7' && source.volume === 'upper' ? (
             <img

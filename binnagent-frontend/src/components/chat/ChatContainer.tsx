@@ -10,6 +10,7 @@ import { MemoryPanel } from './MemoryPanel'
 import { Button } from '@/components/ui/Button'
 import { IconButton } from '@/components/ui/IconButton'
 import { StatusBanner } from '@/components/ui/StatusBanner'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
 
 interface ChatContainerProps {
   learnerId: string
@@ -48,6 +49,8 @@ export function ChatContainer({
   } = useChat(learnerId, { onGeneratingChange })
   const [isHistoryCollapsed, setIsHistoryCollapsed] = useState(true)
   const [isMemoryCollapsed, setIsMemoryCollapsed] = useState(true)
+  const isHistoryDrawer = useMediaQuery('(max-width: 1023px)')
+  const isMemoryDrawer = useMediaQuery('(max-width: 1279px)')
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -93,6 +96,7 @@ export function ChatContainer({
         conversations={conversations}
         activeThreadId={threadId}
         isCollapsed={isHistoryCollapsed}
+        isModal={isHistoryDrawer}
         onToggleCollapsed={() => setIsHistoryCollapsed(prev => !prev)}
         isLocked={isLoading}
         onNewConversation={handleNewConversation}
@@ -200,6 +204,7 @@ export function ChatContainer({
       <MemoryPanel
         memory={memorySummary}
         isCollapsed={isMemoryCollapsed}
+        isModal={isMemoryDrawer}
         onToggleCollapsed={() => setIsMemoryCollapsed(prev => !prev)}
       />
     </div>

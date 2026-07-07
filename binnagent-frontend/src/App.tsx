@@ -6,6 +6,8 @@ import { useLearningPreferences } from './hooks/useLearningPreferences'
 import type { VocabularyPracticeMode } from './pages/VocabularyPracticePage'
 import type { AppTab, Learner, PronunciationWorkspace } from './types'
 
+type LearningCenterView = 'home' | 'daily-learning' | 'vocabulary' | 'vocabulary-practice'
+
 const ChatPage = lazy(() =>
   import('./pages/ChatPage').then((module) => ({ default: module.ChatPage }))
 )
@@ -49,7 +51,7 @@ function PageLoadingFallback({ label = '正在打开学习空间...' }: { label?
 function App() {
   const { showToast } = useToast()
   const [activeTab, setActiveTab] = useState<AppTab>('chat')
-  const [learningCenterView, setLearningCenterView] = useState<'home' | 'daily-learning' | 'vocabulary-practice'>('home')
+  const [learningCenterView, setLearningCenterView] = useState<LearningCenterView>('home')
   const [practiceMode, setPracticeMode] = useState<VocabularyPracticeMode>('review')
   const [practiceNodeId, setPracticeNodeId] = useState<string | null>(null)
   const [practiceSourceLabel, setPracticeSourceLabel] = useState<string | null>(null)
@@ -136,6 +138,11 @@ function App() {
     handleTabChange('pronunciation')
   }
 
+  const openVocabularyManager = () => {
+    setLearningCenterView('vocabulary')
+    setActiveTab('dashboard')
+  }
+
   if (isRestoringLearner) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background text-sm text-muted-foreground">
@@ -207,6 +214,7 @@ function App() {
               }}
               onTabChange={handleTabChange}
               onDraftPrompt={handleDraftPrompt}
+              onOpenVocabularyManager={openVocabularyManager}
               onOpenPronunciationWorkspace={openPronunciationWorkspace}
             />
           ) : activeTab === 'pronunciation' ? (
@@ -227,7 +235,10 @@ function App() {
               />
             ) : (
               <DashboardPage
+                key={learningCenterView === 'vocabulary' ? 'vocabulary' : 'home'}
                 learner={currentLearner}
+                initialVocabularyListOpen={learningCenterView === 'vocabulary'}
+                initialWorkspace={learningCenterView === 'vocabulary' ? 'vocabulary' : 'home'}
                 onOpenDailyLearning={() => setLearningCenterView('daily-learning')}
                 onStartVocabularyPractice={(mode) => openVocabularyPractice(mode ?? preferences.defaultPracticeMode)}
               />
