@@ -38,7 +38,7 @@ class GroupLearningSource(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         nullable=False,
         index=True,
     )
-    platform: Mapped[str] = mapped_column(String(30), nullable=False, default="wechat")
+    platform: Mapped[str] = mapped_column(String(30), nullable=False, default="feishu")
     source_type: Mapped[str] = mapped_column(String(30), nullable=False, default="group")
     display_name: Mapped[str] = mapped_column(String(120), nullable=False)
     external_group_key: Mapped[str] = mapped_column(String(255), nullable=False)
@@ -46,6 +46,9 @@ class GroupLearningSource(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     last_cursor: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
     last_seen_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     last_import_summary: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
+    sync_interval_seconds: Mapped[int] = mapped_column(Integer, nullable=False, default=60)
+    import_mode: Mapped[str] = mapped_column(String(30), nullable=False, default="silent")
+    allowed_senders: Mapped[list] = mapped_column(JSONB, nullable=False, default=list)
     raw_retention_days: Mapped[int] = mapped_column(Integer, nullable=False, default=7)
     auto_generate_recommendations: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=True

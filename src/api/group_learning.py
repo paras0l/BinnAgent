@@ -9,10 +9,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.api.deps import get_db_session, require_learner_access
 from src.group_learning import (
+    FeishuMcpClientError,
+    FeishuMcpMessageImporter,
     GroupLearningImportMessage,
+    analyze_pending_group_learning_messages,
     accept_signal,
     cleanup_expired_messages,
     delete_all_raw_messages,
+    feishu_mcp_client_from_settings,
     import_group_messages,
 )
 from src.models.group_learning import (
@@ -30,6 +34,8 @@ router = APIRouter(
 import_router = APIRouter(prefix="/api/group-learning", tags=["group-learning"])
 
 SourceStatus = Literal["active", "paused", "revoked"]
+SourcePlatform = Literal["feishu", "wechat"]
+ImportMode = Literal["silent", "triggered_reply"]
 ParticipantRole = Literal["learner", "partner", "unknown"]
 SignalStatus = Literal["candidate", "accepted", "dismissed"]
 SignalAction = Literal[
@@ -47,9 +53,13 @@ CONFIDENCE_OPTIONS = {0.7, 0.8, 0.9}
 
 
 class SourceBaseRequest(BaseModel):
+    platform: SourcePlatform = "feishu"
     display_name: str = Field(min_length=1, max_length=120)
     external_group_key: str = Field(min_length=1, max_length=255)
     status: SourceStatus = "active"
+    sync_interval_seconds: int = Field(default=60, ge=30, le=86_400)
+    import_mode: ImportMode = "silent"
+    allowed_senders: list[str] = Field(default_factory=list, max_length=100)
     raw_retention_days: int = Field(default=7, ge=1, le=30)
     auto_generate_recommendations: bool = True
     auto_write_candidates: bool = True
@@ -63,6 +73,11 @@ class SourceBaseRequest(BaseModel):
         if not stripped:
             raise ValueError("value must not be blank")
         return stripped
+
+    @field_validator("allowed_senders")
+    @classmethod
+    def allowed_senders_must_be_normalized(cls, value: list[str]) -> list[str]:
+        return [sender.strip() for sender in value if sender.strip()]
 
     @field_validator("raw_retention_days")
     @classmethod
@@ -85,9 +100,13 @@ class CreateSourceRequest(SourceBaseRequest):
 
 
 class UpdateSourceRequest(BaseModel):
+    platform: SourcePlatform | None = None
     display_name: str | None = Field(default=None, min_length=1, max_length=120)
     external_group_key: str | None = Field(default=None, min_length=1, max_length=255)
     status: SourceStatus | None = None
+    sync_interval_seconds: int | None = Field(default=None, ge=30, le=86_400)
+    import_mode: ImportMode | None = None
+    allowed_senders: list[str] | None = Field(default=None, max_length=100)
     raw_retention_days: int | None = Field(default=None, ge=1, le=30)
     auto_generate_recommendations: bool | None = None
     auto_write_candidates: bool | None = None
@@ -103,6 +122,15 @@ class UpdateSourceRequest(BaseModel):
         if not stripped:
             raise ValueError("value must not be blank")
         return stripped
+
+    @field_validator("allowed_senders")
+    @classmethod
+    def optional_allowed_senders_must_be_normalized(
+        cls, value: list[str] | None
+    ) -> list[str] | None:
+        if value is None:
+            return None
+        return [sender.strip() for sender in value if sender.strip()]
 
     @field_validator("raw_retention_days")
     @classmethod
@@ -134,13 +162,18 @@ class SourceResponse(BaseModel):
     status: str
     last_cursor: str | None = None
     last_seen_at: datetime | None = None
+    last_sync_at: datetime | None = None
     last_import_summary: dict
+    sync_interval_seconds: int
+    import_mode: str
+    allowed_senders: list[str]
     raw_retention_days: int
     auto_generate_recommendations: bool
     auto_write_candidates: bool
     auto_apply_high_confidence_tagged_signals: bool
     confidence_threshold: float
     pending_signal_count: int = 0
+    pending_llm_message_count: int = 0
     participant_count: int = 0
     created_at: datetime
     updated_at: datetime
@@ -193,7 +226,7 @@ class CleanupResponse(BaseModel):
     deleted_raw_message_count: int
 
 
-class ImportWechatMessageRequest(BaseModel):
+class ImportGroupLearningMessageRequest(BaseModel):
     external_message_id: str = Field(min_length=1, max_length=255)
     external_member_key: str = Field(min_length=1, max_length=255)
     display_name: str | None = Field(default=None, max_length=120)
@@ -202,12 +235,12 @@ class ImportWechatMessageRequest(BaseModel):
     message_type: str = "text"
 
 
-class ImportWechatMessagesRequest(BaseModel):
+class ImportGroupLearningMessagesRequest(BaseModel):
     source_id: uuid.UUID
-    messages: list[ImportWechatMessageRequest] = Field(min_length=1)
+    messages: list[ImportGroupLearningMessageRequest] = Field(min_length=1)
 
 
-class ImportWechatMessagesResponse(BaseModel):
+class ImportGroupLearningMessagesResponse(BaseModel):
     source_id: uuid.UUID
     learner_id: uuid.UUID
     imported_count: int
@@ -215,6 +248,35 @@ class ImportWechatMessagesResponse(BaseModel):
     generated_signal_count: int
     ignored_count: int
     participant_count: int
+
+
+class SourceSyncStatusResponse(BaseModel):
+    source_id: uuid.UUID
+    platform: str
+    status: str
+    last_cursor: str | None = None
+    last_seen_at: datetime | None = None
+    last_sync_at: datetime | None = None
+    sync_interval_seconds: int
+    import_mode: str
+    allowed_senders: list[str]
+    last_import_summary: dict
+
+
+class SourceSyncNowResponse(ImportGroupLearningMessagesResponse):
+    fetched_count: int
+    next_cursor: str | None = None
+    last_sync_at: datetime
+    placeholder: bool = False
+
+
+class SourceAnalyzePendingResponse(BaseModel):
+    source_id: uuid.UUID
+    learner_id: uuid.UUID
+    analyzed_message_count: int
+    generated_signal_count: int
+    skipped_signal_count: int
+    remaining_pending_count: int
 
 
 class SignalResponse(BaseModel):
@@ -265,7 +327,7 @@ async def create_source(
     learner: Learner = Depends(require_learner_access),
     db: AsyncSession = Depends(get_db_session),
 ) -> SourceResponse:
-    await _ensure_unique_source_key(db, learner.id, body.external_group_key)
+    await _ensure_unique_source_key(db, learner.id, body.platform, body.external_group_key)
     source = GroupLearningSource(learner_id=learner.id, **body.model_dump())
     db.add(source)
     await db.flush()
@@ -282,8 +344,16 @@ async def update_source(
 ) -> SourceResponse:
     source = await _get_owned_source(db, learner.id, source_id)
     updates = body.model_dump(exclude_unset=True)
-    if "external_group_key" in updates:
-        await _ensure_unique_source_key(db, learner.id, updates["external_group_key"], source_id)
+    next_platform = updates.get("platform", source.platform)
+    next_external_group_key = updates.get("external_group_key", source.external_group_key)
+    if "external_group_key" in updates or "platform" in updates:
+        await _ensure_unique_source_key(
+            db,
+            learner.id,
+            next_platform,
+            next_external_group_key,
+            source_id,
+        )
     for key, value in updates.items():
         setattr(source, key, value)
     await db.flush()
@@ -421,6 +491,65 @@ async def delete_source_raw_messages(
     return CleanupResponse(deleted_raw_message_count=count)
 
 
+@router.get("/sources/{source_id}/sync-status", response_model=SourceSyncStatusResponse)
+async def get_source_sync_status(
+    source_id: uuid.UUID,
+    learner: Learner = Depends(require_learner_access),
+    db: AsyncSession = Depends(get_db_session),
+) -> SourceSyncStatusResponse:
+    source = await _get_owned_source(db, learner.id, source_id)
+    return _sync_status_response(source)
+
+
+@router.post("/sources/{source_id}/sync-now", response_model=SourceSyncNowResponse)
+async def sync_source_now(
+    source_id: uuid.UUID,
+    learner: Learner = Depends(require_learner_access),
+    db: AsyncSession = Depends(get_db_session),
+) -> SourceSyncNowResponse:
+    source = await _get_owned_source(db, learner.id, source_id)
+    if source.platform != "feishu":
+        raise HTTPException(status_code=422, detail="sync-now currently supports feishu sources")
+    try:
+        sync_result = await FeishuMcpMessageImporter(
+            client_factory=feishu_mcp_client_from_settings,
+        ).sync_source(db, source)
+    except FeishuMcpClientError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+    return SourceSyncNowResponse(
+        source_id=sync_result.source_id,
+        learner_id=sync_result.learner_id,
+        imported_count=sync_result.imported_count,
+        duplicate_count=sync_result.duplicate_count,
+        generated_signal_count=sync_result.generated_signal_count,
+        ignored_count=sync_result.ignored_count,
+        participant_count=sync_result.participant_count,
+        fetched_count=sync_result.fetched_count,
+        next_cursor=sync_result.next_cursor,
+        last_sync_at=sync_result.last_sync_at,
+        placeholder=sync_result.placeholder,
+    )
+
+
+@router.post("/sources/{source_id}/analyze-pending", response_model=SourceAnalyzePendingResponse)
+async def analyze_pending_source_messages(
+    source_id: uuid.UUID,
+    limit: int = Query(default=10, ge=1, le=20),
+    learner: Learner = Depends(require_learner_access),
+    db: AsyncSession = Depends(get_db_session),
+) -> SourceAnalyzePendingResponse:
+    source = await _get_owned_source(db, learner.id, source_id)
+    result = await analyze_pending_group_learning_messages(db, source=source, limit=limit)
+    return SourceAnalyzePendingResponse(
+        source_id=result.source_id,
+        learner_id=result.learner_id,
+        analyzed_message_count=result.analyzed_message_count,
+        generated_signal_count=result.generated_signal_count,
+        skipped_signal_count=result.skipped_signal_count,
+        remaining_pending_count=result.remaining_pending_count,
+    )
+
+
 @router.get("/signals", response_model=list[SignalResponse])
 async def list_signals(
     status_filter: SignalStatus | Literal["all"] = Query(default="candidate", alias="status"),
@@ -483,17 +612,46 @@ async def delete_signal(
     await db.flush()
 
 
-@import_router.post("/wechat/messages/import", response_model=ImportWechatMessagesResponse)
-async def import_wechat_messages(
-    body: ImportWechatMessagesRequest,
+@import_router.post("/messages/import", response_model=ImportGroupLearningMessagesResponse)
+async def import_group_learning_messages(
+    body: ImportGroupLearningMessagesRequest,
     db: AsyncSession = Depends(get_db_session),
-) -> ImportWechatMessagesResponse:
+) -> ImportGroupLearningMessagesResponse:
+    return await _import_messages(body, db)
+
+
+@import_router.post("/feishu/messages/import", response_model=ImportGroupLearningMessagesResponse)
+async def import_feishu_messages(
+    body: ImportGroupLearningMessagesRequest,
+    db: AsyncSession = Depends(get_db_session),
+) -> ImportGroupLearningMessagesResponse:
+    return await _import_messages(body, db, expected_platform="feishu")
+
+
+@import_router.post("/wechat/messages/import", response_model=ImportGroupLearningMessagesResponse)
+async def import_wechat_messages(
+    body: ImportGroupLearningMessagesRequest,
+    db: AsyncSession = Depends(get_db_session),
+) -> ImportGroupLearningMessagesResponse:
+    return await _import_messages(body, db, expected_platform="wechat")
+
+
+async def _import_messages(
+    body: ImportGroupLearningMessagesRequest,
+    db: AsyncSession,
+    expected_platform: str | None = None,
+) -> ImportGroupLearningMessagesResponse:
     result = await db.execute(
         select(GroupLearningSource).where(GroupLearningSource.id == body.source_id)
     )
     source = result.scalar_one_or_none()
     if source is None:
         raise HTTPException(status_code=404, detail="Group learning source not found")
+    if expected_platform and source.platform != expected_platform:
+        raise HTTPException(
+            status_code=422,
+            detail=f"Source platform must be {expected_platform}",
+        )
     try:
         summary = await import_group_messages(
             db,
@@ -512,7 +670,7 @@ async def import_wechat_messages(
         )
     except ValueError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
-    return ImportWechatMessagesResponse(
+    return ImportGroupLearningMessagesResponse(
         source_id=source.id,
         learner_id=source.learner_id,
         imported_count=summary.imported_count,
@@ -540,6 +698,15 @@ async def _source_response(db: AsyncSession, source: GroupLearningSource) -> Sou
         .select_from(GroupLearningParticipant)
         .where(GroupLearningParticipant.source_id == source.id)
     )
+    pending_llm_result = await db.execute(
+        select(func.count())
+        .select_from(GroupLearningMessage)
+        .where(
+            GroupLearningMessage.source_id == source.id,
+            GroupLearningMessage.learner_id == source.learner_id,
+            GroupLearningMessage.ingestion_status == "pending_llm_analysis",
+        )
+    )
     return SourceResponse(
         id=source.id,
         learner_id=source.learner_id,
@@ -550,7 +717,11 @@ async def _source_response(db: AsyncSession, source: GroupLearningSource) -> Sou
         status=source.status,
         last_cursor=source.last_cursor,
         last_seen_at=source.last_seen_at,
+        last_sync_at=_last_sync_at(source),
         last_import_summary=source.last_import_summary or {},
+        sync_interval_seconds=source.sync_interval_seconds,
+        import_mode=source.import_mode,
+        allowed_senders=source.allowed_senders or [],
         raw_retention_days=source.raw_retention_days,
         auto_generate_recommendations=source.auto_generate_recommendations,
         auto_write_candidates=source.auto_write_candidates,
@@ -559,6 +730,7 @@ async def _source_response(db: AsyncSession, source: GroupLearningSource) -> Sou
         ),
         confidence_threshold=source.confidence_threshold,
         pending_signal_count=pending_result.scalar_one(),
+        pending_llm_message_count=pending_llm_result.scalar_one(),
         participant_count=participant_result.scalar_one(),
         created_at=source.created_at,
         updated_at=source.updated_at,
@@ -604,12 +776,13 @@ async def _get_owned_participant(
 async def _ensure_unique_source_key(
     db: AsyncSession,
     learner_id: uuid.UUID,
+    platform: str,
     external_group_key: str,
     exclude_source_id: uuid.UUID | None = None,
 ) -> None:
     query = select(GroupLearningSource.id).where(
         GroupLearningSource.learner_id == learner_id,
-        GroupLearningSource.platform == "wechat",
+        GroupLearningSource.platform == platform,
         GroupLearningSource.external_group_key == external_group_key,
     )
     if exclude_source_id is not None:
@@ -617,6 +790,31 @@ async def _ensure_unique_source_key(
     result = await db.execute(query)
     if result.scalar_one_or_none() is not None:
         raise HTTPException(status_code=409, detail="Group learning source already exists")
+
+
+def _sync_status_response(source: GroupLearningSource) -> SourceSyncStatusResponse:
+    return SourceSyncStatusResponse(
+        source_id=source.id,
+        platform=source.platform,
+        status=source.status,
+        last_cursor=source.last_cursor,
+        last_seen_at=source.last_seen_at,
+        last_sync_at=_last_sync_at(source),
+        sync_interval_seconds=source.sync_interval_seconds,
+        import_mode=source.import_mode,
+        allowed_senders=source.allowed_senders or [],
+        last_import_summary=source.last_import_summary or {},
+    )
+
+
+def _last_sync_at(source: GroupLearningSource) -> datetime | None:
+    synced_at = (source.last_import_summary or {}).get("synced_at")
+    if not isinstance(synced_at, str) or not synced_at.strip():
+        return None
+    try:
+        return datetime.fromisoformat(synced_at.replace("Z", "+00:00"))
+    except ValueError:
+        return None
 
 
 def _validate_participant_mapping(

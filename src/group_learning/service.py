@@ -89,6 +89,9 @@ async def import_group_messages(
         if not text or raw_message.message_type != "text":
             ignored_count += 1
             continue
+        if source.allowed_senders and raw_message.external_member_key not in source.allowed_senders:
+            ignored_count += 1
+            continue
 
         participant = participants.get(raw_message.external_member_key)
         if participant is None:
@@ -117,6 +120,20 @@ async def import_group_messages(
         )
         if duplicate is not None:
             duplicate_count += 1
+            if (
+                duplicate.learner_id == source.learner_id
+                and duplicate.ingestion_status == "processed"
+                and text.startswith("#")
+            ):
+                generated_signal_count += await _write_missing_signal_drafts(
+                    db,
+                    source=source,
+                    message=duplicate,
+                    text=text,
+                )
+            elif duplicate.learner_id == source.learner_id and not text.startswith("#"):
+                duplicate.ingestion_status = "pending_llm_analysis"
+                duplicate.processed_at = None
             continue
 
         should_analyze = (
@@ -125,6 +142,7 @@ async def import_group_messages(
             and bool(participant.analysis_enabled)
             and participant.learner_id == source.learner_id
         )
+        tagged = text.startswith("#")
         message = GroupLearningMessage(
             source_id=source.id,
             external_message_id=raw_message.external_message_id,
@@ -135,8 +153,14 @@ async def import_group_messages(
             content_hash=message_hash,
             language_mix=detect_language_mix(text),
             occurred_at=raw_message.occurred_at,
-            ingestion_status="processed" if should_analyze else "ignored_unmapped_participant",
-            processed_at=datetime.now(timezone.utc),
+            ingestion_status=(
+                "processed"
+                if should_analyze and tagged
+                else "pending_llm_analysis"
+                if should_analyze
+                else "ignored_unmapped_participant"
+            ),
+            processed_at=datetime.now(timezone.utc) if should_analyze and tagged else None,
         )
         db.add(message)
         await db.flush()
@@ -146,23 +170,13 @@ async def import_group_messages(
             ignored_count += 1
             continue
 
-        drafts = extract_signal_drafts(text, source=source)
-        for draft in drafts:
-            signal = GroupLearningSignal(
-                message_id=message.id,
-                learner_id=source.learner_id,
-                signal_type=draft.signal_type,
-                target_type=draft.target_type,
-                target_label=draft.target_label,
-                confidence=draft.confidence,
-                evidence_text=draft.evidence_text,
-                normalized_note=draft.normalized_note,
-                recommendation_reason=draft.recommendation_reason,
-                status="candidate",
-                metadata_=draft.metadata,
+        if tagged:
+            generated_signal_count += await _write_missing_signal_drafts(
+                db,
+                source=source,
+                message=message,
+                text=text,
             )
-            db.add(signal)
-            generated_signal_count += 1
 
     if messages:
         source.last_seen_at = max(message.occurred_at for message in messages)
@@ -180,6 +194,52 @@ async def import_group_messages(
         ignored_count=ignored_count,
         participant_count=len(participants),
     )
+
+
+async def _write_missing_signal_drafts(
+    db: AsyncSession,
+    *,
+    source: GroupLearningSource,
+    message: GroupLearningMessage,
+    text: str,
+) -> int:
+    generated_count = 0
+    for draft in extract_signal_drafts(text, source=source):
+        existing = await _find_existing_signal_for_draft(db, message.id, draft)
+        if existing is not None:
+            continue
+        signal = GroupLearningSignal(
+            message_id=message.id,
+            learner_id=source.learner_id,
+            signal_type=draft.signal_type,
+            target_type=draft.target_type,
+            target_label=draft.target_label,
+            confidence=draft.confidence,
+            evidence_text=draft.evidence_text,
+            normalized_note=draft.normalized_note,
+            recommendation_reason=draft.recommendation_reason,
+            status="candidate",
+            metadata_=draft.metadata,
+        )
+        db.add(signal)
+        generated_count += 1
+    return generated_count
+
+
+async def _find_existing_signal_for_draft(
+    db: AsyncSession,
+    message_id: uuid.UUID,
+    draft: SignalDraft,
+) -> GroupLearningSignal | None:
+    result = await db.execute(
+        select(GroupLearningSignal).where(
+            GroupLearningSignal.message_id == message_id,
+            GroupLearningSignal.signal_type == draft.signal_type,
+            GroupLearningSignal.target_type == draft.target_type,
+            GroupLearningSignal.target_label == draft.target_label,
+        )
+    )
+    return result.scalar_one_or_none()
 
 
 def extract_signal_drafts(text: str, *, source: GroupLearningSource | None = None) -> list[SignalDraft]:
@@ -237,7 +297,7 @@ def extract_signal_drafts(text: str, *, source: GroupLearningSource | None = Non
                 0.79,
                 normalized,
                 "自然聊天中正确使用现在完成进行时。",
-                "微信群自然聊天证据权重较低，但可作为语法熟练度弱证据。",
+                "群聊自然聊天证据权重较低，但可作为语法熟练度弱证据。",
                 weight=0.3,
                 source_status=getattr(source, "status", None),
             )

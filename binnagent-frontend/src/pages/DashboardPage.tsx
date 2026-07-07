@@ -714,7 +714,7 @@ function LearningSideRail({
                   群聊学习线索
                 </span>
                 <span className="mt-2 block text-xs leading-5 text-slate-600">
-                  从指定微信群捕捉你想学的表达、语法、单词和好句。
+                  从指定飞书群捕捉你想学的表达、语法、单词和好句。
                 </span>
               </span>
               <span className="rounded-full bg-primary px-2.5 py-1 text-xs font-black text-white">5</span>

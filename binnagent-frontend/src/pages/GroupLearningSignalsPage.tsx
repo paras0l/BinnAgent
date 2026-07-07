@@ -30,6 +30,7 @@ import {
   deleteGroupLearningSignal,
   listGroupLearningSignals,
   listGroupLearningSources,
+  syncGroupLearningSourceNow,
   updateGroupLearningSource,
   updateGroupLearningSignal,
   type GroupLearningSignal as ApiGroupLearningSignal,
@@ -157,7 +158,7 @@ export function GroupLearningSignalsPage({ learner, onBack, onOpenSettings }: Gr
       .at(-1)
     return {
       boundaryItems: [
-        `白名单群组 ${sources.length} 个`,
+        `飞书群来源 ${sources.length} 个`,
         `已发现成员 ${participantCount} 位`,
         `原始消息保留 ${retentionDays} 天`,
         '未映射成员默认忽略',
@@ -208,7 +209,7 @@ export function GroupLearningSignalsPage({ learner, onBack, onOpenSettings }: Gr
                 群聊学习线索
               </h1>
               <p className="mt-4 max-w-3xl text-sm leading-7 text-slate-500 sm:text-base">
-                从指定微信群捕捉你想学的表达、语法、单词和好句。这里只分析已绑定学习者的文本消息，不做群内公开纠错。
+                从指定飞书群捕捉你想学的表达、语法、单词和好句。默认只读，线索确认后才写入长期学习资产。
               </p>
               <div className="mt-7 grid gap-3 sm:grid-cols-4">
                 <HeroMetric label="待确认" value={stats.pending} tone="indigo" />
@@ -222,7 +223,7 @@ export function GroupLearningSignalsPage({ learner, onBack, onOpenSettings }: Gr
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <p className="text-sm font-black text-slate-950">读取边界</p>
-                  <p className="mt-1 text-xs leading-5 text-slate-500">白名单群组、成员映射、短期保留。</p>
+                  <p className="mt-1 text-xs leading-5 text-slate-500">指定飞书群、成员映射、短期保留。</p>
                 </div>
                 <ShieldCheck className="size-6 text-primary" />
               </div>
@@ -272,7 +273,27 @@ export function GroupLearningSignalsPage({ learner, onBack, onOpenSettings }: Gr
         <StatusBanner
           tone={isPaused ? 'warning' : 'success'}
           title={isPaused ? '读取已暂停' : '同步正常'}
-          action={<Button variant="secondary" onClick={() => showToast('已发起一次手动同步。', { variant: 'success' })}><RefreshCw className="size-4" />同步一次</Button>}
+          action={<Button variant="secondary" onClick={() => {
+            const activeSources = sources.filter((source) => source.status === 'active' && source.platform === 'feishu')
+            if (!activeSources.length) {
+              showToast('请先添加并启用一个飞书群来源。', { variant: 'warning' })
+              return
+            }
+            void Promise.all(activeSources.map((source) => syncGroupLearningSourceNow(learner.id, source.id)))
+              .then((summaries) => {
+                const isPlaceholder = summaries.every((summary) => summary.placeholder)
+                const generated = summaries.reduce((sum, summary) => sum + summary.generated_signal_count, 0)
+                showToast(
+                  isPlaceholder ? '同步占位已记录；配置 MCP 后会读取飞书消息。' : `同步完成，生成 ${generated} 条候选线索。`,
+                  { variant: isPlaceholder ? 'warning' : 'success' },
+                )
+                void loadSources()
+                void loadSignals()
+              })
+              .catch((error: unknown) => {
+                showToast(error instanceof Error ? error.message : '手动同步失败。', { variant: 'error' })
+              })
+          }}><RefreshCw className="size-4" />同步一次</Button>}
         >
           {isPaused ? '系统不会读取新群消息，已有线索仍可确认或删除。' : `最后同步：${sourceSummary.latestSeenLabel}。新消息会先去重，再进入线索抽取。`}
         </StatusBanner>
@@ -429,7 +450,7 @@ function SourceSetupPanel({ sources }: { sources: GroupLearningSource[] }) {
   const activeSources = sources.filter((source) => source.status === 'active')
   const participantCount = sources.reduce((sum, source) => sum + source.participant_count, 0)
   const retentionDays = sources[0]?.raw_retention_days ?? 7
-  const sourceNames = sources.map((source) => source.display_name).join(' / ') || '还没有白名单群组'
+  const sourceNames = sources.map((source) => source.display_name).join(' / ') || '还没有飞书群来源'
 
   return (
     <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
@@ -442,7 +463,7 @@ function SourceSetupPanel({ sources }: { sources: GroupLearningSource[] }) {
       </div>
 
       <div className="mt-4 space-y-3">
-        <SetupRow icon={<ShieldCheck className="size-4" />} label="白名单群组" value={`${sourceNames}；${activeSources.length} 个活跃`} />
+        <SetupRow icon={<ShieldCheck className="size-4" />} label="飞书群来源" value={`${sourceNames}；${activeSources.length} 个活跃`} />
         <SetupRow icon={<UserRoundCheck className="size-4" />} label="成员映射" value={`${participantCount} 位已发现成员，只有 learner 且开启分析才会抽取`} />
         <SetupRow icon={<Database className="size-4" />} label="原始消息保留" value={`${retentionDays} 天后自动清理，可随时删除缓存`} />
         <SetupRow icon={<Tags className="size-4" />} label="标签识别" value="#单词 #语法 #收藏 #怎么说 #纠错" />

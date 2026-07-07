@@ -149,3 +149,15 @@ prompt_registry.register(
         eval_set="evals/prompts/writing_phrase_import_v1.jsonl",
     )
 )
+prompt_registry.register(
+    PromptMetadata(
+        id="group_learning.signal_extract",
+        version="v1",
+        owner="group_learning",
+        purpose="从飞书群聊自然消息中低频提取学习意图和可沉淀学习线索",
+        template_path="versions/group_learning.signal_extract.v1.md",
+        output_schema="GroupLearningSignalExtractOutput",
+        model_policy={"default_model": "ollama_utility", "temperature": 0.1, "max_tokens": 1600},
+        eval_set="evals/prompts/group_learning_signal_extract_v1.jsonl",
+    )
+)

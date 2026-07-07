@@ -25,12 +25,14 @@ import { IconButton } from '@/components/ui/IconButton'
 import { useFocusTrap } from '@/hooks/useFocusTrap'
 import { useToast } from '@/hooks/useToast'
 import {
+  analyzePendingGroupLearningMessages,
   cleanupGroupLearningSource,
   createGroupLearningSource,
   deleteGroupLearningSource,
   importGroupLearningMessages,
   listGroupLearningParticipants,
   listGroupLearningSources,
+  syncGroupLearningSourceNow,
   updateGroupLearningParticipant,
   updateGroupLearningSource,
   type GroupLearningParticipant,
@@ -44,12 +46,18 @@ type ParticipantRole = 'learner' | 'partner' | 'unknown'
 
 interface GroupSourceConfig {
   id: string
+  platform: 'feishu' | 'wechat'
   displayName: string
   externalGroupKey: string
   status: SourceStatus
+  syncIntervalSeconds: number
+  importMode: 'silent' | 'triggered_reply'
+  allowedSenders: string[]
   rawRetentionDays: number
+  lastSyncAt: string
   lastSeenAt: string
   pendingSignals: number
+  pendingLlmMessages: number
   autoGenerateRecommendations: boolean
   autoWriteCandidates: boolean
   autoApplyHighConfidenceTaggedSignals: boolean
@@ -68,7 +76,9 @@ interface ParticipantMapping {
   lastMessageAt: string
 }
 
-type SourceDraft = Pick<GroupSourceConfig, 'displayName' | 'externalGroupKey' | 'status' | 'rawRetentionDays'>
+type SourceDraft = Pick<GroupSourceConfig, 'displayName' | 'externalGroupKey' | 'status' | 'syncIntervalSeconds' | 'importMode' | 'rawRetentionDays'> & {
+  allowedSendersText: string
+}
 
 type DangerAction =
   | { type: 'remove-source'; sourceId: string }
@@ -77,6 +87,7 @@ type DangerAction =
 
 const RETENTION_OPTIONS = [1, 3, 7, 14, 30]
 const CONFIDENCE_OPTIONS = [0.7, 0.8, 0.9]
+const SYNC_INTERVAL_OPTIONS = [60, 300, 900, 1800, 3600]
 const CURRENT_LEARNER_LABEL = '当前 learner'
 const TEXT_INPUT_CLASS =
   'min-h-10 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20'
@@ -106,6 +117,8 @@ export function GroupLearningSettingsDialog({
   const [memberQuery, setMemberQuery] = useState('')
   const [dangerAction, setDangerAction] = useState<DangerAction>(null)
   const [lastImportSummary, setLastImportSummary] = useState('尚未导入本地 JSON。')
+  const [syncingSourceId, setSyncingSourceId] = useState<string | null>(null)
+  const [analyzingSourceId, setAnalyzingSourceId] = useState<string | null>(null)
   const [lastSavedArea, setLastSavedArea] = useState<string | null>(null)
   const { containerRef, handleKeyDown } = useFocusTrap<HTMLElement>({
     isActive: open && !dangerAction,
@@ -172,6 +185,9 @@ export function GroupLearningSettingsDialog({
       displayName: source.displayName,
       externalGroupKey: source.externalGroupKey,
       status: source.status,
+      syncIntervalSeconds: source.syncIntervalSeconds,
+      importMode: source.importMode,
+      allowedSendersText: source.allowedSenders.join(', '),
       rawRetentionDays: source.rawRetentionDays,
     })
   }
@@ -187,12 +203,24 @@ export function GroupLearningSettingsDialog({
       showToast('原始消息保留天数只能选择 1、3、7、14 或 30 天。', { variant: 'warning' })
       return
     }
+    if (!SYNC_INTERVAL_OPTIONS.includes(sourceDraft.syncIntervalSeconds)) {
+      showToast('同步频率只能选择 1、5、15、30 或 60 分钟。', { variant: 'warning' })
+      return
+    }
+    const allowedSenders = sourceDraft.allowedSendersText
+      .split(',')
+      .map((item) => item.trim())
+      .filter(Boolean)
     try {
       if (editingSourceId === 'new') {
         const nextSource = await createGroupLearningSource(learner.id, {
+          platform: 'feishu',
           display_name: displayName,
           external_group_key: externalGroupKey,
           status: sourceDraft.status,
+          sync_interval_seconds: sourceDraft.syncIntervalSeconds,
+          import_mode: sourceDraft.importMode,
+          allowed_senders: allowedSenders,
           raw_retention_days: sourceDraft.rawRetentionDays,
           auto_generate_recommendations: true,
           auto_write_candidates: true,
@@ -201,20 +229,23 @@ export function GroupLearningSettingsDialog({
         })
         setSources((items) => [...items, toSourceConfig(nextSource)])
         setSelectedSourceId(nextSource.id)
-        markSaved('白名单群组已添加')
+        markSaved('飞书群来源已添加')
       } else if (editingSourceId) {
         const updated = await updateGroupLearningSource(learner.id, editingSourceId, {
           display_name: displayName,
           external_group_key: externalGroupKey,
           status: sourceDraft.status,
+          sync_interval_seconds: sourceDraft.syncIntervalSeconds,
+          import_mode: sourceDraft.importMode,
+          allowed_senders: allowedSenders,
           raw_retention_days: sourceDraft.rawRetentionDays,
         })
         setSources((items) => items.map((source) => source.id === updated.id ? toSourceConfig(updated) : source))
-        markSaved('白名单群组已保存')
+        markSaved('飞书群来源已保存')
       }
       setEditingSourceId(null)
     } catch (error) {
-      showToast(error instanceof Error ? error.message : '保存白名单群组失败。', { variant: 'error' })
+      showToast(error instanceof Error ? error.message : '保存飞书群来源失败。', { variant: 'error' })
     }
   }
 
@@ -252,6 +283,41 @@ export function GroupLearningSettingsDialog({
     }
   }
 
+  const syncSelectedSource = async () => {
+    if (!selectedSource || syncingSourceId) return
+    setSyncingSourceId(selectedSource.id)
+    try {
+      const summary = await syncGroupLearningSourceNow(learner.id, selectedSource.id)
+      const detail = summary.placeholder
+        ? '同步占位已记录，等待 MCP 参数配置'
+        : `已拉取 ${summary.fetched_count} 条，导入 ${summary.imported_count} 条，重复 ${summary.duplicate_count} 条，生成 ${summary.generated_signal_count} 条候选线索`
+      setLastImportSummary(detail)
+      markSaved(detail)
+      await loadSources()
+      await loadParticipants(selectedSource.id)
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : '手动同步失败。', { variant: 'error' })
+    } finally {
+      setSyncingSourceId(null)
+    }
+  }
+
+  const analyzePendingMessages = async () => {
+    if (!selectedSource || analyzingSourceId) return
+    setAnalyzingSourceId(selectedSource.id)
+    try {
+      const summary = await analyzePendingGroupLearningMessages(learner.id, selectedSource.id, 10)
+      const detail = `已分析 ${summary.analyzed_message_count} 条待处理消息，生成 ${summary.generated_signal_count} 条候选线索，剩余 ${summary.remaining_pending_count} 条`
+      setLastImportSummary(detail)
+      markSaved(detail)
+      await loadSources()
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : 'LLM 分析失败。', { variant: 'error' })
+    } finally {
+      setAnalyzingSourceId(null)
+    }
+  }
+
   const saveParticipants = () => {
     markSaved('成员映射已保存')
   }
@@ -269,7 +335,7 @@ export function GroupLearningSettingsDialog({
           return next
         })
         setParticipants((items) => items.filter((participant) => participant.sourceId !== dangerAction.sourceId))
-        markSaved('已移除白名单群组')
+        markSaved('已移除飞书群来源')
       } else {
         await cleanupGroupLearningSource(learner.id, dangerAction.sourceId, 'all_raw_messages')
         await loadSources()
@@ -288,7 +354,7 @@ export function GroupLearningSettingsDialog({
       try {
         const parsed = JSON.parse(String(reader.result ?? '{}')) as unknown
         if (!selectedSource) {
-          showToast('请先选择一个白名单群组。', { variant: 'warning' })
+          showToast('请先选择一个飞书群来源。', { variant: 'warning' })
           return
         }
         const messages = normalizeImportedMessages(parsed)
@@ -337,7 +403,7 @@ export function GroupLearningSettingsDialog({
             <div className="min-w-0">
               <h2 id={titleId} className="text-lg font-black text-slate-950">群聊学习线索设置</h2>
               <p className="mt-1 text-sm leading-6 text-slate-500">
-                添加白名单群组、映射成员、配置缓存保留和写入策略。
+                添加飞书群来源、映射成员、配置缓存保留和写入策略。
               </p>
             </div>
           </div>
@@ -355,7 +421,7 @@ export function GroupLearningSettingsDialog({
             >
               <ToggleRow
                 checked={isEnabled}
-                description="关闭后不读取任何白名单群的新消息。"
+                description="关闭后不读取任何已启用飞书群的新消息。"
                 label="启用群聊学习线索捕捉"
                 name="group_learning_enabled"
                 onChange={(checked) => {
@@ -364,7 +430,7 @@ export function GroupLearningSettingsDialog({
                 }}
               />
               <div className="grid gap-2 sm:grid-cols-3">
-                <MetricTile label="白名单群组" value={`${sources.length} 个`} />
+                <MetricTile label="飞书群来源" value={`${sources.length} 个`} />
                 <MetricTile label="活跃来源" value={`${activeSourceCount} 个`} />
                 <MetricTile label="分析成员" value={`${mappedParticipantCount} 位`} />
               </div>
@@ -372,9 +438,9 @@ export function GroupLearningSettingsDialog({
 
             <SettingsSection
               action={<Button variant="secondary" onClick={startAddSource}><Plus className="size-4" />添加群组</Button>}
-              description="只有加入白名单的微信群会被读取。"
+              description="第一版读取一个指定飞书群，MCP 连接参数先占位。"
               icon={<MessageCircle className="size-4" />}
-              title="群组白名单"
+              title="飞书群来源"
             >
               {editingSourceId ? (
                 <SourceEditor
@@ -408,8 +474,8 @@ export function GroupLearningSettingsDialog({
               ) : (
                 <div className="rounded-lg border border-dashed border-slate-300 p-6 text-center">
                   <MessageCircle className="mx-auto size-6 text-slate-400" />
-                  <p className="mt-2 text-sm font-black text-slate-950">还没有白名单群组</p>
-                  <p className="mt-1 text-sm text-slate-500">添加指定微信群后，BinnAgent 才会读取该群文本消息。</p>
+                  <p className="mt-2 text-sm font-black text-slate-950">还没有飞书群来源</p>
+                  <p className="mt-1 text-sm text-slate-500">添加指定飞书群 chat_id 后，BinnAgent 才会读取该群文本消息。</p>
                   <Button className="mt-4" onClick={startAddSource}><Plus className="size-4" />添加群组</Button>
                 </div>
               )}
@@ -466,7 +532,7 @@ export function GroupLearningSettingsDialog({
                 </>
               ) : (
                 <p className="rounded-lg border border-dashed border-slate-300 p-4 text-sm text-slate-500">
-                  先添加白名单群组，再配置成员映射。
+                  先添加飞书群来源，再配置成员映射。
                 </p>
               )}
             </SettingsSection>
@@ -572,19 +638,33 @@ export function GroupLearningSettingsDialog({
               title="同步与导入"
             >
               <div className="space-y-2 text-sm text-slate-600">
-                <StatusLine label="最后同步" value={selectedSource?.lastSeenAt ?? '尚未同步'} />
+                <StatusLine label="最后同步" value={selectedSource?.lastSyncAt ?? '尚未同步'} />
+                <StatusLine label="最后消息" value={selectedSource?.lastSeenAt ?? '尚未读取消息'} />
+                <StatusLine label="同步频率" value={selectedSource ? `${selectedSource.syncIntervalSeconds / 60} 分钟` : '未配置'} />
+                <StatusLine label="导入模式" value={selectedSource?.importMode === 'triggered_reply' ? '触发词回复' : '只读沉淀'} />
+                <StatusLine label="sender 白名单" value={selectedSource?.allowedSenders.length ? `${selectedSource.allowedSenders.length} 个` : '不限制'} />
                 <StatusLine label="待确认线索" value={`${selectedSource?.pendingSignals ?? 0} 条`} />
+                <StatusLine label="待 LLM 分析" value={`${selectedSource?.pendingLlmMessages ?? 0} 条`} />
                 <StatusLine label="最近导入" value={lastImportSummary} />
               </div>
               <div className="grid gap-2">
                 <Button
                   variant="secondary"
                   className="justify-between"
-                  onClick={() => {
-                    if (selectedSource) updateSource(selectedSource.id, { lastSeenAt: '刚刚' }, '已手动同步一次')
-                  }}
+                  disabled={!selectedSource || syncingSourceId === selectedSource.id}
+                  onClick={() => { void syncSelectedSource() }}
                 >
-                  手动同步一次<RefreshCw className="size-4" />
+                  {syncingSourceId === selectedSource?.id ? '同步中' : '手动同步一次'}
+                  <RefreshCw className={`size-4 ${syncingSourceId === selectedSource?.id ? 'animate-spin' : ''}`} />
+                </Button>
+                <Button
+                  variant="secondary"
+                  className="justify-between"
+                  disabled={!selectedSource || analyzingSourceId === selectedSource.id}
+                  onClick={() => { void analyzePendingMessages() }}
+                >
+                  {analyzingSourceId === selectedSource?.id ? '分析中' : '分析待处理消息'}
+                  <SlidersHorizontal className={`size-4 ${analyzingSourceId === selectedSource?.id ? 'animate-pulse' : ''}`} />
                 </Button>
                 <label className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 shadow-sm transition hover:border-primary/30 hover:text-primary">
                   <Upload className="size-4" />
@@ -614,7 +694,7 @@ export function GroupLearningSettingsDialog({
 
       <ConfirmDialog
         open={Boolean(dangerAction)}
-        title={dangerAction?.type === 'remove-source' ? '移除这个白名单群组？' : '删除全部原始消息缓存？'}
+        title={dangerAction?.type === 'remove-source' ? '移除这个飞书群来源？' : '删除全部原始消息缓存？'}
         description={dangerAction?.type === 'remove-source'
           ? '移除后不再读取这个群的新消息；你可以选择后续接入 API 时同时删除该群 raw message 缓存。'
           : '删除后无法从原始群消息重新生成线索；已接受的学习资产不会删除。'}
@@ -672,7 +752,7 @@ function SourceEditor({
 }) {
   return (
     <div className="rounded-lg border border-indigo-100 bg-indigo-50/60 p-3">
-      <p className="text-sm font-black text-slate-950">{isNew ? '添加白名单群组' : '编辑白名单群组'}</p>
+      <p className="text-sm font-black text-slate-950">{isNew ? '添加飞书群来源' : '编辑飞书群来源'}</p>
       <div className="mt-3 grid gap-3 md:grid-cols-2">
         <TextInput
           label="群名称"
@@ -681,10 +761,10 @@ function SourceEditor({
           placeholder="例如：七年级英语学习搭子群"
         />
         <TextInput
-          label="external_group_key"
+          label="飞书 chat_id"
           value={draft.externalGroupKey}
           onChange={(externalGroupKey) => onChange({ ...draft, externalGroupKey })}
-          placeholder="例如：wechat-grade7-study"
+          placeholder="例如：oc_xxx"
         />
         <SelectField
           label="状态"
@@ -697,11 +777,34 @@ function SourceEditor({
           ]}
         />
         <SelectField
+          label="同步频率"
+          value={String(draft.syncIntervalSeconds)}
+          onChange={(syncIntervalSeconds) => onChange({ ...draft, syncIntervalSeconds: Number(syncIntervalSeconds) })}
+          options={SYNC_INTERVAL_OPTIONS.map((seconds) => ({ label: seconds < 3600 ? `${seconds / 60} 分钟` : '60 分钟', value: String(seconds) }))}
+        />
+        <SelectField
+          label="导入模式"
+          value={draft.importMode}
+          onChange={(importMode) => onChange({ ...draft, importMode: importMode as GroupSourceConfig['importMode'] })}
+          options={[
+            { label: 'silent 只读', value: 'silent' },
+            { label: 'triggered_reply 触发词回复', value: 'triggered_reply' },
+          ]}
+        />
+        <SelectField
           label="原始消息保留"
           value={String(draft.rawRetentionDays)}
           onChange={(rawRetentionDays) => onChange({ ...draft, rawRetentionDays: Number(rawRetentionDays) })}
           options={RETENTION_OPTIONS.map((days) => ({ label: `${days} 天`, value: String(days) }))}
         />
+        <div className="md:col-span-2">
+          <TextInput
+            label="sender 白名单"
+            value={draft.allowedSendersText}
+            onChange={(allowedSendersText) => onChange({ ...draft, allowedSendersText })}
+            placeholder="可选，逗号分隔 ou_xxx；留空表示不限制"
+          />
+        </div>
       </div>
       <div className="mt-3 flex justify-end gap-2">
         <Button variant="ghost" onClick={onCancel}>取消</Button>
@@ -738,9 +841,10 @@ function SourceRow({
           </div>
           <StatusPill status={source.status} />
         </div>
-        <div className="mt-3 grid gap-2 text-xs text-slate-500 sm:grid-cols-3">
+        <div className="mt-3 grid gap-2 text-xs text-slate-500 sm:grid-cols-4">
           <span>最后同步：<b className="text-slate-700">{source.lastSeenAt}</b></span>
           <span>待确认：<b className="text-slate-700">{source.pendingSignals}</b></span>
+          <span>频率：<b className="text-slate-700">{source.syncIntervalSeconds / 60} 分钟</b></span>
           <span>缓存：<b className="text-slate-700">{source.rawRetentionDays} 天</b></span>
         </div>
       </button>
@@ -942,6 +1046,9 @@ function createEmptySourceDraft(): SourceDraft {
     displayName: '',
     externalGroupKey: '',
     status: 'active',
+    syncIntervalSeconds: 60,
+    importMode: 'silent',
+    allowedSendersText: '',
     rawRetentionDays: 7,
   }
 }
@@ -949,12 +1056,18 @@ function createEmptySourceDraft(): SourceDraft {
 function toSourceConfig(source: GroupLearningSource): GroupSourceConfig {
   return {
     id: source.id,
+    platform: source.platform,
     displayName: source.display_name,
     externalGroupKey: source.external_group_key,
     status: source.status,
+    syncIntervalSeconds: source.sync_interval_seconds,
+    importMode: source.import_mode,
+    allowedSenders: source.allowed_senders ?? [],
     rawRetentionDays: source.raw_retention_days,
-    lastSeenAt: formatDateTime(source.last_seen_at),
+    lastSyncAt: formatDateTime(source.last_sync_at, '尚未同步'),
+    lastSeenAt: formatDateTime(source.last_seen_at, '尚未读取消息'),
     pendingSignals: source.pending_signal_count,
+    pendingLlmMessages: source.pending_llm_message_count,
     autoGenerateRecommendations: source.auto_generate_recommendations,
     autoWriteCandidates: source.auto_write_candidates,
     autoApplyHighConfidenceTaggedSignals: source.auto_apply_high_confidence_tagged_signals,
@@ -964,9 +1077,13 @@ function toSourceConfig(source: GroupLearningSource): GroupSourceConfig {
 
 function toSourcePatch(patch: Partial<GroupSourceConfig>) {
   return {
+    ...(patch.platform !== undefined ? { platform: patch.platform } : {}),
     ...(patch.displayName !== undefined ? { display_name: patch.displayName } : {}),
     ...(patch.externalGroupKey !== undefined ? { external_group_key: patch.externalGroupKey } : {}),
     ...(patch.status !== undefined ? { status: patch.status } : {}),
+    ...(patch.syncIntervalSeconds !== undefined ? { sync_interval_seconds: patch.syncIntervalSeconds } : {}),
+    ...(patch.importMode !== undefined ? { import_mode: patch.importMode } : {}),
+    ...(patch.allowedSenders !== undefined ? { allowed_senders: patch.allowedSenders } : {}),
     ...(patch.rawRetentionDays !== undefined ? { raw_retention_days: patch.rawRetentionDays } : {}),
     ...(patch.autoGenerateRecommendations !== undefined ? { auto_generate_recommendations: patch.autoGenerateRecommendations } : {}),
     ...(patch.autoWriteCandidates !== undefined ? { auto_write_candidates: patch.autoWriteCandidates } : {}),
@@ -985,12 +1102,12 @@ function toParticipantMapping(participant: GroupLearningParticipant, learner: Le
     learnerName: participant.learner_id === learner.id ? CURRENT_LEARNER_LABEL : null,
     role: participant.role,
     analysisEnabled: participant.analysis_enabled,
-    lastMessageAt: formatDateTime(participant.last_message_at),
+    lastMessageAt: formatDateTime(participant.last_message_at, '尚未发言'),
   }
 }
 
-function formatDateTime(value?: string | null) {
-  if (!value) return '尚未同步'
+function formatDateTime(value?: string | null, emptyLabel = '尚未同步') {
+  if (!value) return emptyLabel
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return value
   return date.toLocaleString('zh-CN', {

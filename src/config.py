@@ -29,6 +29,12 @@ class Settings(BaseSettings):
     langfuse_secret_key: str | None = None
     langfuse_base_url: str = "http://localhost:3100"
     langfuse_environment: str = "development"
+    feishu_mcp_enabled: bool = False
+    feishu_mcp_transport: str = "http"
+    feishu_mcp_url: str | None = None
+    feishu_app_id: str | None = None
+    feishu_app_secret: str | None = None
+    feishu_openapi_fallback_enabled: bool = True
     debug: bool = False
     debug_console_enabled: bool = Field(
         default=False,

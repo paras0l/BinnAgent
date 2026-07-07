@@ -54,8 +54,42 @@ GRAMMAR_MICRO_LESSON_SCHEMA: dict[str, Any] = {
     "required": ["machine_data", "display_html"],
 }
 
+GROUP_LEARNING_SIGNAL_EXTRACT_SCHEMA: dict[str, Any] = {
+    "type": "object",
+    "properties": {
+        "signals": {
+            "type": "array",
+            "maxItems": 12,
+            "items": {
+                "type": "object",
+                "properties": {
+                    "message_id": {"type": "string"},
+                    "signal_type": {"type": "string"},
+                    "target_type": {"type": "string"},
+                    "target_label": {"type": "string"},
+                    "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+                    "evidence_text": {"type": "string"},
+                    "normalized_note": {"type": "string"},
+                    "recommendation_reason": {"type": "string"},
+                },
+                "required": [
+                    "message_id",
+                    "signal_type",
+                    "target_type",
+                    "target_label",
+                    "confidence",
+                    "evidence_text",
+                    "recommendation_reason",
+                ],
+            },
+        }
+    },
+    "required": ["signals"],
+}
+
 SCHEMA_REGISTRY: dict[str, dict[str, Any]] = {
     "VocabularyExtractOutput": VOCABULARY_CARD_SCHEMA,
     "WritingPhraseImportOutput": WRITING_PHRASE_IMPORT_SCHEMA,
     "GrammarMicroLessonOutput": GRAMMAR_MICRO_LESSON_SCHEMA,
+    "GroupLearningSignalExtractOutput": GROUP_LEARNING_SIGNAL_EXTRACT_SCHEMA,
 }

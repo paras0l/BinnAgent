@@ -10,6 +10,12 @@ FRONTEND_HOST="${BINN_FRONTEND_HOST:-0.0.0.0}"
 LEARNER_LOG="${TMPDIR:-/tmp}/binnagent-learner-vite.log"
 DEV_CONSOLE_LOG="${TMPDIR:-/tmp}/binnagent-dev-console-vite.log"
 FRONTEND_PIDS=()
+FEISHU_MCP_DIR="$ROOT_DIR/var/feishu-mcp"
+FEISHU_MCP_CONFIG="$FEISHU_MCP_DIR/config.json"
+FEISHU_MCP_LOG="$FEISHU_MCP_DIR/server.log"
+FEISHU_MCP_PID_FILE="$FEISHU_MCP_DIR/server.pid"
+FEISHU_MCP_PORT="${BINN_FEISHU_MCP_PORT:-8765}"
+FEISHU_MCP_PID=""
 
 CHAT_MODEL_FROM_ENV="${BINN_OLLAMA_CHAT_MODEL:-}"
 EMBEDDING_MODEL_FROM_ENV="${BINN_OLLAMA_EMBEDDING_MODEL:-}"
@@ -46,6 +52,9 @@ Environment:
   BINN_DEBUG_CONSOLE_TOKEN=dev    Token used by backend and Dev Console.
   BINN_LEARNER_PORT=5173          Learner App port.
   BINN_DEV_CONSOLE_PORT=5174      Dev Console port.
+  BINN_FEISHU_MCP_ENABLED=true    Start Feishu/Lark MCP sidecar.
+  BINN_FEISHU_APP_ID=cli_xxx      Feishu/Lark Open Platform app id.
+  BINN_FEISHU_APP_SECRET=xxx      Feishu/Lark Open Platform app secret.
 EOF
 }
 
@@ -118,6 +127,138 @@ configure_local_debug_console() {
   export BINN_DEBUG_CONSOLE_TOKEN="${BINN_DEBUG_CONSOLE_TOKEN:-dev}"
   export BINN_DEBUG_CONSOLE_ALLOWED_ORIGINS="${BINN_DEBUG_CONSOLE_ALLOWED_ORIGINS:-[\"http://localhost:${DEV_CONSOLE_PORT}\",\"http://127.0.0.1:${DEV_CONSOLE_PORT}\"]}"
   export VITE_DEBUG_CONSOLE_TOKEN="${VITE_DEBUG_CONSOLE_TOKEN:-$BINN_DEBUG_CONSOLE_TOKEN}"
+}
+
+env_file_value() {
+  local wanted_key="$1"
+  if [[ ! -f "$ROOT_DIR/.env" ]]; then
+    return
+  fi
+  while IFS='=' read -r key value; do
+    if [[ "$key" == "$wanted_key" ]]; then
+      parse_env_value "$value"
+      return
+    fi
+  done < <(grep -E '^[A-Za-z_][A-Za-z0-9_]*=' "$ROOT_DIR/.env" || true)
+}
+
+effective_env_value() {
+  local key="$1"
+  local current="${!key:-}"
+  if [[ -n "$current" ]]; then
+    printf "%s" "$current"
+  else
+    env_file_value "$key"
+  fi
+}
+
+is_truthy() {
+  case "$(printf "%s" "$1" | tr '[:upper:]' '[:lower:]')" in
+    true|1|yes|y|on) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+write_feishu_mcp_config() {
+  local app_id="$1"
+  local app_secret="$2"
+
+  mkdir -p "$FEISHU_MCP_DIR"
+  APP_ID="$app_id" APP_SECRET="$app_secret" MCP_PORT="$FEISHU_MCP_PORT" CONFIG_PATH="$FEISHU_MCP_CONFIG" python3 - <<'PY'
+import json
+import os
+from pathlib import Path
+
+config = {
+    "appId": os.environ["APP_ID"],
+    "appSecret": os.environ["APP_SECRET"],
+    "mode": "streamable",
+    "host": "localhost",
+    "port": os.environ["MCP_PORT"],
+    "toolNameCase": "dot",
+    "language": "en",
+    "tokenMode": "tenant_access_token",
+    "tools": [
+        "im.v1.chat.list",
+        "im.v1.chat.search",
+        "im.v1.chatMembers.get",
+        "im.v1.message.list",
+    ],
+}
+
+path = Path(os.environ["CONFIG_PATH"])
+path.write_text(json.dumps(config, ensure_ascii=False, indent=2), encoding="utf-8")
+path.chmod(0o600)
+PY
+}
+
+install_feishu_mcp_sidecar() {
+  local package_dir="$FEISHU_MCP_DIR/package"
+  local bin_path="$package_dir/node_modules/.bin/lark-mcp"
+  if [[ -x "$bin_path" ]]; then
+    return
+  fi
+
+  info "Installing Feishu/Lark MCP sidecar"
+  mkdir -p "$package_dir"
+  (
+    cd "$package_dir"
+    if [[ ! -f package.json ]]; then
+      npm init -y >/dev/null 2>&1
+    fi
+    npm install @larksuiteoapi/lark-mcp@0.5.1
+  )
+}
+
+start_feishu_mcp_sidecar() {
+  local enabled app_id app_secret
+  enabled="$(effective_env_value BINN_FEISHU_MCP_ENABLED)"
+  if ! is_truthy "$enabled"; then
+    return
+  fi
+
+  app_id="$(effective_env_value BINN_FEISHU_APP_ID)"
+  app_secret="$(effective_env_value BINN_FEISHU_APP_SECRET)"
+  if [[ -z "$app_id" || -z "$app_secret" ]]; then
+    warn "BINN_FEISHU_MCP_ENABLED=true but BINN_FEISHU_APP_ID / BINN_FEISHU_APP_SECRET is missing; Feishu MCP sidecar not started."
+    return
+  fi
+
+  if [[ -f "$FEISHU_MCP_PID_FILE" ]]; then
+    local old_pid
+    old_pid="$(cat "$FEISHU_MCP_PID_FILE" 2>/dev/null || true)"
+    if [[ -n "$old_pid" ]] && kill -0 "$old_pid" >/dev/null 2>&1; then
+      info "Stopping previous Feishu MCP sidecar pid $old_pid"
+      kill "$old_pid" >/dev/null 2>&1 || true
+    fi
+  fi
+
+  if is_port_listening "$FEISHU_MCP_PORT"; then
+    warn "Feishu MCP port $FEISHU_MCP_PORT is already in use; leaving the existing process untouched."
+    return
+  fi
+
+  write_feishu_mcp_config "$app_id" "$app_secret"
+  install_feishu_mcp_sidecar
+
+  : > "$FEISHU_MCP_LOG"
+  info "Starting Feishu MCP sidecar on http://localhost:${FEISHU_MCP_PORT}/mcp"
+  "$FEISHU_MCP_DIR/package/node_modules/.bin/lark-mcp" mcp --config "$FEISHU_MCP_CONFIG" > "$FEISHU_MCP_LOG" 2>&1 &
+  FEISHU_MCP_PID="$!"
+  echo "$FEISHU_MCP_PID" > "$FEISHU_MCP_PID_FILE"
+
+  local attempts=20
+  while [[ "$attempts" -gt 0 ]]; do
+    if is_port_listening "$FEISHU_MCP_PORT"; then
+      info "Feishu MCP sidecar ready: http://localhost:${FEISHU_MCP_PORT}/mcp"
+      return
+    fi
+    attempts=$((attempts - 1))
+    sleep 1
+  done
+
+  warn "Feishu MCP sidecar did not start. Last log lines:"
+  tail -n 40 "$FEISHU_MCP_LOG" >&2 || true
 }
 
 ensure_ollama_model() {
@@ -210,8 +351,23 @@ cleanup_frontends() {
   done
 }
 
-handle_shutdown() {
+cleanup_feishu_mcp() {
+  if [[ -z "$FEISHU_MCP_PID" ]]; then
+    return
+  fi
+  if kill -0 "$FEISHU_MCP_PID" >/dev/null 2>&1; then
+    info "Stopping Feishu MCP sidecar"
+    kill "$FEISHU_MCP_PID" >/dev/null 2>&1 || true
+  fi
+}
+
+cleanup_all() {
   cleanup_frontends
+  cleanup_feishu_mcp
+}
+
+handle_shutdown() {
+  cleanup_all
   exit 0
 }
 
@@ -238,9 +394,11 @@ main() {
   require_command docker
   require_command npm
   require_command curl
+  require_command python3
 
   ensure_env_file
   configure_local_debug_console
+  start_feishu_mcp_sidecar
   ensure_ollama_model "$CHAT_MODEL"
   ensure_ollama_model "$EMBEDDING_MODEL"
 
@@ -258,10 +416,10 @@ main() {
     info "Dev Console: http://localhost:${DEV_CONSOLE_PORT}"
     info "Dev Console token: ${BINN_DEBUG_CONSOLE_TOKEN}"
   fi
-  info "Press Ctrl+C to stop frontend dev servers."
+  info "Press Ctrl+C to stop frontend dev servers and Feishu MCP sidecar."
   info "Docker services stay running. Stop them with: docker compose down"
 
-  trap cleanup_frontends EXIT
+  trap cleanup_all EXIT
   trap handle_shutdown INT TERM
 
   start_vite_server "Learner App" "$LEARNER_PORT" "dev" "$LEARNER_LOG"

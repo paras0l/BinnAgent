@@ -1,33 +1,44 @@
 export type GroupLearningSourceStatus = 'active' | 'paused' | 'revoked'
+export type GroupLearningSourcePlatform = 'feishu' | 'wechat'
+export type GroupLearningImportMode = 'silent' | 'triggered_reply'
 export type GroupLearningParticipantRole = 'learner' | 'partner' | 'unknown'
 export type GroupLearningSignalStatus = 'candidate' | 'accepted' | 'dismissed' | 'deleted'
 
 export interface GroupLearningSource {
   id: string
   learner_id: string
-  platform: string
+  platform: GroupLearningSourcePlatform
   source_type: string
   display_name: string
   external_group_key: string
   status: GroupLearningSourceStatus
   last_cursor?: string | null
   last_seen_at?: string | null
+  last_sync_at?: string | null
   last_import_summary: Record<string, unknown>
+  sync_interval_seconds: number
+  import_mode: GroupLearningImportMode
+  allowed_senders: string[]
   raw_retention_days: number
   auto_generate_recommendations: boolean
   auto_write_candidates: boolean
   auto_apply_high_confidence_tagged_signals: boolean
   confidence_threshold: number
   pending_signal_count: number
+  pending_llm_message_count: number
   participant_count: number
   created_at: string
   updated_at: string
 }
 
 export interface GroupLearningSourcePayload {
+  platform?: GroupLearningSourcePlatform
   display_name: string
   external_group_key: string
   status: GroupLearningSourceStatus
+  sync_interval_seconds?: number
+  import_mode?: GroupLearningImportMode
+  allowed_senders?: string[]
   raw_retention_days: number
   auto_generate_recommendations?: boolean
   auto_write_candidates?: boolean
@@ -95,6 +106,22 @@ export interface ImportGroupLearningSummary {
   generated_signal_count: number
   ignored_count: number
   participant_count: number
+}
+
+export interface GroupLearningSyncNowSummary extends ImportGroupLearningSummary {
+  fetched_count: number
+  next_cursor?: string | null
+  last_sync_at: string
+  placeholder: boolean
+}
+
+export interface GroupLearningAnalyzePendingSummary {
+  source_id: string
+  learner_id: string
+  analyzed_message_count: number
+  generated_signal_count: number
+  skipped_signal_count: number
+  remaining_pending_count: number
 }
 
 export async function listGroupLearningSources(learnerId: string) {
@@ -174,10 +201,24 @@ export async function importGroupLearningMessages(
   sourceId: string,
   messages: ImportGroupLearningMessage[],
 ) {
-  return apiJson<ImportGroupLearningSummary>('/api/group-learning/wechat/messages/import', {
+  return apiJson<ImportGroupLearningSummary>('/api/group-learning/messages/import', {
     method: 'POST',
     body: JSON.stringify({ source_id: sourceId, messages }),
   })
+}
+
+export async function syncGroupLearningSourceNow(learnerId: string, sourceId: string) {
+  return apiJson<GroupLearningSyncNowSummary>(
+    `/api/learners/${learnerId}/group-learning/sources/${sourceId}/sync-now`,
+    { method: 'POST' },
+  )
+}
+
+export async function analyzePendingGroupLearningMessages(learnerId: string, sourceId: string, limit = 10) {
+  return apiJson<GroupLearningAnalyzePendingSummary>(
+    `/api/learners/${learnerId}/group-learning/sources/${sourceId}/analyze-pending?limit=${limit}`,
+    { method: 'POST' },
+  )
 }
 
 export async function listGroupLearningSignals(
