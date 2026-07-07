@@ -1,6 +1,6 @@
 import uuid
 from collections import Counter
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -10,9 +10,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.api.deps import get_db_session
 from src.models.error_pattern import ErrorPattern
+from src.models.knowledge import ExerciseAttempt, LearnerKnowledgeState
 from src.models.learner import Learner
+from src.models.learning_progress import LearningProgressItem
 from src.models.session import LearningSession
-from src.models.vocabulary import ReviewSchedule, VocabularyItem
+from src.models.vocabulary import ReviewSchedule, VocabularyItem, VocabularyMasteryVector
 
 router = APIRouter(prefix="/api/learners/{learner_id}/dashboard", tags=["dashboard"])
 
@@ -53,6 +55,29 @@ class DashboardDailyActivity(BaseModel):
     count: int
 
 
+class DashboardProfileAbility(BaseModel):
+    label: str
+    value: int
+    evidence_count: int = 0
+
+
+class DashboardProfileMasteryBucket(BaseModel):
+    label: str
+    value: int
+
+
+class DashboardProfileTrendPoint(BaseModel):
+    date: str
+    accuracy: int
+    due_reviews: int
+
+
+class DashboardProfileData(BaseModel):
+    ability_scores: list[DashboardProfileAbility] = Field(default_factory=list)
+    mastery_buckets: list[DashboardProfileMasteryBucket] = Field(default_factory=list)
+    trend: list[DashboardProfileTrendPoint] = Field(default_factory=list)
+
+
 class DashboardResponse(BaseModel):
     stats: DashboardStats
     review_items: list[DashboardReviewItem] = Field(default_factory=list)
@@ -60,6 +85,7 @@ class DashboardResponse(BaseModel):
     today_goal: DashboardGoal
     weekly_goal: DashboardGoal
     daily_activity: list[DashboardDailyActivity] = Field(default_factory=list)
+    profile: DashboardProfileData = Field(default_factory=DashboardProfileData)
 
 
 async def _ensure_learner_exists(db: AsyncSession, learner_id: uuid.UUID) -> None:
@@ -120,6 +146,199 @@ def _streak_days(sessions: list[LearningSession]) -> int:
         streak += 1
         cursor = cursor.fromordinal(cursor.toordinal() - 1)
     return streak
+
+
+def _score_from_attempts(attempts: list[ExerciseAttempt]) -> int | None:
+    if not attempts:
+        return None
+    correct_count = sum(1 for attempt in attempts if attempt.correct)
+    return round(correct_count / len(attempts) * 100)
+
+
+def _progress_score(items: list[LearningProgressItem]) -> int | None:
+    if not items:
+        return None
+    learned = sum(1 for item in items if item.status == "learned")
+    opened = sum(1 for item in items if item.opened_count > 0 or item.status in {"opened", "learned"})
+    return round(((learned * 1.0) + max(0, opened - learned) * 0.45) / len(items) * 100)
+
+
+def _average(values: list[float | None]) -> float | None:
+    filtered = [value for value in values if value is not None]
+    if not filtered:
+        return None
+    return sum(filtered) / len(filtered)
+
+
+def _clamp_percent(value: float) -> int:
+    return max(0, min(100, round(value)))
+
+
+def _skill_key(value: str | None) -> str:
+    normalized = (value or "").lower()
+    if "grammar" in normalized or "语法" in normalized:
+        return "grammar"
+    if "read" in normalized or "阅读" in normalized:
+        return "reading"
+    if "writ" in normalized or "写作" in normalized or "essay" in normalized:
+        return "writing"
+    if "pronunciation" in normalized or "phonetic" in normalized or "发音" in normalized:
+        return "pronunciation"
+    if "listen" in normalized or "听力" in normalized:
+        return "listening"
+    if "vocab" in normalized or "word" in normalized or "词" in normalized:
+        return "vocabulary"
+    return normalized or "general"
+
+
+def _combine_scores(scores: list[tuple[float | None, int]]) -> tuple[int | None, int]:
+    weighted_total = 0.0
+    evidence_total = 0
+    for score, evidence_count in scores:
+        if score is None or evidence_count <= 0:
+            continue
+        weighted_total += score * evidence_count
+        evidence_total += evidence_count
+    if evidence_total == 0:
+        return None, 0
+    return _clamp_percent(weighted_total / evidence_total), evidence_total
+
+
+def _profile_ability_scores(
+    vocab_items: list[VocabularyItem],
+    mastery_vectors: list[VocabularyMasteryVector],
+    progress_items: list[LearningProgressItem],
+    exercise_attempts: list[ExerciseAttempt],
+) -> list[DashboardProfileAbility]:
+    attempts_by_skill: dict[str, list[ExerciseAttempt]] = {}
+    for attempt in exercise_attempts:
+        attempts_by_skill.setdefault(_skill_key(attempt.target_type), []).append(attempt)
+
+    progress_by_skill: dict[str, list[LearningProgressItem]] = {}
+    for item in progress_items:
+        progress_by_skill.setdefault(_skill_key(item.skill), []).append(item)
+
+    vocab_confidence = _average([item.confidence * 100 for item in vocab_items])
+    vocab_vector_scores: list[float] = []
+    for vector in mastery_vectors:
+        vector_score = _average(
+            [
+                vector.recognition,
+                vector.recall,
+                vector.spelling,
+                vector.context_use,
+                vector.production,
+            ]
+        )
+        if vector_score is not None:
+            vocab_vector_scores.append(vector_score * 100)
+    vocab_vector = _average(vocab_vector_scores)
+    listening_vector = _average([vector.listening * 100 for vector in mastery_vectors])
+
+    skill_sources = {
+        "词汇": [
+            (vocab_confidence, len(vocab_items)),
+            (vocab_vector, len(mastery_vectors)),
+            (
+                _score_from_attempts(attempts_by_skill.get("vocabulary", [])),
+                len(attempts_by_skill.get("vocabulary", [])),
+            ),
+        ],
+        "语法": [
+            (_progress_score(progress_by_skill.get("grammar", [])), len(progress_by_skill.get("grammar", []))),
+            (
+                _score_from_attempts(attempts_by_skill.get("grammar", [])),
+                len(attempts_by_skill.get("grammar", [])),
+            ),
+        ],
+        "阅读": [
+            (_score_from_attempts(attempts_by_skill.get("reading", [])), len(attempts_by_skill.get("reading", []))),
+        ],
+        "写作": [
+            (_score_from_attempts(attempts_by_skill.get("writing", [])), len(attempts_by_skill.get("writing", []))),
+        ],
+        "发音": [
+            (_progress_score(progress_by_skill.get("pronunciation", [])), len(progress_by_skill.get("pronunciation", []))),
+            (_score_from_attempts(attempts_by_skill.get("pronunciation", [])), len(attempts_by_skill.get("pronunciation", []))),
+        ],
+        "听力": [
+            (listening_vector, len(mastery_vectors)),
+            (_score_from_attempts(attempts_by_skill.get("listening", [])), len(attempts_by_skill.get("listening", []))),
+        ],
+    }
+
+    ability_scores: list[DashboardProfileAbility] = []
+    for label, sources in skill_sources.items():
+        score, evidence_count = _combine_scores(sources)
+        if score is not None:
+            ability_scores.append(
+                DashboardProfileAbility(label=label, value=score, evidence_count=evidence_count)
+            )
+    return ability_scores
+
+
+def _mastery_buckets(
+    vocab_items: list[VocabularyItem],
+    knowledge_states: list[LearnerKnowledgeState],
+    mastery_vectors: list[VocabularyMasteryVector],
+) -> list[DashboardProfileMasteryBucket]:
+    scores = [item.confidence for item in vocab_items]
+    scores.extend(state.mastery_score for state in knowledge_states)
+    for vector in mastery_vectors:
+        vector_score = _average(
+            [
+                vector.recognition,
+                vector.recall,
+                vector.spelling,
+                vector.listening,
+                vector.context_use,
+                vector.production,
+            ]
+        )
+        if vector_score is not None:
+            scores.append(vector_score)
+
+    buckets = {"新学": 0, "学习中": 0, "熟悉": 0, "掌握": 0}
+    for score in scores:
+        if score <= 0:
+            buckets["新学"] += 1
+        elif score < 0.5:
+            buckets["学习中"] += 1
+        elif score < 0.8:
+            buckets["熟悉"] += 1
+        else:
+            buckets["掌握"] += 1
+    return [DashboardProfileMasteryBucket(label=label, value=value) for label, value in buckets.items()]
+
+
+def _profile_trend(
+    days: list[date],
+    review_schedules: list[ReviewSchedule],
+    exercise_attempts: list[ExerciseAttempt],
+    due_review_counts: dict[date, int],
+) -> list[DashboardProfileTrendPoint]:
+    points: list[DashboardProfileTrendPoint] = []
+    for day in days:
+        correct = 0
+        total = 0
+        for review in review_schedules:
+            if review.completed_at and review.completed_at.astimezone(timezone.utc).date() == day:
+                total += 1
+                if review.result == "correct":
+                    correct += 1
+        for attempt in exercise_attempts:
+            if attempt.created_at and attempt.created_at.astimezone(timezone.utc).date() == day:
+                total += 1
+                if attempt.correct:
+                    correct += 1
+        points.append(
+            DashboardProfileTrendPoint(
+                date=day.isoformat(),
+                accuracy=round(correct / total * 100) if total else 0,
+                due_reviews=int(due_review_counts.get(day, 0)),
+            )
+        )
+    return points
 
 
 @router.get("", response_model=DashboardResponse)
@@ -236,6 +455,58 @@ async def get_dashboard(
         )
         for offset in range(13, -1, -1)
     ]
+    trend_days = [today - timedelta(days=offset) for offset in range(13, -1, -1)]
+
+    vocab_items_result = await db.execute(
+        select(VocabularyItem).where(VocabularyItem.learner_id == learner_id).limit(5000)
+    )
+    profile_vocab_items = list(vocab_items_result.scalars().all())
+
+    knowledge_states_result = await db.execute(
+        select(LearnerKnowledgeState).where(LearnerKnowledgeState.learner_id == learner_id).limit(5000)
+    )
+    knowledge_states = list(knowledge_states_result.scalars().all())
+
+    mastery_vectors_result = await db.execute(
+        select(VocabularyMasteryVector).where(VocabularyMasteryVector.learner_id == learner_id).limit(5000)
+    )
+    mastery_vectors = list(mastery_vectors_result.scalars().all())
+
+    progress_items_result = await db.execute(
+        select(LearningProgressItem).where(LearningProgressItem.learner_id == learner_id).limit(5000)
+    )
+    progress_items = list(progress_items_result.scalars().all())
+
+    attempts_result = await db.execute(
+        select(ExerciseAttempt)
+        .where(ExerciseAttempt.learner_id == learner_id)
+        .order_by(ExerciseAttempt.created_at.desc())
+        .limit(500)
+    )
+    exercise_attempts = list(attempts_result.scalars().all())
+
+    recent_review_history_result = await db.execute(
+        select(ReviewSchedule).where(
+            ReviewSchedule.learner_id == learner_id,
+            ReviewSchedule.completed_at.is_not(None),
+            ReviewSchedule.completed_at >= datetime.combine(trend_days[0], datetime.min.time(), tzinfo=timezone.utc),
+        )
+    )
+    recent_review_history = list(recent_review_history_result.scalars().all())
+
+    due_schedule_result = await db.execute(
+        select(ReviewSchedule).where(
+            ReviewSchedule.learner_id == learner_id,
+            ReviewSchedule.scheduled_at >= datetime.combine(
+                trend_days[0], datetime.min.time(), tzinfo=timezone.utc
+            ),
+        )
+    )
+    due_review_counts = Counter(
+        review.scheduled_at.astimezone(timezone.utc).date()
+        for review in due_schedule_result.scalars().all()
+        if review.scheduled_at is not None
+    )
 
     return DashboardResponse(
         stats=DashboardStats(
@@ -250,4 +521,24 @@ async def get_dashboard(
         today_goal=DashboardGoal(label="今日课程", completed=today_completed, total=1),
         weekly_goal=DashboardGoal(label="本周练习", completed=weekly_completed, total=5),
         daily_activity=daily_activity,
+        profile=DashboardProfileData(
+            ability_scores=_profile_ability_scores(
+                profile_vocab_items,
+                mastery_vectors,
+                progress_items,
+                exercise_attempts,
+            ),
+            mastery_buckets=_mastery_buckets(profile_vocab_items, knowledge_states, mastery_vectors),
+            trend=_profile_trend(
+                trend_days,
+                recent_review_history,
+                [
+                    attempt
+                    for attempt in exercise_attempts
+                    if attempt.created_at
+                    and attempt.created_at.astimezone(timezone.utc).date() >= trend_days[0]
+                ],
+                due_review_counts,
+            ),
+        ),
     )

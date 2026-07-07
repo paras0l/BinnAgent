@@ -34,6 +34,11 @@ const emptySummary: DashboardSummary = {
     date: `2026-07-${String(index + 1).padStart(2, '0')}`,
     count: 0,
   })),
+  profile: {
+    ability_scores: [],
+    mastery_buckets: [],
+    trend: [],
+  },
 }
 
 const emptyMemorySummary: MemorySummary = {
@@ -72,6 +77,8 @@ describe('Dashboard learning profile workspaces', () => {
     expect(html).toContain('状态摘要')
     expect(html).toContain('最近表现')
     expect(html).toContain('下一步建议')
+    expect(html).toContain('还没有足够的能力证据')
+    expect(html).toContain('还没有掌握度记录')
     expect(html).not.toContain('数据控制说明')
     expect(html).not.toContain('/memory/center')
     expect(html).not.toContain('Memory Debug')
@@ -117,5 +124,13 @@ describe('Dashboard learning profile workspaces', () => {
     expect(dashboardSource).toContain('pagedVocabulary')
     expect(dashboardSource).toContain('max-h-[min(64vh,760px)] overflow-y-auto')
     expect(dashboardSource).toContain('VocabularyListPagination')
+  })
+
+  it('uses backend profile fields instead of estimating ability scores in the browser', () => {
+    expect(dashboardSource).toContain('summary.profile?.ability_scores')
+    expect(dashboardSource).toContain('summary.profile?.mastery_buckets')
+    expect(dashboardSource).toContain('summary.profile?.trend')
+    expect(dashboardSource).not.toContain('weaknessPenalty')
+    expect(dashboardSource).not.toContain('summary.stats.streak_days * 6 + 45')
   })
 })

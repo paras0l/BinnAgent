@@ -555,6 +555,22 @@ export interface DashboardSummary {
     date: string
     count: number
   }>
+  profile?: {
+    ability_scores: Array<{
+      label: string
+      value: number
+      evidence_count: number
+    }>
+    mastery_buckets: Array<{
+      label: string
+      value: number
+    }>
+    trend: Array<{
+      date: string
+      accuracy: number
+      due_reviews: number
+    }>
+  }
 }
 
 export interface VocabularyListItem {

@@ -799,10 +799,11 @@ export function LearningProfileView({
 }) {
   const reasons = buildFocusReasons(summary)
   const weaknesses = buildWeaknessList(summary, memorySummary)
-  const abilityScores = buildAbilityScores(summary, memorySummary)
-  const masteryBuckets = buildMasteryBuckets(summary, memorySummary)
+  const abilityScores = buildAbilityScores(summary)
+  const masteryBuckets = buildMasteryBuckets(summary)
   const recentActivity = memorySummary?.recent_events?.slice(0, 4) ?? []
-  const hasProfileData = weaknesses.length > 0 || recentActivity.length > 0 || summary.stats.total_vocab > 0
+  const hasMasteryData = masteryBuckets.some((bucket) => bucket.value > 0)
+  const hasProfileData = weaknesses.length > 0 || recentActivity.length > 0 || abilityScores.length > 0 || hasMasteryData
 
   return (
     <PageShell>
@@ -837,12 +838,20 @@ export function LearningProfileView({
         <div className="space-y-4">
           <SurfaceCard>
             <SectionHeading icon={<Target className="size-4" />} title="能力雷达图" />
-            <AbilityRadarChart items={abilityScores} />
+            {abilityScores.length ? (
+              <AbilityRadarChart items={abilityScores} />
+            ) : (
+              <p className="mt-3 text-sm leading-6 text-slate-500">还没有足够的能力证据。完成词汇复习、教材练习或专项练习后，这里会展示真实能力分。</p>
+            )}
           </SurfaceCard>
 
           <SurfaceCard>
             <SectionHeading icon={<BookOpen className="size-4" />} title="掌握度分布" />
-            <MasteryDistributionChart buckets={masteryBuckets} />
+            {hasMasteryData ? (
+              <MasteryDistributionChart buckets={masteryBuckets} />
+            ) : (
+              <p className="mt-3 text-sm leading-6 text-slate-500">还没有掌握度记录。开始学习教材知识点或加入词汇本后，这里会按真实掌握度分组。</p>
+            )}
           </SurfaceCard>
 
           <SurfaceCard>
@@ -1233,37 +1242,25 @@ function buildWeaknessList(summary: DashboardSummary, memorySummary: MemorySumma
   return [...fromDashboard, ...fromMemory].slice(0, 6)
 }
 
-function buildAbilityScores(summary: DashboardSummary, memorySummary: MemorySummary | null) {
-  const accuracy = summary.stats.accuracy || 0
-  const completedRate = toPercent(summary.today_goal.completed, summary.today_goal.total)
-  const weeklyRate = toPercent(summary.weekly_goal.completed, summary.weekly_goal.total)
-  const masteredVocab = memorySummary?.stats.mastered_vocab ?? 0
-  const vocabBase = summary.stats.total_vocab > 0 ? Math.round((masteredVocab / summary.stats.total_vocab) * 100) : Math.min(75, summary.stats.today_completed_reviews * 12)
-  const weaknessPenalty = Math.min(25, summary.error_patterns.length * 4)
-
-  return [
-    { label: '词汇', value: clampScore(Math.round((vocabBase + accuracy) / 2)) },
-    { label: '语法', value: clampScore(accuracy - weaknessPenalty + 8) },
-    { label: '阅读', value: clampScore(Math.round((completedRate + weeklyRate) / 2)) },
-    { label: '写作', value: clampScore(weeklyRate - weaknessPenalty + 12) },
-    { label: '发音', value: clampScore(summary.stats.today_completed_reviews * 10 + 45) },
-    { label: '听力', value: clampScore(summary.stats.streak_days * 6 + 45) },
-  ]
+function buildAbilityScores(summary: DashboardSummary) {
+  return (summary.profile?.ability_scores ?? [])
+    .filter((item) => item.evidence_count > 0)
+    .map((item) => ({ label: item.label, value: clampScore(item.value) }))
 }
 
-function buildMasteryBuckets(summary: DashboardSummary, memorySummary: MemorySummary | null) {
-  const mastered = memorySummary?.stats.mastered_vocab ?? 0
-  const total = Math.max(summary.stats.total_vocab, mastered, 0)
-  const reviewing = Math.min(total, summary.stats.today_reviews + summary.stats.today_completed_reviews)
-  const remaining = Math.max(0, total - mastered - reviewing)
-  const learning = Math.round(remaining * 0.65)
-  const fresh = Math.max(0, remaining - learning)
-  return [
-    { label: '新学', value: fresh, className: 'bg-slate-300' },
-    { label: '学习中', value: learning, className: 'bg-amber-400' },
-    { label: '熟悉', value: reviewing, className: 'bg-indigo-500' },
-    { label: '掌握', value: mastered, className: 'bg-emerald-500' },
-  ]
+function buildMasteryBuckets(summary: DashboardSummary) {
+  const classNames: Record<string, string> = {
+    新学: 'bg-slate-300',
+    学习中: 'bg-amber-400',
+    熟悉: 'bg-indigo-500',
+    掌握: 'bg-emerald-500',
+  }
+  const buckets = summary.profile?.mastery_buckets ?? []
+  return buckets.map((bucket) => ({
+    label: bucket.label,
+    value: bucket.value,
+    className: classNames[bucket.label] ?? 'bg-slate-300',
+  }))
 }
 
 function buildLearningTrend(summary: DashboardSummary) {
@@ -1274,19 +1271,16 @@ function buildLearningTrend(summary: DashboardSummary) {
 }
 
 function buildAccuracyTrend(summary: DashboardSummary) {
-  const activity = summary.daily_activity.slice(-14)
-  const base = summary.stats.accuracy || 70
-  return activity.map((item, index) => ({
+  return (summary.profile?.trend ?? []).slice(-14).map((item) => ({
     label: formatShortDate(item.date),
-    value: clampScore(base - 10 + index * 1.5 + Math.min(8, item.count * 2)),
+    value: clampScore(item.accuracy),
   }))
 }
 
 function buildDueTrend(summary: DashboardSummary) {
-  const activity = summary.daily_activity.slice(-14)
-  return activity.map((item, index) => ({
+  return (summary.profile?.trend ?? []).slice(-14).map((item) => ({
     label: formatShortDate(item.date),
-    value: Math.max(0, summary.stats.today_reviews + activity.length - index - item.count),
+    value: Math.max(0, item.due_reviews),
   }))
 }
 
