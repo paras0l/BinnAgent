@@ -160,6 +160,15 @@ export interface ParserReviewDecisionResponse {
   item: ParserReviewItem
 }
 
+export interface ParserReviewBatchDecisionResponse {
+  source: TextbookSourceDebugSummary
+  source_quality_summary: TextbookSourceDebugSummary
+  summary: ParserReviewItemsResponse['summary']
+  decided_count: number
+  decided_ids: string[]
+  action: 'confirmed' | 'ignored'
+}
+
 export interface ParserEvidenceResponse {
   source_id: string
   query: {

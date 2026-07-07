@@ -1,6 +1,7 @@
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -32,6 +33,12 @@ def _one(value):
 def _many(values: list):
     result = MagicMock()
     result.scalars.return_value.all.return_value = values
+    return result
+
+
+def _rows(values: list):
+    result = MagicMock()
+    result.__iter__.return_value = iter(values)
     return result
 
 
@@ -177,6 +184,44 @@ async def test_overview_switches_content_to_requested_curriculum_node(client, kn
     assert response.json()["current_node_id"] == str(nodes[1].id)
     assert response.json()["current_unit"]["title"] == "Starter Unit 2"
     assert response.json()["knowledge_points"][0]["title"] == "What's this in English?"
+
+
+@pytest.mark.asyncio
+async def test_overview_does_not_advance_after_lesson_when_unit_mastery_is_low(
+    client, knowledge_session
+):
+    learner_id = uuid.uuid4()
+    source = _source()
+    nodes = [_node(source.id, 1), _node(source.id, 2)]
+    points = [_point(source.id, nodes[0].id)]
+    knowledge_session.execute = AsyncMock(
+        side_effect=[
+            _one(learner_id),
+            _many([source]),
+            _one(source),
+            _many(nodes),
+            _rows(
+                [
+                    SimpleNamespace(
+                        curriculum_node_id=nodes[0].id,
+                        point_count=1,
+                        average_mastery=0.18,
+                    )
+                ]
+            ),
+            _many(points),
+            _many([]),
+            _many([]),
+        ]
+    )
+
+    response = await client.get(f"/api/learners/{learner_id}/knowledge-base")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["current_node_id"] == str(nodes[0].id)
+    assert payload["curriculum"][0]["status"] == "in_progress"
+    assert payload["curriculum"][1]["status"] == "available"
 
 
 @pytest.mark.asyncio

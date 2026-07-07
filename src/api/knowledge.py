@@ -54,7 +54,11 @@ from src.runtime.hashing import stable_json_hash
 from src.runtime.schemas import EpisodeTraceView, episode_to_view, event_to_view, tool_call_to_view
 from src.runtime.task_spec import SuccessCriteria, TaskSpec, TaskTarget, VerificationPolicy
 from src.verification.report import verify_knowledge_exercise_episode
-from src.vocabulary.learning import canonical_vocabulary_key, enroll_unit_vocabulary
+from src.vocabulary.learning import (
+    canonical_vocabulary_key,
+    enroll_unit_vocabulary,
+    learnable_point_statuses,
+)
 
 router = APIRouter(tags=["knowledge-base"])
 
@@ -691,11 +695,14 @@ def _lesson_parts(points: list[KnowledgePoint]) -> list[dict[str, Any]]:
 
 
 def _unit_point_filter(node: CurriculumNode):
-    return or_(
-        KnowledgePoint.curriculum_node_id == node.id,
-        and_(
-            KnowledgePoint.type == "grammar",
-            KnowledgePoint.content["related_units"].contains([node.title]),
+    return and_(
+        KnowledgePoint.source_id == node.source_id,
+        or_(
+            KnowledgePoint.curriculum_node_id == node.id,
+            and_(
+                KnowledgePoint.type == "grammar",
+                KnowledgePoint.content["related_units"].contains([node.title]),
+            ),
         ),
     )
 
@@ -964,21 +971,34 @@ async def knowledge_base_overview(
     nodes = list(node_result.scalars().all())
     if not nodes:
         raise HTTPException(status_code=409, detail="Textbook curriculum has not been generated")
-    completed_task_result = await db.execute(
-        select(LearningTask).where(
-            LearningTask.learner_id == learner_id,
-            LearningTask.skill == "knowledge",
-            LearningTask.status == "completed",
+    node_ids = [node.id for node in nodes]
+    point_statuses = learnable_point_statuses(source)
+    mastery_result = await db.execute(
+        select(
+            KnowledgePoint.curriculum_node_id,
+            func.count(KnowledgePoint.id).label("point_count"),
+            func.avg(func.coalesce(LearnerKnowledgeState.mastery_score, 0.0)).label("average_mastery"),
         )
+        .outerjoin(
+            LearnerKnowledgeState,
+            and_(
+                LearnerKnowledgeState.knowledge_point_id == KnowledgePoint.id,
+                LearnerKnowledgeState.learner_id == learner_id,
+            ),
+        )
+        .where(
+            KnowledgePoint.curriculum_node_id.in_(node_ids),
+            KnowledgePoint.source_id == source.id,
+            KnowledgePoint.status.in_(point_statuses),
+            KnowledgePoint.type != "text_note",
+        )
+        .group_by(KnowledgePoint.curriculum_node_id)
     )
-    completed_node_ids: set[uuid.UUID] = set()
-    for task in completed_task_result.scalars().all():
-        if not task.input_ref or not task.input_ref.startswith("curriculum:"):
-            continue
-        try:
-            completed_node_ids.add(uuid.UUID(task.input_ref.removeprefix("curriculum:")))
-        except ValueError:
-            continue
+    completed_node_ids: set[uuid.UUID] = {
+        row.curriculum_node_id
+        for row in mastery_result
+        if int(row.point_count or 0) > 0 and float(row.average_mastery or 0.0) >= 0.8
+    }
 
     recommended_node = next(
         (node for node in nodes if node.id not in completed_node_ids), nodes[-1]
@@ -994,7 +1014,7 @@ async def knowledge_base_overview(
         select(KnowledgePoint)
         .where(
             _unit_point_filter(display_node),
-            KnowledgePoint.status == "published",
+            KnowledgePoint.status.in_(point_statuses),
         )
         .order_by(*_unit_point_order())
     )
@@ -1396,12 +1416,20 @@ async def start_knowledge_lesson(
         raise HTTPException(status_code=404, detail="Curriculum node not found")
     point_result = await db.execute(
         select(KnowledgePoint)
-        .where(_unit_point_filter(node), KnowledgePoint.status == "published")
+        .where(_unit_point_filter(node))
         .order_by(*_unit_point_order())
     )
-    points = list(point_result.scalars().all())
+    source_result = await db.execute(
+        select(KnowledgeSource).where(KnowledgeSource.id == node.source_id)
+    )
+    source = source_result.scalar_one()
+    points = [
+        point
+        for point in point_result.scalars().all()
+        if point.status in learnable_point_statuses(source)
+    ]
     lesson_parts = _lesson_parts(points)
-    enrollment = await enroll_unit_vocabulary(db, learner_id, node)
+    enrollment = await enroll_unit_vocabulary(db, learner_id, node, source=source)
 
     now = datetime.now(timezone.utc)
     session = LearningSession(

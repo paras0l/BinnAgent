@@ -62,21 +62,34 @@ class EnrollmentResult:
     already_known: int
 
 
+def source_allows_draft_learning(source: KnowledgeSource) -> bool:
+    metadata = source.metadata_ or {}
+    return source.status in {"review_required", "partial_indexed"} or metadata.get(
+        "quality_status"
+    ) in {"review_required", "partial_indexed"}
+
+
+def learnable_point_statuses(source: KnowledgeSource) -> list[str]:
+    return ["published", "draft"] if source_allows_draft_learning(source) else ["published"]
+
+
 async def enroll_unit_vocabulary(
     db: AsyncSession,
     learner_id: uuid.UUID,
     node: CurriculumNode,
+    source: KnowledgeSource | None = None,
 ) -> EnrollmentResult:
-    source_result = await db.execute(
-        select(KnowledgeSource).where(KnowledgeSource.id == node.source_id)
-    )
-    source = source_result.scalar_one()
+    if source is None:
+        source_result = await db.execute(
+            select(KnowledgeSource).where(KnowledgeSource.id == node.source_id)
+        )
+        source = source_result.scalar_one()
     point_result = await db.execute(
         select(KnowledgePoint)
         .where(
             KnowledgePoint.curriculum_node_id == node.id,
             KnowledgePoint.type == "vocabulary",
-            KnowledgePoint.status == "published",
+            KnowledgePoint.status.in_(learnable_point_statuses(source)),
         )
         .order_by(KnowledgePoint.content["unit_order"].as_integer().asc())
     )

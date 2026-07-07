@@ -142,6 +142,7 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice, 
   const [deleteSourceTarget, setDeleteSourceTarget] = useState<DeleteSourceTarget | null>(null)
   const [isDeletingSource, setIsDeletingSource] = useState(false)
   const [lessonSession, setLessonSession] = useState<KnowledgeLessonSession | null>(null)
+  const [lessonNodeId, setLessonNodeId] = useState<string | null>(null)
   const [isStartingLesson, setIsStartingLesson] = useState(false)
   const [unitVocabulary, setUnitVocabulary] = useState<UnitVocabularySummary | null>(null)
   const [grammarTopic, setGrammarTopic] = useState<string | null>(null)
@@ -328,13 +329,16 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice, 
   }, [ingestStatus, learner.id, loadOverview, showToast])
 
   const handleStartLesson = async () => {
+    const nodeId = overview?.current_unit.id
+    if (!nodeId) return
     setIsStartingLesson(true)
     try {
       const response = await fetch(
-        `/api/learners/${learner.id}/knowledge-base/lessons/${overview?.current_unit.id}/start`,
+        `/api/learners/${learner.id}/knowledge-base/lessons/${nodeId}/start`,
         { method: 'POST' }
       )
       if (!response.ok) throw new Error('今日课程暂时无法开始。')
+      setLessonNodeId(nodeId)
       setLessonSession(await response.json() as KnowledgeLessonSession)
     } catch (startError) {
       showToast(startError instanceof Error ? startError.message : '今日课程暂时无法开始。', { variant: 'error' })
@@ -421,9 +425,11 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice, 
     )
     if (!response.ok) throw new Error('课程完成状态保存失败，请重试。')
     await response.json() as KnowledgeLessonCompleteResult
+    const completedNodeId = lessonNodeId ?? selectedNodeId ?? overview?.current_unit.id
     setLessonSession(null)
+    setLessonNodeId(null)
     showToast('单元导学已记录，当前单元进度已更新。', { variant: 'success', duration: 5000 })
-    await loadOverview(selectedSourceId ?? overview?.source.id, selectedNodeId ?? overview?.current_unit.id)
+    await loadOverview(selectedSourceId ?? overview?.source.id, completedNodeId)
   }
 
   const handleStartDailyLesson = async () => {
@@ -869,8 +875,10 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice, 
         key={lessonSession?.session_id ?? 'closed-lesson'}
         session={lessonSession}
         onClose={() => {
+          const currentLessonNodeId = lessonNodeId ?? selectedNodeId ?? overview.current_unit.id
           setLessonSession(null)
-          void loadOverview(selectedSourceId ?? overview.source.id)
+          setLessonNodeId(null)
+          void loadOverview(selectedSourceId ?? overview.source.id, currentLessonNodeId)
         }}
         onAttempt={handleAttempt}
         onComplete={handleCompleteLesson}
@@ -1065,7 +1073,7 @@ function TodayCourseTasks({
             ? '本单元词汇还在学习中，可以继续巩固。'
           : '本单元暂时没有可练习的词汇。',
       meta: vocabularyEntry.meta,
-      status: vocabularyEntry.mode ? (vocabularyEntry.kind === 'review' || vocabularyEntry.kind === 'continue' ? 'continue' : 'not-started') : 'completed',
+      status: vocabularyEntry.mode ? (vocabularyEntry.kind === 'review' || vocabularyEntry.kind === 'continue' ? 'continue' : 'not-started') : 'unavailable',
       actionLabel: vocabularyEntry.kind === 'review' ? '去复习' : vocabularyEntry.kind === 'continue' ? '继续' : vocabularyEntry.kind === 'new' ? '去预习' : '暂无可练',
       disabled: !vocabularyEntry.mode,
       onAction: () => {
@@ -1087,7 +1095,7 @@ function TodayCourseTasks({
       title: '拼写巩固',
       description: '针对本单元单词做一次拼写检查。',
       meta: `${vocabulary?.total ?? overview.knowledge_points.filter((item) => item.type === 'vocabulary').length} 个词`,
-      status: canPracticeSpelling ? 'not-started' : 'completed',
+      status: canPracticeSpelling ? 'not-started' : 'unavailable',
       actionLabel: canPracticeSpelling ? '练拼写' : '暂无可练',
       disabled: !canPracticeSpelling,
       onAction: () => {
@@ -1120,7 +1128,7 @@ interface CourseTaskCardProps {
   title: string
   description: string
   meta: string
-  status: 'completed' | 'continue' | 'not-started'
+  status: 'completed' | 'continue' | 'not-started' | 'unavailable'
   actionLabel: string
   isLoading?: boolean
   disabled?: boolean
@@ -1138,7 +1146,7 @@ function CourseTaskCard({
   disabled = false,
   onAction,
 }: CourseTaskCardProps) {
-  const statusLabel = status === 'completed' ? '已完成' : status === 'continue' ? '继续' : '未开始'
+  const statusLabel = status === 'completed' ? '已完成' : status === 'continue' ? '继续' : status === 'unavailable' ? '暂无' : '未开始'
   const statusClassName = status === 'completed'
     ? 'bg-emerald-50 text-emerald-700'
     : status === 'continue'

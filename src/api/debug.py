@@ -382,6 +382,70 @@ async def confirm_debug_parser_review_item(
     )
 
 
+@router.post("/textbook-sources/{source_id}/review-items/batch")
+async def batch_decide_debug_parser_review_items(
+    source_id: uuid.UUID,
+    body: dict[str, Any],
+    current_user: CurrentUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db_session),
+) -> dict[str, Any]:
+    source = await _load_debug_source(db, source_id)
+    action_value = str(body.get("action") or "").strip().lower()
+    action = {"confirm": "confirmed", "ignore": "ignored"}.get(action_value, action_value)
+    if action not in {"confirmed", "ignored"}:
+        raise HTTPException(status_code=422, detail="Batch action must be confirm or ignore.")
+    raw_ids = body.get("review_item_ids")
+    if not isinstance(raw_ids, list) or not raw_ids:
+        raise HTTPException(status_code=422, detail="review_item_ids is required.")
+    if len(raw_ids) > 200:
+        raise HTTPException(status_code=422, detail="Batch review is limited to 200 items.")
+    try:
+        review_item_ids = [uuid.UUID(str(item_id)) for item_id in raw_ids]
+    except (TypeError, ValueError) as exc:
+        raise HTTPException(status_code=422, detail="review_item_ids must be UUIDs.") from exc
+
+    result = await db.execute(
+        select(ParserReviewItem).where(
+            ParserReviewItem.source_id == source_id,
+            ParserReviewItem.id.in_(review_item_ids),
+        )
+    )
+    items_by_id = {item.id: item for item in result.scalars().all()}
+    missing_ids = [str(item_id) for item_id in review_item_ids if item_id not in items_by_id]
+    if missing_ids:
+        raise HTTPException(
+            status_code=404,
+            detail={"message": "Some review items were not found.", "missing_ids": missing_ids},
+        )
+
+    review_note = _optional_str(body.get("review_note"))
+    allow_blocker_ignore = bool(body.get("allow_blocker_ignore"))
+    decided_ids: list[str] = []
+    for review_item_id in review_item_ids:
+        await _apply_debug_review_decision(
+            db=db,
+            item=items_by_id[review_item_id],
+            action=action,
+            body={
+                "review_note": review_note,
+                "allow_blocker_ignore": allow_blocker_ignore,
+            },
+            current_user=current_user,
+        )
+        decided_ids.append(str(review_item_id))
+
+    await db.flush()
+    summary = await recalculate_quality_gate_from_queue(db, source)
+    return {
+        "source": _source_quality_summary(source),
+        "source_quality_summary": _source_quality_summary(source),
+        "summary": _queue_summary_payload(summary),
+        "decided_count": len(decided_ids),
+        "decided_ids": decided_ids,
+        "action": action,
+    }
+
+
 @router.post("/textbook-sources/{source_id}/review-items/{review_item_id}/update")
 async def update_debug_parser_review_item(
     source_id: uuid.UUID,
@@ -1141,6 +1205,31 @@ async def _decide_debug_review_item(
 ) -> dict[str, Any]:
     source = await _load_debug_source(db, source_id)
     item = await _load_debug_review_item(db, source_id, review_item_id)
+    await _apply_debug_review_decision(
+        db=db,
+        item=item,
+        action=action,
+        body=body,
+        current_user=current_user,
+    )
+    await db.flush()
+    summary = await recalculate_quality_gate_from_queue(db, source)
+    return {
+        "source": _source_quality_summary(source),
+        "source_quality_summary": _source_quality_summary(source),
+        "summary": _queue_summary_payload(summary),
+        "item": _review_item_debug_payload(item),
+    }
+
+
+async def _apply_debug_review_decision(
+    *,
+    db: AsyncSession,
+    item: ParserReviewItem,
+    action: str,
+    body: dict[str, Any],
+    current_user: CurrentUser,
+) -> None:
     if item.decision != "pending":
         raise HTTPException(status_code=409, detail="Review item has already been decided")
 
@@ -1172,14 +1261,6 @@ async def _decide_debug_review_item(
     item.decision = action
     item.review_note = review_note
     item.reviewed_at = datetime.now(timezone.utc)
-    await db.flush()
-    summary = await recalculate_quality_gate_from_queue(db, source)
-    return {
-        "source": _source_quality_summary(source),
-        "source_quality_summary": _source_quality_summary(source),
-        "summary": _queue_summary_payload(summary),
-        "item": _review_item_debug_payload(item),
-    }
 
 
 async def _load_debug_review_target(

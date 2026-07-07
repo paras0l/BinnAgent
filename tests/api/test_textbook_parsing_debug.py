@@ -4,6 +4,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
+from src.api import debug as debug_api
 from src.api import deps
 from src.config import settings
 from src.main import app
@@ -26,6 +27,12 @@ def _many(values: list):
     result = MagicMock()
     result.scalars.return_value.all.return_value = values
     return result
+
+
+class _Summary:
+    pending_review_count = 0
+    pending_blocker_count = 0
+    review_warning_count = 0
 
 
 @pytest.fixture(autouse=True)
@@ -267,6 +274,73 @@ async def test_debug_parsing_report_returns_quality_report_score_and_metric_grou
     assert payload["review_summary_by_severity"]["blocker"] == 1
     assert payload["parser_artifacts"]["rag_chunk_count"] == 42
     assert payload["evidence_coverage"]["evidence_ref_coverage_rate"] == 0.92
+
+
+@pytest.mark.asyncio
+async def test_debug_batch_review_confirm_decides_selected_items(
+    client,
+    debug_session,
+    monkeypatch,
+) -> None:
+    source = _source()
+    run = _parser_run(source.id)
+    first = _review_item(source.id, run.id)
+    second = _review_item(source.id, run.id, issue_type="missing_source_page")
+    first.target_id = None
+    second.target_id = None
+    settings.debug_console_enabled = True
+    settings.debug_console_token = "dev"
+    monkeypatch.setattr(
+        debug_api,
+        "recalculate_quality_gate_from_queue",
+        AsyncMock(return_value=_Summary()),
+    )
+    debug_session.execute = AsyncMock(side_effect=[_one(source), _many([first, second])])
+
+    response = await client.post(
+        f"/api/debug/textbook-sources/{source.id}/review-items/batch",
+        headers={"X-Debug-Token": "dev"},
+        json={
+            "action": "confirm",
+            "review_item_ids": [str(first.id), str(second.id)],
+            "review_note": "bulk checked",
+        },
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["decided_count"] == 2
+    assert first.decision == "confirmed"
+    assert second.decision == "confirmed"
+    assert first.review_note == "bulk checked"
+    assert debug_session.flush.await_count == 1
+
+
+@pytest.mark.asyncio
+async def test_debug_batch_review_ignore_blocker_requires_note(
+    client,
+    debug_session,
+) -> None:
+    source = _source()
+    run = _parser_run(source.id)
+    blocker = _review_item(source.id, run.id, severity="blocker")
+    blocker.target_id = None
+    settings.debug_console_enabled = True
+    settings.debug_console_token = "dev"
+    debug_session.execute = AsyncMock(side_effect=[_one(source), _many([blocker])])
+
+    response = await client.post(
+        f"/api/debug/textbook-sources/{source.id}/review-items/batch",
+        headers={"X-Debug-Token": "dev"},
+        json={
+            "action": "ignore",
+            "review_item_ids": [str(blocker.id)],
+            "allow_blocker_ignore": True,
+        },
+    )
+
+    assert response.status_code == 422
+    assert blocker.decision == "pending"
 
 
 @pytest.mark.asyncio

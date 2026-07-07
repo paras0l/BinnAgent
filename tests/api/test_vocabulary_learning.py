@@ -13,7 +13,7 @@ from src.api.vocabulary_learning import (
     _part_of_speech,
 )
 from src.main import app
-from src.models.knowledge import CurriculumNode
+from src.models.knowledge import CurriculumNode, KnowledgeSource
 from src.models.vocabulary import VocabularyItem, VocabularyItemSource
 from src.vocabulary.learning import EnrollmentResult
 
@@ -56,7 +56,23 @@ def vocabulary_learning_session():
 @pytest.mark.asyncio
 async def test_unit_summary_includes_full_textbook_total(client, vocabulary_learning_session):
     learner_id = uuid.uuid4()
+    knowledge_source = KnowledgeSource(
+        title="英语 七年级上册",
+        filename="textbook.pdf",
+        status="published",
+        visibility="public",
+        sha256="a" * 64,
+        file_size=1,
+    )
+    knowledge_source.id = uuid.uuid4()
     node_id = uuid.uuid4()
+    node = CurriculumNode(
+        source_id=knowledge_source.id,
+        node_type="unit",
+        title="Unit 1",
+        ordinal=1,
+    )
+    node.id = node_id
     item = VocabularyItem(
         learner_id=learner_id,
         word="morning",
@@ -68,7 +84,7 @@ async def test_unit_summary_includes_full_textbook_total(client, vocabulary_lear
     )
     item.id = uuid.uuid4()
     item.next_review_at = datetime.now(timezone.utc)
-    source = VocabularyItemSource(
+    item_source = VocabularyItemSource(
         learner_id=learner_id,
         vocabulary_item_id=item.id,
         source_type="textbook_unit",
@@ -78,7 +94,13 @@ async def test_unit_summary_includes_full_textbook_total(client, vocabulary_lear
         active=True,
     )
     vocabulary_learning_session.execute = AsyncMock(
-        side_effect=[_one(learner_id), _scalar(7), _rows([(item, source)])]
+        side_effect=[
+            _one(learner_id),
+            _one(node),
+            _scalar(knowledge_source),
+            _scalar(7),
+            _rows([(item, item_source)]),
+        ]
     )
 
     response = await client.get(f"/api/learners/{learner_id}/vocabulary/units/{node_id}/summary")

@@ -16,6 +16,7 @@ import {
   XCircle,
 } from 'lucide-react'
 import {
+  batchDecideDebugParserReviewItems,
   decideDebugParserReviewItem,
   fetchDebugParserEvidence,
   fetchDebugParserReviewItems,
@@ -268,6 +269,7 @@ function TextbookParsingDetailView({
   const [review, setReview] = useState<ParserReviewItemsResponse | null>(null)
   const [metricTab, setMetricTab] = useState<ParserQualityMetricGroupName>('intake')
   const [selectedReviewId, setSelectedReviewId] = useState<string | null>(null)
+  const [selectedBatchReviewIds, setSelectedBatchReviewIds] = useState<string[]>([])
   const [reviewPatch, setReviewPatch] = useState('{}')
   const [reviewNote, setReviewNote] = useState('')
   const [allowBlockerIgnore, setAllowBlockerIgnore] = useState(false)
@@ -297,6 +299,7 @@ function TextbookParsingDetailView({
       setReport(nextReport)
       setRuns(nextRuns)
       setReview(nextReview)
+      setSelectedBatchReviewIds((current) => current.filter((itemId) => nextReview.items.some((item) => item.id === itemId)))
       setSelectedReviewId((current) => {
         if (current && nextReview.items.some((item) => item.id === current)) return current
         return nextReview.items[0]?.id ?? null
@@ -358,6 +361,26 @@ function TextbookParsingDetailView({
       await loadDetail()
     } catch (saveError) {
       setReviewError(saveError instanceof Error ? saveError.message : 'Review action failed')
+    } finally {
+      setIsReviewSaving(false)
+    }
+  }
+
+  const handleBatchReviewAction = async (action: 'confirm' | 'ignore') => {
+    if (!selectedBatchReviewIds.length) return
+    setIsReviewSaving(true)
+    setReviewError(null)
+    try {
+      await batchDecideDebugParserReviewItems(sourceId, {
+        action,
+        review_item_ids: selectedBatchReviewIds,
+        review_note: reviewNote.trim() || undefined,
+        allow_blocker_ignore: allowBlockerIgnore,
+      })
+      setSelectedBatchReviewIds([])
+      await loadDetail()
+    } catch (saveError) {
+      setReviewError(saveError instanceof Error ? saveError.message : 'Batch review action failed')
     } finally {
       setIsReviewSaving(false)
     }
@@ -445,16 +468,19 @@ function TextbookParsingDetailView({
           review={review}
           selectedReviewItem={selectedReviewItem}
           selectedReviewId={selectedReviewId}
+          selectedBatchReviewIds={selectedBatchReviewIds}
           reviewPatch={reviewPatch}
           reviewNote={reviewNote}
           allowBlockerIgnore={allowBlockerIgnore}
           isSaving={isReviewSaving}
           error={reviewError}
           onSelect={handleSelectReviewItem}
+          onBatchSelectionChange={setSelectedBatchReviewIds}
           onPatchChange={setReviewPatch}
           onNoteChange={setReviewNote}
           onAllowBlockerIgnoreChange={setAllowBlockerIgnore}
           onAction={(action) => void handleReviewAction(action)}
+          onBatchAction={(action) => void handleBatchReviewAction(action)}
           onEvidence={(item) => void jumpToEvidence(item)}
         />
         <ParserRunsPanel
@@ -588,34 +614,53 @@ function ReviewQueuePanel({
   review,
   selectedReviewItem,
   selectedReviewId,
+  selectedBatchReviewIds,
   reviewPatch,
   reviewNote,
   allowBlockerIgnore,
   isSaving,
   error,
   onSelect,
+  onBatchSelectionChange,
   onPatchChange,
   onNoteChange,
   onAllowBlockerIgnoreChange,
   onAction,
+  onBatchAction,
   onEvidence,
 }: {
   review: ParserReviewItemsResponse | null
   selectedReviewItem: ParserReviewItem | null
   selectedReviewId: string | null
+  selectedBatchReviewIds: string[]
   reviewPatch: string
   reviewNote: string
   allowBlockerIgnore: boolean
   isSaving: boolean
   error: string | null
   onSelect: (itemId: string) => void
+  onBatchSelectionChange: (itemIds: string[]) => void
   onPatchChange: (value: string) => void
   onNoteChange: (value: string) => void
   onAllowBlockerIgnoreChange: (value: boolean) => void
   onAction: (action: 'confirm' | 'update' | 'ignore') => void
+  onBatchAction: (action: 'confirm' | 'ignore') => void
   onEvidence: (item: ParserReviewItem) => void
 }) {
   const items = review?.items ?? []
+  const pendingItems = items.filter((item) => item.decision === 'pending')
+  const selectedBatchSet = new Set(selectedBatchReviewIds)
+  const allPendingSelected = pendingItems.length > 0 && pendingItems.every((item) => selectedBatchSet.has(item.id))
+  const toggleBatchItem = (itemId: string) => {
+    onBatchSelectionChange(
+      selectedBatchSet.has(itemId)
+        ? selectedBatchReviewIds.filter((current) => current !== itemId)
+        : [...selectedBatchReviewIds, itemId],
+    )
+  }
+  const toggleAllPending = () => {
+    onBatchSelectionChange(allPendingSelected ? [] : pendingItems.map((item) => item.id))
+  }
   return (
     <SurfaceCard>
       <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
@@ -633,10 +678,34 @@ function ReviewQueuePanel({
       </div>
 
       {items.length ? (
-        <div className="mt-4 overflow-auto rounded-lg border border-slate-100">
+        <div className="mt-4 space-y-3">
+          <div className="flex flex-col gap-3 rounded-lg border border-slate-100 bg-slate-50 p-3 xl:flex-row xl:items-center xl:justify-between">
+            <div className="text-sm font-bold text-slate-700">
+              {selectedBatchReviewIds.length} selected for batch review
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button variant="secondary" disabled={isSaving || selectedBatchReviewIds.length === 0} onClick={() => onBatchAction('confirm')}>
+                <CheckCircle2 className="size-4" />
+                Batch Confirm
+              </Button>
+              <Button variant="danger" disabled={isSaving || selectedBatchReviewIds.length === 0} onClick={() => onBatchAction('ignore')}>
+                <XCircle className="size-4" />
+                Batch Ignore
+              </Button>
+            </div>
+          </div>
+          <div className="overflow-auto rounded-lg border border-slate-100">
           <table className="min-w-full text-left text-sm">
             <thead className="bg-slate-50 text-xs uppercase text-slate-500">
               <tr>
+                <th className="px-3 py-2 font-black">
+                  <input
+                    type="checkbox"
+                    checked={allPendingSelected}
+                    onChange={toggleAllPending}
+                    aria-label="Select all pending review items"
+                  />
+                </th>
                 <th className="px-3 py-2 font-black">Issue</th>
                 <th className="px-3 py-2 font-black">Target</th>
                 <th className="px-3 py-2 font-black">Evidence</th>
@@ -650,6 +719,19 @@ function ReviewQueuePanel({
                   className={`cursor-pointer align-top ${selectedReviewId === item.id ? 'bg-cyan-50' : 'bg-white hover:bg-slate-50'}`}
                   onClick={() => onSelect(item.id)}
                 >
+                  <td className="px-3 py-3">
+                    <input
+                      type="checkbox"
+                      checked={selectedBatchSet.has(item.id)}
+                      disabled={item.decision !== 'pending'}
+                      onChange={(event) => {
+                        event.stopPropagation()
+                        toggleBatchItem(item.id)
+                      }}
+                      onClick={(event) => event.stopPropagation()}
+                      aria-label={`Select review item ${item.id}`}
+                    />
+                  </td>
                   <td className="px-3 py-3">
                     <p className="font-bold text-slate-950">{item.issue_type}</p>
                     <p className="mt-1"><SeverityPill value={item.severity} /></p>
@@ -672,6 +754,7 @@ function ReviewQueuePanel({
               ))}
             </tbody>
           </table>
+          </div>
         </div>
       ) : (
         <EmptyState

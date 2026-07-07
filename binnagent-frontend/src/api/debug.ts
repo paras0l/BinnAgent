@@ -1,6 +1,7 @@
 import { debugFetch } from '@/shared/api/debugClient'
 import type {
   ParserEvidenceResponse,
+  ParserReviewBatchDecisionResponse,
   ParserReviewDecisionResponse,
   ParserReviewItemsResponse,
   ParserRunDetailResponse,
@@ -71,6 +72,25 @@ export async function decideDebugParserReviewItem(
 ) {
   return requestJson<ParserReviewDecisionResponse>(
     `/api/debug/textbook-sources/${encodeURIComponent(sourceId)}/review-items/${encodeURIComponent(reviewItemId)}/${action}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    },
+  )
+}
+
+export async function batchDecideDebugParserReviewItems(
+  sourceId: string,
+  body: {
+    action: 'confirm' | 'ignore'
+    review_item_ids: string[]
+    review_note?: string
+    allow_blocker_ignore?: boolean
+  },
+) {
+  return requestJson<ParserReviewBatchDecisionResponse>(
+    `/api/debug/textbook-sources/${encodeURIComponent(sourceId)}/review-items/batch`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

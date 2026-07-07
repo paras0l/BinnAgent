@@ -13,7 +13,7 @@ from src.memory.explainer import MemoryExplainer
 from src.memory.retriever import MemoryRetriever
 from src.memory.schemas import MemoryEventInput
 from src.memory.writer import MemoryWriter
-from src.models.knowledge import CurriculumNode, KnowledgePoint
+from src.models.knowledge import CurriculumNode, KnowledgePoint, KnowledgeSource
 from src.models.learner import Learner
 from src.models.vocabulary import (
     VocabularyAttempt,
@@ -29,6 +29,7 @@ from src.vocabulary.learning import (
     current_item_id,
     enroll_unit_vocabulary,
     excluded_item_ids,
+    learnable_point_statuses,
     mastery_to_dict,
     record_attempt,
     spelling_feedback,
@@ -227,13 +228,23 @@ async def unit_vocabulary_summary(
     db: AsyncSession = Depends(get_db_session),
 ) -> dict[str, Any]:
     await _ensure_learner(db, learner_id)
+    node_result = await db.execute(
+        select(CurriculumNode).where(CurriculumNode.id == curriculum_node_id)
+    )
+    node = node_result.scalar_one_or_none()
+    if node is None:
+        raise HTTPException(status_code=404, detail="Curriculum node not found")
+    source_result = await db.execute(
+        select(KnowledgeSource).where(KnowledgeSource.id == node.source_id)
+    )
+    source = source_result.scalar_one()
     total_result = await db.execute(
         select(func.count())
         .select_from(KnowledgePoint)
         .where(
             KnowledgePoint.curriculum_node_id == curriculum_node_id,
             KnowledgePoint.type == "vocabulary",
-            KnowledgePoint.status == "published",
+            KnowledgePoint.status.in_(learnable_point_statuses(source)),
             KnowledgePoint.content["role"].as_string() == "unit_wordlist",
         )
     )
