@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Bot, BookOpen, ChevronDown, Compass, LogOut, Settings, User } from 'lucide-react'
+import { Bot, BookOpen, ChevronDown, Compass, LogOut, MessageCircle, Settings, User } from 'lucide-react'
 import type { AppTab, Learner } from '@/types'
 
 interface HeaderProps {
@@ -7,6 +7,7 @@ interface HeaderProps {
   isLocked?: boolean
   learner: Learner
   onLogout: () => void
+  onOpenGroupLearningSettings: () => void
   onOpenLearningSettings: () => void
   onTabChange: (tab: AppTab) => void
 }
@@ -16,6 +17,7 @@ export function Header({
   isLocked = false,
   learner,
   onLogout,
+  onOpenGroupLearningSettings,
   onOpenLearningSettings,
   onTabChange,
 }: HeaderProps) {
@@ -116,6 +118,18 @@ export function Header({
                 >
                   <Settings className="size-4" />
                   学习设置
+                </button>
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => {
+                    setIsMenuOpen(false)
+                    onOpenGroupLearningSettings()
+                  }}
+                  className="mt-1 flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-bold text-slate-700 transition hover:bg-slate-50 hover:text-teal-700 focus-visible:outline-2 focus-visible:outline-primary"
+                >
+                  <MessageCircle className="size-4" />
+                  群聊学习线索设置
                 </button>
                 <div className="rounded-lg px-3 py-2.5">
                   <div className="flex items-start gap-3">

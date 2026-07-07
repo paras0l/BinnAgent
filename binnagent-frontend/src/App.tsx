@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
 import { Header } from './components/layout/Header'
+import { GroupLearningSettingsDialog } from './components/learning/GroupLearningSettingsDialog'
 import { LearningSettingsDialog } from './components/learning/LearningSettingsDialog'
 import { useToast } from './hooks/useToast'
 import { useLearningPreferences } from './hooks/useLearningPreferences'
@@ -60,6 +61,7 @@ function App() {
   const [chatSkillFocus, setChatSkillFocus] = useState<string | null>(null)
   const [isChatGenerating, setIsChatGenerating] = useState(false)
   const [isLearningSettingsOpen, setIsLearningSettingsOpen] = useState(false)
+  const [isGroupLearningSettingsOpen, setIsGroupLearningSettingsOpen] = useState(false)
   const [currentLearner, setCurrentLearner] = useState<Learner | null>(() => {
     const cached = localStorage.getItem('binnLearner')
     if (!cached) return null
@@ -181,8 +183,13 @@ function App() {
         isLocked={isChatGenerating}
         learner={currentLearner}
         onLogout={handleLogout}
+        onOpenGroupLearningSettings={() => setIsGroupLearningSettingsOpen(true)}
         onOpenLearningSettings={() => setIsLearningSettingsOpen(true)}
         onTabChange={handleTabChange}
+      />
+      <GroupLearningSettingsDialog
+        open={isGroupLearningSettingsOpen}
+        onClose={() => setIsGroupLearningSettingsOpen(false)}
       />
       <LearningSettingsDialog
         open={isLearningSettingsOpen}
@@ -240,6 +247,7 @@ function App() {
                 initialVocabularyListOpen={learningCenterView === 'vocabulary'}
                 initialWorkspace={learningCenterView === 'vocabulary' ? 'vocabulary' : 'home'}
                 onOpenDailyLearning={() => setLearningCenterView('daily-learning')}
+                onOpenGroupLearningSettings={() => setIsGroupLearningSettingsOpen(true)}
                 onStartVocabularyPractice={(mode) => openVocabularyPractice(mode ?? preferences.defaultPracticeMode)}
               />
             )

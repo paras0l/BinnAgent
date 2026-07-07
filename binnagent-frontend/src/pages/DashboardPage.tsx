@@ -8,6 +8,7 @@ import {
   ClipboardList,
   Clock3,
   FileText,
+  MessageCircle,
   Plus,
   RefreshCw,
   Search,
@@ -30,18 +31,20 @@ import { LoadingState } from '@/components/ui/LoadingState'
 import { SurfaceCard } from '@/components/ui/SurfaceCard'
 import type { DashboardSummary, Learner, MemorySummary, VocabularyListItem } from '@/types'
 import { useToast } from '@/hooks/useToast'
+import { GroupLearningSignalsPage } from '@/pages/GroupLearningSignalsPage'
 import type { VocabularyPracticeMode } from '@/pages/VocabularyPracticePage'
 import { VocabularyPracticePage } from '@/pages/VocabularyPracticePage'
 
 const VOCABULARY_PAGE_SIZE = 12
 
-export type DashboardWorkspace = 'home' | 'vocabulary' | 'profile' | 'records'
+export type DashboardWorkspace = 'home' | 'vocabulary' | 'profile' | 'records' | 'group-signals'
 
 interface DashboardPageProps {
   learner: Learner
   initialWorkspace?: DashboardWorkspace
   initialVocabularyListOpen?: boolean
   onOpenDailyLearning: () => void
+  onOpenGroupLearningSettings: () => void
   onStartVocabularyPractice: (mode?: VocabularyPracticeMode) => void
 }
 
@@ -50,6 +53,7 @@ export function DashboardPage({
   initialVocabularyListOpen = false,
   initialWorkspace = 'home',
   onOpenDailyLearning,
+  onOpenGroupLearningSettings,
   onStartVocabularyPractice,
 }: DashboardPageProps) {
   const { showToast } = useToast()
@@ -267,6 +271,7 @@ export function DashboardPage({
         onOpenVocabularyManager={handleOpenVocabularyManager}
         onOpenProfile={() => setActiveWorkspace('profile')}
         onOpenRecords={() => setActiveWorkspace('records')}
+        onOpenGroupSignals={() => setActiveWorkspace('group-signals')}
         onStartVocabularyPractice={onStartVocabularyPractice}
       />
     )
@@ -292,6 +297,15 @@ export function DashboardPage({
         memorySummary={memorySummary}
         onBack={() => setActiveWorkspace('home')}
         onOpenProfile={() => setActiveWorkspace('profile')}
+      />
+    )
+  }
+
+  if (activeWorkspace === 'group-signals') {
+    return (
+      <GroupLearningSignalsPage
+        onBack={() => setActiveWorkspace('home')}
+        onOpenSettings={onOpenGroupLearningSettings}
       />
     )
   }
@@ -514,6 +528,7 @@ function LearningCenterHome({
   onOpenVocabularyManager,
   onOpenProfile,
   onOpenRecords,
+  onOpenGroupSignals,
   onStartVocabularyPractice,
 }: {
   learnerName: string
@@ -522,6 +537,7 @@ function LearningCenterHome({
   onOpenVocabularyManager: () => void
   onOpenProfile: () => void
   onOpenRecords: () => void
+  onOpenGroupSignals: () => void
   onStartVocabularyPractice: (mode?: VocabularyPracticeMode) => void
 }) {
   const todayPercent = toPercent(summary.today_goal.completed, summary.today_goal.total)
@@ -570,6 +586,7 @@ function LearningCenterHome({
         />
         <LearningSideRail
           summary={summary}
+          onOpenGroupSignals={onOpenGroupSignals}
           onOpenVocabularyManager={onOpenVocabularyManager}
           onOpenProfile={onOpenProfile}
           onOpenRecords={onOpenRecords}
@@ -643,12 +660,14 @@ function TodayLearningFlow({
 
 function LearningSideRail({
   summary,
+  onOpenGroupSignals,
   onOpenVocabularyManager,
   onOpenProfile,
   onOpenRecords,
   onStartVocabularyPractice,
 }: {
   summary: DashboardSummary
+  onOpenGroupSignals: () => void
   onOpenVocabularyManager: () => void
   onOpenProfile: () => void
   onOpenRecords: () => void
@@ -682,6 +701,30 @@ function LearningSideRail({
       <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
         <p className="text-sm font-black text-slate-950">辅助入口</p>
         <div className="mt-3 grid gap-2">
+          <button
+            type="button"
+            onClick={onOpenGroupSignals}
+            className="rounded-2xl border border-indigo-200 bg-[linear-gradient(135deg,#eef2ff,#f8fafc_55%,#f0f9ff)] p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-300 hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          >
+            <span className="flex items-start justify-between gap-3">
+              <span className="min-w-0">
+                <span className="flex items-center gap-2 text-base font-black text-slate-950">
+                  <MessageCircle className="size-4 text-primary" />
+                  群聊学习线索
+                </span>
+                <span className="mt-2 block text-xs leading-5 text-slate-600">
+                  从指定微信群捕捉你想学的表达、语法、单词和好句。
+                </span>
+              </span>
+              <span className="rounded-full bg-primary px-2.5 py-1 text-xs font-black text-white">5</span>
+            </span>
+            <span className="mt-4 flex items-center justify-between gap-3">
+              <span className="text-xs font-bold text-slate-500">待确认 5 条 · 今日新增 2 条</span>
+              <span className="inline-flex items-center gap-1 text-xs font-black text-primary">
+                查看线索<ArrowRight className="size-3.5" />
+              </span>
+            </span>
+          </button>
           <Button variant="secondary" className="justify-between" onClick={() => onStartVocabularyPractice()}>
             词汇训练<ArrowRight className="size-4" />
           </Button>
