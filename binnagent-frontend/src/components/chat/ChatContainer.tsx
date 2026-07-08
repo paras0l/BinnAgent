@@ -16,6 +16,12 @@ interface ChatContainerProps {
   learnerId: string
   draft: string
   onDraftChange: (value: string) => void
+  pendingPrompt?: {
+    id: number
+    prompt: string
+    skillFocus: string | null
+  } | null
+  onPendingPromptConsumed?: () => void
   skillFocus: string | null
   onSkillFocusChange: (value: string | null) => void
   onGeneratingChange: (isGenerating: boolean) => void
@@ -26,6 +32,8 @@ export function ChatContainer({
   learnerId,
   draft,
   onDraftChange,
+  pendingPrompt = null,
+  onPendingPromptConsumed,
   skillFocus,
   onSkillFocusChange,
   onGeneratingChange,
@@ -52,10 +60,29 @@ export function ChatContainer({
   const isHistoryDrawer = useMediaQuery('(max-width: 1023px)')
   const isMemoryDrawer = useMediaQuery('(max-width: 1279px)')
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const consumedPromptIdRef = useRef<number | null>(null)
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
+
+  useEffect(() => {
+    if (!pendingPrompt || isLoading || isLoadingHistory) return
+    if (consumedPromptIdRef.current === pendingPrompt.id) return
+    consumedPromptIdRef.current = pendingPrompt.id
+    onDraftChange('')
+    onSkillFocusChange(pendingPrompt.skillFocus)
+    void sendMessage(pendingPrompt.prompt, pendingPrompt.skillFocus)
+    onPendingPromptConsumed?.()
+  }, [
+    isLoading,
+    isLoadingHistory,
+    onDraftChange,
+    onPendingPromptConsumed,
+    onSkillFocusChange,
+    pendingPrompt,
+    sendMessage,
+  ])
 
   const guardContextChange = (action: () => void) => {
     if (isLoading) {
@@ -69,6 +96,10 @@ export function ChatContainer({
   const handleReviewVocab = () => guardContextChange(() => sendMessage('我想复习今天的词汇'))
   const handlePracticeSpeaking = () => guardContextChange(() => sendMessage('我想练习口语场景'))
   const handleSendMessage = (content: string) => {
+    if (isLoadingHistory) {
+      onLockedAction()
+      return
+    }
     onDraftChange('')
     sendMessage(content, skillFocus)
   }
@@ -195,6 +226,7 @@ export function ChatContainer({
             onSend={handleSendMessage}
             onCancel={cancel}
             isLoading={isLoading}
+            isDisabled={isLoadingHistory}
             message={draft}
             onMessageChange={onDraftChange}
           />

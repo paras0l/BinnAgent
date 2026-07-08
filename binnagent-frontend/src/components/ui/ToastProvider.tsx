@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react
 import { createPortal } from 'react-dom'
 import { Toast } from './Toast'
 import { ToastContext, type ToastOptions, type ToastVariant } from './ToastContext'
+import { createClientId } from '@/utils/id'
 
 interface ToastState {
   id: string
@@ -80,7 +81,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 
   const showToast = useCallback((message: string, options: ToastOptions = {}) => {
     const duration = options.duration ?? DEFAULT_DURATION
-    const id = crypto.randomUUID()
+    const id = createClientId('toast')
     const nextToast: ToastState = {
       id,
       message,

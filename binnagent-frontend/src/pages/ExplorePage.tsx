@@ -49,7 +49,7 @@ interface ExplorePageProps {
   isLocked?: boolean
   onLockedAction?: () => void
   onTabChange: (tab: AppTab) => void
-  onDraftPrompt: (prompt: string, skillFocus?: string | null) => void
+  onDraftPrompt: (prompt: string, skillFocus?: string | null, options?: { autoSend?: boolean }) => void
   onOpenVocabularyManager: () => void
   onOpenPronunciationWorkspace: (workspace: PronunciationWorkspace) => void
 }
@@ -475,18 +475,7 @@ export function ExplorePage({
       return
     }
 
-    const startedRuntime = await startExploreCapabilityRuntime(feature)
-    if (startedRuntime?.episode_id) {
-      showToast('已准备好本次学习能力任务。', {
-        variant: startedRuntime.status === 'not_implemented' ? 'warning' : 'success',
-      })
-    }
-
-    try {
-      await updatePreference(feature, { mark_used: true })
-    } catch (err) {
-      console.error('Feature usage update error:', err)
-    }
+    void recordFeatureLaunch(feature)
 
     if (feature.action === 'chat' && feature.prompt) {
       if (feature.id === 'essay-review') {
@@ -496,11 +485,13 @@ export function ExplorePage({
             learnerProfile,
           ),
           null,
+          { autoSend: true },
         )
       } else {
         onDraftPrompt(
           promptWithLearnerProfile(feature.prompt, learnerProfile),
           feature.category === 'vocabulary' ? 'vocabulary_deposit' : null,
+          { autoSend: true },
         )
       }
       onTabChange('chat')
@@ -542,8 +533,27 @@ export function ExplorePage({
     }
 
     if (feature.action === 'session') {
-      onDraftPrompt(promptWithLearnerProfile('开始今日课程。请根据我的学习记录安排一次适合我的综合练习。', learnerProfile))
+      onDraftPrompt(
+        promptWithLearnerProfile('开始今日课程。请根据我的学习记录安排一次适合我的综合练习。', learnerProfile),
+        null,
+        { autoSend: true },
+      )
       onTabChange('chat')
+    }
+  }
+
+  const recordFeatureLaunch = async (feature: ExploreFeature) => {
+    const startedRuntime = await startExploreCapabilityRuntime(feature)
+    if (startedRuntime?.episode_id) {
+      showToast('已准备好本次学习能力任务。', {
+        variant: startedRuntime.status === 'not_implemented' ? 'warning' : 'success',
+      })
+    }
+
+    try {
+      await updatePreference(feature, { mark_used: true })
+    } catch (err) {
+      console.error('Feature usage update error:', err)
     }
   }
 

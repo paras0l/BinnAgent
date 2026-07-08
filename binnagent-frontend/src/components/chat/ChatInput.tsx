@@ -5,6 +5,7 @@ interface ChatInputProps {
   onSend: (message: string) => void
   onCancel: () => void
   isLoading: boolean
+  isDisabled?: boolean
   message: string
   onMessageChange: (value: string) => void
 }
@@ -13,12 +14,13 @@ export function ChatInput({
   onSend,
   onCancel,
   isLoading,
+  isDisabled = false,
   message,
   onMessageChange,
 }: ChatInputProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (message.trim() && !isLoading) {
+    if (message.trim() && !isLoading && !isDisabled) {
       onSend(message.trim())
     }
   }
@@ -43,26 +45,27 @@ export function ChatInput({
           onKeyDown={handleKeyDown}
           placeholder="输入你想练习的内容…"
           className="w-full rounded-xl border bg-background px-4 py-3 text-sm transition-colors focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 disabled:cursor-not-allowed disabled:opacity-60"
-          disabled={isLoading}
+          disabled={isLoading || isDisabled}
         />
       </label>
       {isLoading ? (
         <IconButton
           onClick={onCancel}
           label="停止生成"
-          danger
-          className="size-12 border-error bg-error text-primary-foreground hover:bg-error/90 hover:text-primary-foreground"
+          variant="dangerSolid"
+          className="size-12"
         >
-          <Square className="h-4 w-4 text-primary-foreground" />
+          <Square className="h-4 w-4" />
         </IconButton>
       ) : (
         <IconButton
           type="submit"
-          disabled={!message.trim()}
-          label="发送消息"
-          className="group size-12 border-primary bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground disabled:border-slate-200 disabled:bg-slate-100"
+          disabled={!message.trim() || isDisabled}
+          label={isDisabled ? '正在恢复对话' : '发送消息'}
+          variant="primary"
+          className="size-12"
         >
-          <Send className="h-4 w-4 text-primary-foreground group-disabled:text-slate-400" />
+          <Send className="h-4 w-4" />
         </IconButton>
       )}
     </form>

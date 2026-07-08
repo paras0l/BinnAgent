@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 import type { ChatMessage, ChatSkillEvent, ConversationThread, MemorySummary } from '@/types'
+import { createClientId } from '@/utils/id'
 
 interface HistoryResponse {
   thread_id: string | null
@@ -59,6 +60,7 @@ export function useChat(
   const [activeSkillName, setActiveSkillName] = useState<string | null>(null)
   const abortRef = useRef<AbortController | null>(null)
   const onGeneratingChangeRef = useRef(options.onGeneratingChange)
+  const isSendingRef = useRef(false)
 
   useEffect(() => {
     onGeneratingChangeRef.current = options.onGeneratingChange
@@ -148,10 +150,12 @@ export function useChat(
       ])
         .then(([latest]) => {
           if (cancelled) return
-          setThreadId(latest.thread_id)
-          setActiveSkillId(latest.skill_id ?? null)
-          setActiveSkillName(latest.skill_name ?? null)
-          setMessages(latest.messages.map(toChatMessage))
+          if (!isSendingRef.current) {
+            setThreadId(latest.thread_id)
+            setActiveSkillId(latest.skill_id ?? null)
+            setActiveSkillName(latest.skill_name ?? null)
+            setMessages(latest.messages.map(toChatMessage))
+          }
         })
         .catch((err) => {
           if (!cancelled) {
@@ -172,10 +176,11 @@ export function useChat(
   }, [learnerId, loadConversations, loadMemorySummary])
 
   const sendMessage = useCallback(async (content: string, skillId?: string | null) => {
+    isSendingRef.current = true
     setSkillStatus('')
     const requestedSkillId = skillId ?? activeSkillId
     const userMsg: ChatMessage = {
-      id: crypto.randomUUID(),
+      id: createClientId('chat-user'),
       role: 'user',
       content,
       timestamp: Date.now(),
@@ -184,7 +189,7 @@ export function useChat(
     setIsLoading(true)
     onGeneratingChangeRef.current?.(true)
 
-    const assistantId = crypto.randomUUID()
+    const assistantId = createClientId('chat-assistant')
     const assistantMsg: ChatMessage = {
       id: assistantId,
       role: 'assistant',
@@ -338,6 +343,7 @@ export function useChat(
       setIsLoading(false)
       onGeneratingChangeRef.current?.(false)
       abortRef.current = null
+      isSendingRef.current = false
     }
   }, [activeSkillId, learnerId, threadId, loadConversations, loadMemorySummary])
 

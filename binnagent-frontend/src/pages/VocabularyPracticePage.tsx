@@ -22,6 +22,7 @@ import {
   inferWordPartAnalysis,
   spellingSafeMorphologyParts,
 } from '@/data/wordParts'
+import { createClientId } from '@/utils/id'
 
 export type VocabularyPracticeMode = 'new' | 'review' | 'spelling'
 
@@ -337,7 +338,7 @@ export function VocabularyPracticePage({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           vocabulary_item_id: task.vocabulary_item_id,
-          idempotency_key: crypto.randomUUID(),
+          idempotency_key: createClientId('vocab-attempt'),
           action: options?.reveal ? 'reveal' : 'submit',
           answer: mode === 'spelling' ? submittedAnswer : null,
           rating: options?.rating ?? null,

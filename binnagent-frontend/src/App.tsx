@@ -59,6 +59,11 @@ function App() {
   const [pronunciationWorkspace, setPronunciationWorkspace] = useState<PronunciationWorkspace>('phonetic')
   const [chatDraft, setChatDraft] = useState('')
   const [chatSkillFocus, setChatSkillFocus] = useState<string | null>(null)
+  const [pendingChatPrompt, setPendingChatPrompt] = useState<{
+    id: number
+    prompt: string
+    skillFocus: string | null
+  } | null>(null)
   const [isChatGenerating, setIsChatGenerating] = useState(false)
   const [isLearningSettingsOpen, setIsLearningSettingsOpen] = useState(false)
   const [isGroupLearningSettingsOpen, setIsGroupLearningSettingsOpen] = useState(false)
@@ -159,13 +164,28 @@ function App() {
     setChatSkillFocus(null)
   }
 
-  const handleDraftPrompt = (prompt: string, skillFocus?: string | null) => {
+  const handleDraftPrompt = (
+    prompt: string,
+    skillFocus?: string | null,
+    options: { autoSend?: boolean } = {},
+  ) => {
     if (isChatGenerating) {
       showToast('回答生成中，请先等待完成或点击取消。', { variant: 'warning' })
       return
     }
-    setChatDraft(prompt)
-    setChatSkillFocus(skillFocus ?? null)
+    const nextSkillFocus = skillFocus ?? null
+    setChatSkillFocus(nextSkillFocus)
+    if (options.autoSend) {
+      setChatDraft('')
+      setPendingChatPrompt({
+        id: Date.now(),
+        prompt,
+        skillFocus: nextSkillFocus,
+      })
+    } else {
+      setChatDraft(prompt)
+      setPendingChatPrompt(null)
+    }
   }
 
   const handleTabChange = (tab: AppTab) => {
@@ -255,6 +275,8 @@ function App() {
               learner={currentLearner}
               draft={chatDraft}
               onDraftChange={setChatDraft}
+              pendingPrompt={pendingChatPrompt}
+              onPendingPromptConsumed={() => setPendingChatPrompt(null)}
               skillFocus={chatSkillFocus}
               onSkillFocusChange={setChatSkillFocus}
               onGeneratingChange={setIsChatGenerating}

@@ -196,12 +196,25 @@ docker run -d \
   -v binnagent_knowledge:/app/var/knowledge \
   binnagent-app:latest >/dev/null
 
-docker run -d \
-  --name binnagent-web \
-  --restart unless-stopped \
-  --network "$NETWORK_NAME" \
-  -p "${BINN_HTTP_PORT:-80}:80" \
-  -p "${BINN_DEV_CONSOLE_PORT:-5174}:5174" \
-  binnagent-web:latest >/dev/null
+if [[ -d "$ROOT_DIR/binnagent-frontend/dist" && -d "$ROOT_DIR/binnagent-frontend/dist-dev-console" ]]; then
+  docker run -d \
+    --name binnagent-web \
+    --restart unless-stopped \
+    --network "$NETWORK_NAME" \
+    -p "${BINN_LEARNER_WEB_PORT:-${BINN_HTTP_PORT:-5173}}:80" \
+    -p "${BINN_DEV_CONSOLE_PORT:-5174}:5174" \
+    -v "$ROOT_DIR/binnagent-frontend/nginx.prod.conf:/etc/nginx/conf.d/default.conf:ro" \
+    -v "$ROOT_DIR/binnagent-frontend/dist:/usr/share/nginx/learner:ro" \
+    -v "$ROOT_DIR/binnagent-frontend/dist-dev-console:/usr/share/nginx/dev-console:ro" \
+    nginx:1.27-alpine >/dev/null
+else
+  docker run -d \
+    --name binnagent-web \
+    --restart unless-stopped \
+    --network "$NETWORK_NAME" \
+    -p "${BINN_LEARNER_WEB_PORT:-${BINN_HTTP_PORT:-5173}}:80" \
+    -p "${BINN_DEV_CONSOLE_PORT:-5174}:5174" \
+    binnagent-web:latest >/dev/null
+fi
 
 docker ps --format "table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}"
