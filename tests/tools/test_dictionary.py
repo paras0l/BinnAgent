@@ -39,7 +39,12 @@ class TestDictionaryLookupUnknownWord:
             return_value=ChatResponse(
                 provider="ollama",
                 model="gemma4:e2b",
-                content='{"phonetic": "/test/", "meanings": [{"definition": "test"}]}',
+                content=(
+                    '{"phonetic": "/test/", '
+                    '"meanings": [{"part_of_speech": "noun", "definition": "test"}], '
+                    '"collocations": [], "examples": [], "confusing_words": [], '
+                    '"cet_relevance": ""}'
+                ),
             )
         )
         monkeypatch.setattr(dictionary_module, "router", mock_router)

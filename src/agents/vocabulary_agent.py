@@ -1,4 +1,3 @@
-import json
 import logging
 import uuid
 from dataclasses import dataclass
@@ -7,79 +6,15 @@ from typing import Any
 import httpx
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.config import settings
 from src.memory.vocabulary_rules import normalize_vocabulary_word
 from src.memory.vocabulary_store import VocabularyStore
-from src.prompts import prompt_registry
-from src.providers.base import ChatRequest as ModelChatRequest
+from src.prompts.executor import PromptExecutionContext, PromptExecutor
 from src.providers.router import ModelRouter
 
 logger = logging.getLogger(__name__)
 
 VOCABULARY_AGENT_NAME = "vocabulary_agent"
 VOCABULARY_CONFIDENCE_THRESHOLD = 0.75
-
-VOCABULARY_CARD_SCHEMA: dict[str, Any] = {
-    "type": "object",
-    "properties": {
-        "cards": {
-            "type": "array",
-            "maxItems": 8,
-            "items": {
-                "type": "object",
-                "properties": {
-                    "word": {"type": "string"},
-                    "phonetic": {"type": "string"},
-                    "definition_zh": {"type": "string"},
-                    "definition_en": {"type": "string"},
-                    "collocations": {
-                        "type": "array",
-                        "maxItems": 3,
-                        "items": {
-                            "type": "object",
-                            "properties": {
-                                "phrase": {"type": "string"},
-                                "translation_zh": {"type": "string"},
-                            },
-                            "required": ["phrase", "translation_zh"],
-                        },
-                    },
-                    "examples": {
-                        "type": "array",
-                        "minItems": 1,
-                        "maxItems": 3,
-                        "items": {
-                            "type": "object",
-                            "properties": {
-                                "sentence": {"type": "string"},
-                                "translation_zh": {"type": "string"},
-                            },
-                            "required": ["sentence", "translation_zh"],
-                        },
-                    },
-                    "memory_tip": {"type": "string"},
-                    "exam_level": {"type": "string"},
-                    "confidence": {"type": "number", "minimum": 0, "maximum": 1},
-                },
-                "required": [
-                    "word",
-                    "phonetic",
-                    "definition_zh",
-                    "definition_en",
-                    "examples",
-                    "confidence",
-                ],
-            },
-        }
-    },
-    "required": ["cards"],
-}
-
-VOCABULARY_AGENT_SYSTEM_PROMPT = prompt_registry.render(
-    prompt_id="vocabulary.agent.extract",
-    version="v1",
-    variables={},
-).prompt
 
 
 @dataclass(frozen=True)
@@ -104,8 +39,10 @@ class VocabularyAgentService:
     ) -> VocabularyAgentResult:
         try:
             structured = await self._extract_cards(
+                learner_id=learner_id,
                 user_message=user_message,
                 assistant_reply=assistant_reply,
+                source_ref=source_ref,
             )
         except (httpx.HTTPError, ValueError, TypeError):
             logger.exception("Vocabulary agent extraction failed")
@@ -148,48 +85,32 @@ class VocabularyAgentService:
         await self.db.flush()
         return VocabularyAgentResult(saved_count=saved_count, skipped_count=skipped_count)
 
-    async def _extract_cards(self, *, user_message: str, assistant_reply: str) -> dict[str, Any]:
-        prompt = prompt_registry.render(
+    async def _extract_cards(
+        self,
+        *,
+        learner_id: uuid.UUID,
+        user_message: str,
+        assistant_reply: str,
+        source_ref: str | None,
+    ) -> dict[str, Any]:
+        result = await PromptExecutor(db=self.db, model_router=self.model_router).execute(
             prompt_id="vocabulary.agent.extract",
             version="v1",
             variables={
                 "user_message": user_message,
                 "assistant_reply": assistant_reply,
             },
+            context=PromptExecutionContext(
+                learner_id=learner_id,
+                source_module="agents.vocabulary_agent",
+                task_id="vocabulary_agent_extract",
+                target_type="vocabulary_card",
+                target_id=source_ref,
+            ),
         )
-        response = await self.model_router.chat(
-            ModelChatRequest(
-                messages=[
-                    {"role": "system", "content": prompt.prompt},
-                    {
-                        "role": "user",
-                        "content": (
-                            "请从下面这轮英语学习对话中提取可沉淀词卡。\n\n"
-                            f"用户材料：\n{user_message}\n\n"
-                            f"assistant 讲解：\n{assistant_reply}"
-                        ),
-                    },
-                ],
-                task_type="vocabulary_agent_extract",
-                temperature=0.1,
-                max_tokens=1200,
-                response_schema=VOCABULARY_CARD_SCHEMA,
-                preferred_model=settings.ollama_utility_model,
-                metadata={
-                    "prompt_id": prompt.prompt_id,
-                    "prompt_version": prompt.version,
-                    "prompt_hash": prompt.prompt_hash,
-                    "input_hash": prompt.input_hash,
-                    "output_schema": prompt.output_schema,
-                },
-            )
-        )
-        if response.structured is not None:
-            return response.structured
-        parsed = json.loads(response.content)
-        if not isinstance(parsed, dict):
-            raise ValueError("Vocabulary agent response must be an object")
-        return parsed
+        if result.decision != "accepted" or result.validated_output is None:
+            raise ValueError("Vocabulary agent output was not accepted")
+        return result.validated_output
 
 
 def should_trigger_vocabulary_agent(*, user_message: str, skill_focus: str | None) -> bool:

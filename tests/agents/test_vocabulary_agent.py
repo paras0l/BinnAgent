@@ -5,6 +5,7 @@ import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.agents.vocabulary_agent import VocabularyAgentService, should_trigger_vocabulary_agent
+from src.models.prompt_execution import PromptExecutionRecord
 from src.models.vocabulary import VocabularyItem
 from src.providers.base import ChatResponse as ModelChatResponse
 
@@ -30,6 +31,10 @@ def _none_result():
     return result
 
 
+def _added_objects(mock_db):
+    return [call.args[0] for call in mock_db.add.call_args_list]
+
+
 class TestVocabularyAgentService:
     @pytest.mark.asyncio
     async def test_capture_chat_turn_saves_structured_high_confidence_card(
@@ -40,32 +45,15 @@ class TestVocabularyAgentService:
         mock_router.chat.return_value = ModelChatResponse(
             provider="ollama",
             model="gemma4:e2b",
-            content="",
-            structured={
-                "cards": [
-                    {
-                        "word": "significant",
-                        "phonetic": "/sɪɡˈnɪfɪkənt/",
-                        "definition_zh": "重要的；显著的",
-                        "definition_en": "important or noticeable",
-                        "collocations": [
-                            {
-                                "phrase": "significant impact",
-                                "translation_zh": "重大影响",
-                            }
-                        ],
-                        "examples": [
-                            {
-                                "sentence": "The policy had a significant impact.",
-                                "translation_zh": "这项政策产生了重大影响。",
-                            }
-                        ],
-                        "memory_tip": "常用于写作表达影响很大。",
-                        "exam_level": "CET-4",
-                        "confidence": 0.92,
-                    }
-                ]
-            },
+            content=(
+                '{"cards":[{"word":"significant","phonetic":"/sɪɡˈnɪfɪkənt/",'
+                '"definition_zh":"重要的；显著的","definition_en":"important or noticeable",'
+                '"collocations":[{"phrase":"significant impact","translation_zh":"重大影响"}],'
+                '"examples":[{"sentence":"The policy had a significant impact.",'
+                '"translation_zh":"这项政策产生了重大影响。"}],'
+                '"memory_tip":"常用于写作表达影响很大。","exam_level":"CET-4",'
+                '"confidence":0.92}]}'
+            ),
         )
 
         result = await VocabularyAgentService(mock_db, mock_router).capture_chat_turn(
@@ -76,7 +64,11 @@ class TestVocabularyAgentService:
         )
 
         assert result.saved_count == 1
-        added_item = mock_db.add.call_args.args[0]
+        added_objects = _added_objects(mock_db)
+        record = next(item for item in added_objects if isinstance(item, PromptExecutionRecord))
+        assert record.prompt_id == "vocabulary.agent.extract"
+        assert record.decision == "accepted"
+        added_item = next(item for item in added_objects if isinstance(item, VocabularyItem))
         assert isinstance(added_item, VocabularyItem)
         assert added_item.word == "significant"
         assert added_item.meanings == [
@@ -93,7 +85,7 @@ class TestVocabularyAgentService:
             }
         ]
         request = mock_router.chat.await_args.args[0]
-        assert request.task_type == "vocabulary_agent_extract"
+        assert request.task_type == "vocabulary.agent.extract"
         assert request.response_schema
         assert request.preferred_model == "gemma4:e2b"
 
@@ -102,39 +94,18 @@ class TestVocabularyAgentService:
         mock_router.chat.return_value = ModelChatResponse(
             provider="ollama",
             model="gemma4:e2b",
-            content="",
-            structured={
-                "cards": [
-                    {
-                        "word": "definition",
-                        "phonetic": "/ˌdefɪˈnɪʃn/",
-                        "definition_zh": "释义",
-                        "definition_en": "definition",
-                        "examples": [
-                            {"sentence": "Definition is a label.", "translation_zh": "这是标签。"}
-                        ],
-                        "confidence": 0.99,
-                    },
-                    {
-                        "word": "sustainable",
-                        "phonetic": "/səˈsteɪnəbl/",
-                        "definition_zh": "可持续的",
-                        "definition_en": "able to continue",
-                        "examples": [],
-                        "confidence": 0.95,
-                    },
-                    {
-                        "word": "prosperity",
-                        "phonetic": "/prɒˈsperəti/",
-                        "definition_zh": "繁荣",
-                        "definition_en": "success",
-                        "examples": [
-                            {"sentence": "People seek prosperity.", "translation_zh": "人们追求繁荣。"}
-                        ],
-                        "confidence": 0.6,
-                    },
-                ]
-            },
+            content=(
+                '{"cards":['
+                '{"word":"definition","phonetic":"/ˌdefɪˈnɪʃn/","definition_zh":"释义",'
+                '"definition_en":"definition","examples":[{"sentence":"Definition is a label.",'
+                '"translation_zh":"这是标签。"}],"confidence":0.99},'
+                '{"word":"sustainable","phonetic":"/səˈsteɪnəbl/","definition_zh":"可持续的",'
+                '"definition_en":"able to continue","examples":[],"confidence":0.95},'
+                '{"word":"prosperity","phonetic":"/prɒˈsperəti/","definition_zh":"繁荣",'
+                '"definition_en":"success","examples":[{"sentence":"People seek prosperity.",'
+                '"translation_zh":"人们追求繁荣。"}],"confidence":0.6}'
+                ']}'
+            ),
         )
 
         result = await VocabularyAgentService(mock_db, mock_router).capture_chat_turn(
@@ -146,30 +117,20 @@ class TestVocabularyAgentService:
 
         assert result.saved_count == 0
         assert result.skipped_count == 3
-        mock_db.add.assert_not_called()
+        assert not any(isinstance(item, VocabularyItem) for item in _added_objects(mock_db))
 
     @pytest.mark.asyncio
-    async def test_capture_chat_turn_skips_card_without_phonetic(self, mock_db, mock_router):
+    async def test_capture_chat_turn_rejects_schema_invalid_card_without_phonetic(
+        self, mock_db, mock_router
+    ):
         mock_router.chat.return_value = ModelChatResponse(
             provider="ollama",
             model="gemma4:e2b",
-            content="",
-            structured={
-                "cards": [
-                    {
-                        "word": "significant",
-                        "definition_zh": "重要的；显著的",
-                        "definition_en": "important or noticeable",
-                        "examples": [
-                            {
-                                "sentence": "The result is significant.",
-                                "translation_zh": "这个结果很重要。",
-                            }
-                        ],
-                        "confidence": 0.95,
-                    }
-                ]
-            },
+            content=(
+                '{"cards":[{"word":"significant","definition_zh":"重要的；显著的",'
+                '"definition_en":"important or noticeable","examples":[{"sentence":"The result is significant.",'
+                '"translation_zh":"这个结果很重要。"}],"confidence":0.95}]}'
+            ),
         )
 
         result = await VocabularyAgentService(mock_db, mock_router).capture_chat_turn(
@@ -179,9 +140,11 @@ class TestVocabularyAgentService:
             source_ref=None,
         )
 
-        assert result.saved_count == 0
-        assert result.skipped_count == 1
-        mock_db.add.assert_not_called()
+        assert result.failed is True
+        records = [item for item in _added_objects(mock_db) if isinstance(item, PromptExecutionRecord)]
+        assert records
+        assert records[0].decision == "rejected"
+        assert not any(isinstance(item, VocabularyItem) for item in _added_objects(mock_db))
 
     @pytest.mark.asyncio
     async def test_capture_chat_turn_handles_invalid_json_without_raising(self, mock_db, mock_router):
@@ -199,7 +162,10 @@ class TestVocabularyAgentService:
         )
 
         assert result.failed is True
-        mock_db.add.assert_not_called()
+        records = [item for item in _added_objects(mock_db) if isinstance(item, PromptExecutionRecord)]
+        assert records
+        assert records[0].decision == "rejected"
+        assert not any(isinstance(item, VocabularyItem) for item in _added_objects(mock_db))
 
 
 def test_should_trigger_vocabulary_agent_only_for_vocabulary_skill():

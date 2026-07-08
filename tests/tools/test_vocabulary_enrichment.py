@@ -1,8 +1,10 @@
+import json
 from unittest.mock import AsyncMock
 
 import pytest
 
 from src.providers.base import ChatResponse
+from src.prompts.schemas import LOCAL_VOCABULARY_SCHEMA
 from src.tools import vocabulary_enrichment
 from src.tools.free_dictionary import FreeDictionaryEntry
 
@@ -104,25 +106,25 @@ async def test_enrich_vocabulary_with_local_model_uses_router_schema(monkeypatch
         examples=[],
         provider="free_dictionary_api",
     )
+    return_payload = {
+        "meanings": [
+            {
+                "part_of_speech": "noun",
+                "definition": "A written work.",
+                "definition_zh": "书。",
+            }
+        ],
+        "dictionary_senses": [{"part_of_speech": "n.", "meanings_zh": ["书"]}],
+        "word_forms": {"word_pl": ["books"]},
+        "dictionary_tags": ["grade-7"],
+        "examples": [{"en": "This is a book.", "zh": "这是一本书。"}],
+        "collocations": ["read a book"],
+    }
     chat = AsyncMock(
         return_value=ChatResponse(
             provider="ollama",
             model="gemma4:e2b",
-            content="{}",
-            structured={
-                "meanings": [
-                    {
-                        "part_of_speech": "noun",
-                        "definition": "A written work.",
-                        "definition_zh": "书。",
-                    }
-                ],
-                "dictionary_senses": [{"part_of_speech": "n.", "meanings_zh": ["书"]}],
-                "word_forms": {"word_pl": ["books"]},
-                "dictionary_tags": ["grade-7"],
-                "examples": [{"en": "This is a book.", "zh": "这是一本书。"}],
-                "collocations": ["read a book"],
-            },
+            content=json.dumps(return_payload, ensure_ascii=False),
         )
     )
     monkeypatch.setattr(vocabulary_enrichment.router, "chat", chat)
@@ -131,7 +133,7 @@ async def test_enrich_vocabulary_with_local_model_uses_router_schema(monkeypatch
 
     request = chat.await_args.args[0]
     assert request.task_type == "vocabulary_local_enrichment"
-    assert request.response_schema is vocabulary_enrichment.LOCAL_VOCABULARY_SCHEMA
+    assert request.response_schema is LOCAL_VOCABULARY_SCHEMA
     assert request.local_only is True
     assert result.provider == "ollama:gemma4:e2b"
     assert result.dictionary_senses[0]["meanings_zh"] == ["书"]

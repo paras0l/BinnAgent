@@ -8,3 +8,11 @@
 - phonetic 优先使用 IPA 格式，例如 /sɪɡˈnɪfɪkənt/；不知道音标时不要返回该词。
 - confidence 表示“值得自动沉淀且字段可靠”的置信度，低于 0.75 的词也可以返回，但系统不会入库。
 - 严格输出符合 JSON schema 的 JSON，不要输出 markdown。
+
+请从下面这轮英语学习对话中提取可沉淀词卡。
+
+用户材料：
+{{ user_message }}
+
+assistant 讲解：
+{{ assistant_reply }}

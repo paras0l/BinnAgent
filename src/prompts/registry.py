@@ -115,6 +115,38 @@ prompt_registry.register(
 )
 prompt_registry.register(
     PromptMetadata(
+        id="conversation.summary",
+        version="v1",
+        owner="chat",
+        purpose="更新英语学习陪伴对话摘要",
+        template_path="versions/conversation.summary.v1.md",
+        model_policy={"default_model": "ollama_utility", "temperature": 0.2, "max_tokens": 512},
+    )
+)
+prompt_registry.register(
+    PromptMetadata(
+        id="graph.node",
+        version="v1",
+        owner="graph",
+        purpose="LangGraph 节点内的通用文本 LLM 调用",
+        template_path="versions/graph.node.v1.md",
+        model_policy={"default_model": "ollama_chat", "temperature": 0.7, "max_tokens": 1024},
+    )
+)
+prompt_registry.register(
+    PromptMetadata(
+        id="graph.feedback",
+        version="v1",
+        owner="graph",
+        purpose="为学习图练习结果生成结构化中文反馈",
+        template_path="versions/graph.feedback.v1.md",
+        output_schema="GraphFeedbackOutput",
+        model_policy={"default_model": "ollama_utility", "temperature": 0.7, "max_tokens": 500},
+        eval_set="evals/prompts/graph_feedback_v1.jsonl",
+    )
+)
+prompt_registry.register(
+    PromptMetadata(
         id="vocabulary.agent.extract",
         version="v1",
         owner="vocabulary",
@@ -147,6 +179,66 @@ prompt_registry.register(
         output_schema="WritingPhraseImportOutput",
         model_policy={"default_model": "external", "temperature": 0.2, "max_tokens": 1800},
         eval_set="evals/prompts/writing_phrase_import_v1.jsonl",
+    )
+)
+prompt_registry.register(
+    PromptMetadata(
+        id="exercise.generate",
+        version="v1",
+        owner="exercises",
+        purpose="围绕指定学习 target 生成可直接验收的结构化练习题",
+        template_path="versions/exercise.generate.v1.md",
+        output_schema="GeneratedExerciseOutput",
+        model_policy={"default_model": "ollama_utility", "temperature": 0.2, "max_tokens": 1800},
+        eval_set="evals/prompts/exercise_generate_v1.jsonl",
+    )
+)
+prompt_registry.register(
+    PromptMetadata(
+        id="essay.scoring",
+        version="v1",
+        owner="writing",
+        purpose="对英语作文生成结构化评分和反馈",
+        template_path="versions/essay.scoring.v1.md",
+        output_schema="EssayScoringOutput",
+        model_policy={"default_model": "ollama_utility", "temperature": 0.3, "max_tokens": 1024},
+        eval_set="evals/prompts/essay_scoring_v1.jsonl",
+    )
+)
+prompt_registry.register(
+    PromptMetadata(
+        id="dictionary.lookup",
+        version="v1",
+        owner="tools",
+        purpose="为本地词典缺失词条生成结构化词典信息",
+        template_path="versions/dictionary.lookup.v1.md",
+        output_schema="DictionaryLookupOutput",
+        model_policy={"default_model": "ollama_utility", "temperature": 0.3, "max_tokens": 512},
+        eval_set="evals/prompts/dictionary_lookup_v1.jsonl",
+    )
+)
+prompt_registry.register(
+    PromptMetadata(
+        id="vocabulary.local_enrichment",
+        version="v1",
+        owner="vocabulary",
+        purpose="结合 Free Dictionary API 结果补全本地教材词汇字段",
+        template_path="versions/vocabulary.local_enrichment.v1.md",
+        output_schema="LocalVocabularyOutput",
+        model_policy={"default_model": "ollama_utility", "temperature": 0.1, "max_tokens": 900},
+        eval_set="evals/prompts/vocabulary_local_enrichment_v1.jsonl",
+    )
+)
+prompt_registry.register(
+    PromptMetadata(
+        id="vocabulary.detail_html_extract",
+        version="v1",
+        owner="vocabulary",
+        purpose="从词汇详解 HTML 文本中抽取可入库的词汇字段",
+        template_path="versions/vocabulary.detail_html_extract.v1.md",
+        output_schema="VocabularyDetailHtmlOutput",
+        model_policy={"default_model": "ollama_utility", "temperature": 0.0, "max_tokens": 1000},
+        eval_set="evals/prompts/vocabulary_detail_html_extract_v1.jsonl",
     )
 )
 prompt_registry.register(

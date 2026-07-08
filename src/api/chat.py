@@ -29,7 +29,7 @@ from src.models.learning_progress import LearningProgressItem
 from src.models.learner import Learner, LearnerProfile
 from src.models.runtime import AgentThread, ConversationMessage
 from src.models.vocabulary import VocabularyAttempt, VocabularyItem
-from src.prompts import prompt_registry
+from src.prompts import PromptExecutionContext, PromptExecutor, prompt_registry
 from src.providers.base import ChatRequest as ModelChatRequest
 from src.providers.router import ModelRouter
 
@@ -204,6 +204,50 @@ def _model_request(
     return model_request
 
 
+def _request_overrides(model_request: ModelChatRequest) -> dict[str, Any]:
+    return {
+        "task_type": model_request.task_type,
+        "temperature": model_request.temperature,
+        "max_tokens": model_request.max_tokens,
+        "preferred_provider": model_request.preferred_provider,
+        "preferred_model": model_request.preferred_model,
+        "local_only": model_request.local_only,
+    }
+
+
+def _chat_prompt_variables(
+    req: ChatRequest,
+    thread: AgentThread,
+    history: list[ConversationMessage],
+    model_request: ModelChatRequest,
+) -> dict[str, Any]:
+    return {
+        "learner_id": str(req.learner_id),
+        "thread_id": str(thread.id) if thread.id else None,
+        "message": req.message,
+        "skill_focus": req.skill_focus,
+        "skill_id": req.skill_id,
+        "history_count": len(history),
+        "messages": model_request.messages,
+    }
+
+
+def _chat_prompt_context(
+    req: ChatRequest,
+    thread: AgentThread,
+    *,
+    task_id: str,
+) -> PromptExecutionContext:
+    return PromptExecutionContext(
+        learner_id=req.learner_id,
+        source_module="api.chat",
+        task_id=task_id,
+        target_type="chat_thread",
+        target_id=thread.id,
+        metadata={"skill_focus": req.skill_focus, "skill_id": req.skill_id},
+    )
+
+
 def _sse_event(event: str, data: dict) -> str:
     return f"event: {event}\ndata: {dumps(data, ensure_ascii=False)}\n\n"
 
@@ -231,31 +275,42 @@ async def _complete_non_streaming(
     req: ChatRequest,
     thread: AgentThread,
     history: list[ConversationMessage],
+    db: AsyncSession,
     model_router: ModelRouter,
     skill: AgentSkill | None,
     memory_context: MemoryContext | None,
 ) -> tuple[str, str, int]:
-    response = await model_router.chat(
-        _model_request(req, thread, history, skill=skill, memory_context=memory_context)
+    model_request = _model_request(req, thread, history, skill=skill, memory_context=memory_context)
+    result = await PromptExecutor(db=db, model_router=model_router).execute_messages(
+        prompt_id="tutor.chat",
+        variables=_chat_prompt_variables(req, thread, history, model_request),
+        messages=model_request.messages,
+        context=_chat_prompt_context(req, thread, task_id="learning_chat"),
+        request_overrides=_request_overrides(model_request),
     )
-    reply_parts = [response.content]
-    finish_reason = response.finish_reason
+    reply_parts = [result.raw_output]
+    finish_reason = result.finish_reason or "stop"
     continuation_count = 0
 
     while finish_reason == "length" and continuation_count < settings.chat_auto_continue_limit:
         continuation_count += 1
-        response = await model_router.chat(
-            _model_request(
-                req,
-                thread,
-                history,
-                skill=skill,
-                memory_context=memory_context,
-                continuation_text="".join(reply_parts),
-            )
+        model_request = _model_request(
+            req,
+            thread,
+            history,
+            skill=skill,
+            memory_context=memory_context,
+            continuation_text="".join(reply_parts),
         )
-        reply_parts.append(response.content)
-        finish_reason = response.finish_reason
+        result = await PromptExecutor(db=db, model_router=model_router).execute_messages(
+            prompt_id="tutor.chat",
+            variables=_chat_prompt_variables(req, thread, history, model_request),
+            messages=model_request.messages,
+            context=_chat_prompt_context(req, thread, task_id="learning_chat.continuation"),
+            request_overrides=_request_overrides(model_request),
+        )
+        reply_parts.append(result.raw_output)
+        finish_reason = result.finish_reason or "stop"
 
     return "".join(reply_parts) or "抱歉，我暂时无法回复。", finish_reason, continuation_count
 
@@ -281,29 +336,20 @@ async def _maybe_update_thread_summary(
         [f"{message.role}: {message.content}" for message in history]
         + [f"user: {req.message}", f"assistant: {assistant_reply}"]
     )
-    summary_prompt = (
-        "请为英语学习陪伴对话更新一段紧凑摘要，保留后续续写和教学最需要的信息："
-        "用户问题、assistant已回答要点、未完成部分、学习目标、术语约定。"
-        "不要超过300字。\n\n"
-        f"已有摘要：{existing_summary or '无'}\n\n最新对话：\n{transcript}"
-    )
     try:
-        response = await model_router.chat(
-            ModelChatRequest(
-                messages=[
-                    {"role": "system", "content": "你是对话记忆摘要器，只输出摘要正文。"},
-                    {"role": "user", "content": summary_prompt},
-                ],
-                task_type="conversation_summary",
-                temperature=0.2,
-                max_tokens=512,
-                preferred_model=None,
-            )
+        result = await PromptExecutor(db=db, model_router=model_router).execute(
+            prompt_id="conversation.summary",
+            variables={
+                "existing_summary": existing_summary or "无",
+                "transcript": transcript,
+            },
+            context=_chat_prompt_context(req, thread, task_id="conversation_summary"),
+            request_overrides={"task_type": "conversation_summary"},
         )
     except httpx.HTTPError:
         return
 
-    summary = response.content.strip()
+    summary = result.raw_output.strip()
     if not summary:
         return
     thread.metadata_ = {
@@ -508,7 +554,7 @@ async def chat_send(
 
     try:
         reply, finish_reason, continuation_count = await _complete_non_streaming(
-            req, thread, history, model_router, skill, memory_context
+            req, thread, history, db, model_router, skill, memory_context
         )
     except httpx.HTTPError:
         await db.rollback()
@@ -854,37 +900,56 @@ async def chat_stream(
         )
 
         try:
-            while True:
-                request = _model_request(
-                    req,
-                    thread,
-                    history,
-                    skill=skill,
-                    memory_context=memory_context,
-                    continuation_text="".join(chunks) if continuation_count > 0 else None,
-                )
-                async for raw_chunk in model_router.stream_chat(request):
-                    content, chunk_finish_reason = _chunk_content_and_finish(raw_chunk)
-                    if content:
-                        chunks.append(content)
-                        yield _sse_event("delta", {"content": content})
-                    if chunk_finish_reason:
-                        finish_reason = chunk_finish_reason
+            async with async_session_factory() as prompt_db:
+                while True:
+                    request = _model_request(
+                        req,
+                        thread,
+                        history,
+                        skill=skill,
+                        memory_context=memory_context,
+                        continuation_text="".join(chunks) if continuation_count > 0 else None,
+                    )
+                    async for raw_chunk in PromptExecutor(
+                        db=prompt_db,
+                        model_router=model_router,
+                    ).stream_messages(
+                        prompt_id="tutor.chat",
+                        variables=_chat_prompt_variables(req, thread, history, request),
+                        messages=request.messages,
+                        context=_chat_prompt_context(
+                            req,
+                            thread,
+                            task_id=(
+                                "learning_chat.stream"
+                                if continuation_count == 0
+                                else "learning_chat.stream.continuation"
+                            ),
+                        ),
+                        request_overrides=_request_overrides(request),
+                    ):
+                        content, chunk_finish_reason = _chunk_content_and_finish(raw_chunk)
+                        if content:
+                            chunks.append(content)
+                            yield _sse_event("delta", {"content": content})
+                        if chunk_finish_reason:
+                            finish_reason = chunk_finish_reason
 
-                if (
-                    finish_reason != "length"
-                    or continuation_count >= settings.chat_auto_continue_limit
-                ):
-                    break
+                    if (
+                        finish_reason != "length"
+                        or continuation_count >= settings.chat_auto_continue_limit
+                    ):
+                        break
 
-                continuation_count += 1
-                yield _sse_event(
-                    "continuation",
-                    {
-                        "count": continuation_count,
-                        "limit": settings.chat_auto_continue_limit,
-                    },
-                )
+                    continuation_count += 1
+                    yield _sse_event(
+                        "continuation",
+                        {
+                            "count": continuation_count,
+                            "limit": settings.chat_auto_continue_limit,
+                        },
+                    )
+                await prompt_db.commit()
         except httpx.HTTPError:
             yield _sse_event("error", {"detail": "Ollama service unavailable"})
             return

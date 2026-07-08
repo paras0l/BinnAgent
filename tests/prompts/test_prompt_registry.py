@@ -20,8 +20,17 @@ def test_prompt_registry_lists_core_prompts() -> None:
     ids = {item.id for item in prompt_registry.list()}
 
     assert {
+        "conversation.summary",
+        "dictionary.lookup",
+        "essay.scoring",
+        "exercise.generate",
+        "graph.feedback",
+        "graph.node",
+        "group_learning.signal_extract",
         "tutor.chat",
         "vocabulary.agent.extract",
+        "vocabulary.detail_html_extract",
+        "vocabulary.local_enrichment",
         "grammar.micro_lesson.structured",
         "writing_phrase.import",
     } <= ids

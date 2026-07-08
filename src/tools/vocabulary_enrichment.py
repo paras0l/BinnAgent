@@ -1,11 +1,14 @@
 from __future__ import annotations
 
 import json
+import uuid
 from dataclasses import dataclass, field
 from typing import Any
 
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from src.config import settings
-from src.providers.base import ChatRequest
+from src.prompts import PromptExecutionContext, PromptExecutor
 from src.providers.router import router
 from src.tools.free_dictionary import FreeDictionaryEntry
 
@@ -19,58 +22,6 @@ class LocalVocabularyEntry:
     examples: list[Any] = field(default_factory=list)
     collocations: list[str] = field(default_factory=list)
     provider: str = "local_llm"
-
-
-LOCAL_VOCABULARY_SCHEMA: dict[str, Any] = {
-    "type": "object",
-    "properties": {
-        "meanings": {
-            "type": "array",
-            "items": {
-                "type": "object",
-                "properties": {
-                    "part_of_speech": {"type": "string"},
-                    "definition": {"type": "string"},
-                    "definition_zh": {"type": "string"},
-                },
-                "required": ["part_of_speech", "definition", "definition_zh"],
-            },
-        },
-        "dictionary_senses": {
-            "type": "array",
-            "items": {
-                "type": "object",
-                "properties": {
-                    "part_of_speech": {"type": "string"},
-                    "meanings_zh": {"type": "array", "items": {"type": "string"}},
-                },
-                "required": ["part_of_speech", "meanings_zh"],
-            },
-        },
-        "word_forms": {
-            "type": "object",
-            "additionalProperties": {"type": "array", "items": {"type": "string"}},
-        },
-        "dictionary_tags": {"type": "array", "items": {"type": "string"}},
-        "examples": {
-            "type": "array",
-            "items": {
-                "type": "object",
-                "properties": {"en": {"type": "string"}, "zh": {"type": "string"}},
-                "required": ["en", "zh"],
-            },
-        },
-        "collocations": {"type": "array", "items": {"type": "string"}},
-    },
-    "required": [
-        "meanings",
-        "dictionary_senses",
-        "word_forms",
-        "dictionary_tags",
-        "examples",
-        "collocations",
-    ],
-}
 
 
 def build_vocabulary_enrichment_prompt(
@@ -198,38 +149,41 @@ def _sanitize_single_letter_entry(
 
 
 async def enrich_vocabulary_with_local_model(
-    expression: str, free_dictionary_entry: FreeDictionaryEntry
+    expression: str,
+    free_dictionary_entry: FreeDictionaryEntry,
+    *,
+    db: AsyncSession | None = None,
+    learner_id: uuid.UUID | None = None,
 ) -> LocalVocabularyEntry:
-    response = await router.chat(
-        ChatRequest(
-            messages=[
-                {
-                    "role": "system",
-                    "content": "你是七年级英语教材词汇整理助手。严格输出符合 schema 的 JSON。",
-                },
-                {
-                    "role": "user",
-                    "content": build_vocabulary_enrichment_prompt(
-                        expression, free_dictionary_entry
-                    ),
-                },
-            ],
-            task_type="vocabulary_local_enrichment",
-            temperature=0.1,
-            max_tokens=900,
-            response_schema=LOCAL_VOCABULARY_SCHEMA,
-            preferred_model=settings.ollama_utility_model,
-            local_only=True,
-        )
+    free_dictionary_payload = _free_dictionary_payload(expression, free_dictionary_entry)
+    result = await PromptExecutor(db=db, model_router=router).execute(
+        prompt_id="vocabulary.local_enrichment",
+        variables={
+            "expression": expression,
+            "free_dictionary_payload": json.dumps(free_dictionary_payload, ensure_ascii=False),
+        },
+        context=PromptExecutionContext(
+            learner_id=learner_id,
+            source_module="tools.vocabulary_enrichment",
+            task_id="vocabulary_local_enrichment",
+            target_type="vocabulary_entry",
+            target_id=expression,
+        ),
+        request_overrides={
+            "task_type": "vocabulary_local_enrichment",
+            "preferred_model": settings.ollama_utility_model,
+            "local_only": True,
+        },
     )
-    payload = response.structured
-    if payload is None:
-        payload = json.loads(response.content)
-    if not isinstance(payload, dict):
-        raise ValueError("Local vocabulary enrichment response must be a JSON object")
+    payload = result.validated_output
+    if result.decision != "accepted" or payload is None:
+        raise ValueError("Local vocabulary enrichment response was not accepted")
     entry = parse_local_vocabulary_payload(payload)
     if len(expression.strip()) == 1 and expression.strip().isupper():
         entry = _sanitize_single_letter_entry(expression, entry)
+    provider = "local_llm"
+    if result.provider or result.model:
+        provider = f"{result.provider or 'unknown'}:{result.model or 'unknown'}"
     return LocalVocabularyEntry(
         meanings=entry.meanings,
         dictionary_senses=entry.dictionary_senses,
@@ -237,5 +191,21 @@ async def enrich_vocabulary_with_local_model(
         dictionary_tags=entry.dictionary_tags,
         examples=entry.examples,
         collocations=entry.collocations,
-        provider=f"{response.provider}:{response.model}",
+        provider=provider,
     )
+
+
+def _free_dictionary_payload(
+    expression: str,
+    free_dictionary_entry: FreeDictionaryEntry,
+) -> dict[str, Any]:
+    is_single_letter = len(expression.strip()) == 1 and expression.strip().isupper()
+    return {
+        "word": free_dictionary_entry.word,
+        "phonetic": free_dictionary_entry.phonetic,
+        "phonetic_uk": free_dictionary_entry.phonetic_uk,
+        "phonetic_us": free_dictionary_entry.phonetic_us,
+        "entry_kind": "single_letter" if is_single_letter else "word_or_phrase",
+        "meanings": [] if is_single_letter else free_dictionary_entry.meanings,
+        "examples": [] if is_single_letter else free_dictionary_entry.examples,
+    }

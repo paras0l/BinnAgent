@@ -1,6 +1,6 @@
 import inspect
 import uuid
-from collections.abc import Callable
+from collections.abc import AsyncIterator, Callable
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -45,6 +45,10 @@ class PromptExecutionResult:
     parse_mode: str
     confidence: float | None
     decision: str
+    raw_output: str
+    provider: str | None
+    model: str | None
+    finish_reason: str | None
     langfuse_trace_id: str | None
     langfuse_observation_id: str | None
     execution_record_id: uuid.UUID | None
@@ -69,6 +73,7 @@ class PromptExecutor:
         variables: dict[str, Any],
         context: PromptExecutionContext,
         version: str | None = None,
+        request_overrides: dict[str, Any] | None = None,
         fallback_parser: FallbackParser | None = None,
     ) -> PromptExecutionResult:
         if self.model_router is None:
@@ -85,7 +90,9 @@ class PromptExecutor:
             metadata=metadata,
         ) as observation:
             langfuse_trace_id, langfuse_observation_id = _extract_langfuse_ids(observation)
-            response = await self.model_router.chat(_chat_request(rendered))
+            response = await self.model_router.chat(
+                _chat_request(rendered, overrides=request_overrides)
+            )
             raw_output = response.content
             if observation is not None:
                 observation.update(output=raw_output)
@@ -95,6 +102,105 @@ class PromptExecutor:
             raw_output=raw_output,
             context=context,
             fallback_parser=fallback_parser,
+            provider=response.provider,
+            model=response.model,
+            finish_reason=response.finish_reason,
+            langfuse_trace_id=langfuse_trace_id,
+            langfuse_observation_id=langfuse_observation_id,
+        )
+
+    async def execute_messages(
+        self,
+        *,
+        prompt_id: str,
+        variables: dict[str, Any],
+        messages: list[dict[str, str]],
+        context: PromptExecutionContext,
+        version: str | None = None,
+        request_overrides: dict[str, Any] | None = None,
+        fallback_parser: FallbackParser | None = None,
+    ) -> PromptExecutionResult:
+        if self.model_router is None:
+            raise ValueError("PromptExecutor.execute_messages requires a model_router")
+
+        rendered = self.registry.render(prompt_id=prompt_id, version=version, variables=variables)
+        langfuse_trace_id: str | None = None
+        langfuse_observation_id: str | None = None
+        metadata = _langfuse_metadata(rendered, context)
+        with observe(
+            f"prompt.{rendered.prompt_id}",
+            as_type="generation",
+            input=messages,
+            metadata=metadata,
+        ) as observation:
+            langfuse_trace_id, langfuse_observation_id = _extract_langfuse_ids(observation)
+            response = await self.model_router.chat(
+                _chat_request(rendered, messages=messages, overrides=request_overrides)
+            )
+            raw_output = response.content
+            if observation is not None:
+                observation.update(output=raw_output)
+
+        return await self._finalize(
+            rendered=rendered,
+            raw_output=raw_output,
+            context=context,
+            fallback_parser=fallback_parser,
+            provider=response.provider,
+            model=response.model,
+            finish_reason=response.finish_reason,
+            langfuse_trace_id=langfuse_trace_id,
+            langfuse_observation_id=langfuse_observation_id,
+        )
+
+    async def stream_messages(
+        self,
+        *,
+        prompt_id: str,
+        variables: dict[str, Any],
+        messages: list[dict[str, str]],
+        context: PromptExecutionContext,
+        version: str | None = None,
+        request_overrides: dict[str, Any] | None = None,
+    ) -> AsyncIterator[Any]:
+        if self.model_router is None:
+            raise ValueError("PromptExecutor.stream_messages requires a model_router")
+
+        rendered = self.registry.render(prompt_id=prompt_id, version=version, variables=variables)
+        langfuse_trace_id: str | None = None
+        langfuse_observation_id: str | None = None
+        chunks: list[str] = []
+        finish_reason: str | None = None
+        metadata = {**_langfuse_metadata(rendered, context), "stream": True}
+        with observe(
+            f"prompt.{rendered.prompt_id}.stream",
+            as_type="generation",
+            input=messages,
+            metadata=metadata,
+        ) as observation:
+            langfuse_trace_id, langfuse_observation_id = _extract_langfuse_ids(observation)
+            async for chunk in self.model_router.stream_chat(
+                _chat_request(rendered, messages=messages, overrides=request_overrides)
+            ):
+                content = getattr(chunk, "content", "") if not isinstance(chunk, str) else chunk
+                chunk_finish_reason = getattr(chunk, "finish_reason", None)
+                if content:
+                    chunks.append(content)
+                if chunk_finish_reason:
+                    finish_reason = chunk_finish_reason
+                yield chunk
+            raw_output = "".join(chunks)
+            if observation is not None:
+                observation.update(output=raw_output)
+
+        await self._finalize(
+            rendered=rendered,
+            raw_output=raw_output,
+            context=context,
+            fallback_parser=None,
+            provider=None,
+            model=None,
+            finish_reason=finish_reason,
             langfuse_trace_id=langfuse_trace_id,
             langfuse_observation_id=langfuse_observation_id,
         )
@@ -131,6 +237,9 @@ class PromptExecutor:
             raw_output=raw_output,
             context=context,
             fallback_parser=fallback_parser,
+            provider=None,
+            model=None,
+            finish_reason=None,
             langfuse_trace_id=langfuse_trace_id,
             langfuse_observation_id=langfuse_observation_id,
         )
@@ -142,6 +251,9 @@ class PromptExecutor:
         raw_output: str,
         context: PromptExecutionContext,
         fallback_parser: FallbackParser | None,
+        provider: str | None,
+        model: str | None,
+        finish_reason: str | None,
         langfuse_trace_id: str | None,
         langfuse_observation_id: str | None,
     ) -> PromptExecutionResult:
@@ -211,6 +323,10 @@ class PromptExecutor:
             parse_mode=parse_mode,
             confidence=confidence,
             decision=decision,
+            raw_output=raw_output,
+            provider=provider,
+            model=model,
+            finish_reason=finish_reason,
             langfuse_trace_id=langfuse_trace_id,
             langfuse_observation_id=langfuse_observation_id,
             execution_record_id=record_id,
@@ -268,20 +384,30 @@ class PromptExecutor:
         return record.id
 
 
-def _chat_request(rendered: RenderedPrompt) -> ChatRequest:
+def _chat_request(
+    rendered: RenderedPrompt,
+    *,
+    messages: list[dict[str, str]] | None = None,
+    overrides: dict[str, Any] | None = None,
+) -> ChatRequest:
     policy = rendered.model_policy
+    overrides = overrides or {}
     default_model = policy.get("default_model")
-    preferred_model = policy.get("preferred_model") or policy.get("model")
+    preferred_model = (
+        overrides.get("preferred_model")
+        or policy.get("preferred_model")
+        or policy.get("model")
+    )
     if preferred_model is None and default_model == "ollama_utility":
         preferred_model = settings.ollama_utility_model
     if preferred_model is None and default_model == "ollama_chat":
         preferred_model = settings.ollama_chat_model
 
     return ChatRequest(
-        messages=[{"role": "user", "content": rendered.prompt}],
-        task_type=rendered.prompt_id,
-        temperature=float(policy.get("temperature", 0.3)),
-        max_tokens=int(policy.get("max_tokens", 2000)),
+        messages=messages or [{"role": "user", "content": rendered.prompt}],
+        task_type=str(overrides.get("task_type") or rendered.prompt_id),
+        temperature=float(overrides.get("temperature", policy.get("temperature", 0.3))),
+        max_tokens=int(overrides.get("max_tokens", policy.get("max_tokens", 2000))),
         response_schema=rendered.output_schema_json,
         metadata={
             "prompt_id": rendered.prompt_id,
@@ -289,9 +415,14 @@ def _chat_request(rendered: RenderedPrompt) -> ChatRequest:
             "prompt_hash": rendered.prompt_hash,
             "input_hash": rendered.input_hash,
         },
-        preferred_provider=policy.get("preferred_provider") or policy.get("provider") or "ollama",
+        preferred_provider=(
+            overrides.get("preferred_provider")
+            or policy.get("preferred_provider")
+            or policy.get("provider")
+            or "ollama"
+        ),
         preferred_model=preferred_model,
-        local_only=bool(policy.get("local_only", True)),
+        local_only=bool(overrides.get("local_only", policy.get("local_only", True))),
     )
 
 
@@ -346,6 +477,17 @@ def _infer_confidence(payload: dict[str, Any] | None) -> float | None:
             if not isinstance(item, dict):
                 continue
             score = item.get("confidence", item.get("quality_score"))
+            if isinstance(score, int | float):
+                scores.append(_clamp_confidence(float(score)))
+        if scores:
+            return min(scores)
+    cards = payload.get("cards")
+    if isinstance(cards, list):
+        scores = []
+        for item in cards:
+            if not isinstance(item, dict):
+                continue
+            score = item.get("confidence")
             if isinstance(score, int | float):
                 scores.append(_clamp_confidence(float(score)))
         if scores:

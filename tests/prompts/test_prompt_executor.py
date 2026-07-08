@@ -4,7 +4,7 @@ import pytest
 
 from src.models.prompt_execution import PromptExecutionRecord
 from src.prompts.executor import PromptExecutionContext, PromptExecutor
-from src.providers.base import ChatResponse
+from src.providers.base import ChatResponse, ChatStreamChunk
 
 
 class FakeDb:
@@ -26,6 +26,11 @@ class FakeRouter:
     async def chat(self, request):
         self.requests.append(request)
         return ChatResponse(provider="test", model="fake", content=self.content)
+
+    async def stream_chat(self, request):
+        self.requests.append(request)
+        yield ChatStreamChunk(content="hello ")
+        yield ChatStreamChunk(content="world", finish_reason="stop")
 
 
 @pytest.mark.asyncio
@@ -85,3 +90,49 @@ async def test_prompt_executor_fallback_record_is_review_required() -> None:
     assert result.decision == "review_required"
     assert db.records[0].decision == "review_required"
     assert db.records[0].schema_validation_status == "fallback"
+
+
+@pytest.mark.asyncio
+async def test_prompt_executor_execute_messages_records_text_prompt() -> None:
+    db = FakeDb()
+    router = FakeRouter("plain response")
+
+    result = await PromptExecutor(db=db, model_router=router).execute_messages(
+        prompt_id="graph.node",
+        variables={"system_prompt": "system", "messages": [{"role": "user", "content": "hi"}]},
+        messages=[
+            {"role": "system", "content": "system"},
+            {"role": "user", "content": "hi"},
+        ],
+        context=PromptExecutionContext(source_module="tests.prompt_executor"),
+        request_overrides={"task_type": "graph_node", "temperature": 0.2, "max_tokens": 128},
+    )
+
+    assert result.raw_output == "plain response"
+    assert result.schema_validation_status == "not_applicable"
+    assert result.decision == "accepted"
+    assert router.requests[0].task_type == "graph_node"
+    assert router.requests[0].messages[0]["content"] == "system"
+    assert db.records[0].prompt_id == "graph.node"
+    assert db.records[0].decision == "accepted"
+
+
+@pytest.mark.asyncio
+async def test_prompt_executor_stream_messages_records_after_stream() -> None:
+    db = FakeDb()
+    router = FakeRouter("")
+
+    chunks = []
+    async for chunk in PromptExecutor(db=db, model_router=router).stream_messages(
+        prompt_id="tutor.chat",
+        variables={"message": "hi"},
+        messages=[{"role": "user", "content": "hi"}],
+        context=PromptExecutionContext(source_module="tests.prompt_executor"),
+        request_overrides={"task_type": "learning_chat"},
+    ):
+        chunks.append(chunk.content)
+
+    assert chunks == ["hello ", "world"]
+    assert db.records[0].prompt_id == "tutor.chat"
+    assert db.records[0].schema_validation_status == "not_applicable"
+    assert db.records[0].decision == "accepted"

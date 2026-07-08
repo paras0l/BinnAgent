@@ -56,7 +56,7 @@ async def review_essay(
         for item in context.loaded_items
     ]
     prompt = _prompt_with_memory(body.prompt, historical_weaknesses)
-    result = await essay_scorer.score(body.text, prompt=prompt)
+    result = await essay_scorer.score(body.text, prompt=prompt, db=db, learner_id=learner_id)
 
     now = datetime.now(timezone.utc)
     writer = MemoryWriter(db)

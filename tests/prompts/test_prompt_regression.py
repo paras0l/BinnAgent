@@ -29,6 +29,24 @@ from src.prompts import PromptExecutionContext, PromptExecutor
             ),
         ),
         (
+            "exercise.generate",
+            {
+                "count": 1,
+                "target_type": "grammar_topic",
+                "target_id": "simple-present",
+                "target_label": "一般现在时",
+                "allowed_types": "grammar_fill_blank, single_choice, fill_blank",
+                "context_text": "学习者水平：junior",
+            },
+            (
+                '{"items":[{"skill":"grammar","type":"grammar_fill_blank",'
+                '"prompt":"She ____ English every day.","options":[],'
+                '"correctAnswer":"studies","acceptedAnswers":["studies"],'
+                '"explanation":"主语 She 是第三人称单数，一般现在时动词用 studies。",'
+                '"difficulty":"easy"}]}'
+            ),
+        ),
+        (
             "grammar.micro_lesson.structured",
             {"topic_title": "一般现在时"},
             (
@@ -86,6 +104,23 @@ async def test_registered_structured_prompts_accept_schema_valid_output(
             ),
         ),
         (
+            "exercise.generate",
+            {
+                "count": 1,
+                "target_type": "vocabulary_item",
+                "target_id": "significant",
+                "target_label": "significant",
+                "allowed_types": "single_choice, fill_blank",
+                "context_text": "例子：The result is significant.",
+            },
+            (
+                'Sure:\n{"items":[{"skill":"vocabulary","type":"single_choice",'
+                '"prompt":"What does significant mean?","options":["important","tiny","silent","ancient"],'
+                '"correctAnswer":"important","acceptedAnswers":["important"],'
+                '"explanation":"significant 表示重要的、显著的。","difficulty":"easy"}]}'
+            ),
+        ),
+        (
             "grammar.micro_lesson.structured",
             {"topic_title": "冠词"},
             (
@@ -126,6 +161,7 @@ async def test_registered_structured_prompts_accept_repaired_json(
     [
         ("vocabulary.agent.extract", {"user_message": "hi"}, '{"cards":[{"word":"hi"}]}'),
         ("writing_phrase.import", {"topic": "online learning"}, '{"candidates":"bad"}'),
+        ("exercise.generate", {"count": 1}, '{"items":[{"prompt":"I have ___ apple."}]}'),
         (
             "grammar.micro_lesson.structured",
             {"topic_title": "代词"},

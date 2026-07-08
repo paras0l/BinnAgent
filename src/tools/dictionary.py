@@ -1,7 +1,10 @@
+import uuid
 from dataclasses import dataclass, field
 from typing import Optional
 
-from src.providers.base import ChatRequest
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from src.prompts import PromptExecutionContext, PromptExecutor
 from src.providers.router import router
 
 
@@ -611,7 +614,13 @@ LOCAL_DICT: dict[str, dict] = {
 class DictionaryTool:
     """Dictionary lookup tool with local cache and Ollama fallback."""
 
-    async def lookup(self, request: DictionaryLookupRequest) -> DictionaryLookupResponse:
+    async def lookup(
+        self,
+        request: DictionaryLookupRequest,
+        *,
+        db: AsyncSession | None = None,
+        learner_id: uuid.UUID | None = None,
+    ) -> DictionaryLookupResponse:
         word_key = request.word.strip().lower()
         entry = LOCAL_DICT.get(word_key)
 
@@ -631,11 +640,15 @@ class DictionaryTool:
                 provider="local",
             )
 
-        return await self._lookup_via_llm(request)
+        return await self._lookup_via_llm(request, db=db, learner_id=learner_id)
 
-    async def _lookup_via_llm(self, request: DictionaryLookupRequest) -> DictionaryLookupResponse:
-        import json as _json
-
+    async def _lookup_via_llm(
+        self,
+        request: DictionaryLookupRequest,
+        *,
+        db: AsyncSession | None = None,
+        learner_id: uuid.UUID | None = None,
+    ) -> DictionaryLookupResponse:
         prompt = (
             f'请为英语单词 "{request.word}" 提供词典信息，'
             f"难度级别: {request.learner_level}。"
@@ -647,23 +660,26 @@ class DictionaryTool:
         )
 
         try:
-            response = await router.chat(
-                ChatRequest(
-                    messages=[
-                        {
-                            "role": "system",
-                            "content": "你是一位专业的英语词典助手。请用JSON格式回复词典信息。",
-                        },
-                        {"role": "user", "content": prompt},
-                    ],
-                    task_type="dictionary_lookup",
-                    temperature=0.3,
-                    max_tokens=512,
-                )
+            result = await PromptExecutor(db=db, model_router=router).execute(
+                prompt_id="dictionary.lookup",
+                variables={
+                    "word": request.word,
+                    "learner_level": request.learner_level,
+                    "context_sentence": request.context_sentence or "无",
+                    "legacy_prompt": prompt,
+                },
+                context=PromptExecutionContext(
+                    learner_id=learner_id,
+                    source_module="tools.dictionary",
+                    task_id="dictionary_lookup",
+                    target_type="dictionary_entry",
+                    target_id=request.word,
+                ),
+                request_overrides={"task_type": "dictionary_lookup"},
             )
-            content = response.content
-
-            parsed = _json.loads(content)
+            if result.decision != "accepted" or result.validated_output is None:
+                raise ValueError("dictionary lookup output was not accepted")
+            parsed = result.validated_output
             return DictionaryLookupResponse(
                 word=request.word,
                 phonetic=parsed.get("phonetic", ""),

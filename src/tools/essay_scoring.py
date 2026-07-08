@@ -1,7 +1,10 @@
+import uuid
 from dataclasses import dataclass, field
 from typing import Optional
 
-from src.providers.base import ChatRequest
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from src.prompts import PromptExecutionContext, PromptExecutor
 from src.providers.router import router
 
 
@@ -19,7 +22,14 @@ class EssayScoringTool:
     MAX_WORDS = 300
     MIN_WORDS = 80
 
-    async def score(self, text: str, prompt: Optional[str] = None) -> EssayScoringResult:
+    async def score(
+        self,
+        text: str,
+        prompt: Optional[str] = None,
+        *,
+        db: AsyncSession | None = None,
+        learner_id: uuid.UUID | None = None,
+    ) -> EssayScoringResult:
         word_count = len(text.split())
 
         if word_count < 10:
@@ -30,44 +40,36 @@ class EssayScoringTool:
                 error_patterns=[],
             )
 
-        return await self._score_via_llm(text, prompt)
+        return await self._score_via_llm(text, prompt, db=db, learner_id=learner_id)
 
-    async def _score_via_llm(self, text: str, prompt: Optional[str] = None) -> EssayScoringResult:
-        import json as _json
-
+    async def _score_via_llm(
+        self,
+        text: str,
+        prompt: Optional[str] = None,
+        *,
+        db: AsyncSession | None = None,
+        learner_id: uuid.UUID | None = None,
+    ) -> EssayScoringResult:
         word_count = len(text.split())
-        context = f"写作题目: {prompt}\n\n" if prompt else ""
-        user_msg = (
-            f"{context}请对以下英语作文进行评分和反馈。\n\n"
-            f"作文内容:\n{text}\n\n"
-            "请用JSON格式回复，包含: "
-            '{"score": 0-25的分数, "strengths": ["优点"], '
-            '"key_issues": ["需要改进的地方"], '
-            '"sentence_feedback": [{"sentence": "原句", "feedback": "反馈"}]}'
-        )
 
         try:
-            response = await router.chat(
-                ChatRequest(
-                    messages=[
-                        {
-                            "role": "system",
-                            "content": (
-                                "你是一位专业的英语作文评分老师，熟悉CET-4和CET-6写作评分标准。"
-                                "请从词汇、语法、结构、内容四个方面评分，总分25分。"
-                                "请用JSON格式回复。"
-                            ),
-                        },
-                        {"role": "user", "content": user_msg},
-                    ],
-                    task_type="essay_scoring",
-                    temperature=0.3,
-                    max_tokens=1024,
-                )
+            result = await PromptExecutor(db=db, model_router=router).execute(
+                prompt_id="essay.scoring",
+                variables={
+                    "prompt_context": f"写作题目: {prompt}\n\n" if prompt else "",
+                    "essay_text": text,
+                },
+                context=PromptExecutionContext(
+                    learner_id=learner_id,
+                    source_module="tools.essay_scoring",
+                    task_id="essay_scoring",
+                    target_type="essay",
+                ),
+                request_overrides={"task_type": "essay_scoring"},
             )
-            content = response.content
-
-            parsed = _json.loads(content)
+            if result.decision != "accepted" or result.validated_output is None:
+                raise ValueError("essay scoring output was not accepted")
+            parsed = result.validated_output
             score = float(parsed.get("score", 10.0))
             score = max(0.0, min(25.0, score))
 

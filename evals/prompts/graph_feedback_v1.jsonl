@@ -1,0 +1,3 @@
+{"case_id":"graph_feedback_schema_valid","input":{"user_msg":"技能类型: reading\n评分: 需要改进\n得分: 0.4\n错误原因: detail_miss"},"raw_output":"{\"summary\":\"你完成了阅读练习，但细节定位还需要加强。\",\"strengths\":[\"能抓住题目主题\"],\"improvements\":[\"回到原文定位关键词\"],\"drill\":\"再做一道细节定位题。\"}","expected":{"decision":"accepted"}}
+{"case_id":"graph_feedback_json_repair","input":{"user_msg":"技能类型: vocabulary\n评分: 正确\n得分: 1"},"raw_output":"Feedback:\n{\"summary\":\"这次词汇作答正确。\",\"strengths\":[\"词义判断准确\"],\"improvements\":[],\"drill\":null}","expected":{"decision":"accepted","repair_used":true}}
+{"case_id":"graph_feedback_schema_invalid","input":{"user_msg":"技能类型: grammar"},"raw_output":"{\"summary\":\"完成练习。\"}","expected":{"decision":"rejected"}}

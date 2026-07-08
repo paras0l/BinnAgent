@@ -1,6 +1,21 @@
 # Prompt Execution Governance
 
-Status: issue #29 debug / evaluation closure.
+Status: issue #29 PromptExecutor migration closure.
+
+## Mandatory PromptExecutor Boundary
+
+All new prompt-like model calls must go through `PromptExecutor`.
+
+Do not call `ModelRouter.chat()` or `ModelRouter.stream_chat()` directly from API, graph, agent, tool, memory, mastery, knowledge, or provider-adjacent business modules. The only prompt gateway allowed to call model chat/stream directly is `src/prompts/executor.py`.
+
+Required workflow for a new prompt:
+
+1. Add a versioned template under `src/prompts/versions/`.
+2. Register `PromptMetadata` in `src/prompts/registry.py` with owner, purpose, template path and `model_policy`.
+3. For structured output, add the JSON schema to `src/prompts/schemas.py`, bind `output_schema`, and add an eval set under `evals/prompts/`.
+4. Call the prompt through `PromptExecutor.execute()`, `execute_messages()`, `stream_messages()`, or `execute_with_raw_output()` depending on runtime shape.
+5. For learner-facing writes, use only `decision == accepted` and `validated_output`; fallback output defaults to review-required unless the business flow explicitly keeps it out of automatic writes.
+6. Add or update regression tests and include the prompt in `scripts/evaluate_prompts.py --all` when it has structured output.
 
 ## Boundary between Langfuse and BinnAgent
 
@@ -38,7 +53,7 @@ The repository already has historical runtime model-call concepts, but issue #29
 
 ## Schema-first rule
 
-Structured LLM output must pass schema validation before it can be accepted by business code that writes Memory, Mastery, KnowledgePoint, Vocabulary, or WritingPhrase data.
+Structured LLM output must pass schema validation before it can be accepted by business code that writes Memory, Mastery, KnowledgePoint, Vocabulary, generated exercises, dictionary fields, or WritingPhrase data.
 
 First-phase statuses:
 
@@ -66,15 +81,24 @@ First-phase statuses:
 
 If Langfuse is disabled or the SDK object does not expose one of those identifiers, the local record is still written with null reference fields. The business flow must not fail because Langfuse is unavailable.
 
-## Writing phrase import
+## Migrated prompt paths
 
-`writing_phrase.import` is the first migrated prompt path.
+Current migrated paths include:
 
-- Valid JSON with `WritingPhraseImportOutput` is accepted.
-- Markdown-fenced JSON is extracted and validated.
-- Explanation text around a JSON object is sliced, marked as repaired, and revalidated.
-- Invalid JSON may use the writing-phrase-specific regex fallback.
-- Regex fallback produces a `PromptExecutionRecord` with `schema_validation_status=fallback` and `decision=review_required`.
+- `tutor.chat` via chat send and stream.
+- `conversation.summary`.
+- `graph.node`.
+- `graph.feedback`.
+- `writing_phrase.import`.
+- `vocabulary.agent.extract`.
+- `exercise.generate`.
+- `group_learning.signal_extract`.
+- `essay.scoring`.
+- `dictionary.lookup`.
+- `vocabulary.local_enrichment`.
+- `vocabulary.detail_html_extract`.
+
+Valid JSON with a registered output schema is accepted. Markdown-fenced JSON and explain-then-JSON output are repaired and revalidated. Fallback parsers may produce schema-shaped payloads, but they record `schema_validation_status=fallback` and default to `decision=review_required`.
 
 The API response shape remains unchanged; prompt execution records are available only through debug endpoints.
 
@@ -123,20 +147,23 @@ python scripts/evaluate_prompts.py --all --min-schema-pass-rate 0.8
 - `review_required_rate`
 - `confidence_avg`
 
-当 `schema_pass_rate` 低于 `--min-schema-pass-rate` 时脚本返回非 0。当前已有三个 eval set：
+当 `schema_pass_rate` 低于 `--min-schema-pass-rate` 时脚本返回非 0。当前 structured eval sets include:
 
+- `evals/prompts/dictionary_lookup_v1.jsonl`
+- `evals/prompts/essay_scoring_v1.jsonl`
+- `evals/prompts/exercise_generate_v1.jsonl`
+- `evals/prompts/graph_feedback_v1.jsonl`
 - `evals/prompts/vocabulary_agent_extract_v1.jsonl`
 - `evals/prompts/grammar_micro_lesson_v1.jsonl`
+- `evals/prompts/group_learning_signal_extract_v1.jsonl`
+- `evals/prompts/vocabulary_detail_html_extract_v1.jsonl`
+- `evals/prompts/vocabulary_local_enrichment_v1.jsonl`
 - `evals/prompts/writing_phrase_import_v1.jsonl`
 
 这些 eval set 覆盖 schema valid、schema invalid、JSON repair、fallback 和非 accepted decision。
 
 ## Remaining Direct Prompt Paths
 
-仍需后续迁移到 `PromptExecutor` 的结构化/准结构化调用：
+None. `ModelRouter.chat()` and `ModelRouter.stream_chat()` should only appear in `src/prompts/executor.py`.
 
-- `src/agents/vocabulary_agent.py`：仍直接使用 `ModelRouter.chat()` 和本地 `VOCABULARY_CARD_SCHEMA`。
-- `src/api/exercises.py`：练习生成仍直接绑定 `GENERATED_EXERCISE_SCHEMA`。
-- `src/tools/vocabulary_detail_html.py`：词汇详情 HTML 生成仍直接解析模型输出。
-- `src/tools/vocabulary_enrichment.py`：词汇 enrichment 仍直接解析模型输出。
-- chat、graph feedback、essay scoring、dictionary lookup 等路径仍需按结构化程度分批接入。
+`model_router.embed()` remains outside the prompt governance boundary because it is an embedding operation rather than a prompt output decision.

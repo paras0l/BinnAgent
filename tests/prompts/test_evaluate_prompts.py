@@ -31,7 +31,13 @@ def test_evaluate_prompts_all_supports_multiple_eval_sets() -> None:
     payload = json.loads(result.stdout)
     prompt_ids = {report["prompt_id"] for report in payload["reports"]}
     assert {
+        "dictionary.lookup",
+        "essay.scoring",
         "vocabulary.agent.extract",
+        "vocabulary.detail_html_extract",
+        "vocabulary.local_enrichment",
+        "exercise.generate",
+        "graph.feedback",
         "writing_phrase.import",
         "grammar.micro_lesson.structured",
     }.issubset(prompt_ids)

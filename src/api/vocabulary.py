@@ -588,7 +588,7 @@ async def upsert_vocabulary_detail_html(
     canonical = canonical_vocabulary_key(req.term)
     if not canonical:
         raise HTTPException(status_code=422, detail="Invalid vocabulary term")
-    extracted = await extract_vocabulary_detail_html(req.term, req.html)
+    extracted = await extract_vocabulary_detail_html(req.term, req.html, db=db)
     result = await db.execute(
         select(VocabularyItem).where(
             VocabularyItem.learner_id == learner_id,

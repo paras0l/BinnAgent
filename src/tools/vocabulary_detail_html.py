@@ -1,61 +1,18 @@
 from __future__ import annotations
 
-import json
 import logging
 import re
 from dataclasses import dataclass, field
 from html.parser import HTMLParser
 from typing import Any
 
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from src.config import settings
-from src.providers.base import ChatRequest
+from src.prompts import PromptExecutionContext, PromptExecutor
 from src.providers.router import router
 
 logger = logging.getLogger(__name__)
-
-
-DETAIL_HTML_SCHEMA: dict[str, Any] = {
-    "type": "object",
-    "properties": {
-        "phonetic": {"type": ["string", "null"]},
-        "meanings": {
-            "type": "array",
-            "items": {
-                "type": "object",
-                "properties": {
-                    "part_of_speech": {"type": "string"},
-                    "definition": {"type": "string"},
-                    "definition_zh": {"type": "string"},
-                },
-                "required": ["part_of_speech", "definition", "definition_zh"],
-            },
-        },
-        "dictionary_senses": {
-            "type": "array",
-            "items": {
-                "type": "object",
-                "properties": {
-                    "part_of_speech": {"type": "string"},
-                    "meanings_zh": {"type": "array", "items": {"type": "string"}},
-                },
-                "required": ["part_of_speech", "meanings_zh"],
-            },
-        },
-        "examples": {
-            "type": "array",
-            "items": {
-                "type": "object",
-                "properties": {
-                    "en": {"type": "string"},
-                    "zh": {"type": "string"},
-                },
-                "required": ["en", "zh"],
-            },
-        },
-        "collocations": {"type": "array", "items": {"type": "string"}},
-    },
-    "required": ["phonetic", "meanings", "dictionary_senses", "examples", "collocations"],
-}
 
 
 @dataclass(frozen=True)
@@ -112,38 +69,44 @@ def html_to_text_blocks(html: str) -> list[str]:
     return parser.blocks
 
 
-async def extract_vocabulary_detail_html(term: str, html: str) -> DetailHtmlExtraction:
+async def extract_vocabulary_detail_html(
+    term: str,
+    html: str,
+    *,
+    db: AsyncSession | None = None,
+) -> DetailHtmlExtraction:
     blocks = html_to_text_blocks(html)
     text = "\n".join(blocks)
     try:
-        response = await router.chat(
-            ChatRequest(
-                messages=[
-                    {
-                        "role": "system",
-                        "content": "你是英语词汇详解 HTML 的结构化抽取器，只输出 JSON。",
-                    },
-                    {"role": "user", "content": _build_prompt(term, text)},
-                ],
-                task_type="vocabulary_detail_html_extract",
-                temperature=0.0,
-                max_tokens=1000,
-                response_schema=DETAIL_HTML_SCHEMA,
-                preferred_model=settings.ollama_utility_model,
-                local_only=True,
-            )
+        result = await PromptExecutor(db=db, model_router=router).execute(
+            prompt_id="vocabulary.detail_html_extract",
+            variables={"term": term, "html_text": text[:12_000]},
+            context=PromptExecutionContext(
+                source_module="tools.vocabulary_detail_html",
+                task_id="vocabulary_detail_html_extract",
+                target_type="vocabulary_entry",
+                target_id=term,
+            ),
+            request_overrides={
+                "task_type": "vocabulary_detail_html_extract",
+                "preferred_model": settings.ollama_utility_model,
+                "local_only": True,
+            },
         )
-        payload = response.structured if response.structured is not None else json.loads(response.content)
-        if not isinstance(payload, dict):
-            raise ValueError("detail html extraction response must be an object")
+        payload = result.validated_output
+        if result.decision != "accepted" or payload is None:
+            raise ValueError("detail html extraction output was not accepted")
         parsed = _parse_payload(term, payload)
+        provider = "vocabulary_detail_html"
+        if result.provider or result.model:
+            provider = f"vocabulary_detail_html+{result.provider or 'unknown'}:{result.model or 'unknown'}"
         return DetailHtmlExtraction(
             phonetic=parsed.phonetic or _first_phonetic(text),
             meanings=parsed.meanings,
             dictionary_senses=parsed.dictionary_senses,
             examples=parsed.examples,
             collocations=parsed.collocations,
-            provider=f"vocabulary_detail_html+{response.provider}:{response.model}",
+            provider=provider,
         )
     except Exception as exc:
         logger.warning("Falling back to heuristic vocabulary detail HTML extraction: %s", exc)

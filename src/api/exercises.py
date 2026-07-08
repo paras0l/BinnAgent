@@ -7,13 +7,12 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.api.deps import get_db_session, get_model_router
-from src.config import settings
 from src.exercises.attempt_service import ExerciseTargetType
 from src.exercises.item_mapper import exercise_question_to_item
 from src.knowledge.exercises import ensure_unit_exercises
 from src.models.knowledge import CurriculumNode
 from src.models.learner import Learner
-from src.providers.base import ChatRequest
+from src.prompts import PromptExecutionContext, PromptExecutor
 from src.providers.router import ModelRouter
 
 router = APIRouter(
@@ -57,46 +56,6 @@ class GenerateExercisesRequest(BaseModel):
     context: GenerateExerciseContext | None = None
 
 
-GENERATED_EXERCISE_SCHEMA: dict[str, Any] = {
-    "type": "object",
-    "properties": {
-        "items": {
-            "type": "array",
-            "minItems": 1,
-            "maxItems": 3,
-            "items": {
-                "type": "object",
-                "properties": {
-                    "skill": {"type": "string", "enum": ["grammar", "vocabulary", "reading"]},
-                    "type": {
-                        "type": "string",
-                        "enum": ["single_choice", "fill_blank", "grammar_fill_blank"],
-                    },
-                    "prompt": {"type": "string"},
-                    "options": {"type": "array", "items": {"type": "string"}},
-                    "correctAnswer": {"type": "string"},
-                    "acceptedAnswers": {"type": "array", "items": {"type": "string"}},
-                    "explanation": {"type": "string"},
-                    "difficulty": {"type": "string", "enum": ["easy", "medium", "hard"]},
-                    "metadata": {"type": "object"},
-                },
-                "required": [
-                    "skill",
-                    "type",
-                    "prompt",
-                    "correctAnswer",
-                    "explanation",
-                    "difficulty",
-                ],
-                "additionalProperties": True,
-            },
-        }
-    },
-    "required": ["items"],
-    "additionalProperties": False,
-}
-
-
 @router.get("")
 async def list_exercises_for_target(
     learner_id: uuid.UUID,
@@ -134,33 +93,25 @@ async def generate_exercises(
     model_router: ModelRouter = Depends(get_model_router),
 ) -> list[dict[str, Any]]:
     await _ensure_learner_exists(db, learner_id)
-    prompt = _build_generation_prompt(body)
     try:
-        response = await model_router.chat(
-            ChatRequest(
-                messages=[
-                    {
-                        "role": "system",
-                        "content": (
-                            "你是 BinnAgent 的英语练习题生成器。"
-                            "只输出符合 schema 的 JSON，不要输出 Markdown。"
-                            "题目必须严格围绕 target，不要生成超出知识点范围的题。"
-                        ),
-                    },
-                    {"role": "user", "content": prompt},
-                ],
-                task_type="exercise_generate",
-                temperature=0.2,
-                max_tokens=1800,
-                response_schema=GENERATED_EXERCISE_SCHEMA,
-                preferred_model=settings.ollama_utility_model,
-            )
+        executor_result = await PromptExecutor(db=db, model_router=model_router).execute(
+            prompt_id="exercise.generate",
+            version="v1",
+            variables=_generation_prompt_variables(body),
+            context=PromptExecutionContext(
+                learner_id=learner_id,
+                source_module="api.exercises",
+                task_id="exercise_generate",
+                target_type=body.target.type,
+                target_id=body.target.id,
+                metadata={"count": body.count},
+            ),
         )
     except Exception as exc:
         raise HTTPException(status_code=503, detail="AI 练习生成暂时不可用") from exc
 
-    structured = response.structured
-    if not isinstance(structured, dict):
+    structured = executor_result.validated_output
+    if executor_result.decision != "accepted" or not isinstance(structured, dict):
         raise HTTPException(status_code=502, detail="AI 练习生成结果格式错误")
     raw_items = structured.get("items")
     if not isinstance(raw_items, list):
@@ -185,14 +136,14 @@ def _parse_uuid(value: str, error: str) -> uuid.UUID:
         raise HTTPException(status_code=422, detail=error) from exc
 
 
-def _build_generation_prompt(body: GenerateExercisesRequest) -> str:
+def _generation_prompt_variables(body: GenerateExercisesRequest) -> dict[str, Any]:
     target = body.target
     default_types = (
         ["grammar_fill_blank", "single_choice", "fill_blank"]
         if target.type == "grammar_topic"
         else ["single_choice", "fill_blank"]
     )
-    types = ", ".join(body.exercise_types or default_types)
+    types = body.exercise_types or default_types
     context = body.context
     context_lines: list[str] = []
     if context is not None:
@@ -204,24 +155,14 @@ def _build_generation_prompt(body: GenerateExercisesRequest) -> str:
             context_lines.append(f"知识点说明：{context.explanation}")
         if context.examples:
             context_lines.append("例子：" + " / ".join(context.examples[:8]))
-    return (
-        f"请生成 {body.count} 道英语学习验收题。\n"
-        f"target.type: {target.type}\n"
-        f"target.id: {target.id}\n"
-        f"target.label: {target.label}\n"
-        f"允许题型：{types}\n"
-        f"上下文：\n{chr(10).join(context_lines) if context_lines else '无'}\n\n"
-        "要求：\n"
-        "1. 每道题必须验收当前 target，不要泛泛出题。\n"
-        "2. grammar_topic 必须优先生成 grammar_fill_blank：题干用完整英文句子挖空，"
-        "要求学员填入正确语法形式，例如时态、冠词、介词、从句连接词或动词形态；"
-        "vocabulary_item 侧重词义、搭配、句中用法；"
-        "word_part 侧重词根词缀意义和拆词；reading_passage 侧重主旨、细节、句子理解；"
-        "curriculum_node 侧重单元知识验收。\n"
-        "3. single_choice 必须给 4 个 options，correctAnswer 必须等于其中一个选项。\n"
-        "4. fill_blank 和 grammar_fill_blank 的 options 可以为空，acceptedAnswers 给 1-3 个可接受答案。\n"
-        "5. explanation 用中文解释为什么答案正确。\n"
-    )
+    return {
+        "count": body.count,
+        "target_type": target.type,
+        "target_id": target.id,
+        "target_label": target.label,
+        "allowed_types": ", ".join(types),
+        "context_text": "\n".join(context_lines) if context_lines else "无",
+    }
 
 
 def _normalize_generated_item(

@@ -129,9 +129,10 @@ Python:
 
 Prompt / schema governance:
 
-- Structured LLM calls must go through `PromptExecutor`.
-- New prompts must be registered as `PromptMetadata`.
+- All prompt-like LLM calls must go through `PromptExecutor`; business modules must not call `ModelRouter.chat()` or `ModelRouter.stream_chat()` directly.
+- New prompts must be registered as `PromptMetadata` with a versioned template and `model_policy`.
 - Every structured prompt must bind `output_schema` and `model_policy`.
+- Every structured prompt must add or update an eval set under `evals/prompts/`.
 - Do not bypass schema validation and write directly to Memory, Mastery, KnowledgePoint, WritingPhrase, or similar learner-facing business tables.
 - Do not duplicate raw prompt, raw output, token usage, cost, or latency locally when Langfuse already covers them.
 - `PromptExecutionRecord` records only business decisions, schema/repair/fallback status, hashes, and Langfuse references.
