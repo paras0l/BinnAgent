@@ -304,7 +304,7 @@
           <li>引入 <strong>LangGraph</strong> 编排 Daily Lesson 流程，将画像加载、目标选择、技能路由、出题、等待用户作答、反馈生成、Memory 写入、复习调度和验证报告拆分为状态节点；当题目需要用户输入时持久化 checkpoint，用户提交后从指定节点恢复执行。</li>
           <li>构建 <strong>ExerciseAttempt → Mastery → ReviewSchedule → Memory → Recommendation</strong> 学习闭环：用户答题后记录练习证据，基于 correct、score、hint、retry、error_type 更新知识点掌握度，并驱动复习计划、记忆沉淀和下一步学习动作推荐。</li>
           <li>设计 <strong>Retain / Recall / Reflect / Control</strong> 长期学习记忆架构，统一沉淀跨模块学习证据；支持学习片段、学习者画像、教学策略记忆，并提供删除、禁用、纠正和“我已改善”等可控操作，降低错误画像长期污染风险。</li>
-          <li>实现教材冷启动与知识库治理：基于 PDF 教材抽取 CurriculumNode、KnowledgePoint、ExerciseQuestion 与 RAG Chunk；通过 ParserProfile、ParserQualityReport、confidence、warnings、source_page 与 review queue 控制低置信知识点进入人工校对流程。</li>
+          <li>实现教材冷启动、知识库治理与飞书 MCP 群聊学习线索捕捉：基于 PDF 教材抽取 CurriculumNode、KnowledgePoint、ExerciseQuestion，并新增飞书 MCP 模块读取指定群聊消息，识别单词、语法、好句与表达缺口等学习线索，进入收件箱确认后沉淀为学习资产。</li>
           <li>建设 Prompt Registry 与 Schema-first 输出治理：为核心 Prompt 绑定 owner、version、output_schema、model_policy、eval_set；记录 prompt_hash 和 input_hash，并对写作好句、词汇提取、语法微课等 LLM 输出执行 JSON repair、fallback、confidence 与 warning 标记。</li>
           <li>接入 Langfuse 与 Dev Console：跟踪 LangGraph、模型、工具、Memory、RAG 与 Verification 运行状态；</li>
           <li>构建 deterministic learner simulation：内置不同学习者 persona、behavior policy、scenario runner 和 assertion engine，覆盖 Daily Lesson checkpoint/resume、词汇练习、Explore 推荐、Runtime trace 等回归场景，为高频迭代提供基础安全网。</li>

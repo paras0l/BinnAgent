@@ -97,6 +97,14 @@ interface DeleteSourceTarget {
   title: string
 }
 
+type KnowledgeWorkspace = 'today' | 'unit' | 'exercises'
+
+const KNOWLEDGE_WORKSPACES: ReadonlyArray<{ id: KnowledgeWorkspace; label: string }> = [
+  { id: 'today', label: '今日任务' },
+  { id: 'unit', label: '本单元材料' },
+  { id: 'exercises', label: '教材练习' },
+]
+
 function readFailedSource(detail: KnowledgeOverviewError | null) {
   const payload = detail?.detail
   if (payload && typeof payload === 'object' && !Array.isArray(payload)) {
@@ -653,6 +661,7 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice, 
 
   const activeUnitVocabulary = unitVocabulary?.unit_id === overview.current_unit.id ? unitVocabulary : null
   const currentSourceLabel = `${overview.source.title} · ${overview.current_unit.title}`
+  const activeWorkspace = KNOWLEDGE_WORKSPACES[0]
   const unitWorkspace = overview.unit_workspace ?? fallbackUnitWorkspace(overview)
   const unitProgressPercent = normalizePercent(unitWorkspace.mastery_summary.average)
   const capabilityRecommendations = buildCapabilityRecommendations(
@@ -691,7 +700,7 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice, 
             学习中心
           </button>
           <span className="mx-2 text-slate-300">/</span>
-          <span>今日学习</span>
+          <span>{activeWorkspace.label}</span>
           <span className="mx-2 text-slate-300">/</span>
           <span className="hidden sm:inline">{overview.current_unit.title} · {overview.current_unit.subtitle}</span>
         </div>
@@ -1193,7 +1202,7 @@ function LearningSourceTiles({
       <div className="flex items-center justify-between gap-3">
         <div>
           <h2 className="text-base font-black text-slate-950">学习来源</h2>
-          <p className="mt-1 text-sm text-slate-500">切换教材后，今日单元和练习会跟着更新。</p>
+          <p className="mt-1 text-sm text-slate-500">切换教材或添加资料，今日单元和练习会跟着更新。</p>
         </div>
         <Button variant="secondary" onClick={onManage}>
           <UploadCloud className="size-4" />
