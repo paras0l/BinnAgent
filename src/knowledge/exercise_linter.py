@@ -6,7 +6,7 @@ TEMPLATE_PHRASES = [
     "需要结合更多上下文判断",
 ]
 
-ACTIVE_INPUT_TYPES = {"fill_blank", "dialogue_complete", "error_fix"}
+ACTIVE_INPUT_TYPES = {"fill_blank", "grammar_fill_blank", "dialogue_complete", "error_fix"}
 
 
 def lint_question(question: ExerciseQuestion) -> list[str]:

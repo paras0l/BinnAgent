@@ -1,10 +1,11 @@
 import { useState } from 'react'
-import { LoaderCircle, Plus, Save, Sparkles, Trash2 } from 'lucide-react'
+import { FileInput, LoaderCircle, Plus, Save, Sparkles, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { FormField } from '@/components/ui/FormField'
 import { StatusBanner } from '@/components/ui/StatusBanner'
 import { SurfaceCard } from '@/components/ui/SurfaceCard'
 import {
+  extractExercisesFromHtml,
   generateExercisesForTarget,
   saveExerciseItems,
   type GenerateExercisesRequest,
@@ -16,6 +17,7 @@ interface AddExerciseFormProps {
   learnerId?: string
   className?: string
   context?: GenerateExercisesRequest['context']
+  sourceHtml?: string
 }
 
 type ExerciseDraft = ExerciseItem & {
@@ -23,7 +25,7 @@ type ExerciseDraft = ExerciseItem & {
   acceptedAnswersText: string
 }
 
-export function AddExerciseForm({ target, learnerId, className = '', context }: AddExerciseFormProps) {
+export function AddExerciseForm({ target, learnerId, className = '', context, sourceHtml = '' }: AddExerciseFormProps) {
   const [drafts, setDrafts] = useState<ExerciseDraft[]>([])
   const [isGenerating, setIsGenerating] = useState(false)
   const [status, setStatus] = useState<string | null>(null)
@@ -47,7 +49,9 @@ export function AddExerciseForm({ target, learnerId, className = '', context }: 
       const generated = await generateExercisesForTarget(learnerId, {
         target,
         count: 3,
-        exerciseTypes: ['single_choice', 'fill_blank'],
+        exerciseTypes: target.type === 'grammar_topic'
+          ? ['grammar_fill_blank', 'single_choice', 'fill_blank']
+          : ['single_choice', 'fill_blank'],
         context,
       })
       setDrafts(generated.map(toDraft))
@@ -57,6 +61,16 @@ export function AddExerciseForm({ target, learnerId, className = '', context }: 
     } finally {
       setIsGenerating(false)
     }
+  }
+
+  const extractFromHtml = () => {
+    const exercises = extractExercisesFromHtml(sourceHtml, target)
+    if (exercises.length === 0) {
+      setStatus('当前 HTML 中没有识别到可导入的练习。可以让 AI 按 data-exercise 格式重新生成，或手动添加。')
+      return
+    }
+    setDrafts(exercises.map(toDraft))
+    setStatus(`已从 HTML 识别 ${exercises.length} 道练习，保存前可以继续编辑。`)
   }
 
   const updateDraft = (index: number, patch: Partial<ExerciseDraft>) => {
@@ -102,6 +116,10 @@ export function AddExerciseForm({ target, learnerId, className = '', context }: 
             <Plus className="size-4" />
             手动添加
           </Button>
+          <Button variant="secondary" onClick={extractFromHtml} disabled={!sourceHtml.trim()}>
+            <FileInput className="size-4" />
+            从 HTML 提取
+          </Button>
           <Button onClick={() => void generateExercises()} disabled={isGenerating}>
             {isGenerating ? <LoaderCircle className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
             {isGenerating ? '生成中…' : 'AI 生成练习'}
@@ -139,6 +157,7 @@ export function AddExerciseForm({ target, learnerId, className = '', context }: 
                   >
                     <option value="single_choice">单选题</option>
                     <option value="fill_blank">填空题</option>
+                    <option value="grammar_fill_blank">语法填空题</option>
                   </select>
                 </label>
                 <label className="block">
@@ -238,7 +257,7 @@ function createBlankExercise(target: ExerciseTarget): ExerciseItem {
     id: `manual-${target.type}-${target.id}-${Date.now()}`,
     target,
     skill: defaultSkillForTarget(target.type),
-    type: 'single_choice',
+    type: target.type === 'grammar_topic' ? 'grammar_fill_blank' : 'single_choice',
     prompt: '',
     options: ['', '', '', ''],
     correctAnswer: '',

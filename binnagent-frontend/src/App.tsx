@@ -5,7 +5,7 @@ import { LearningSettingsDialog } from './components/learning/LearningSettingsDi
 import { useToast } from './hooks/useToast'
 import { useLearningPreferences } from './hooks/useLearningPreferences'
 import type { VocabularyPracticeMode } from './pages/VocabularyPracticePage'
-import type { AppTab, Learner, PronunciationWorkspace } from './types'
+import type { AppTab, Learner, LearnerProfile, PronunciationWorkspace } from './types'
 
 type LearningCenterView = 'home' | 'daily-learning' | 'vocabulary' | 'vocabulary-practice'
 
@@ -62,6 +62,7 @@ function App() {
   const [isChatGenerating, setIsChatGenerating] = useState(false)
   const [isLearningSettingsOpen, setIsLearningSettingsOpen] = useState(false)
   const [isGroupLearningSettingsOpen, setIsGroupLearningSettingsOpen] = useState(false)
+  const [learnerProfile, setLearnerProfile] = useState<LearnerProfile | null>(null)
   const [currentLearner, setCurrentLearner] = useState<Learner | null>(() => {
     const cached = localStorage.getItem('binnLearner')
     if (!cached) return null
@@ -97,6 +98,53 @@ function App() {
       .finally(() => setIsRestoringLearner(false))
   }, [])
 
+  useEffect(() => {
+    if (!currentLearner?.id) {
+      return
+    }
+    let isMounted = true
+    fetch(`/api/learners/${currentLearner.id}/profile`)
+      .then((response) => {
+        if (response.status === 404) return null
+        if (!response.ok) throw new Error('Learner profile unavailable')
+        return response.json() as Promise<LearnerProfile>
+      })
+      .then((profile) => {
+        if (isMounted) setLearnerProfile(profile)
+      })
+      .catch(() => {
+        if (isMounted) setLearnerProfile(null)
+      })
+    return () => {
+      isMounted = false
+    }
+  }, [currentLearner?.id])
+
+  const updateLearnerProfile = async (patch: Partial<LearnerProfile>) => {
+    if (!currentLearner) return
+    const nextProfile: LearnerProfile = {
+      learner_id: currentLearner.id,
+      target_exam: learnerProfile?.target_exam ?? null,
+      target_score: learnerProfile?.target_score ?? null,
+      exam_date: learnerProfile?.exam_date ?? null,
+      current_level: learnerProfile?.current_level ?? null,
+      daily_time_budget_minutes: learnerProfile?.daily_time_budget_minutes ?? null,
+      ...patch,
+    }
+    setLearnerProfile(nextProfile)
+    try {
+      const response = await fetch(`/api/learners/${currentLearner.id}/profile`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(nextProfile),
+      })
+      if (!response.ok) throw new Error('Failed to save learner profile')
+      setLearnerProfile(await response.json() as LearnerProfile)
+    } catch {
+      showToast('学习画像暂时无法保存，请稍后重试。', { variant: 'warning' })
+    }
+  }
+
   const handleLogout = () => {
     if (isChatGenerating) {
       showToast('回答生成中，请先等待完成或点击取消。', { variant: 'warning' })
@@ -105,6 +153,7 @@ function App() {
     localStorage.removeItem('binnLearnerId')
     localStorage.removeItem('binnLearner')
     setCurrentLearner(null)
+    setLearnerProfile(null)
     setActiveTab('chat')
     setChatDraft('')
     setChatSkillFocus(null)
@@ -216,6 +265,7 @@ function App() {
           ) : activeTab === 'explore' ? (
             <ExplorePage
               learner={currentLearner}
+              learnerProfile={learnerProfile}
               isLocked={isChatGenerating}
               onLockedAction={() => {
                 showToast('回答生成中，请先等待完成或点击取消。', { variant: 'warning' })
@@ -232,7 +282,11 @@ function App() {
               initialWorkspace={pronunciationWorkspace}
             />
           ) : activeTab === 'grammar' ? (
-            <GrammarPage learner={currentLearner} onBack={() => handleTabChange('explore')} />
+            <GrammarPage
+              learner={currentLearner}
+              learnerProfile={learnerProfile}
+              onBack={() => handleTabChange('explore')}
+            />
           ) : (
             learningCenterView === 'daily-learning' ? (
               <KnowledgeBasePage
@@ -245,10 +299,12 @@ function App() {
               <DashboardPage
                 key={learningCenterView === 'vocabulary' ? 'vocabulary' : 'home'}
                 learner={currentLearner}
+                learnerProfile={learnerProfile}
                 initialVocabularyListOpen={learningCenterView === 'vocabulary'}
                 initialWorkspace={learningCenterView === 'vocabulary' ? 'vocabulary' : 'home'}
                 onOpenDailyLearning={() => setLearningCenterView('daily-learning')}
                 onOpenGroupLearningSettings={() => setIsGroupLearningSettingsOpen(true)}
+                onProfileUpdate={(patch) => void updateLearnerProfile(patch)}
                 onStartVocabularyPractice={(mode) => openVocabularyPractice(mode ?? preferences.defaultPracticeMode)}
               />
             )

@@ -30,7 +30,7 @@ export interface ExerciseSource {
 
 export type ExerciseSkill = 'grammar' | 'vocabulary' | 'reading'
 
-export type ExerciseType = 'single_choice' | 'fill_blank'
+export type ExerciseType = 'single_choice' | 'fill_blank' | 'grammar_fill_blank'
 
 export interface ExerciseItem {
   id: string

@@ -21,7 +21,7 @@ router = APIRouter(
     tags=["exercises"],
 )
 
-ExerciseType = Literal["single_choice", "fill_blank"]
+ExerciseType = Literal["single_choice", "fill_blank", "grammar_fill_blank"]
 
 
 class ExerciseTargetPayload(BaseModel):
@@ -68,7 +68,10 @@ GENERATED_EXERCISE_SCHEMA: dict[str, Any] = {
                 "type": "object",
                 "properties": {
                     "skill": {"type": "string", "enum": ["grammar", "vocabulary", "reading"]},
-                    "type": {"type": "string", "enum": ["single_choice", "fill_blank"]},
+                    "type": {
+                        "type": "string",
+                        "enum": ["single_choice", "fill_blank", "grammar_fill_blank"],
+                    },
                     "prompt": {"type": "string"},
                     "options": {"type": "array", "items": {"type": "string"}},
                     "correctAnswer": {"type": "string"},
@@ -184,7 +187,12 @@ def _parse_uuid(value: str, error: str) -> uuid.UUID:
 
 def _build_generation_prompt(body: GenerateExercisesRequest) -> str:
     target = body.target
-    types = ", ".join(body.exercise_types or ["single_choice", "fill_blank"])
+    default_types = (
+        ["grammar_fill_blank", "single_choice", "fill_blank"]
+        if target.type == "grammar_topic"
+        else ["single_choice", "fill_blank"]
+    )
+    types = ", ".join(body.exercise_types or default_types)
     context = body.context
     context_lines: list[str] = []
     if context is not None:
@@ -205,11 +213,13 @@ def _build_generation_prompt(body: GenerateExercisesRequest) -> str:
         f"上下文：\n{chr(10).join(context_lines) if context_lines else '无'}\n\n"
         "要求：\n"
         "1. 每道题必须验收当前 target，不要泛泛出题。\n"
-        "2. grammar_topic 侧重语法选择/填空；vocabulary_item 侧重词义、搭配、句中用法；"
+        "2. grammar_topic 必须优先生成 grammar_fill_blank：题干用完整英文句子挖空，"
+        "要求学员填入正确语法形式，例如时态、冠词、介词、从句连接词或动词形态；"
+        "vocabulary_item 侧重词义、搭配、句中用法；"
         "word_part 侧重词根词缀意义和拆词；reading_passage 侧重主旨、细节、句子理解；"
         "curriculum_node 侧重单元知识验收。\n"
         "3. single_choice 必须给 4 个 options，correctAnswer 必须等于其中一个选项。\n"
-        "4. fill_blank 的 options 可以为空，acceptedAnswers 给 1-3 个可接受答案。\n"
+        "4. fill_blank 和 grammar_fill_blank 的 options 可以为空，acceptedAnswers 给 1-3 个可接受答案。\n"
         "5. explanation 用中文解释为什么答案正确。\n"
     )
 
@@ -220,7 +230,13 @@ def _normalize_generated_item(
     target: ExerciseTargetPayload,
     index: int,
 ) -> dict[str, Any]:
-    exercise_type = item.get("type") if item.get("type") in ("single_choice", "fill_blank") else "fill_blank"
+    exercise_type = (
+        item.get("type")
+        if item.get("type") in ("single_choice", "fill_blank", "grammar_fill_blank")
+        else "grammar_fill_blank"
+        if target.type == "grammar_topic"
+        else "fill_blank"
+    )
     options = _string_list(item.get("options"))
     correct_answer = str(item.get("correctAnswer") or item.get("correct_answer") or "").strip()
     if exercise_type == "single_choice":

@@ -129,6 +129,22 @@ export function saveExerciseItems(exercises: ExerciseItem[]) {
   }
 }
 
+export function extractExercisesFromHtml(html: string, target: ExerciseTarget): ExerciseItem[] {
+  const fragment = extractHtmlFragment(html)
+  if (!fragment.trim()) return []
+  const extracted = typeof DOMParser === 'undefined'
+    ? extractExercisesWithRegex(fragment, target)
+    : extractExercisesWithDom(fragment, target)
+
+  const seen = new Set<string>()
+  return extracted.filter((exercise) => {
+    const key = `${exercise.prompt}:${exercise.correctAnswer}`
+    if (seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
+}
+
 export function normalizeExerciseTargetId(value: string) {
   const normalized = value
     .trim()
@@ -368,7 +384,7 @@ function isExerciseSkill(value: unknown) {
 }
 
 function isExerciseType(value: unknown) {
-  return value === 'single_choice' || value === 'fill_blank'
+  return value === 'single_choice' || value === 'fill_blank' || value === 'grammar_fill_blank'
 }
 
 function isExerciseSourceType(value: unknown) {
@@ -445,4 +461,192 @@ function exerciseLearningStatusValue(
     return value
   }
   return fallback
+}
+
+function extractExercisesWithDom(html: string, target: ExerciseTarget): ExerciseItem[] {
+  const parser = new DOMParser()
+  const doc = parser.parseFromString(html, 'text/html')
+  const dataNodes = Array.from(doc.querySelectorAll('[data-exercise="true"], [data-exercise-answer], [data-answer]'))
+  const fromDataNodes = dataNodes
+    .map((node, index) => exerciseFromElement(node as HTMLElement, target, index))
+    .filter((exercise): exercise is ExerciseItem => Boolean(exercise))
+  if (fromDataNodes.length > 0) return fromDataNodes
+  return extractExercisesFromText(doc.body.textContent ?? '', target)
+}
+
+function extractExercisesWithRegex(html: string, target: ExerciseTarget): ExerciseItem[] {
+  const taggedBlocks = Array.from(
+    html.matchAll(/<([a-z0-9-]+)\b([^>]*\bdata-exercise\s*=\s*["']true["'][^>]*)>([\s\S]*?)<\/\1>/gi),
+  )
+    .map((match, index) => {
+      const attrs = match[2] ?? ''
+      const content = match[3] ?? ''
+      const answer = attrValue(attrs, 'data-answer') || attrValue(attrs, 'data-exercise-answer')
+      if (!answer) return null
+      return buildImportedExercise({
+        target,
+        index,
+        prompt: cleanExercisePrompt(stripTags(content)),
+        answer,
+        explanation: attrValue(attrs, 'data-explanation') ||
+          `这道题来自“${target.label}”的 HTML 讲解，请根据当前语法规则核对答案。`,
+        type: exerciseTypeValue(attrValue(attrs, 'data-exercise-type')),
+        acceptedAnswers: answersFromAttribute(attrValue(attrs, 'data-accepted-answers'), answer),
+      })
+    })
+    .filter((exercise): exercise is ExerciseItem => Boolean(exercise))
+  if (taggedBlocks.length > 0) return taggedBlocks
+  return extractExercisesFromText(stripTags(html), target)
+}
+
+function exerciseFromElement(node: HTMLElement, target: ExerciseTarget, index: number): ExerciseItem | null {
+  const prompt = cleanExercisePrompt(
+    node.getAttribute('data-prompt') ||
+    node.querySelector('[data-exercise-prompt]')?.textContent ||
+    node.textContent ||
+    '',
+  )
+  const answer = (
+    node.getAttribute('data-answer') ||
+    node.getAttribute('data-exercise-answer') ||
+    node.querySelector('[data-answer]')?.textContent ||
+    ''
+  ).trim()
+  const explanation = (
+    node.getAttribute('data-explanation') ||
+    node.getAttribute('data-exercise-explanation') ||
+    node.querySelector('[data-explanation]')?.textContent ||
+    `这道题来自“${target.label}”的 HTML 讲解，请根据当前语法规则核对答案。`
+  ).trim()
+  if (!prompt || !answer) return null
+  return buildImportedExercise({
+    target,
+    index,
+    prompt,
+    answer,
+    explanation,
+    type: exerciseTypeValue(node.getAttribute('data-exercise-type')),
+    acceptedAnswers: answersFromAttribute(node.getAttribute('data-accepted-answers'), answer),
+  })
+}
+
+function extractExercisesFromText(text: string, target: ExerciseTarget): ExerciseItem[] {
+  const normalized = text
+    .replace(/\r/g, '\n')
+    .replace(/[ \t]+/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
+  const blocks = normalized
+    .split(/(?:^|\n)\s*(?:题目|练习|小题|Exercise|Question)\s*\d*[\s:：.、-]*/i)
+    .map((block) => block.trim())
+    .filter(Boolean)
+
+  return blocks
+    .map((block, index) => exerciseFromTextBlock(block, target, index))
+    .filter((exercise): exercise is ExerciseItem => Boolean(exercise))
+}
+
+function exerciseFromTextBlock(block: string, target: ExerciseTarget, index: number): ExerciseItem | null {
+  const answer = matchGroup(block, /(?:答案|Answer)\s*[:：]\s*([^\n。；;]+)/i)
+  if (!answer) return null
+  const explanation = matchGroup(block, /(?:解析|解释|Explanation)\s*[:：]\s*([^\n]+)/i) ||
+    `这道题来自“${target.label}”的 HTML 讲解，请根据当前语法规则核对答案。`
+  const prompt = cleanExercisePrompt(block.split(/(?:答案|Answer)\s*[:：]/i)[0] ?? '')
+  if (!prompt || !looksLikeFillBlank(prompt)) return null
+  return buildImportedExercise({
+    target,
+    index,
+    prompt,
+    answer,
+    explanation,
+    type: 'grammar_fill_blank',
+    acceptedAnswers: [answer],
+  })
+}
+
+function buildImportedExercise({
+  target,
+  index,
+  prompt,
+  answer,
+  explanation,
+  type,
+  acceptedAnswers,
+}: {
+  target: ExerciseTarget
+  index: number
+  prompt: string
+  answer: string
+  explanation: string
+  type: ExerciseItem['type']
+  acceptedAnswers: string[]
+}): ExerciseItem {
+  return {
+    id: `imported-html-${target.type}-${target.id}-${Date.now()}-${index + 1}`,
+    target,
+    skill: target.type === 'grammar_topic' ? 'grammar' : 'vocabulary',
+    type,
+    prompt,
+    options: [],
+    correctAnswer: answer,
+    acceptedAnswers,
+    explanation,
+    difficulty: 'easy',
+    source: {
+      type: 'imported',
+      name: 'grammar_html',
+    },
+    metadata: {
+      importedFrom: 'html',
+      targetType: target.type,
+      targetId: target.id,
+    },
+  }
+}
+
+function extractHtmlFragment(value: string) {
+  const fenced = value.match(/```(?:html)?\s*([\s\S]*?)```/i)
+  return (fenced?.[1] ?? value).trim()
+}
+
+function attrValue(attrs: string, name: string) {
+  const escapedName = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const match = attrs.match(new RegExp(`${escapedName}\\s*=\\s*["']([^"']*)["']`, 'i'))
+  return match?.[1]?.trim() ?? ''
+}
+
+function stripTags(value: string) {
+  return value
+    .replace(/<script[\s\S]*?<\/script>/gi, '')
+    .replace(/<style[\s\S]*?<\/style>/gi, '')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+function cleanExercisePrompt(value: string) {
+  return value
+    .replace(/(?:答案|Answer)\s*[:：]\s*[^\n。；;]+/gi, '')
+    .replace(/(?:解析|解释|Explanation)\s*[:：]\s*[^\n]+/gi, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+function exerciseTypeValue(value: string | null): ExerciseItem['type'] {
+  if (value === 'single_choice' || value === 'fill_blank' || value === 'grammar_fill_blank') return value
+  return 'grammar_fill_blank'
+}
+
+function answersFromAttribute(value: string | null, fallback: string) {
+  const answers = value
+    ? value.split(/[|,，；;]/).map((item) => item.trim()).filter(Boolean)
+    : []
+  return answers.length > 0 ? answers : [fallback]
+}
+
+function matchGroup(value: string, pattern: RegExp) {
+  return value.match(pattern)?.[1]?.trim() ?? ''
+}
+
+function looksLikeFillBlank(value: string) {
+  return /_{2,}|___|\(\s*\)|\[\s*\]|<blank>/i.test(value)
 }

@@ -23,7 +23,7 @@ import {
   type CapabilityRecommendation,
 } from '@/components/learning/CapabilityRecommendationCard'
 import { ReasonCard } from '@/components/learning/ReasonCard'
-import type { AppTab, ExplorePreference, Learner, PronunciationWorkspace } from '@/types'
+import type { AppTab, ExplorePreference, Learner, LearnerProfile, PronunciationWorkspace } from '@/types'
 import { useToast } from '@/hooks/useToast'
 import { GrammarPage } from '@/pages/GrammarPage'
 import { ReadingWorkshopPage } from '@/pages/ReadingWorkshopPage'
@@ -37,6 +37,7 @@ import {
   exploreCapabilityStartUrl,
   learnerExploreRecommendationsUrl,
 } from '@/services/exploreCapabilityApi'
+import { promptWithLearnerProfile } from '@/utils/learnerProfile'
 
 type FeatureCategory = 'all' | 'listening' | 'speaking' | 'reading' | 'writing' | 'vocabulary' | 'grammar' | 'exam'
 type FeatureStatus = 'ready' | 'todo'
@@ -44,6 +45,7 @@ type FeatureAction = 'chat' | 'session' | 'tool' | 'vocabulary-detail' | 'todo'
 
 interface ExplorePageProps {
   learner: Learner
+  learnerProfile?: LearnerProfile | null
   isLocked?: boolean
   onLockedAction?: () => void
   onTabChange: (tab: AppTab) => void
@@ -318,6 +320,7 @@ const FEATURES: ExploreFeature[] = [
 
 export function ExplorePage({
   learner,
+  learnerProfile,
   isLocked = false,
   onLockedAction,
   onTabChange,
@@ -488,11 +491,17 @@ export function ExplorePage({
     if (feature.action === 'chat' && feature.prompt) {
       if (feature.id === 'essay-review') {
         onDraftPrompt(
-          `${feature.prompt}\n\n如果作文中多次出现 First / Second / Third 或低级连接词，请推荐我进入“好句收藏馆”沉淀可替换句式。`,
-          null
+          promptWithLearnerProfile(
+            `${feature.prompt}\n\n如果作文中多次出现 First / Second / Third 或低级连接词，请推荐我进入“好句收藏馆”沉淀可替换句式。`,
+            learnerProfile,
+          ),
+          null,
         )
       } else {
-        onDraftPrompt(feature.prompt, feature.category === 'vocabulary' ? 'vocabulary_deposit' : null)
+        onDraftPrompt(
+          promptWithLearnerProfile(feature.prompt, learnerProfile),
+          feature.category === 'vocabulary' ? 'vocabulary_deposit' : null,
+        )
       }
       onTabChange('chat')
       return
@@ -533,7 +542,7 @@ export function ExplorePage({
     }
 
     if (feature.action === 'session') {
-      onDraftPrompt('开始今日课程。请根据我的学习记录安排一次适合 CET 的综合练习。')
+      onDraftPrompt(promptWithLearnerProfile('开始今日课程。请根据我的学习记录安排一次适合我的综合练习。', learnerProfile))
       onTabChange('chat')
     }
   }
@@ -615,12 +624,18 @@ export function ExplorePage({
 
   if (isVocabularyDetailOpen) {
     return (
-      <VocabularyDetailPage learner={learner} term="" onBack={() => setIsVocabularyDetailOpen(false)} backLabel="返回探索" />
+      <VocabularyDetailPage
+        learner={learner}
+        learnerProfile={learnerProfile}
+        term=""
+        onBack={() => setIsVocabularyDetailOpen(false)}
+        backLabel="返回探索"
+      />
     )
   }
 
   if (isGrammarOpen) {
-    return <GrammarPage learner={learner} onBack={() => setIsGrammarOpen(false)} />
+    return <GrammarPage learner={learner} learnerProfile={learnerProfile} onBack={() => setIsGrammarOpen(false)} />
   }
 
   if (isReadingWorkshopOpen) {
@@ -628,7 +643,7 @@ export function ExplorePage({
   }
 
   if (isWritingPhrasebookOpen) {
-    return <WritingPhrasebookPage learner={learner} onBack={() => setIsWritingPhrasebookOpen(false)} />
+    return <WritingPhrasebookPage learner={learner} learnerProfile={learnerProfile} onBack={() => setIsWritingPhrasebookOpen(false)} />
   }
 
   if (isWordPartsOpen) {

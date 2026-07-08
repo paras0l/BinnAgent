@@ -26,7 +26,7 @@ from src.memory.layers import MemoryLayer
 from src.memory.retriever import MemoryRetriever
 from src.memory.schemas import MemoryContext, RetrievedMemoryItem
 from src.models.learning_progress import LearningProgressItem
-from src.models.learner import Learner
+from src.models.learner import Learner, LearnerProfile
 from src.models.runtime import AgentThread, ConversationMessage
 from src.models.vocabulary import VocabularyAttempt, VocabularyItem
 from src.prompts import prompt_registry
@@ -695,6 +695,9 @@ async def _learning_snapshot_item(
         )
         .limit(12)
     )
+    profile_result = await db.execute(
+        select(LearnerProfile).where(LearnerProfile.learner_id == learner_id)
+    )
 
     total_vocab = int(total_vocab_result.scalar_one() or 0)
     mastered_vocab = int(mastered_vocab_result.scalar_one() or 0)
@@ -704,11 +707,20 @@ async def _learning_snapshot_item(
     grammar_titles = _unique_texts(
         item.title for item in grammar_result.scalars().all() if item.title
     )
+    profile = profile_result.scalar_one_or_none()
 
-    if total_vocab == 0 and grammar_count == 0 and not recent_words:
+    has_profile_context = profile is not None and bool(profile.target_exam or profile.current_level)
+    if total_vocab == 0 and grammar_count == 0 and not recent_words and not has_profile_context:
         return None
 
     parts = [f"学习快照：词汇库共 {total_vocab} 个词，已掌握 {mastered_vocab} 个。"]
+    if profile is not None and (profile.target_exam or profile.current_level):
+        parts.append(
+            "学习画像："
+            f"目标={profile.target_exam or '未设置'}；"
+            f"当前水平={profile.current_level or '未设置'}。"
+            "生成解释、练习和建议时应优先匹配该目标与水平。"
+        )
     if recent_attempts:
         parts.append(
             f"最近词汇练习 {len(recent_attempts)} 次，涉及 {len(recent_words)} 个词："

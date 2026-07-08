@@ -32,10 +32,12 @@ import { SurfaceCard } from '@/components/ui/SurfaceCard'
 import { useFocusTrap } from '@/hooks/useFocusTrap'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { useToast } from '@/hooks/useToast'
-import type { Learner } from '@/types'
+import type { Learner, LearnerProfile } from '@/types'
+import { learnerBackground, promptWithLearnerProfile } from '@/utils/learnerProfile'
 
 interface WritingPhrasebookPageProps {
   learner: Learner
+  learnerProfile?: LearnerProfile | null
   onBack: () => void
 }
 
@@ -222,7 +224,7 @@ const WRITING_POSITIONS = [
   { id: 'translation', label: '翻译', hint: '翻译题常用衔接、强调和高级替换' },
 ]
 
-export function WritingPhrasebookPage({ learner, onBack }: WritingPhrasebookPageProps) {
+export function WritingPhrasebookPage({ learner, learnerProfile, onBack }: WritingPhrasebookPageProps) {
   const { showToast } = useToast()
   const [workspace, setWorkspace] = useState<Workspace>('library')
   const [phrases, setPhrases] = useState<WritingPhrase[]>([])
@@ -254,7 +256,10 @@ export function WritingPhrasebookPage({ learner, onBack }: WritingPhrasebookPage
   const promptKey = `${selectedPromptId}:${importTopic}`
   const selectedPrompt = {
     ...selectedPromptBase,
-    text: renderedImportPrompt?.key === promptKey ? renderedImportPrompt.prompt : selectedPromptBase.text,
+    text: promptWithLearnerProfile(
+      renderedImportPrompt?.key === promptKey ? renderedImportPrompt.prompt : selectedPromptBase.text,
+      learnerProfile,
+    ),
   }
 
   const stats = useMemo(
@@ -337,6 +342,7 @@ export function WritingPhrasebookPage({ learner, onBack }: WritingPhrasebookPage
         variables: {
           topic: importTopic,
           task_type: selectedPromptId,
+          learner_background: learnerBackground(learnerProfile),
         },
       }),
     })
@@ -354,7 +360,7 @@ export function WritingPhrasebookPage({ learner, onBack }: WritingPhrasebookPage
     return () => {
       isMounted = false
     }
-  }, [importTopic, selectedPromptId, showToast])
+  }, [importTopic, learnerProfile, selectedPromptId, showToast])
 
   const parseLines = (value: string) =>
     value

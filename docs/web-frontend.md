@@ -67,7 +67,7 @@ AI对话 / 探索 / 学习中心
 - `ExplorePage` 改为学习能力工作台：优先展示后端 ExploreCapability 推荐，保留固定入口、收藏、搜索和分类筛选；搜索框已补可访问属性和 focus-visible，能力卡与收藏按钮已补基础 hover/focus/disabled 状态。
 - `ChatContainer` 的 Skill 状态使用 `StatusBanner`；顶部操作、历史侧栏、记忆面板、欢迎入口和发送/停止操作已接入统一 `Button` / `IconButton`，聊天输入补齐 `name` / `autocomplete` / focus-visible，streaming/typing 使用 `aria-live` 并尊重 reduced-motion；移动端历史对话 / 学习状态侧栏已补遮罩、dialog 语义、ESC 关闭、焦点恢复和 Tab 循环。
 - Header 右侧改为学习者菜单，包含学习设置、当前学习者摘要和登出/切换学习者；裸退出 icon 不再常驻导航。
-- 新增 learner-scoped 本地学习设置，覆盖词汇练习默认模式、数量、英/美音、是否显示 setup、自动播放、拼写填满自动检查、答对后自动进入下一题和单元词汇范围；设置弹层具备 dialog 语义、ESC 关闭、焦点恢复、Tab 循环，恢复默认需要二次确认。
+- 学习设置新增学习画像配置：学习目标写入 LearnerProfile.target_exam，当前水平使用 CEFR A1-C2 写入 LearnerProfile.current_level；语法、词汇、写作和探索页 prompt 读取画像后按目标和水平调整。练习偏好仍为 learner-scoped 本地设置，覆盖词汇练习默认模式、数量、英/美音、是否显示 setup、自动播放、拼写填满自动检查、答对后自动进入下一题和单元词汇范围；设置弹层具备 dialog 语义、ESC 关闭、焦点恢复、Tab 循环，恢复默认需要二次确认。
 - `MemoryCenterPage` 不在用户端主导航出现；Dev Console 可继续复用它查看和管理 memory/debug evidence。
 - `GrammarPage`、`PronunciationPage`、`VocabularyDetailPage`、`LoginPage` 接入统一外壳和表单/按钮标准；`LoginPage` 登录字段已补 `name` / `autocomplete` / `spellCheck`，产品能力卡已有 hover elevation/translate。
 - `VocabularyDetailPage` 已补生成-回填-保存四步 stepper，生成指令、HTML 回填、个人词卡和构词笔记表单已统一 `name` / `autocomplete` / focus-visible 与省略号占位文案；沉浸阅读具备 dialog 语义、ESC 关闭、焦点恢复和 Tab 循环。

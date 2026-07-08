@@ -22,7 +22,7 @@ import {
   type GrammarCategory,
   type GrammarTopic,
 } from '@/data/grammarTopics'
-import type { GrammarHtmlCacheResponse, Learner, LearningProgressItem } from '@/types'
+import type { GrammarHtmlCacheResponse, Learner, LearnerProfile, LearningProgressItem } from '@/types'
 import { useToast } from '@/hooks/useToast'
 import { FeatureHero } from '@/components/layout/FeatureHero'
 import { PageShell } from '@/components/layout/PageShell'
@@ -37,6 +37,7 @@ import { IconButton } from '@/components/ui/IconButton'
 import { SurfaceCard } from '@/components/ui/SurfaceCard'
 import { useFocusTrap } from '@/hooks/useFocusTrap'
 import type { ExerciseTarget } from '@/types/exercises'
+import { learnerBackground } from '@/utils/learnerProfile'
 
 type CategoryFilter = 'all' | GrammarCategory
 
@@ -57,6 +58,7 @@ interface StoredGrammarState {
 
 interface GrammarPageProps {
   learner: Learner
+  learnerProfile?: LearnerProfile | null
   onBack: () => void
   backLabel?: string
   initialTopic?: string | null
@@ -71,7 +73,7 @@ const PROMPT_VERSION = 'v1'
 const EXTENSION_PATH = '/Users/binge/Documents/BinnAgent/browser-extension/grammar-autofill'
 
 type CacheStatus = 'idle' | 'loading' | 'hit' | 'miss' | 'saving' | 'saved' | 'error' | 'bypassed'
-type GrammarWorkspace = 'topics' | 'generate' | 'preview' | 'settings'
+type GrammarWorkspace = 'topics' | 'generate' | 'preview' | 'practice' | 'settings'
 type PendingGrammarAction = 'regenerate-topic' | 'clear-html' | 'remove-target' | null
 
 interface GrammarCategoryRow {
@@ -92,6 +94,7 @@ const GRAMMAR_WORKSPACE_TABS: WorkspaceTab<GrammarWorkspace>[] = [
   { id: 'topics', label: '知识点', description: '选择微知识点', icon: <Search className="h-4 w-4" /> },
   { id: 'generate', label: '生成指令', description: '复制并跳转', icon: <ExternalLink className="h-4 w-4" /> },
   { id: 'preview', label: '预览回填', description: '粘贴 HTML', icon: <FileInput className="h-4 w-4" /> },
+  { id: 'practice', label: '习题巩固', description: '提取和练习', icon: <CheckCircle2 className="h-4 w-4" /> },
   { id: 'settings', label: '目标设置', description: '网站和扩展', icon: <Puzzle className="h-4 w-4" /> },
 ]
 
@@ -130,7 +133,7 @@ const BASE_IFRAME_STYLE = `
   </style>
 `
 
-export function GrammarPage({ learner, onBack, backLabel = '返回探索', initialTopic }: GrammarPageProps) {
+export function GrammarPage({ learner, learnerProfile, onBack, backLabel = '返回探索', initialTopic }: GrammarPageProps) {
   const { showToast } = useToast()
   const storedState = useMemo(() => readStoredGrammarState(), [])
   const topicOptions = useMemo(() => {
@@ -180,7 +183,8 @@ export function GrammarPage({ learner, onBack, backLabel = '返回探索', initi
     [selectedTopicId, topicOptions]
   )
 
-  const fallbackPrompt = useMemo(() => buildGrammarPrompt(selectedTopic), [selectedTopic])
+  const profileBackground = useMemo(() => learnerBackground(learnerProfile), [learnerProfile])
+  const fallbackPrompt = useMemo(() => buildGrammarPrompt(selectedTopic, profileBackground), [profileBackground, selectedTopic])
   const activeRenderedPrompt = renderedPrompt?.topicId === selectedTopic.id ? renderedPrompt : null
   const prompt = activeRenderedPrompt?.prompt ?? fallbackPrompt
   const promptVersion = activeRenderedPrompt?.version ?? PROMPT_VERSION
@@ -350,7 +354,7 @@ export function GrammarPage({ learner, onBack, backLabel = '返回探索', initi
           topic_title: selectedTopic.title,
           short_description: selectedTopic.shortDescription,
           tags: selectedTopic.tags,
-          learner_background: 'CET 四六级备考，喜欢中英结合、规则清楚、例句实用。',
+          learner_background: profileBackground,
         },
       }),
     })
@@ -368,7 +372,7 @@ export function GrammarPage({ learner, onBack, backLabel = '返回探索', initi
     return () => {
       isMounted = false
     }
-  }, [selectedTopic, showToast])
+  }, [profileBackground, selectedTopic, showToast])
 
   useEffect(() => {
     if (currentHtml.trim()) return
@@ -765,31 +769,39 @@ export function GrammarPage({ learner, onBack, backLabel = '返回探索', initi
               />
             </SurfaceCard>
           </div>
-          <ExerciseLearningSignal
-            learnerId={learner.id}
-            target={grammarExerciseTarget}
-            messages={{
-              needs_review: '这个语法点练习结果还不稳定，建议先复习讲解再答一次。',
-              unstable: '这个语法点练习结果还不稳定，建议先复习讲解再答一次。',
-            }}
-            titles={{
-              needs_review: '建议复习',
-              unstable: '建议复习',
-            }}
-          />
-          <ExerciseAttemptSummary learnerId={learner.id} target={grammarExerciseTarget} />
+        </>
+      )}
+
+      {workspace === 'practice' && (
+        <section className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_420px]">
+          <div className="space-y-5">
+            <ExerciseLearningSignal
+              learnerId={learner.id}
+              target={grammarExerciseTarget}
+              messages={{
+                needs_review: '这个语法点练习结果还不稳定，建议先复习讲解再答一次。',
+                unstable: '这个语法点练习结果还不稳定，建议先复习讲解再答一次。',
+              }}
+              titles={{
+                needs_review: '建议复习',
+                unstable: '建议复习',
+              }}
+            />
+            <ExerciseAttemptSummary learnerId={learner.id} target={grammarExerciseTarget} />
+            <ExerciseBlock learnerId={learner.id} target={grammarExerciseTarget} limit={5} />
+          </div>
           <AddExerciseForm
             learnerId={learner.id}
             target={grammarExerciseTarget}
+            sourceHtml={currentHtml}
             context={{
               page: 'GrammarPage',
-              explanation: selectedTopic.shortDescription,
+              explanation: `${selectedTopic.shortDescription}\n\nHTML 摘要：${htmlToPlainText(currentHtml).slice(0, 1200)}`,
               examples: selectedTopic.tags,
               learnerLevel: selectedTopic.level,
             }}
           />
-          <ExerciseBlock learnerId={learner.id} target={grammarExerciseTarget} limit={3} />
-        </>
+        </section>
       )}
 
       {workspace === 'settings' && (
@@ -1268,18 +1280,19 @@ function getPendingActionCopy(action: PendingGrammarAction, topicTitle: string, 
   }
 }
 
-function buildGrammarPrompt(topic: GrammarTopic) {
+function buildGrammarPrompt(topic: GrammarTopic, profileBackground: string) {
   return `请为英语学习者讲解一个“语法微知识点”：${topic.title}。
 
 请严格遵守：
 1. 只讲这个微知识点，不要扩展到“${GRAMMAR_CATEGORY_LABELS[topic.category]}”整个大类，也不要写成长篇语法课。
 2. 内容控制在约 600-900 中文字等量，适合 5-8 分钟阅读；可以讲得具体，但不要发散。
 3. 仅输出一个 HTML 片段，不要 Markdown 代码围栏，不要解释 HTML 之外的文字。
-4. HTML 结构必须包含：标题、适用场景、核心规则、3-5 个英文例句及中文解释、常见误区、2 道小练习、答案。
+4. HTML 结构必须包含：标题、适用场景、核心规则、3-5 个英文例句及中文解释、常见误区、2 道语法填空小练习、答案。
 5. 例句必须服务“${topic.title}”这个知识点；如果是主将从现，只讲时间/条件状语从句中从句用一般现在时表示将来。
 6. 禁止输出 <script>、外链 JS、表单、iframe、自动播放媒体。
+7. 每道小练习外层必须使用 data-exercise="true"，并填写 data-exercise-type="grammar_fill_blank"、data-answer、data-explanation；题干用完整英文句子挖空。
 
-学习者背景：CET 四六级备考，喜欢中英结合、规则清楚、例句实用。
+学习者背景：${profileBackground}
 知识点简介：${topic.shortDescription}
 相关标签：${topic.tags.join('、')}`
 }
@@ -1397,6 +1410,15 @@ function sanitizeHtml(value: string) {
     }
   })
   return doc.body.innerHTML
+}
+
+function htmlToPlainText(value: string) {
+  const fragment = extractHtmlFragment(value)
+  if (!fragment.trim()) return ''
+  const parser = new DOMParser()
+  const doc = parser.parseFromString(fragment, 'text/html')
+  doc.querySelectorAll('script, iframe, style').forEach((node) => node.remove())
+  return (doc.body.textContent ?? '').replace(/\s+/g, ' ').trim()
 }
 
 function emptyPreviewMarkup(topicTitle: string) {

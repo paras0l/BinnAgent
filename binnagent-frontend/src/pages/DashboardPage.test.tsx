@@ -73,6 +73,8 @@ describe('Dashboard learning profile workspaces', () => {
     ).replaceAll('<!-- -->', '')
 
     expect(html).toContain('我的学习画像')
+    expect(html).toContain('目标与水平')
+    expect(html).toContain('查看分级标准')
     expect(html).toContain('画像正在建立中')
     expect(html).toContain('状态摘要')
     expect(html).toContain('最近表现')

@@ -45,7 +45,25 @@ GRAMMAR_MICRO_LESSON_SCHEMA: dict[str, Any] = {
                 "core_rules": {"type": "array", "items": {"type": "string"}},
                 "examples": {"type": "array", "items": {"type": "object"}},
                 "mistakes": {"type": "array", "items": {"type": "string"}},
-                "exercises": {"type": "array", "items": {"type": "object"}},
+                "exercises": {
+                    "type": "array",
+                    "minItems": 2,
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "type": {
+                                "type": "string",
+                                "enum": ["grammar_fill_blank", "single_choice", "fill_blank"],
+                            },
+                            "prompt": {"type": "string"},
+                            "answer": {"type": "string"},
+                            "accepted_answers": {"type": "array", "items": {"type": "string"}},
+                            "explanation": {"type": "string"},
+                        },
+                        "required": ["type", "prompt", "answer", "explanation"],
+                        "additionalProperties": True,
+                    },
+                },
             },
             "required": ["topic", "core_rules", "examples", "mistakes", "exercises"],
         },

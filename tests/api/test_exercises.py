@@ -46,11 +46,11 @@ async def test_generate_exercises_returns_generated_exercise_items(
             "items": [
                 {
                     "skill": "grammar",
-                    "type": "single_choice",
-                    "prompt": "Which sentence is correct?",
-                    "options": ["If it rains, I will stay home.", "If it will rain, I stay home."],
-                    "correctAnswer": "If it rains, I will stay home.",
-                    "acceptedAnswers": [],
+                    "type": "grammar_fill_blank",
+                    "prompt": "If it ____ tomorrow, I will stay home.",
+                    "options": [],
+                    "correctAnswer": "rains",
+                    "acceptedAnswers": ["rains"],
                     "explanation": "条件状语从句中 if 从句用一般现在时表示将来。",
                     "difficulty": "easy",
                     "metadata": {"focus": "present_for_future"},
@@ -68,7 +68,7 @@ async def test_generate_exercises_returns_generated_exercise_items(
                 "label": "主将从现",
             },
             "count": 1,
-            "exerciseTypes": ["single_choice"],
+            "exerciseTypes": ["grammar_fill_blank"],
             "context": {"page": "GrammarPage", "learnerLevel": "junior"},
         },
     )
@@ -86,5 +86,47 @@ async def test_generate_exercises_returns_generated_exercise_items(
     assert item["metadata"]["generatedBy"] == "ai"
     assert item["metadata"]["targetType"] == "grammar_topic"
     assert item["metadata"]["targetId"] == "present-for-future"
-    assert item["type"] == "single_choice"
-    assert item["correctAnswer"] in item["options"]
+    assert item["type"] == "grammar_fill_blank"
+    assert item["acceptedAnswers"] == ["rains"]
+
+
+@pytest.mark.asyncio
+async def test_generate_exercises_defaults_to_grammar_fill_blank_for_grammar_topics(
+    client,
+    exercise_session,
+    mock_model_router,
+):
+    learner_id = uuid.uuid4()
+    exercise_session.execute = AsyncMock(return_value=_one(learner_id))
+    mock_model_router.chat.return_value = ChatResponse(
+        provider="test",
+        model="test",
+        content="{}",
+        structured={
+            "items": [
+                {
+                    "skill": "grammar",
+                    "type": "fill_blank",
+                    "prompt": "She ____ English every day.",
+                    "correctAnswer": "studies",
+                    "explanation": "一般现在时第三人称单数动词用 studies。",
+                    "difficulty": "easy",
+                }
+            ]
+        },
+    )
+
+    response = await client.post(
+        f"/api/learners/{learner_id}/exercises/generate",
+        json={
+            "target": {
+                "type": "grammar_topic",
+                "id": "simple-present",
+                "label": "一般现在时",
+            },
+            "count": 1,
+        },
+    )
+
+    assert response.status_code == 200
+    assert "grammar_fill_blank" in mock_model_router.chat.call_args.args[0].messages[1]["content"]

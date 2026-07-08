@@ -210,6 +210,7 @@ class TestCreateProfile:
             f"/api/learners/{learner_id}/profile",
             json={
                 "target_exam": "CET-4",
+                "current_level": "b1",
                 "target_score": 500,
                 "daily_time_budget_minutes": 60,
             },
@@ -219,6 +220,7 @@ class TestCreateProfile:
         data = response.json()
         assert data["learner_id"] == str(learner_id)
         assert data["target_exam"] == "CET-4"
+        assert data["current_level"] == "b1"
         assert data["target_score"] == 500
         assert data["daily_time_budget_minutes"] == 60
 
@@ -285,6 +287,7 @@ class TestGetProfile:
         profile = LearnerProfile(
             learner_id=learner_id,
             target_exam="CET-4",
+            current_level="b1",
             target_score=500,
             daily_time_budget_minutes=60,
         )
@@ -299,6 +302,7 @@ class TestGetProfile:
         data = response.json()
         assert data["learner_id"] == str(learner_id)
         assert data["target_exam"] == "CET-4"
+        assert data["current_level"] == "b1"
         assert data["target_score"] == 500
         assert data["daily_time_budget_minutes"] == 60
 
@@ -314,3 +318,84 @@ class TestGetProfile:
 
         assert response.status_code == 404
         assert response.json()["detail"] == "Profile not found"
+
+
+class TestUpsertProfile:
+    @pytest.mark.asyncio
+    async def test_upsert_profile_creates_editable_goal_and_level(self, client, mock_session):
+        learner_id = uuid.uuid4()
+        learner = Learner(nickname="Alice")
+        learner.id = learner_id
+
+        learner_result = MagicMock()
+        learner_result.scalar_one_or_none.return_value = learner
+        profile_result = MagicMock()
+        profile_result.scalar_one_or_none.return_value = None
+        mock_session.execute = AsyncMock(side_effect=[learner_result, profile_result])
+
+        response = await client.put(
+            f"/api/learners/{learner_id}/profile",
+            json={
+                "target_exam": "ielts",
+                "current_level": "b2",
+                "daily_time_budget_minutes": 45,
+            },
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["learner_id"] == str(learner_id)
+        assert data["target_exam"] == "ielts"
+        assert data["current_level"] == "b2"
+        mock_session.add.assert_called_once()
+        mock_session.flush.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_upsert_profile_updates_existing_profile(self, client, mock_session):
+        learner_id = uuid.uuid4()
+        learner = Learner(nickname="Alice")
+        learner.id = learner_id
+        profile = LearnerProfile(
+            learner_id=learner_id,
+            target_exam="cet4",
+            current_level="a2",
+        )
+
+        learner_result = MagicMock()
+        learner_result.scalar_one_or_none.return_value = learner
+        profile_result = MagicMock()
+        profile_result.scalar_one_or_none.return_value = profile
+        mock_session.execute = AsyncMock(side_effect=[learner_result, profile_result])
+
+        response = await client.put(
+            f"/api/learners/{learner_id}/profile",
+            json={
+                "target_exam": "toefl",
+                "current_level": "b1",
+                "daily_time_budget_minutes": 30,
+            },
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["target_exam"] == "toefl"
+        assert data["current_level"] == "b1"
+        assert profile.target_exam == "toefl"
+        assert profile.current_level == "b1"
+        mock_session.add.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_upsert_profile_learner_not_found(self, client, mock_session):
+        learner_id = uuid.uuid4()
+
+        mock_result = MagicMock()
+        mock_result.scalar_one_or_none.return_value = None
+        mock_session.execute = AsyncMock(return_value=mock_result)
+
+        response = await client.put(
+            f"/api/learners/{learner_id}/profile",
+            json={"target_exam": "gaokao", "current_level": "b1"},
+        )
+
+        assert response.status_code == 404
+        assert response.json()["detail"] == "Learner not found"

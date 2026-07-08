@@ -45,7 +45,16 @@ class CreateProfileRequest(BaseModel):
     target_exam: Optional[str] = Field(default=None, max_length=50)
     target_score: Optional[int] = Field(default=None, ge=0, le=710)
     exam_date: Optional[date] = None
+    current_level: Optional[str] = Field(default=None, max_length=20)
     daily_time_budget_minutes: Optional[int] = Field(default=None, ge=1, le=600)
+
+    @field_validator("target_exam", "current_level")
+    @classmethod
+    def normalize_optional_text(cls, value: Optional[str]) -> Optional[str]:
+        if value is None:
+            return None
+        stripped = value.strip()
+        return stripped or None
 
 
 # --- Response schemas ---
@@ -66,6 +75,7 @@ class ProfileResponse(BaseModel):
     target_exam: Optional[str] = None
     target_score: Optional[int] = None
     exam_date: Optional[date] = None
+    current_level: Optional[str] = None
     daily_time_budget_minutes: Optional[int] = None
 
 
@@ -154,9 +164,37 @@ async def create_profile(
         target_exam=body.target_exam,
         target_score=body.target_score,
         exam_date=body.exam_date,
+        current_level=body.current_level,
         daily_time_budget_minutes=body.daily_time_budget_minutes,
     )
     db.add(profile)
+    await db.flush()
+    await db.refresh(profile)
+    return profile
+
+
+@router.put("/{learner_id}/profile", response_model=ProfileResponse)
+async def upsert_profile(
+    learner_id: uuid.UUID,
+    body: CreateProfileRequest,
+    db: AsyncSession = Depends(get_db_session),
+) -> LearnerProfile:
+    result = await db.execute(select(Learner).where(Learner.id == learner_id))
+    learner = result.scalar_one_or_none()
+    if learner is None:
+        raise HTTPException(status_code=404, detail="Learner not found")
+
+    result = await db.execute(select(LearnerProfile).where(LearnerProfile.learner_id == learner_id))
+    profile = result.scalar_one_or_none()
+    if profile is None:
+        profile = LearnerProfile(learner_id=learner_id)
+        db.add(profile)
+
+    profile.target_exam = body.target_exam
+    profile.target_score = body.target_score
+    profile.exam_date = body.exam_date
+    profile.current_level = body.current_level
+    profile.daily_time_budget_minutes = body.daily_time_budget_minutes
     await db.flush()
     await db.refresh(profile)
     return profile

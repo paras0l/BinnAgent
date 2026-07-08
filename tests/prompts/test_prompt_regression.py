@@ -34,7 +34,12 @@ from src.prompts import PromptExecutionContext, PromptExecutor
             (
                 '{"machine_data":{"topic":"一般现在时","core_rules":["动词随主语变化。"],'
                 '"examples":[{"sentence":"She likes English."}],"mistakes":["漏掉 s"],'
-                '"exercises":[{"question":"She ___ English.","answer":"likes"}]},'
+                '"exercises":['
+                '{"type":"grammar_fill_blank","prompt":"She ___ English.","answer":"likes",'
+                '"accepted_answers":["likes"],"explanation":"主语是第三人称单数。"},'
+                '{"type":"grammar_fill_blank","prompt":"He ___ to school every day.","answer":"goes",'
+                '"accepted_answers":["goes"],"explanation":"一般现在时第三人称单数加 es。"}'
+                ']},'
                 '"display_html":"<section>一般现在时</section>"}'
             ),
         ),
@@ -86,7 +91,12 @@ async def test_registered_structured_prompts_accept_schema_valid_output(
             (
                 'Sure, here is the structured lesson:\n{"machine_data":{"topic":"冠词","core_rules":["a/an 泛指。"],'
                 '"examples":[{"sentence":"I have a pen."}],"mistakes":["an 用错"],'
-                '"exercises":[{"question":"___ apple","answer":"an"}]},'
+                '"exercises":['
+                '{"type":"grammar_fill_blank","prompt":"I have ___ apple.","answer":"an",'
+                '"accepted_answers":["an"],"explanation":"apple 以元音音素开头。"},'
+                '{"type":"grammar_fill_blank","prompt":"She is ___ teacher.","answer":"a",'
+                '"accepted_answers":["a"],"explanation":"teacher 以辅音音素开头。"}'
+                ']},'
                 '"display_html":"<section>冠词</section>"}'
             ),
         ),

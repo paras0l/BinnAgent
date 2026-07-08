@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useId, useMemo, useState, type ReactNode } from 'react'
 import {
   ArrowLeft,
   ArrowRight,
@@ -8,6 +8,7 @@ import {
   ClipboardList,
   Clock3,
   FileText,
+  HelpCircle,
   MessageCircle,
   Plus,
   RefreshCw,
@@ -29,11 +30,19 @@ import { ErrorState } from '@/components/ui/ErrorState'
 import { IconButton } from '@/components/ui/IconButton'
 import { LoadingState } from '@/components/ui/LoadingState'
 import { SurfaceCard } from '@/components/ui/SurfaceCard'
-import type { DashboardSummary, Learner, MemorySummary, VocabularyListItem } from '@/types'
+import type { DashboardSummary, Learner, LearnerProfile, MemorySummary, VocabularyListItem } from '@/types'
 import { useToast } from '@/hooks/useToast'
+import { useFocusTrap } from '@/hooks/useFocusTrap'
 import { GroupLearningSignalsPage } from '@/pages/GroupLearningSignalsPage'
 import type { VocabularyPracticeMode } from '@/pages/VocabularyPracticePage'
 import { VocabularyPracticePage } from '@/pages/VocabularyPracticePage'
+import {
+  CURRENT_LEVEL_OPTIONS,
+  LEARNING_GOAL_OPTIONS,
+  LEVEL_STANDARD_NOTES,
+  currentLevelLabel,
+  learningGoalLabel,
+} from '@/utils/learnerProfile'
 
 const VOCABULARY_PAGE_SIZE = 12
 
@@ -41,19 +50,23 @@ export type DashboardWorkspace = 'home' | 'vocabulary' | 'profile' | 'records' |
 
 interface DashboardPageProps {
   learner: Learner
+  learnerProfile?: LearnerProfile | null
   initialWorkspace?: DashboardWorkspace
   initialVocabularyListOpen?: boolean
   onOpenDailyLearning: () => void
   onOpenGroupLearningSettings: () => void
+  onProfileUpdate?: (patch: Partial<LearnerProfile>) => void
   onStartVocabularyPractice: (mode?: VocabularyPracticeMode) => void
 }
 
 export function DashboardPage({
   learner,
+  learnerProfile,
   initialVocabularyListOpen = false,
   initialWorkspace = 'home',
   onOpenDailyLearning,
   onOpenGroupLearningSettings,
+  onProfileUpdate,
   onStartVocabularyPractice,
 }: DashboardPageProps) {
   const { showToast } = useToast()
@@ -281,11 +294,13 @@ export function DashboardPage({
     return (
       <LearningProfileView
         learner={learner}
+        learnerProfile={learnerProfile}
         summary={summary}
         memorySummary={memorySummary}
         onBack={() => setActiveWorkspace('home')}
         onOpenDailyLearning={onOpenDailyLearning}
         onOpenRecords={() => setActiveWorkspace('records')}
+        onProfileUpdate={onProfileUpdate}
       />
     )
   }
@@ -828,19 +843,24 @@ function ActivityCalendarCard({
 
 export function LearningProfileView({
   learner,
+  learnerProfile,
   summary,
   memorySummary,
   onBack,
   onOpenDailyLearning,
   onOpenRecords,
+  onProfileUpdate = () => {},
 }: {
   learner: Learner
+  learnerProfile?: LearnerProfile | null
   summary: DashboardSummary
   memorySummary: MemorySummary | null
   onBack: () => void
   onOpenDailyLearning: () => void
   onOpenRecords: () => void
+  onProfileUpdate?: (patch: Partial<LearnerProfile>) => void
 }) {
+  const [isLevelInfoOpen, setIsLevelInfoOpen] = useState(false)
   const reasons = buildFocusReasons(summary)
   const weaknesses = buildWeaknessList(summary, memorySummary)
   const abilityScores = buildAbilityScores(summary)
@@ -867,6 +887,12 @@ export function LearningProfileView({
           { label: '词汇量', value: summary.stats.total_vocab },
           { label: '薄弱点', value: weaknesses.length, tone: weaknesses.length ? 'warning' : 'success' },
         ]}
+      />
+
+      <ProfileSettingsCard
+        learnerProfile={learnerProfile}
+        onOpenLevelInfo={() => setIsLevelInfoOpen(true)}
+        onProfileUpdate={onProfileUpdate}
       />
 
       {!hasProfileData ? (
@@ -945,6 +971,7 @@ export function LearningProfileView({
           </SurfaceCard>
         </aside>
       </section>
+      <LevelStandardsDialog open={isLevelInfoOpen} onClose={() => setIsLevelInfoOpen(false)} />
     </PageShell>
   )
 }
@@ -1065,6 +1092,191 @@ function SectionHeading({ icon, title }: { icon: ReactNode; title: string }) {
       <h2 className="text-base font-black text-slate-950">{title}</h2>
     </div>
   )
+}
+
+function ProfileSettingsCard({
+  learnerProfile,
+  onOpenLevelInfo,
+  onProfileUpdate,
+}: {
+  learnerProfile?: LearnerProfile | null
+  onOpenLevelInfo: () => void
+  onProfileUpdate: (patch: Partial<LearnerProfile>) => void
+}) {
+  return (
+    <SurfaceCard>
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+        <SectionHeading icon={<BrainCircuit className="size-4" />} title="目标与水平" />
+        <div className="flex flex-wrap gap-2 text-xs font-bold text-slate-500">
+          <span className="rounded-lg bg-slate-100 px-2.5 py-1">
+            目标：{learningGoalLabel(learnerProfile?.target_exam)}
+          </span>
+          <span className="rounded-lg bg-slate-100 px-2.5 py-1">
+            水平：{currentLevelLabel(learnerProfile?.current_level)}
+          </span>
+        </div>
+      </div>
+      <p className="mt-2 text-sm leading-6 text-slate-500">
+        这两项会进入用户画像，后续语法、词汇、写作和对话 prompt 会按目标和当前水平调整。
+      </p>
+      <div className="mt-4 grid gap-4 lg:grid-cols-2">
+        <ProfileSelectRow
+          label="学习目标"
+          name="profile_learning_goal"
+          value={learnerProfile?.target_exam ?? ''}
+          options={LEARNING_GOAL_OPTIONS}
+          placeholder="未设置"
+          onChange={(target_exam) => onProfileUpdate({ target_exam })}
+        />
+        <ProfileSelectRow
+          label="当前水平"
+          name="profile_current_level"
+          value={learnerProfile?.current_level ?? ''}
+          options={CURRENT_LEVEL_OPTIONS}
+          placeholder="未设置"
+          onChange={(current_level) => onProfileUpdate({ current_level })}
+        />
+      </div>
+      <Button
+        variant="secondary"
+        onClick={onOpenLevelInfo}
+        className="mt-4 px-3 py-2 text-xs"
+      >
+        <HelpCircle className="size-4" />
+        查看分级标准
+      </Button>
+    </SurfaceCard>
+  )
+}
+
+function ProfileSelectRow<TValue extends string>({
+  label,
+  name,
+  onChange,
+  options,
+  placeholder,
+  value,
+}: {
+  label: string
+  name: string
+  options: ReadonlyArray<{ label: string; value: TValue; description?: string }>
+  placeholder: string
+  value: TValue | ''
+  onChange: (value: TValue | null) => void
+}) {
+  const selected = options.find((option) => option.value === value)
+
+  return (
+    <label className="block">
+      <span className="text-sm font-black text-slate-800">{label}</span>
+      <select
+        name={name}
+        autoComplete="off"
+        value={value}
+        onChange={(event) => onChange(event.currentTarget.value ? event.currentTarget.value as TValue : null)}
+        className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 transition-colors focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20"
+      >
+        <option value="">{placeholder}</option>
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+      {selected?.description ? (
+        <span className="mt-1 block text-xs leading-5 text-slate-500">{selected.description}</span>
+      ) : null}
+    </label>
+  )
+}
+
+function LevelStandardsDialog({
+  open,
+  onClose,
+}: {
+  open: boolean
+  onClose: () => void
+}) {
+  const titleId = useId()
+  const { containerRef, handleKeyDown } = useFocusTrap<HTMLElement>({
+    isActive: open,
+    onEscape: onClose,
+  })
+
+  if (!open) return null
+
+  return (
+    <div className="fixed inset-0 z-[90] flex items-end justify-center px-3 py-4 sm:items-center">
+      <button
+        type="button"
+        aria-label="关闭当前水平说明"
+        className="absolute inset-0 bg-slate-950/40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+        onClick={onClose}
+      />
+      <section
+        ref={containerRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        tabIndex={-1}
+        onKeyDown={handleKeyDown}
+        className="relative max-h-[calc(100dvh-2rem)] w-full max-w-2xl overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-2xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+      >
+        <div className="flex items-start justify-between gap-4 border-b border-slate-100 px-5 py-4">
+          <div>
+            <h3 id={titleId} className="text-lg font-black text-slate-950">当前水平怎么选</h3>
+            <p className="mt-1 text-sm leading-6 text-slate-500">
+              BinnAgent 用 CEFR A1-C2 记录当前英语能力，考试名称单独作为学习目标保存。
+            </p>
+          </div>
+          <IconButton label="关闭当前水平说明" onClick={onClose}>
+            <X className="size-4" />
+          </IconButton>
+        </div>
+
+        <div className="space-y-5 px-5 py-5">
+          <div className="grid gap-3 sm:grid-cols-3">
+            {LEVEL_STANDARD_NOTES.map((item) => (
+              <div key={item.title} className="rounded-lg border border-indigo-100 bg-indigo-50/60 p-3">
+                <p className="text-sm font-black text-indigo-900">{item.title}</p>
+                <p className="mt-1 text-xs leading-5 text-indigo-800/80">{item.detail}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="grid gap-2">
+            {CURRENT_LEVEL_OPTIONS.map((item) => (
+              <div key={item.value} className="rounded-lg border border-slate-200 bg-white px-4 py-3">
+                <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
+                  <p className="text-sm font-black text-slate-950">{item.label}</p>
+                  <p className="text-xs font-semibold text-slate-500">{levelReference(item.value)}</p>
+                </div>
+                <p className="mt-1 text-sm leading-6 text-slate-600">{item.description}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">
+            考试和 CEFR 没有严格一一对应关系。这里的参照只帮助初选；真正使用时，系统会结合后续练习结果继续调整推荐难度。
+          </div>
+        </div>
+
+        <div className="flex justify-end border-t border-slate-100 px-5 py-4">
+          <Button onClick={onClose}>知道了</Button>
+        </div>
+      </section>
+    </div>
+  )
+}
+
+function levelReference(value: string) {
+  if (value === 'a1') return '零基础到入门'
+  if (value === 'a2') return '初中基础 / 日常简单表达'
+  if (value === 'b1') return '中考到高考衔接 / 常见话题'
+  if (value === 'b2') return '高考较好 / 四六级或雅思托福备考常见起点'
+  if (value === 'c1') return '雅思托福高分段 / 学术与职场表达'
+  if (value === 'c2') return '接近熟练使用'
+  return ''
 }
 
 function ProfileMetric({ label, value }: { label: string; value: string | number }) {

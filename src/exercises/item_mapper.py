@@ -3,7 +3,7 @@ from typing import Any, Literal
 from src.models.knowledge import ExerciseQuestion
 
 ExerciseItemSkill = Literal["grammar", "vocabulary", "reading"]
-ExerciseItemType = Literal["single_choice", "fill_blank"]
+ExerciseItemType = Literal["single_choice", "fill_blank", "grammar_fill_blank"]
 
 
 def exercise_question_to_item(
@@ -53,7 +53,7 @@ def infer_skill_from_question(question: ExerciseQuestion) -> ExerciseItemSkill:
     skill = metadata.get("skill")
     if skill in ("grammar", "vocabulary", "reading"):
         return skill
-    if question.question_type == "error_fix":
+    if question.question_type in ("error_fix", "grammar_fill_blank"):
         return "grammar"
     if question.question_type in ("choice_context", "dialogue_complete", "fill_blank"):
         return "vocabulary"
@@ -63,6 +63,8 @@ def infer_skill_from_question(question: ExerciseQuestion) -> ExerciseItemSkill:
 def map_question_type(question_type: str) -> ExerciseItemType:
     if question_type in ("choice_context", "multiple_choice"):
         return "single_choice"
+    if question_type == "grammar_fill_blank":
+        return "grammar_fill_blank"
     return "fill_blank"
 
 

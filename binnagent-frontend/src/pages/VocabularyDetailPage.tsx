@@ -11,7 +11,7 @@ import {
 } from 'lucide-react'
 import { useCallback, useEffect, useId, useMemo, useState } from 'react'
 import { useToast } from '@/hooks/useToast'
-import type { Learner } from '@/types'
+import type { Learner, LearnerProfile } from '@/types'
 import { FeatureHero } from '@/components/layout/FeatureHero'
 import { PageShell } from '@/components/layout/PageShell'
 import { WorkspaceTabs, type WorkspaceTab } from '@/components/layout/WorkspaceTabs'
@@ -37,9 +37,11 @@ import {
 } from '@/data/wordParts'
 import type { WordPartAnalysis } from '@/types'
 import type { ExerciseTarget } from '@/types/exercises'
+import { learnerBackground } from '@/utils/learnerProfile'
 
 interface VocabularyDetailPageProps {
   learner?: Learner
+  learnerProfile?: LearnerProfile | null
   term: string
   onBack: () => void
   backLabel?: string
@@ -72,6 +74,7 @@ interface PersonalCardDetail {
 
 export function VocabularyDetailPage({
   learner,
+  learnerProfile,
   term,
   onBack,
   backLabel = '返回词汇练习',
@@ -94,7 +97,10 @@ export function VocabularyDetailPage({
   const termInput = effectiveTermState.input
   const activeTerm = effectiveTermState.active
   const [isSaving, setIsSaving] = useState(false)
-  const prompt = useMemo(() => buildVocabularyPrompt(activeTerm), [activeTerm])
+  const prompt = useMemo(
+    () => buildVocabularyPrompt(activeTerm, learnerBackground(learnerProfile)),
+    [activeTerm, learnerProfile],
+  )
   const storageKey = useMemo(
     () => `binnVocabularyDetail:${activeTerm.trim().toLocaleLowerCase()}`,
     [activeTerm],
@@ -848,7 +854,7 @@ function StatusLine({ label, value, tone = 'default' }: { label: string; value: 
   )
 }
 
-function buildVocabularyPrompt(term: string) {
+function buildVocabularyPrompt(term: string, profileBackground: string) {
   return `请为英语学习者制作一个“词汇详解微课”，目标词汇（可能是单词或词组）是：${term}。
 
 请严格遵守：
@@ -861,7 +867,7 @@ function buildVocabularyPrompt(term: string) {
 7. 如果是词组，重点说明整体含义、固定结构、可否拆分、宾语位置和常见变体；不要把它误当作单个词讲解。
 8. 不确定的词源或用法不要编造。禁止输出 <script>、外链资源、表单、iframe 或自动播放媒体。
 
-学习者背景：初中到 CET 四六级阶段，母语为中文，喜欢中英结合、结构清楚、例句实用。`
+学习者背景：${profileBackground}`
 }
 
 function sanitizeHtml(value: string) {

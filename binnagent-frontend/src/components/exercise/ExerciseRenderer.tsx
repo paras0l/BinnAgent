@@ -240,7 +240,9 @@ export function ExerciseRenderer({
 }
 
 function exerciseTypeLabel(type: ExerciseItem['type']) {
-  return type === 'single_choice' ? '单选题' : '填空题'
+  if (type === 'single_choice') return '单选题'
+  if (type === 'grammar_fill_blank') return '语法填空题'
+  return '填空题'
 }
 
 function exerciseSkillLabel(skill: ExerciseItem['skill']) {

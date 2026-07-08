@@ -6,6 +6,15 @@ export interface Learner {
   email?: string | null
 }
 
+export interface LearnerProfile {
+  learner_id: string
+  target_exam?: string | null
+  target_score?: number | null
+  exam_date?: string | null
+  current_level?: string | null
+  daily_time_budget_minutes?: number | null
+}
+
 export type AppTab =
   | 'chat'
   | 'explore'

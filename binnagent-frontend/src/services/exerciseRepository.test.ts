@@ -5,6 +5,7 @@ import {
   fetchExercisesForTarget,
   fetchExerciseSummaryForTarget,
   generateExercisesForTarget,
+  extractExercisesFromHtml,
   getExerciseAttemptsForTarget,
   getExerciseSummaryForTarget,
   getExercisesForTarget,
@@ -83,6 +84,33 @@ describe('exerciseRepository', () => {
     saveExerciseItem(exercise)
 
     expect(getExercisesForTarget(grammarTarget).map((item) => item.id)).toContain('generated-local-1')
+  })
+
+  it('extracts grammar fill blank exercises from grammar lesson HTML data attributes', () => {
+    const html = `
+      <article>
+        <section
+          data-exercise="true"
+          data-exercise-type="grammar_fill_blank"
+          data-answer="rains"
+          data-explanation="if 引导真实条件句时，从句用一般现在时表示将来。"
+        >
+          <p data-exercise-prompt>If it ____ tomorrow, we will stay home.</p>
+        </section>
+      </article>
+    `
+
+    expect(extractExercisesFromHtml(html, grammarTarget)).toMatchObject([
+      {
+        target: grammarTarget,
+        skill: 'grammar',
+        type: 'grammar_fill_blank',
+        prompt: 'If it ____ tomorrow, we will stay home.',
+        correctAnswer: 'rains',
+        acceptedAnswers: ['rains'],
+        source: { type: 'imported', name: 'grammar_html' },
+      },
+    ])
   })
 
   it('normalizes vocabulary terms to stable target ids', () => {
@@ -239,11 +267,11 @@ describe('exerciseRepository', () => {
           id: 'generated-backend-1',
           target: grammarTarget,
           skill: 'grammar',
-          type: 'single_choice',
-          prompt: 'Which sentence is correct?',
+          type: 'grammar_fill_blank',
+          prompt: 'If it ____ tomorrow, I will stay home.',
           options: ['If it rains, I will stay home.', 'If it will rain, I stay home.'],
-          correctAnswer: 'If it rains, I will stay home.',
-          acceptedAnswers: [],
+          correctAnswer: 'rains',
+          acceptedAnswers: ['rains'],
           explanation: '真实条件句中 if 从句用一般现在时表示将来。',
           difficulty: 'easy',
           source: { type: 'generated', name: 'ai_generated' },
@@ -265,6 +293,7 @@ describe('exerciseRepository', () => {
         id: 'generated-backend-1',
         target: grammarTarget,
         source: { type: 'generated' },
+        type: 'grammar_fill_blank',
       },
     ])
   })
