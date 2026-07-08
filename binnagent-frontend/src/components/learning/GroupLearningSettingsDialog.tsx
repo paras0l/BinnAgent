@@ -32,6 +32,7 @@ import {
   importGroupLearningMessages,
   listGroupLearningParticipants,
   listGroupLearningSources,
+  syncGroupLearningSourceMembers,
   syncGroupLearningSourceNow,
   updateGroupLearningParticipant,
   updateGroupLearningSource,
@@ -89,6 +90,7 @@ const RETENTION_OPTIONS = [1, 3, 7, 14, 30]
 const CONFIDENCE_OPTIONS = [0.7, 0.8, 0.9]
 const SYNC_INTERVAL_OPTIONS = [60, 300, 900, 1800, 3600]
 const CURRENT_LEARNER_LABEL = '当前 learner'
+const GROUP_LEARNING_REFRESH_EVENT = 'binnagent:group-learning-signals-updated'
 const TEXT_INPUT_CLASS =
   'min-h-10 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20'
 const SELECT_INPUT_CLASS =
@@ -118,6 +120,7 @@ export function GroupLearningSettingsDialog({
   const [dangerAction, setDangerAction] = useState<DangerAction>(null)
   const [lastImportSummary, setLastImportSummary] = useState('尚未导入本地 JSON。')
   const [syncingSourceId, setSyncingSourceId] = useState<string | null>(null)
+  const [syncingMembersSourceId, setSyncingMembersSourceId] = useState<string | null>(null)
   const [analyzingSourceId, setAnalyzingSourceId] = useState<string | null>(null)
   const [lastSavedArea, setLastSavedArea] = useState<string | null>(null)
   const { containerRef, handleKeyDown } = useFocusTrap<HTMLElement>({
@@ -290,15 +293,35 @@ export function GroupLearningSettingsDialog({
       const summary = await syncGroupLearningSourceNow(learner.id, selectedSource.id)
       const detail = summary.placeholder
         ? '同步占位已记录，等待 MCP 参数配置'
-        : `已拉取 ${summary.fetched_count} 条，导入 ${summary.imported_count} 条，重复 ${summary.duplicate_count} 条，生成 ${summary.generated_signal_count} 条候选线索`
+        : `已拉取 ${summary.fetched_count} 条，导入 ${summary.imported_count} 条，重复 ${summary.duplicate_count} 条，生成 ${summary.generated_signal_count} 条候选线索，回复 ${summary.help_reply_count ?? 0} 条帮助`
+      setLastImportSummary(detail)
+      markSaved(detail)
+      await loadSources()
+      await loadParticipants(selectedSource.id)
+      notifySignalInboxChanged()
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : '手动同步失败。', { variant: 'error' })
+    } finally {
+      setSyncingSourceId(null)
+    }
+  }
+
+  const syncSelectedSourceMembers = async () => {
+    if (!selectedSource || syncingMembersSourceId) return
+    setSyncingMembersSourceId(selectedSource.id)
+    try {
+      const summary = await syncGroupLearningSourceMembers(learner.id, selectedSource.id)
+      const detail = summary.placeholder
+        ? '成员同步占位已记录，等待 MCP 参数配置'
+        : `已从飞书获取 ${summary.fetched_count} 位成员，新增或更新 ${summary.upserted_count} 位`
       setLastImportSummary(detail)
       markSaved(detail)
       await loadSources()
       await loadParticipants(selectedSource.id)
     } catch (error) {
-      showToast(error instanceof Error ? error.message : '手动同步失败。', { variant: 'error' })
+      showToast(error instanceof Error ? error.message : '获取飞书群成员失败。', { variant: 'error' })
     } finally {
-      setSyncingSourceId(null)
+      setSyncingMembersSourceId(null)
     }
   }
 
@@ -311,6 +334,7 @@ export function GroupLearningSettingsDialog({
       setLastImportSummary(detail)
       markSaved(detail)
       await loadSources()
+      notifySignalInboxChanged()
     } catch (error) {
       showToast(error instanceof Error ? error.message : 'LLM 分析失败。', { variant: 'error' })
     } finally {
@@ -362,6 +386,7 @@ export function GroupLearningSettingsDialog({
           setLastImportSummary(`导入成功 ${summary.imported_count} 条 · 重复跳过 ${summary.duplicate_count} 条 · 生成候选线索 ${summary.generated_signal_count} 条 · 成员规则忽略 ${summary.ignored_count} 条`)
           void loadSources()
           void loadParticipants(selectedSource.id)
+          notifySignalInboxChanged()
           markSaved('本地 JSON 已导入')
         }).catch((error: unknown) => {
           showToast(error instanceof Error ? error.message : '导入本地 JSON 失败。', { variant: 'error' })
@@ -376,6 +401,10 @@ export function GroupLearningSettingsDialog({
   const markSaved = (message: string) => {
     setLastSavedArea(message)
     showToast(message, { variant: 'success' })
+  }
+
+  const notifySignalInboxChanged = () => {
+    window.dispatchEvent(new Event(GROUP_LEARNING_REFRESH_EVENT))
   }
 
   return (
@@ -482,6 +511,16 @@ export function GroupLearningSettingsDialog({
             </SettingsSection>
 
             <SettingsSection
+              action={selectedSource ? (
+                <Button
+                  variant="secondary"
+                  disabled={syncingMembersSourceId === selectedSource.id}
+                  onClick={() => { void syncSelectedSourceMembers() }}
+                >
+                  <RefreshCw className={`size-4 ${syncingMembersSourceId === selectedSource.id ? 'animate-spin' : ''}`} />
+                  获取成员
+                </Button>
+              ) : undefined}
               description="只有映射为 learner 且开启分析的成员会写入学习资产。"
               icon={<UserRoundCheck className="size-4" />}
               title="成员映射"

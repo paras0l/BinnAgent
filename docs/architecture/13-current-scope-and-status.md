@@ -18,7 +18,7 @@
 | 教材线 | 部分实现 | 多教材 source 库、教材切换、split public textbook pack v2 公共种子、七年级上/下册结构化单元 workspace、单元词汇、RAG chunk、场景化多题型练习和前端入口已存在；八/九年级可上传并走通用解析/校对 fallback |
 | CET 备考线 | 设计中 | 7 天计划、阅读训练、写作二改和周报仍主要在架构文档中 |
 | 通用英语陪伴 | 部分实现 | Chat、Memory 摘要、Dashboard 和词汇沉淀已有基础闭环 |
-| 群聊学习线索 | 第一版已实现 | 学习中心辅助入口、独立设置入口、飞书群来源配置、MCP/OpenAPI 同步、成员映射、中性 JSON 消息导入、显式标签即时抽取、无标签消息 pending 队列、低频 LLM 小批量线索提取、线索收件箱和接受/忽略/删除闭环已接入 |
+| 群聊学习线索 | 第一版已实现 | 学习中心辅助入口、独立设置入口、飞书群来源配置、MCP/OpenAPI 同步、群成员拉取与当前 learner 绑定、成员映射过滤、中性 JSON 消息导入、显式标签即时抽取、`@机器人 --help` 群内操作指南回复与去重、无标签消息 pending 队列、低频 LLM 小批量线索提取、线索收件箱分页和接受/忽略/删除闭环已接入 |
 
 ## 核心路线最终收口
 
@@ -60,7 +60,7 @@
 | Evaluation / Simulation | 部分实现 | `src/simulation` 提供 deterministic learner persona、behavior policy、scenario runner、assertion engine 和结构化 simulation report；runner 已分层为 `contract` / `integration` / `e2e` mode，contract 使用 MockTransport，integration 使用 ASGITransport + deterministic fake model provider，e2e 指向真实 base_url；内置 scenarios 已补 `module_tags`、entrypoints、expected events/tool calls、required metrics 和 change triggers；新增 impacted simulation 推导脚本；AssertionEngine 支持 runtime event/tool/order/absence/verification/recommendation/error/not_equals 断言；Evaluator 输出 runtime/learning/memory/recommendation/parser_rag/prompt_schema 六组 metrics；新增 baseline comparison、regressions、threshold_failures 和 gate；已覆盖 smoke、vocabulary agent deposit、vocabulary practice adaptation、episode runtime knowledge practice、daily lesson checkpoint resume/capability recommendation、missing answer no memory、verification failure blocks completed status、mastery 上下行和 LLM JSON missing field repair 场景 | 后续补更多 integration/e2e 实跑、写作好句闭环、Memory 可控性 regression、LLM-assisted learner 和 dashboard |
 | CI | 已实现 | GitHub Actions 覆盖 backend lint/test、frontend lint/test/build/build:console、migration 文本检查 | Alembic 在线迁移检查和端到端 smoke |
 | Writing Phrasebook | 基础版已实现 | 探索页写作入口、句式 CRUD、外部模型结果提取、候选收藏、识别/填空/替换练习和 attempt 记录 | 模型辅助编辑、精细 mastery、作文批改与翻译练习深度联动 |
-| Group Learning Signals | 第一版已实现 | 新增 `group_learning_sources/participants/messages/signals` 表、来源/成员/清理/导入/收件箱 API；飞书群来源支持 `chat_id`、同步频率、只读/触发回复模式、sender 白名单和 MCP/OpenAPI 同步；本地 JSON/飞书导入只接收映射到当前 learner 且开启 analysis 的文本消息；`#单词/#语法/#收藏/#怎么说/#纠错` 等显式标签即时规则抽取，无标签自然消息进入 `pending_llm_analysis`，通过 `group_learning.signal_extract` 结构化 prompt 按小批量低频分析后生成候选；接受后写入 `VocabularyItem`、`WritingPhrase` 或 `LearningProgressItem` | 后续补自动调度、Memory/Mastery 权重更细化、前端导入记录列表 |
+| Group Learning Signals | 第一版已实现 | 新增 `group_learning_sources/participants/messages/signals` 表、来源/成员/清理/导入/分页收件箱 API；飞书群来源支持 `chat_id`、同步频率、只读/触发回复模式、sender 白名单、MCP/OpenAPI 消息同步和 `chatMembers.get` 成员同步；本地 JSON/飞书导入只接收映射到当前 learner 且开启 analysis 的文本消息；`#单词/#语法/#收藏/#怎么说/#纠错` 等显式标签即时规则抽取；`@机器人 --help` 会发送群内操作指南、记录已回复 message_id 去重且不进入学习线索候选；无标签自然消息进入 `pending_llm_analysis`，通过 `group_learning.signal_extract` 结构化 prompt 按小批量低频分析后生成候选；接受后写入 `VocabularyItem`、`WritingPhrase` 或 `LearningProgressItem` | 后续补自动调度、Memory/Mastery 权重更细化、前端导入记录列表 |
 
 ## Issue 对应落地
 

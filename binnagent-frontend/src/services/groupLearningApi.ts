@@ -113,6 +113,17 @@ export interface GroupLearningSyncNowSummary extends ImportGroupLearningSummary 
   next_cursor?: string | null
   last_sync_at: string
   placeholder: boolean
+  help_reply_count?: number
+}
+
+export interface GroupLearningSyncMembersSummary {
+  source_id: string
+  learner_id: string
+  fetched_count: number
+  upserted_count: number
+  participant_count: number
+  last_sync_at: string
+  placeholder: boolean
 }
 
 export interface GroupLearningAnalyzePendingSummary {
@@ -122,6 +133,14 @@ export interface GroupLearningAnalyzePendingSummary {
   generated_signal_count: number
   skipped_signal_count: number
   remaining_pending_count: number
+}
+
+export interface GroupLearningSignalPage {
+  items: GroupLearningSignal[]
+  total: number
+  page: number
+  page_size: number
+  total_pages: number
 }
 
 export async function listGroupLearningSources(learnerId: string) {
@@ -214,6 +233,13 @@ export async function syncGroupLearningSourceNow(learnerId: string, sourceId: st
   )
 }
 
+export async function syncGroupLearningSourceMembers(learnerId: string, sourceId: string) {
+  return apiJson<GroupLearningSyncMembersSummary>(
+    `/api/learners/${learnerId}/group-learning/sources/${sourceId}/sync-members`,
+    { method: 'POST' },
+  )
+}
+
 export async function analyzePendingGroupLearningMessages(learnerId: string, sourceId: string, limit = 10) {
   return apiJson<GroupLearningAnalyzePendingSummary>(
     `/api/learners/${learnerId}/group-learning/sources/${sourceId}/analyze-pending?limit=${limit}`,
@@ -225,10 +251,13 @@ export async function listGroupLearningSignals(
   learnerId: string,
   status: 'all' | GroupLearningSignalStatus = 'all',
   query?: string,
+  page = 1,
+  pageSize = 12,
+  category: 'all' | 'expression_gap' | 'grammar' | 'intent' | 'vocabulary' | 'sentence' | 'note' = 'all',
 ) {
-  const params = new URLSearchParams({ status })
+  const params = new URLSearchParams({ status, page: String(page), page_size: String(pageSize), category })
   if (query?.trim()) params.set('q', query.trim())
-  return apiJson<GroupLearningSignal[]>(
+  return apiJson<GroupLearningSignalPage>(
     `/api/learners/${learnerId}/group-learning/signals?${params.toString()}`,
   )
 }

@@ -4,7 +4,7 @@ from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, ConfigDict, Field, field_validator
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.api.deps import get_db_session, require_learner_access
@@ -268,6 +268,7 @@ class SourceSyncNowResponse(ImportGroupLearningMessagesResponse):
     next_cursor: str | None = None
     last_sync_at: datetime
     placeholder: bool = False
+    help_reply_count: int = 0
 
 
 class SourceAnalyzePendingResponse(BaseModel):
@@ -277,6 +278,16 @@ class SourceAnalyzePendingResponse(BaseModel):
     generated_signal_count: int
     skipped_signal_count: int
     remaining_pending_count: int
+
+
+class SourceSyncMembersResponse(BaseModel):
+    source_id: uuid.UUID
+    learner_id: uuid.UUID
+    fetched_count: int
+    upserted_count: int
+    participant_count: int
+    last_sync_at: datetime
+    placeholder: bool = False
 
 
 class SignalResponse(BaseModel):
@@ -301,6 +312,14 @@ class SignalResponse(BaseModel):
     source_time: datetime | None = None
     created_at: datetime
     updated_at: datetime
+
+
+class SignalListResponse(BaseModel):
+    items: list[SignalResponse]
+    total: int
+    page: int
+    page_size: int
+    total_pages: int
 
 
 class UpdateSignalRequest(BaseModel):
@@ -528,6 +547,7 @@ async def sync_source_now(
         next_cursor=sync_result.next_cursor,
         last_sync_at=sync_result.last_sync_at,
         placeholder=sync_result.placeholder,
+        help_reply_count=sync_result.help_reply_count,
     )
 
 
@@ -550,13 +570,55 @@ async def analyze_pending_source_messages(
     )
 
 
-@router.get("/signals", response_model=list[SignalResponse])
-async def list_signals(
-    status_filter: SignalStatus | Literal["all"] = Query(default="candidate", alias="status"),
-    q: str | None = Query(default=None),
+@router.post("/sources/{source_id}/sync-members", response_model=SourceSyncMembersResponse)
+async def sync_source_members(
+    source_id: uuid.UUID,
     learner: Learner = Depends(require_learner_access),
     db: AsyncSession = Depends(get_db_session),
-) -> list[SignalResponse]:
+) -> SourceSyncMembersResponse:
+    source = await _get_owned_source(db, learner.id, source_id)
+    if source.platform != "feishu":
+        raise HTTPException(status_code=422, detail="sync-members currently supports feishu sources")
+    try:
+        result = await FeishuMcpMessageImporter(
+            client_factory=feishu_mcp_client_from_settings,
+        ).sync_members(db, source)
+    except FeishuMcpClientError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+    participant_result = await db.execute(
+        select(func.count())
+        .select_from(GroupLearningParticipant)
+        .where(GroupLearningParticipant.source_id == source.id)
+    )
+    return SourceSyncMembersResponse(
+        source_id=result.source_id,
+        learner_id=result.learner_id,
+        fetched_count=result.fetched_count,
+        upserted_count=result.upserted_count,
+        participant_count=participant_result.scalar_one(),
+        last_sync_at=result.last_sync_at,
+        placeholder=result.placeholder,
+    )
+
+
+@router.get("/signals", response_model=SignalListResponse)
+async def list_signals(
+    status_filter: SignalStatus | Literal["all"] = Query(default="candidate", alias="status"),
+    category: Literal[
+        "all",
+        "expression_gap",
+        "grammar",
+        "intent",
+        "vocabulary",
+        "sentence",
+        "note",
+    ] = Query(default="all"),
+    q: str | None = Query(default=None),
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=12, ge=1, le=50),
+    learner: Learner = Depends(require_learner_access),
+    db: AsyncSession = Depends(get_db_session),
+) -> SignalListResponse:
     query = (
         select(GroupLearningSignal, GroupLearningMessage, GroupLearningSource)
         .join(GroupLearningMessage, GroupLearningMessage.id == GroupLearningSignal.message_id)
@@ -565,6 +627,10 @@ async def list_signals(
     )
     if status_filter != "all":
         query = query.where(GroupLearningSignal.status == status_filter)
+    else:
+        query = query.where(GroupLearningSignal.status != "deleted")
+    if category != "all":
+        query = query.where(_signal_category_filter(category))
     if q:
         pattern = f"%{q.strip()}%"
         query = query.where(
@@ -572,12 +638,39 @@ async def list_signals(
             | (GroupLearningSignal.evidence_text.ilike(pattern))
             | (GroupLearningSignal.recommendation_reason.ilike(pattern))
         )
-    query = query.order_by(GroupLearningSignal.created_at.desc())
+    count_query = select(func.count()).select_from(query.subquery())
+    total = int((await db.execute(count_query)).scalar_one() or 0)
+    query = query.order_by(GroupLearningSignal.created_at.desc()).offset((page - 1) * page_size).limit(page_size)
     result = await db.execute(query)
-    return [
+    items = [
         _signal_response(signal, message, source)
         for signal, message, source in result.all()
     ]
+    return SignalListResponse(
+        items=items,
+        total=total,
+        page=page,
+        page_size=page_size,
+        total_pages=max(1, (total + page_size - 1) // page_size),
+    )
+
+
+def _signal_category_filter(category: str):
+    mapping = {
+        "expression_gap": ["expression_gap"],
+        "grammar": ["grammar_error", "grammar_correct_usage", "desired_grammar"],
+        "vocabulary": ["desired_vocabulary", "vocabulary_candidate"],
+        "sentence": ["good_sentence", "phrase_candidate"],
+        "note": ["note_candidate"],
+    }
+    signal_types = mapping.get(category)
+    if signal_types:
+        return GroupLearningSignal.signal_type.in_(signal_types)
+    known_types = [item for values in mapping.values() for item in values]
+    return or_(
+        GroupLearningSignal.signal_type.not_in(known_types),
+        GroupLearningSignal.signal_type.is_(None),
+    )
 
 
 @router.patch("/signals/{signal_id}", response_model=SignalResponse)

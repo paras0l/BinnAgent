@@ -106,6 +106,10 @@ class FeishuOpenApiClient:
     async def call_tool(self, tool_name: str, arguments: dict[str, Any]) -> dict[str, Any]:
         if tool_name == "im.v1.message.list":
             return await self._get("/open-apis/im/v1/messages", params=arguments.get("params") or {})
+        if tool_name == "im.v1.message.create":
+            params = arguments.get("params") or {}
+            data = arguments.get("data") or {}
+            return await self._post("/open-apis/im/v1/messages", params=params, json_body=data)
         if tool_name == "im.v1.chat.list":
             return await self._get("/open-apis/im/v1/chats", params=arguments.get("params") or {})
         if tool_name == "im.v1.chatMembers.get":
@@ -127,6 +131,24 @@ class FeishuOpenApiClient:
                 f"{self.base_url}{path}",
                 headers={"Authorization": f"Bearer {token}"},
                 params={key: value for key, value in params.items() if value is not None},
+            )
+        return self._response_data(response)
+
+    async def _post(
+        self,
+        path: str,
+        *,
+        params: dict[str, Any],
+        json_body: dict[str, Any],
+    ) -> dict[str, Any]:
+        token = await self._tenant_token()
+        timeout = httpx.Timeout(30.0, connect=5.0)
+        async with httpx.AsyncClient(timeout=timeout) as client:
+            response = await client.post(
+                f"{self.base_url}{path}",
+                headers={"Authorization": f"Bearer {token}"},
+                params={key: value for key, value in params.items() if value is not None},
+                json=json_body,
             )
         return self._response_data(response)
 

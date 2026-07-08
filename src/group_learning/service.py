@@ -71,6 +71,11 @@ def detect_language_mix(text: str) -> str:
     return "unknown"
 
 
+def is_group_help_command(text: str) -> bool:
+    normalized = normalize_message_text(text)
+    return bool(re.search(r"(^|\s)--help(\s|$)", normalized, flags=re.IGNORECASE))
+
+
 async def import_group_messages(
     db: AsyncSession,
     *,
@@ -131,6 +136,9 @@ async def import_group_messages(
                     message=duplicate,
                     text=text,
                 )
+            elif duplicate.learner_id == source.learner_id and is_group_help_command(text):
+                duplicate.ingestion_status = "processed"
+                duplicate.processed_at = duplicate.processed_at or datetime.now(timezone.utc)
             elif duplicate.learner_id == source.learner_id and not text.startswith("#"):
                 duplicate.ingestion_status = "pending_llm_analysis"
                 duplicate.processed_at = None
@@ -143,6 +151,7 @@ async def import_group_messages(
             and participant.learner_id == source.learner_id
         )
         tagged = text.startswith("#")
+        help_command = is_group_help_command(text)
         message = GroupLearningMessage(
             source_id=source.id,
             external_message_id=raw_message.external_message_id,
@@ -155,12 +164,12 @@ async def import_group_messages(
             occurred_at=raw_message.occurred_at,
             ingestion_status=(
                 "processed"
-                if should_analyze and tagged
+                if should_analyze and (tagged or help_command)
                 else "pending_llm_analysis"
                 if should_analyze
                 else "ignored_unmapped_participant"
             ),
-            processed_at=datetime.now(timezone.utc) if should_analyze and tagged else None,
+            processed_at=datetime.now(timezone.utc) if should_analyze and (tagged or help_command) else None,
         )
         db.add(message)
         await db.flush()

@@ -7,6 +7,7 @@ from src.group_learning.service import (
     import_group_messages,
 )
 from src.group_learning.feishu_mcp_importer import (
+    FeishuMcpMemberSyncResult,
     FeishuMcpMessageImporter,
     FeishuMcpSyncResult,
     feishu_message_to_compatible_json,
@@ -26,6 +27,7 @@ from src.group_learning.feishu_mcp_client import (
 __all__ = [
     "FallbackFeishuClient",
     "FeishuMcpClientError",
+    "FeishuMcpMemberSyncResult",
     "FeishuMcpMessageImporter",
     "FeishuMcpSyncResult",
     "FeishuOpenApiClient",

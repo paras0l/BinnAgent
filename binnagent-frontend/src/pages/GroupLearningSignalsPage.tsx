@@ -38,6 +38,9 @@ import {
 } from '@/services/groupLearningApi'
 import type { Learner } from '@/types'
 
+const GROUP_LEARNING_REFRESH_EVENT = 'binnagent:group-learning-signals-updated'
+const SIGNAL_PAGE_SIZE = 8
+
 type SignalStatus = 'candidate' | 'accepted' | 'dismissed'
 type SignalCategory =
   | 'all'
@@ -88,20 +91,28 @@ export function GroupLearningSignalsPage({ learner, onBack, onOpenSettings }: Gr
   const [sources, setSources] = useState<GroupLearningSource[]>([])
   const [activeFilter, setActiveFilter] = useState<SignalCategory>('all')
   const [query, setQuery] = useState('')
+  const [page, setPage] = useState(1)
+  const [totalSignals, setTotalSignals] = useState(0)
+  const [totalPages, setTotalPages] = useState(1)
   const [isPaused, setIsPaused] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
 
-  const loadSignals = useCallback(async () => {
+  const loadSignals = useCallback(async (nextPage = page) => {
     setIsLoading(true)
     try {
-      const items = await listGroupLearningSignals(learner.id, 'all')
-      setSignals(items.filter((item) => item.status !== 'deleted').map(toSignalCard))
+      const status = activeFilter === 'dismissed' ? 'dismissed' : 'all'
+      const category = activeFilter === 'dismissed' ? 'all' : activeFilter
+      const result = await listGroupLearningSignals(learner.id, status, query, nextPage, SIGNAL_PAGE_SIZE, category)
+      setSignals(result.items.filter((item) => item.status !== 'deleted').map(toSignalCard))
+      setTotalSignals(result.total)
+      setTotalPages(result.total_pages)
+      if (result.total > 0 && result.items.length === 0 && nextPage > 1) setPage(result.total_pages)
     } catch (error) {
       showToast(error instanceof Error ? error.message : '加载群聊学习线索失败。', { variant: 'error' })
     } finally {
       setIsLoading(false)
     }
-  }, [learner.id, showToast])
+  }, [activeFilter, learner.id, page, query, showToast])
 
   const loadSources = useCallback(async () => {
     try {
@@ -121,6 +132,16 @@ export function GroupLearningSignalsPage({ learner, onBack, onOpenSettings }: Gr
     return () => window.clearTimeout(timer)
   }, [loadSignals, loadSources])
 
+  useEffect(() => {
+    const handleRefresh = () => {
+      setPage(1)
+      void loadSignals(1)
+      void loadSources()
+    }
+    window.addEventListener(GROUP_LEARNING_REFRESH_EVENT, handleRefresh)
+    return () => window.removeEventListener(GROUP_LEARNING_REFRESH_EVENT, handleRefresh)
+  }, [loadSignals, loadSources])
+
   const stats = useMemo(() => {
     const candidates = signals.filter((signal) => signal.status === 'candidate')
     return {
@@ -134,19 +155,8 @@ export function GroupLearningSignalsPage({ learner, onBack, onOpenSettings }: Gr
   }, [signals])
 
   const visibleSignals = useMemo(() => {
-    const normalizedQuery = query.trim().toLowerCase()
-    return signals.filter((signal) => {
-      const matchesFilter =
-        activeFilter === 'all'
-          ? signal.status !== 'dismissed'
-          : activeFilter === 'dismissed'
-            ? signal.status === 'dismissed'
-            : signal.category === activeFilter && signal.status !== 'dismissed'
-      if (!matchesFilter) return false
-      if (!normalizedQuery) return true
-      return `${signal.title} ${signal.sourceText} ${signal.recommendation}`.toLowerCase().includes(normalizedQuery)
-    })
-  }, [activeFilter, query, signals])
+    return signals.filter((signal) => activeFilter === 'dismissed' ? signal.status === 'dismissed' : signal.status !== 'dismissed')
+  }, [activeFilter, signals])
 
   const sourceSummary = useMemo(() => {
     const participantCount = sources.reduce((sum, source) => sum + source.participant_count, 0)
@@ -172,6 +182,8 @@ export function GroupLearningSignalsPage({ learner, onBack, onOpenSettings }: Gr
     try {
       const updated = await updateGroupLearningSignal(learner.id, id, action)
       setSignals((items) => items.map((item) => item.id === id ? toSignalCard(updated) : item))
+      void loadSignals()
+      void loadSources()
       return true
     } catch (error) {
       showToast(error instanceof Error ? error.message : '更新线索失败。', { variant: 'error' })
@@ -183,6 +195,8 @@ export function GroupLearningSignalsPage({ learner, onBack, onOpenSettings }: Gr
     try {
       await deleteGroupLearningSignal(learner.id, id)
       setSignals((items) => items.filter((item) => item.id !== id))
+      void loadSignals()
+      void loadSources()
       showToast('已删除这条群聊学习线索。', { variant: 'success' })
     } catch (error) {
       showToast(error instanceof Error ? error.message : '删除线索失败。', { variant: 'error' })
@@ -280,15 +294,16 @@ export function GroupLearningSignalsPage({ learner, onBack, onOpenSettings }: Gr
               return
             }
             void Promise.all(activeSources.map((source) => syncGroupLearningSourceNow(learner.id, source.id)))
-              .then((summaries) => {
+              .then(async (summaries) => {
                 const isPlaceholder = summaries.every((summary) => summary.placeholder)
                 const generated = summaries.reduce((sum, summary) => sum + summary.generated_signal_count, 0)
+                const helpReplies = summaries.reduce((sum, summary) => sum + (summary.help_reply_count ?? 0), 0)
                 showToast(
-                  isPlaceholder ? '同步占位已记录；配置 MCP 后会读取飞书消息。' : `同步完成，生成 ${generated} 条候选线索。`,
+                  isPlaceholder ? '同步占位已记录；配置 MCP 后会读取飞书消息。' : `同步完成，生成 ${generated} 条候选线索，回复 ${helpReplies} 条帮助。`,
                   { variant: isPlaceholder ? 'warning' : 'success' },
                 )
-                void loadSources()
-                void loadSignals()
+                setPage(1)
+                await Promise.all([loadSources(), loadSignals(1)])
               })
               .catch((error: unknown) => {
                 showToast(error instanceof Error ? error.message : '手动同步失败。', { variant: 'error' })
@@ -313,7 +328,10 @@ export function GroupLearningSignalsPage({ learner, onBack, onOpenSettings }: Gr
                   <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
                   <input
                     value={query}
-                    onChange={(event) => setQuery(event.target.value)}
+                    onChange={(event) => {
+                      setQuery(event.target.value)
+                      setPage(1)
+                    }}
                     className="min-h-10 w-full rounded-lg border border-slate-200 bg-slate-50 py-2.5 pl-9 pr-3 text-sm outline-none transition focus:border-primary focus:bg-white focus:ring-2 focus:ring-primary/20"
                     placeholder="搜索线索、原文或推荐..."
                     aria-label="搜索群聊学习线索"
@@ -323,7 +341,10 @@ export function GroupLearningSignalsPage({ learner, onBack, onOpenSettings }: Gr
 
               <div className="mt-4 flex gap-2 overflow-x-auto pb-1" aria-label="线索分组">
                 {filters.map((filter) => (
-                  <FilterChip key={filter.id} active={activeFilter === filter.id} onClick={() => setActiveFilter(filter.id)}>
+                  <FilterChip key={filter.id} active={activeFilter === filter.id} onClick={() => {
+                    setActiveFilter(filter.id)
+                    setPage(1)
+                  }}>
                     {filter.label}
                   </FilterChip>
                 ))}
@@ -360,6 +381,13 @@ export function GroupLearningSignalsPage({ learner, onBack, onOpenSettings }: Gr
                 </div>
               )}
             </div>
+            <PaginationBar
+              page={page}
+              pageSize={SIGNAL_PAGE_SIZE}
+              total={totalSignals}
+              totalPages={totalPages}
+              onPageChange={setPage}
+            />
           </div>
 
           <aside className="space-y-4">
@@ -469,6 +497,40 @@ function SourceSetupPanel({ sources }: { sources: GroupLearningSource[] }) {
         <SetupRow icon={<Tags className="size-4" />} label="标签识别" value="#单词 #语法 #收藏 #怎么说 #纠错" />
       </div>
     </section>
+  )
+}
+
+function PaginationBar({
+  onPageChange,
+  page,
+  pageSize,
+  total,
+  totalPages,
+}: {
+  onPageChange: (page: number) => void
+  page: number
+  pageSize: number
+  total: number
+  totalPages: number
+}) {
+  if (total <= pageSize && page === 1) return null
+  const start = total === 0 ? 0 : (page - 1) * pageSize + 1
+  const end = Math.min(total, page * pageSize)
+
+  return (
+    <nav className="flex flex-col gap-3 rounded-lg border border-slate-200 bg-white px-4 py-3 shadow-sm sm:flex-row sm:items-center sm:justify-between" aria-label="线索分页">
+      <p className="text-sm font-bold text-slate-600">
+        第 {page} / {totalPages} 页 · {start}-{end} / {total} 条
+      </p>
+      <div className="flex gap-2">
+        <Button variant="secondary" disabled={page <= 1} onClick={() => onPageChange(Math.max(1, page - 1))}>
+          上一页
+        </Button>
+        <Button variant="secondary" disabled={page >= totalPages} onClick={() => onPageChange(Math.min(totalPages, page + 1))}>
+          下一页
+        </Button>
+      </div>
+    </nav>
   )
 }
 

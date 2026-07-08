@@ -5,7 +5,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from src.group_learning.service import accept_signal, extract_signal_drafts
+from src.group_learning.service import accept_signal, extract_signal_drafts, is_group_help_command
 from src.models.group_learning import GroupLearningSignal
 from src.models.learning_progress import LearningProgressItem
 from src.models.vocabulary import VocabularyItem
@@ -78,6 +78,11 @@ def test_extract_signal_drafts_covers_tags_grammar_expression_and_sentence():
         "grammar_error",
         "grammar_correct_usage",
     }.issubset(signal_types)
+
+
+def test_help_command_is_not_a_learning_signal():
+    assert is_group_help_command("@_user_1 --help")
+    assert extract_signal_drafts("@_user_1 --help", source=SimpleNamespace(status="active")) == []
 
 
 @pytest.mark.asyncio

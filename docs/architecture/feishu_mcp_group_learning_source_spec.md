@@ -363,7 +363,10 @@ interface FeishuGroupLearningSourceConfig {
 #单词
 #语法
 @BinnAgent
+@BinnAgent --help
 ```
+
+其中 `@BinnAgent --help` 只发送操作指南，不进入学习线索候选；系统会记录已回复的 message_id，避免同一条 help 反复刷屏。
 
 ### 回复示例
 
