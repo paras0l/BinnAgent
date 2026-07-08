@@ -183,6 +183,7 @@ config = {
         "im.v1.chat.search",
         "im.v1.chatMembers.get",
         "im.v1.message.list",
+        "im.v1.message.create",
     ],
 }
 

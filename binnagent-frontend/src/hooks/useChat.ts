@@ -209,7 +209,8 @@ export function useChat(
         signal: controller.signal,
       })
 
-      if (!response.ok || !response.body) throw new Error('Chat stream request failed')
+      if (!response.ok) throw new Error(await errorMessage(response))
+      if (!response.body) throw new Error('对话服务没有返回可读取的内容。')
 
       const reader = response.body.getReader()
       const decoder = new TextDecoder()
@@ -326,8 +327,8 @@ export function useChat(
               ? {
                   ...m,
                   content: m.content
-                    ? `${m.content}\n\n_流式连接失败，请检查 Ollama / 后端 SSE / 代理配置_`
-                    : '流式连接失败，请检查 Ollama / 后端 SSE / 代理配置',
+                    ? `${m.content}\n\n_${chatErrorMessage(err.message)}_`
+                    : chatErrorMessage(err.message),
                 }
               : m
           )
@@ -362,6 +363,29 @@ export function useChat(
     isLoading,
     isLoadingHistory,
   }
+}
+
+async function errorMessage(response: Response) {
+  try {
+    const data = await response.json() as { detail?: unknown }
+    if (typeof data.detail === 'string' && data.detail.trim()) return data.detail
+  } catch {
+    // Fall through to status text.
+  }
+  return response.statusText || '对话请求失败'
+}
+
+function chatErrorMessage(message: string) {
+  if (message === 'Model provider service unavailable') {
+    return '模型服务暂时不可用，请在 Dev Console 检查 DeepSeek / LongCat API Key 和当前模型开关。'
+  }
+  if (message === 'Invalid model stream response') {
+    return '模型返回格式异常，请稍后重试或切换模型提供商。'
+  }
+  if (message === 'Failed to persist conversation memory') {
+    return '回复已生成，但保存对话失败，请稍后重试。'
+  }
+  return message || '对话请求失败，请稍后重试。'
 }
 
 function toChatMessage(message: HistoryResponse['messages'][number]): ChatMessage {

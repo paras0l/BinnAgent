@@ -3,42 +3,40 @@ services:
     image: pgvector/pgvector:pg16
     restart: unless-stopped
     environment:
-      POSTGRES_USER: binn
-      POSTGRES_PASSWORD: binn
-      POSTGRES_DB: binn_agent
-    ports:
-      - "5432:5432"
+      POSTGRES_USER: ${POSTGRES_USER:-binn}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-binn_agent}
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U binn -d binn_agent"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-binn} -d ${POSTGRES_DB:-binn_agent}"]
       interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 10
 
   redis:
     image: redis:7-alpine
     restart: unless-stopped
-    ports:
-      - "6379:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 10
 
   app:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
     restart: unless-stopped
-    ports:
-      - "8000:8000"
     environment:
-      BINN_DATABASE_URL: postgresql+asyncpg://binn:binn@db:5432/binn_agent
-      BINN_OLLAMA_BASE_URL: http://host.docker.internal:11434
+      BINN_DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-binn}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-binn_agent}
+      BINN_REDIS_URL: redis://redis:6379/0
+      BINN_KNOWLEDGE_UPLOAD_DIR: /app/var/knowledge/uploads
+      BINN_MODEL_PROVIDER: ${BINN_MODEL_PROVIDER:-deepseek}
+      BINN_OLLAMA_BASE_URL: ${BINN_OLLAMA_BASE_URL:-http://host.docker.internal:11434}
       BINN_OLLAMA_CHAT_MODEL: ${BINN_OLLAMA_CHAT_MODEL:-gemma4:e2b}
       BINN_OLLAMA_UTILITY_MODEL: ${BINN_OLLAMA_UTILITY_MODEL:-gemma4:e2b}
       BINN_OLLAMA_EMBEDDING_MODEL: ${BINN_OLLAMA_EMBEDDING_MODEL:-nomic-embed-text:latest}
-      BINN_MODEL_PROVIDER: ${BINN_MODEL_PROVIDER:-ollama}
       BINN_DEEPSEEK_BASE_URL: ${BINN_DEEPSEEK_BASE_URL:-https://api.deepseek.com}
       BINN_DEEPSEEK_API_KEY: ${BINN_DEEPSEEK_API_KEY:-}
       BINN_DEEPSEEK_CHAT_MODEL: ${BINN_DEEPSEEK_CHAT_MODEL:-deepseek-v4-flash}
@@ -47,22 +45,22 @@ services:
       BINN_LONGCAT_API_KEY: ${BINN_LONGCAT_API_KEY:-}
       BINN_LONGCAT_CHAT_MODEL: ${BINN_LONGCAT_CHAT_MODEL:-LongCat-2.0}
       BINN_LONGCAT_UTILITY_MODEL: ${BINN_LONGCAT_UTILITY_MODEL:-LongCat-2.0}
-      BINN_REDIS_URL: redis://redis:6379/0
-      BINN_KNOWLEDGE_UPLOAD_DIR: /app/var/knowledge/uploads
       BINN_LANGFUSE_ENABLED: ${BINN_LANGFUSE_ENABLED:-false}
       BINN_LANGFUSE_PUBLIC_KEY: ${BINN_LANGFUSE_PUBLIC_KEY:-}
       BINN_LANGFUSE_SECRET_KEY: ${BINN_LANGFUSE_SECRET_KEY:-}
-      BINN_LANGFUSE_BASE_URL: ${BINN_LANGFUSE_DOCKER_BASE_URL:-http://host.docker.internal:3100}
-      BINN_LANGFUSE_ENVIRONMENT: ${BINN_LANGFUSE_ENVIRONMENT:-development}
+      BINN_LANGFUSE_BASE_URL: ${BINN_LANGFUSE_BASE_URL:-http://localhost:3100}
+      BINN_LANGFUSE_ENVIRONMENT: ${BINN_LANGFUSE_ENVIRONMENT:-production}
       BINN_FEISHU_MCP_ENABLED: ${BINN_FEISHU_MCP_ENABLED:-false}
       BINN_FEISHU_MCP_TRANSPORT: ${BINN_FEISHU_MCP_TRANSPORT:-http}
-      BINN_FEISHU_MCP_URL: ${BINN_FEISHU_MCP_DOCKER_URL:-http://host.docker.internal:8765/mcp}
+      BINN_FEISHU_MCP_URL: ${BINN_FEISHU_MCP_URL:-}
       BINN_FEISHU_APP_ID: ${BINN_FEISHU_APP_ID:-}
       BINN_FEISHU_APP_SECRET: ${BINN_FEISHU_APP_SECRET:-}
       BINN_FEISHU_OPENAPI_FALLBACK_ENABLED: ${BINN_FEISHU_OPENAPI_FALLBACK_ENABLED:-true}
-      BINN_DEBUG_CONSOLE_ENABLED: ${BINN_DEBUG_CONSOLE_ENABLED:-false}
-      BINN_DEBUG_CONSOLE_TOKEN: ${BINN_DEBUG_CONSOLE_TOKEN:-}
-      BINN_DEBUG_CONSOLE_ALLOWED_ORIGINS: '${BINN_DEBUG_CONSOLE_ALLOWED_ORIGINS:-["http://localhost:5174","http://127.0.0.1:5174"]}'
+      BINN_DEBUG: ${BINN_DEBUG:-false}
+      BINN_DEBUG_CONSOLE_ENABLED: ${BINN_DEBUG_CONSOLE_ENABLED:-true}
+      BINN_DEBUG_CONSOLE_TOKEN: ${BINN_DEBUG_CONSOLE_TOKEN:?set BINN_DEBUG_CONSOLE_TOKEN}
+      BINN_DEBUG_CONSOLE_ALLOWED_ORIGINS: ${BINN_DEBUG_CONSOLE_ALLOWED_ORIGINS:-["http://8.152.198.107:5174"]}
+    command: sh -c "alembic upgrade head && uvicorn src.main:app --host 0.0.0.0 --port 8000"
     volumes:
       - knowledge_data:/app/var/knowledge
     depends_on:
@@ -70,6 +68,17 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+
+  web:
+    build:
+      context: .
+      dockerfile: binnagent-frontend/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "${BINN_HTTP_PORT:-80}:80"
+      - "${BINN_DEV_CONSOLE_PORT:-5174}:5174"
+    depends_on:
+      - app
 
 volumes:
   pgdata:

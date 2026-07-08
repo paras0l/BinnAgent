@@ -259,7 +259,7 @@ class TestChatSend:
         )
 
         assert response.status_code == 503
-        assert response.json()["detail"] == "Ollama service unavailable"
+        assert response.json()["detail"] == "Model provider service unavailable"
         messages = [
             obj for obj in mock_session.added_objects if isinstance(obj, ConversationMessage)
         ]
@@ -607,7 +607,7 @@ class TestChatStream:
 
         assert response.status_code == 200
         assert "event: error" in response.text
-        assert "Ollama service unavailable" in response.text
+        assert "Model provider service unavailable" in response.text
         assert "secret host detail" not in response.text
 
         messages = [

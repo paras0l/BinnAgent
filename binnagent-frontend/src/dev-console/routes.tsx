@@ -1,5 +1,6 @@
 export const devConsoleRoutes = [
   { id: 'learners', label: 'Learners', path: '/dev/learners' },
+  { id: 'model-provider', label: 'Model Provider', path: '/dev/model-provider' },
   { id: 'episodes', label: 'Recent Episodes', path: '/dev/episodes' },
   { id: 'graph-runs', label: 'Graph Runs', path: '/dev/graph-runs' },
   { id: 'textbooks', label: 'Textbook Parsing', path: '/dev/textbooks' },

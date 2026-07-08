@@ -10,7 +10,7 @@ class ChatRequest:
     max_tokens: int = 2000
     response_schema: dict[str, Any] | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
-    preferred_provider: str = "ollama"
+    preferred_provider: str = "auto"
     preferred_model: str | None = None
     local_only: bool = True
 

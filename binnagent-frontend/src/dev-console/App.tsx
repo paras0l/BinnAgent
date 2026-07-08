@@ -28,6 +28,7 @@ import { SurfaceCard } from '@/components/ui/SurfaceCard'
 import { clearDebugToken, debugFetch, readDebugToken, saveDebugToken } from '@/shared/api/debugClient'
 import type { Learner } from '@/types'
 import { LearnersPage } from './pages/LearnersPage'
+import { ModelProviderPage } from './pages/ModelProviderPage'
 import { RecentEpisodesPage } from './pages/RecentEpisodesPage'
 import { TextbookParsingPage } from './pages/TextbookParsingPage'
 import { devConsoleRoutes, findDevConsoleRoute, type DevConsoleRouteId } from './routes'
@@ -265,6 +266,8 @@ function DevConsoleShell({ onClearToken }: { onClearToken: () => void }) {
           <Suspense fallback={<LoadingState title="正在打开 Dev Console" description="正在加载调试面板..." />}>
             {routeId === 'learners' ? (
               <LearnersPage onLearnerChange={updateLearner} navigate={navigate} />
+            ) : routeId === 'model-provider' ? (
+              <ModelProviderPage />
             ) : routeId === 'memory' ? (
               learner ? (
                 <MemoryCenterPage learner={learner} />
@@ -1308,6 +1311,7 @@ function langfuseHomeUrl() {
 
 function routeIcon(routeId: DevConsoleRouteId) {
   if (routeId === 'learners') return <Users className="size-4" />
+  if (routeId === 'model-provider') return <TerminalSquare className="size-4" />
   if (routeId === 'memory') return <BrainCircuit className="size-4" />
   if (routeId === 'episodes') return <Activity className="size-4" />
   if (routeId === 'graph-runs') return <Route className="size-4" />

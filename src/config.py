@@ -14,6 +14,15 @@ class Settings(BaseSettings):
     ollama_chat_model: str = "gemma4:e2b"
     ollama_utility_model: str = "gemma4:e2b"
     ollama_embedding_model: str = "nomic-embed-text:latest"
+    model_provider: str = "ollama"
+    deepseek_base_url: str = "https://api.deepseek.com"
+    deepseek_api_key: str | None = None
+    deepseek_chat_model: str = "deepseek-v4-flash"
+    deepseek_utility_model: str = "deepseek-v4-flash"
+    longcat_base_url: str = "https://api.longcat.chat/openai"
+    longcat_api_key: str | None = None
+    longcat_chat_model: str = "LongCat-2.0"
+    longcat_utility_model: str = "LongCat-2.0"
     chat_max_tokens: int = 2048
     chat_history_limit: int = 12
     chat_auto_continue_limit: int = 2

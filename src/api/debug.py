@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel, Field
 from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -44,6 +45,10 @@ router = APIRouter(
 )
 
 SIMULATION_REPORT_ROOT = Path("var/simulation")
+
+
+class ModelProviderSwitchRequest(BaseModel):
+    provider: str = Field(..., min_length=1, max_length=40)
 
 
 @router.get("/learners")
@@ -138,6 +143,20 @@ async def list_debug_learners(
         "limit": limit,
         "offset": offset,
     }
+
+
+@router.get("/model/provider")
+async def get_debug_model_provider() -> dict[str, Any]:
+    return await model_router.provider_status()
+
+
+@router.patch("/model/provider")
+async def update_debug_model_provider(payload: ModelProviderSwitchRequest) -> dict[str, Any]:
+    try:
+        model_router.set_default_provider(payload.provider)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return await model_router.provider_status()
 
 
 @router.get("/rag/search")

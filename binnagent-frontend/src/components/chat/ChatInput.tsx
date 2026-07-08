@@ -53,16 +53,16 @@ export function ChatInput({
           danger
           className="size-12 border-error bg-error text-primary-foreground hover:bg-error/90 hover:text-primary-foreground"
         >
-          <Square className="h-4 w-4" />
+          <Square className="h-4 w-4 text-primary-foreground" />
         </IconButton>
       ) : (
         <IconButton
           type="submit"
           disabled={!message.trim()}
           label="发送消息"
-          className="size-12 border-primary bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground"
+          className="group size-12 border-primary bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground disabled:border-slate-200 disabled:bg-slate-100"
         >
-          <Send className="h-4 w-4" />
+          <Send className="h-4 w-4 text-primary-foreground group-disabled:text-slate-400" />
         </IconButton>
       )}
     </form>

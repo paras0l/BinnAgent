@@ -6,6 +6,7 @@ describe('devConsoleRoutes', () => {
     expect(devConsoleRoutes.map((route) => route.id)).toEqual(
       expect.arrayContaining([
         'memory',
+        'model-provider',
         'episodes',
         'learners',
         'textbooks',
@@ -21,6 +22,7 @@ describe('devConsoleRoutes', () => {
     expect(devConsoleRoutes.map((route) => route.label)).toEqual(
       expect.arrayContaining([
         'Memory Debug',
+        'Model Provider',
         'Learners',
         'Textbook Parsing',
         'Recent Episodes',
@@ -46,6 +48,7 @@ describe('devConsoleRoutes', () => {
 
   it('routes learners and recent episodes pages', () => {
     expect(findDevConsoleRoute('/dev/learners').id).toBe('learners')
+    expect(findDevConsoleRoute('/dev/model-provider').id).toBe('model-provider')
     expect(findDevConsoleRoute('/dev/episodes').id).toBe('episodes')
   })
 })

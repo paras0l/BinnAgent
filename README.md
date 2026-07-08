@@ -118,6 +118,7 @@ http://localhost:5174，可在 Learners / Recent Episodes 中直接选择 learne
 - [Project Interview Bullets](docs/interview/project-bullets.md)
 - [Issue Roadmap Status](docs/project/issue-roadmap-status.md)
 - [Demo Script](docs/demo/demo-script.md)
+- [Cloud Deployment](docs/deployment-cloud.md)
 - [Memory Architecture v2](docs/memory-architecture-v2.md)
 - [Learner Scope Audit](docs/security/learner_scope_audit.md)
 
@@ -133,6 +134,7 @@ http://localhost:5174，可在 Learners / Recent Episodes 中直接选择 learne
 | ExploreCapability 推荐 | 基础版已实现，Explore Tab 入口由后端 registry 统一管理；Daily Lesson 答题后可推荐 ready 学习能力，点击/忽略事件写入 Memory 和 episode trace |
 | Frontend UI/UX 统一标准 | Issue #20 首轮整改已落地，普通学习端主导航保留 AI对话 / 探索 / 学习中心，Debug/Memory/Runtime 页面移入 Dev Console；Dashboard 首页升级为今日学习驾驶舱，学习设置可编辑学习目标和 CEFR 当前水平，KnowledgeBase 普通端只保留今日单元和练习任务，教材解析治理集中到 Dev Console Textbook Parsing |
 | Prompt Registry / Schema-first Import / Parser Quality | 基础治理已实现；PromptExecutor 已统一 text/structured/stream prompt 调用，PromptExecutionRecord、结构化校验记录、Prompt Debug API、prompt eval CLI / eval sets、核心 prompt 迁移、画像驱动 prompt 背景和教材解析质量门禁已落地 |
+| Model Provider | 部分实现；本地默认 Ollama，云端可通过环境变量或 Dev Console Debug 页面切换到 DeepSeek / LongCat OpenAI-compatible chat API；RAG embedding 暂时隔离在 Ollama 路径 |
 | Agent Runtime / Harness | 第二阶段补强中，TaskSpec、AgentEpisode、LearningEvent、EvidenceRef、ToolCallRecord、VerificationReport、MasteryEngine、RecommendationEngine、LearningGraphCheckpoint 和 Dev Console 调试入口已接入；VerificationReport 已升级为 evidence-based deterministic/schema/business_rule/evidence checks，critical 失败会阻止静默 completed；EpisodeTraceView、Graph Runs 和 Textbook Parsing Report 可查看 checkpoint、events、tool calls、prompt execution summary、verification checks、parser evidence 和 review queue；Debug API 默认关闭并需 token |
 | Learner-scoped isolation | Issue #25 第一阶段已实现，新增 current user / current learner dependency、scoped resource helper，并加固 Runtime、Daily Lesson、Memory、Explore、ExerciseAttempt 和 Debug 高风险路径 |
 | LangGraph daily lesson | 已升级为单题 checkpoint / interrupt / resume 学习闭环；graph 支持可选 checkpointer 编译，start 返回 waiting_user checkpoint/thread/schema/prompt，answer 从 `grade_attempt` 恢复并完成 grading、mastery、memory、review、recommend、verification，验证报告决定 completed / completed_with_warnings / verification_failed |

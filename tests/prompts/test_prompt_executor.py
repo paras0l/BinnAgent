@@ -22,6 +22,7 @@ class FakeRouter:
     def __init__(self, content: str) -> None:
         self.content = content
         self.requests = []
+        self.default_provider = "ollama"
 
     async def chat(self, request):
         self.requests.append(request)
@@ -115,6 +116,23 @@ async def test_prompt_executor_execute_messages_records_text_prompt() -> None:
     assert router.requests[0].messages[0]["content"] == "system"
     assert db.records[0].prompt_id == "graph.node"
     assert db.records[0].decision == "accepted"
+
+
+@pytest.mark.asyncio
+async def test_prompt_executor_maps_default_model_to_cloud_provider() -> None:
+    db = FakeDb()
+    router = FakeRouter("plain response")
+    router.default_provider = "deepseek"
+
+    await PromptExecutor(db=db, model_router=router).execute_messages(
+        prompt_id="graph.node",
+        variables={"system_prompt": "system", "messages": [{"role": "user", "content": "hi"}]},
+        messages=[{"role": "user", "content": "hi"}],
+        context=PromptExecutionContext(source_module="tests.prompt_executor"),
+    )
+
+    assert router.requests[0].preferred_provider == "deepseek"
+    assert router.requests[0].preferred_model == "deepseek-v4-flash"
 
 
 @pytest.mark.asyncio

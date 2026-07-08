@@ -37,6 +37,11 @@ import { GroupLearningSignalsPage } from '@/pages/GroupLearningSignalsPage'
 import type { VocabularyPracticeMode } from '@/pages/VocabularyPracticePage'
 import { VocabularyPracticePage } from '@/pages/VocabularyPracticePage'
 import {
+  listGroupLearningSignals,
+  listGroupLearningSources,
+  type GroupLearningSource,
+} from '@/services/groupLearningApi'
+import {
   CURRENT_LEVEL_OPTIONS,
   LEARNING_GOAL_OPTIONS,
   LEVEL_STANDARD_NOTES,
@@ -45,6 +50,24 @@ import {
 } from '@/utils/learnerProfile'
 
 const VOCABULARY_PAGE_SIZE = 12
+
+type GroupLearningCardState = 'not_configured' | 'paused' | 'unbound' | 'pending_sync' | 'active'
+
+interface GroupLearningCardSummary {
+  state: GroupLearningCardState
+  sourceCount: number
+  participantCount: number
+  pendingCount: number
+  latestSyncLabel: string
+}
+
+const EMPTY_GROUP_LEARNING_SUMMARY: GroupLearningCardSummary = {
+  state: 'not_configured',
+  sourceCount: 0,
+  participantCount: 0,
+  pendingCount: 0,
+  latestSyncLabel: '尚未同步',
+}
 
 export type DashboardWorkspace = 'home' | 'vocabulary' | 'profile' | 'records' | 'group-signals'
 
@@ -72,6 +95,7 @@ export function DashboardPage({
   const { showToast } = useToast()
   const [summary, setSummary] = useState<DashboardSummary | null>(null)
   const [memorySummary, setMemorySummary] = useState<MemorySummary | null>(null)
+  const [groupLearningSummary, setGroupLearningSummary] = useState<GroupLearningCardSummary>(EMPTY_GROUP_LEARNING_SUMMARY)
   const [currentVocabIndex, setCurrentVocabIndex] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
   const [isReviewing, setIsReviewing] = useState(false)
@@ -104,6 +128,12 @@ export function DashboardPage({
         console.warn('Memory summary unavailable:', memoryResult.reason)
         setMemorySummary(null)
       }
+      fetchGroupLearningCardSummary(learner.id)
+        .then(setGroupLearningSummary)
+        .catch((error: unknown) => {
+          console.warn('Group learning summary unavailable:', error)
+          setGroupLearningSummary(EMPTY_GROUP_LEARNING_SUMMARY)
+        })
       setCurrentVocabIndex(0)
     } catch (err) {
       console.error('Dashboard error:', err)
@@ -286,6 +316,7 @@ export function DashboardPage({
         onOpenRecords={() => setActiveWorkspace('records')}
         onOpenGroupSignals={() => setActiveWorkspace('group-signals')}
         onStartVocabularyPractice={onStartVocabularyPractice}
+        groupLearningSummary={groupLearningSummary}
       />
     )
   }
@@ -540,6 +571,7 @@ export function DashboardPage({
 function LearningCenterHome({
   learnerName,
   summary,
+  groupLearningSummary,
   onOpenDailyLearning,
   onOpenVocabularyManager,
   onOpenProfile,
@@ -549,6 +581,7 @@ function LearningCenterHome({
 }: {
   learnerName: string
   summary: DashboardSummary
+  groupLearningSummary: GroupLearningCardSummary
   onOpenDailyLearning: () => void
   onOpenVocabularyManager: () => void
   onOpenProfile: () => void
@@ -602,6 +635,7 @@ function LearningCenterHome({
         />
         <LearningSideRail
           summary={summary}
+          groupLearningSummary={groupLearningSummary}
           onOpenGroupSignals={onOpenGroupSignals}
           onOpenVocabularyManager={onOpenVocabularyManager}
           onOpenProfile={onOpenProfile}
@@ -676,6 +710,7 @@ function TodayLearningFlow({
 
 function LearningSideRail({
   summary,
+  groupLearningSummary,
   onOpenGroupSignals,
   onOpenVocabularyManager,
   onOpenProfile,
@@ -683,6 +718,7 @@ function LearningSideRail({
   onStartVocabularyPractice,
 }: {
   summary: DashboardSummary
+  groupLearningSummary: GroupLearningCardSummary
   onOpenGroupSignals: () => void
   onOpenVocabularyManager: () => void
   onOpenProfile: () => void
@@ -691,6 +727,7 @@ function LearningSideRail({
 }) {
   const latestActivity = summary.daily_activity.slice(-7)
   const maxLearningAmount = Math.max(...latestActivity.map((item) => item.count), 1)
+  const groupCard = groupLearningCardCopy(groupLearningSummary)
 
   return (
     <aside className="space-y-3">
@@ -729,13 +766,15 @@ function LearningSideRail({
                   群聊学习线索
                 </span>
                 <span className="mt-2 block text-xs leading-5 text-slate-600">
-                  从指定飞书群捕捉你想学的表达、语法、单词和好句。
+                  {groupCard.description}
                 </span>
               </span>
-              <span className="rounded-full bg-primary px-2.5 py-1 text-xs font-black text-white">5</span>
+              <span className={`rounded-full px-2.5 py-1 text-xs font-black ${groupCard.badgeClass}`}>
+                {groupLearningSummary.pendingCount}
+              </span>
             </span>
             <span className="mt-4 flex items-center justify-between gap-3">
-              <span className="text-xs font-bold text-slate-500">待确认 5 条 · 今日新增 2 条</span>
+              <span className="text-xs font-bold text-slate-500">{groupCard.meta}</span>
               <span className="inline-flex items-center gap-1 text-xs font-black text-primary">
                 查看线索<ArrowRight className="size-3.5" />
               </span>
@@ -1551,6 +1590,80 @@ async function fetchMemorySummary(learnerId: string) {
   const response = await fetch(`/api/learners/${learnerId}/memory/summary`)
   if (!response.ok) throw new Error('Failed to load memory summary')
   return await response.json() as MemorySummary
+}
+
+async function fetchGroupLearningCardSummary(learnerId: string): Promise<GroupLearningCardSummary> {
+  const [sources, signalPage] = await Promise.all([
+    listGroupLearningSources(learnerId),
+    listGroupLearningSignals(learnerId, 'candidate', undefined, 1, 1, 'all'),
+  ])
+  return buildGroupLearningCardSummary(sources, signalPage.total)
+}
+
+function buildGroupLearningCardSummary(
+  sources: GroupLearningSource[],
+  pendingCount: number,
+): GroupLearningCardSummary {
+  const activeSources = sources.filter((source) => source.status === 'active')
+  const participantCount = sources.reduce((sum, source) => sum + source.participant_count, 0)
+  const latestSync = sources
+    .map((source) => source.last_sync_at || source.last_seen_at || syncedAtFromSummary(source.last_import_summary))
+    .filter((value): value is string => Boolean(value))
+    .sort()
+    .at(-1)
+  const state: GroupLearningCardState = sources.length === 0
+    ? 'not_configured'
+    : activeSources.length === 0
+      ? 'paused'
+      : participantCount === 0
+        ? 'unbound'
+        : latestSync
+          ? 'active'
+          : 'pending_sync'
+
+  return {
+    state,
+    sourceCount: sources.length,
+    participantCount,
+    pendingCount,
+    latestSyncLabel: latestSync ? formatActivityDate(latestSync) : '尚未同步',
+  }
+}
+
+function syncedAtFromSummary(summary: Record<string, unknown>) {
+  const syncedAt = summary.synced_at
+  return typeof syncedAt === 'string' && syncedAt.trim() ? syncedAt : null
+}
+
+function groupLearningCardCopy(summary: GroupLearningCardSummary) {
+  const statusCopy = {
+    not_configured: {
+      description: '还没有配置飞书群来源；添加后才能捕捉表达、语法、单词和好句。',
+      meta: '未配置来源 · 点击进入设置',
+      badgeClass: 'bg-slate-200 text-slate-700',
+    },
+    paused: {
+      description: '群聊读取已暂停，已有线索仍可查看和确认。',
+      meta: `${summary.sourceCount} 个来源 · 读取已暂停`,
+      badgeClass: 'bg-amber-100 text-amber-700',
+    },
+    unbound: {
+      description: '已添加群来源，但还没有同步或绑定群成员。',
+      meta: `${summary.sourceCount} 个来源 · 待绑定成员`,
+      badgeClass: 'bg-amber-100 text-amber-700',
+    },
+    pending_sync: {
+      description: '来源已启用，等待首次同步后开始生成候选线索。',
+      meta: `${summary.sourceCount} 个来源 · ${summary.participantCount} 位成员 · ${summary.latestSyncLabel}`,
+      badgeClass: 'bg-sky-100 text-sky-700',
+    },
+    active: {
+      description: '从指定飞书群捕捉你想学的表达、语法、单词和好句。',
+      meta: `待确认 ${summary.pendingCount} 条 · ${summary.sourceCount} 个来源 · ${summary.participantCount} 位成员`,
+      badgeClass: summary.pendingCount > 0 ? 'bg-primary text-white' : 'bg-emerald-100 text-emerald-700',
+    },
+  } satisfies Record<GroupLearningCardState, { description: string; meta: string; badgeClass: string }>
+  return statusCopy[summary.state]
 }
 
 function buildFocusReasons(summary: DashboardSummary) {

@@ -94,7 +94,6 @@ export function GroupLearningSignalsPage({ learner, onBack, onOpenSettings }: Gr
   const [page, setPage] = useState(1)
   const [totalSignals, setTotalSignals] = useState(0)
   const [totalPages, setTotalPages] = useState(1)
-  const [isPaused, setIsPaused] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
 
   const loadSignals = useCallback(async (nextPage = page) => {
@@ -118,7 +117,6 @@ export function GroupLearningSignalsPage({ learner, onBack, onOpenSettings }: Gr
     try {
       const items = await listGroupLearningSources(learner.id)
       setSources(items)
-      setIsPaused(items.length > 0 && items.every((source) => source.status !== 'active'))
     } catch {
       setSources([])
     }
@@ -176,6 +174,50 @@ export function GroupLearningSignalsPage({ learner, onBack, onOpenSettings }: Gr
       latestSeenLabel: latestSeen ? formatSignalTime(latestSeen) : '尚未同步',
     }
   }, [sources])
+  const isPaused = sources.length > 0 && sources.every((source) => source.status !== 'active')
+  const activeFeishuSources = sources.filter((source) => source.status === 'active' && source.platform === 'feishu')
+  const participantCount = sources.reduce((sum, source) => sum + source.participant_count, 0)
+  const hasSyncRecord = sources.some((source) => Boolean(source.last_sync_at || source.last_seen_at || syncedAtFromSummary(source.last_import_summary)))
+  const syncBanner = useMemo(() => {
+    if (sources.length === 0) {
+      return {
+        tone: 'warning' as const,
+        title: '尚未配置飞书群来源',
+        body: '先添加一个飞书群来源并完成成员映射后，系统才会读取群消息。',
+        canSync: false,
+      }
+    }
+    if (activeFeishuSources.length === 0) {
+      return {
+        tone: 'warning' as const,
+        title: '读取已暂停',
+        body: '当前没有启用中的飞书群来源，系统不会读取新群消息。',
+        canSync: false,
+      }
+    }
+    if (participantCount === 0) {
+      return {
+        tone: 'warning' as const,
+        title: '等待成员同步与绑定',
+        body: '已添加群来源，但还没有同步到群成员；请先在设置里同步成员并映射学习者。',
+        canSync: true,
+      }
+    }
+    if (!hasSyncRecord) {
+      return {
+        tone: 'warning' as const,
+        title: '等待首次同步',
+        body: '来源已启用，首次同步成功后才会开始生成候选线索。',
+        canSync: true,
+      }
+    }
+    return {
+      tone: 'success' as const,
+      title: '同步正常',
+      body: `最后同步：${sourceSummary.latestSeenLabel}。新消息会先去重，再进入线索抽取。`,
+      canSync: true,
+    }
+  }, [activeFeishuSources.length, hasSyncRecord, participantCount, sourceSummary.latestSeenLabel, sources.length])
 
   const updateSignalStatus = async (id: string, status: SignalStatus) => {
     const action = status === 'accepted' ? 'accept' : status === 'dismissed' ? 'dismiss' : 'restore'
@@ -261,11 +303,12 @@ export function GroupLearningSignalsPage({ learner, onBack, onOpenSettings }: Gr
                 <Button
                   variant="secondary"
                   className="flex-1"
+                  disabled={sources.length === 0}
+                  title={sources.length === 0 ? '请先添加群聊来源' : isPaused ? '恢复群聊线索读取' : '暂停群聊线索读取'}
                   onClick={() => {
                     const nextStatus = isPaused ? 'active' : 'paused'
                     void Promise.all(sources.map((source) => updateGroupLearningSource(learner.id, source.id, { status: nextStatus })))
                       .then(() => {
-                        setIsPaused(!isPaused)
                         void loadSources()
                         showToast(isPaused ? '已恢复群聊线索读取。' : '已暂停群聊线索读取。', {
                           variant: isPaused ? 'success' : 'warning',
@@ -285,15 +328,16 @@ export function GroupLearningSignalsPage({ learner, onBack, onOpenSettings }: Gr
         </section>
 
         <StatusBanner
-          tone={isPaused ? 'warning' : 'success'}
-          title={isPaused ? '读取已暂停' : '同步正常'}
-          action={<Button variant="secondary" onClick={() => {
-            const activeSources = sources.filter((source) => source.status === 'active' && source.platform === 'feishu')
-            if (!activeSources.length) {
+          tone={syncBanner.tone}
+          title={syncBanner.title}
+          action={sources.length === 0
+            ? <Button variant="secondary" onClick={onOpenSettings}><Settings className="size-4" />设置来源</Button>
+            : <Button variant="secondary" disabled={!syncBanner.canSync} onClick={() => {
+            if (!activeFeishuSources.length) {
               showToast('请先添加并启用一个飞书群来源。', { variant: 'warning' })
               return
             }
-            void Promise.all(activeSources.map((source) => syncGroupLearningSourceNow(learner.id, source.id)))
+            void Promise.all(activeFeishuSources.map((source) => syncGroupLearningSourceNow(learner.id, source.id)))
               .then(async (summaries) => {
                 const isPlaceholder = summaries.every((summary) => summary.placeholder)
                 const generated = summaries.reduce((sum, summary) => sum + summary.generated_signal_count, 0)
@@ -310,7 +354,7 @@ export function GroupLearningSignalsPage({ learner, onBack, onOpenSettings }: Gr
               })
           }}><RefreshCw className="size-4" />同步一次</Button>}
         >
-          {isPaused ? '系统不会读取新群消息，已有线索仍可确认或删除。' : `最后同步：${sourceSummary.latestSeenLabel}。新消息会先去重，再进入线索抽取。`}
+          {syncBanner.body}
         </StatusBanner>
 
         <section className="grid min-w-0 items-start gap-5 xl:grid-cols-[minmax(0,1fr)_380px]">
@@ -690,4 +734,9 @@ function formatSignalTime(value?: string | null) {
     hour: '2-digit',
     minute: '2-digit',
   })
+}
+
+function syncedAtFromSummary(summary: Record<string, unknown>) {
+  const syncedAt = summary.synced_at
+  return typeof syncedAt === 'string' && syncedAt.trim() ? syncedAt : null
 }

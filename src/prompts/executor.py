@@ -91,7 +91,7 @@ class PromptExecutor:
         ) as observation:
             langfuse_trace_id, langfuse_observation_id = _extract_langfuse_ids(observation)
             response = await self.model_router.chat(
-                _chat_request(rendered, overrides=request_overrides)
+                _chat_request(rendered, model_router=self.model_router, overrides=request_overrides)
             )
             raw_output = response.content
             if observation is not None:
@@ -135,7 +135,12 @@ class PromptExecutor:
         ) as observation:
             langfuse_trace_id, langfuse_observation_id = _extract_langfuse_ids(observation)
             response = await self.model_router.chat(
-                _chat_request(rendered, messages=messages, overrides=request_overrides)
+                _chat_request(
+                    rendered,
+                    messages=messages,
+                    model_router=self.model_router,
+                    overrides=request_overrides,
+                )
             )
             raw_output = response.content
             if observation is not None:
@@ -180,7 +185,12 @@ class PromptExecutor:
         ) as observation:
             langfuse_trace_id, langfuse_observation_id = _extract_langfuse_ids(observation)
             async for chunk in self.model_router.stream_chat(
-                _chat_request(rendered, messages=messages, overrides=request_overrides)
+                _chat_request(
+                    rendered,
+                    messages=messages,
+                    model_router=self.model_router,
+                    overrides=request_overrides,
+                )
             ):
                 content = getattr(chunk, "content", "") if not isinstance(chunk, str) else chunk
                 chunk_finish_reason = getattr(chunk, "finish_reason", None)
@@ -388,20 +398,32 @@ def _chat_request(
     rendered: RenderedPrompt,
     *,
     messages: list[dict[str, str]] | None = None,
+    model_router: ModelRouter | None = None,
     overrides: dict[str, Any] | None = None,
 ) -> ChatRequest:
     policy = rendered.model_policy
     overrides = overrides or {}
+    preferred_provider = (
+        overrides.get("preferred_provider")
+        or policy.get("preferred_provider")
+        or policy.get("provider")
+        or (
+            getattr(model_router, "default_provider", settings.model_provider)
+            if model_router is not None
+            else settings.model_provider
+        )
+    )
     default_model = policy.get("default_model")
     preferred_model = (
         overrides.get("preferred_model")
         or policy.get("preferred_model")
         or policy.get("model")
     )
-    if preferred_model is None and default_model == "ollama_utility":
-        preferred_model = settings.ollama_utility_model
-    if preferred_model is None and default_model == "ollama_chat":
-        preferred_model = settings.ollama_chat_model
+    preferred_model = _resolve_model_for_provider(
+        provider=str(preferred_provider),
+        default_model=default_model,
+        preferred_model=preferred_model,
+    )
 
     return ChatRequest(
         messages=messages or [{"role": "user", "content": rendered.prompt}],
@@ -415,15 +437,40 @@ def _chat_request(
             "prompt_hash": rendered.prompt_hash,
             "input_hash": rendered.input_hash,
         },
-        preferred_provider=(
-            overrides.get("preferred_provider")
-            or policy.get("preferred_provider")
-            or policy.get("provider")
-            or "ollama"
-        ),
+        preferred_provider=str(preferred_provider),
         preferred_model=preferred_model,
         local_only=bool(overrides.get("local_only", policy.get("local_only", True))),
     )
+
+
+def _resolve_model_for_provider(
+    *,
+    provider: str,
+    default_model: Any,
+    preferred_model: Any,
+) -> str | None:
+    normalized_provider = provider.strip().lower()
+    model = str(preferred_model) if preferred_model else None
+    if normalized_provider != "ollama" and model in {
+        settings.ollama_chat_model,
+        settings.ollama_utility_model,
+    }:
+        model = None
+    if model is not None:
+        return model
+    if normalized_provider == "deepseek":
+        if default_model == "ollama_utility":
+            return settings.deepseek_utility_model
+        return settings.deepseek_chat_model
+    if normalized_provider == "longcat":
+        if default_model == "ollama_utility":
+            return settings.longcat_utility_model
+        return settings.longcat_chat_model
+    if default_model == "ollama_utility":
+        return settings.ollama_utility_model
+    if default_model == "ollama_chat":
+        return settings.ollama_chat_model
+    return None
 
 
 def _langfuse_metadata(

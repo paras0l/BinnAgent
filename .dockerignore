@@ -1,6 +1,9 @@
 .venv/
 __pycache__/
 *.pyc
+.DS_Store
+._*
+**/._*
 .env
 .git/
 .gitignore
@@ -10,6 +13,10 @@ __pycache__/
 *.egg-info/
 dist/
 build/
+binnagent-frontend/node_modules/
+binnagent-frontend/dist/
+binnagent-frontend/dist-dev-console/
+remotion-video/node_modules/
 docs/
 tests/
 .vscode/

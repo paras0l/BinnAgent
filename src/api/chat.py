@@ -558,7 +558,7 @@ async def chat_send(
         )
     except httpx.HTTPError:
         await db.rollback()
-        raise HTTPException(status_code=503, detail="Ollama service unavailable")
+        raise HTTPException(status_code=503, detail="Model provider service unavailable")
 
     writable_thread, _, assistant_message = await _persist_chat_messages(
         db=db,
@@ -951,7 +951,7 @@ async def chat_stream(
                     )
                 await prompt_db.commit()
         except httpx.HTTPError:
-            yield _sse_event("error", {"detail": "Ollama service unavailable"})
+            yield _sse_event("error", {"detail": "Model provider service unavailable"})
             return
         except ValueError:
             yield _sse_event("error", {"detail": "Invalid model stream response"})
