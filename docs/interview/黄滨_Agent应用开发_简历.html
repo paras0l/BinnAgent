@@ -142,7 +142,8 @@
       margin-bottom: 3px;
     }
 
-    ul {
+    ul,
+    ol {
       margin: 3px 0 0 0;
       padding-left: 17px;
     }
@@ -150,6 +151,10 @@
     li {
       margin: 2px 0;
       padding-left: 1px;
+    }
+
+    ol li {
+      padding-left: 2px;
     }
 
     b, strong {
@@ -255,7 +260,7 @@
     </header>
 
     <div class="summary">
-      计算机技术硕士在读，具备 Java 后端、企业项目交付和 AI Agent 应用开发经验。近期聚焦学习型 Agent 工程化，围绕 LangGraph Runtime、长期记忆、教材 RAG、练习掌握度、Prompt Registry、Schema-first 输出治理、Langfuse 可观测与 Simulation Evaluation 构建可追踪、可验证、可持续迭代的 Agent 应用。
+      计算机技术硕士在读，具备 Java 后端、企业项目交付和 AI Agent 应用开发经验。订阅ChatGPT Pro套餐，近期聚焦学习型 Agent 工程化，围绕 LangGraph Runtime、长期记忆、Prompt Registry、Schema-first 输出治理、Langfuse 可观测与 Simulation Evaluation 构建可追踪、可验证、可持续迭代的 Agent 应用。
     </div>
 
     <section>
@@ -299,7 +304,7 @@
         </div>
         <div class="sub">技术栈：Python、FastAPI、LangGraph、Langfuse、Ollama、PostgreSQL、SQLAlchemy、React、TypeScript </div>
         <div>GitHub：<a href="https://github.com/paras0l/BinnAgent">github.com/paras0l/BinnAgent</a></div>
-        <ul>
+        <ol>
           <li>设计并实现面向英语学习场景的 <strong>Agent Runtime</strong>，将一次学习过程建模为 TaskSpec、AgentEpisode、LearningEvent、ToolCallRecord、VerificationReport 与 Checkpoint，支持学习任务的可追踪、可恢复、可验证。</li>
           <li>引入 <strong>LangGraph</strong> 编排 Daily Lesson 流程，将画像加载、目标选择、技能路由、出题、等待用户作答、反馈生成、Memory 写入、复习调度和验证报告拆分为状态节点；当题目需要用户输入时持久化 checkpoint，用户提交后从指定节点恢复执行。</li>
           <li>构建 <strong>ExerciseAttempt → Mastery → ReviewSchedule → Memory → Recommendation</strong> 学习闭环：用户答题后记录练习证据，基于 correct、score、hint、retry、error_type 更新知识点掌握度，并驱动复习计划、记忆沉淀和下一步学习动作推荐。</li>
@@ -308,7 +313,7 @@
           <li>建设 Prompt Registry 与 Schema-first 输出治理：为核心 Prompt 绑定 owner、version、output_schema、model_policy、eval_set；记录 prompt_hash 和 input_hash，并对写作好句、词汇提取、语法微课等 LLM 输出执行 JSON repair、fallback、confidence 与 warning 标记。</li>
           <li>接入 Langfuse 与 Dev Console：跟踪 LangGraph、模型、工具、Memory、RAG 与 Verification 运行状态；</li>
           <li>构建 deterministic learner simulation：内置不同学习者 persona、behavior policy、scenario runner 和 assertion engine，覆盖 Daily Lesson checkpoint/resume、词汇练习、Explore 推荐、Runtime trace 等回归场景，为高频迭代提供基础安全网。</li>
-        </ul>
+        </ol>
       </div>
     </section>
 

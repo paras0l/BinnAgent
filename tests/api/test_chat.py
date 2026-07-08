@@ -39,6 +39,12 @@ def _scalars_result(values):
     return result
 
 
+def _scalar_one_or_none_result(value):
+    result = MagicMock()
+    result.scalar_one_or_none.return_value = value
+    return result
+
+
 @pytest.fixture
 def mock_model_router():
     router = AsyncMock(spec=ModelRouter)
@@ -481,6 +487,7 @@ class TestChatLearningSnapshot:
                 _rows_result([(MagicMock(), "weather"), (MagicMock(), "usually"), (MagicMock(), "weather")]),
                 _count_result(3),
                 _scalars_result([grammar_item]),
+                _scalar_one_or_none_result(None),
             ]
         )
 
