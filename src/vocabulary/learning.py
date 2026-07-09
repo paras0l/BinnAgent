@@ -79,6 +79,15 @@ def learnable_point_statuses(source: KnowledgeSource) -> list[str]:
     return ["published", "draft"] if source_allows_draft_learning(source) else ["published"]
 
 
+def is_unit_wordlist_point(point: KnowledgePoint) -> bool:
+    content = point.content or {}
+    if content.get("role") == "unit_wordlist":
+        return True
+    if content.get("origin") == "unit_wordlist_sequence_parser":
+        return True
+    return point.canonical_key.startswith("vocabulary.sequence.")
+
+
 async def enroll_unit_vocabulary(
     db: AsyncSession,
     learner_id: uuid.UUID,
@@ -102,7 +111,7 @@ async def enroll_unit_vocabulary(
     points = [
         point
         for point in point_result.scalars().all()
-        if (point.content or {}).get("role") == "unit_wordlist"
+        if is_unit_wordlist_point(point)
     ]
     keys = [
         canonical_vocabulary_key((point.content or {}).get("lemma") or point.title)

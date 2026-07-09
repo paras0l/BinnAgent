@@ -13,7 +13,7 @@ from src.api.vocabulary_learning import (
     _part_of_speech,
 )
 from src.main import app
-from src.models.knowledge import CurriculumNode, KnowledgeSource
+from src.models.knowledge import CurriculumNode, KnowledgePoint, KnowledgeSource
 from src.models.vocabulary import VocabularyItem, VocabularyItemSource
 from src.vocabulary.learning import EnrollmentResult
 
@@ -43,6 +43,24 @@ def _items(values):
     result = MagicMock()
     result.scalars.return_value = scalar_result
     return result
+
+
+def _unit_word_points(source_id: uuid.UUID, node_id: uuid.UUID, count: int) -> list[KnowledgePoint]:
+    points = []
+    for index in range(count):
+        point = KnowledgePoint(
+            source_id=source_id,
+            curriculum_node_id=node_id,
+            canonical_key=f"vocabulary.word-{index}",
+            type="vocabulary",
+            title=f"word{index}",
+            summary=f"Unit vocabulary {index}",
+            status="published",
+            content={"role": "unit_wordlist", "unit_order": index + 1},
+        )
+        point.id = uuid.uuid4()
+        points.append(point)
+    return points
 
 
 @pytest.fixture
@@ -93,12 +111,13 @@ async def test_unit_summary_includes_full_textbook_total(client, vocabulary_lear
         display_label="七上 · SU1",
         active=True,
     )
+    unit_points = _unit_word_points(knowledge_source.id, node_id, 7)
     vocabulary_learning_session.execute = AsyncMock(
         side_effect=[
             _one(learner_id),
             _one(node),
             _scalar(knowledge_source),
-            _scalar(7),
+            _items(unit_points),
             _rows([(item, item_source)]),
         ]
     )

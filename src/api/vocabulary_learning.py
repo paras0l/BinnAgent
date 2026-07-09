@@ -5,7 +5,7 @@ from typing import Any, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field
-from sqlalchemy import func, select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.api.deps import get_db_session
@@ -29,6 +29,7 @@ from src.vocabulary.learning import (
     current_item_id,
     enroll_unit_vocabulary,
     excluded_item_ids,
+    is_unit_wordlist_point,
     learnable_point_statuses,
     mastery_to_dict,
     record_attempt,
@@ -238,17 +239,14 @@ async def unit_vocabulary_summary(
         select(KnowledgeSource).where(KnowledgeSource.id == node.source_id)
     )
     source = source_result.scalar_one()
-    total_result = await db.execute(
-        select(func.count())
-        .select_from(KnowledgePoint)
-        .where(
+    points_result = await db.execute(
+        select(KnowledgePoint).where(
             KnowledgePoint.curriculum_node_id == curriculum_node_id,
             KnowledgePoint.type == "vocabulary",
             KnowledgePoint.status.in_(learnable_point_statuses(source)),
-            KnowledgePoint.content["role"].as_string() == "unit_wordlist",
         )
     )
-    total = total_result.scalar_one()
+    total = sum(1 for point in points_result.scalars().all() if is_unit_wordlist_point(point))
     result = await db.execute(
         select(VocabularyItem, VocabularyItemSource)
         .join(VocabularyItemSource, VocabularyItemSource.vocabulary_item_id == VocabularyItem.id)

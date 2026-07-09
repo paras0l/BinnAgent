@@ -570,6 +570,44 @@ async def test_attempt_updates_mastery_and_writes_memory_events(client, knowledg
 
 
 @pytest.mark.asyncio
+async def test_vocabulary_attempt_adds_word_and_textbook_source(client, knowledge_session):
+    learner_id = uuid.uuid4()
+    source = _source()
+    node = _node(source.id)
+    point = _vocabulary_point(source.id, node.id, "hello")
+    point.content = {
+        "origin": "unit_wordlist_sequence_parser",
+        "unit_order": 1,
+        "raw_line": "hello /həˈləʊ/",
+    }
+    knowledge_session.execute = AsyncMock(
+        side_effect=[
+            _one(learner_id),
+            _one(point),
+            _one(None),
+            _one(None),
+            _one(None),
+        ]
+    )
+
+    response = await client.post(
+        f"/api/learners/{learner_id}/knowledge-base/attempts",
+        json={"knowledge_point_id": str(point.id), "correct": True, "hint_count": 0},
+    )
+
+    assert response.status_code == 200
+    vocab = next(item for item in knowledge_session.added_objects if isinstance(item, VocabularyItem))
+    source_link = next(
+        item for item in knowledge_session.added_objects if isinstance(item, VocabularyItemSource)
+    )
+    assert vocab.word == "hello"
+    assert source_link.vocabulary_item_id == vocab.id
+    assert source_link.source_type == "textbook_unit"
+    assert source_link.source_id == str(point.id)
+    assert source_link.curriculum_node_id == node.id
+
+
+@pytest.mark.asyncio
 async def test_upload_accepts_grade8_filename(client, knowledge_session, tmp_path, monkeypatch):
     learner_id = uuid.uuid4()
     knowledge_session.execute = AsyncMock(side_effect=[_one(learner_id), _one(None)])

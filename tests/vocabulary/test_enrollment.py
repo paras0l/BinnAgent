@@ -110,3 +110,60 @@ async def test_enrollment_enriches_sequence_point_with_free_dictionary(monkeypat
         item_source.context_snapshot["dictionary_provider"]
         == dictionary_entry.provider
     )
+
+
+@pytest.mark.asyncio
+async def test_enrollment_accepts_legacy_unit_wordlist_origin(monkeypatch) -> None:
+    source = KnowledgeSource(
+        title="英语 七年级上册",
+        filename="textbook.pdf",
+        grade="grade-7",
+        volume="upper",
+        sha256="b" * 64,
+        file_size=1,
+    )
+    source.id = uuid.uuid4()
+    node = CurriculumNode(
+        source_id=source.id,
+        node_type="unit",
+        title="Unit 1",
+        ordinal=1,
+    )
+    node.id = uuid.uuid4()
+    point = KnowledgePoint(
+        source_id=source.id,
+        curriculum_node_id=node.id,
+        canonical_key="vocabulary.legacy.hello",
+        type="vocabulary",
+        title="hello",
+        summary="Unit 1 单元词表第 1 个词条。",
+        source_page="Words and Expressions",
+        status="published",
+        content={
+            "origin": "unit_wordlist_sequence_parser",
+            "unit_order": 1,
+            "raw_line": "hello /həˈləʊ/",
+        },
+    )
+    point.id = uuid.uuid4()
+    learner_id = uuid.uuid4()
+    monkeypatch.setattr(learning, "lookup_free_dictionary_batch", AsyncMock(return_value={}))
+
+    db = AsyncMock()
+    added: list[object] = []
+    db.add = MagicMock(side_effect=added.append)
+
+    async def flush() -> None:
+        for item in added:
+            if getattr(item, "id", None) is None:
+                item.id = uuid.uuid4()
+
+    db.flush = AsyncMock(side_effect=flush)
+    db.execute = AsyncMock(side_effect=[_one(source), _many([point]), _many([]), _many([])])
+
+    result = await learning.enroll_unit_vocabulary(db, learner_id, node)
+
+    assert result.total == 1
+    assert result.newly_added == 1
+    assert any(isinstance(value, VocabularyItem) and value.word == "hello" for value in added)
+    assert any(isinstance(value, VocabularyItemSource) for value in added)

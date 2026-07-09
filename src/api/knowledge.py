@@ -57,6 +57,7 @@ from src.verification.report import verify_knowledge_exercise_episode
 from src.vocabulary.learning import (
     canonical_vocabulary_key,
     enroll_unit_vocabulary,
+    is_unit_wordlist_point,
     learnable_point_statuses,
 )
 
@@ -1735,24 +1736,54 @@ async def record_knowledge_attempt(
         )
         vocab = vocab_result.scalar_one_or_none()
         if vocab is None:
-            db.add(
-                VocabularyItem(
-                    learner_id=learner_id,
-                    word=point.title,
-                    canonical_key=canonical_vocabulary_key(point.title),
-                    entry_kind=(point.content or {}).get("entry_kind") or "word",
-                    preferred_accent="auto",
-                    level=(point.content or {}).get("grade") or "unknown",
-                    meanings=[point.summary],
-                    source_ref=f"knowledge:{point.id}",
-                    status="learning",
-                    confidence=mastery,
-                    next_review_at=learner_state.next_review_at,
-                )
+            vocab = VocabularyItem(
+                learner_id=learner_id,
+                word=point.title,
+                canonical_key=canonical_vocabulary_key(point.title),
+                entry_kind=(point.content or {}).get("entry_kind") or "word",
+                preferred_accent="auto",
+                level=(point.content or {}).get("grade") or "unknown",
+                meanings=[point.summary],
+                source_ref=f"knowledge:{point.id}",
+                status="learning",
+                confidence=mastery,
+                next_review_at=learner_state.next_review_at,
             )
+            db.add(vocab)
+            await db.flush()
         else:
             vocab.confidence = mastery
             vocab.next_review_at = learner_state.next_review_at
+        if is_unit_wordlist_point(point) and point.curriculum_node_id:
+            source_result = await db.execute(
+                select(VocabularyItemSource.id).where(
+                    VocabularyItemSource.learner_id == learner_id,
+                    VocabularyItemSource.vocabulary_item_id == vocab.id,
+                    VocabularyItemSource.source_type == "textbook_unit",
+                    VocabularyItemSource.source_id == str(point.id),
+                    VocabularyItemSource.active.is_(True),
+                )
+            )
+            if source_result.scalar_one_or_none() is None:
+                db.add(
+                    VocabularyItemSource(
+                        learner_id=learner_id,
+                        vocabulary_item_id=vocab.id,
+                        source_type="textbook_unit",
+                        source_id=str(point.id),
+                        source_version_id=str(point.source_id),
+                        reason="knowledge_point_practiced",
+                        priority=0.8,
+                        curriculum_node_id=point.curriculum_node_id,
+                        display_label="教材单元",
+                        context_snapshot={
+                            "source_page": point.source_page,
+                            "unit_order": (point.content or {}).get("unit_order"),
+                            "origin": (point.content or {}).get("origin"),
+                        },
+                        active=True,
+                    )
+                )
 
     await db.flush()
     return KnowledgeAttemptResponse(
