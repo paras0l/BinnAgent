@@ -121,6 +121,14 @@ describe('Dashboard learning profile workspaces', () => {
     expect(dashboardSource).toContain("setActiveWorkspace('vocabulary')")
   })
 
+  it('opens vocabulary training workspace before choosing a practice mode', () => {
+    expect(dashboardSource).toContain('handleOpenVocabularyTraining')
+    expect(dashboardSource).toContain('onOpenVocabularyTraining')
+    expect(dashboardSource).toContain('label="词汇训练"')
+    expect(dashboardSource).toContain('onClick={onOpenVocabularyTraining}')
+    expect(dashboardSource).not.toContain('label="词汇训练" detail="复习、新词、拼写" onClick={() => onStartVocabularyPractice()}')
+  })
+
   it('keeps the vocabulary manager list bounded and paged', () => {
     expect(dashboardSource).toContain('VOCABULARY_PAGE_SIZE = 12')
     expect(dashboardSource).toContain('pagedVocabulary')

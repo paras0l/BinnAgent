@@ -201,6 +201,11 @@ export function DashboardPage({
     handleOpenVocabularyList()
   }
 
+  const handleOpenVocabularyTraining = () => {
+    setIsVocabListOpen(false)
+    setActiveWorkspace('vocabulary')
+  }
+
   useEffect(() => {
     if (initialWorkspace === 'vocabulary' && initialVocabularyListOpen) {
       const timer = window.setTimeout(() => void loadVocabularyList(), 0)
@@ -321,6 +326,7 @@ export function DashboardPage({
         summary={summary}
         onOpenDailyLearning={onOpenDailyLearning}
         onOpenVocabularyManager={handleOpenVocabularyManager}
+        onOpenVocabularyTraining={handleOpenVocabularyTraining}
         onOpenProfile={() => setActiveWorkspace('profile')}
         onOpenRecords={() => setActiveWorkspace('records')}
         onOpenGroupSignals={() => setActiveWorkspace('group-signals')}
@@ -585,6 +591,7 @@ function LearningCenterHome({
   groupLearningSummary,
   onOpenDailyLearning,
   onOpenVocabularyManager,
+  onOpenVocabularyTraining,
   onOpenProfile,
   onOpenRecords,
   onOpenGroupSignals,
@@ -595,6 +602,7 @@ function LearningCenterHome({
   groupLearningSummary: GroupLearningCardSummary
   onOpenDailyLearning: () => void
   onOpenVocabularyManager: () => void
+  onOpenVocabularyTraining: () => void
   onOpenProfile: () => void
   onOpenRecords: () => void
   onOpenGroupSignals: () => void
@@ -667,9 +675,9 @@ function LearningCenterHome({
           groupLearningSummary={groupLearningSummary}
           onOpenGroupSignals={onOpenGroupSignals}
           onOpenVocabularyManager={onOpenVocabularyManager}
+          onOpenVocabularyTraining={onOpenVocabularyTraining}
           onOpenProfile={onOpenProfile}
           onOpenRecords={onOpenRecords}
-          onStartVocabularyPractice={onStartVocabularyPractice}
         />
       </section>
     </PageShell>
@@ -752,17 +760,17 @@ function LearningSideRail({
   groupLearningSummary,
   onOpenGroupSignals,
   onOpenVocabularyManager,
+  onOpenVocabularyTraining,
   onOpenProfile,
   onOpenRecords,
-  onStartVocabularyPractice,
 }: {
   summary: DashboardSummary
   groupLearningSummary: GroupLearningCardSummary
   onOpenGroupSignals: () => void
   onOpenVocabularyManager: () => void
+  onOpenVocabularyTraining: () => void
   onOpenProfile: () => void
   onOpenRecords: () => void
-  onStartVocabularyPractice: (mode?: VocabularyPracticeMode) => void
 }) {
   const latestActivity = summary.daily_activity.slice(-7)
   const maxLearningAmount = Math.max(...latestActivity.map((item) => item.count), 1)
@@ -822,7 +830,7 @@ function LearningSideRail({
               </span>
             </span>
           </button>
-          <SideRailLink icon={<BookOpen className="size-4" />} label="词汇训练" detail="复习、新词、拼写" onClick={() => onStartVocabularyPractice()} />
+          <SideRailLink icon={<BookOpen className="size-4" />} label="词汇训练" detail="选择新词、复习或拼写" onClick={onOpenVocabularyTraining} />
           <SideRailLink icon={<Target className="size-4" />} label="词汇本管理" detail={`${summary.stats.total_vocab} 个词`} onClick={onOpenVocabularyManager} />
           <SideRailLink icon={<BrainCircuit className="size-4" />} label="学习画像" detail={`正确率 ${summary.stats.accuracy}%`} onClick={onOpenProfile} />
           <SideRailLink icon={<ClipboardList className="size-4" />} label="学习记录" detail="查看最近表现" onClick={onOpenRecords} />
