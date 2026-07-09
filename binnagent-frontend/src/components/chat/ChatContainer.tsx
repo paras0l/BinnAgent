@@ -89,6 +89,10 @@ export function ChatContainer({
     shouldAutoScrollRef.current = distanceFromBottom < 96
   }
 
+  const pauseAutoScrollForReading = () => {
+    if (isLoading) shouldAutoScrollRef.current = false
+  }
+
   useEffect(() => {
     if (!pendingPrompt || isLoading || isLoadingHistory) return
     if (consumedPromptIdRef.current === pendingPrompt.id) return
@@ -145,7 +149,7 @@ export function ChatContainer({
   const currentSkillName = activeSkillName || (currentSkillId === 'vocabulary_deposit' ? '词汇 Skill' : null)
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] overflow-hidden">
+    <div className="flex h-[calc(100dvh-4rem)] overflow-hidden overscroll-none">
       <ConversationSidebar
         conversations={conversations}
         activeThreadId={threadId}
@@ -201,7 +205,10 @@ export function ChatContainer({
           ref={messagesPaneRef}
           className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain p-4"
           aria-live="polite"
+          onPointerDown={pauseAutoScrollForReading}
           onScroll={handleMessagesScroll}
+          onTouchStart={pauseAutoScrollForReading}
+          onWheel={pauseAutoScrollForReading}
         >
           {isLoadingHistory ? (
             <div className="flex h-full items-center justify-center text-sm text-muted-foreground">

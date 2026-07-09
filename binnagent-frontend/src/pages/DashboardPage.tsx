@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useId, useMemo, useState, type ReactNode } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useId, useMemo, useState, type ReactNode } from 'react'
 import {
   ArrowLeft,
   ArrowRight,
@@ -34,9 +34,7 @@ import { SurfaceCard } from '@/components/ui/SurfaceCard'
 import type { DashboardSummary, Learner, LearnerProfile, MemorySummary, VocabularyListItem } from '@/types'
 import { useToast } from '@/hooks/useToast'
 import { useFocusTrap } from '@/hooks/useFocusTrap'
-import { GroupLearningSignalsPage } from '@/pages/GroupLearningSignalsPage'
 import type { VocabularyPracticeMode } from '@/pages/VocabularyPracticePage'
-import { VocabularyPracticePage } from '@/pages/VocabularyPracticePage'
 import {
   listGroupLearningSignals,
   listGroupLearningSources,
@@ -51,6 +49,14 @@ import {
 } from '@/utils/learnerProfile'
 
 const VOCABULARY_PAGE_SIZE = 12
+
+const GroupLearningSignalsPage = lazy(() =>
+  import('@/pages/GroupLearningSignalsPage').then((module) => ({ default: module.GroupLearningSignalsPage }))
+)
+
+const VocabularyPracticePage = lazy(() =>
+  import('@/pages/VocabularyPracticePage').then((module) => ({ default: module.VocabularyPracticePage }))
+)
 
 type GroupLearningCardState = 'not_configured' | 'paused' | 'unbound' | 'pending_sync' | 'active'
 
@@ -281,14 +287,16 @@ export function DashboardPage({
 
   if (detailItemId) {
     return (
-      <VocabularyPracticePage
-        learner={learner}
-        initialMode="new"
-        readonlyItemId={detailItemId}
-        readonlyBackLabel="返回词汇本"
-        sourceLabel="我的词汇本"
-        onExit={() => setDetailItemId(null)}
-      />
+      <Suspense fallback={<LoadingState title="正在打开词卡" description="正在加载单词详情..." />}>
+        <VocabularyPracticePage
+          learner={learner}
+          initialMode="new"
+          readonlyItemId={detailItemId}
+          readonlyBackLabel="返回词汇本"
+          sourceLabel="我的词汇本"
+          onExit={() => setDetailItemId(null)}
+        />
+      </Suspense>
     )
   }
 
@@ -350,11 +358,13 @@ export function DashboardPage({
 
   if (activeWorkspace === 'group-signals') {
     return (
-      <GroupLearningSignalsPage
-        learner={learner}
-        onBack={() => setActiveWorkspace('home')}
-        onOpenSettings={onOpenGroupLearningSettings}
-      />
+      <Suspense fallback={<LoadingState title="正在打开群聊学习线索" description="正在加载候选表达和复习线索..." />}>
+        <GroupLearningSignalsPage
+          learner={learner}
+          onBack={() => setActiveWorkspace('home')}
+          onOpenSettings={onOpenGroupLearningSettings}
+        />
+      </Suspense>
     )
   }
 

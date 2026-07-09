@@ -142,4 +142,11 @@ describe('Dashboard learning profile workspaces', () => {
     expect(dashboardSource).toContain('asArray(source.daily_activity)')
     expect(dashboardSource).toContain('asArray(source.error_patterns)')
   })
+
+  it('keeps secondary learning-center workspaces out of the first dashboard chunk', () => {
+    expect(dashboardSource).toContain("const GroupLearningSignalsPage = lazy(() =>")
+    expect(dashboardSource).toContain("const VocabularyPracticePage = lazy(() =>")
+    expect(dashboardSource).not.toContain("import { GroupLearningSignalsPage }")
+    expect(dashboardSource).not.toContain("import { VocabularyPracticePage }")
+  })
 })
