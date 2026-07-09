@@ -195,6 +195,30 @@ prompt_registry.register(
 )
 prompt_registry.register(
     PromptMetadata(
+        id="exercise.unit_candidates",
+        version="v1",
+        owner="exercises",
+        purpose="基于单元知识点和覆盖计划批量生成单元题库候选题",
+        template_path="versions/exercise.unit_candidates.v1.md",
+        output_schema="UnitExerciseCandidatesOutput",
+        model_policy={"default_model": "ollama_utility", "temperature": 0.35, "max_tokens": 6000},
+        eval_set="evals/prompts/exercise_unit_candidates_v1.jsonl",
+    )
+)
+prompt_registry.register(
+    PromptMetadata(
+        id="exercise.unit_review",
+        version="v1",
+        owner="exercises",
+        purpose="独立审查单元候选题的语境、答案唯一性和知识点对齐",
+        template_path="versions/exercise.unit_review.v1.md",
+        output_schema="UnitExerciseReviewOutput",
+        model_policy={"default_model": "ollama_utility", "temperature": 0.0, "max_tokens": 2500},
+        eval_set="evals/prompts/exercise_unit_review_v1.jsonl",
+    )
+)
+prompt_registry.register(
+    PromptMetadata(
         id="essay.scoring",
         version="v1",
         owner="writing",

@@ -47,6 +47,15 @@ from src.prompts import PromptExecutionContext, PromptExecutor
             ),
         ),
         (
+            "exercise.unit_review",
+            {
+                "unit_title": "Starter Unit 1",
+                "knowledge_points": [{"id": "kp-1", "title": "Good morning!"}],
+                "candidates": [{"knowledgePointId": "kp-1", "stem": "A: Hi. B: ___"}],
+            },
+            '{"reviews":[{"index":0,"decision":"accept","reasons":[]}]}',
+        ),
+        (
             "grammar.micro_lesson.structured",
             {"topic_title": "一般现在时"},
             (

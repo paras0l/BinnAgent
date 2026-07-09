@@ -156,6 +156,97 @@ GENERATED_EXERCISE_SCHEMA: dict[str, Any] = {
     "additionalProperties": False,
 }
 
+UNIT_EXERCISE_CANDIDATES_SCHEMA: dict[str, Any] = {
+    "type": "object",
+    "properties": {
+        "items": {
+            "type": "array",
+            "minItems": 8,
+            "maxItems": 20,
+            "items": {
+                "type": "object",
+                "properties": {
+                    "knowledgePointId": {"type": "string"},
+                    "questionType": {
+                        "type": "string",
+                        "enum": [
+                            "choice_context",
+                            "fill_blank",
+                            "dialogue_complete",
+                            "error_fix",
+                            "grammar_fill_blank",
+                        ],
+                    },
+                    "cognitiveLevel": {
+                        "type": "string",
+                        "enum": ["recognition", "understanding", "production", "transfer"],
+                    },
+                    "scenario": {
+                        "type": "object",
+                        "properties": {
+                            "name": {"type": "string"},
+                            "setting": {"type": "string"},
+                            "zh": {"type": "string"},
+                        },
+                        "required": ["name", "setting", "zh"],
+                        "additionalProperties": False,
+                    },
+                    "stem": {"type": "string"},
+                    "options": {"type": "array", "items": {"type": "string"}},
+                    "answer": {"type": "string"},
+                    "acceptableAnswers": {"type": "array", "items": {"type": "string"}},
+                    "explanation": {"type": "string"},
+                    "difficulty": {"type": "number", "minimum": 0.1, "maximum": 1.0},
+                    "targetExpression": {"type": "string"},
+                    "errorTypes": {"type": "array", "items": {"type": "string"}},
+                    "hint": {"type": "string"},
+                },
+                "required": [
+                    "knowledgePointId",
+                    "questionType",
+                    "cognitiveLevel",
+                    "scenario",
+                    "stem",
+                    "options",
+                    "answer",
+                    "acceptableAnswers",
+                    "explanation",
+                    "difficulty",
+                    "targetExpression",
+                    "errorTypes",
+                    "hint",
+                ],
+                "additionalProperties": False,
+            },
+        }
+    },
+    "required": ["items"],
+    "additionalProperties": False,
+}
+
+UNIT_EXERCISE_REVIEW_SCHEMA: dict[str, Any] = {
+    "type": "object",
+    "properties": {
+        "reviews": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 20,
+            "items": {
+                "type": "object",
+                "properties": {
+                    "index": {"type": "integer", "minimum": 0, "maximum": 19},
+                    "decision": {"type": "string", "enum": ["accept", "reject"]},
+                    "reasons": {"type": "array", "items": {"type": "string"}},
+                },
+                "required": ["index", "decision", "reasons"],
+                "additionalProperties": False,
+            },
+        }
+    },
+    "required": ["reviews"],
+    "additionalProperties": False,
+}
+
 ESSAY_SCORING_SCHEMA: dict[str, Any] = {
     "type": "object",
     "properties": {
@@ -377,6 +468,8 @@ SCHEMA_REGISTRY: dict[str, dict[str, Any]] = {
     "GroupLearningSignalExtractOutput": GROUP_LEARNING_SIGNAL_EXTRACT_SCHEMA,
     "GraphFeedbackOutput": GRAPH_FEEDBACK_SCHEMA,
     "GeneratedExerciseOutput": GENERATED_EXERCISE_SCHEMA,
+    "UnitExerciseCandidatesOutput": UNIT_EXERCISE_CANDIDATES_SCHEMA,
+    "UnitExerciseReviewOutput": UNIT_EXERCISE_REVIEW_SCHEMA,
     "EssayScoringOutput": ESSAY_SCORING_SCHEMA,
     "DictionaryLookupOutput": DICTIONARY_LOOKUP_SCHEMA,
     "LocalVocabularyOutput": LOCAL_VOCABULARY_SCHEMA,

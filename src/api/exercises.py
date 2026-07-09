@@ -10,6 +10,10 @@ from src.api.deps import get_db_session, get_model_router
 from src.exercises.attempt_service import ExerciseTargetType
 from src.exercises.item_mapper import exercise_question_to_item
 from src.knowledge.exercises import ensure_unit_exercises
+from src.knowledge.unit_exercise_generation import (
+    UnitExerciseGenerationUnavailableError,
+    select_unit_exercises_for_learner,
+)
 from src.models.knowledge import CurriculumNode
 from src.models.learner import Learner
 from src.prompts import PromptExecutionContext, PromptExecutor
@@ -63,6 +67,7 @@ async def list_exercises_for_target(
     target_id: str = Query(min_length=1),
     limit: int = Query(default=12, ge=1, le=50),
     db: AsyncSession = Depends(get_db_session),
+    model_router: ModelRouter = Depends(get_model_router),
 ) -> list[dict[str, Any]]:
     await _ensure_learner_exists(db, learner_id)
     if target_type != "curriculum_node":
@@ -74,14 +79,26 @@ async def list_exercises_for_target(
     if node is None:
         raise HTTPException(status_code=404, detail="Curriculum node not found")
 
-    questions = await ensure_unit_exercises(
+    try:
+        questions = await ensure_unit_exercises(
+            db,
+            source_id=node.source_id,
+            curriculum_node_id=node.id,
+            learner_id=learner_id,
+            unit_title=node.title,
+            model_router=model_router,
+        )
+    except UnitExerciseGenerationUnavailableError as exc:
+        raise HTTPException(status_code=503, detail="当前单元暂时没有通过质量审核的练习题") from exc
+    selected_questions = await select_unit_exercises_for_learner(
         db,
-        source_id=node.source_id,
-        curriculum_node_id=node.id,
+        learner_id=learner_id,
+        questions=questions,
+        limit=limit,
     )
     return [
         exercise_question_to_item(question, target_label=node.title)
-        for question in questions[:limit]
+        for question in selected_questions
     ]
 
 

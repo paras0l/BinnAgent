@@ -25,6 +25,8 @@ def test_prompt_registry_lists_core_prompts() -> None:
         "essay.scoring",
         "explore.capability_rerank",
         "exercise.generate",
+        "exercise.unit_candidates",
+        "exercise.unit_review",
         "graph.feedback",
         "graph.node",
         "group_learning.signal_extract",

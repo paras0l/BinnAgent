@@ -7,6 +7,7 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 from src.api import knowledge as knowledge_api
+from src.api import exercises as exercises_api
 from src.api import deps
 from src.config import settings
 from src.main import app
@@ -863,13 +864,49 @@ def test_knowledge_migration_creates_source_graph_and_memory_tables() -> None:
 
 
 @pytest.mark.asyncio
-async def test_start_unit_exercises_generates_questions(client, knowledge_session):
+async def test_start_unit_exercises_returns_reviewed_questions(
+    client,
+    knowledge_session,
+    monkeypatch,
+):
     learner_id = uuid.uuid4()
     source = _source()
     node = _node(source.id)
     point = _point(source.id, node.id)
+    question_types = [
+        "choice_context",
+        "fill_blank",
+        "dialogue_complete",
+        "error_fix",
+    ] * 2
+    questions: list[ExerciseQuestion] = []
+    for index, question_type in enumerate(question_types):
+        question = ExerciseQuestion(
+            source_id=source.id,
+            curriculum_node_id=node.id,
+            knowledge_point_id=point.id,
+            question_type=question_type,
+            stem=f"Reviewed question {index} with enough context and a clear answer.",
+            options=[point.title, "Good afternoon!", "Good evening!", "Good night!"]
+            if question_type == "choice_context"
+            else [],
+            answer=point.title,
+            explanation=point.summary,
+            difficulty=0.3 + index * 0.05,
+            status="published",
+            metadata_={
+                "scenario": {"name": f"Scenario {index}"},
+                "generator_version": "unit-exercise-llm-v1",
+                "quality_gate": {"status": "accepted"},
+                "rubric": {"acceptable_answers": [point.title]},
+            },
+        )
+        question.id = uuid.uuid4()
+        questions.append(question)
+    ensure = AsyncMock(return_value=questions)
+    monkeypatch.setattr(knowledge_api, "ensure_unit_exercises", ensure)
     knowledge_session.execute = AsyncMock(
-        side_effect=[_one(learner_id), _one(node), _many([]), _many([point])]
+        side_effect=[_one(learner_id), _one(node), _many([])]
     )
 
     response = await client.post(
@@ -900,11 +937,16 @@ async def test_start_unit_exercises_generates_questions(client, knowledge_sessio
     assert first_question["correctAnswer"]
     assert point.title in first_question["options"]
     assert first_question["metadata"]["scenario"]
-    assert any(isinstance(item, ExerciseQuestion) for item in knowledge_session.added_objects)
+    ensure.assert_awaited_once()
+    assert ensure.await_args.kwargs["learner_id"] == learner_id
 
 
 @pytest.mark.asyncio
-async def test_list_exercises_for_curriculum_target_returns_unified_items(client, knowledge_session):
+async def test_list_exercises_for_curriculum_target_returns_unified_items(
+    client,
+    knowledge_session,
+    monkeypatch,
+):
     learner_id = uuid.uuid4()
     source = _source()
     node = _node(source.id)
@@ -922,8 +964,13 @@ async def test_list_exercises_for_curriculum_target_returns_unified_items(client
         metadata_={"scenario": {"name": "Classroom"}},
     )
     question.id = uuid.uuid4()
+    monkeypatch.setattr(
+        exercises_api,
+        "ensure_unit_exercises",
+        AsyncMock(return_value=[question]),
+    )
     knowledge_session.execute = AsyncMock(
-        side_effect=[_one(learner_id), _one(node), _many([question])]
+        side_effect=[_one(learner_id), _one(node), _many([])]
     )
 
     response = await client.get(

@@ -85,14 +85,46 @@ traces 并关闭 tracing。查看本地管理员账号：
 `metadata` 保存 interaction、scenario、rubric、source evidence 和 estimated seconds。
 `exercise_attempts` 保存学习者答案、正确性、耗时和课程 session。
 
-首次请求某单元练习时，根据该单元知识点生成并持久化 8 道场景化混合题，后续复用：
+首次请求某单元练习时，根据该单元知识点生成并持久化经过审核的候选题池，后续复用：
 
 - `choice_context`：带语境的选择题。
 - `fill_blank`：填空题。
 - `dialogue_complete`：补全对话。
 - `error_fix`：找错并修改。
 
-生成链路为 `ExerciseBlueprint -> question generator -> linter -> published`。linter 会检查题干是否模板化、是否包含场景、是否有 rubric、题型是否至少 4 类、主动输入是否达到 30%、是否连续 3 道同题型。
+生成链路已经升级为：
+
+```text
+knowledge points
+  -> deterministic coverage plan
+  -> exercise.unit_candidates (LLM)
+  -> schema + deterministic quality gate
+  -> exercise.unit_review (independent LLM review)
+  -> published unit pool
+  -> mastery-aware selection
+```
+
+生成前会从单元知识点中优先选择 sentence pattern、grammar、phrase 和核心 vocabulary，
+避免大量按插入顺序排列的词汇项淹没核心句式。确定性 coverage plan 约束知识点、题型、认知层级和难度覆盖。直接识记题不超过 25%，
+`production` / `transfer` 至少占 50%，并要求至少 4 种题型和 50% 主动输入题。
+候选题必须通过以下门禁：
+
+- knowledge point ID 必须来自当前单元；
+- 题干不得包含“目标：使用……”等答案泄露提示；
+- 选择题必须有 4 个唯一同类选项，且正确答案恰好出现一次；
+- 填空和对话题必须有明确空格，文本题不能混入选择项；
+- 题干、答案、解释、scenario 和 rubric 必须完整；
+- 整套题不能重复，认知层级和题型比例必须达标；
+- 独立 reviewer 再检查语境连贯、答案唯一、干扰项质量、知识点对齐和难度合理性。
+
+候选生成或审题失败会重试一次。仍失败时只回退到已存在的教材原题或人工题（题量可少于默认值），旧的
+固定模板不会再作为 learner-facing fallback。旧模板生成题只有在
+新题池成功通过门禁后才会归档，避免失败时破坏已有可用数据。
+
+题库按单元缓存，页面打开不会重复调用模型。返回给学习者的题目由
+`LearnerKnowledgeState.mastery_score` 决定目标难度，同时优先保证题型和知识点多样性。
+生成和审题都通过 `PromptExecutor`，使用独立 schema、版本化模板、PromptExecutionRecord
+和离线 eval set。
 
 ```text
 POST /api/learners/{learner_id}/knowledge-base/units/{node_id}/exercises

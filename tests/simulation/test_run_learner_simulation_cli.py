@@ -61,5 +61,6 @@ def test_select_scenarios_supports_all_and_tag_filters() -> None:
 
     assert len(all_scenarios) > 1
     assert [scenario.id for scenario in prompt_scenarios] == [
-        "llm_json_missing_field_triggers_repair"
+        "llm_json_missing_field_triggers_repair",
+        "unit_exercise_rejects_template_context_mismatch",
     ]

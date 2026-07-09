@@ -5,6 +5,7 @@ import uuid
 import httpx
 
 from src.graph.main_graph import daily_lesson_graph
+from src.knowledge.unit_exercise_generation import lint_candidate
 from src.simulation.assertions import AssertionEngine
 from src.simulation.evaluator import SimulationEvaluator
 from src.simulation.learner_agent import SimulatedLearnerAgent
@@ -149,7 +150,36 @@ class ScenarioRunner:
             return await self._fetch_verification_report(context)
         if step.action == "generate_exercise_with_repair":
             return await self._generate_exercise_with_repair(step, context)
+        if step.action == "validate_unit_exercise_candidate":
+            return self._validate_unit_exercise_candidate(step)
         raise ValueError(f"Unsupported simulation action: {step.action}")
+
+    def _validate_unit_exercise_candidate(self, step: SimulationStep) -> dict[str, Any]:
+        point_id = str(step.payload.get("knowledge_point_id") or "kp-simulation")
+        candidate = {
+            "knowledgePointId": point_id,
+            "questionType": "dialogue_complete",
+            "cognitiveLevel": "production",
+            "scenario": {
+                "name": "classroom",
+                "setting": "answering in class",
+                "zh": "课堂问答",
+            },
+            "stem": step.payload.get(
+                "stem",
+                "场景：课堂问答。A: Hello! I am Jack. B: ______ 目标：使用相关表达。",
+            ),
+            "options": [],
+            "answer": step.payload.get("answer", "I'm fine, thanks."),
+            "acceptableAnswers": [step.payload.get("answer", "I'm fine, thanks.")],
+            "explanation": "根据上下文选择自然且符合知识点的回答。",
+            "difficulty": 0.3,
+            "targetExpression": step.payload.get("answer", "I'm fine, thanks."),
+            "errorTypes": ["context_mismatch"],
+            "hint": "先判断上一句话的交际意图。",
+        }
+        errors = lint_candidate(candidate, valid_point_ids={point_id})
+        return {"accepted": not errors, "errors": errors, "candidate": candidate}
 
     async def _create_learner(self, context: dict[str, Any]) -> dict[str, Any]:
         persona_id = str(context["persona"])

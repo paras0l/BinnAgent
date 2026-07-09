@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import and_, case, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.api.deps import get_db_session
+from src.api.deps import get_db_session, get_model_router
 from src.knowledge.exercise_grader import answer_to_text, grade_exercise_answer
 from src.config import settings
 from src.db import async_session_factory
@@ -19,6 +19,10 @@ from src.evidence.types import EvidenceRef
 from src.exercises import ExerciseAttemptService
 from src.exercises.item_mapper import exercise_question_to_item
 from src.knowledge.exercises import ensure_unit_exercises
+from src.knowledge.unit_exercise_generation import (
+    UnitExerciseGenerationUnavailableError,
+    select_unit_exercises_for_learner,
+)
 from src.knowledge.processor import process_uploaded_textbook
 from src.knowledge.quality import availability_status_for_quality, quality_summary, score_textbook_quality
 from src.knowledge.rag import retrieve_chunks
@@ -48,7 +52,7 @@ from src.models.knowledge import (
 from src.models.learner import Learner
 from src.models.session import LearningSession, LearningTask
 from src.models.vocabulary import ReviewSchedule, VocabularyItem, VocabularyItemSource
-from src.providers.router import router as model_router
+from src.providers.router import ModelRouter, router as model_router
 from src.runtime.episode import EpisodeRuntime
 from src.runtime.hashing import stable_json_hash
 from src.runtime.schemas import EpisodeTraceView, episode_to_view, event_to_view, tool_call_to_view
@@ -2180,6 +2184,7 @@ async def start_unit_exercises(
     curriculum_node_id: uuid.UUID,
     limit: int = Query(default=8, ge=1, le=12),
     db: AsyncSession = Depends(get_db_session),
+    unit_model_router: ModelRouter = Depends(get_model_router),
 ) -> dict[str, Any]:
     await _ensure_learner(db, learner_id)
     node_result = await db.execute(
@@ -2188,17 +2193,29 @@ async def start_unit_exercises(
     node = node_result.scalar_one_or_none()
     if node is None:
         raise HTTPException(status_code=404, detail="Curriculum node not found")
-    questions = await ensure_unit_exercises(
+    try:
+        questions = await ensure_unit_exercises(
+            db,
+            source_id=node.source_id,
+            curriculum_node_id=node.id,
+            learner_id=learner_id,
+            unit_title=node.title,
+            model_router=unit_model_router,
+        )
+    except UnitExerciseGenerationUnavailableError as exc:
+        raise HTTPException(status_code=503, detail="当前单元暂时没有通过质量审核的练习题") from exc
+    selected_questions = await select_unit_exercises_for_learner(
         db,
-        source_id=node.source_id,
-        curriculum_node_id=node.id,
+        learner_id=learner_id,
+        questions=questions,
+        limit=limit,
     )
     return {
         "curriculum_node_id": str(node.id),
         "title": f"{node.title} 练习",
         "questions": [
             _exercise_question_payload(question, target_label=node.title)
-            for question in questions[:limit]
+            for question in selected_questions
         ],
     }
 

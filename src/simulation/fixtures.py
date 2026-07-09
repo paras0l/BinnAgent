@@ -892,5 +892,43 @@ BUILTIN_SCENARIOS.update(
             "src/simulation/**",
         ],
     ),
+    "unit_exercise_rejects_template_context_mismatch": SimulationScenario(
+        id="unit_exercise_rejects_template_context_mismatch",
+        name="Unit exercise quality gate rejects leaked target template",
+        persona_id="grade7_low_vocab",
+        steps=[
+            SimulationStep(
+                name="validate_bad_unit_exercise_candidate",
+                action="validate_unit_exercise_candidate",
+                payload={
+                    "stem": (
+                        "场景：课堂问答。A: Hello! I am Jack. B: ______ "
+                        "目标：使用「I'm fine, thanks.」相关表达。"
+                    ),
+                    "answer": "I'm fine, thanks.",
+                },
+                assertions=[
+                    {"type": "equals", "path": "accepted", "value": False},
+                    {"type": "contains", "path": "errors", "value": "stem_leaks_target"},
+                ],
+            )
+        ],
+        module_tags=["exercise", "prompt_schema", "quality_gate"],
+        entrypoints=[
+            "src.knowledge.unit_exercise_generation.lint_candidate",
+            "src.knowledge.exercises.ensure_unit_exercises",
+        ],
+        expected_events=[],
+        expected_tool_calls=[],
+        expected_state_changes=["bad_candidate_rejected"],
+        required_metrics=["assertion_pass_rate"],
+        owner_module="exercises",
+        change_triggers=[
+            "src/knowledge/unit_exercise_generation.py",
+            "src/knowledge/exercises.py",
+            "src/prompts/versions/exercise.unit_*.md",
+            "src/simulation/**",
+        ],
+    ),
     }
 )

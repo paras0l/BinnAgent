@@ -210,10 +210,11 @@
 - 哪些 review item 应该阻止发布？
 - 你如何向面试官解释“解析质量治理”比“支持更多 PDF”更重要？
 
-### 29. ExerciseBlueprint、linter、rubric grader 的设计意图是什么？
+### 29. 单元覆盖计划、双重质量门禁和 rubric grader 的设计意图是什么？
 
-- 为什么不能直接让 LLM 生成 8 道题后保存？
-- linter 检查题型分布、场景性、主动输入比例有什么价值？
+- 为什么不能直接让 LLM 生成一批题后保存？
+- 确定性门禁与独立 LLM reviewer 分别解决什么问题？
+- 检查知识点覆盖、题型分布、场景性和主动输入比例有什么价值？
 - 主观题为什么不能只用 exact match？
 - hint / retry / next_review_signal 如何服务后续 mastery 和 review？
 
