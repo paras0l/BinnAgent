@@ -60,7 +60,7 @@ services:
       BINN_DEBUG_CONSOLE_ENABLED: ${BINN_DEBUG_CONSOLE_ENABLED:-true}
       BINN_DEBUG_CONSOLE_TOKEN: ${BINN_DEBUG_CONSOLE_TOKEN:?set BINN_DEBUG_CONSOLE_TOKEN}
       BINN_DEBUG_CONSOLE_ALLOWED_ORIGINS: ${BINN_DEBUG_CONSOLE_ALLOWED_ORIGINS:-["http://8.152.198.107:5174"]}
-    command: sh -c "alembic upgrade head && uvicorn src.main:app --host 0.0.0.0 --port 8000"
+    command: sh -c "python scripts/run_alembic.py upgrade head && python -m uvicorn src.main:app --host 0.0.0.0 --port 8000"
     volumes:
       - knowledge_data:/app/var/knowledge
     depends_on:

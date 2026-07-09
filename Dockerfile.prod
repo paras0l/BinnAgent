@@ -6,20 +6,13 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 WORKDIR /app
 
 COPY pyproject.toml ./
-RUN python - <<'PY' > /tmp/requirements.txt
-import tomllib
-
-with open("pyproject.toml", "rb") as fh:
-    project = tomllib.load(fh)["project"]
-
-for dependency in project.get("dependencies", []):
-    print(dependency)
-PY
-RUN pip install \
+RUN python -c "import tomllib; project = tomllib.load(open('pyproject.toml', 'rb'))['project']; print('\n'.join(project.get('dependencies', [])))" > /tmp/requirements.txt
+RUN python -m pip install \
     -i https://mirrors.aliyun.com/pypi/simple \
     --trusted-host mirrors.aliyun.com \
     --no-cache-dir \
-    -r /tmp/requirements.txt
+    -r /tmp/requirements.txt && \
+    python -c "from alembic.config import main as alembic_main; import uvicorn; print('verified runtime dependencies:', alembic_main.__name__, uvicorn.__version__)"
 
 COPY alembic/ ./alembic/
 COPY alembic.ini ./
@@ -27,12 +20,13 @@ COPY books/ ./books/
 COPY scripts/ ./scripts/
 COPY src/ ./src/
 
-RUN pip install \
+RUN python -m pip install \
     -i https://mirrors.aliyun.com/pypi/simple \
     --trusted-host mirrors.aliyun.com \
     --no-cache-dir \
     --no-deps \
-    .
+    . && \
+    python -c "from alembic.config import main as alembic_main; print('verified alembic cli entrypoint:', alembic_main.__name__)"
 
 EXPOSE 8000
 

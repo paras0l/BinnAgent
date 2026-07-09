@@ -573,14 +573,14 @@ export function VocabularyPracticePage({
         </div>
       </header>
 
-      <main className="min-h-0 flex-1 overflow-hidden px-4 py-3 sm:px-6 sm:py-4">
-        <section className="mx-auto grid h-full w-full max-w-[1420px] grid-rows-[minmax(0,1fr)_auto] gap-3 lg:grid-cols-[minmax(0,1fr)_320px] lg:grid-rows-1">
-          <section className="flex min-h-0 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <main className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto px-3 py-3 sm:px-6 sm:py-4 lg:overflow-hidden">
+        <section className="mx-auto grid min-h-full w-full max-w-[1420px] gap-3 lg:h-full lg:grid-cols-[minmax(0,1fr)_320px] lg:grid-rows-1">
+          <section className="flex min-h-[22rem] min-w-0 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm lg:min-h-0">
             <div className="shrink-0 border-b border-slate-100 px-4 py-3 sm:px-5">
               <p className="text-xs font-black uppercase tracking-[0.18em] text-indigo-600">当前任务</p>
             </div>
-            <div className={`min-h-0 flex-1 overflow-y-auto p-4 sm:p-5 ${mode === 'review' && isReviewRevealed ? '' : 'flex items-center justify-center text-center'}`}>
-              <div className="w-full">
+            <div className={`min-h-0 flex-1 p-4 sm:p-5 lg:overflow-y-auto ${mode === 'review' && isReviewRevealed ? '' : 'flex items-start justify-center text-center sm:items-center'}`}>
+              <div className="w-full min-w-0">
                 {mode === 'spelling' ? <><p className="text-sm font-black uppercase tracking-[0.18em] text-indigo-600">{feedback ? (feedback.result === 'correct' ? '拼对了' : feedback.result === 'revealed' ? '先记住答案' : '差一点，再看看') : '听发音，拼出这个词'}</p><button type="button" onClick={() => void playAudio()} aria-label="播放发音" className={`mx-auto mt-5 flex size-20 items-center justify-center rounded-full bg-indigo-600 text-white shadow-[0_14px_36px_rgba(79,70,229,0.28)] transition-transform hover:scale-[1.03] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 sm:size-24 ${isPlaying ? 'ring-8 ring-indigo-100' : ''}`}><Volume2 className="size-9 sm:size-10" /></button><p className="mt-3 text-xs font-bold text-slate-400">点击播放 · 空格键重播 · {accent === 'us' ? '美音' : '英音'}</p></> : null}
 
                 {(mode === 'review' || mode === 'new') && isReviewRevealed ? (
@@ -602,7 +602,7 @@ export function VocabularyPracticePage({
                 ) : mode === 'review' ? (
                   <div className="mx-auto max-w-2xl">
                     <p className="text-xs font-black uppercase tracking-[0.18em] text-indigo-600">先主动回忆</p>
-                    <h1 className="mt-4 text-4xl font-black text-slate-950 sm:text-5xl">{task.word}</h1>
+                    <h1 className="mt-4 break-words text-4xl font-black text-slate-950 [overflow-wrap:anywhere] sm:text-5xl">{task.word}</h1>
                     {task.phonetic ? <p className="mt-3 text-lg font-semibold text-slate-400">{task.phonetic}</p> : null}
                     <div className="mt-6 flex flex-wrap justify-center gap-3">
                       <button type="button" onClick={() => void playAudio()} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-black text-slate-700 transition-colors hover:border-indigo-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"><Volume2 className="size-4" />播放发音</button>
@@ -616,8 +616,8 @@ export function VocabularyPracticePage({
                   <div className="mx-auto max-w-2xl">
                     <label className="relative block cursor-text rounded-xl focus-within:ring-2 focus-within:ring-indigo-100" onClick={() => inputRef.current?.focus()}>
                       <input ref={inputRef} name="vocabulary_spelling_answer" value={answer} onChange={(event) => handleAnswerChange(event.target.value)} onCompositionStart={() => { compositionRef.current = true; setIsComposing(true); setInputWarning('正在使用输入法，请切换到英文输入后再提交。') }} onCompositionEnd={(event) => { compositionRef.current = false; setIsComposing(false); handleAnswerChange(event.currentTarget.value) }} lang="en" inputMode="text" autoCapitalize="none" autoCorrect="off" autoComplete="off" spellCheck={false} className="absolute inset-0 h-full w-full cursor-text opacity-0" aria-label="拼写答案" />
-                      <div className="flex min-h-16 flex-wrap items-end justify-center gap-2" aria-hidden="true">
-                        {Array.from({ length: Math.max(task.answer_length, answer.length) }, (_, index) => <span key={index} className={`flex h-14 min-w-10 items-center justify-center border-b-2 text-3xl font-black ${answer[index] ? 'border-indigo-500 text-slate-950' : 'border-slate-300 text-transparent'}`}>{answer[index] ?? '·'}</span>)}
+                      <div className="flex min-h-16 flex-wrap items-end justify-center gap-1.5 sm:gap-2" aria-hidden="true">
+                        {Array.from({ length: Math.max(task.answer_length, answer.length) }, (_, index) => <span key={index} className={`flex h-12 min-w-8 items-center justify-center border-b-2 text-2xl font-black sm:h-14 sm:min-w-10 sm:text-3xl ${answer[index] ? 'border-indigo-500 text-slate-950' : 'border-slate-300 text-transparent'}`}>{answer[index] ?? '·'}</span>)}
                       </div>
                     </label>
                     {error ? <p className="mt-4 text-sm font-bold text-amber-700">{error}</p> : null}

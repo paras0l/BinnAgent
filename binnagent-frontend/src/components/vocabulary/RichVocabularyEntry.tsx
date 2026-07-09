@@ -75,8 +75,8 @@ export function RichVocabularyEntry({
     <div className={`grid min-w-0 gap-3 ${compact ? '' : 'lg:grid-cols-[minmax(0,1fr)_300px]'}`}>
       <article className="min-w-0 rounded-2xl border border-slate-200 bg-white px-5 py-6 shadow-[0_12px_38px_rgba(15,23,42,0.06)] sm:px-8 sm:py-7">
         <div className="flex flex-wrap items-start justify-between gap-4 border-b border-slate-200 pb-5">
-          <div>
-            <h1 className="font-serif text-6xl font-semibold tracking-[-0.055em] text-[#102044] sm:text-7xl">
+          <div className="min-w-0">
+            <h1 className="break-words font-serif text-5xl font-semibold leading-tight tracking-normal text-[#102044] [overflow-wrap:anywhere] sm:text-7xl">
               {word}
             </h1>
             {tags.length > 0 ? (
@@ -85,7 +85,7 @@ export function RichVocabularyEntry({
               </p>
             ) : null}
           </div>
-          <div className="flex flex-wrap gap-2 pt-1">
+          <div className="flex min-w-0 flex-wrap gap-2 pt-1">
             <PronunciationButton
               accent="uk"
               label="英"
@@ -246,11 +246,11 @@ function PronunciationButton({
     <button
       type="button"
       onClick={() => onPlay?.(accent)}
-      className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-left transition ${selected ? 'border-indigo-300 bg-indigo-50 text-indigo-800' : 'border-slate-200 bg-white text-slate-600 hover:border-indigo-200'}`}
+      className={`flex min-w-0 items-center gap-2 rounded-xl border px-3 py-2 text-left transition ${selected ? 'border-indigo-300 bg-indigo-50 text-indigo-800' : 'border-slate-200 bg-white text-slate-600 hover:border-indigo-200'}`}
       aria-label={`播放${label}音`}
     >
       <span className="text-sm font-black">{label}</span>
-      <span className="font-mono text-sm">/{stripSlashes(phonetic) || '—'}/</span>
+      <span className="max-w-[8rem] truncate font-mono text-sm">/{stripSlashes(phonetic) || '—'}/</span>
       <Volume2 className="size-4" />
     </button>
   )

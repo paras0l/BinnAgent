@@ -1651,13 +1651,171 @@ function buildDueTrend(summary: DashboardSummary) {
 async function fetchDashboardSummary(learnerId: string) {
   const response = await fetch(`/api/learners/${learnerId}/dashboard`)
   if (!response.ok) throw new Error('Failed to load dashboard')
-  return await response.json() as DashboardSummary
+  return normalizeDashboardSummary(await response.json())
 }
 
 async function fetchMemorySummary(learnerId: string) {
   const response = await fetch(`/api/learners/${learnerId}/memory/summary`)
   if (!response.ok) throw new Error('Failed to load memory summary')
-  return await response.json() as MemorySummary
+  return normalizeMemorySummary(await response.json(), learnerId)
+}
+
+function normalizeDashboardSummary(value: unknown): DashboardSummary {
+  const source = asRecord(value)
+  const stats = asRecord(source.stats)
+  const todayGoal = normalizeGoal(source.today_goal, '今日课程', 0, 1)
+  const weeklyGoal = normalizeGoal(source.weekly_goal, '本周练习', 0, 5)
+  const profile = asRecord(source.profile)
+
+  return {
+    stats: {
+      today_reviews: safeNumber(stats.today_reviews),
+      today_completed_reviews: safeNumber(stats.today_completed_reviews),
+      streak_days: safeNumber(stats.streak_days),
+      accuracy: safeNumber(stats.accuracy),
+      total_vocab: safeNumber(stats.total_vocab),
+    },
+    review_items: asArray(source.review_items).map((item, index) => {
+      const row = asRecord(item)
+      return {
+        id: safeString(row.id, `review-${index}`),
+        word: safeString(row.word, 'word'),
+        phonetic: safeNullableString(row.phonetic),
+        definition: safeNullableString(row.definition),
+        example: safeNullableString(row.example),
+        confidence: safeNumber(row.confidence),
+      }
+    }),
+    error_patterns: asArray(source.error_patterns).map((item, index) => {
+      const row = asRecord(item)
+      return {
+        id: safeString(row.id, `pattern-${index}`),
+        name: safeString(row.name, '待巩固项目'),
+        count: safeNumber(row.count),
+        example: safeNullableString(row.example),
+        severity: safeNullableString(row.severity),
+      }
+    }),
+    today_goal: todayGoal,
+    weekly_goal: weeklyGoal,
+    daily_activity: asArray(source.daily_activity).map((item, index) => {
+      const row = asRecord(item)
+      return {
+        date: safeString(row.date, `day-${index + 1}`),
+        count: safeNumber(row.count),
+      }
+    }),
+    profile: {
+      ability_scores: asArray(profile.ability_scores).map((item, index) => {
+        const row = asRecord(item)
+        return {
+          label: safeString(row.label, `能力 ${index + 1}`),
+          value: safeNumber(row.value),
+          evidence_count: safeNumber(row.evidence_count),
+        }
+      }),
+      mastery_buckets: asArray(profile.mastery_buckets).map((item, index) => {
+        const row = asRecord(item)
+        return {
+          label: safeString(row.label, `分组 ${index + 1}`),
+          value: safeNumber(row.value),
+        }
+      }),
+      trend: asArray(profile.trend).map((item, index) => {
+        const row = asRecord(item)
+        return {
+          date: safeString(row.date, `trend-${index + 1}`),
+          accuracy: safeNumber(row.accuracy),
+          due_reviews: safeNumber(row.due_reviews),
+        }
+      }),
+    },
+  }
+}
+
+function normalizeMemorySummary(value: unknown, learnerId: string): MemorySummary {
+  const source = asRecord(value)
+  const learner = asRecord(source.learner)
+  const stats = asRecord(source.stats)
+
+  return {
+    learner: {
+      id: safeString(learner.id, learnerId),
+      nickname: safeString(learner.nickname, '学习者'),
+      email: safeNullableString(learner.email),
+    },
+    stats: {
+      conversation_count: safeNumber(stats.conversation_count),
+      message_count: safeNumber(stats.message_count),
+      total_vocab: safeNumber(stats.total_vocab),
+      due_reviews: safeNumber(stats.due_reviews),
+      mastered_vocab: safeNumber(stats.mastered_vocab),
+    },
+    latest_thread_id: safeNullableString(source.latest_thread_id),
+    latest_thread_title: safeNullableString(source.latest_thread_title),
+    latest_thread_summary: safeNullableString(source.latest_thread_summary),
+    error_patterns: asArray(source.error_patterns).map((item, index) => {
+      const row = asRecord(item)
+      return {
+        id: safeString(row.id, `memory-pattern-${index}`),
+        name: safeString(row.name, '待巩固项目'),
+        count: safeNumber(row.count),
+        severity: safeNullableString(row.severity),
+      }
+    }),
+    recent_sessions: asArray(source.recent_sessions).map((item, index) => {
+      const row = asRecord(item)
+      return {
+        id: safeString(row.id, `session-${index}`),
+        summary: safeNullableString(row.summary),
+        active_skill: safeNullableString(row.active_skill),
+        completed_at: safeNullableString(row.completed_at),
+      }
+    }),
+    recent_events: asArray(source.recent_events).map((item, index) => {
+      const row = asRecord(item)
+      return {
+        id: safeString(row.id, `event-${index}`),
+        event_type: safeString(row.event_type, 'event'),
+        skill: safeString(row.skill, 'general'),
+        source_type: safeString(row.source_type, 'unknown'),
+        source_id: safeNullableString(row.source_id),
+        confidence: safeNumber(row.confidence),
+        occurred_at: safeString(row.occurred_at, ''),
+        summary: safeString(row.summary, '学习记录已更新'),
+      }
+    }),
+    active_weaknesses: asArray(source.active_weaknesses).filter((item): item is string => typeof item === 'string'),
+  }
+}
+
+function normalizeGoal(value: unknown, fallbackLabel: string, fallbackCompleted: number, fallbackTotal: number) {
+  const goal = asRecord(value)
+  return {
+    label: safeString(goal.label, fallbackLabel),
+    completed: safeNumber(goal.completed, fallbackCompleted),
+    total: Math.max(1, safeNumber(goal.total, fallbackTotal)),
+  }
+}
+
+function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : {}
+}
+
+function asArray(value: unknown): unknown[] {
+  return Array.isArray(value) ? value : []
+}
+
+function safeString(value: unknown, fallback: string) {
+  return typeof value === 'string' && value.trim() ? value : fallback
+}
+
+function safeNullableString(value: unknown) {
+  return typeof value === 'string' && value.trim() ? value : null
+}
+
+function safeNumber(value: unknown, fallback = 0) {
+  return typeof value === 'number' && Number.isFinite(value) ? value : fallback
 }
 
 async function fetchGroupLearningCardSummary(learnerId: string): Promise<GroupLearningCardSummary> {

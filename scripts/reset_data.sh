@@ -94,7 +94,7 @@ if [[ "$DOCKER_VOLUME" -eq 1 ]]; then
   wait_for_database
 
   info "Running database migrations"
-  (cd "$ROOT_DIR" && "$PYTHON_BIN" -m alembic upgrade head)
+  (cd "$ROOT_DIR" && "$PYTHON_BIN" scripts/run_alembic.py upgrade head)
 
   info "Docker data volume has been recreated."
   exit 0

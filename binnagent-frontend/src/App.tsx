@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useState } from 'react'
+import { Component, lazy, Suspense, useEffect, useState, type ErrorInfo, type ReactNode } from 'react'
 import { Header } from './components/layout/Header'
 import { GroupLearningSettingsDialog } from './components/learning/GroupLearningSettingsDialog'
 import { LearningSettingsDialog } from './components/learning/LearningSettingsDialog'
@@ -60,6 +60,41 @@ function PageLoadingFallback({ label = '正在打开学习空间...' }: { label?
   )
 }
 
+interface RouteErrorBoundaryProps {
+  children: ReactNode
+  fallback: (reset: () => void) => ReactNode
+  resetKey: string
+}
+
+interface RouteErrorBoundaryState {
+  hasError: boolean
+}
+
+class RouteErrorBoundary extends Component<RouteErrorBoundaryProps, RouteErrorBoundaryState> {
+  state: RouteErrorBoundaryState = { hasError: false }
+
+  static getDerivedStateFromError(): RouteErrorBoundaryState {
+    return { hasError: true }
+  }
+
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error('Route render error:', error, errorInfo)
+  }
+
+  componentDidUpdate(previousProps: RouteErrorBoundaryProps) {
+    if (previousProps.resetKey !== this.props.resetKey && this.state.hasError) {
+      this.setState({ hasError: false })
+    }
+  }
+
+  reset = () => this.setState({ hasError: false })
+
+  render() {
+    if (this.state.hasError) return this.props.fallback(this.reset)
+    return this.props.children
+  }
+}
+
 function App() {
   const { showToast } = useToast()
   const [activeTab, setActiveTab] = useState<AppTab>('chat')
@@ -80,22 +115,14 @@ function App() {
   const [isGroupLearningSettingsOpen, setIsGroupLearningSettingsOpen] = useState(false)
   const [learnerProfile, setLearnerProfile] = useState<LearnerProfile | null>(null)
   const [learnerProfileReadiness, setLearnerProfileReadiness] = useState<LearnerProfileReadiness | null>(null)
-  const [currentLearner, setCurrentLearner] = useState<Learner | null>(() => {
-    const cached = localStorage.getItem('binnLearner')
-    if (!cached) return null
-    try {
-      return JSON.parse(cached) as Learner
-    } catch {
-      return null
-    }
-  })
+  const [currentLearner, setCurrentLearner] = useState<Learner | null>(() => readCachedLearner())
   const [isRestoringLearner, setIsRestoringLearner] = useState(() =>
-    Boolean(localStorage.getItem('binnLearnerId'))
+    Boolean(readLocalStorageItem('binnLearnerId'))
   )
   const { preferences, resetPreferences, updatePreferences } = useLearningPreferences(currentLearner?.id)
 
   useEffect(() => {
-    const learnerId = localStorage.getItem('binnLearnerId')
+    const learnerId = readLocalStorageItem('binnLearnerId')
     if (!learnerId) return
 
     fetch(`/api/learners/${learnerId}`)
@@ -104,12 +131,12 @@ function App() {
         return response.json() as Promise<Learner>
       })
       .then((learner) => {
-        localStorage.setItem('binnLearner', JSON.stringify(learner))
+        writeLocalStorageItem('binnLearner', JSON.stringify(learner))
         setCurrentLearner(learner)
       })
       .catch(() => {
-        localStorage.removeItem('binnLearnerId')
-        localStorage.removeItem('binnLearner')
+        removeLocalStorageItem('binnLearnerId')
+        removeLocalStorageItem('binnLearner')
         setCurrentLearner(null)
       })
       .finally(() => setIsRestoringLearner(false))
@@ -199,8 +226,8 @@ function App() {
       showToast('回答生成中，请先等待完成或点击取消。', { variant: 'warning' })
       return
     }
-    localStorage.removeItem('binnLearnerId')
-    localStorage.removeItem('binnLearner')
+    removeLocalStorageItem('binnLearnerId')
+    removeLocalStorageItem('binnLearner')
     setCurrentLearner(null)
     setLearnerProfile(null)
     setLearnerProfileReadiness(null)
@@ -347,7 +374,33 @@ function App() {
       />
       <main className="pt-16">
         {profileSetupBanner}
-        <Suspense fallback={<PageLoadingFallback />}>
+        <RouteErrorBoundary
+          resetKey={`${currentLearner.id}:${activeTab}:${learningCenterView}`}
+          fallback={(reset) => (
+            <div className="mx-auto max-w-3xl px-4 py-6 sm:px-6 lg:px-8">
+              <StatusBanner
+                tone="warning"
+                title="这个页面暂时没有打开"
+                action={
+                  <Button
+                    variant="secondary"
+                    className="px-3 py-2 text-xs"
+                    onClick={() => {
+                      reset()
+                      setActiveTab('chat')
+                      setLearningCenterView('home')
+                    }}
+                  >
+                    返回 AI 对话
+                  </Button>
+                }
+              >
+                可以先回到 AI 对话继续学习，或者切换回来重试学习中心。
+              </StatusBanner>
+            </div>
+          )}
+        >
+          <Suspense fallback={<PageLoadingFallback />}>
           {activeTab === 'chat' ? (
             <ChatPage
               learner={currentLearner}
@@ -414,10 +467,45 @@ function App() {
             )
           )
           }
-        </Suspense>
+          </Suspense>
+        </RouteErrorBoundary>
       </main>
     </div>
   )
+}
+
+function readCachedLearner() {
+  const cached = readLocalStorageItem('binnLearner')
+  if (!cached) return null
+  try {
+    return JSON.parse(cached) as Learner
+  } catch {
+    return null
+  }
+}
+
+function readLocalStorageItem(key: string) {
+  try {
+    return localStorage.getItem(key)
+  } catch {
+    return null
+  }
+}
+
+function writeLocalStorageItem(key: string, value: string) {
+  try {
+    localStorage.setItem(key, value)
+  } catch {
+    // Some mobile/private browsers can deny storage; keep the in-memory session usable.
+  }
+}
+
+function removeLocalStorageItem(key: string) {
+  try {
+    localStorage.removeItem(key)
+  } catch {
+    // Ignore storage cleanup failures.
+  }
 }
 
 export default App

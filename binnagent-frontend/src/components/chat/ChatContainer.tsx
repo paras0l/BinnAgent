@@ -59,12 +59,35 @@ export function ChatContainer({
   const [isMemoryCollapsed, setIsMemoryCollapsed] = useState(true)
   const isHistoryDrawer = useMediaQuery('(max-width: 1023px)')
   const isMemoryDrawer = useMediaQuery('(max-width: 1279px)')
-  const messagesEndRef = useRef<HTMLDivElement>(null)
+  const messagesPaneRef = useRef<HTMLDivElement>(null)
+  const shouldAutoScrollRef = useRef(true)
+  const previousMessageCountRef = useRef(0)
   const consumedPromptIdRef = useRef<number | null>(null)
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    shouldAutoScrollRef.current = true
+  }, [threadId, isLoadingHistory])
+
+  useEffect(() => {
+    const pane = messagesPaneRef.current
+    if (!pane) return
+    const messageCountChanged = messages.length !== previousMessageCountRef.current
+    previousMessageCountRef.current = messages.length
+
+    if (messageCountChanged && messages[messages.length - 1]?.role === 'user') {
+      shouldAutoScrollRef.current = true
+    }
+
+    if (!shouldAutoScrollRef.current) return
+    pane.scrollTo({ top: pane.scrollHeight, behavior: messageCountChanged ? 'smooth' : 'auto' })
   }, [messages])
+
+  const handleMessagesScroll = () => {
+    const pane = messagesPaneRef.current
+    if (!pane) return
+    const distanceFromBottom = pane.scrollHeight - pane.scrollTop - pane.clientHeight
+    shouldAutoScrollRef.current = distanceFromBottom < 96
+  }
 
   useEffect(() => {
     if (!pendingPrompt || isLoading || isLoadingHistory) return
@@ -174,7 +197,12 @@ export function ChatContainer({
           </div>
         </div>
 
-        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-4" aria-live="polite">
+        <div
+          ref={messagesPaneRef}
+          className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain p-4"
+          aria-live="polite"
+          onScroll={handleMessagesScroll}
+        >
           {isLoadingHistory ? (
             <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
               正在恢复最近对话…
@@ -200,7 +228,6 @@ export function ChatContainer({
           {isLoading && messages[messages.length - 1]?.content === '' && (
             <TypingIndicator />
           )}
-          <div ref={messagesEndRef} />
         </div>
 
         <div className="border-t p-4">

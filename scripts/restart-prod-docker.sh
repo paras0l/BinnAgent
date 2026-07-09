@@ -176,13 +176,15 @@ if [[ -n "$FEISHU_MCP_URL_FOR_APP" ]]; then
   FEISHU_ENV_ARGS=(-e "BINN_FEISHU_MCP_URL=$FEISHU_MCP_URL_FOR_APP")
 fi
 
+docker run --rm binnagent-app:latest python -c "from alembic.config import main as alembic_main; import uvicorn; print('runtime dependency check ok:', alembic_main.__name__, uvicorn.__version__)"
+
 docker run --rm \
   --network "$NETWORK_NAME" \
   --env-file "$ENV_FILE" \
   "${FEISHU_ENV_ARGS[@]}" \
   -v binnagent_knowledge:/app/var/knowledge \
   binnagent-app:latest \
-  alembic upgrade head
+  python scripts/run_alembic.py upgrade head
 
 docker rm -f binnagent-app binnagent-web >/dev/null 2>&1 || true
 

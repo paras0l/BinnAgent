@@ -135,4 +135,11 @@ describe('Dashboard learning profile workspaces', () => {
     expect(dashboardSource).not.toContain('weaknessPenalty')
     expect(dashboardSource).not.toContain('summary.stats.streak_days * 6 + 45')
   })
+
+  it('normalizes dashboard API payloads before rendering learning center', () => {
+    expect(dashboardSource).toContain('normalizeDashboardSummary(await response.json())')
+    expect(dashboardSource).toContain("normalizeGoal(source.today_goal, '今日课程', 0, 1)")
+    expect(dashboardSource).toContain('asArray(source.daily_activity)')
+    expect(dashboardSource).toContain('asArray(source.error_patterns)')
+  })
 })

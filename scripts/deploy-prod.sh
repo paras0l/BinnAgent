@@ -14,6 +14,7 @@ REMOTE_ARCHIVE="$REMOTE_TMP_DIR/$ARCHIVE_NAME"
 
 RUN_LINT="${BINN_DEPLOY_RUN_LINT:-true}"
 RUN_NPM_CI="${BINN_DEPLOY_NPM_CI:-auto}"
+DOCKER_BUILD_NO_CACHE="${BINN_DEPLOY_DOCKER_BUILD_NO_CACHE:-false}"
 DRY_RUN=false
 
 usage() {
@@ -26,6 +27,7 @@ Environment variables:
   BINN_DEPLOY_ENV_FILE=/opt/binnagent/.env.production
   BINN_DEPLOY_RUN_LINT=true|false
   BINN_DEPLOY_NPM_CI=auto|true|false
+  BINN_DEPLOY_DOCKER_BUILD_NO_CACHE=true|false
 EOF
 }
 
@@ -115,6 +117,7 @@ set -euo pipefail
 REMOTE_DIR="$1"
 REMOTE_ENV_FILE="$2"
 REMOTE_ARCHIVE="$3"
+DOCKER_BUILD_NO_CACHE="$4"
 
 if [[ ! -f "$REMOTE_ENV_FILE" ]]; then
   echo "Missing remote env file: $REMOTE_ENV_FILE" >&2
@@ -142,7 +145,14 @@ rm -rf \
 tar -xzf "$REMOTE_ARCHIVE" -C "$REMOTE_DIR"
 chmod +x "$REMOTE_DIR/scripts/restart-prod-docker.sh"
 
-docker build -f Dockerfile.prod -t binnagent-app:latest "$REMOTE_DIR"
+BUILD_ARGS=(-f Dockerfile.prod -t binnagent-app:latest)
+if [[ "$DOCKER_BUILD_NO_CACHE" == "true" ]]; then
+  BUILD_ARGS+=(--no-cache)
+fi
+BUILD_ARGS+=("$REMOTE_DIR")
+docker image rm -f binnagent-app:latest >/dev/null 2>&1 || true
+docker build "${BUILD_ARGS[@]}"
+docker run --rm binnagent-app:latest python -c "from alembic.config import main as alembic_main; import uvicorn; print('runtime dependency check ok:', alembic_main.__name__, uvicorn.__version__)"
 "$REMOTE_DIR/scripts/restart-prod-docker.sh" "$REMOTE_ENV_FILE"
 
 echo
@@ -158,9 +168,9 @@ EOS
 
 echo "Running remote deploy"
 if [[ "$DRY_RUN" == "false" ]]; then
-  ssh "$DEPLOY_HOST" "bash -s" -- "$REMOTE_DIR" "$REMOTE_ENV_FILE" "$REMOTE_ARCHIVE" <<<"$REMOTE_SCRIPT"
+  ssh "$DEPLOY_HOST" "bash -s" -- "$REMOTE_DIR" "$REMOTE_ENV_FILE" "$REMOTE_ARCHIVE" "$DOCKER_BUILD_NO_CACHE" <<<"$REMOTE_SCRIPT"
 else
-  echo "+ ssh $DEPLOY_HOST bash -s -- $REMOTE_DIR $REMOTE_ENV_FILE $REMOTE_ARCHIVE"
+  echo "+ ssh $DEPLOY_HOST bash -s -- $REMOTE_DIR $REMOTE_ENV_FILE $REMOTE_ARCHIVE $DOCKER_BUILD_NO_CACHE"
 fi
 
 if [[ "$DRY_RUN" == "false" ]]; then

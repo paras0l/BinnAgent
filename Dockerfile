@@ -21,16 +21,9 @@ RUN apt-get update && \
 # Install third-party Python dependencies before copying application code so
 # source-only changes can reuse the expensive dependency layer.
 COPY pyproject.toml ./
-RUN python - <<'PY' > /tmp/requirements.txt
-import tomllib
-
-with open("pyproject.toml", "rb") as fh:
-    project = tomllib.load(fh)["project"]
-
-for dependency in project.get("dependencies", []):
-    print(dependency)
-PY
-RUN pip install --no-cache-dir -r /tmp/requirements.txt
+RUN python -c "import tomllib; project = tomllib.load(open('pyproject.toml', 'rb'))['project']; print('\n'.join(project.get('dependencies', [])))" > /tmp/requirements.txt
+RUN python -m pip install --no-cache-dir -r /tmp/requirements.txt && \
+    python -c "from alembic.config import main as alembic_main; import uvicorn; print('verified runtime dependencies:', alembic_main.__name__, uvicorn.__version__)"
 
 COPY alembic/ ./alembic/
 COPY alembic.ini ./
@@ -39,7 +32,8 @@ COPY scripts/ ./scripts/
 COPY src/ ./src/
 
 # Install only the local project package after source code is copied.
-RUN pip install --no-cache-dir --no-deps .
+RUN python -m pip install --no-cache-dir --no-deps . && \
+    python -c "from alembic.config import main as alembic_main; print('verified alembic cli entrypoint:', alembic_main.__name__)"
 
 EXPOSE 8000
 
