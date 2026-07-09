@@ -6,7 +6,11 @@ import pytest
 
 from src.api import deps
 from src.main import app
+from src.models.knowledge import CurriculumNode, KnowledgePoint, KnowledgeSource
+from src.models.learner import LearnerProfile
+from src.models.knowledge import ExerciseAttempt
 from src.models.reading import ReadingMaterialHistory
+from src.providers.base import ChatRequest, ChatResponse
 
 
 @pytest.fixture
@@ -43,6 +47,12 @@ def _many(values: list):
     return result
 
 
+def _first(value):
+    result = MagicMock()
+    result.first.return_value = value
+    return result
+
+
 def _history(learner_id: uuid.UUID) -> ReadingMaterialHistory:
     material = ReadingMaterialHistory(
         learner_id=learner_id,
@@ -51,14 +61,50 @@ def _history(learner_id: uuid.UUID) -> ReadingMaterialHistory:
         text_hash="hash",
         level="general",
         goal="mixed",
+        material_type="passage",
         word_count=14,
         sentence_count=2,
         source="reading_workshop",
+        generation_context={},
     )
     material.id = uuid.uuid4()
     material.created_at = datetime.now(timezone.utc)
     material.updated_at = datetime.now(timezone.utc)
     return material
+
+
+class FakeReadingModelRouter:
+    async def chat(self, request: ChatRequest) -> ChatResponse:
+        return ChatResponse(
+            provider="fake",
+            model="fake-reading",
+            content=(
+                '{"title":"A New Friend At School","material_type":"passage",'
+                '"text":"Lily is new at school. She meets Tom in her classroom. Tom is friendly and helps Lily find the library. They talk about their teachers, their timetable, and their favorite books. After lunch, Lily feels happy because she has a kind classmate and a new friend.",'
+                '"theme":"school life","grammar_focus":["be 动词"],'
+                '"vocabulary_used":["friend","classmate","school","teacher"],'
+                '"level_rationale":"句子较短，适合初中学习者。",'
+                '"comprehension_checks":[{"question":"Who helps Lily?","answer":"Tom helps Lily."}],'
+                '"confidence":0.9}'
+            ),
+        )
+
+
+class FakeDialogueAsPassageModelRouter:
+    async def chat(self, request: ChatRequest) -> ChatResponse:
+        return ChatResponse(
+            provider="fake",
+            model="fake-reading",
+            content=(
+                '{"title":"A Fun Day At School","material_type":"passage",'
+                '"text":"Lily: Hi, Tom! Today is a fun day at school because we have a music lesson and a library visit.\\nTom: Hi, Lily! I like music too, and I want to read a story about a clever student after lunch.\\nLily: Great! We can meet our teacher, ask questions, and talk with our new classmates.",'
+                '"theme":"school life","grammar_focus":["be 动词"],'
+                '"vocabulary_used":["school","teacher","classmate","library"],'
+                '"level_rationale":"句子较短，适合初中学习者。",'
+                '"comprehension_checks":[{"question":"Where are Lily and Tom?","answer":"They are at school."}],'
+                '"confidence":0.9}'
+            ),
+        )
 
 
 @pytest.mark.asyncio
@@ -120,6 +166,7 @@ async def test_save_reading_material_history(client, mock_session):
     assert data["title"] == "Reading Strategies"
     assert data["level"] == "cet4"
     assert data["goal"] == "mixed"
+    assert data["material_type"] == "passage"
     assert data["word_count"] == 14
     assert data["sentence_count"] == 2
     created = mock_session.added_objects[0]
@@ -141,6 +188,49 @@ async def test_list_reading_material_history(client, mock_session):
 
 
 @pytest.mark.asyncio
+async def test_list_reading_material_history_filters_by_curriculum_node(client, mock_session):
+    learner_id = uuid.uuid4()
+    source_id = uuid.uuid4()
+    node_id = uuid.uuid4()
+    source = KnowledgeSource(
+        id=source_id,
+        owner_learner_id=None,
+        title="Grade 7 English",
+        filename="book.pdf",
+        publisher="PEP",
+        edition="2026",
+        grade="grade-7",
+        volume="upper",
+        status="published",
+        visibility="public",
+        sha256="x" * 64,
+        file_size=100,
+        unit_count=1,
+        knowledge_count=3,
+    )
+    node = CurriculumNode(
+        id=node_id,
+        source_id=source_id,
+        parent_id=None,
+        node_type="unit",
+        title="Unit 1",
+        subtitle="Making new friends",
+        ordinal=1,
+    )
+    material = _history(learner_id)
+    material.curriculum_node_id = node_id
+    mock_session.execute = AsyncMock(side_effect=[_one(learner_id), _first((node, source)), _many([material])])
+
+    response = await client.get(
+        f"/api/learners/{learner_id}/reading-workshop/materials",
+        params={"curriculum_node_id": str(node_id)},
+    )
+
+    assert response.status_code == 200
+    assert response.json()[0]["curriculum_node_id"] == str(node_id)
+
+
+@pytest.mark.asyncio
 async def test_list_reading_material_history_unknown_learner_returns_404(client, mock_session):
     learner_id = uuid.uuid4()
     mock_session.execute = AsyncMock(return_value=_one(None))
@@ -148,3 +238,171 @@ async def test_list_reading_material_history_unknown_learner_returns_404(client,
     response = await client.get(f"/api/learners/{learner_id}/reading-workshop/materials")
 
     assert response.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_generate_unit_reading_material(client, mock_session):
+    learner_id = uuid.uuid4()
+    source_id = uuid.uuid4()
+    node_id = uuid.uuid4()
+    source = KnowledgeSource(
+        id=source_id,
+        owner_learner_id=None,
+        title="Grade 7 English",
+        filename="book.pdf",
+        publisher="PEP",
+        edition="2026",
+        grade="grade-7",
+        volume="upper",
+        status="published",
+        visibility="public",
+        sha256="x" * 64,
+        file_size=100,
+        unit_count=1,
+        knowledge_count=3,
+    )
+    node = CurriculumNode(
+        id=node_id,
+        source_id=source_id,
+        parent_id=None,
+        node_type="unit",
+        title="Unit 1",
+        subtitle="Making new friends",
+        ordinal=1,
+        learning_objectives=["Introduce yourself"],
+    )
+    points = [
+        KnowledgePoint(
+            id=uuid.uuid4(),
+            source_id=source_id,
+            curriculum_node_id=node_id,
+            canonical_key="grammar.be",
+            type="grammar",
+            title="be 动词",
+            summary="用 am/is/are 介绍身份。",
+            source_page="1",
+            content={"unit_order": 1},
+        ),
+        KnowledgePoint(
+            id=uuid.uuid4(),
+            source_id=source_id,
+            curriculum_node_id=node_id,
+            canonical_key="vocab.friend",
+            type="vocabulary",
+            title="friend",
+            summary="朋友。",
+            source_page="2",
+            content={"unit_order": 1},
+        ),
+    ]
+    profile = LearnerProfile(learner_id=learner_id, current_level="a2")
+    mock_session.execute = AsyncMock(
+        side_effect=[
+            _one(learner_id),
+            _first((node, source)),
+            _many(points),
+            _one(profile),
+        ]
+    )
+    app.dependency_overrides[deps.get_model_router] = lambda: FakeReadingModelRouter()
+
+    response = await client.post(
+        f"/api/learners/{learner_id}/reading-workshop/generated-materials",
+        json={
+            "curriculum_node_id": str(node_id),
+            "material_type": "passage",
+            "length": "short",
+            "goal": "mixed",
+        },
+    )
+
+    assert response.status_code == 201
+    data = response.json()
+    assert data["material"]["title"] == "A New Friend At School"
+    assert data["material"]["source"] == "unit_llm_generation"
+    assert data["material"]["curriculum_node_id"] == str(node_id)
+    assert data["material"]["generation_context"]["grammar_focus"] == ["be 动词"]
+    created_material = [item for item in mock_session.added_objects if isinstance(item, ReadingMaterialHistory)][0]
+    assert created_material.material_type == "passage"
+
+
+@pytest.mark.asyncio
+async def test_generate_passage_rejects_dialogue_format(client, mock_session):
+    learner_id = uuid.uuid4()
+    source_id = uuid.uuid4()
+    node_id = uuid.uuid4()
+    source = KnowledgeSource(
+        id=source_id,
+        owner_learner_id=None,
+        title="Grade 7 English",
+        filename="book.pdf",
+        publisher="PEP",
+        edition="2026",
+        grade="grade-7",
+        volume="upper",
+        status="published",
+        visibility="public",
+        sha256="x" * 64,
+        file_size=100,
+        unit_count=1,
+        knowledge_count=3,
+    )
+    node = CurriculumNode(
+        id=node_id,
+        source_id=source_id,
+        parent_id=None,
+        node_type="unit",
+        title="Unit 1",
+        subtitle="Making new friends",
+        ordinal=1,
+    )
+    profile = LearnerProfile(learner_id=learner_id, current_level="a2")
+    mock_session.execute = AsyncMock(
+        side_effect=[
+            _one(learner_id),
+            _first((node, source)),
+            _many([]),
+            _one(profile),
+        ]
+    )
+    app.dependency_overrides[deps.get_model_router] = lambda: FakeDialogueAsPassageModelRouter()
+
+    response = await client.post(
+        f"/api/learners/{learner_id}/reading-workshop/generated-materials",
+        json={
+            "curriculum_node_id": str(node_id),
+            "material_type": "passage",
+            "length": "long",
+            "goal": "mixed",
+        },
+    )
+
+    assert response.status_code == 502
+    assert response.json()["detail"] == "Generated passage used dialogue format"
+    created_materials = [item for item in mock_session.added_objects if isinstance(item, ReadingMaterialHistory)]
+    assert created_materials == []
+
+
+@pytest.mark.asyncio
+async def test_complete_reading_material_records_reading_attempt(client, mock_session):
+    learner_id = uuid.uuid4()
+    material = _history(learner_id)
+    mock_session.execute = AsyncMock(side_effect=[_one(learner_id), _one(material)])
+
+    response = await client.post(
+        f"/api/learners/{learner_id}/reading-workshop/materials/{material.id}/complete",
+        json={
+            "duration_seconds": 240,
+            "comprehension_score": 86,
+            "selected_sentence_count": 2,
+            "grammar_topic_count": 1,
+        },
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["material_id"] == str(material.id)
+    created_attempt = [item for item in mock_session.added_objects if isinstance(item, ExerciseAttempt)][0]
+    assert created_attempt.target_type == "reading_passage"
+    assert created_attempt.result == "correct"
+    assert created_attempt.metadata_["reading_value"] > 0

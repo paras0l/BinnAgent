@@ -23,6 +23,7 @@ import { Button } from '@/components/ui/Button'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { FormField } from '@/components/ui/FormField'
 import { IconButton } from '@/components/ui/IconButton'
+import { Select } from '@/components/ui/Select'
 import { SurfaceCard } from '@/components/ui/SurfaceCard'
 import { useFocusTrap } from '@/hooks/useFocusTrap'
 import {
@@ -539,19 +540,20 @@ export function VocabularyDetailPage({
                     <Field label="展示名" name="vocabulary_display_form" value={cardForm.display_form_override} onChange={(value) => setCardForm((prev) => ({ ...prev, display_form_override: value }))} placeholder={`例如：${cardDetail.word}…`} />
                     <label className="block text-sm font-bold text-slate-700">
                       掌握状态 / 复习偏好
-                      <select
+                      <Select
                         name="vocabulary_review_preference"
                         autoComplete="off"
                         value={cardForm.review_preference}
                         onChange={(event) => setCardForm((prev) => ({ ...prev, review_preference: event.target.value }))}
-                        className="mt-1.5 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
+                        wrapperClassName="mt-1.5"
+                        className="font-normal"
                       >
                         <option value="normal">正常复习</option>
                         <option value="mastered">已掌握</option>
                         <option value="too_easy">太简单</option>
                         <option value="excluded">暂不复习</option>
                         <option value="relearn">重新学习</option>
-                      </select>
+                      </Select>
                     </label>
                     <Field label="我的理解" name="vocabulary_user_understanding" value={cardForm.user_understanding} onChange={(value) => setCardForm((prev) => ({ ...prev, user_understanding: value }))} textarea />
                     <Field label="我的例句" name="vocabulary_user_examples" value={cardForm.user_examples_text} onChange={(value) => setCardForm((prev) => ({ ...prev, user_examples_text: value }))} textarea placeholder="每行一个例句…" />

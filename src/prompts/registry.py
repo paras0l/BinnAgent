@@ -265,3 +265,15 @@ prompt_registry.register(
         eval_set="evals/prompts/explore_capability_rerank_v1.jsonl",
     )
 )
+prompt_registry.register(
+    PromptMetadata(
+        id="reading.material_generation",
+        version="v1",
+        owner="reading",
+        purpose="按教材单元语法、主题、词汇和学习者水平生成可精读/泛读的长对话或短文",
+        template_path="versions/reading.material_generation.v1.md",
+        output_schema="ReadingMaterialGenerationOutput",
+        model_policy={"default_model": "ollama_utility", "temperature": 0.4, "max_tokens": 1800},
+        eval_set="evals/prompts/reading_material_generation_v1.jsonl",
+    )
+)

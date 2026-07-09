@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { FileInput, LoaderCircle, Plus, Save, Sparkles, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { FormField } from '@/components/ui/FormField'
+import { Select } from '@/components/ui/Select'
 import { StatusBanner } from '@/components/ui/StatusBanner'
 import { SurfaceCard } from '@/components/ui/SurfaceCard'
 import {
@@ -148,45 +149,48 @@ export function AddExerciseForm({ target, learnerId, className = '', context, so
               <div className="mt-3 grid gap-3 md:grid-cols-3">
                 <label className="block">
                   <span className="text-sm font-medium text-slate-950">题型</span>
-                  <select
+                  <Select
                     name={`exercise_${index}_type`}
                     autoComplete="off"
                     value={draft.type}
                     onChange={(event) => updateDraft(index, { type: event.target.value as ExerciseItem['type'] })}
-                    className="mt-1.5 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm transition-colors focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20"
+                    wrapperClassName="mt-1.5"
+                    className="font-normal"
                   >
                     <option value="single_choice">单选题</option>
                     <option value="fill_blank">填空题</option>
                     <option value="grammar_fill_blank">语法填空题</option>
-                  </select>
+                  </Select>
                 </label>
                 <label className="block">
                   <span className="text-sm font-medium text-slate-950">能力</span>
-                  <select
+                  <Select
                     name={`exercise_${index}_skill`}
                     autoComplete="off"
                     value={draft.skill}
                     onChange={(event) => updateDraft(index, { skill: event.target.value as ExerciseItem['skill'] })}
-                    className="mt-1.5 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm transition-colors focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20"
+                    wrapperClassName="mt-1.5"
+                    className="font-normal"
                   >
                     <option value="grammar">语法</option>
                     <option value="vocabulary">词汇</option>
                     <option value="reading">阅读</option>
-                  </select>
+                  </Select>
                 </label>
                 <label className="block">
                   <span className="text-sm font-medium text-slate-950">难度</span>
-                  <select
+                  <Select
                     name={`exercise_${index}_difficulty`}
                     autoComplete="off"
                     value={draft.difficulty ?? 'easy'}
                     onChange={(event) => updateDraft(index, { difficulty: event.target.value as ExerciseItem['difficulty'] })}
-                    className="mt-1.5 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm transition-colors focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20"
+                    wrapperClassName="mt-1.5"
+                    className="font-normal"
                   >
                     <option value="easy">easy</option>
                     <option value="medium">medium</option>
                     <option value="hard">hard</option>
-                  </select>
+                  </Select>
                 </label>
               </div>
 

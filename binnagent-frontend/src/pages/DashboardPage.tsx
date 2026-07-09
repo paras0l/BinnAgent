@@ -29,6 +29,7 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { ErrorState } from '@/components/ui/ErrorState'
 import { IconButton } from '@/components/ui/IconButton'
 import { LoadingState } from '@/components/ui/LoadingState'
+import { Select } from '@/components/ui/Select'
 import { SurfaceCard } from '@/components/ui/SurfaceCard'
 import type { DashboardSummary, Learner, LearnerProfile, MemorySummary, VocabularyListItem } from '@/types'
 import { useToast } from '@/hooks/useToast'
@@ -593,29 +594,47 @@ function LearningCenterHome({
   const dueCount = summary.stats.today_reviews
   const focusReasons = buildFocusReasons(summary)
   const nextActionLabel = dueCount > 0 ? `先复习 ${dueCount} 个词` : '开始今日学习'
+  const routeStatus = todayPercent >= 100 ? '今日任务已收口' : dueCount > 0 ? '先清复习，再进教材' : '可以直接进入教材'
 
   return (
     <PageShell>
-      <section className="rounded-[2rem] border border-slate-200 bg-white px-5 py-6 shadow-sm sm:px-7 lg:px-8">
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_300px] lg:items-end">
+      <section className="relative overflow-hidden rounded-[1.75rem] border border-slate-200 bg-[linear-gradient(135deg,#ffffff_0%,#f8fafc_54%,#eef2ff_100%)] px-5 py-6 shadow-[0_18px_48px_rgba(15,23,42,0.08)] ring-1 ring-white/80 sm:px-7 lg:px-8">
+        <div className="absolute inset-x-0 top-0 h-1 bg-[linear-gradient(90deg,#6366f1,#22d3ee,#22c55e)]" />
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-stretch">
           <div>
-            <p className="text-xs font-black uppercase text-primary">学习中心</p>
-            <h1 className="mt-3 text-3xl font-black leading-tight text-slate-950 sm:text-4xl">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center gap-2 rounded-full border border-indigo-100 bg-white/80 px-3 py-1 text-xs font-black text-primary shadow-sm">
+                <span className="size-1.5 rounded-full bg-primary" />
+                学习中心
+              </span>
+              <span className="rounded-full bg-slate-900 px-3 py-1 text-xs font-black text-white shadow-sm">{routeStatus}</span>
+            </div>
+            <h1 className="mt-4 text-3xl font-black leading-tight tracking-tight text-slate-950 sm:text-4xl">
               {learnerName}，今天从这里开始
             </h1>
             <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-500">
               先完成当前最该做的一步，再继续教材。系统会按复习、学习、检查题的顺序带你往前走。
             </p>
           </div>
-          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-1">
-            <Button className="justify-between" onClick={dueCount > 0 ? () => onStartVocabularyPractice('review') : onOpenDailyLearning}>
-              {nextActionLabel}<ArrowRight className="size-4" />
-            </Button>
-            {dueCount > 0 ? (
-              <Button variant="secondary" className="justify-between" onClick={onOpenDailyLearning}>
-                进入教材学习<ArrowRight className="size-4" />
+          <div className="rounded-2xl border border-white/80 bg-white/85 p-4 shadow-[0_10px_30px_rgba(15,23,42,0.08)] backdrop-blur">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-xs font-black uppercase text-slate-500">今日进度</p>
+                <p className="mt-1 text-2xl font-black text-slate-950">{todayPercent}%</p>
+              </div>
+              <span className="rounded-xl bg-indigo-50 px-3 py-2 text-xs font-black text-indigo-700">{summary.today_goal.completed}/{summary.today_goal.total}</span>
+            </div>
+            <ProgressBar value={todayPercent} className="mt-4 bg-slate-100" />
+            <div className="mt-4 grid gap-2">
+              <Button className="justify-between shadow-[0_10px_24px_rgba(99,102,241,0.22)]" onClick={dueCount > 0 ? () => onStartVocabularyPractice('review') : onOpenDailyLearning}>
+                {nextActionLabel}<ArrowRight className="size-4" />
               </Button>
-            ) : null}
+              {dueCount > 0 ? (
+                <Button variant="secondary" className="justify-between" onClick={onOpenDailyLearning}>
+                  进入教材学习<ArrowRight className="size-4" />
+                </Button>
+              ) : null}
+            </div>
           </div>
         </div>
 
@@ -626,7 +645,7 @@ function LearningCenterHome({
         </div>
       </section>
 
-      <section className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
+      <section className="grid items-stretch gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
         <TodayLearningFlow
           reasons={focusReasons}
           summary={summary}
@@ -660,18 +679,18 @@ function TodayLearningFlow({
 }) {
   const steps = buildTodaySteps(summary)
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+    <section className="h-full rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-[0_12px_34px_rgba(15,23,42,0.06)] sm:p-6">
+      <div>
         <div>
-          <p className="text-xs font-black uppercase text-primary">今日学习流</p>
+          <p className="inline-flex items-center gap-2 rounded-full bg-indigo-50 px-3 py-1 text-xs font-black uppercase text-primary">
+            <Clock3 className="size-3.5" />
+            今日学习流
+          </p>
           <h2 className="mt-2 text-2xl font-black text-slate-950">按顺序完成，不用挑入口</h2>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
             建议 15-20 分钟。按复习、教材、检查题推进，今天只完成一组清晰任务。
           </p>
         </div>
-        <Button className="shrink-0" onClick={onOpenDailyLearning}>
-          开始今日学习<ArrowRight className="size-4" />
-        </Button>
       </div>
 
       <div className="mt-6 grid gap-3">
@@ -680,9 +699,15 @@ function TodayLearningFlow({
             key={step.title}
             type="button"
             onClick={step.action === 'review' ? () => onStartVocabularyPractice('review') : onOpenDailyLearning}
-            className="grid grid-cols-[34px_minmax(0,1fr)] items-start gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-left transition hover:border-primary/40 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            className={`group grid grid-cols-[42px_minmax(0,1fr)_auto] items-center gap-3 rounded-2xl border px-4 py-3.5 text-left transition hover:-translate-y-0.5 hover:shadow-[0_12px_30px_rgba(15,23,42,0.08)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
+              step.state === 'done'
+                ? 'border-emerald-100 bg-emerald-50/50'
+                : index === 0
+                  ? 'border-indigo-200 bg-[linear-gradient(135deg,#ffffff,#eef2ff)]'
+                  : 'border-slate-200 bg-white hover:border-primary/30'
+            }`}
           >
-            <span className={`flex size-8 items-center justify-center rounded-lg text-sm font-black ${
+            <span className={`flex size-10 items-center justify-center rounded-xl text-sm font-black shadow-sm ${
               step.state === 'done' ? 'bg-emerald-100 text-emerald-700' : index === 0 ? 'bg-primary text-primary-foreground' : 'bg-slate-100 text-slate-600'
             }`}>
               {step.state === 'done' ? '✓' : index + 1}
@@ -690,18 +715,22 @@ function TodayLearningFlow({
             <span className="min-w-0">
               <span className="flex flex-wrap items-center gap-2">
                 <span className="text-sm font-black text-slate-950">{step.title}</span>
-                {step.badge ? <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-bold text-slate-500">{step.badge}</span> : null}
+                {step.badge ? <span className="rounded-full bg-white px-2.5 py-0.5 text-[11px] font-black text-slate-500 shadow-sm ring-1 ring-slate-200">{step.badge}</span> : null}
               </span>
               <span className="mt-1 block text-xs leading-5 text-slate-500">{step.description}</span>
             </span>
+            <ArrowRight className="size-4 text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-primary" />
           </button>
         ))}
       </div>
 
-      <div className="mt-5 rounded-xl bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-600">
-        <p className="text-xs font-black uppercase text-slate-500">为什么现在这样排</p>
-        <ul className="mt-2 grid gap-1 sm:grid-cols-2">
-          {reasons.slice(0, 2).map((reason) => <li key={reason}>{reason}</li>)}
+      <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3 text-sm leading-6 text-slate-600">
+        <p className="flex items-center gap-2 text-xs font-black uppercase text-slate-500">
+          <ShieldCheck className="size-3.5 text-primary" />
+          为什么现在这样排
+        </p>
+        <ul className="mt-2 grid gap-2 sm:grid-cols-2">
+          {reasons.slice(0, 2).map((reason) => <li key={reason} className="rounded-xl bg-white px-3 py-2 shadow-sm">{reason}</li>)}
         </ul>
       </div>
     </section>
@@ -730,11 +759,11 @@ function LearningSideRail({
   const groupCard = groupLearningCardCopy(groupLearningSummary)
 
   return (
-    <aside className="space-y-3">
-      <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+    <aside className="flex h-full flex-col gap-4">
+      <section className="rounded-[1.35rem] border border-slate-200 bg-white p-4 shadow-[0_10px_28px_rgba(15,23,42,0.05)]">
         <div className="flex items-center justify-between gap-3">
           <SectionHeading icon={<CalendarDays className="size-4" />} title="最近 7 天" />
-          <span className="text-xs font-bold text-slate-500">{summary.stats.streak_days} 天连续</span>
+          <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-black text-slate-600">{summary.stats.streak_days} 天连续</span>
         </div>
         <div className="mt-4 grid grid-cols-7 gap-2" aria-label="最近 7 天学习活跃度">
           {latestActivity.map((item) => {
@@ -751,13 +780,16 @@ function LearningSideRail({
         </div>
       </section>
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-        <p className="text-sm font-black text-slate-950">辅助入口</p>
-        <div className="mt-3 grid gap-2">
+      <section className="flex flex-1 flex-col rounded-[1.35rem] border border-slate-200 bg-white p-4 shadow-[0_10px_28px_rgba(15,23,42,0.05)]">
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-sm font-black text-slate-950">辅助入口</p>
+          <span className="text-xs font-bold text-slate-400">Tools</span>
+        </div>
+        <div className="mt-3 grid flex-1 content-start gap-2">
           <button
             type="button"
             onClick={onOpenGroupSignals}
-            className="rounded-2xl border border-indigo-200 bg-[linear-gradient(135deg,#eef2ff,#f8fafc_55%,#f0f9ff)] p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-300 hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            className="rounded-2xl border border-indigo-200 bg-[linear-gradient(135deg,#eef2ff,#f8fafc_55%,#f0f9ff)] p-4 text-left shadow-sm ring-1 ring-white/70 transition hover:-translate-y-0.5 hover:border-indigo-300 hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
           >
             <span className="flex items-start justify-between gap-3">
               <span className="min-w-0">
@@ -780,21 +812,44 @@ function LearningSideRail({
               </span>
             </span>
           </button>
-          <Button variant="secondary" className="justify-between" onClick={() => onStartVocabularyPractice()}>
-            词汇训练<ArrowRight className="size-4" />
-          </Button>
-          <Button variant="secondary" className="justify-between" onClick={onOpenVocabularyManager}>
-            词汇本管理<ArrowRight className="size-4" />
-          </Button>
-          <Button variant="secondary" className="justify-between" onClick={onOpenProfile}>
-            学习画像<ArrowRight className="size-4" />
-          </Button>
-          <Button variant="secondary" className="justify-between" onClick={onOpenRecords}>
-            学习记录<ArrowRight className="size-4" />
-          </Button>
+          <SideRailLink icon={<BookOpen className="size-4" />} label="词汇训练" detail="复习、新词、拼写" onClick={() => onStartVocabularyPractice()} />
+          <SideRailLink icon={<Target className="size-4" />} label="词汇本管理" detail={`${summary.stats.total_vocab} 个词`} onClick={onOpenVocabularyManager} />
+          <SideRailLink icon={<BrainCircuit className="size-4" />} label="学习画像" detail={`正确率 ${summary.stats.accuracy}%`} onClick={onOpenProfile} />
+          <SideRailLink icon={<ClipboardList className="size-4" />} label="学习记录" detail="查看最近表现" onClick={onOpenRecords} />
         </div>
       </section>
     </aside>
+  )
+}
+
+function SideRailLink({
+  detail,
+  icon,
+  label,
+  onClick,
+}: {
+  detail: string
+  icon: ReactNode
+  label: string
+  onClick: () => void
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="group flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-primary/30 hover:bg-slate-50 hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+    >
+      <span className="flex min-w-0 items-center gap-3">
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600 transition group-hover:bg-indigo-50 group-hover:text-primary">
+          {icon}
+        </span>
+        <span className="min-w-0">
+          <span className="block truncate text-sm font-black text-slate-900">{label}</span>
+          <span className="mt-0.5 block truncate text-xs font-medium text-slate-500">{detail}</span>
+        </span>
+      </span>
+      <ArrowRight className="size-4 shrink-0 text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-primary" />
+    </button>
   )
 }
 
@@ -810,18 +865,31 @@ function LearningPulseItem({
   value: string | number
 }) {
   const toneClass = {
-    neutral: 'bg-slate-50 text-slate-600',
-    primary: 'bg-indigo-50 text-indigo-700',
-    success: 'bg-emerald-50 text-emerald-700',
-    warning: 'bg-amber-50 text-amber-700',
+    neutral: {
+      badge: 'bg-slate-100 text-slate-600',
+      bar: 'bg-slate-300',
+    },
+    primary: {
+      badge: 'bg-indigo-50 text-indigo-700',
+      bar: 'bg-indigo-500',
+    },
+    success: {
+      badge: 'bg-emerald-50 text-emerald-700',
+      bar: 'bg-emerald-500',
+    },
+    warning: {
+      badge: 'bg-amber-50 text-amber-700',
+      bar: 'bg-amber-500',
+    },
   }[tone]
 
   return (
-    <div className="rounded-xl bg-slate-50 px-4 py-3">
+    <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white/85 px-4 py-3 shadow-sm">
+      <span className={`absolute inset-x-0 top-0 h-0.5 ${toneClass.bar}`} />
       <p className="text-xs font-bold text-slate-500">{label}</p>
       <div className="mt-2 flex items-end justify-between gap-3">
         <p className="text-2xl font-black text-slate-950">{value}</p>
-        <span className={`rounded-md px-2 py-1 text-xs font-black ${toneClass}`}>{detail}</span>
+        <span className={`rounded-full px-2.5 py-1 text-xs font-black ${toneClass.badge}`}>{detail}</span>
       </div>
     </div>
   )
@@ -1208,12 +1276,12 @@ function ProfileSelectRow<TValue extends string>({
   return (
     <label className="block">
       <span className="text-sm font-black text-slate-800">{label}</span>
-      <select
+      <Select
         name={name}
         autoComplete="off"
         value={value}
         onChange={(event) => onChange(event.currentTarget.value ? event.currentTarget.value as TValue : null)}
-        className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 transition-colors focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20"
+        wrapperClassName="mt-2"
       >
         <option value="">{placeholder}</option>
         {options.map((option) => (
@@ -1221,7 +1289,7 @@ function ProfileSelectRow<TValue extends string>({
             {option.label}
           </option>
         ))}
-      </select>
+      </Select>
       {selected?.description ? (
         <span className="mt-1 block text-xs leading-5 text-slate-500">{selected.description}</span>
       ) : null}

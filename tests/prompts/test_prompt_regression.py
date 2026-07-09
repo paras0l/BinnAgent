@@ -72,6 +72,27 @@ from src.prompts import PromptExecutionContext, PromptExecutor
                 '"priority_score":0.91,"reason":"significant 是真实词汇，适合详解。"}]}'
             ),
         ),
+        (
+            "reading.material_generation",
+            {
+                "material_type": "passage",
+                "length_label": "120-180 words",
+                "learner_profile": {"current_level": "a2", "reading_level": "junior"},
+                "unit_context": {"unit_title": "Unit 1", "unit_subtitle": "Making new friends"},
+                "grammar_focus": [{"title": "be 动词"}],
+                "vocabulary_focus": [{"title": "friend"}, {"title": "classmate"}],
+                "theme_focus": [{"title": "school life"}],
+            },
+            (
+                '{"title":"A New Friend At School","material_type":"passage",'
+                '"text":"Lily is new at school. She meets Tom in her classroom. Tom is friendly and helps Lily find the library. They talk about their teachers, their timetable, and their favorite books. After lunch, Lily feels happy because she has a kind classmate and a new friend.",'
+                '"theme":"school life","grammar_focus":["be 动词"],'
+                '"vocabulary_used":["friend","classmate","school","teacher"],'
+                '"level_rationale":"句子较短，适合初中学习者。",'
+                '"comprehension_checks":[{"question":"Who helps Lily?","answer":"Tom helps Lily."}],'
+                '"confidence":0.9}'
+            ),
+        ),
     ],
 )
 async def test_registered_structured_prompts_accept_schema_valid_output(
@@ -155,6 +176,27 @@ async def test_registered_structured_prompts_accept_schema_valid_output(
             (
                 'JSON:\n{"recommendations":[{"capability_id":"grammar-explain",'
                 '"priority_score":0.92,"reason":"错因是语法规则混淆，适合语法微课。"}]}'
+            ),
+        ),
+        (
+            "reading.material_generation",
+            {
+                "material_type": "dialogue",
+                "length_label": "120-180 words",
+                "learner_profile": {"current_level": "b1", "reading_level": "cet4"},
+                "unit_context": {"unit_title": "Unit 2", "unit_subtitle": "Healthy habits"},
+                "grammar_focus": [{"title": "频度副词"}],
+                "vocabulary_focus": [{"title": "habit"}],
+                "theme_focus": [{"title": "daily routines"}],
+            },
+            (
+                'JSON:\n{"title":"A Talk About Healthy Habits","material_type":"dialogue",'
+                '"text":"Mia: I usually get up at seven, but I often skip breakfast. Ben: That is not a good habit. Your body needs energy before school. Mia: You are right. What do you usually eat? Ben: I have eggs and fruit, and I sometimes drink milk. Mia: I will try that tomorrow.",'
+                '"theme":"healthy habits","grammar_focus":["频度副词"],'
+                '"vocabulary_used":["habit","usually","often","sometimes"],'
+                '"level_rationale":"对话自然重复目标语法。",'
+                '"comprehension_checks":[{"question":"What does Mia often skip?","answer":"She often skips breakfast."}],'
+                '"confidence":0.88}'
             ),
         ),
     ],

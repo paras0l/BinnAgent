@@ -127,7 +127,7 @@ http://localhost:5176，可在 Learners / Recent Episodes 中直接选择 learne
 | 能力 | 状态 |
 |------|------|
 | Chat / Memory / Dashboard | 部分实现，Memory v2 已落地 Retain / Recall / Reflect、LearningEpisode、LearnerModelMemory、TeachingStrategyMemory；普通学习端只展示学习状态摘要，Memory Center 已移入 Dev Console |
-| 教材 Knowledge Base / RAG / Exercises | 部分实现，作为冷启动知识来源；已支持 split public textbook pack v2 物化为 KnowledgeSource/CurriculumNode/KnowledgePoint/ExerciseQuestion、普通单元页 UnitLearningWorkspace 分组学习卡片、多教材切换、文档解析流水线第一阶段、ParserRun 审计、ParserReviewItem 队列、低置信词条人工校对入口、统一 ExerciseItem / ExerciseAttempt 语义、AI 生成练习可编辑保存，以及语法微课 HTML 练习提取和语法填空题 |
+| 教材 Knowledge Base / RAG / Exercises | 部分实现，作为冷启动知识来源；已支持 split public textbook pack v2 物化为 KnowledgeSource/CurriculumNode/KnowledgePoint/ExerciseQuestion、普通单元页 UnitLearningWorkspace 分组学习卡片、多教材切换、文档解析流水线第一阶段、ParserRun 审计、ParserReviewItem 队列、低置信词条人工校对入口、统一 ExerciseItem / ExerciseAttempt 语义、AI 生成练习可编辑保存、单元阅读语感材料生成，以及语法微课 HTML 练习提取和语法填空题 |
 | Vocabulary Personal Cards / Practice / Spelling / Word Parts | 部分实现，已新增“词根与词缀”探索入口、四工作区学习页、内置词根词缀库、拆词练习、morphology 前端展示/降级和知识点配套练习验收 |
 | Writing Phrasebook | 基础版已实现 |
 | 群聊学习线索 | 第一版已实现并切到飞书 MCP 兼容方案，支持飞书群来源配置、MCP/OpenAPI 同步、群成员拉取与当前 learner 绑定、原始消息保留/清理、中性 JSON 导入、显式标签即时规则抽取、`@机器人 --help` 群内操作指南回复与去重、无标签消息 pending 队列、低频 LLM 小批量线索提取、收件箱分页接受/忽略/删除，以及接受后写入词汇候选、好句候选或语法学习进度 |
@@ -153,6 +153,7 @@ http://localhost:5176，可在 Learners / Recent Episodes 中直接选择 learne
 - [ExploreCapability Recommendation](docs/explore-capability-recommendation.md) — Explore 学习能力入口、推荐、Memory 和 trace 事件
 - [Web Frontend Design Spec](docs/superpowers/specs/2026-06-12-web-frontend-design.md) — 详细设计规范
 - [Spelling Training UI/UX](docs/superpowers/specs/2026-06-19-spelling-training-uiux.md) — 拼写训练流程、界面状态与交互规范
+- [Unit Reading Fluency Training](docs/superpowers/specs/2026-07-09-unit-reading-fluency.md) — 单元阅读语感训练生成、入口和画像证据规范
 
 ### 开发指南
 

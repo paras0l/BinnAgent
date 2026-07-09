@@ -4,11 +4,16 @@ export type ReadingLevel = 'junior' | 'cet4' | 'cet6' | 'general'
 
 export type ReadingTrainingGoal = 'intensive' | 'extensive' | 'mixed'
 
+export type ReadingMaterialType = 'dialogue' | 'passage'
+
+export type ReadingMaterialLength = 'short' | 'long'
+
 export interface ReadingMaterial {
   title: string
   text: string
   level: ReadingLevel
   goal: ReadingTrainingGoal
+  material_type?: ReadingMaterialType
 }
 
 export interface ReadingSentence {
@@ -47,15 +52,49 @@ export interface ReadingTitleSuggestionResponse {
 export interface ReadingMaterialHistoryItem {
   id: string
   learner_id: string
+  curriculum_node_id?: string | null
   title?: string | null
   text: string
   level: ReadingLevel
   goal: ReadingTrainingGoal
+  material_type: ReadingMaterialType
   word_count: number
   sentence_count: number
   source: string
+  generation_context?: ReadingGenerationContext | null
   created_at: string
   updated_at: string
+}
+
+export interface ReadingGenerationContext {
+  prompt_id?: string | null
+  prompt_version?: string | null
+  prompt_execution_record_id?: string | null
+  schema_validation_status?: string | null
+  repair_used?: boolean
+  source_id?: string
+  source_title?: string
+  unit_title?: string
+  unit_subtitle?: string | null
+  length?: ReadingMaterialLength
+  theme?: string | null
+  grammar_focus?: string[]
+  vocabulary_used?: string[]
+  level_rationale?: string | null
+  comprehension_checks?: Array<{ question: string; answer: string }>
+  confidence?: number | null
+}
+
+export interface ReadingMaterialGenerationResponse {
+  material: ReadingMaterialHistoryItem
+  generation_context: ReadingGenerationContext
+}
+
+export interface ReadingMaterialCompleteResponse {
+  material_id: string
+  attempt_id: string
+  reading_value: number
+  message: string
 }
 
 export const READING_LEVEL_LABELS: Record<ReadingLevel, string> = {
@@ -69,6 +108,16 @@ export const READING_GOAL_LABELS: Record<ReadingTrainingGoal, string> = {
   intensive: '精读',
   extensive: '泛读',
   mixed: '先泛读后精读',
+}
+
+export const READING_MATERIAL_TYPE_LABELS: Record<ReadingMaterialType, string> = {
+  passage: '短文',
+  dialogue: '对话',
+}
+
+export const READING_MATERIAL_LENGTH_LABELS: Record<ReadingMaterialLength, string> = {
+  short: '短材料',
+  long: '长材料',
 }
 
 export const READING_GRAMMAR_OPTIONS: ReadingGrammarOption[] = [

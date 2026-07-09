@@ -24,6 +24,7 @@ import { WorkspaceTabs, type WorkspaceTab } from '@/components/layout/WorkspaceT
 import { ExerciseBlock } from '@/components/exercise/ExerciseBlock'
 import { Button } from '@/components/ui/Button'
 import { FormField } from '@/components/ui/FormField'
+import { Select } from '@/components/ui/Select'
 import { SurfaceCard } from '@/components/ui/SurfaceCard'
 import { useFocusTrap } from '@/hooks/useFocusTrap'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
@@ -42,6 +43,7 @@ import {
   type ReadingKeywordCandidate,
   type ReadingLevel,
   type ReadingMaterial,
+  type ReadingMaterialCompleteResponse,
   type ReadingMaterialHistoryItem,
   type ReadingSentence,
   type ReadingSentenceHint,
@@ -56,6 +58,9 @@ import { GrammarPage } from '@/pages/GrammarPage'
 interface ReadingWorkshopPageProps {
   learner: Learner
   onBack: () => void
+  initialMaterial?: ReadingMaterial
+  initialMaterialId?: string | null
+  initialSourceLabel?: string | null
 }
 
 interface ExtensiveNotes {
@@ -75,6 +80,7 @@ type TitleMode = 'empty' | 'auto' | 'user'
 type TitleSuggestionStatus = 'idle' | 'checking' | 'suggested' | 'incomplete' | 'error'
 type MaterialHistoryStatus = 'idle' | 'loading' | 'ready' | 'error'
 type MaterialSaveStatus = 'idle' | 'saving' | 'saved' | 'error'
+type MaterialCompleteStatus = 'idle' | 'saving' | 'completed' | 'error'
 
 const SAMPLE_TEXT = `Many students believe that reading faster simply means moving their eyes quickly across a page. However, effective readers do more than race through words. They first notice the title, predict the topic, and look for sentences that show the writer's main point. When a sentence becomes difficult, they slow down, find the main verb, and separate extra information from the core meaning.`
 
@@ -83,6 +89,7 @@ const EMPTY_MATERIAL: ReadingMaterial = {
   text: '',
   level: 'general',
   goal: 'mixed',
+  material_type: 'passage',
 }
 
 const EMPTY_EXTENSIVE_NOTES: ExtensiveNotes = {
@@ -98,8 +105,6 @@ const EMPTY_INTENSIVE_NOTES: IntensiveNotes = {
   evidenceNote: '',
 }
 
-const SELECT_CLASS = 'w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm transition-colors focus-visible:border-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary'
-
 const WORKSPACE_TABS: WorkspaceTab<ReadingWorkspace>[] = [
   { id: 'input', label: '材料输入', description: '标题与原文', icon: <FileText className="h-4 w-4" /> },
   { id: 'extensive', label: '泛读模式', description: '主旨与结构', icon: <Gauge className="h-4 w-4" /> },
@@ -113,19 +118,35 @@ const READING_GRAMMAR_EXERCISE_TARGET_IDS: Record<string, string> = {
   '定语从句中 which/that 的选择': 'which-that-relative',
 }
 
-export function ReadingWorkshopPage({ learner, onBack }: ReadingWorkshopPageProps) {
+export function ReadingWorkshopPage({
+  learner,
+  onBack,
+  initialMaterial,
+  initialMaterialId = null,
+  initialSourceLabel = null,
+}: ReadingWorkshopPageProps) {
+  const hasInitialMaterial = Boolean(initialMaterial?.text.trim())
   const [workspace, setWorkspace] = useState<ReadingWorkspace>('input')
-  const [material, setMaterial] = useState<ReadingMaterial>(EMPTY_MATERIAL)
+  const [material, setMaterial] = useState<ReadingMaterial>(() => (
+    hasInitialMaterial
+      ? { ...initialMaterial, material_type: initialMaterial?.material_type ?? 'passage' } as ReadingMaterial
+      : EMPTY_MATERIAL
+  ))
   const [extensiveNotes, setExtensiveNotes] = useState<ExtensiveNotes>(EMPTY_EXTENSIVE_NOTES)
   const [intensiveNotes, setIntensiveNotes] = useState<IntensiveNotes>(EMPTY_INTENSIVE_NOTES)
-  const [titleMode, setTitleMode] = useState<TitleMode>('empty')
-  const [titleSuggestionStatus, setTitleSuggestionStatus] = useState<TitleSuggestionStatus>('idle')
-  const [autoTitleSourceText, setAutoTitleSourceText] = useState('')
+  const [titleMode, setTitleMode] = useState<TitleMode>(hasInitialMaterial && initialMaterial?.title ? 'auto' : 'empty')
+  const [titleSuggestionStatus, setTitleSuggestionStatus] = useState<TitleSuggestionStatus>(
+    hasInitialMaterial && initialMaterial?.title ? 'suggested' : 'idle'
+  )
+  const [autoTitleSourceText, setAutoTitleSourceText] = useState(hasInitialMaterial ? initialMaterial?.text ?? '' : '')
   const [materialHistory, setMaterialHistory] = useState<ReadingMaterialHistoryItem[]>([])
+  const [activeMaterialId, setActiveMaterialId] = useState<string | null>(initialMaterialId)
   const [historyStatus, setHistoryStatus] = useState<MaterialHistoryStatus>('idle')
-  const [saveStatus, setSaveStatus] = useState<MaterialSaveStatus>('idle')
-  const [selectedSentenceId, setSelectedSentenceId] = useState<string | null>(null)
-  const [visitedSentenceIds, setVisitedSentenceIds] = useState<string[]>([])
+  const [saveStatus, setSaveStatus] = useState<MaterialSaveStatus>(initialMaterialId ? 'saved' : 'idle')
+  const [completeStatus, setCompleteStatus] = useState<MaterialCompleteStatus>('idle')
+  const [completionResult, setCompletionResult] = useState<ReadingMaterialCompleteResponse | null>(null)
+  const [selectedSentenceId, setSelectedSentenceId] = useState<string | null>(hasInitialMaterial ? 'reading-sentence-1' : null)
+  const [visitedSentenceIds, setVisitedSentenceIds] = useState<string[]>(hasInitialMaterial ? ['reading-sentence-1'] : [])
   const [selectedGrammarOptionIds, setSelectedGrammarOptionIds] = useState<string[]>([])
   const [openedGrammarTopics, setOpenedGrammarTopics] = useState<string[]>([])
   const [grammarTopic, setGrammarTopic] = useState<string | null>(null)
@@ -191,10 +212,12 @@ export function ReadingWorkshopPage({ learner, onBack }: ReadingWorkshopPageProp
           text,
           level: material.level,
           goal: material.goal,
+          material_type: material.material_type ?? 'passage',
         }),
       })
       if (!response.ok) throw new Error('Failed to save reading material')
       const saved = (await response.json()) as ReadingMaterialHistoryItem
+      setActiveMaterialId(saved.id)
       setMaterialHistory((current) => [
         saved,
         ...current.filter((item) => item.id !== saved.id),
@@ -206,7 +229,7 @@ export function ReadingWorkshopPage({ learner, onBack }: ReadingWorkshopPageProp
       setSaveStatus('error')
       return null
     }
-  }, [learner.id, material.goal, material.level, material.text, material.title])
+  }, [learner.id, material.goal, material.level, material.material_type, material.text, material.title])
 
   useEffect(() => {
     const text = material.text.trim()
@@ -274,7 +297,9 @@ export function ReadingWorkshopPage({ learner, onBack }: ReadingWorkshopPageProp
       text: SAMPLE_TEXT,
       level: 'general',
       goal: 'mixed',
+      material_type: 'passage',
     })
+    setActiveMaterialId(null)
     setTitleMode('auto')
     setTitleSuggestionStatus('suggested')
     setAutoTitleSourceText(SAMPLE_TEXT)
@@ -286,11 +311,16 @@ export function ReadingWorkshopPage({ learner, onBack }: ReadingWorkshopPageProp
   const updateTitle = (title: string) => {
     setTitleMode('user')
     setSaveStatus('idle')
+    setCompleteStatus('idle')
+    setCompletionResult(null)
     setMaterial((current) => ({ ...current, title }))
   }
 
   const updateText = (text: string) => {
     setSaveStatus('idle')
+    setActiveMaterialId(null)
+    setCompleteStatus('idle')
+    setCompletionResult(null)
     if (!text.trim() && titleMode !== 'user') {
       setTitleMode('empty')
       setAutoTitleSourceText('')
@@ -307,11 +337,15 @@ export function ReadingWorkshopPage({ learner, onBack }: ReadingWorkshopPageProp
       text: item.text,
       level: item.level,
       goal: item.goal,
+      material_type: item.material_type,
     })
+    setActiveMaterialId(item.id)
     setTitleMode(item.title ? 'user' : 'empty')
     setTitleSuggestionStatus(item.title ? 'suggested' : 'idle')
     setAutoTitleSourceText(item.title ? item.text : '')
     setSaveStatus('idle')
+    setCompleteStatus('idle')
+    setCompletionResult(null)
     setExtensiveNotes(EMPTY_EXTENSIVE_NOTES)
     setIntensiveNotes(EMPTY_INTENSIVE_NOTES)
     setSelectedSentenceId(null)
@@ -339,6 +373,46 @@ export function ReadingWorkshopPage({ learner, onBack }: ReadingWorkshopPageProp
     setOpenedGrammarTopics((current) => uniqueList([...current, option.grammarTopicTitle]))
     setGrammarTopic(option.grammarTopicTitle)
   }
+
+  const completeReadingMaterial = useCallback(async () => {
+    if (!material.text.trim()) return
+    setCompleteStatus('saving')
+    setCompletionResult(null)
+    try {
+      const saved = activeMaterialId ? null : await saveCurrentMaterial()
+      const materialId = activeMaterialId ?? saved?.id
+      if (!materialId) throw new Error('请先保存阅读材料。')
+      const response = await fetch(`/api/learners/${learner.id}/reading-workshop/materials/${materialId}/complete`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          selected_sentence_count: visitedSentenceIds.length,
+          grammar_topic_count: selectedGrammarOptionIds.length,
+          notes: [
+            extensiveNotes.gist ? `gist: ${extensiveNotes.gist}` : '',
+            intensiveNotes.mainStructure ? `structure: ${intensiveNotes.mainStructure}` : '',
+          ].filter(Boolean).join('\n') || null,
+        }),
+      })
+      if (!response.ok) throw new Error('阅读完成记录保存失败。')
+      const data = await response.json() as ReadingMaterialCompleteResponse
+      setActiveMaterialId(data.material_id)
+      setCompletionResult(data)
+      setCompleteStatus('completed')
+    } catch (error) {
+      console.error('Reading completion error:', error)
+      setCompleteStatus('error')
+    }
+  }, [
+    activeMaterialId,
+    extensiveNotes.gist,
+    intensiveNotes.mainStructure,
+    learner.id,
+    material.text,
+    saveCurrentMaterial,
+    selectedGrammarOptionIds.length,
+    visitedSentenceIds.length,
+  ])
 
   if (grammarTopic) {
     return (
@@ -389,10 +463,16 @@ export function ReadingWorkshopPage({ learner, onBack }: ReadingWorkshopPageProp
           onTextChange={updateText}
           onLevelChange={(level) => {
             setSaveStatus('idle')
+            setActiveMaterialId(null)
+            setCompleteStatus('idle')
+            setCompletionResult(null)
             setMaterial((current) => ({ ...current, level }))
           }}
           onGoalChange={(goal) => {
             setSaveStatus('idle')
+            setActiveMaterialId(null)
+            setCompleteStatus('idle')
+            setCompletionResult(null)
             setMaterial((current) => ({ ...current, goal }))
           }}
           historyItems={materialHistory}
@@ -445,6 +525,10 @@ export function ReadingWorkshopPage({ learner, onBack }: ReadingWorkshopPageProp
           selectedSentences={visitedSentences}
           sentences={sentences}
           wordCount={wordCount}
+          completeStatus={completeStatus}
+          completionResult={completionResult}
+          sourceLabel={initialSourceLabel}
+          onCompleteReading={() => void completeReadingMaterial()}
           onOpenGrammar={openGrammarOption}
           onOpenWorkspace={openWorkspace}
         />
@@ -527,30 +611,30 @@ function InputWorkspace({
           />
           <div className="grid gap-4 sm:grid-cols-2">
             <FormField label="难度">
-              <select
+              <Select
                 name="reading_material_level"
                 autoComplete="off"
-                className={SELECT_CLASS}
+                className="focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                 value={material.level}
                 onChange={(event) => onLevelChange(event.target.value as ReadingLevel)}
               >
                 {(Object.entries(READING_LEVEL_LABELS) as Array<[ReadingLevel, string]>).map(([id, label]) => (
                   <option key={id} value={id}>{label}</option>
                 ))}
-              </select>
+              </Select>
             </FormField>
             <FormField label="训练目标">
-              <select
+              <Select
                 name="reading_training_goal"
                 autoComplete="off"
-                className={SELECT_CLASS}
+                className="focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                 value={material.goal}
                 onChange={(event) => onGoalChange(event.target.value as ReadingTrainingGoal)}
               >
                 {(Object.entries(READING_GOAL_LABELS) as Array<[ReadingTrainingGoal, string]>).map(([id, label]) => (
                   <option key={id} value={id}>{label}</option>
                 ))}
-              </select>
+              </Select>
             </FormField>
           </div>
         </div>
@@ -1002,6 +1086,8 @@ function IntensiveWorkspace({
 }
 
 function ReviewWorkspace({
+  completeStatus,
+  completionResult,
   extensiveNotes,
   intensiveNotes,
   keywordCandidates,
@@ -1010,10 +1096,14 @@ function ReviewWorkspace({
   selectedGrammarOptions,
   selectedSentences,
   sentences,
+  sourceLabel,
   wordCount,
+  onCompleteReading,
   onOpenGrammar,
   onOpenWorkspace,
 }: {
+  completeStatus: MaterialCompleteStatus
+  completionResult: ReadingMaterialCompleteResponse | null
   extensiveNotes: ExtensiveNotes
   intensiveNotes: IntensiveNotes
   keywordCandidates: ReadingKeywordCandidate[]
@@ -1022,7 +1112,9 @@ function ReviewWorkspace({
   selectedGrammarOptions: ReadingGrammarOption[]
   selectedSentences: ReadingSentence[]
   sentences: ReadingSentence[]
+  sourceLabel: string | null
   wordCount: number
+  onCompleteReading: () => void
   onOpenGrammar: (option: ReadingGrammarOption) => void
   onOpenWorkspace: (workspace: ReadingWorkspace) => void
 }) {
@@ -1100,6 +1192,33 @@ function ReviewWorkspace({
       </SurfaceCard>
 
       <div className="grid gap-5">
+        <SurfaceCard>
+          <div className="flex items-center gap-2">
+            <BookOpenCheck className="h-5 w-5 text-primary" />
+            <h2 className="text-lg font-black text-slate-950">完成阅读</h2>
+          </div>
+          <p className="mt-3 text-sm leading-6 text-slate-600">
+            {sourceLabel ? `${sourceLabel} · ` : ''}完成后会写入阅读画像证据，学习中心的阅读值会随练习记录更新。
+          </p>
+          {completionResult ? (
+            <div className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm font-bold text-emerald-700">
+              已记录阅读值 +{completionResult.reading_value}
+            </div>
+          ) : completeStatus === 'error' ? (
+            <div className="mt-4 rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm font-bold text-rose-700">
+              完成记录保存失败，请稍后重试。
+            </div>
+          ) : null}
+          <Button
+            className="mt-5 w-full"
+            disabled={completeStatus === 'saving' || completeStatus === 'completed'}
+            onClick={onCompleteReading}
+          >
+            <CheckCircle2 className="h-4 w-4" />
+            {completeStatus === 'saving' ? '正在记录' : completeStatus === 'completed' ? '已完成阅读' : '完成阅读'}
+          </Button>
+        </SurfaceCard>
+
         <SurfaceCard>
           <div className="flex items-center gap-2">
             <CheckCircle2 className="h-5 w-5 text-success" />

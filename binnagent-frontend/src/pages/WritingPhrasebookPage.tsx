@@ -28,6 +28,7 @@ import { Button } from '@/components/ui/Button'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { FilterChip } from '@/components/ui/FilterChip'
 import { IconButton } from '@/components/ui/IconButton'
+import { Select } from '@/components/ui/Select'
 import { SurfaceCard } from '@/components/ui/SurfaceCard'
 import { useFocusTrap } from '@/hooks/useFocusTrap'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
@@ -1532,18 +1533,19 @@ function PhraseEditDrawer({
             <div className="grid grid-cols-2 gap-3">
               <label className="text-sm">
                 <span className="font-medium text-slate-950">使用位置</span>
-                <select
+                <Select
                   name="writing_phrase_position"
                   autoComplete="off"
                   value={form.usage_position}
                   onChange={(event) => update({ usage_position: event.target.value })}
-                  className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 outline-none transition-colors focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
+                  wrapperClassName="mt-1"
+                  className="font-normal"
                 >
                   <option value="opening">开头</option>
                   <option value="body">主体</option>
                   <option value="closing">结尾</option>
                   <option value="translation">翻译</option>
-                </select>
+                </Select>
               </label>
               <label className="text-sm">
                 <span className="font-medium text-slate-950">难度</span>

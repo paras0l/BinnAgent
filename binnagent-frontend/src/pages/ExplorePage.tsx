@@ -110,6 +110,8 @@ const CATEGORIES: Array<{ id: FeatureCategory; label: string }> = [
   { id: 'exam', label: '考试冲刺' },
 ]
 
+const HIDDEN_EXPLORE_FEATURE_IDS = new Set(['vocab-review', 'vocabulary-manager'])
+
 const FEATURES: ExploreFeature[] = [
   {
     id: 'daily-lesson',
@@ -120,17 +122,6 @@ const FEATURES: ExploreFeature[] = [
     outcome: '生成今日目标、练习材料和反馈，并沉淀最近学习记录。',
     status: 'ready',
     action: 'session',
-  },
-  {
-    id: 'vocab-review',
-    category: 'vocabulary',
-    title: '复习待掌握词汇',
-    description: '进入学习中心复习系统安排的词卡。',
-    whenToUse: '看到待复习数量增加，或想巩固最近遇到的词时使用。',
-    outcome: '更新词汇熟练度、复习间隔和正确率。',
-    status: 'ready',
-    action: 'tool',
-    toolTarget: 'dashboard',
   },
   {
     id: 'vocabulary-detail',
@@ -163,17 +154,6 @@ const FEATURES: ExploreFeature[] = [
     status: 'ready',
     action: 'chat',
     prompt: '请作为 CET 词汇教练，帮我从下面的单词、句子或阅读段落中提炼值得记忆的重点词。请按「单词 / 中文释义 / 常见搭配 / 例句 / 记忆提示」输出，并优先解释四六级高频词。材料如下：\n\n',
-  },
-  {
-    id: 'vocabulary-manager',
-    category: 'vocabulary',
-    title: '词汇本管理',
-    description: '手动模式：进入学习中心精确添加新词、查看待复习词卡。',
-    whenToUse: '已经知道要保存哪个单词，或想手动维护词汇本和复习计划时使用。',
-    outcome: '手动创建真实词卡，并通过学习中心进行复习评分。',
-    status: 'ready',
-    action: 'tool',
-    toolTarget: 'vocabulary-manager',
   },
   {
     id: 'cet-reading',
@@ -384,8 +364,8 @@ export function ExplorePage({
     [preferences]
   )
   const features = useMemo(() => {
-    if (!capabilitySpecs.length) return FEATURES
-    return capabilitySpecs.map(capabilityToFeature)
+    const sourceFeatures = capabilitySpecs.length ? capabilitySpecs.map(capabilityToFeature) : FEATURES
+    return sourceFeatures.filter((feature) => !HIDDEN_EXPLORE_FEATURE_IDS.has(feature.id))
   }, [capabilitySpecs])
   const featureMap = useMemo(() => new Map(features.map((feature) => [feature.id, feature])), [features])
 
@@ -415,11 +395,12 @@ export function ExplorePage({
 
   const favorites = visibleFeatures.filter((feature) => preferenceMap.get(feature.id)?.is_favorite)
   const recommendedFeatures = useMemo(() => {
-    const preferred = features.filter((feature) => ['word-roots-affixes', 'writing-phrasebook', 'vocab-review'].includes(feature.id))
+    const preferred = features.filter((feature) => ['word-roots-affixes', 'writing-phrasebook', 'vocabulary-detail'].includes(feature.id))
     return preferred.filter((feature) => category === 'all' || feature.category === category).slice(0, 3)
   }, [category, features])
   const visibleCapabilityRecommendations = useMemo(
     () => capabilityRecommendations
+      .filter((item) => !HIDDEN_EXPLORE_FEATURE_IDS.has(item.feature_id))
       .filter((item) => !dismissedRecommendationIds.has(item.recommendation_id))
       .filter((item) => category === 'all' || item.category === category)
       .slice(0, 3),

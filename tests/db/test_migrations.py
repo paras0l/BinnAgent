@@ -31,7 +31,7 @@ def test_alembic_migrations_have_single_head_revision() -> None:
             parents.update(item for item in down_revision if isinstance(item, str))
 
     heads = revisions - parents
-    assert heads == {"n4o5p6q7r8s9"}
+    assert heads == {"o5p6q7r8s9t0"}
 
 
 def test_initial_migration_enables_pgcrypto_for_gen_random_uuid() -> None:

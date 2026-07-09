@@ -1,7 +1,7 @@
 import uuid
 
 from sqlalchemy import ForeignKey, Index, Integer, String, Text, UniqueConstraint
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from src.db import Base
@@ -25,11 +25,19 @@ class ReadingMaterialHistory(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         nullable=False,
         index=True,
     )
+    curriculum_node_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("curriculum_nodes.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
     title: Mapped[str | None] = mapped_column(String(200), nullable=True)
     text: Mapped[str] = mapped_column(Text, nullable=False)
     text_hash: Mapped[str] = mapped_column(String(64), nullable=False)
     level: Mapped[str] = mapped_column(String(30), nullable=False, default="general")
     goal: Mapped[str] = mapped_column(String(30), nullable=False, default="mixed")
+    material_type: Mapped[str] = mapped_column(String(30), nullable=False, default="passage")
     word_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     sentence_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     source: Mapped[str] = mapped_column(String(30), nullable=False, default="reading_workshop")
+    generation_context: Mapped[dict | None] = mapped_column(JSONB, nullable=True, default=dict)

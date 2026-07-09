@@ -28,6 +28,7 @@ def test_prompt_registry_lists_core_prompts() -> None:
         "graph.feedback",
         "graph.node",
         "group_learning.signal_extract",
+        "reading.material_generation",
         "tutor.chat",
         "vocabulary.agent.extract",
         "vocabulary.detail_html_extract",

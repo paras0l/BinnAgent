@@ -1,4 +1,4 @@
-import { AlertCircle, ArrowRight, BookCheck, BookMarked, BookOpen, CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, Clock3, Dumbbell, FileText, GraduationCap, Languages, Layers3, LibraryBig, ListChecks, ListTree, LoaderCircle, Send, Sparkles, Trash2, UploadCloud, X } from 'lucide-react'
+import { AlertCircle, ArrowRight, BookCheck, BookMarked, BookOpen, BookOpenCheck, CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, Clock3, Dumbbell, FileText, GraduationCap, Languages, Layers3, LibraryBig, ListChecks, ListTree, LoaderCircle, Send, Sparkles, Trash2, UploadCloud, X } from 'lucide-react'
 import { useCallback, useEffect, useId, useMemo, useState, type KeyboardEventHandler, type ReactNode, type Ref } from 'react'
 import type { CapabilityRecommendation } from '@/components/learning/CapabilityRecommendationCard'
 import { PageShell } from '@/components/layout/PageShell'
@@ -10,11 +10,21 @@ import { UploadTextbookDialog } from '@/components/knowledge/UploadTextbookDialo
 import { Button } from '@/components/ui/Button'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { IconButton } from '@/components/ui/IconButton'
+import { Select } from '@/components/ui/Select'
 import { StatusBanner } from '@/components/ui/StatusBanner'
 import { useFocusTrap } from '@/hooks/useFocusTrap'
 import { useToast } from '@/hooks/useToast'
 import { GrammarPage } from '@/pages/GrammarPage'
+import { ReadingWorkshopPage } from '@/pages/ReadingWorkshopPage'
 import { deleteKnowledgeSource } from '@/api/knowledge'
+import {
+  READING_MATERIAL_LENGTH_LABELS,
+  READING_MATERIAL_TYPE_LABELS,
+  type ReadingMaterial,
+  type ReadingMaterialGenerationResponse,
+  type ReadingMaterialLength,
+  type ReadingMaterialType,
+} from '@/data/readingWorkshop'
 import { exploreCapabilityEventUrl } from '@/services/exploreCapabilityApi'
 import {
   formatFailedIngestMessage,
@@ -99,6 +109,12 @@ interface DeleteSourceTarget {
 
 type KnowledgeWorkspace = 'today' | 'unit' | 'exercises'
 
+interface ReadingWorkshopSeed {
+  material: ReadingMaterial
+  materialId: string
+  sourceLabel: string
+}
+
 const KNOWLEDGE_WORKSPACES: ReadonlyArray<{ id: KnowledgeWorkspace; label: string }> = [
   { id: 'today', label: '今日任务' },
   { id: 'unit', label: '本单元材料' },
@@ -159,6 +175,12 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice, 
   const [dailyLesson, setDailyLesson] = useState<DailyLessonRuntime | null>(null)
   const [dailyAnswer, setDailyAnswer] = useState('')
   const [isStartingDailyLesson, setIsStartingDailyLesson] = useState(false)
+  const [readingMaterialType, setReadingMaterialType] = useState<ReadingMaterialType>('passage')
+  const [readingMaterialLength, setReadingMaterialLength] = useState<ReadingMaterialLength>('short')
+  const [isGeneratingReadingMaterial, setIsGeneratingReadingMaterial] = useState(false)
+  const [readingWorkshopSeed, setReadingWorkshopSeed] = useState<ReadingWorkshopSeed | null>(null)
+  const [unitReadingMaterials, setUnitReadingMaterials] = useState<ReadingMaterialGenerationResponse['material'][]>([])
+  const [isLoadingUnitReadingMaterials, setIsLoadingUnitReadingMaterials] = useState(false)
   const [isCurriculumRailOpen, setIsCurriculumRailOpen] = useState(false)
   const [isContextPanelOpen, setIsContextPanelOpen] = useState(false)
   const [isCapabilityDrawerOpen, setIsCapabilityDrawerOpen] = useState(false)
@@ -225,6 +247,25 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice, 
       .then((data) => setUnitVocabulary(data))
       .catch((fetchError: unknown) => {
         if (!(fetchError instanceof DOMException && fetchError.name === 'AbortError')) setUnitVocabulary(null)
+      })
+    return () => controller.abort()
+  }, [learner.id, overview?.current_unit.id])
+
+  useEffect(() => {
+    const nodeId = overview?.current_unit.id
+    if (!nodeId) return
+    const controller = new AbortController()
+    fetch(
+      `/api/learners/${learner.id}/reading-workshop/materials?curriculum_node_id=${encodeURIComponent(nodeId)}&limit=6`,
+      { signal: controller.signal },
+    )
+      .then((response) => response.ok ? response.json() as Promise<ReadingMaterialGenerationResponse['material'][]> : [])
+      .then((items) => setUnitReadingMaterials(items))
+      .catch((fetchError: unknown) => {
+        if (!(fetchError instanceof DOMException && fetchError.name === 'AbortError')) setUnitReadingMaterials([])
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setIsLoadingUnitReadingMaterials(false)
       })
     return () => controller.abort()
   }, [learner.id, overview?.current_unit.id])
@@ -358,6 +399,8 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice, 
   const handleSelectNode = (nodeId: string) => {
     if (nodeId === selectedNodeId) return
     setSelectedNodeId(nodeId)
+    setUnitReadingMaterials([])
+    setIsLoadingUnitReadingMaterials(true)
     void loadOverview(selectedSourceId ?? overview?.source.id, nodeId)
   }
 
@@ -366,6 +409,8 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice, 
     setSelectedSourceId(sourceId)
     setSelectedNodeId(null)
     setUnitVocabulary(null)
+    setUnitReadingMaterials([])
+    setIsLoadingUnitReadingMaterials(true)
     void loadOverview(sourceId)
   }
 
@@ -466,6 +511,50 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice, 
       showToast(startError instanceof Error ? startError.message : 'AI 每日题暂时无法开始。', { variant: 'error' })
     } finally {
       setIsStartingDailyLesson(false)
+    }
+  }
+
+  const openReadingMaterial = (material: ReadingMaterialGenerationResponse['material']) => {
+    if (!overview) return
+    setReadingWorkshopSeed({
+      material: {
+        title: material.title ?? '',
+        text: material.text,
+        level: material.level,
+        goal: material.goal,
+        material_type: material.material_type,
+      },
+      materialId: material.id,
+      sourceLabel: `${overview.current_unit.title} · ${overview.current_unit.subtitle || '阅读语感'}`,
+    })
+  }
+
+  const handleGenerateReadingMaterial = async () => {
+    if (!overview?.current_unit.id) return
+    setIsGeneratingReadingMaterial(true)
+    try {
+      const response = await fetch(`/api/learners/${learner.id}/reading-workshop/generated-materials`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          curriculum_node_id: overview.current_unit.id,
+          material_type: readingMaterialType,
+          length: readingMaterialLength,
+          goal: 'mixed',
+        }),
+      })
+      if (!response.ok) throw new Error('阅读材料暂时生成失败。')
+      const result = await response.json() as ReadingMaterialGenerationResponse
+      setUnitReadingMaterials((current) => [
+        result.material,
+        ...current.filter((item) => item.id !== result.material.id),
+      ].slice(0, 6))
+      openReadingMaterial(result.material)
+      showToast('阅读材料已生成，已打开精读与泛读工作区。', { variant: 'success' })
+    } catch (generateError) {
+      showToast(generateError instanceof Error ? generateError.message : '阅读材料暂时生成失败。', { variant: 'error' })
+    } finally {
+      setIsGeneratingReadingMaterial(false)
     }
   }
 
@@ -676,6 +765,18 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice, 
     ? 'fixed bottom-0 right-0 top-16 z-40 w-[min(90vw,24rem)] overflow-y-auto shadow-2xl transition-[transform,opacity] duration-200 motion-reduce:transition-none'
     : 'hidden'
 
+  if (readingWorkshopSeed) {
+    return (
+      <ReadingWorkshopPage
+        learner={learner}
+        initialMaterial={readingWorkshopSeed.material}
+        initialMaterialId={readingWorkshopSeed.materialId}
+        initialSourceLabel={readingWorkshopSeed.sourceLabel}
+        onBack={() => setReadingWorkshopSeed(null)}
+      />
+    )
+  }
+
   if (grammarTopic) {
     return (
       <GrammarPage
@@ -784,19 +885,31 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice, 
             isStartingLesson={isStartingLesson}
             isStartingExercise={isStartingExercise}
             isStartingDailyLesson={isStartingDailyLesson}
+            isGeneratingReadingMaterial={isGeneratingReadingMaterial}
+            isLoadingReadingMaterials={isLoadingUnitReadingMaterials}
+            readingMaterialType={readingMaterialType}
+            readingMaterialLength={readingMaterialLength}
+            readingMaterials={unitReadingMaterials}
             onStartLesson={() => void handleStartLesson()}
             onStartVocabulary={(mode) => onStartVocabularyPractice(mode, overview.current_unit.id, currentSourceLabel)}
             onStartExercise={() => void handleStartExercise()}
             onStartDailyLesson={() => void handleStartDailyLesson()}
+            onGenerateReadingMaterial={() => void handleGenerateReadingMaterial()}
+            onReadingMaterialTypeChange={setReadingMaterialType}
+            onReadingMaterialLengthChange={setReadingMaterialLength}
           />
 
           <UnitMaterialsSection
             overview={overview}
             workspace={unitWorkspace}
             vocabulary={activeUnitVocabulary}
+            isGeneratingReadingMaterial={isGeneratingReadingMaterial}
+            readingMaterials={unitReadingMaterials}
             onStartVocabulary={(mode) => onStartVocabularyPractice(mode, overview.current_unit.id, currentSourceLabel)}
             onStartDailyLesson={() => void handleStartDailyLesson()}
             onStartExercise={() => void handleStartExercise()}
+            onGenerateReadingMaterial={() => void handleGenerateReadingMaterial()}
+            onOpenReadingMaterial={openReadingMaterial}
             onStartGrammar={setGrammarTopic}
           />
 
@@ -1043,23 +1156,40 @@ function TodayCourseTasks({
   isStartingLesson,
   isStartingExercise,
   isStartingDailyLesson,
+  isGeneratingReadingMaterial,
+  isLoadingReadingMaterials,
+  readingMaterialType,
+  readingMaterialLength,
+  readingMaterials,
   onStartLesson,
   onStartVocabulary,
   onStartExercise,
   onStartDailyLesson,
+  onGenerateReadingMaterial,
+  onReadingMaterialTypeChange,
+  onReadingMaterialLengthChange,
 }: {
   overview: KnowledgeBaseOverview
   vocabulary: UnitVocabularySummary | null
   isStartingLesson: boolean
   isStartingExercise: boolean
   isStartingDailyLesson: boolean
+  isGeneratingReadingMaterial: boolean
+  isLoadingReadingMaterials: boolean
+  readingMaterialType: ReadingMaterialType
+  readingMaterialLength: ReadingMaterialLength
+  readingMaterials: ReadingMaterialGenerationResponse['material'][]
   onStartLesson: () => void
   onStartVocabulary: (mode: VocabularyPracticeMode) => void
   onStartExercise: () => void
   onStartDailyLesson: () => void
+  onGenerateReadingMaterial: () => void
+  onReadingMaterialTypeChange: (value: ReadingMaterialType) => void
+  onReadingMaterialLengthChange: (value: ReadingMaterialLength) => void
 }) {
   const vocabularyEntry = vocabularyPracticeEntry(vocabulary)
   const canPracticeSpelling = Boolean(vocabulary && vocabulary.total > vocabulary.mastered)
+  const latestReadingMaterial = readingMaterials[0]
   const tasks: CourseTaskCardProps[] = [
     {
       icon: <BookOpen className="size-5" />,
@@ -1088,6 +1218,22 @@ function TodayCourseTasks({
       onAction: () => {
         if (vocabularyEntry.mode) onStartVocabulary(vocabularyEntry.mode)
       },
+    },
+    {
+      icon: <BookOpenCheck className="size-5" />,
+      title: '阅读语感',
+      description: latestReadingMaterial
+        ? '按本单元知识点重新生成一篇连续输入材料；历史材料在下方阅读材料卡片查看。'
+        : '融合本单元词汇、语法和主题，生成一篇连续输入材料。',
+      meta: isLoadingReadingMaterials
+        ? `${READING_MATERIAL_TYPE_LABELS[readingMaterialType]} · ${READING_MATERIAL_LENGTH_LABELS[readingMaterialLength]}`
+        : latestReadingMaterial
+          ? `已有 ${readingMaterials.length} 篇历史`
+          : `${READING_MATERIAL_TYPE_LABELS[readingMaterialType]} · ${READING_MATERIAL_LENGTH_LABELS[readingMaterialLength]}`,
+      status: 'not-started',
+      actionLabel: '生成阅读',
+      isLoading: isGeneratingReadingMaterial,
+      onAction: onGenerateReadingMaterial,
     },
     {
       icon: <Dumbbell className="size-5" />,
@@ -1120,12 +1266,38 @@ function TodayCourseTasks({
           <h2 id="today-course-tasks-title" className="text-xl font-black text-slate-950">今日课程任务</h2>
           <p className="mt-1 text-sm text-slate-500">主线任务只围绕当前单元推进，完成后再看能力加练。</p>
         </div>
-        <Button variant="secondary" onClick={onStartDailyLesson} disabled={isStartingDailyLesson}>
-          {isStartingDailyLesson ? <LoaderCircle className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
-          AI 每日题
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <Select
+            name="reading_material_type"
+            autoComplete="off"
+            value={readingMaterialType}
+            onChange={(event) => onReadingMaterialTypeChange(event.target.value as ReadingMaterialType)}
+            wrapperClassName="w-28"
+            className="h-10 py-0 text-xs font-bold text-slate-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
+          >
+            {(Object.entries(READING_MATERIAL_TYPE_LABELS) as Array<[ReadingMaterialType, string]>).map(([value, label]) => (
+              <option key={value} value={value}>{label}</option>
+            ))}
+          </Select>
+          <Select
+            name="reading_material_length"
+            autoComplete="off"
+            value={readingMaterialLength}
+            onChange={(event) => onReadingMaterialLengthChange(event.target.value as ReadingMaterialLength)}
+            wrapperClassName="w-28"
+            className="h-10 py-0 text-xs font-bold text-slate-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
+          >
+            {(Object.entries(READING_MATERIAL_LENGTH_LABELS) as Array<[ReadingMaterialLength, string]>).map(([value, label]) => (
+              <option key={value} value={value}>{label}</option>
+            ))}
+          </Select>
+          <Button variant="secondary" onClick={onStartDailyLesson} disabled={isStartingDailyLesson}>
+            {isStartingDailyLesson ? <LoaderCircle className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
+            AI 每日题
+          </Button>
+        </div>
       </div>
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
         {tasks.map((task) => <CourseTaskCard key={task.title} {...task} />)}
       </div>
     </section>
@@ -1163,24 +1335,32 @@ function CourseTaskCard({
       : 'bg-slate-100 text-slate-600'
 
   return (
-    <article className="group flex min-h-[210px] flex-col rounded-xl border border-slate-200 bg-white p-4 shadow-[0_4px_14px_rgba(15,23,42,0.04)] transition hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-[0_14px_30px_rgba(15,23,42,0.08)] focus-within:border-indigo-300">
+    <article className="group flex min-h-[210px] flex-col overflow-hidden rounded-lg border border-slate-200/90 bg-white shadow-[0_8px_24px_rgba(15,23,42,0.05)] transition-colors hover:border-indigo-200 focus-within:border-indigo-300">
+      <div className="h-1 bg-gradient-to-r from-indigo-500 via-sky-400 to-emerald-400 opacity-80" />
+      <div className="flex flex-1 flex-col p-4">
       <div className="flex items-start justify-between gap-3">
-        <div className="flex size-11 items-center justify-center rounded-lg bg-slate-100 text-slate-700 transition group-hover:bg-indigo-50 group-hover:text-indigo-700">
+        <div className="flex size-10 items-center justify-center rounded-md border border-slate-200 bg-slate-50 text-slate-700 transition group-hover:border-indigo-200 group-hover:bg-indigo-50 group-hover:text-indigo-700">
           {icon}
         </div>
-        <span className={`rounded-md px-2 py-1 text-xs font-black ${statusClassName}`}>{statusLabel}</span>
+        <span className={`rounded-md px-2 py-1 text-[11px] font-black ${statusClassName}`}>{statusLabel}</span>
       </div>
       <h3 className="mt-4 text-base font-black text-slate-950">{title}</h3>
       <p className="mt-2 line-clamp-2 flex-1 text-sm leading-6 text-slate-600">{description}</p>
-      <div className="mt-4 flex items-center justify-between gap-3">
+      <div className="mt-4 grid gap-3">
         <span className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500">
           <Clock3 className="size-3.5" />
           {meta}
         </span>
-        <Button variant={status === 'continue' ? 'primary' : 'secondary'} onClick={onAction} disabled={disabled || isLoading} className="px-3 py-2">
+        <Button
+          variant={status === 'continue' ? 'primary' : 'secondary'}
+          onClick={onAction}
+          disabled={disabled || isLoading}
+          className="w-full justify-center whitespace-nowrap px-3 py-2"
+        >
           {isLoading ? <LoaderCircle className="size-4 animate-spin" /> : <ArrowRight className="size-4" />}
           {isLoading ? '准备中' : actionLabel}
         </Button>
+      </div>
       </div>
     </article>
   )
@@ -1237,20 +1417,29 @@ function UnitMaterialsSection({
   overview,
   workspace,
   vocabulary,
+  isGeneratingReadingMaterial,
+  readingMaterials,
   onStartExercise,
   onStartDailyLesson,
   onStartVocabulary,
+  onGenerateReadingMaterial,
+  onOpenReadingMaterial,
   onStartGrammar,
 }: {
   overview: KnowledgeBaseOverview
   workspace: UnitLearningWorkspace
   vocabulary: UnitVocabularySummary | null
+  isGeneratingReadingMaterial: boolean
+  readingMaterials: ReadingMaterialGenerationResponse['material'][]
   onStartExercise: () => void
   onStartDailyLesson: () => void
   onStartVocabulary: (mode: VocabularyPracticeMode) => void
+  onGenerateReadingMaterial: () => void
+  onOpenReadingMaterial: (material: ReadingMaterialGenerationResponse['material']) => void
   onStartGrammar: (topic: string) => void
 }) {
   const [detail, setDetail] = useState<MaterialDetail | null>(null)
+  const [isReadingHistoryOpen, setIsReadingHistoryOpen] = useState(false)
   const sectionById = new Map(workspace.sections.map((section) => [section.id, section]))
   const firstGrammarTopic = sectionById.get('grammar')?.items[0]?.title ?? overview.knowledge_points.find((item) => item.type === 'grammar')?.title ?? 'grammar'
   const expressionItems = [
@@ -1258,6 +1447,7 @@ function UnitMaterialsSection({
     ...(sectionById.get('phrases')?.items ?? []),
   ]
   const vocabularyEntry = vocabularyPracticeEntry(vocabulary)
+  const latestReadingMaterial = readingMaterials[0]
   const materialCards = [
     {
       id: 'vocabulary',
@@ -1298,6 +1488,19 @@ function UnitMaterialsSection({
       itemActionLabel: '练这个表达',
     },
     {
+      id: 'reading',
+      icon: <BookOpenCheck className="size-5" />,
+      title: '阅读材料',
+      description: latestReadingMaterial
+        ? latestReadingMaterial.title ?? '继续阅读本单元材料。'
+        : '还没有材料时，可以生成本单元短文或对话。',
+      meta: latestReadingMaterial ? `${readingMaterials.length} 篇历史` : `${sectionById.get('vocabulary')?.count ?? 0} 个词可融入`,
+      actionLabel: latestReadingMaterial ? '打开最近' : isGeneratingReadingMaterial ? '生成中' : '新生成',
+      actionType: 'reading' as UnitWorkspaceActionType,
+      isLoading: isGeneratingReadingMaterial,
+      readingItems: readingMaterials,
+    },
+    {
       id: 'practice',
       icon: <Dumbbell className="size-5" />,
       title: '教材题库',
@@ -1315,6 +1518,10 @@ function UnitMaterialsSection({
     else if (type === 'daily_lesson') onStartDailyLesson()
     else if (type === 'exercise') onStartExercise()
     else if (type === 'grammar') onStartGrammar(targetTopic ?? firstGrammarTopic)
+    else if (type === 'reading') {
+      if (latestReadingMaterial) onOpenReadingMaterial(latestReadingMaterial)
+      else onGenerateReadingMaterial()
+    }
   }
 
   const openDetails = (card: (typeof materialCards)[number]) => {
@@ -1348,48 +1555,85 @@ function UnitMaterialsSection({
           <span>待复习 {vocabulary?.due ?? '—'}</span>
         </div>
       </div>
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        {materialCards.map((card) => (
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+        {materialCards.map((card) => {
+          const readingItems = 'readingItems' in card ? card.readingItems ?? [] : []
+          const isReadingCardWithHistory = card.actionType === 'reading' && readingItems.length > 0
+          return (
           <div
             key={card.id}
-            className="relative rounded-xl border border-slate-200 bg-white shadow-[0_4px_14px_rgba(15,23,42,0.04)] transition hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-[0_14px_30px_rgba(15,23,42,0.08)]"
+            className="relative overflow-hidden rounded-lg border border-slate-200/90 bg-white shadow-[0_8px_24px_rgba(15,23,42,0.05)] transition-colors hover:border-indigo-200 focus-within:border-indigo-300"
           >
+            <div className="h-1 bg-gradient-to-r from-slate-200 via-indigo-300 to-sky-300" />
             {'detailItems' in card ? (
               <button
                 type="button"
                 onClick={() => openDetails(card)}
                 aria-label={`查看${card.title}详情`}
-                className="absolute right-3 top-3 z-10 inline-flex size-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
+                className="absolute right-3 top-4 z-10 inline-flex size-8 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
                 title="详情"
               >
                 <ListChecks className="size-4" />
               </button>
             ) : null}
-            <div className="flex min-h-[178px] w-full flex-col rounded-xl p-4 pr-12 text-left">
-              <span className="flex size-11 items-center justify-center rounded-lg bg-slate-100 text-slate-700">
+            <div className="flex min-h-[190px] w-full flex-col p-4 pr-12 text-left">
+              <span className="flex size-10 items-center justify-center rounded-md border border-slate-200 bg-slate-50 text-slate-700">
                 {card.icon}
               </span>
               <span className="mt-4 text-base font-black text-slate-950">{card.title}</span>
               <span className="mt-2 line-clamp-2 flex-1 text-sm leading-6 text-slate-600">{card.description}</span>
-              <span className="mt-4 flex items-center justify-between gap-3 text-xs font-bold text-slate-500">
+              {readingItems.length > 0 ? (
+                <div className="mt-3 space-y-1.5">
+                  {readingItems.slice(0, 3).map((item) => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => onOpenReadingMaterial(item)}
+                      className="block w-full truncate rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-left text-xs font-bold text-slate-700 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
+                    >
+                      {item.title || '未命名阅读材料'}
+                    </button>
+                  ))}
+                  {readingItems.length > 3 ? (
+                    <button
+                      type="button"
+                      onClick={() => setIsReadingHistoryOpen(true)}
+                      className="block w-full rounded-md border border-dashed border-indigo-200 bg-indigo-50/60 px-2.5 py-1.5 text-left text-xs font-black text-indigo-700 transition hover:border-indigo-300 hover:bg-indigo-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
+                    >
+                      查看全部 {readingItems.length} 篇
+                    </button>
+                  ) : null}
+                </div>
+              ) : null}
+              <div className="mt-4 grid gap-2 text-xs font-bold text-slate-500">
                 <span>{card.meta}</span>
-                {card.actionType !== 'details' ? (
+                {isReadingCardWithHistory ? null : card.actionType !== 'details' && card.actionType !== 'reading' ? (
                   <button
                     type="button"
                     onClick={() => handleAction(card.actionType as UnitWorkspaceActionType, 'targetTopic' in card && typeof card.targetTopic === 'string' ? card.targetTopic : undefined)}
-                    disabled={card.disabled}
-                    className="inline-flex items-center gap-1 rounded-lg bg-indigo-50 px-2.5 py-1.5 text-indigo-700 transition hover:bg-indigo-600 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 active:scale-[0.98] disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+                    disabled={card.disabled || ('isLoading' in card && card.isLoading)}
+                    className="inline-flex w-full items-center justify-center gap-1 whitespace-nowrap rounded-md bg-indigo-50 px-2.5 py-1.5 text-indigo-700 transition hover:bg-indigo-600 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 active:scale-[0.98] disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
                   >
-                    {card.actionLabel}
-                    <ArrowRight className="size-3.5" />
+                    {'isLoading' in card && card.isLoading ? '生成中' : card.actionLabel}
+                    {'isLoading' in card && card.isLoading ? <LoaderCircle className="size-3.5 animate-spin" /> : <ArrowRight className="size-3.5" />}
                   </button>
                 ) : null}
-              </span>
+              </div>
             </div>
           </div>
-        ))}
+          )
+        })}
       </div>
       <MaterialDetailDialog detail={detail} onClose={() => setDetail(null)} />
+      <ReadingMaterialHistoryDialog
+        items={readingMaterials}
+        open={isReadingHistoryOpen}
+        onClose={() => setIsReadingHistoryOpen(false)}
+        onOpenMaterial={(item) => {
+          setIsReadingHistoryOpen(false)
+          onOpenReadingMaterial(item)
+        }}
+      />
     </section>
   )
 }
@@ -1479,6 +1723,83 @@ function MaterialDetailDialog({ detail, onClose }: { detail: MaterialDetail | nu
               {detail.emptyMessage}
             </div>
           )}
+        </div>
+      </section>
+    </div>
+  )
+}
+
+function ReadingMaterialHistoryDialog({
+  items,
+  open,
+  onClose,
+  onOpenMaterial,
+}: {
+  items: ReadingMaterialGenerationResponse['material'][]
+  open: boolean
+  onClose: () => void
+  onOpenMaterial: (item: ReadingMaterialGenerationResponse['material']) => void
+}) {
+  const titleId = useId()
+  const { containerRef, handleKeyDown } = useFocusTrap<HTMLElement>({
+    isActive: open,
+    onEscape: onClose,
+  })
+
+  if (!open) return null
+
+  return (
+    <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
+      <button
+        type="button"
+        aria-label="关闭阅读材料历史"
+        onClick={onClose}
+        className="absolute inset-0 bg-slate-950/35 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+      />
+      <section
+        ref={containerRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        tabIndex={-1}
+        onKeyDown={handleKeyDown}
+        className="relative flex max-h-[calc(100dvh-2rem)] w-full max-w-2xl flex-col overflow-hidden rounded-xl bg-white p-5 shadow-2xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+      >
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h2 id={titleId} className="text-xl font-extrabold text-slate-950">本单元阅读材料</h2>
+            <p className="mt-1 text-sm font-semibold text-slate-500">按最近更新时间排序，点标题继续阅读。</p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-md p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            aria-label="关闭阅读材料历史"
+          >
+            <X className="size-5" />
+          </button>
+        </div>
+
+        <div className="mt-5 min-h-0 flex-1 space-y-2 overflow-y-auto overscroll-contain pr-1">
+          {items.map((item, index) => (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => onOpenMaterial(item)}
+              className="grid w-full grid-cols-[2rem_minmax(0,1fr)_auto] items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 py-3 text-left transition hover:border-indigo-200 hover:bg-indigo-50/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
+            >
+              <span className="flex size-8 items-center justify-center rounded-md bg-slate-100 text-xs font-black text-slate-500">
+                {index + 1}
+              </span>
+              <span className="min-w-0">
+                <span className="block truncate text-sm font-black text-slate-900">{item.title || '未命名阅读材料'}</span>
+                <span className="mt-1 block text-xs font-semibold text-slate-500">
+                  {item.word_count} 词 · {READING_MATERIAL_TYPE_LABELS[item.material_type]}
+                </span>
+              </span>
+              <ArrowRight className="size-4 text-indigo-500" />
+            </button>
+          ))}
         </div>
       </section>
     </div>

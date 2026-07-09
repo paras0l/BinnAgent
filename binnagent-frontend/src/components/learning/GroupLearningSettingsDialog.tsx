@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useId, useMemo, useState, type ReactNode } from 'react'
 import {
   AlertTriangle,
-  ChevronDown,
   Clock3,
   Database,
   MessageCircle,
@@ -22,6 +21,7 @@ import {
 import { Button } from '@/components/ui/Button'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { IconButton } from '@/components/ui/IconButton'
+import { Select } from '@/components/ui/Select'
 import { useFocusTrap } from '@/hooks/useFocusTrap'
 import { useToast } from '@/hooks/useToast'
 import {
@@ -93,9 +93,6 @@ const CURRENT_LEARNER_LABEL = '当前 learner'
 const GROUP_LEARNING_REFRESH_EVENT = 'binnagent:group-learning-signals-updated'
 const TEXT_INPUT_CLASS =
   'min-h-10 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20'
-const SELECT_INPUT_CLASS =
-  'min-h-10 appearance-none rounded-lg border border-slate-200 bg-white py-2 pl-3 pr-11 text-sm font-bold text-slate-800 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20'
-const SELECT_CHEVRON_CLASS = 'pointer-events-none absolute bottom-3 right-4 size-4 text-slate-400'
 
 interface GroupLearningSettingsDialogProps {
   learner: Learner
@@ -528,16 +525,15 @@ export function GroupLearningSettingsDialog({
               {selectedSource ? (
                 <>
                   <div className="grid gap-3 md:grid-cols-[220px_minmax(0,1fr)]">
-                    <label className="relative grid gap-1">
+                    <label className="grid gap-1">
                       <span className="text-xs font-bold text-slate-500">当前群组</span>
-                      <select
+                      <Select
                         value={selectedSource.id}
                         onChange={(event) => setSelectedSourceId(event.currentTarget.value)}
-                        className={SELECT_INPUT_CLASS}
+                        className="min-h-10 font-bold"
                       >
                         {sources.map((source) => <option key={source.id} value={source.id}>{source.displayName}</option>)}
-                      </select>
-                      <ChevronDown className={SELECT_CHEVRON_CLASS} />
+                      </Select>
                     </label>
                     <label className="relative grid gap-1">
                       <span className="text-xs font-bold text-slate-500">搜索成员</span>
@@ -585,20 +581,19 @@ export function GroupLearningSettingsDialog({
             >
               {selectedSource ? (
                 <>
-                  <label className="relative grid gap-1">
+                  <label className="grid gap-1">
                     <span className="text-xs font-bold text-slate-500">原始消息保留天数</span>
-                    <select
+                    <Select
                       value={selectedSource.rawRetentionDays}
                       onChange={(event) => updateSource(
                         selectedSource.id,
                         { rawRetentionDays: Number(event.currentTarget.value) },
                         '原始消息保留天数已保存',
                       )}
-                      className={SELECT_INPUT_CLASS}
+                      className="min-h-10 font-bold"
                     >
                       {RETENTION_OPTIONS.map((days) => <option key={days} value={days}>{days} 天</option>)}
-                    </select>
-                    <ChevronDown className={SELECT_CHEVRON_CLASS} />
+                    </Select>
                   </label>
                   <div className="grid gap-2">
                     <Button
@@ -652,20 +647,19 @@ export function GroupLearningSettingsDialog({
                     name="auto_apply_high_confidence_tagged_signals"
                     onChange={(checked) => updateSource(selectedSource.id, { autoApplyHighConfidenceTaggedSignals: checked }, '写入策略已保存')}
                   />
-                  <label className="relative grid gap-1">
+                  <label className="grid gap-1">
                     <span className="text-xs font-bold text-slate-500">可信度阈值</span>
-                    <select
+                    <Select
                       value={selectedSource.confidenceThreshold}
                       onChange={(event) => updateSource(
                         selectedSource.id,
                         { confidenceThreshold: Number(event.currentTarget.value) },
                         '可信度阈值已保存',
                       )}
-                      className={SELECT_INPUT_CLASS}
+                      className="min-h-10 font-bold"
                     >
                       {CONFIDENCE_OPTIONS.map((value) => <option key={value} value={value}>{Math.round(value * 100)}%</option>)}
-                    </select>
-                    <ChevronDown className={SELECT_CHEVRON_CLASS} />
+                    </Select>
                   </label>
                 </>
               ) : null}
@@ -1003,16 +997,15 @@ function SelectField({
   value: string
 }) {
   return (
-    <label className="relative grid gap-1">
+    <label className="grid gap-1">
       <span className="text-xs font-bold text-slate-500">{label}</span>
-      <select
+      <Select
         value={value}
         onChange={(event) => onChange(event.currentTarget.value)}
-        className={SELECT_INPUT_CLASS}
+        className="min-h-10 font-bold"
       >
         {options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-      </select>
-      <ChevronDown className={SELECT_CHEVRON_CLASS} />
+      </Select>
     </label>
   )
 }

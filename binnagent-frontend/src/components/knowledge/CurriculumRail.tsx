@@ -1,5 +1,6 @@
 import { BookMarked, Check, Circle, Trash2 } from 'lucide-react'
 import type { KeyboardEventHandler, Ref } from 'react'
+import { Select } from '@/components/ui/Select'
 import type { CurriculumNode, KnowledgeBaseOverview } from '@/types'
 
 interface CurriculumRailProps {
@@ -63,19 +64,20 @@ export function CurriculumRail({
         {sources.length > 1 ? (
           <label className="mt-4 block">
             <span className="text-xs font-bold text-slate-500">切换教材</span>
-            <select
+            <Select
               name="knowledge_source"
               autoComplete="off"
               value={currentSourceId}
               onChange={(event) => onSourceChange(event.target.value)}
-              className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-800 outline-none focus-visible:border-indigo-400 focus-visible:ring-2 focus-visible:ring-indigo-100"
+              wrapperClassName="mt-1"
+              className="font-bold focus-visible:border-indigo-400 focus-visible:ring-indigo-100"
             >
               {sources.map((source) => (
                 <option key={source.id} value={source.id}>
                   {source.title}
                 </option>
               ))}
-            </select>
+            </Select>
           </label>
         ) : null}
         <div className="mt-4 flex items-center justify-between text-sm text-slate-500">

@@ -116,6 +116,7 @@ export type UnitWorkspaceActionType =
   | 'exercise'
   | 'grammar'
   | 'pronunciation'
+  | 'reading'
   | 'review'
   | 'vocabulary_new'
   | 'vocabulary_spelling'

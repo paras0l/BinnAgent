@@ -34,6 +34,7 @@ import { ExerciseLearningSignal } from '@/components/exercise/ExerciseLearningSi
 import { Button } from '@/components/ui/Button'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { IconButton } from '@/components/ui/IconButton'
+import { Select } from '@/components/ui/Select'
 import { SurfaceCard } from '@/components/ui/SurfaceCard'
 import { useFocusTrap } from '@/hooks/useFocusTrap'
 import type { ExerciseTarget } from '@/types/exercises'
@@ -721,20 +722,21 @@ export function GrammarPage({ learner, learnerProfile, onBack, backLabel = '返�
                 跳转网站
               </label>
               <div className="mt-2 flex gap-2">
-                <select
+                <Select
                   id="grammar-target"
                   name="grammar_target"
                   autoComplete="off"
                   value={selectedTarget.id}
                   onChange={(event) => setTargetId(event.target.value)}
-                  className="min-w-0 flex-1 rounded-lg border bg-background px-3 py-2 text-sm outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
+                  wrapperClassName="min-w-0 flex-1"
+                  className="bg-background font-normal text-foreground"
                 >
                   {targets.map((target) => (
                     <option key={target.id} value={target.id}>
                       {target.label}
                     </option>
                   ))}
-                </select>
+                </Select>
                 <Button variant="ghost" onClick={() => setWorkspace('settings')}>管理</Button>
               </div>
 
@@ -814,20 +816,21 @@ export function GrammarPage({ learner, learnerProfile, onBack, backLabel = '返�
               当前目标
             </label>
             <div className="mt-2 flex gap-2">
-              <select
+              <Select
                 id="grammar-target-settings"
                 name="grammar_target_settings"
                 autoComplete="off"
                 value={selectedTarget.id}
                 onChange={(event) => setTargetId(event.target.value)}
-                className="min-w-0 flex-1 rounded-lg border bg-background px-3 py-2 text-sm outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
+                wrapperClassName="min-w-0 flex-1"
+                className="bg-background font-normal text-foreground"
               >
                 {targets.map((target) => (
                   <option key={target.id} value={target.id}>
                     {target.label}
                   </option>
                 ))}
-              </select>
+              </Select>
               <IconButton
                 label="删除当前目标"
                 danger

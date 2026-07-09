@@ -331,6 +331,45 @@ EXPLORE_CAPABILITY_RERANK_SCHEMA: dict[str, Any] = {
     "additionalProperties": False,
 }
 
+READING_MATERIAL_GENERATION_SCHEMA: dict[str, Any] = {
+    "type": "object",
+    "properties": {
+        "title": {"type": "string", "minLength": 1},
+        "material_type": {"type": "string", "enum": ["dialogue", "passage"]},
+        "text": {"type": "string", "minLength": 80},
+        "theme": {"type": "string"},
+        "grammar_focus": {"type": "array", "items": {"type": "string"}, "maxItems": 6},
+        "vocabulary_used": {"type": "array", "items": {"type": "string"}, "maxItems": 20},
+        "level_rationale": {"type": "string"},
+        "comprehension_checks": {
+            "type": "array",
+            "maxItems": 3,
+            "items": {
+                "type": "object",
+                "properties": {
+                    "question": {"type": "string"},
+                    "answer": {"type": "string"},
+                },
+                "required": ["question", "answer"],
+                "additionalProperties": True,
+            },
+        },
+        "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+    },
+    "required": [
+        "title",
+        "material_type",
+        "text",
+        "theme",
+        "grammar_focus",
+        "vocabulary_used",
+        "level_rationale",
+        "comprehension_checks",
+        "confidence",
+    ],
+    "additionalProperties": True,
+}
+
 SCHEMA_REGISTRY: dict[str, dict[str, Any]] = {
     "VocabularyExtractOutput": VOCABULARY_CARD_SCHEMA,
     "WritingPhraseImportOutput": WRITING_PHRASE_IMPORT_SCHEMA,
@@ -343,4 +382,5 @@ SCHEMA_REGISTRY: dict[str, dict[str, Any]] = {
     "LocalVocabularyOutput": LOCAL_VOCABULARY_SCHEMA,
     "VocabularyDetailHtmlOutput": DETAIL_HTML_SCHEMA,
     "ExploreCapabilityRerankOutput": EXPLORE_CAPABILITY_RERANK_SCHEMA,
+    "ReadingMaterialGenerationOutput": READING_MATERIAL_GENERATION_SCHEMA,
 }
