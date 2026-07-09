@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Bot, BookOpen, ChevronDown, Compass, LogOut, MessageCircle, Settings, User } from 'lucide-react'
+import { Bot, ChevronDown, Compass, LogOut, MessageCircle, Settings, User } from 'lucide-react'
 import type { AppTab, Learner } from '@/types'
 
 interface HeaderProps {
@@ -131,17 +131,6 @@ export function Header({
                   <MessageCircle className="size-4" />
                   群聊学习线索设置
                 </button>
-                <div className="rounded-lg px-3 py-2.5">
-                  <div className="flex items-start gap-3">
-                    <BookOpen className="mt-0.5 size-4 shrink-0 text-slate-400" />
-                    <div className="min-w-0">
-                      <p className="text-sm font-bold text-slate-700">当前学习者摘要</p>
-                      <p className="mt-1 text-xs leading-5 text-slate-500">
-                        学习记录和画像会按当前学习者保存；调试记忆与原始证据在 Dev Console 查看。
-                      </p>
-                    </div>
-                  </div>
-                </div>
                 <button
                   type="button"
                   role="menuitem"
