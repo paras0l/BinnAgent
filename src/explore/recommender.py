@@ -6,6 +6,7 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.config import settings
 from src.explore.capabilities import ExploreCapabilityRegistry, explore_capability_registry
 from src.explore.schemas import (
     ExploreCapabilityRecommendation,
@@ -13,6 +14,8 @@ from src.explore.schemas import (
     ExploreRecommendationContext,
 )
 from src.models.explore import ExploreFeaturePreference
+from src.prompts import PromptExecutionContext, PromptExecutor
+from src.providers.router import ModelRouter
 
 
 @dataclass
@@ -29,11 +32,15 @@ class ExploreCapabilityRecommender:
         db: AsyncSession,
         *,
         registry: ExploreCapabilityRegistry = explore_capability_registry,
-        rerank_with_llm: bool = False,
+        rerank_with_llm: bool | None = None,
+        model_router: ModelRouter | None = None,
     ):
         self.db = db
         self.registry = registry
-        self.rerank_with_llm = rerank_with_llm
+        self.rerank_with_llm = (
+            settings.explore_llm_rerank_enabled if rerank_with_llm is None else rerank_with_llm
+        )
+        self.model_router = model_router
 
     async def recommend_for_daily_lesson(
         self,
@@ -60,7 +67,7 @@ class ExploreCapabilityRecommender:
 
         scored = sorted(scored, key=lambda item: (-item.score, item.spec.capability_id))[:5]
         source = "rule" if any(item.source == "rule" for item in scored) else "fallback"
-        if self.rerank_with_llm and scored:
+        if self.rerank_with_llm and self.model_router is not None and scored:
             try:
                 scored = await self._rerank_with_llm(context, scored)
                 source = "llm_rerank"
@@ -97,6 +104,8 @@ class ExploreCapabilityRecommender:
         results: list[_ScoredCapability] = []
 
         for spec in self.registry.ready():
+            if not _capability_is_contextually_eligible(spec, context):
+                continue
             target_match = _target_match(spec, target_type, learning_skill)
             error_match = _error_match(spec, error_text)
             if not target_match and not error_match and mastery_need < 0.35:
@@ -163,22 +172,48 @@ class ExploreCapabilityRecommender:
                 continue
             score = item.get("priority_score", original.score)
             reason = item.get("reason") or original.reason
+            normalized_score = float(score) if isinstance(score, int | float) else original.score
             reranked.append(
                 _ScoredCapability(
                     spec=original.spec,
-                    score=float(score) if isinstance(score, int | float) else original.score,
+                    score=round(max(0.0, min(normalized_score, 1.0)), 4),
                     reason=str(reason),
                 )
             )
-        return reranked or scored
+        if llm_items and not reranked:
+            return scored
+        return sorted(reranked, key=lambda item: (-item.score, item.spec.capability_id))
 
     async def _call_llm_rerank(
         self,
         context: ExploreRecommendationContext,
         scored: list[_ScoredCapability],
     ) -> list[dict[str, Any]]:
-        del context, scored
-        return []
+        if self.model_router is None:
+            return []
+        result = await PromptExecutor(db=self.db, model_router=self.model_router).execute(
+            prompt_id="explore.capability_rerank",
+            version="v1",
+            variables={
+                "context": _llm_context_payload(context),
+                "candidates": [_llm_candidate_payload(item) for item in scored],
+            },
+            context=PromptExecutionContext(
+                learner_id=context.learner_id,
+                episode_id=context.episode_id,
+                source_module="explore.recommender",
+                target_type=_target_type(context),
+                target_id=context.knowledge_point_id or _target_label(context),
+                metadata={
+                    "candidate_count": len(scored),
+                    "learning_skill": _learning_skill(context),
+                },
+            ),
+        )
+        if result.validated_output is None or result.decision == "rejected":
+            raise ValueError(result.schema_error_summary or "Invalid explore capability rerank output")
+        recommendations = result.validated_output.get("recommendations")
+        return recommendations if isinstance(recommendations, list) else []
 
     def _to_recommendation(
         self,
@@ -221,6 +256,39 @@ def _target_type(context: ExploreRecommendationContext) -> str | None:
     )
 
 
+def _target_label(context: ExploreRecommendationContext) -> str | None:
+    task_spec = context.task_spec or {}
+    target = task_spec.get("target") if isinstance(task_spec.get("target"), dict) else {}
+    metadata = context.metadata or {}
+    target_metadata = target.get("metadata") if isinstance(target.get("metadata"), dict) else {}
+    candidates = [
+        metadata.get("target_label"),
+        metadata.get("word"),
+        metadata.get("term"),
+        target.get("label"),
+        target.get("target_label"),
+        target_metadata.get("target_label"),
+        target_metadata.get("word"),
+        target_metadata.get("term"),
+        context.knowledge_point_title,
+    ]
+    for payload in (context.grading_result, context.mastery_update, context.memory_context):
+        if not isinstance(payload, dict):
+            continue
+        candidates.extend(
+            [
+                payload.get("target_label"),
+                payload.get("word"),
+                payload.get("term"),
+                payload.get("vocabulary"),
+            ]
+        )
+    for value in candidates:
+        if isinstance(value, str) and value.strip():
+            return value.strip()
+    return None
+
+
 def _learning_skill(context: ExploreRecommendationContext) -> str | None:
     if context.learning_skill:
         return context.learning_skill
@@ -228,6 +296,82 @@ def _learning_skill(context: ExploreRecommendationContext) -> str | None:
     metadata = task_spec.get("metadata") if isinstance(task_spec.get("metadata"), dict) else {}
     value = metadata.get("learning_skill") or metadata.get("skill")
     return str(value) if value else None
+
+
+def _capability_is_contextually_eligible(
+    spec: ExploreCapabilitySpec,
+    context: ExploreRecommendationContext,
+) -> bool:
+    target_label = _target_label(context)
+    if not target_label:
+        return True
+    if spec.capability_id == "word-roots-affixes" and _looks_like_proper_noun_target(target_label):
+        return False
+    if spec.capability_id == "vocabulary-detail" and _looks_like_bare_name_target(target_label):
+        return False
+    return True
+
+
+def _looks_like_proper_noun_target(value: str) -> bool:
+    normalized = _normalize_target_label(value)
+    if not normalized:
+        return False
+    if normalized.lower().startswith(("unit ", "lesson ", "starter unit ")):
+        return False
+    if " " in normalized or "-" in normalized:
+        tokens = [token for token in normalized.replace("-", " ").split() if token]
+        return bool(tokens) and all(_is_capitalized_name_token(token) for token in tokens)
+    return _is_capitalized_name_token(normalized)
+
+
+def _looks_like_bare_name_target(value: str) -> bool:
+    normalized = _normalize_target_label(value)
+    if not normalized:
+        return False
+    return _looks_like_proper_noun_target(normalized)
+
+
+def _normalize_target_label(value: str) -> str:
+    return value.strip().strip("\"'`“”‘’.,:;!?()[]{}")
+
+
+def _is_capitalized_name_token(value: str) -> bool:
+    if len(value) < 2 or not value.isalpha() or not value.isascii():
+        return False
+    return value[0].isupper() and value[1:].islower()
+
+
+def _llm_context_payload(context: ExploreRecommendationContext) -> dict[str, Any]:
+    return {
+        "target_label": _target_label(context),
+        "target_type": _target_type(context),
+        "knowledge_point_id": context.knowledge_point_id,
+        "knowledge_point_title": context.knowledge_point_title,
+        "learning_skill": _learning_skill(context),
+        "subskill": context.subskill,
+        "error_text": _error_text(context),
+        "grading_result": context.grading_result or {},
+        "mastery_update": context.mastery_update or {},
+        "memory_context": context.memory_context or {},
+        "metadata": context.metadata or {},
+        "evidence_refs": context.evidence_refs[:5],
+    }
+
+
+def _llm_candidate_payload(item: _ScoredCapability) -> dict[str, Any]:
+    spec = item.spec
+    return {
+        "capability_id": spec.capability_id,
+        "title": spec.title,
+        "category": spec.category,
+        "learning_skill": spec.learning_skill,
+        "description": spec.description,
+        "recommended_when": spec.recommended_when,
+        "not_recommended_when": spec.not_recommended_when,
+        "expected_learning_outcome": spec.expected_learning_outcome,
+        "rule_score": item.score,
+        "rule_reason": item.reason,
+    }
 
 
 def _error_text(context: ExploreRecommendationContext) -> str:

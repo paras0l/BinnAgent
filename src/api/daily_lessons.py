@@ -5,10 +5,11 @@ from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.api.deps import get_current_learner, get_db_session
+from src.api.deps import get_current_learner, get_db_session, get_model_router
 from src.learning.orchestrator import LearningOrchestrator
 from src.learning.types import LearningPlanRequest, StartedTask
 from src.models.learner import Learner
+from src.providers.router import ModelRouter
 
 router = APIRouter(prefix="/api/learners/{learner_id}/daily-lessons", tags=["daily-lessons"])
 
@@ -69,8 +70,9 @@ async def submit_daily_lesson_answer(
     body: DailyLessonAnswerRequest,
     _current_learner: Learner = Depends(get_current_learner),
     db: AsyncSession = Depends(get_db_session),
+    model_router: ModelRouter = Depends(get_model_router),
 ) -> dict[str, Any]:
-    return await LearningOrchestrator(db).submit_answer(
+    return await LearningOrchestrator(db, model_router=model_router).submit_answer(
         learner_id=learner_id,
         episode_id=episode_id,
         answer=body.answer,

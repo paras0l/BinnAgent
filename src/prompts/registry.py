@@ -253,3 +253,15 @@ prompt_registry.register(
         eval_set="evals/prompts/group_learning_signal_extract_v1.jsonl",
     )
 )
+prompt_registry.register(
+    PromptMetadata(
+        id="explore.capability_rerank",
+        version="v1",
+        owner="explore",
+        purpose="结合学习上下文判断 Explore 能力加练候选是否适合推荐并重排",
+        template_path="versions/explore.capability_rerank.v1.md",
+        output_schema="ExploreCapabilityRerankOutput",
+        model_policy={"default_model": "ollama_utility", "temperature": 0.1, "max_tokens": 700},
+        eval_set="evals/prompts/explore_capability_rerank_v1.jsonl",
+    )
+)

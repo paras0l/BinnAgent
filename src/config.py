@@ -60,6 +60,7 @@ class Settings(BaseSettings):
             "DEBUG_CONSOLE_ALLOWED_ORIGINS",
         ),
     )
+    explore_llm_rerank_enabled: bool = True
 
 
 settings = Settings()

@@ -14,8 +14,8 @@
 
 打开：
 
-- Learner App: http://localhost:5173
-- Dev Console: http://localhost:5174
+- Learner App: http://localhost:5175
+- Dev Console: http://localhost:5176
 - Debug token: `dev`
 
 如果只演示后端闭环，可使用 Swagger 或 API client；前端 UI polish 仍属于 roadmap。

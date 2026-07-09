@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Bot, ChevronDown, Compass, LogOut, MessageCircle, Settings, User } from 'lucide-react'
+import { Bot, BookOpen, ChevronDown, Compass, LogOut, MessageCircle, Settings, User } from 'lucide-react'
 import type { AppTab, Learner } from '@/types'
 
 interface HeaderProps {

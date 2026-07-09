@@ -3,8 +3,8 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 FRONTEND_DIR="$ROOT_DIR/binnagent-frontend"
-LEARNER_PORT="${BINN_LEARNER_PORT:-5173}"
-DEV_CONSOLE_PORT="${BINN_DEV_CONSOLE_PORT:-5174}"
+LEARNER_PORT="${BINN_LEARNER_PORT:-5175}"
+DEV_CONSOLE_PORT="${BINN_DEV_CONSOLE_PORT:-5176}"
 START_DEV_CONSOLE="${BINN_START_DEV_CONSOLE:-true}"
 FRONTEND_HOST="${BINN_FRONTEND_HOST:-0.0.0.0}"
 LEARNER_LOG="${TMPDIR:-/tmp}/binnagent-learner-vite.log"
@@ -50,8 +50,8 @@ Options:
 Environment:
   BINN_START_DEV_CONSOLE=false   Same as --no-console.
   BINN_DEBUG_CONSOLE_TOKEN=dev    Token used by backend and Dev Console.
-  BINN_LEARNER_PORT=5173          Learner App port.
-  BINN_DEV_CONSOLE_PORT=5174      Dev Console port.
+  BINN_LEARNER_PORT=5175          Learner App port.
+  BINN_DEV_CONSOLE_PORT=5176      Dev Console port.
   BINN_FEISHU_MCP_ENABLED=true    Start Feishu/Lark MCP sidecar.
   BINN_FEISHU_APP_ID=cli_xxx      Feishu/Lark Open Platform app id.
   BINN_FEISHU_APP_SECRET=xxx      Feishu/Lark Open Platform app secret.

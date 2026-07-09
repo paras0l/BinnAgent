@@ -1612,6 +1612,8 @@ function fallbackCapabilityRecommendations(overview: KnowledgeBaseOverview): Cap
   const byType = (type: string) => overview.knowledge_points.filter((item) => item.type === type)
   const grammarItems = byType('grammar')
   const vocabularyItems = byType('vocabulary')
+  const wordPartTarget = vocabularyItems.find((item) => isWordPartPracticeTarget(item.title))
+  const vocabularyDetailTarget = vocabularyItems.find((item) => isVocabularyDetailTarget(item.title))
   const phraseItems = byType('phrase')
   const sentenceItems = byType('sentence_pattern')
   const pronunciationItems = byType('pronunciation')
@@ -1634,31 +1636,31 @@ function fallbackCapabilityRecommendations(overview: KnowledgeBaseOverview): Cap
     }))
   }
 
-  if (vocabularyItems.length >= 6) {
+  if (vocabularyItems.length >= 6 && wordPartTarget) {
     recommendations.push(makeFallbackRecommendation({
       id: 'word-parts',
       capabilityId: 'word-parts',
       featureId: 'word-parts-page',
       title: '词根与词缀',
       category: 'vocabulary',
-      target: vocabularyItems[0]?.title ?? unitTarget,
+      target: wordPartTarget.title,
       reason: '本单元新词较多，拆词形和构词线索能降低记忆负担。',
-      evidence: vocabularyItems[0]?.source_page || evidence,
+      evidence: wordPartTarget.source_page || evidence,
       toolTarget: 'word-parts',
       priorityScore: 0.88,
     }))
   }
 
-  if (vocabularyItems.length > 0) {
+  if (vocabularyDetailTarget) {
     recommendations.push(makeFallbackRecommendation({
       id: 'vocabulary-detail',
       capabilityId: 'vocabulary-detail',
       featureId: 'vocabulary-detail-page',
       title: '词汇详解',
       category: 'vocabulary',
-      target: vocabularyItems[0]?.title ?? unitTarget,
+      target: vocabularyDetailTarget.title,
       reason: '挑一个本单元高频词做搭配、例句和近义辨析，会帮助后续阅读和写作。',
-      evidence: vocabularyItems[0]?.source_page || evidence,
+      evidence: vocabularyDetailTarget.source_page || evidence,
       toolTarget: 'vocabulary-detail',
       priorityScore: 0.82,
       action: 'vocabulary-detail',
@@ -1726,6 +1728,30 @@ function fallbackCapabilityRecommendations(overview: KnowledgeBaseOverview): Cap
   }
 
   return recommendations
+}
+
+function isWordPartPracticeTarget(value: string) {
+  const normalized = normalizeVocabularyTarget(value)
+  if (!normalized || isLikelyBareProperNoun(normalized)) return false
+  return /^[a-z][a-z'-]{2,}$/i.test(normalized)
+}
+
+function isVocabularyDetailTarget(value: string) {
+  const normalized = normalizeVocabularyTarget(value)
+  if (!normalized || isLikelyBareProperNoun(normalized)) return false
+  return /[a-z]/i.test(normalized)
+}
+
+function normalizeVocabularyTarget(value: string) {
+  return value.trim().replace(/^["'`“”‘’.,:;!?()[\]{}]+|["'`“”‘’.,:;!?()[\]{}]+$/g, '')
+}
+
+function isLikelyBareProperNoun(value: string) {
+  const normalized = normalizeVocabularyTarget(value)
+  if (!normalized) return false
+  const tokens = normalized.split(/[\s-]+/).filter(Boolean)
+  if (!tokens.length) return false
+  return tokens.every((token) => /^[A-Z][a-z]+$/.test(token))
 }
 
 function makeFallbackRecommendation({

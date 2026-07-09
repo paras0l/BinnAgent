@@ -26,8 +26,8 @@ BinnAgent 是面向英语学习场景的个性化 Agent 系统。它不是普通
 默认会同时启动 Learner App 和 Dev Console；Dev Console 本地 token 默认为 `dev`。
 
 - 后端 API：http://localhost:8000/docs
-- 学习端页面：http://localhost:5173
-- Dev Console：http://localhost:5174
+- 学习端页面：http://localhost:5175
+- Dev Console：http://localhost:5176
 
 ### Docker 部署（推荐）
 
@@ -79,8 +79,8 @@ npm run dev:console
 npm run test
 ```
 
-学习端运行在 http://localhost:5173，自动代理 API 请求到后端。Dev Console 运行在
-http://localhost:5174，可在 Learners / Recent Episodes 中直接选择 learner 和 episode，并用于 Memory / Episode / Tool / Evidence / Prompt 等内部调试页面。
+学习端运行在 http://localhost:5175，自动代理 API 请求到后端。Dev Console 运行在
+http://localhost:5176，可在 Learners / Recent Episodes 中直接选择 learner 和 episode，并用于 Memory / Episode / Tool / Evidence / Prompt 等内部调试页面。
 
 ## 文档索引
 
@@ -181,5 +181,5 @@ http://localhost:5174，可在 Learners / Recent Episodes 中直接选择 learne
 | `app` | 8000 | FastAPI 应用 |
 | `db` | 5432 | PostgreSQL |
 | `redis` | 6379 | Redis 缓存 |
-| `frontend` | 5173 | Learner App React 开发服务器 |
-| `dev-console` | 5174 | Agent Runtime / Harness 调试控制台 |
+| `frontend` | 5175 | Learner App React 开发服务器 |
+| `dev-console` | 5176 | Agent Runtime / Harness 调试控制台 |

@@ -26,6 +26,7 @@ from src.memory.schemas import MemoryEventInput
 from src.memory.writer import MemoryWriter
 from src.models.knowledge import ExerciseQuestion, KnowledgeLearningEvent
 from src.models.runtime import AgentEpisode, LearningEvent, ToolCallRecord
+from src.providers.router import ModelRouter
 from src.recommendation.engine import RecommendationEngine
 from src.recommendation.types import RecommendationInput
 from src.runtime.episode import EpisodeRuntime
@@ -38,8 +39,9 @@ from src.learning.types import LearningPlanRequest, LearningPlanResult, StartedT
 
 
 class LearningOrchestrator:
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: AsyncSession, *, model_router: ModelRouter | None = None):
         self.db = db
+        self.model_router = model_router
 
     async def build_learning_plan(self, request: LearningPlanRequest) -> LearningPlanResult:
         recommendation_plan = await RecommendationEngine(self.db).build_daily_plan(
@@ -681,7 +683,10 @@ class LearningOrchestrator:
         )
         next_capability_recommendations: list[dict[str, Any]] = []
         try:
-            recommendations = await ExploreCapabilityRecommender(self.db).recommend_for_daily_lesson(
+            recommendations = await ExploreCapabilityRecommender(
+                self.db,
+                model_router=self.model_router,
+            ).recommend_for_daily_lesson(
                 ExploreRecommendationContext(
                     learner_id=uuid.UUID(str(learner_id)),
                     episode_id=episode.id,

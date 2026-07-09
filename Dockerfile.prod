@@ -6,6 +6,21 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 WORKDIR /app
 
 COPY pyproject.toml ./
+RUN python - <<'PY' > /tmp/requirements.txt
+import tomllib
+
+with open("pyproject.toml", "rb") as fh:
+    project = tomllib.load(fh)["project"]
+
+for dependency in project.get("dependencies", []):
+    print(dependency)
+PY
+RUN pip install \
+    -i https://mirrors.aliyun.com/pypi/simple \
+    --trusted-host mirrors.aliyun.com \
+    --no-cache-dir \
+    -r /tmp/requirements.txt
+
 COPY alembic/ ./alembic/
 COPY alembic.ini ./
 COPY books/ ./books/
@@ -16,6 +31,7 @@ RUN pip install \
     -i https://mirrors.aliyun.com/pypi/simple \
     --trusted-host mirrors.aliyun.com \
     --no-cache-dir \
+    --no-deps \
     .
 
 EXPOSE 8000

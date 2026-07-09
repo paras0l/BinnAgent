@@ -2,12 +2,23 @@ import { lazy, Suspense, useEffect, useState } from 'react'
 import { Header } from './components/layout/Header'
 import { GroupLearningSettingsDialog } from './components/learning/GroupLearningSettingsDialog'
 import { LearningSettingsDialog } from './components/learning/LearningSettingsDialog'
+import { Button } from './components/ui/Button'
+import { StatusBanner } from './components/ui/StatusBanner'
 import { useToast } from './hooks/useToast'
 import { useLearningPreferences } from './hooks/useLearningPreferences'
 import type { VocabularyPracticeMode } from './pages/VocabularyPracticePage'
 import type { AppTab, Learner, LearnerProfile, PronunciationWorkspace } from './types'
 
-type LearningCenterView = 'home' | 'daily-learning' | 'vocabulary' | 'vocabulary-practice'
+type LearningCenterView = 'home' | 'daily-learning' | 'vocabulary' | 'vocabulary-practice' | 'profile'
+
+interface LearnerProfileReadiness {
+  learner_id: string
+  target_exam?: string | null
+  current_level?: string | null
+  has_learning_goal: boolean
+  has_current_level: boolean
+  is_complete: boolean
+}
 
 const ChatPage = lazy(() =>
   import('./pages/ChatPage').then((module) => ({ default: module.ChatPage }))
@@ -68,6 +79,7 @@ function App() {
   const [isLearningSettingsOpen, setIsLearningSettingsOpen] = useState(false)
   const [isGroupLearningSettingsOpen, setIsGroupLearningSettingsOpen] = useState(false)
   const [learnerProfile, setLearnerProfile] = useState<LearnerProfile | null>(null)
+  const [learnerProfileReadiness, setLearnerProfileReadiness] = useState<LearnerProfileReadiness | null>(null)
   const [currentLearner, setCurrentLearner] = useState<Learner | null>(() => {
     const cached = localStorage.getItem('binnLearner')
     if (!cached) return null
@@ -110,15 +122,39 @@ function App() {
     let isMounted = true
     fetch(`/api/learners/${currentLearner.id}/profile`)
       .then((response) => {
-        if (response.status === 404) return null
         if (!response.ok) throw new Error('Learner profile unavailable')
         return response.json() as Promise<LearnerProfile>
       })
       .then((profile) => {
-        if (isMounted) setLearnerProfile(profile)
+        if (isMounted) {
+          setLearnerProfile(profile)
+        }
       })
       .catch(() => {
-        if (isMounted) setLearnerProfile(null)
+        if (isMounted) {
+          setLearnerProfile(null)
+        }
+      })
+    return () => {
+      isMounted = false
+    }
+  }, [currentLearner?.id])
+
+  useEffect(() => {
+    if (!currentLearner?.id) {
+      return
+    }
+    let isMounted = true
+    fetch(`/api/learners/${currentLearner.id}/profile-readiness`)
+      .then((response) => {
+        if (!response.ok) throw new Error('Learner profile readiness unavailable')
+        return response.json() as Promise<LearnerProfileReadiness>
+      })
+      .then((readiness) => {
+        if (isMounted) setLearnerProfileReadiness(readiness)
+      })
+      .catch(() => {
+        if (isMounted) setLearnerProfileReadiness(null)
       })
     return () => {
       isMounted = false
@@ -137,6 +173,14 @@ function App() {
       ...patch,
     }
     setLearnerProfile(nextProfile)
+    setLearnerProfileReadiness({
+      learner_id: currentLearner.id,
+      target_exam: nextProfile.target_exam,
+      current_level: nextProfile.current_level,
+      has_learning_goal: Boolean(nextProfile.target_exam),
+      has_current_level: Boolean(nextProfile.current_level),
+      is_complete: Boolean(nextProfile.target_exam && nextProfile.current_level),
+    })
     try {
       const response = await fetch(`/api/learners/${currentLearner.id}/profile`, {
         method: 'PUT',
@@ -159,6 +203,7 @@ function App() {
     localStorage.removeItem('binnLearner')
     setCurrentLearner(null)
     setLearnerProfile(null)
+    setLearnerProfileReadiness(null)
     setActiveTab('chat')
     setChatDraft('')
     setChatSkillFocus(null)
@@ -197,6 +242,15 @@ function App() {
     setActiveTab(tab)
   }
 
+  const handleOpenLearnerProfile = () => {
+    if (isChatGenerating) {
+      showToast('回答生成中，请先等待完成或点击取消。', { variant: 'warning' })
+      return
+    }
+    setLearningCenterView('profile')
+    setActiveTab('dashboard')
+  }
+
   const openVocabularyPractice = (mode: VocabularyPracticeMode, nodeId?: string | null, sourceLabel?: string | null) => {
     setPracticeMode(mode)
     setPracticeNodeId(nodeId ?? null)
@@ -230,18 +284,41 @@ function App() {
     )
   }
 
+  const isProfileMissingGoalAndLevel =
+    learnerProfileReadiness?.learner_id === currentLearner.id &&
+    !learnerProfileReadiness.has_learning_goal &&
+    !learnerProfileReadiness.has_current_level
+  const profileSetupBanner = isProfileMissingGoalAndLevel ? (
+    <div className="mx-auto max-w-7xl px-4 pt-4 sm:px-6 lg:px-8">
+      <StatusBanner
+        tone="warning"
+        title="完善学习目标和当前水平"
+        action={
+          <Button variant="secondary" className="px-3 py-2 text-xs" onClick={handleOpenLearnerProfile}>
+            去设置
+          </Button>
+        }
+      >
+        设置后，BinnAgent 会按你的目标和水平调整讲解难度、例句和练习推荐。
+      </StatusBanner>
+    </div>
+  ) : null
+
   if (activeTab === 'dashboard' && learningCenterView === 'vocabulary-practice') {
     return (
-      <Suspense fallback={<PageLoadingFallback label="正在打开词汇练习..." />}>
-        <VocabularyPracticePage
-          learner={currentLearner}
-          initialMode={practiceMode}
-          curriculumNodeId={practiceNodeId}
-          preferences={preferences}
-          sourceLabel={practiceSourceLabel}
-          onExit={() => setLearningCenterView(practiceNodeId ? 'daily-learning' : 'home')}
-        />
-      </Suspense>
+      <div className="min-h-screen bg-background">
+        {profileSetupBanner}
+        <Suspense fallback={<PageLoadingFallback label="正在打开词汇练习..." />}>
+          <VocabularyPracticePage
+            learner={currentLearner}
+            initialMode={practiceMode}
+            curriculumNodeId={practiceNodeId}
+            preferences={preferences}
+            sourceLabel={practiceSourceLabel}
+            onExit={() => setLearningCenterView(practiceNodeId ? 'daily-learning' : 'home')}
+          />
+        </Suspense>
+      </div>
     )
   }
 
@@ -269,6 +346,7 @@ function App() {
         onUpdate={updatePreferences}
       />
       <main className="pt-16">
+        {profileSetupBanner}
         <Suspense fallback={<PageLoadingFallback />}>
           {activeTab === 'chat' ? (
             <ChatPage
@@ -319,11 +397,15 @@ function App() {
               />
             ) : (
               <DashboardPage
-                key={learningCenterView === 'vocabulary' ? 'vocabulary' : 'home'}
+                key={learningCenterView === 'vocabulary' || learningCenterView === 'profile' ? learningCenterView : 'home'}
                 learner={currentLearner}
                 learnerProfile={learnerProfile}
                 initialVocabularyListOpen={learningCenterView === 'vocabulary'}
-                initialWorkspace={learningCenterView === 'vocabulary' ? 'vocabulary' : 'home'}
+                initialWorkspace={
+                  learningCenterView === 'vocabulary' || learningCenterView === 'profile'
+                    ? learningCenterView
+                    : 'home'
+                }
                 onOpenDailyLearning={() => setLearningCenterView('daily-learning')}
                 onOpenGroupLearningSettings={() => setIsGroupLearningSettingsOpen(true)}
                 onProfileUpdate={(patch) => void updateLearnerProfile(patch)}

@@ -7,7 +7,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.api.deps import get_current_learner, get_current_user, get_db_session
+from src.api.deps import get_current_learner, get_current_user, get_db_session, get_model_router
 from src.explore.capabilities import explore_capability_registry
 from src.explore.recommender import ExploreCapabilityRecommender
 from src.explore.schemas import (
@@ -24,6 +24,7 @@ from src.memory.schemas import MemoryEventInput
 from src.memory.writer import MemoryWriter
 from src.models.explore import ExploreFeaturePreference
 from src.models.learner import Learner
+from src.providers.router import ModelRouter
 from src.runtime.episode import EpisodeRuntime
 from src.runtime.task_spec import SuccessCriteria, TaskSpec, TaskTarget, VerificationPolicy
 from src.security.ownership import CurrentUser, get_episode_for_learner, get_learner_for_user
@@ -210,10 +211,11 @@ async def recommend_explore_capabilities(
     body: ExploreRecommendationsRequest,
     _current_learner: Learner = Depends(get_current_learner),
     db: AsyncSession = Depends(get_db_session),
+    model_router: ModelRouter = Depends(get_model_router),
 ) -> ExploreRecommendationsResponse:
     if body.episode_id:
         await get_episode_for_learner(db, learner_id, body.episode_id)
-    recommendations = await ExploreCapabilityRecommender(db).recommend(
+    recommendations = await ExploreCapabilityRecommender(db, model_router=model_router).recommend(
         ExploreRecommendationContext(
             learner_id=learner_id,
             episode_id=body.episode_id,

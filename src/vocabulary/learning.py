@@ -7,7 +7,13 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.models.knowledge import CurriculumNode, KnowledgePoint, KnowledgeSource
+from src.models.knowledge import (
+    CurriculumNode,
+    KnowledgeLearningEvent,
+    KnowledgePoint,
+    KnowledgeSource,
+    LearnerKnowledgeState,
+)
 from src.models.vocabulary import (
     ReviewSchedule,
     VocabularyAttempt,
@@ -417,6 +423,95 @@ async def update_item_after_attempt(
     )
 
 
+async def sync_textbook_knowledge_state_after_vocabulary_attempt(
+    db: AsyncSession,
+    *,
+    item: VocabularyItem,
+    result: str,
+    score: float,
+    drill_type: str,
+) -> None:
+    source_result = await db.execute(
+        select(VocabularyItemSource).where(
+            VocabularyItemSource.learner_id == item.learner_id,
+            VocabularyItemSource.vocabulary_item_id == item.id,
+            VocabularyItemSource.source_type == "textbook_unit",
+            VocabularyItemSource.active.is_(True),
+        )
+    )
+    source_rows = list(source_result.scalars().all())
+    point_ids: list[uuid.UUID] = []
+    for source in source_rows:
+        try:
+            point_ids.append(uuid.UUID(str(source.source_id)))
+        except (TypeError, ValueError):
+            continue
+    if not point_ids:
+        return
+
+    state_result = await db.execute(
+        select(LearnerKnowledgeState).where(
+            LearnerKnowledgeState.learner_id == item.learner_id,
+            LearnerKnowledgeState.knowledge_point_id.in_(point_ids),
+        )
+    )
+    states = {state.knowledge_point_id: state for state in state_result.scalars().all()}
+    now = datetime.now(timezone.utc)
+    is_correct = result == "correct"
+    for point_id in point_ids:
+        state = states.get(point_id)
+        if state is None:
+            state = LearnerKnowledgeState(
+                learner_id=item.learner_id,
+                knowledge_point_id=point_id,
+                status="learning",
+                mastery_score=0.0,
+                confidence=0.0,
+                exposure_count=0,
+                correct_count=0,
+                evidence_summary={},
+            )
+            db.add(state)
+        previous_mastery = float(state.mastery_score or 0.0)
+        if result == "revealed":
+            next_mastery = max(previous_mastery, min(0.35, item.confidence))
+        elif is_correct:
+            next_mastery = max(previous_mastery, item.confidence, previous_mastery + 0.08 * score)
+        else:
+            next_mastery = max(0.0, min(previous_mastery, item.confidence))
+        state.mastery_score = round(min(1.0, next_mastery), 4)
+        state.confidence = round(max(float(state.confidence or 0.0), min(1.0, item.confidence)), 4)
+        state.exposure_count = (state.exposure_count or 0) + 1
+        state.correct_count = (state.correct_count or 0) + int(is_correct)
+        state.status = (
+            "mastered"
+            if state.mastery_score >= 0.8
+            else "reviewing"
+            if not is_correct
+            else "learning"
+        )
+        state.last_seen_at = now
+        state.next_review_at = item.next_review_at
+        state.evidence_summary = {
+            "source": "vocabulary_practice",
+            "vocabulary_item_id": str(item.id),
+            "word": item.word,
+            "drill_type": drill_type,
+            "last_result": result,
+            "score": score,
+            "item_confidence": item.confidence,
+        }
+        db.add(
+            KnowledgeLearningEvent(
+                learner_id=item.learner_id,
+                event_type="vocabulary_practice_synced",
+                knowledge_point_id=point_id,
+                payload=state.evidence_summary,
+                occurred_at=now,
+            )
+        )
+
+
 def current_item_id(session: VocabularyPracticeSession) -> uuid.UUID | None:
     if session.current_index >= len(session.item_ids):
         return None
@@ -463,6 +558,13 @@ async def record_attempt(
         result=result,
         score=score,
         hint_count=hint_count,
+        drill_type=drill_type,
+    )
+    await sync_textbook_knowledge_state_after_vocabulary_attempt(
+        db,
+        item=item,
+        result=result,
+        score=score,
         drill_type=drill_type,
     )
     if result == "correct":

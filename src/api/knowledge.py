@@ -47,7 +47,7 @@ from src.models.knowledge import (
 )
 from src.models.learner import Learner
 from src.models.session import LearningSession, LearningTask
-from src.models.vocabulary import ReviewSchedule, VocabularyItem
+from src.models.vocabulary import ReviewSchedule, VocabularyItem, VocabularyItemSource
 from src.providers.router import router as model_router
 from src.runtime.episode import EpisodeRuntime
 from src.runtime.hashing import stable_json_hash
@@ -899,6 +899,61 @@ def _build_unit_workspace(
     }
 
 
+async def _backfill_vocabulary_states_from_items(
+    db: AsyncSession,
+    learner_id: uuid.UUID,
+    points: list[KnowledgePoint],
+    states: dict[uuid.UUID, LearnerKnowledgeState],
+) -> None:
+    vocabulary_point_ids = [point.id for point in points if point.type == "vocabulary"]
+    missing_point_ids = [point_id for point_id in vocabulary_point_ids if point_id not in states]
+    if not missing_point_ids:
+        return
+    rows_result = await db.execute(
+        select(VocabularyItem, VocabularyItemSource)
+        .join(VocabularyItemSource, VocabularyItemSource.vocabulary_item_id == VocabularyItem.id)
+        .where(
+            VocabularyItem.learner_id == learner_id,
+            VocabularyItemSource.learner_id == learner_id,
+            VocabularyItemSource.source_type == "textbook_unit",
+            VocabularyItemSource.source_id.in_([str(point_id) for point_id in missing_point_ids]),
+            VocabularyItemSource.active.is_(True),
+            VocabularyItem.review_count > 0,
+        )
+    )
+    now = datetime.now(timezone.utc)
+    for item, source in rows_result.all():
+        try:
+            point_id = uuid.UUID(str(source.source_id))
+        except (TypeError, ValueError):
+            continue
+        if point_id in states:
+            continue
+        mastery = round(max(0.0, min(1.0, float(item.confidence or 0.0))), 4)
+        state = LearnerKnowledgeState(
+            learner_id=learner_id,
+            knowledge_point_id=point_id,
+            status="mastered" if mastery >= 0.8 or item.status == "mastered" else "learning",
+            mastery_score=mastery,
+            confidence=mastery,
+            exposure_count=item.review_count or 1,
+            correct_count=1 if mastery > 0 else 0,
+            last_seen_at=item.last_reviewed_at or now,
+            next_review_at=item.next_review_at,
+            evidence_summary={
+                "source": "vocabulary_practice_backfill",
+                "vocabulary_item_id": str(item.id),
+                "word": item.word,
+                "review_count": item.review_count,
+                "item_status": item.status,
+            },
+        )
+        db.add(state)
+        states[point_id] = state
+    if states:
+        await db.flush()
+
+
 @router.get("/api/learners/{learner_id}/knowledge-base")
 async def knowledge_base_overview(
     learner_id: uuid.UUID,
@@ -1042,6 +1097,7 @@ async def knowledge_base_overview(
             )
         )
         states = {item.knowledge_point_id: item for item in state_result.scalars().all()}
+        await _backfill_vocabulary_states_from_items(db, learner_id, points, states)
 
     progress = len(completed_node_ids.intersection({node.id for node in nodes})) / len(nodes)
     recommended_index = nodes.index(recommended_node)

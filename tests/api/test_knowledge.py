@@ -21,7 +21,7 @@ from src.models.knowledge import (
     ParserRun,
 )
 from src.models.session import LearningSession, LearningTask
-from src.models.vocabulary import ReviewSchedule
+from src.models.vocabulary import ReviewSchedule, VocabularyItem, VocabularyItemSource
 
 
 def _one(value):
@@ -39,6 +39,7 @@ def _many(values: list):
 def _rows(values: list):
     result = MagicMock()
     result.__iter__.return_value = iter(values)
+    result.all.return_value = values
     return result
 
 
@@ -117,6 +118,23 @@ def _point(source_id: uuid.UUID, node_id: uuid.UUID) -> KnowledgePoint:
     return point
 
 
+def _vocabulary_point(source_id: uuid.UUID, node_id: uuid.UUID, title: str = "morning") -> KnowledgePoint:
+    point = KnowledgePoint(
+        source_id=source_id,
+        curriculum_node_id=node_id,
+        canonical_key=f"vocabulary.{title}",
+        type="vocabulary",
+        title=title,
+        summary="早晨；上午",
+        source_page="P.2",
+        status="published",
+        content={"role": "unit_wordlist", "unit_order": 1},
+    )
+    point.id = uuid.uuid4()
+    point.created_at = datetime.now(timezone.utc)
+    return point
+
+
 @pytest.mark.asyncio
 async def test_overview_returns_ordered_curriculum_and_knowledge(client, knowledge_session):
     learner_id = uuid.uuid4()
@@ -156,6 +174,63 @@ async def test_overview_returns_ordered_curriculum_and_knowledge(client, knowled
     assert data["path"][0]["status"] == "current"
     assert data["review"]["pending_count"] == 0
     assert "parser_evidence" in data
+
+
+@pytest.mark.asyncio
+async def test_overview_backfills_unit_vocabulary_progress_from_practiced_word(
+    client,
+    knowledge_session,
+):
+    learner_id = uuid.uuid4()
+    source = _source()
+    nodes = [_node(source.id, 1)]
+    point = _vocabulary_point(source.id, nodes[0].id)
+    item = VocabularyItem(
+        learner_id=learner_id,
+        word=point.title,
+        canonical_key=point.title,
+        entry_kind="word",
+        status="learning",
+        confidence=0.42,
+        review_count=2,
+        last_reviewed_at=datetime.now(timezone.utc),
+    )
+    item.id = uuid.uuid4()
+    item_source = VocabularyItemSource(
+        learner_id=learner_id,
+        vocabulary_item_id=item.id,
+        source_type="textbook_unit",
+        source_id=str(point.id),
+        curriculum_node_id=nodes[0].id,
+        display_label="七上 · SU1",
+        active=True,
+    )
+    knowledge_session.execute = AsyncMock(
+        side_effect=[
+            _one(learner_id),
+            _many([source]),
+            _one(source),
+            _many(nodes),
+            _rows([]),
+            _many([point]),
+            _many([]),
+            _many([]),
+            _rows([(item, item_source)]),
+        ]
+    )
+
+    response = await client.get(f"/api/learners/{learner_id}/knowledge-base")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["knowledge_points"][0]["mastery"] == 0.42
+    assert payload["unit_workspace"]["mastery_summary"]["average"] == 0.42
+    assert any(
+        isinstance(value, LearnerKnowledgeState)
+        and value.knowledge_point_id == point.id
+        and value.evidence_summary["source"] == "vocabulary_practice_backfill"
+        for value in knowledge_session.added_objects
+    )
 
 
 @pytest.mark.asyncio

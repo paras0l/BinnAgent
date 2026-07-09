@@ -23,6 +23,7 @@ def test_prompt_registry_lists_core_prompts() -> None:
         "conversation.summary",
         "dictionary.lookup",
         "essay.scoring",
+        "explore.capability_rerank",
         "exercise.generate",
         "graph.feedback",
         "graph.node",

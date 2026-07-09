@@ -61,6 +61,17 @@ from src.prompts import PromptExecutionContext, PromptExecutor
                 '"display_html":"<section>一般现在时</section>"}'
             ),
         ),
+        (
+            "explore.capability_rerank",
+            {
+                "context": {"target_label": "significant", "learning_skill": "vocabulary"},
+                "candidates": [{"capability_id": "vocabulary-detail", "title": "词汇详解"}],
+            },
+            (
+                '{"recommendations":[{"capability_id":"vocabulary-detail",'
+                '"priority_score":0.91,"reason":"significant 是真实词汇，适合详解。"}]}'
+            ),
+        ),
     ],
 )
 async def test_registered_structured_prompts_accept_schema_valid_output(
@@ -135,6 +146,17 @@ async def test_registered_structured_prompts_accept_schema_valid_output(
                 '"display_html":"<section>冠词</section>"}'
             ),
         ),
+        (
+            "explore.capability_rerank",
+            {
+                "context": {"target_label": "一般现在时", "learning_skill": "grammar"},
+                "candidates": [{"capability_id": "grammar-explain", "title": "语法微课"}],
+            },
+            (
+                'JSON:\n{"recommendations":[{"capability_id":"grammar-explain",'
+                '"priority_score":0.92,"reason":"错因是语法规则混淆，适合语法微课。"}]}'
+            ),
+        ),
     ],
 )
 async def test_registered_structured_prompts_accept_repaired_json(
@@ -166,6 +188,11 @@ async def test_registered_structured_prompts_accept_repaired_json(
             "grammar.micro_lesson.structured",
             {"topic_title": "代词"},
             '{"machine_data":{"topic":"代词"},"display_html":"<section></section>"}',
+        ),
+        (
+            "explore.capability_rerank",
+            {"context": {"target_label": "Alice"}, "candidates": []},
+            '{"recommendations":[{"capability_id":"word-roots-affixes"}]}',
         ),
     ],
 )

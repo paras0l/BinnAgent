@@ -79,6 +79,15 @@ class ProfileResponse(BaseModel):
     daily_time_budget_minutes: Optional[int] = None
 
 
+class ProfileReadinessResponse(BaseModel):
+    learner_id: uuid.UUID
+    target_exam: Optional[str] = None
+    current_level: Optional[str] = None
+    has_learning_goal: bool
+    has_current_level: bool
+    is_complete: bool
+
+
 # --- Endpoints ---
 
 
@@ -135,6 +144,34 @@ async def get_learner(
     if learner is None:
         raise HTTPException(status_code=404, detail="Learner not found")
     return learner
+
+
+@router.get("/{learner_id}/profile-readiness", response_model=ProfileReadinessResponse)
+async def get_profile_readiness(
+    learner_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db_session),
+) -> ProfileReadinessResponse:
+    result = await db.execute(
+        select(Learner.id, LearnerProfile.target_exam, LearnerProfile.current_level)
+        .select_from(Learner)
+        .outerjoin(LearnerProfile, LearnerProfile.learner_id == Learner.id)
+        .where(Learner.id == learner_id)
+    )
+    row = result.one_or_none()
+    if row is None:
+        raise HTTPException(status_code=404, detail="Learner not found")
+
+    _, target_exam, current_level = row
+    has_learning_goal = bool((target_exam or "").strip())
+    has_current_level = bool((current_level or "").strip())
+    return ProfileReadinessResponse(
+        learner_id=learner_id,
+        target_exam=target_exam,
+        current_level=current_level,
+        has_learning_goal=has_learning_goal,
+        has_current_level=has_current_level,
+        is_complete=has_learning_goal and has_current_level,
+    )
 
 
 @router.post(

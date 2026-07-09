@@ -309,6 +309,28 @@ DETAIL_HTML_SCHEMA: dict[str, Any] = {
     "required": ["phonetic", "meanings", "dictionary_senses", "examples", "collocations"],
 }
 
+EXPLORE_CAPABILITY_RERANK_SCHEMA: dict[str, Any] = {
+    "type": "object",
+    "properties": {
+        "recommendations": {
+            "type": "array",
+            "maxItems": 3,
+            "items": {
+                "type": "object",
+                "properties": {
+                    "capability_id": {"type": "string"},
+                    "priority_score": {"type": "number", "minimum": 0, "maximum": 1},
+                    "reason": {"type": "string"},
+                },
+                "required": ["capability_id", "priority_score", "reason"],
+                "additionalProperties": True,
+            },
+        }
+    },
+    "required": ["recommendations"],
+    "additionalProperties": False,
+}
+
 SCHEMA_REGISTRY: dict[str, dict[str, Any]] = {
     "VocabularyExtractOutput": VOCABULARY_CARD_SCHEMA,
     "WritingPhraseImportOutput": WRITING_PHRASE_IMPORT_SCHEMA,
@@ -320,4 +342,5 @@ SCHEMA_REGISTRY: dict[str, dict[str, Any]] = {
     "DictionaryLookupOutput": DICTIONARY_LOOKUP_SCHEMA,
     "LocalVocabularyOutput": LOCAL_VOCABULARY_SCHEMA,
     "VocabularyDetailHtmlOutput": DETAIL_HTML_SCHEMA,
+    "ExploreCapabilityRerankOutput": EXPLORE_CAPABILITY_RERANK_SCHEMA,
 }

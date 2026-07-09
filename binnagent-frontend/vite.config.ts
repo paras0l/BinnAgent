@@ -18,7 +18,7 @@ export default defineConfig(() => {
       'import.meta.env.VITE_APP_TARGET': JSON.stringify(appTarget),
     },
     server: {
-      port: appTarget === 'dev-console' ? 5174 : 5173,
+      port: appTarget === 'dev-console' ? 5176 : 5175,
       proxy: {
         '/api': {
           target: apiTarget,

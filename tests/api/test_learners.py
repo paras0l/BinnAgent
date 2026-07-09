@@ -320,6 +320,58 @@ class TestGetProfile:
         assert response.json()["detail"] == "Profile not found"
 
 
+class TestGetProfileReadiness:
+    @pytest.mark.asyncio
+    async def test_get_profile_readiness_returns_missing_fields_for_existing_learner(self, client, mock_session):
+        learner_id = uuid.uuid4()
+
+        mock_result = MagicMock()
+        mock_result.one_or_none.return_value = (learner_id, None, None)
+        mock_session.execute = AsyncMock(return_value=mock_result)
+
+        response = await client.get(f"/api/learners/{learner_id}/profile-readiness")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["learner_id"] == str(learner_id)
+        assert data["target_exam"] is None
+        assert data["current_level"] is None
+        assert data["has_learning_goal"] is False
+        assert data["has_current_level"] is False
+        assert data["is_complete"] is False
+
+    @pytest.mark.asyncio
+    async def test_get_profile_readiness_reports_set_fields(self, client, mock_session):
+        learner_id = uuid.uuid4()
+
+        mock_result = MagicMock()
+        mock_result.one_or_none.return_value = (learner_id, "cet4", "b1")
+        mock_session.execute = AsyncMock(return_value=mock_result)
+
+        response = await client.get(f"/api/learners/{learner_id}/profile-readiness")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["target_exam"] == "cet4"
+        assert data["current_level"] == "b1"
+        assert data["has_learning_goal"] is True
+        assert data["has_current_level"] is True
+        assert data["is_complete"] is True
+
+    @pytest.mark.asyncio
+    async def test_get_profile_readiness_learner_not_found(self, client, mock_session):
+        learner_id = uuid.uuid4()
+
+        mock_result = MagicMock()
+        mock_result.one_or_none.return_value = None
+        mock_session.execute = AsyncMock(return_value=mock_result)
+
+        response = await client.get(f"/api/learners/{learner_id}/profile-readiness")
+
+        assert response.status_code == 404
+        assert response.json()["detail"] == "Learner not found"
+
+
 class TestUpsertProfile:
     @pytest.mark.asyncio
     async def test_upsert_profile_creates_editable_goal_and_level(self, client, mock_session):

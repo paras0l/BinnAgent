@@ -11,6 +11,33 @@ from src.main import app
 from src.models.explore import ExploreFeaturePreference
 from src.models.memory import LearningMemoryEvent
 from src.models.runtime import AgentEpisode
+from src.providers.base import ChatResponse
+
+
+class FailingModelRouter:
+    default_provider = "ollama"
+
+    async def chat(self, request):
+        raise RuntimeError("model disabled in test")
+
+
+class FakeModelRouter:
+    default_provider = "ollama"
+
+    def __init__(self, payload: dict):
+        self.payload = payload
+        self.requests = []
+
+    async def chat(self, request):
+        self.requests.append(request)
+        import json
+
+        return ChatResponse(
+            provider="fake",
+            model="fake-utility",
+            content=json.dumps(self.payload, ensure_ascii=False),
+            structured=self.payload,
+        )
 
 
 @pytest.fixture
@@ -31,6 +58,7 @@ def mock_session():
     session.refresh = AsyncMock(side_effect=_refresh)
     session.added_objects = added_objects
     app.dependency_overrides[deps.get_db_session] = lambda: session
+    app.dependency_overrides[deps.get_model_router] = lambda: FailingModelRouter()
     yield session
     app.dependency_overrides.clear()
 
@@ -209,7 +237,11 @@ class TestExploreCapabilities:
     async def test_recommendation_never_returns_unknown_capability(self, mock_session, monkeypatch):
         learner_id = uuid.uuid4()
         mock_session.execute = AsyncMock(side_effect=[_many([])])
-        recommender = ExploreCapabilityRecommender(mock_session, rerank_with_llm=True)
+        recommender = ExploreCapabilityRecommender(
+            mock_session,
+            rerank_with_llm=True,
+            model_router=FakeModelRouter({"recommendations": []}),
+        )
 
         async def fake_llm(context, scored):
             return [
@@ -232,6 +264,83 @@ class TestExploreCapabilities:
         assert recommendations
         assert all(item.capability_id != "made-up-capability" for item in recommendations)
         assert all(item.capability_id in {"grammar-explain", "daily-lesson"} or item.source in {"rule", "llm_rerank"} for item in recommendations)
+
+    @pytest.mark.asyncio
+    async def test_recommendation_filters_bare_name_from_vocabulary_tools(self, mock_session):
+        learner_id = uuid.uuid4()
+        mock_session.execute = AsyncMock(side_effect=[_many([])])
+        recommender = ExploreCapabilityRecommender(mock_session, rerank_with_llm=False)
+
+        recommendations = await recommender.recommend(
+            ExploreRecommendationContext(
+                learner_id=learner_id,
+                learning_skill="vocabulary",
+                grading_result={"error_type": "word_meaning spelling"},
+                metadata={"target_label": "Alice", "target_type": "vocabulary_item"},
+            )
+        )
+
+        capability_ids = {item.capability_id for item in recommendations}
+        assert "word-roots-affixes" not in capability_ids
+        assert "vocabulary-detail" not in capability_ids
+
+    @pytest.mark.asyncio
+    async def test_llm_rerank_can_drop_all_weak_candidates(self, mock_session):
+        learner_id = uuid.uuid4()
+        mock_session.execute = AsyncMock(side_effect=[_many([])])
+        model_router = FakeModelRouter({"recommendations": []})
+        recommender = ExploreCapabilityRecommender(
+            mock_session,
+            rerank_with_llm=True,
+            model_router=model_router,
+        )
+
+        recommendations = await recommender.recommend(
+            ExploreRecommendationContext(
+                learner_id=learner_id,
+                learning_skill="vocabulary",
+                grading_result={"error_type": "word_meaning"},
+                metadata={"target_label": "cake", "target_type": "vocabulary_item"},
+            )
+        )
+
+        assert recommendations == []
+        assert model_router.requests
+
+    @pytest.mark.asyncio
+    async def test_llm_rerank_uses_model_reason_and_score(self, mock_session):
+        learner_id = uuid.uuid4()
+        mock_session.execute = AsyncMock(side_effect=[_many([])])
+        model_router = FakeModelRouter(
+            {
+                "recommendations": [
+                    {
+                        "capability_id": "vocabulary-detail",
+                        "priority_score": 0.93,
+                        "reason": "significant 是真实高频词，适合补核心义项和例句。",
+                    }
+                ]
+            }
+        )
+        recommender = ExploreCapabilityRecommender(
+            mock_session,
+            rerank_with_llm=True,
+            model_router=model_router,
+        )
+
+        recommendations = await recommender.recommend(
+            ExploreRecommendationContext(
+                learner_id=learner_id,
+                learning_skill="vocabulary",
+                grading_result={"error_type": "word_meaning"},
+                metadata={"target_label": "significant", "target_type": "vocabulary_item"},
+            )
+        )
+
+        assert recommendations[0].capability_id == "vocabulary-detail"
+        assert recommendations[0].priority_score == 0.93
+        assert recommendations[0].source == "llm_rerank"
+        assert "真实高频词" in recommendations[0].reason
 
     @pytest.mark.asyncio
     async def test_capability_clicked_event_writes_memory_and_updates_preference(

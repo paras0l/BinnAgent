@@ -21,6 +21,12 @@ def _many(values: list):
     return result
 
 
+def _rows(values: list):
+    result = MagicMock()
+    result.all.return_value = values
+    return result
+
+
 @pytest.fixture
 def quality_session():
     session = AsyncMock()
@@ -112,6 +118,7 @@ async def test_overview_exposes_quality_fields(client, quality_session) -> None:
             _many([point]),
             _many([]),
             _many([]),
+            _rows([]),
         ]
     )
 
