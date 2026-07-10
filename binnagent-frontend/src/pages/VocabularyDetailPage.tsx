@@ -38,6 +38,7 @@ import {
 } from '@/data/wordParts'
 import type { WordPartAnalysis } from '@/types'
 import type { ExerciseTarget } from '@/types/exercises'
+import { copyTextToClipboard } from '@/utils/clipboard'
 import { learnerBackground } from '@/utils/learnerProfile'
 
 interface VocabularyDetailPageProps {
@@ -214,7 +215,7 @@ export function VocabularyDetailPage({
 
   const copyPrompt = async () => {
     try {
-      await navigator.clipboard.writeText(prompt)
+      if (!await copyTextToClipboard(prompt)) throw new Error('Clipboard is unavailable')
       window.postMessage({
         type: 'BINN_GRAMMAR_PROMPT_READY',
         prompt,

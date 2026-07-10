@@ -34,6 +34,7 @@ import { useFocusTrap } from '@/hooks/useFocusTrap'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { useToast } from '@/hooks/useToast'
 import type { Learner, LearnerProfile } from '@/types'
+import { copyTextToClipboard } from '@/utils/clipboard'
 import { learnerBackground, promptWithLearnerProfile } from '@/utils/learnerProfile'
 
 interface WritingPhrasebookPageProps {
@@ -472,7 +473,7 @@ export function WritingPhrasebookPage({ learner, learnerProfile, onBack }: Writi
   }
 
   const copyPrompt = async () => {
-    const copied = await copyText(selectedPrompt.text)
+    const copied = await copyTextToClipboard(selectedPrompt.text)
     showToast(
       copied ? '生成指令已复制，生成结果可回到本页粘贴提取。' : '浏览器阻止了自动复制，请手动选中生成指令文本复制。',
       { variant: copied ? 'success' : 'warning' }
@@ -729,24 +730,6 @@ function phraseToForm(phrase: WritingPhrase | null): PhraseForm {
     difficulty: phrase.difficulty,
     is_favorite: phrase.is_favorite,
     review_enabled: phrase.review_enabled,
-  }
-}
-
-async function copyText(text: string): Promise<boolean> {
-  try {
-    await navigator.clipboard.writeText(text)
-    return true
-  } catch {
-    const textarea = document.createElement('textarea')
-    textarea.value = text
-    textarea.setAttribute('readonly', 'true')
-    textarea.style.position = 'fixed'
-    textarea.style.left = '-9999px'
-    document.body.appendChild(textarea)
-    textarea.select()
-    const copied = document.execCommand('copy')
-    document.body.removeChild(textarea)
-    return copied
   }
 }
 

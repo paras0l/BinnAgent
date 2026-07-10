@@ -38,6 +38,7 @@ import { Select } from '@/components/ui/Select'
 import { SurfaceCard } from '@/components/ui/SurfaceCard'
 import { useFocusTrap } from '@/hooks/useFocusTrap'
 import type { ExerciseTarget } from '@/types/exercises'
+import { copyTextToClipboard } from '@/utils/clipboard'
 import { learnerBackground } from '@/utils/learnerProfile'
 
 type CategoryFilter = 'all' | GrammarCategory
@@ -459,7 +460,7 @@ export function GrammarPage({ learner, learnerProfile, onBack, backLabel = '返�
 
   const copyPrompt = async () => {
     try {
-      await navigator.clipboard.writeText(prompt)
+      if (!await copyTextToClipboard(prompt)) throw new Error('Clipboard is unavailable')
       window.postMessage(
         {
           type: 'BINN_GRAMMAR_PROMPT_READY',
@@ -516,7 +517,7 @@ export function GrammarPage({ learner, learnerProfile, onBack, backLabel = '返�
 
   const copyExtensionPath = async () => {
     try {
-      await navigator.clipboard.writeText(EXTENSION_PATH)
+      if (!await copyTextToClipboard(EXTENSION_PATH)) throw new Error('Clipboard is unavailable')
       setIsExtensionPathCopied(true)
       showToast('扩展目录路径已复制。打开 Chrome/Edge 扩展页后选择这个文件夹。', { variant: 'success' })
       window.setTimeout(() => setIsExtensionPathCopied(false), 1800)

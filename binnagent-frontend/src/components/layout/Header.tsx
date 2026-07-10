@@ -13,6 +13,7 @@ import {
   User,
 } from 'lucide-react'
 import type { AppTab, Learner } from '@/types'
+import { copyTextToClipboard } from '@/utils/clipboard'
 
 interface HeaderProps {
   activeTab: AppTab
@@ -39,13 +40,8 @@ export function Header({
   const menuRef = useRef<HTMLDivElement>(null)
 
   const copyInviteCode = async () => {
-    if (!learner.invite_code || !navigator.clipboard) return
-    try {
-      await navigator.clipboard.writeText(learner.invite_code)
-      setIsInviteCopied(true)
-    } catch {
-      setIsInviteCopied(false)
-    }
+    if (!learner.invite_code) return
+    setIsInviteCopied(await copyTextToClipboard(learner.invite_code))
   }
 
   useEffect(() => {
