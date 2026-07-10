@@ -1,3 +1,7 @@
+import { installChunkLoadRecovery } from './utils/chunkLoadRecovery'
+
+installChunkLoadRecovery()
+
 if (import.meta.env.VITE_APP_TARGET === 'dev-console') {
   void import('./dev-main')
 } else {
