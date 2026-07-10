@@ -6,6 +6,7 @@ import pytest
 from httpx import ASGITransport, AsyncClient
 
 from src.api import deps
+from src.auth.email_verification import create_email_verification_token
 from src.main import app
 from src.models.learner import Learner
 from src.models.vocabulary import VocabularyItem
@@ -16,8 +17,14 @@ def mock_session():
     session = AsyncMock()
     session.add = MagicMock()
     session.flush = AsyncMock()
+    inviter = Learner(
+        nickname="Integration Inviter",
+        email="integration-inviter@example.com",
+        invite_code="BINN-INTEGRATE2",
+    )
+    inviter.id = uuid.uuid4()
     learner_result = MagicMock()
-    learner_result.scalar_one_or_none.return_value = uuid.uuid4()
+    learner_result.scalar_one_or_none.return_value = inviter
     session.execute = AsyncMock(return_value=learner_result)
 
     async def _refresh(instance):
@@ -55,7 +62,14 @@ class TestFullLearningSession:
         async with AsyncClient(transport=transport, base_url="http://test") as client:
             resp = await client.post(
                 "/api/learners",
-                json={"nickname": "Test User", "email": "test@example.com"},
+                json={
+                    "nickname": "Test User",
+                    "email": "test@example.com",
+                    "invite_code": "BINN-INTEGRATE2",
+                    "verification_token": create_email_verification_token(
+                        email="test@example.com"
+                    ),
+                },
             )
             assert resp.status_code == 201, f"Create learner failed: {resp.text}"
             learner_data = resp.json()
@@ -158,7 +172,14 @@ class TestLearnerCRUD:
         async with AsyncClient(transport=transport, base_url="http://test") as client:
             resp = await client.post(
                 "/api/learners",
-                json={"nickname": "Alice", "email": "alice@example.com"},
+                json={
+                    "nickname": "Alice",
+                    "email": "alice@example.com",
+                    "invite_code": "BINN-INTEGRATE2",
+                    "verification_token": create_email_verification_token(
+                        email="alice@example.com"
+                    ),
+                },
             )
             assert resp.status_code == 201
             data = resp.json()
@@ -199,7 +220,14 @@ class TestLearnerCRUD:
         async with AsyncClient(transport=transport, base_url="http://test") as client:
             resp = await client.post(
                 "/api/learners",
-                json={"nickname": "Bob"},
+                json={
+                    "nickname": "Bob",
+                    "email": "bob@example.com",
+                    "invite_code": "BINN-INTEGRATE2",
+                    "verification_token": create_email_verification_token(
+                        email="bob@example.com"
+                    ),
+                },
             )
             assert resp.status_code == 201
             learner_id = resp.json()["id"]

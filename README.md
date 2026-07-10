@@ -11,6 +11,7 @@ BinnAgent 是面向英语学习场景的个性化 Agent 系统。它不是普通
 - **PromptExecutor + Schema-first**：结构化 LLM 输出必须经过 schema validation / repair / fallback decision 后才能进入业务写入。
 - **Simulation / Evaluation**：contract / integration / e2e 分层回归，覆盖学习闭环、Prompt schema、Memory/Mastery 和 Runtime trace。
 - **Dev Console**：集中查看 EpisodeTrace、ToolCall、PromptExecution、VerificationReport、Memory、RAG 和解析质量。
+- **学习者账号**：邮箱验证码登录，同一邮箱可选择多个独立学习者；新用户通过可追踪邀请关系的邀请码注册。
 
 教材解析用于冷启动知识来源和教材线体验，不是项目主卖点；项目主线是“可解释、可验证、可持续个性化”的 Agent Runtime。
 
@@ -123,6 +124,7 @@ http://localhost:5176，可在 Learners / Recent Episodes 中直接选择 learne
 - [Cloud Deployment](docs/deployment-cloud.md)
 - [Memory Architecture v2](docs/memory-architecture-v2.md)
 - [Learner Scope Audit](docs/security/learner_scope_audit.md)
+- [Email Login and Invitation Flow](docs/auth-invitation-flow.md)
 
 ## 当前实现状态
 
@@ -139,6 +141,7 @@ http://localhost:5176，可在 Learners / Recent Episodes 中直接选择 learne
 | Model Provider | 部分实现；本地默认 Ollama，云端可通过环境变量或 Dev Console Debug 页面切换到 DeepSeek / LongCat OpenAI-compatible chat API；RAG embedding 暂时隔离在 Ollama 路径 |
 | Agent Runtime / Harness | 第二阶段补强中，TaskSpec、AgentEpisode、LearningEvent、EvidenceRef、ToolCallRecord、VerificationReport、MasteryEngine、RecommendationEngine、LearningGraphCheckpoint 和 Dev Console 调试入口已接入；VerificationReport 已升级为 evidence-based deterministic/schema/business_rule/evidence checks，critical 失败会阻止静默 completed；EpisodeTraceView、Graph Runs 和 Textbook Parsing Report 可查看 checkpoint、events、tool calls、prompt execution summary、verification checks、parser evidence 和 review queue；Debug API 默认关闭并需 token |
 | Learner-scoped isolation | Issue #25 第一阶段已实现，新增 current user / current learner dependency、scoped resource helper，并加固 Runtime、Daily Lesson、Memory、Explore、ExerciseAttempt 和 Debug 高风险路径 |
+| 邮箱登录与邀请关系 | 基础版已实现，6 位邮箱验证码、短期签名令牌、重发冷却、错误次数限制、SMTP/本地日志投递、同邮箱多学习者选择、邀请码注册、直接邀请人关系、旧账号邮箱升级和空库 bootstrap 邀请码已落地；正式认证 session 留待远程部署前补齐 |
 | LangGraph daily lesson | 已升级为单题 checkpoint / interrupt / resume 学习闭环；graph 支持可选 checkpointer 编译，start 返回 waiting_user checkpoint/thread/schema/prompt，answer 从 `grade_attempt` 恢复并完成 grading、mastery、memory、review、recommend、verification，验证报告决定 completed / completed_with_warnings / verification_failed |
 | Learner Simulation Agent | Deterministic MVP 已实现，新增 contract/integration/e2e mode 分层、deterministic fake model provider、scenario contract/module_tags、impacted simulation 推导脚本、Agent Runtime 断言增强、metric_groups、baseline comparison、threshold gate、episode runtime knowledge practice、daily_lesson_checkpoint_resume、capability recommendation、verification failure blocks completed status、缺答案不写 memory、mastery 上下行和 LLM JSON repair 回归场景 |
 | CET reading / writing / weekly report | 设计中 |

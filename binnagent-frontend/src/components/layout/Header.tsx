@@ -1,5 +1,17 @@
 import { useEffect, useRef, useState } from 'react'
-import { Bot, BookOpen, ChevronDown, Compass, LogOut, MessageCircle, Settings, User } from 'lucide-react'
+import {
+  Bot,
+  BookOpen,
+  Check,
+  ChevronDown,
+  Compass,
+  Copy,
+  KeyRound,
+  LogOut,
+  MessageCircle,
+  Settings,
+  User,
+} from 'lucide-react'
 import type { AppTab, Learner } from '@/types'
 
 interface HeaderProps {
@@ -23,7 +35,18 @@ export function Header({
 }: HeaderProps) {
   const isTabDisabled = (tab: AppTab) => isLocked && tab !== 'chat'
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [isInviteCopied, setIsInviteCopied] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
+
+  const copyInviteCode = async () => {
+    if (!learner.invite_code || !navigator.clipboard) return
+    try {
+      await navigator.clipboard.writeText(learner.invite_code)
+      setIsInviteCopied(true)
+    } catch {
+      setIsInviteCopied(false)
+    }
+  }
 
   useEffect(() => {
     if (!isMenuOpen) return
@@ -86,7 +109,10 @@ export function Header({
           <div className="relative border-l pl-1 sm:pl-4" ref={menuRef}>
             <button
               type="button"
-              onClick={() => setIsMenuOpen((value) => !value)}
+              onClick={() => {
+                setIsInviteCopied(false)
+                setIsMenuOpen((value) => !value)
+              }}
               className="inline-flex max-w-44 items-center gap-2 rounded-lg px-2.5 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted active:bg-muted/80 focus-visible:outline-2 focus-visible:outline-primary"
               aria-expanded={isMenuOpen}
               aria-haspopup="menu"
@@ -107,6 +133,26 @@ export function Header({
                     {learner.email ?? `学习者 ID ${learner.id.slice(0, 8)}`}
                   </p>
                 </div>
+                {learner.invite_code ? (
+                  <div className="mx-1 mt-2 flex items-center gap-2 rounded-lg border border-indigo-100 bg-indigo-50/70 px-3 py-2.5">
+                    <KeyRound className="size-4 shrink-0 text-indigo-600" />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[11px] font-bold text-indigo-600">我的邀请码</p>
+                      <code className="block truncate text-xs font-black tracking-wide text-indigo-950">
+                        {learner.invite_code}
+                      </code>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => void copyInviteCode()}
+                      className="inline-flex size-8 shrink-0 items-center justify-center rounded-md text-indigo-600 transition hover:bg-indigo-100 focus-visible:outline-2 focus-visible:outline-primary"
+                      aria-label={isInviteCopied ? '邀请码已复制' : '复制邀请码'}
+                      title={isInviteCopied ? '已复制' : '复制邀请码'}
+                    >
+                      {isInviteCopied ? <Check className="size-4" /> : <Copy className="size-4" />}
+                    </button>
+                  </div>
+                ) : null}
                 <button
                   type="button"
                   role="menuitem"

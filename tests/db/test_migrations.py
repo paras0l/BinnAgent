@@ -31,7 +31,31 @@ def test_alembic_migrations_have_single_head_revision() -> None:
             parents.update(item for item in down_revision if isinstance(item, str))
 
     heads = revisions - parents
-    assert heads == {"p6q7r8s9t0u1"}
+    assert heads == {"r8s9t0u1v2w3"}
+
+
+def test_learner_invitation_migration_supports_shared_emails_and_relationships() -> None:
+    migration = Path(
+        "alembic/versions/q7r8s9t0u1v2_add_learner_email_invites.py"
+    ).read_text()
+
+    assert "learners_email_key" in migration
+    assert "invite_code" in migration
+    assert "invited_by_learner_id" in migration
+    assert "uq_learners_invite_code" in migration
+    assert "fk_learners_invited_by_learner_id" in migration
+
+
+def test_email_verification_migration_adds_hashed_expiring_challenges() -> None:
+    migration = Path(
+        "alembic/versions/r8s9t0u1v2w3_add_email_verification_challenges.py"
+    ).read_text()
+
+    assert "email_verification_challenges" in migration
+    assert "code_hash" in migration
+    assert "code_salt" in migration
+    assert "attempt_count" in migration
+    assert "expires_at" in migration
 
 
 def test_exercise_pool_migration_adds_durable_jobs_and_quality_fields() -> None:

@@ -1,4 +1,5 @@
 from src.models.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
+from src.models.auth import EmailVerificationChallenge
 from src.models.error_pattern import ErrorPattern
 from src.models.explore import ExploreFeaturePreference
 from src.models.graph_checkpoint import LearningGraphCheckpoint
@@ -70,6 +71,7 @@ __all__ = [
     "AgentThread",
     "Base",
     "ConversationMessage",
+    "EmailVerificationChallenge",
     "ErrorPattern",
     "ExploreFeaturePreference",
     "GroupLearningMessage",

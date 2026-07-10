@@ -7,6 +7,7 @@ import pytest
 
 from src.api import debug as debug_api
 from src.api import deps
+from src.auth.email_verification import create_email_verification_token
 from src.api import memory as memory_api
 from src.api import runtime as runtime_api
 from src.config import settings
@@ -476,12 +477,32 @@ class TestDebugAccess:
         mock_session.add = MagicMock()
         mock_session.flush = AsyncMock()
 
+        inviter = Learner(
+            nickname="Inviter",
+            email="inviter@example.com",
+            invite_code="BINN-INVITER22",
+        )
+        inviter.id = uuid.uuid4()
+        inviter_result = MagicMock()
+        inviter_result.scalar_one_or_none.return_value = inviter
+        mock_session.execute = AsyncMock(return_value=inviter_result)
+
         async def refresh(instance):
             instance.id = uuid.uuid4()
 
         mock_session.refresh = AsyncMock(side_effect=refresh)
 
-        response = await client.post("/api/learners", json={"nickname": "Alice"})
+        response = await client.post(
+            "/api/learners",
+            json={
+                "nickname": "Alice",
+                "email": "alice@example.com",
+                "invite_code": "BINN-INVITER22",
+                "verification_token": create_email_verification_token(
+                    email="alice@example.com"
+                ),
+            },
+        )
 
         assert response.status_code == 201
         assert response.json()["nickname"] == "Alice"

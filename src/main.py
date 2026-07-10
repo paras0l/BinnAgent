@@ -9,6 +9,7 @@ from src.api.dashboard import router as dashboard_router
 from src.api.debug import router as debug_router
 from src.api.daily_lessons import router as daily_lessons_router
 from src.api.evidence import router as evidence_router
+from src.api.email_verifications import router as email_verifications_router
 from src.api.essay_review import router as essay_review_router
 from src.api.explore import capabilities_router as explore_capabilities_router
 from src.api.explore import router as explore_router
@@ -59,6 +60,7 @@ app.include_router(dashboard_router)
 app.include_router(debug_router)
 app.include_router(daily_lessons_router)
 app.include_router(evidence_router)
+app.include_router(email_verifications_router)
 app.include_router(explore_router)
 app.include_router(explore_capabilities_router)
 app.include_router(essay_review_router)

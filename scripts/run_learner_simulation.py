@@ -12,6 +12,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+from src.config import settings
 from src.simulation.baseline import (
     compare_report_to_baseline,
     detect_regressions,
@@ -34,12 +35,19 @@ async def _main() -> int:
     parser.add_argument("--all", action="store_true", help="Run all scenarios, optionally filtered by --tag.")
     parser.add_argument("--tag", action="append", default=[], help="Run scenarios with this module tag. Repeatable.")
     parser.add_argument("--base-url", default="http://localhost:8000", help="Base URL for --mode e2e.")
+    parser.add_argument(
+        "--invite-code",
+        default=settings.simulation_invite_code,
+        help="Existing learner invitation code for integration/e2e temporary learner registration.",
+    )
     parser.add_argument("--report-dir", default=str(ROOT / "var" / "simulation" / "reports"))
     parser.add_argument("--baseline-dir", default=str(ROOT / "var" / "simulation" / "baselines"))
     parser.add_argument("--update-baseline", action="store_true")
     parser.add_argument("--fail-on-threshold", action="store_true")
     parser.add_argument("--fail-on-regression", action="store_true")
     args = parser.parse_args()
+    if args.mode != "contract" and not args.invite_code:
+        parser.error("--invite-code or BINN_SIMULATION_INVITE_CODE is required outside contract mode")
 
     persona = BUILTIN_PERSONAS[args.persona]
     scenarios = _select_scenarios(args)
@@ -55,6 +63,7 @@ async def _main() -> int:
             persona=persona,
             mode=args.mode,
             base_url=args.base_url,
+            invite_code=args.invite_code or "BINN-CONTRACT",
         )
         reports.append(report)
         baseline_paths[report.scenario] = _apply_baseline(
@@ -97,6 +106,7 @@ async def _run_one(
     persona,
     mode: SimulationMode,
     base_url: str,
+    invite_code: str,
 ) -> SimulationReport:
     if mode == "contract":
         async with httpx.AsyncClient(
@@ -107,6 +117,7 @@ async def _run_one(
                 client,
                 graph_invoker=contract_graph_invoker,
                 mode=mode,
+                invite_code=invite_code,
             ).run(scenario=scenario, persona=persona)
     if mode == "integration":
         from src.api import deps
@@ -120,7 +131,7 @@ async def _run_one(
                 transport=httpx.ASGITransport(app=app),
                 base_url="http://test",
             ) as client:
-                return await ScenarioRunner(client, mode=mode).run(
+                return await ScenarioRunner(client, mode=mode, invite_code=invite_code).run(
                     scenario=scenario,
                     persona=persona,
                 )
@@ -128,7 +139,7 @@ async def _run_one(
             app.dependency_overrides.clear()
             app.dependency_overrides.update(previous)
     async with httpx.AsyncClient(base_url=base_url) as client:
-        return await ScenarioRunner(client, mode=mode).run(
+        return await ScenarioRunner(client, mode=mode, invite_code=invite_code).run(
             scenario=scenario,
             persona=persona,
         )

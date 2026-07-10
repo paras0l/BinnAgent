@@ -4,6 +4,7 @@ import uuid
 
 import httpx
 
+from src.auth.email_verification import create_email_verification_token
 from src.graph.main_graph import daily_lesson_graph
 from src.knowledge.unit_exercise_generation import lint_candidate
 from src.simulation.assertions import AssertionEngine
@@ -32,11 +33,13 @@ class ScenarioRunner:
         graph_invoker: GraphInvoker | None = None,
         mode: SimulationMode = "contract",
         seed: int = 42,
+        invite_code: str = "BINN-CONTRACT",
     ) -> None:
         self.client = client
         self.graph_invoker = graph_invoker or self._invoke_daily_graph
         self.mode = mode
         self.seed = seed
+        self.invite_code = invite_code
         self.assertions = AssertionEngine()
         self.evaluator = SimulationEvaluator()
         self.api_calls = 0
@@ -183,10 +186,16 @@ class ScenarioRunner:
 
     async def _create_learner(self, context: dict[str, Any]) -> dict[str, Any]:
         persona_id = str(context["persona"])
+        email = f"{uuid.uuid4().hex}@simulation.local"
         response = await self._request(
             "POST",
             "/api/learners",
-            json={"nickname": f"sim-{persona_id}", "email": f"{uuid.uuid4().hex}@simulation.local"},
+            json={
+                "nickname": f"sim-{persona_id}",
+                "email": email,
+                "invite_code": self.invite_code,
+                "verification_token": create_email_verification_token(email=email),
+            },
         )
         payload = _json_or_empty(response)
         learner_id = payload.get("id")

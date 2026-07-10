@@ -311,6 +311,14 @@ function App() {
     )
   }
 
+  if (!currentLearner.email) {
+    return (
+      <Suspense fallback={<PageLoadingFallback label="正在打开邮箱绑定页..." />}>
+        <LoginPage learnerToBind={currentLearner} onLogin={setCurrentLearner} />
+      </Suspense>
+    )
+  }
+
   const isProfileMissingGoalAndLevel =
     learnerProfileReadiness?.learner_id === currentLearner.id &&
     !learnerProfileReadiness.has_learning_goal &&

@@ -1,3 +1,4 @@
+import hmac
 import uuid
 from datetime import date
 from typing import Optional
@@ -8,7 +9,9 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.api.deps import get_db_session
-from src.models.learner import Learner, LearnerProfile
+from src.auth.email_verification import email_verification_token_is_valid, normalize_email
+from src.config import settings
+from src.models.learner import Learner, LearnerProfile, generate_invite_code
 
 router = APIRouter(prefix="/api/learners", tags=["learners"])
 
@@ -16,9 +19,18 @@ router = APIRouter(prefix="/api/learners", tags=["learners"])
 # --- Request schemas ---
 
 
+def _normalize_invite_code(value: str) -> str:
+    normalized = value.strip().upper()
+    if not normalized:
+        raise ValueError("Invitation code must not be blank")
+    return normalized
+
+
 class CreateLearnerRequest(BaseModel):
     nickname: str = Field(min_length=1, max_length=100)
-    email: Optional[str] = Field(default=None, max_length=255)
+    email: str = Field(min_length=3, max_length=255)
+    invite_code: str = Field(min_length=1, max_length=32)
+    verification_token: str = Field(min_length=20, max_length=2048)
 
     @field_validator("nickname")
     @classmethod
@@ -30,14 +42,30 @@ class CreateLearnerRequest(BaseModel):
 
     @field_validator("email")
     @classmethod
-    def normalize_email(cls, value: Optional[str]) -> Optional[str]:
-        if value is None:
-            return None
-        stripped = value.strip().lower()
-        return stripped or None
+    def normalize_email(cls, value: str) -> str:
+        return normalize_email(value)
+
+    @field_validator("invite_code")
+    @classmethod
+    def normalize_invite_code(cls, value: str) -> str:
+        return _normalize_invite_code(value)
 
 
-class LoginLearnerRequest(CreateLearnerRequest):
+class LookupLearnersRequest(BaseModel):
+    email: str = Field(min_length=3, max_length=255)
+    verification_token: str = Field(min_length=20, max_length=2048)
+
+    @field_validator("email")
+    @classmethod
+    def normalize_email(cls, value: str) -> str:
+        return normalize_email(value)
+
+
+class LoginLearnerRequest(LookupLearnersRequest):
+    learner_id: uuid.UUID
+
+
+class BindLearnerEmailRequest(LookupLearnersRequest):
     pass
 
 
@@ -66,6 +94,19 @@ class LearnerResponse(BaseModel):
     id: uuid.UUID
     nickname: str
     email: Optional[str] = None
+    invite_code: Optional[str] = None
+
+
+class LearnerAccountResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    nickname: str
+
+
+class LearnerLookupResponse(BaseModel):
+    email: str
+    accounts: list[LearnerAccountResponse]
 
 
 class ProfileResponse(BaseModel):
@@ -96,11 +137,48 @@ async def create_learner(
     body: CreateLearnerRequest,
     db: AsyncSession = Depends(get_db_session),
 ) -> Learner:
-    learner = Learner(nickname=body.nickname, email=body.email)
+    _require_verified_email(body.email, body.verification_token)
+    inviter_result = await db.execute(
+        select(Learner).where(Learner.invite_code == body.invite_code)
+    )
+    inviter = inviter_result.scalar_one_or_none()
+
+    if inviter is None:
+        learner_count_result = await db.execute(select(func.count()).select_from(Learner))
+        learner_count = learner_count_result.scalar_one()
+        bootstrap_code = settings.bootstrap_invite_code
+        is_bootstrap_registration = (
+            learner_count == 0
+            and bool(bootstrap_code and bootstrap_code.strip())
+            and hmac.compare_digest(body.invite_code, _normalize_invite_code(bootstrap_code))
+        )
+        if not is_bootstrap_registration:
+            raise HTTPException(status_code=400, detail="Invalid invitation code")
+
+    learner = Learner(
+        nickname=body.nickname,
+        email=body.email,
+        invite_code=generate_invite_code(),
+        invited_by_learner_id=inviter.id if inviter is not None else None,
+    )
     db.add(learner)
     await db.flush()
     await db.refresh(learner)
     return learner
+
+
+@router.post("/lookup", response_model=LearnerLookupResponse)
+async def lookup_learners(
+    body: LookupLearnersRequest,
+    db: AsyncSession = Depends(get_db_session),
+) -> LearnerLookupResponse:
+    _require_verified_email(body.email, body.verification_token)
+    result = await db.execute(
+        select(Learner)
+        .where(Learner.email == body.email)
+        .order_by(Learner.created_at.asc(), Learner.id.asc())
+    )
+    return LearnerLookupResponse(email=body.email, accounts=list(result.scalars().all()))
 
 
 @router.post("/login", response_model=LearnerResponse)
@@ -108,30 +186,42 @@ async def login_learner(
     body: LoginLearnerRequest,
     db: AsyncSession = Depends(get_db_session),
 ) -> Learner:
-    if body.email:
-        result = await db.execute(select(Learner).where(Learner.email == body.email))
-        existing = result.scalar_one_or_none()
-        if existing is not None:
-            return existing
-
-    nickname_result = await db.execute(
-        select(Learner)
-        .where(func.lower(Learner.nickname) == body.nickname.lower())
-        .order_by(Learner.created_at.asc())
+    _require_verified_email(body.email, body.verification_token)
+    result = await db.execute(
+        select(Learner).where(
+            Learner.id == body.learner_id,
+            Learner.email == body.email,
+        )
     )
-    existing_by_nickname = nickname_result.scalars().first()
-    if existing_by_nickname is not None:
-        if body.email and existing_by_nickname.email is None:
-            existing_by_nickname.email = body.email
-            await db.flush()
-            await db.refresh(existing_by_nickname)
-        return existing_by_nickname
+    learner = result.scalar_one_or_none()
+    if learner is None:
+        raise HTTPException(status_code=404, detail="Learner not found for this email")
+    return learner
 
-    learner = Learner(nickname=body.nickname, email=body.email)
-    db.add(learner)
+
+@router.put("/{learner_id}/email", response_model=LearnerResponse)
+async def bind_learner_email(
+    learner_id: uuid.UUID,
+    body: BindLearnerEmailRequest,
+    db: AsyncSession = Depends(get_db_session),
+) -> Learner:
+    _require_verified_email(body.email, body.verification_token)
+    result = await db.execute(select(Learner).where(Learner.id == learner_id))
+    learner = result.scalar_one_or_none()
+    if learner is None:
+        raise HTTPException(status_code=404, detail="Learner not found")
+    if learner.email is not None and learner.email != body.email:
+        raise HTTPException(status_code=409, detail="Learner email is already bound")
+
+    learner.email = body.email
     await db.flush()
     await db.refresh(learner)
     return learner
+
+
+def _require_verified_email(email: str, token: str) -> None:
+    if not email_verification_token_is_valid(email=email, token=token):
+        raise HTTPException(status_code=401, detail="Email verification required")
 
 
 @router.get("/{learner_id}", response_model=LearnerResponse)
@@ -241,9 +331,13 @@ async def upsert_profile(
 async def get_profile(
     learner_id: uuid.UUID,
     db: AsyncSession = Depends(get_db_session),
-) -> LearnerProfile:
+) -> LearnerProfile | ProfileResponse:
     result = await db.execute(select(LearnerProfile).where(LearnerProfile.learner_id == learner_id))
     profile = result.scalar_one_or_none()
-    if profile is None:
-        raise HTTPException(status_code=404, detail="Profile not found")
-    return profile
+    if profile is not None:
+        return profile
+
+    learner_result = await db.execute(select(Learner.id).where(Learner.id == learner_id))
+    if learner_result.scalar_one_or_none() is None:
+        raise HTTPException(status_code=404, detail="Learner not found")
+    return ProfileResponse(learner_id=learner_id)

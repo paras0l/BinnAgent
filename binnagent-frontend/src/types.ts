@@ -4,6 +4,7 @@ export interface Learner {
   id: string
   nickname: string
   email?: string | null
+  invite_code?: string | null
 }
 
 export interface LearnerProfile {

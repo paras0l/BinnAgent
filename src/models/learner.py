@@ -1,3 +1,4 @@
+import secrets
 import uuid
 from datetime import date
 from typing import Optional
@@ -10,15 +11,45 @@ from src.db import Base
 from src.models.base import TimestampMixin, UUIDPrimaryKeyMixin
 
 
+INVITE_CODE_ALPHABET = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ"
+
+
+def generate_invite_code() -> str:
+    """Return a short, human-friendly code suitable for sharing."""
+    suffix = "".join(secrets.choice(INVITE_CODE_ALPHABET) for _ in range(10))
+    return f"BINN-{suffix}"
+
+
 class Learner(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     __tablename__ = "learners"
 
     nickname: Mapped[str] = mapped_column(String(100), nullable=False)
-    email: Mapped[Optional[str]] = mapped_column(String(255), unique=True, nullable=True)
+    email: Mapped[Optional[str]] = mapped_column(String(255), index=True, nullable=True)
+    invite_code: Mapped[str] = mapped_column(
+        String(32),
+        default=generate_invite_code,
+        unique=True,
+        nullable=False,
+    )
+    invited_by_learner_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("learners.id", ondelete="SET NULL"),
+        index=True,
+        nullable=True,
+    )
     tenant_id: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), nullable=True)
 
     profile: Mapped[Optional["LearnerProfile"]] = relationship(
         back_populates="learner", uselist=False, cascade="all, delete-orphan"
+    )
+    inviter: Mapped[Optional["Learner"]] = relationship(
+        remote_side="Learner.id",
+        foreign_keys=[invited_by_learner_id],
+        back_populates="invitees",
+    )
+    invitees: Mapped[list["Learner"]] = relationship(
+        foreign_keys=[invited_by_learner_id],
+        back_populates="inviter",
     )
 
     def __repr__(self) -> str:
