@@ -26,6 +26,7 @@ import {
   type ReadingMaterialType,
 } from '@/data/readingWorkshop'
 import { exploreCapabilityEventUrl } from '@/services/exploreCapabilityApi'
+import { fetchExercisesForTarget } from '@/services/exerciseRepository'
 import {
   formatFailedIngestMessage,
   hasScannedPdfSignal,
@@ -44,7 +45,6 @@ import type {
   Learner,
   PronunciationWorkspace,
   UnitLearningWorkspace,
-  UnitWorkspaceActionType,
   UnitWorkspaceItem,
   UnitWorkspaceSection,
   UnitVocabularySummary,
@@ -1018,14 +1018,12 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice, 
           />
 
           <UnitMaterialsSection
+            learnerId={learner.id}
             overview={overview}
             workspace={unitWorkspace}
             vocabulary={activeUnitVocabulary}
             isGeneratingReadingMaterial={isGeneratingReadingMaterial}
             readingMaterials={unitReadingMaterials}
-            onStartVocabulary={(mode) => onStartVocabularyPractice(mode, overview.current_unit.id, currentSourceLabel)}
-            onStartDailyLesson={() => void handleStartDailyLesson()}
-            onStartExercise={() => void handleStartExercise()}
             onGenerateReadingMaterial={() => void handleGenerateReadingMaterial()}
             onOpenReadingMaterial={openReadingMaterial}
             onStartGrammar={setGrammarTopic}
@@ -1570,56 +1568,68 @@ function LearningSourceTiles({
   )
 }
 
+type UnitMaterialActionType = 'details' | 'reading' | 'exercise-list'
+
+interface UnitMaterialCard {
+  id: string
+  icon: ReactNode
+  title: string
+  description: string
+  meta: string
+  actionType: UnitMaterialActionType
+  actionLabel?: string
+  disabled?: boolean
+  isLoading?: boolean
+  detailItems?: UnitWorkspaceItem[]
+  emptyDetail?: string
+  itemActionLabel?: string
+  readingItems?: ReadingMaterialGenerationResponse['material'][]
+}
+
 function UnitMaterialsSection({
+  learnerId,
   overview,
   workspace,
   vocabulary,
   isGeneratingReadingMaterial,
   readingMaterials,
-  onStartExercise,
-  onStartDailyLesson,
-  onStartVocabulary,
   onGenerateReadingMaterial,
   onOpenReadingMaterial,
   onStartGrammar,
 }: {
+  learnerId: string
   overview: KnowledgeBaseOverview
   workspace: UnitLearningWorkspace
   vocabulary: UnitVocabularySummary | null
   isGeneratingReadingMaterial: boolean
   readingMaterials: ReadingMaterialGenerationResponse['material'][]
-  onStartExercise: () => void
-  onStartDailyLesson: () => void
-  onStartVocabulary: (mode: VocabularyPracticeMode) => void
   onGenerateReadingMaterial: () => void
   onOpenReadingMaterial: (material: ReadingMaterialGenerationResponse['material']) => void
   onStartGrammar: (topic: string) => void
 }) {
   const [detail, setDetail] = useState<MaterialDetail | null>(null)
   const [isReadingHistoryOpen, setIsReadingHistoryOpen] = useState(false)
+  const [isLoadingExerciseList, setIsLoadingExerciseList] = useState(false)
   const sectionById = new Map(workspace.sections.map((section) => [section.id, section]))
-  const firstGrammarTopic = sectionById.get('grammar')?.items[0]?.title ?? overview.knowledge_points.find((item) => item.type === 'grammar')?.title ?? 'grammar'
   const expressionItems = [
     ...(sectionById.get('sentence_patterns')?.items ?? []),
     ...(sectionById.get('phrases')?.items ?? []),
   ]
-  const vocabularyEntry = vocabularyPracticeEntry(vocabulary)
+  const vocabularySection = sectionById.get('vocabulary')
   const latestReadingMaterial = readingMaterials[0]
-  const materialCards = [
+  const materialCards: UnitMaterialCard[] = [
     {
       id: 'vocabulary',
       icon: <Languages className="size-5" />,
       title: '单词表',
-      description: vocabularyEntry.mode
-        ? vocabularyEntry.kind === 'continue'
-          ? '继续巩固本单元学习中的词汇。'
-          : '进入本单元词汇预习或到期复习。'
-        : '本单元暂时没有可练习的词汇。',
-      meta: vocabularyEntry.meta || `${sectionById.get('vocabulary')?.count ?? 0} 个词`,
-      actionLabel: vocabularyEntry.kind === 'review' ? '复习词汇' : vocabularyEntry.kind === 'continue' ? '继续词汇' : vocabularyEntry.kind === 'new' ? '打开词汇' : '暂无可练',
-      actionType: (vocabularyEntry.mode === 'review' ? 'review' : 'vocabulary_new') as UnitWorkspaceActionType,
-      disabled: !vocabularyEntry.mode,
-      detailItems: sectionById.get('vocabulary')?.items ?? [],
+      description: vocabularySection?.count
+        ? `查看本单元收录的全部 ${vocabularySection.count} 个词汇。`
+        : '本单元暂时没有词汇条目。',
+      meta: `${vocabularySection?.count ?? 0} 个词`,
+      actionLabel: '查看全部词汇',
+      actionType: 'details',
+      disabled: !vocabularySection?.count,
+      detailItems: vocabularySection?.items ?? [],
       emptyDetail: '本单元暂时没有词汇条目。',
     },
     {
@@ -1653,7 +1663,7 @@ function UnitMaterialsSection({
         : '还没有材料时，可以生成本单元短文或对话。',
       meta: latestReadingMaterial ? `${readingMaterials.length} 篇历史` : `${sectionById.get('vocabulary')?.count ?? 0} 个词可融入`,
       actionLabel: latestReadingMaterial ? '打开最近' : isGeneratingReadingMaterial ? '生成中' : '新生成',
-      actionType: 'reading' as UnitWorkspaceActionType,
+      actionType: 'reading',
       isLoading: isGeneratingReadingMaterial,
       readingItems: readingMaterials,
     },
@@ -1661,32 +1671,20 @@ function UnitMaterialsSection({
       id: 'practice',
       icon: <Dumbbell className="size-5" />,
       title: '教材题库',
-      description: '用当前单元材料生成练习题。',
-      meta: `${overview.knowledge_points.length} 个知识点`,
-      actionLabel: '开始练习',
-      actionType: 'exercise' as UnitWorkspaceActionType,
+      description: '查看本单元题库中已有的题目，不在这里开始作答。',
+      meta: '题目列表',
+      actionLabel: '查看题目列表',
+      actionType: 'exercise-list',
+      isLoading: isLoadingExerciseList,
     },
   ]
 
-  const handleAction = (type: UnitWorkspaceActionType, targetTopic?: string) => {
-    if (type === 'vocabulary_new') onStartVocabulary('new')
-    else if (type === 'review') onStartVocabulary('review')
-    else if (type === 'vocabulary_spelling') onStartVocabulary('spelling')
-    else if (type === 'daily_lesson') onStartDailyLesson()
-    else if (type === 'exercise') onStartExercise()
-    else if (type === 'grammar') onStartGrammar(targetTopic ?? firstGrammarTopic)
-    else if (type === 'reading') {
-      if (latestReadingMaterial) onOpenReadingMaterial(latestReadingMaterial)
-      else onGenerateReadingMaterial()
-    }
-  }
-
-  const openDetails = (card: (typeof materialCards)[number]) => {
-    if (!('detailItems' in card)) return
+  const openDetails = (card: UnitMaterialCard) => {
+    if (!card.detailItems) return
     setDetail({
       title: card.title,
       subtitle: `${overview.current_unit.title} · ${overview.current_unit.subtitle}`,
-      items: card.detailItems ?? [],
+      items: card.detailItems,
       emptyMessage: card.emptyDetail ?? '暂无详情。',
       itemActionLabel: card.itemActionLabel,
       onItemAction: card.itemActionLabel
@@ -1698,6 +1696,42 @@ function UnitMaterialsSection({
     })
   }
 
+  const openExerciseList = async () => {
+    setIsLoadingExerciseList(true)
+    try {
+      const exercises = await fetchExercisesForTarget(
+        learnerId,
+        {
+          type: 'curriculum_node',
+          id: overview.current_unit.id,
+          label: overview.current_unit.title,
+        },
+        { limit: 50 },
+      )
+      setDetail({
+        title: '教材题库',
+        subtitle: `${overview.current_unit.title} · ${overview.current_unit.subtitle}`,
+        items: exercises.map((exercise) => ({
+          id: exercise.id,
+          title: exercise.prompt,
+          summary: `${exerciseTypeLabel(exercise.type)} · ${exerciseDifficultyLabel(exercise.difficulty)}`,
+          source_page: '教材题库',
+          mastery: 0,
+        })),
+        emptyMessage: '本单元题库暂时没有可展示的题目。',
+      })
+    } finally {
+      setIsLoadingExerciseList(false)
+    }
+  }
+
+  const handleMaterialAction = (card: UnitMaterialCard) => {
+    if (card.actionType === 'details') openDetails(card)
+    else if (card.actionType === 'exercise-list') void openExerciseList()
+    else if (latestReadingMaterial) onOpenReadingMaterial(latestReadingMaterial)
+    else onGenerateReadingMaterial()
+  }
+
   return (
     <section id="unit-materials" className="scroll-mt-24" aria-labelledby="unit-materials-title">
       <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
@@ -1706,7 +1740,7 @@ function UnitMaterialsSection({
           <p className="mt-1 text-sm text-slate-500">这里只保留入口，不在课程主页展开全部知识点。</p>
         </div>
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-lg bg-white px-3 py-2 text-xs font-bold text-slate-500 shadow-sm" aria-label="本单元词汇统计">
-          <span className="text-slate-800">共 {vocabulary?.total ?? sectionById.get('vocabulary')?.count ?? '—'} 词</span>
+          <span className="text-slate-800">共 {vocabularySection?.count ?? vocabulary?.total ?? '—'} 词</span>
           <span>新词 {vocabulary?.new ?? '—'}</span>
           <span>学习中 {vocabulary?.learning ?? '—'}</span>
           <span>待复习 {vocabulary?.due ?? '—'}</span>
@@ -1714,7 +1748,7 @@ function UnitMaterialsSection({
       </div>
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
         {materialCards.map((card) => {
-          const readingItems = 'readingItems' in card ? card.readingItems ?? [] : []
+          const readingItems = card.readingItems ?? []
           const isReadingCardWithHistory = card.actionType === 'reading' && readingItems.length > 0
           return (
           <div
@@ -1722,7 +1756,7 @@ function UnitMaterialsSection({
             className="relative overflow-hidden rounded-lg border border-slate-200/90 bg-white shadow-[0_8px_24px_rgba(15,23,42,0.05)] transition-colors hover:border-indigo-200 focus-within:border-indigo-300"
           >
             <div className="h-1 bg-gradient-to-r from-slate-200 via-indigo-300 to-sky-300" />
-            {'detailItems' in card ? (
+            {card.detailItems ? (
               <button
                 type="button"
                 onClick={() => openDetails(card)}
@@ -1764,17 +1798,17 @@ function UnitMaterialsSection({
               ) : null}
               <div className="mt-4 grid gap-2 text-xs font-bold text-slate-500">
                 <span>{card.meta}</span>
-                {isReadingCardWithHistory ? null : card.actionType !== 'details' && card.actionType !== 'reading' ? (
+                {isReadingCardWithHistory || !card.actionLabel ? null : (
                   <button
                     type="button"
-                    onClick={() => handleAction(card.actionType as UnitWorkspaceActionType, 'targetTopic' in card && typeof card.targetTopic === 'string' ? card.targetTopic : undefined)}
-                    disabled={card.disabled || ('isLoading' in card && card.isLoading)}
+                    onClick={() => handleMaterialAction(card)}
+                    disabled={card.disabled || card.isLoading}
                     className="inline-flex w-full items-center justify-center gap-1 whitespace-nowrap rounded-md bg-indigo-50 px-2.5 py-1.5 text-indigo-700 transition hover:bg-indigo-600 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 active:scale-[0.98] disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
                   >
-                    {'isLoading' in card && card.isLoading ? '生成中' : card.actionLabel}
-                    {'isLoading' in card && card.isLoading ? <LoaderCircle className="size-3.5 animate-spin" /> : <ArrowRight className="size-3.5" />}
+                    {card.isLoading ? '加载中' : card.actionLabel}
+                    {card.isLoading ? <LoaderCircle className="size-3.5 animate-spin" /> : card.actionType === 'details' || card.actionType === 'exercise-list' ? <ListChecks className="size-3.5" /> : <ArrowRight className="size-3.5" />}
                   </button>
-                ) : null}
+                )}
               </div>
             </div>
           </div>
@@ -1802,6 +1836,18 @@ interface MaterialDetail {
   emptyMessage: string
   itemActionLabel?: string
   onItemAction?: (item: UnitWorkspaceItem) => void
+}
+
+function exerciseTypeLabel(type: 'single_choice' | 'fill_blank' | 'grammar_fill_blank') {
+  if (type === 'single_choice') return '选择题'
+  if (type === 'grammar_fill_blank') return '语法填空'
+  return '填空题'
+}
+
+function exerciseDifficultyLabel(difficulty?: 'easy' | 'medium' | 'hard') {
+  if (difficulty === 'hard') return '较难'
+  if (difficulty === 'medium') return '中等'
+  return '基础'
 }
 
 function MaterialDetailDialog({ detail, onClose }: { detail: MaterialDetail | null; onClose: () => void }) {

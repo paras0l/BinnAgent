@@ -47,6 +47,7 @@ import {
   currentLevelLabel,
   learningGoalLabel,
 } from '@/utils/learnerProfile'
+import { buildTodaySteps } from '@/utils/dashboardLearningFlow'
 
 const VOCABULARY_PAGE_SIZE = 12
 
@@ -83,6 +84,7 @@ interface DashboardPageProps {
   learnerProfile?: LearnerProfile | null
   initialWorkspace?: DashboardWorkspace
   initialVocabularyListOpen?: boolean
+  onOpenAiConversation: () => void
   onOpenDailyLearning: () => void
   onOpenGroupLearningSettings: () => void
   onProfileUpdate?: (patch: Partial<LearnerProfile>) => void
@@ -94,6 +96,7 @@ export function DashboardPage({
   learnerProfile,
   initialVocabularyListOpen = false,
   initialWorkspace = 'home',
+  onOpenAiConversation,
   onOpenDailyLearning,
   onOpenGroupLearningSettings,
   onProfileUpdate,
@@ -324,6 +327,7 @@ export function DashboardPage({
       <LearningCenterHome
         learnerName={learner.nickname}
         summary={summary}
+        onOpenAiConversation={onOpenAiConversation}
         onOpenDailyLearning={onOpenDailyLearning}
         onOpenVocabularyManager={handleOpenVocabularyManager}
         onOpenVocabularyTraining={handleOpenVocabularyTraining}
@@ -589,6 +593,7 @@ function LearningCenterHome({
   learnerName,
   summary,
   groupLearningSummary,
+  onOpenAiConversation,
   onOpenDailyLearning,
   onOpenVocabularyManager,
   onOpenVocabularyTraining,
@@ -600,6 +605,7 @@ function LearningCenterHome({
   learnerName: string
   summary: DashboardSummary
   groupLearningSummary: GroupLearningCardSummary
+  onOpenAiConversation: () => void
   onOpenDailyLearning: () => void
   onOpenVocabularyManager: () => void
   onOpenVocabularyTraining: () => void
@@ -631,7 +637,7 @@ function LearningCenterHome({
               {learnerName}，今天从这里开始
             </h1>
             <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-500">
-              先完成当前最该做的一步，再继续教材。系统会按复习、学习、检查题的顺序带你往前走。
+              先完成当前最该做的一步，再继续教材。系统会按复习、学习、检查题、AI 对话的顺序带你往前走。
             </p>
           </div>
           <div className="rounded-2xl border border-white/80 bg-white/85 p-4 shadow-[0_10px_30px_rgba(15,23,42,0.08)] backdrop-blur">
@@ -667,6 +673,7 @@ function LearningCenterHome({
         <TodayLearningFlow
           reasons={focusReasons}
           summary={summary}
+          onOpenAiConversation={onOpenAiConversation}
           onOpenDailyLearning={onOpenDailyLearning}
           onStartVocabularyPractice={onStartVocabularyPractice}
         />
@@ -687,11 +694,13 @@ function LearningCenterHome({
 function TodayLearningFlow({
   reasons,
   summary,
+  onOpenAiConversation,
   onOpenDailyLearning,
   onStartVocabularyPractice,
 }: {
   reasons: string[]
   summary: DashboardSummary
+  onOpenAiConversation: () => void
   onOpenDailyLearning: () => void
   onStartVocabularyPractice: (mode?: VocabularyPracticeMode) => void
 }) {
@@ -706,7 +715,7 @@ function TodayLearningFlow({
           </p>
           <h2 className="mt-2 text-2xl font-black text-slate-950">按顺序完成，不用挑入口</h2>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
-            建议 15-20 分钟。按复习、教材、检查题推进，今天只完成一组清晰任务。
+            建议 20-25 分钟。按复习、教材、检查题、AI 对话推进，今天只完成一组清晰任务。
           </p>
         </div>
       </div>
@@ -716,7 +725,13 @@ function TodayLearningFlow({
           <button
             key={step.title}
             type="button"
-            onClick={step.action === 'review' ? () => onStartVocabularyPractice('review') : onOpenDailyLearning}
+            onClick={
+              step.action === 'review'
+                ? () => onStartVocabularyPractice('review')
+                : step.action === 'chat'
+                  ? onOpenAiConversation
+                  : onOpenDailyLearning
+            }
             className={`group grid grid-cols-[42px_minmax(0,1fr)_auto] items-center gap-3 rounded-2xl border px-4 py-3.5 text-left transition hover:-translate-y-0.5 hover:shadow-[0_12px_30px_rgba(15,23,42,0.08)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
               step.state === 'done'
                 ? 'border-emerald-100 bg-emerald-50/50'
@@ -1689,6 +1704,7 @@ function normalizeDashboardSummary(value: unknown): DashboardSummary {
     stats: {
       today_reviews: safeNumber(stats.today_reviews),
       today_completed_reviews: safeNumber(stats.today_completed_reviews),
+      today_ai_conversations: safeNumber(stats.today_ai_conversations),
       streak_days: safeNumber(stats.streak_days),
       accuracy: safeNumber(stats.accuracy),
       total_vocab: safeNumber(stats.total_vocab),
@@ -1916,32 +1932,6 @@ function buildFocusReasons(summary: DashboardSummary) {
   if (summary.error_patterns[0]) reasons.push(`${summary.error_patterns[0].name} 最近出现 ${summary.error_patterns[0].count} 次，适合安排短练习。`)
   if (summary.today_goal.completed < summary.today_goal.total) reasons.push(`今日目标还剩 ${summary.today_goal.total - summary.today_goal.completed} 项，适合继续教材主线。`)
   return reasons.length > 0 ? reasons : ['今天没有明显积压任务，可以用一节 10 分钟教材练习建立学习节奏。']
-}
-
-function buildTodaySteps(summary: DashboardSummary) {
-  return [
-    {
-      title: summary.stats.today_reviews > 0 ? `复习 ${summary.stats.today_reviews} 个到期词汇` : '快速热身',
-      description: summary.stats.today_reviews > 0 ? '先遮住答案主动回忆，再根据熟练度评分。' : '用一两个已学词汇进入状态。',
-      action: 'review',
-      badge: summary.stats.today_reviews > 0 ? '建议优先' : '完成',
-      state: summary.stats.today_reviews === 0 ? 'done' : 'next',
-    },
-    {
-      title: '继续当前教材单元',
-      description: '按课本单元查看词汇、句式、语法和语音要点。',
-      action: 'lesson',
-      badge: summary.today_goal.completed >= summary.today_goal.total ? '已完成' : '主线',
-      state: summary.today_goal.completed >= summary.today_goal.total ? 'done' : 'next',
-    },
-    {
-      title: '完成一道检查题',
-      description: '用教材语境确认今天学到的内容能不能用出来。',
-      action: 'lesson',
-      badge: '收口',
-      state: 'next',
-    },
-  ] as const
 }
 
 function ProgressBar({ value, className = '' }: { value: number; className?: string }) {

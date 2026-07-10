@@ -138,6 +138,32 @@ def _vocabulary_point(source_id: uuid.UUID, node_id: uuid.UUID, title: str = "mo
     return point
 
 
+def test_unit_workspace_returns_every_vocabulary_item() -> None:
+    source = _source()
+    node = _node(source.id)
+    points = [
+        _vocabulary_point(source.id, node.id, title=f"word-{index}")
+        for index in range(1, 11)
+    ]
+
+    workspace = knowledge_api._build_unit_workspace(
+        source=source,
+        node=node,
+        points=points,
+        review_points=[],
+        states={},
+        recommendation_reason="按教材顺序学习。",
+    )
+
+    vocabulary_section = next(
+        section for section in workspace["sections"] if section["id"] == "vocabulary"
+    )
+    assert vocabulary_section["count"] == 10
+    assert [item["title"] for item in vocabulary_section["items"]] == [
+        f"word-{index}" for index in range(1, 11)
+    ]
+
+
 @pytest.mark.asyncio
 async def test_overview_returns_ordered_curriculum_and_knowledge(client, knowledge_session):
     learner_id = uuid.uuid4()
@@ -1127,6 +1153,8 @@ async def test_list_exercises_for_curriculum_target_returns_unified_items(
     )
 
     assert response.status_code == 200
+    get_pool = exercises_api.get_exercise_pool
+    assert get_pool.await_args.kwargs["schedule_refill"] is False
     assert response.json() == [
         {
             "id": str(question.id),

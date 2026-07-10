@@ -467,6 +467,7 @@ function App() {
                     ? learningCenterView
                     : 'home'
                 }
+                onOpenAiConversation={() => handleTabChange('chat')}
                 onOpenDailyLearning={() => setLearningCenterView('daily-learning')}
                 onOpenGroupLearningSettings={() => setIsGroupLearningSettingsOpen(true)}
                 onProfileUpdate={(patch) => void updateLearnerProfile(patch)}

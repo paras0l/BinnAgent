@@ -33,4 +33,21 @@ describe('KnowledgeBasePage daily learning layout', () => {
     expect(source).toContain("currentCurriculumNode?.progress_override")
     expect(source).toContain("isUnitSkipped ? '重学' : '继续学习'")
   })
+
+  it('keeps the unit material word list separate from vocabulary practice', () => {
+    const materialsSection = source.slice(
+      source.indexOf('function UnitMaterialsSection'),
+      source.indexOf('interface MaterialDetail'),
+    )
+
+    expect(materialsSection).toContain("actionLabel: '查看全部词汇'")
+    expect(materialsSection).toContain("actionType: 'details'")
+    expect(materialsSection).toContain('detailItems: vocabularySection?.items ?? []')
+    expect(materialsSection).toContain("actionLabel: '查看题目列表'")
+    expect(materialsSection).toContain("actionType: 'exercise-list'")
+    expect(materialsSection).toContain('fetchExercisesForTarget(')
+    expect(materialsSection).not.toContain('vocabularyPracticeEntry(vocabulary)')
+    expect(materialsSection).not.toContain("onStartVocabulary('new')")
+    expect(materialsSection).not.toContain('onStartExercise')
+  })
 })

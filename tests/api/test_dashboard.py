@@ -162,6 +162,7 @@ async def test_dashboard_profile_uses_real_backend_evidence(client, mock_session
             _count(2),
             _count(1),
             _many([review]),
+            _count(1),
             _many([session]),
             _many([vocab]),
             _many([error_pattern]),
@@ -182,6 +183,7 @@ async def test_dashboard_profile_uses_real_backend_evidence(client, mock_session
     assert data["review_items"][0]["word"] == "careful"
     assert data["error_patterns"][0]["name"] == "细节定位不稳定"
     assert data["daily_activity"][-1]["date"] == today.isoformat()
+    assert data["stats"]["today_ai_conversations"] == 1
 
     profile = data["profile"]
     ability_scores = {item["label"]: item for item in profile["ability_scores"]}

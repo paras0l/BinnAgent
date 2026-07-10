@@ -545,6 +545,7 @@ export interface DashboardSummary {
   stats: {
     today_reviews: number
     today_completed_reviews: number
+    today_ai_conversations: number
     streak_days: number
     accuracy: number
     total_vocab: number

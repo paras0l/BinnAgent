@@ -80,6 +80,7 @@ async def list_exercises_for_target(
         source_id=node.source_id,
         curriculum_node_id=node.id,
         learner_id=learner_id,
+        schedule_refill=False,
     )
     selected_questions = await select_unit_exercises_for_learner(
         db,

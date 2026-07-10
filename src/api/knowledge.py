@@ -827,12 +827,13 @@ def _build_unit_workspace(
     sections = []
     for section_id, title, point_type in sections_config:
         section_points = by_type.get(point_type, [])
+        visible_points = section_points if section_id == "vocabulary" else section_points[:8]
         sections.append(
             {
                 "id": section_id,
                 "title": title,
                 "count": len(section_points),
-                "items": [_workspace_item_payload(point, states) for point in section_points[:8]],
+                "items": [_workspace_item_payload(point, states) for point in visible_points],
                 "action": _workspace_section_action(section_id),
                 "empty": len(section_points) == 0,
             }

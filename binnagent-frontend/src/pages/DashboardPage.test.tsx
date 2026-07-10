@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { LearningProfileView, LearningRecordsView } from './DashboardPage'
 import dashboardSource from './DashboardPage.tsx?raw'
 import type { DashboardSummary, Learner, MemorySummary } from '@/types'
+import { buildTodaySteps } from '@/utils/dashboardLearningFlow'
 
 const learner: Learner = {
   id: 'learner-1',
@@ -14,6 +15,7 @@ const emptySummary: DashboardSummary = {
   stats: {
     today_reviews: 0,
     today_completed_reviews: 0,
+    today_ai_conversations: 0,
     streak_days: 0,
     accuracy: 0,
     total_vocab: 0,
@@ -156,5 +158,23 @@ describe('Dashboard learning profile workspaces', () => {
     expect(dashboardSource).toContain("const VocabularyPracticePage = lazy(() =>")
     expect(dashboardSource).not.toContain("import { GroupLearningSignalsPage }")
     expect(dashboardSource).not.toContain("import { VocabularyPracticePage }")
+  })
+
+  it('adds an AI conversation as the fourth step in today learning flow', () => {
+    const pendingSteps = buildTodaySteps(emptySummary)
+    expect(pendingSteps).toHaveLength(4)
+    expect(pendingSteps[3]).toMatchObject({
+      title: '与 AI 完成一次对话',
+      action: 'chat',
+      state: 'next',
+    })
+
+    const completedSteps = buildTodaySteps({
+      ...emptySummary,
+      stats: { ...emptySummary.stats, today_ai_conversations: 1 },
+    })
+    expect(completedSteps[3]).toMatchObject({ badge: '已完成', state: 'done' })
+    expect(dashboardSource).toContain("step.action === 'chat'")
+    expect(dashboardSource).toContain('onOpenAiConversation')
   })
 })

@@ -13,6 +13,7 @@ from src.models.error_pattern import ErrorPattern
 from src.models.knowledge import ExerciseAttempt, LearnerKnowledgeState
 from src.models.learner import Learner
 from src.models.learning_progress import LearningProgressItem
+from src.models.runtime import ConversationMessage
 from src.models.session import LearningSession
 from src.models.vocabulary import ReviewSchedule, VocabularyItem, VocabularyMasteryVector
 
@@ -22,6 +23,7 @@ router = APIRouter(prefix="/api/learners/{learner_id}/dashboard", tags=["dashboa
 class DashboardStats(BaseModel):
     today_reviews: int = 0
     today_completed_reviews: int = 0
+    today_ai_conversations: int = 0
     streak_days: int = 0
     accuracy: int = 0
     total_vocab: int = 0
@@ -387,6 +389,20 @@ async def get_dashboard(
         and review.completed_at.astimezone(timezone.utc).date() == today
     )
 
+    today_start = datetime.combine(today, datetime.min.time(), tzinfo=timezone.utc)
+    tomorrow_start = today_start + timedelta(days=1)
+    today_ai_conversations_result = await db.execute(
+        select(func.count())
+        .select_from(ConversationMessage)
+        .where(
+            ConversationMessage.learner_id == learner_id,
+            ConversationMessage.role == "assistant",
+            ConversationMessage.created_at >= today_start,
+            ConversationMessage.created_at < tomorrow_start,
+        )
+    )
+    today_ai_conversations = int(today_ai_conversations_result.scalar_one() or 0)
+
     sessions_result = await db.execute(
         select(LearningSession)
         .where(
@@ -512,6 +528,7 @@ async def get_dashboard(
         stats=DashboardStats(
             today_reviews=today_reviews,
             today_completed_reviews=today_completed_reviews,
+            today_ai_conversations=today_ai_conversations,
             streak_days=streak_days,
             accuracy=accuracy,
             total_vocab=total_vocab,
