@@ -103,7 +103,7 @@ async def generate_reviewed_unit_pool(
     *,
     db: AsyncSession,
     model_router: ModelRouter,
-    learner_id: uuid.UUID,
+    learner_id: uuid.UUID | None,
     source_id: uuid.UUID,
     curriculum_node_id: uuid.UUID,
     unit_title: str,
@@ -159,7 +159,8 @@ async def generate_reviewed_unit_pool(
     if len(reviewed) < MIN_PUBLISHABLE_QUESTIONS:
         raise UnitExerciseGenerationUnavailableError("Too few candidates passed semantic review")
     reviewed_point_ids = {str(item.get("knowledgePointId") or "") for item in reviewed}
-    missing_point_ids = set(point_by_id) - reviewed_point_ids
+    planned_point_ids = {str(item["knowledge_point_id"]) for item in coverage_plan}
+    missing_point_ids = planned_point_ids - reviewed_point_ids
     if missing_point_ids:
         raise UnitExerciseGenerationUnavailableError(
             "Reviewed candidate set does not cover every knowledge point"
@@ -265,7 +266,10 @@ def select_exercises_for_learner(
     def score(question: ExerciseQuestion) -> tuple[float, str]:
         mastery = mastery_by_point.get(question.knowledge_point_id, 0.35)
         target_difficulty = min(0.8, max(0.3, 0.35 + mastery * 0.45))
-        return (abs(question.difficulty - target_difficulty), str(question.id))
+        quality = question.quality_score
+        quality_score = float(quality) if isinstance(quality, int | float) else 0.72
+        rank_score = abs(question.difficulty - target_difficulty) * 0.55 + (1 - quality_score) * 0.45
+        return (rank_score, str(question.id))
 
     ranked = sorted(questions, key=score)
     selected: list[ExerciseQuestion] = []
@@ -296,7 +300,7 @@ def select_exercises_for_learner(
 async def select_unit_exercises_for_learner(
     db: AsyncSession,
     *,
-    learner_id: uuid.UUID,
+    learner_id: uuid.UUID | None,
     questions: list[ExerciseQuestion],
     limit: int,
 ) -> list[ExerciseQuestion]:
@@ -326,7 +330,7 @@ async def select_unit_exercises_for_learner(
 async def _review_candidates(
     *,
     executor: PromptExecutor,
-    learner_id: uuid.UUID,
+    learner_id: uuid.UUID | None,
     curriculum_node_id: uuid.UUID,
     unit_title: str,
     point_payloads: list[dict[str, Any]],
@@ -373,13 +377,21 @@ async def _review_candidates(
     accepted: list[dict[str, Any]] = []
     for index, candidate in enumerate(candidates):
         review = decisions[index]
-        if review.get("decision") == "accept":
+        scores = review.get("scores") if isinstance(review.get("scores"), dict) else {}
+        quality_score = _quality_score(scores)
+        hard_gate_passed = (
+            float(scores.get("knowledgeAlignment", 0)) >= 0.75
+            and float(scores.get("answerability", 0)) >= 0.75
+        )
+        if review.get("decision") == "accept" and hard_gate_passed:
             accepted.append(
                 {
                     **candidate,
                     "review": {
                         "decision": "accept",
                         "reasons": _string_list(review.get("reasons")),
+                        "scores": scores,
+                        "qualityScore": quality_score,
                     },
                 }
             )
@@ -426,6 +438,9 @@ def _candidate_to_question(
         "error_types": _string_list(candidate["errorTypes"]),
         "hint": str(candidate["hint"]).strip(),
     }
+    review = candidate.get("review") if isinstance(candidate.get("review"), dict) else {}
+    quality_score = float(review.get("qualityScore") or 0.0)
+    quality_dimensions = review.get("scores") if isinstance(review.get("scores"), dict) else {}
     return ExerciseQuestion(
         source_id=source_id,
         curriculum_node_id=curriculum_node_id,
@@ -436,11 +451,15 @@ def _candidate_to_question(
         answer=str(candidate["answer"]).strip(),
         explanation=str(candidate["explanation"]).strip(),
         difficulty=float(candidate["difficulty"]),
+        quality_score=quality_score,
+        quality_status="accepted",
+        generator_version=UNIT_GENERATOR_VERSION,
+        quality_dimensions=quality_dimensions,
         status="published",
         metadata_={
             "generator": UNIT_GENERATOR_VERSION,
             "generator_version": UNIT_GENERATOR_VERSION,
-            "quality_gate": {"status": "accepted", "review": candidate.get("review")},
+            "quality_gate": {"status": "accepted", "review": review},
             "cognitive_level": candidate["cognitiveLevel"],
             "interaction": {
                 "type": question_type,
@@ -499,6 +518,19 @@ def _knowledge_point_payload(point: KnowledgePoint) -> dict[str, Any]:
 
 def _normalise(value: str) -> str:
     return re.sub(r"[^a-z0-9\u4e00-\u9fff]+", " ", value.casefold()).strip()
+
+
+def _quality_score(scores: dict[str, Any]) -> float:
+    weights = {
+        "knowledgeAlignment": 0.30,
+        "answerability": 0.25,
+        "naturalness": 0.15,
+        "distractorQuality": 0.10,
+        "explanationQuality": 0.10,
+        "novelty": 0.10,
+    }
+    value = sum(float(scores.get(name, 0.0)) * weight for name, weight in weights.items())
+    return round(min(1.0, max(0.0, value)), 4)
 
 
 def _string_list(value: Any) -> list[str]:

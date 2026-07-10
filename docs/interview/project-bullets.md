@@ -5,6 +5,7 @@
 - 构建面向英语学习场景的个性化 Agent 系统，将 LangGraph Runtime、ExerciseAttempt、Mastery、Memory、Review 和 Recommendation 串成可追踪学习闭环。
 - 设计 Prompt Registry + PromptExecutor + Schema-first 机制，结构化 LLM 输出必须经过 schema validation / repair / fallback decision 后才能写入关键业务表。
 - 建立 Dev Console 与 Simulation/Evaluation 回归安全网，可查看 EpisodeTrace、ToolCall、PromptExecution、VerificationReport，并用 contract/integration/e2e mode 防止 Agent 行为退化。
+- 将同步练习生成重构为 PostgreSQL 持久化题池与独立 Worker，支持立即返回/202 轮询、任务租约与幂等去重，并用六维质量评分结合 mastery 约束选题。
 
 ## 标准版 5 条
 

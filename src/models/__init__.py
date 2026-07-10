@@ -11,6 +11,7 @@ from src.models.group_learning import (
 from src.models.knowledge import (
     CurriculumNode,
     ExerciseAttempt,
+    ExerciseGenerationRun,
     ExerciseQuestion,
     KnowledgeChunk,
     KnowledgeLearningEvent,
@@ -80,6 +81,7 @@ __all__ = [
     "LearningSession",
     "CurriculumNode",
     "ExerciseAttempt",
+    "ExerciseGenerationRun",
     "ExerciseQuestion",
     "KnowledgeChunk",
     "KnowledgeLearningEvent",

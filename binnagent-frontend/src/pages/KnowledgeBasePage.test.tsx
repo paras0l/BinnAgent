@@ -17,4 +17,11 @@ describe('KnowledgeBasePage daily learning layout', () => {
     expect(source).not.toContain('Headphones')
     expect(source).not.toContain('onStartPronunciation')
   })
+
+  it('accepts async exercise generation and polls the persistent pool', () => {
+    expect(source).toContain("response.status === 202")
+    expect(source).toContain('/exercise-pool')
+    expect(source).toContain('retry_after_seconds')
+    expect(source).toContain('题目已进入后台生成队列')
+  })
 })

@@ -15,7 +15,6 @@ from src.knowledge.unit_exercise_generation import (
     select_exercises_for_learner,
     select_generation_points,
 )
-from src.knowledge.exercises import ensure_unit_exercises
 from src.models.knowledge import ExerciseQuestion, KnowledgePoint
 from src.providers.base import ChatResponse
 
@@ -94,10 +93,20 @@ def _candidates(point: KnowledgePoint) -> list[dict]:
     return items
 
 
-def _many(values: list):
-    result = MagicMock()
-    result.scalars.return_value.all.return_value = values
-    return result
+def _review(index: int, *, decision: str = "accept", reasons: list[str] | None = None) -> dict:
+    return {
+        "index": index,
+        "decision": decision,
+        "reasons": reasons or [],
+        "scores": {
+            "knowledgeAlignment": 0.95 if decision == "accept" else 0.5,
+            "answerability": 0.95 if decision == "accept" else 0.4,
+            "naturalness": 0.9,
+            "distractorQuality": 0.85,
+            "explanationQuality": 0.9,
+            "novelty": 0.8,
+        },
+    }
 
 
 def test_coverage_plan_limits_recall_and_prioritises_active_use() -> None:
@@ -155,10 +164,7 @@ def test_candidate_set_requires_cognitive_and_interaction_diversity() -> None:
 async def test_generation_publishes_only_schema_valid_reviewed_candidates() -> None:
     point = _point("Good morning!")
     candidates = _candidates(point)
-    reviews = [
-        {"index": index, "decision": "accept", "reasons": []}
-        for index in range(len(candidates))
-    ]
+    reviews = [_review(index) for index in range(len(candidates))]
     model_router = AsyncMock()
     model_router.chat.side_effect = [
         ChatResponse(provider="test", model="test", content=json.dumps({"items": candidates})),
@@ -196,11 +202,11 @@ async def test_generation_does_not_publish_semantically_rejected_candidates() ->
     candidates = _candidates(point)
     candidates[0]["stem"] = "A: Hello! I am Jack. B: ______"
     reviews = [
-        {
-            "index": index,
-            "decision": "reject" if index == 0 else "accept",
-            "reasons": ["答案没有自然回应自我介绍"] if index == 0 else [],
-        }
+        _review(
+            index,
+            decision="reject" if index == 0 else "accept",
+            reasons=["答案没有自然回应自我介绍"] if index == 0 else [],
+        )
         for index in range(len(candidates))
     ]
     model_router = AsyncMock()
@@ -224,55 +230,6 @@ async def test_generation_does_not_publish_semantically_rejected_candidates() ->
             existing_stems=[],
             candidate_count=8,
         )
-
-
-@pytest.mark.asyncio
-async def test_unit_pool_retries_once_and_archives_legacy_template_questions() -> None:
-    point = _point("Good morning!")
-    legacy = ExerciseQuestion(
-        source_id=point.source_id,
-        curriculum_node_id=point.curriculum_node_id,
-        knowledge_point_id=point.id,
-        question_type="fill_blank",
-        stem="A: Hello! I am Jack. B: ______ 目标：使用相关表达。",
-        options=[],
-        answer="Good morning!",
-        explanation="旧模板题",
-        difficulty=0.2,
-        status="published",
-        metadata_={"source_type": "generated", "generator_version": "legacy-template-generator"},
-    )
-    legacy.id = uuid.uuid4()
-    candidates = _candidates(point)
-    reviews = [
-        {"index": index, "decision": "accept", "reasons": []}
-        for index in range(len(candidates))
-    ]
-    model_router = AsyncMock()
-    model_router.chat.side_effect = [
-        ChatResponse(provider="test", model="test", content='{"items":[]}'),
-        ChatResponse(provider="test", model="test", content=json.dumps({"items": candidates})),
-        ChatResponse(provider="test", model="test", content=json.dumps({"reviews": reviews})),
-    ]
-    db = AsyncMock()
-    db.execute = AsyncMock(side_effect=[_many([legacy]), _many([point])])
-    added: list[object] = []
-    db.add = MagicMock(side_effect=added.append)
-    db.flush = AsyncMock()
-
-    questions = await ensure_unit_exercises(
-        db,
-        source_id=point.source_id,
-        curriculum_node_id=point.curriculum_node_id,
-        learner_id=uuid.uuid4(),
-        unit_title="Starter Unit 1",
-        model_router=model_router,
-    )
-
-    assert len(questions) == 8
-    assert legacy.status == "archived"
-    assert model_router.chat.await_count == 3
-    assert sum(isinstance(item, ExerciseQuestion) for item in added) == 8
 
 
 def test_selector_raises_target_difficulty_for_high_mastery() -> None:

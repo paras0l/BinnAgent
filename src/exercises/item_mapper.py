@@ -21,6 +21,9 @@ def exercise_question_to_item(
             else None,
             "source_id": str(question.source_id),
             "question_type": question.question_type,
+            "quality_score": question.quality_score,
+            "quality_status": question.quality_status,
+            "generator_version": question.generator_version,
         }
     )
 

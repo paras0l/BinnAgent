@@ -26,6 +26,7 @@
 | [11-vocabulary-learning.md](./11-vocabulary-learning.md) | 教材单元词表解析、单元注入、来源标签、沉浸式背词、发音与拼写预留 |
 | [12-rag-observability-exercises.md](./12-rag-observability-exercises.md) | 教材 RAG、Langfuse 观测和练习题闭环 |
 | [13-current-scope-and-status.md](./13-current-scope-and-status.md) | 当前实现状态、产品线边界和 issue 落地表 |
+| [exercise-generation-pool.md](./exercise-generation-pool.md) | 持久化练习题池、异步 Worker、质量评分、降级与恢复策略 |
 | [document-parsing-pipeline.md](./document-parsing-pipeline.md) | MarkItDown baseline、pypdf fallback、DocumentParseArtifact、质量评估和异步 ingest 状态机 |
 | [textbook-parsing-audit.md](./textbook-parsing-audit.md) | 教材解析链路审计、风险和治理改造结论 |
 | [textbook-parsing-quality.md](./textbook-parsing-quality.md) | ParserRun、ParserQualityReport、TextbookQualityScore 和发布门禁契约 |

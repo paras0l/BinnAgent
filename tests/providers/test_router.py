@@ -42,6 +42,7 @@ async def test_close_closes_registered_clients() -> None:
 @pytest.mark.asyncio
 async def test_chat_repairs_invalid_structured_json() -> None:
     router = ModelRouter()
+    router.set_default_provider("ollama")
     mock_client = AsyncMock()
     mock_client.chat = AsyncMock(
         side_effect=[

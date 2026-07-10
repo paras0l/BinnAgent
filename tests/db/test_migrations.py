@@ -31,7 +31,19 @@ def test_alembic_migrations_have_single_head_revision() -> None:
             parents.update(item for item in down_revision if isinstance(item, str))
 
     heads = revisions - parents
-    assert heads == {"o5p6q7r8s9t0"}
+    assert heads == {"p6q7r8s9t0u1"}
+
+
+def test_exercise_pool_migration_adds_durable_jobs_and_quality_fields() -> None:
+    migration = Path(
+        "alembic/versions/p6q7r8s9t0u1_add_exercise_generation_pool.py"
+    ).read_text()
+
+    assert "exercise_generation_runs" in migration
+    assert "uq_exercise_generation_runs_active_dedupe" in migration
+    assert "quality_score" in migration
+    assert "quality_status" in migration
+    assert "generator_version" in migration
 
 
 def test_initial_migration_enables_pgcrypto_for_gen_random_uuid() -> None:

@@ -34,6 +34,7 @@ services:
       - "8000:8000"
     environment:
       BINN_DATABASE_URL: postgresql+asyncpg://binn:binn@db:5432/binn_agent
+      BINN_REDIS_URL: redis://redis:6379/0
       BINN_OLLAMA_BASE_URL: http://host.docker.internal:11434
       BINN_OLLAMA_CHAT_MODEL: ${BINN_OLLAMA_CHAT_MODEL:-gemma4:e2b}
       BINN_OLLAMA_UTILITY_MODEL: ${BINN_OLLAMA_UTILITY_MODEL:-gemma4:e2b}
@@ -47,7 +48,6 @@ services:
       BINN_LONGCAT_API_KEY: ${BINN_LONGCAT_API_KEY:-}
       BINN_LONGCAT_CHAT_MODEL: ${BINN_LONGCAT_CHAT_MODEL:-LongCat-2.0}
       BINN_LONGCAT_UTILITY_MODEL: ${BINN_LONGCAT_UTILITY_MODEL:-LongCat-2.0}
-      BINN_REDIS_URL: redis://redis:6379/0
       BINN_KNOWLEDGE_UPLOAD_DIR: /app/var/knowledge/uploads
       BINN_LANGFUSE_ENABLED: ${BINN_LANGFUSE_ENABLED:-false}
       BINN_LANGFUSE_PUBLIC_KEY: ${BINN_LANGFUSE_PUBLIC_KEY:-}
@@ -69,6 +69,33 @@ services:
       db:
         condition: service_healthy
       redis:
+        condition: service_healthy
+
+  exercise-worker:
+    build: .
+    restart: unless-stopped
+    command: python scripts/run_exercise_worker.py
+    environment:
+      BINN_DATABASE_URL: postgresql+asyncpg://binn:binn@db:5432/binn_agent
+      BINN_MODEL_PROVIDER: ${BINN_MODEL_PROVIDER:-ollama}
+      BINN_OLLAMA_BASE_URL: http://host.docker.internal:11434
+      BINN_OLLAMA_CHAT_MODEL: ${BINN_OLLAMA_CHAT_MODEL:-gemma4:e2b}
+      BINN_OLLAMA_UTILITY_MODEL: ${BINN_OLLAMA_UTILITY_MODEL:-gemma4:e2b}
+      BINN_DEEPSEEK_BASE_URL: ${BINN_DEEPSEEK_BASE_URL:-https://api.deepseek.com}
+      BINN_DEEPSEEK_API_KEY: ${BINN_DEEPSEEK_API_KEY:-}
+      BINN_DEEPSEEK_CHAT_MODEL: ${BINN_DEEPSEEK_CHAT_MODEL:-deepseek-v4-flash}
+      BINN_DEEPSEEK_UTILITY_MODEL: ${BINN_DEEPSEEK_UTILITY_MODEL:-deepseek-v4-flash}
+      BINN_LONGCAT_BASE_URL: ${BINN_LONGCAT_BASE_URL:-https://api.longcat.chat/openai}
+      BINN_LONGCAT_API_KEY: ${BINN_LONGCAT_API_KEY:-}
+      BINN_LONGCAT_CHAT_MODEL: ${BINN_LONGCAT_CHAT_MODEL:-LongCat-2.0}
+      BINN_LONGCAT_UTILITY_MODEL: ${BINN_LONGCAT_UTILITY_MODEL:-LongCat-2.0}
+      BINN_LANGFUSE_ENABLED: ${BINN_LANGFUSE_ENABLED:-false}
+      BINN_LANGFUSE_PUBLIC_KEY: ${BINN_LANGFUSE_PUBLIC_KEY:-}
+      BINN_LANGFUSE_SECRET_KEY: ${BINN_LANGFUSE_SECRET_KEY:-}
+      BINN_LANGFUSE_BASE_URL: ${BINN_LANGFUSE_DOCKER_BASE_URL:-http://host.docker.internal:3100}
+      BINN_LANGFUSE_ENVIRONMENT: ${BINN_LANGFUSE_ENVIRONMENT:-development}
+    depends_on:
+      db:
         condition: service_healthy
 
 volumes:

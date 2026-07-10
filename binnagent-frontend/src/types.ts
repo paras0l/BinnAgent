@@ -390,6 +390,14 @@ export interface KnowledgeLessonCompleteResult {
 export interface ExerciseSession {
   curriculum_node_id: string
   title: string
+  pool?: {
+    status: 'ready' | 'refreshing' | 'degraded' | 'generating'
+    available_count: number
+    target_count: number
+    generation_run_id?: string | null
+    generation_status?: 'queued' | 'running' | 'completed' | 'failed' | null
+    retry_after_seconds?: number | null
+  }
   questions: Array<ExerciseItem & {
     question_type: 'choice_context' | 'fill_blank' | 'dialogue_complete' | 'error_fix' | 'multiple_choice'
     stem: string

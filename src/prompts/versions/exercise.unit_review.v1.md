@@ -9,7 +9,9 @@
 候选题（index 从 0 开始）：
 {{ candidates }}
 
-逐题审查并输出与候选题一一对应的 reviews。满足以下所有条件才 accept：
+逐题审查并输出与候选题一一对应的 reviews。每题必须给出 0-1 的 scores：
+knowledgeAlignment、answerability、naturalness、distractorQuality、explanationQuality、novelty。
+选择题以外的 distractorQuality 评价题目错误设计或备选答案边界。满足以下所有条件才 accept：
 1. 题目确实考查绑定的知识点，而不是只在文字中提到它。
 2. 场景和对话自然连贯；答案能直接回应上文。
 3. 题目信息充分，存在明确答案；可接受答案没有漏掉明显等价形式。
@@ -19,3 +21,4 @@
 7. 题干没有泄露答案，也没有“目标：使用……”这类命题提示。
 
 必须拒绝语境错配，例如：A 自我介绍后，B 无缘无故回答 I'm fine, thanks.
+knowledgeAlignment 或 answerability 低于 0.75 时必须 reject。

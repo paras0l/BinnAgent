@@ -33,6 +33,13 @@ class Settings(BaseSettings):
     knowledge_chunk_size: int = 900
     knowledge_chunk_overlap: int = 150
     knowledge_embedding_dimensions: int = 768
+    exercise_pool_ready_size: int = 8
+    exercise_pool_refill_threshold: int = 16
+    exercise_pool_target_size: int = 24
+    exercise_pool_min_generated: int = 8
+    exercise_worker_poll_seconds: float = 2.0
+    exercise_worker_lease_seconds: int = 900
+    exercise_worker_max_attempts: int = 2
     langfuse_enabled: bool = False
     langfuse_public_key: str | None = None
     langfuse_secret_key: str | None = None

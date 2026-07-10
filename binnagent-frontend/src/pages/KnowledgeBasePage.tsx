@@ -172,6 +172,7 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice, 
   const [grammarTopic, setGrammarTopic] = useState<string | null>(null)
   const [exerciseSession, setExerciseSession] = useState<ExerciseSession | null>(null)
   const [isStartingExercise, setIsStartingExercise] = useState(false)
+  const [exercisePoolNodeId, setExercisePoolNodeId] = useState<string | null>(null)
   const [dailyLesson, setDailyLesson] = useState<DailyLessonRuntime | null>(null)
   const [dailyAnswer, setDailyAnswer] = useState('')
   const [isStartingDailyLesson, setIsStartingDailyLesson] = useState(false)
@@ -223,6 +224,7 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice, 
       }
       const data = await response.json() as KnowledgeBaseOverview
       setOverview(data)
+      setExercisePoolNodeId(null)
       setFailedSource(null)
       setSelectedNodeId(data.current_node_id)
       setSelectedSourceId(data.source.id)
@@ -250,6 +252,49 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice, 
       })
     return () => controller.abort()
   }, [learner.id, overview?.current_unit.id])
+
+  useEffect(() => {
+    if (!exercisePoolNodeId) return
+    if (exercisePoolNodeId !== overview?.current_unit.id) return
+    const controller = new AbortController()
+    let timer: number | null = null
+    let attempts = 0
+
+    const pollExercisePool = async () => {
+      attempts += 1
+      try {
+        const response = await fetch(
+          `/api/learners/${learner.id}/knowledge-base/units/${exercisePoolNodeId}/exercise-pool`,
+          { signal: controller.signal },
+        )
+        if (!response.ok && response.status !== 202) throw new Error('练习题池状态查询失败。')
+        const session = await response.json() as ExerciseSession
+        if (session.questions.length) {
+          setExerciseSession(session)
+          setExercisePoolNodeId(null)
+          showToast('高质量练习题已准备好。', { variant: 'success' })
+          return
+        }
+        if (attempts >= 30 || session.pool?.generation_status === 'failed') {
+          setExercisePoolNodeId(null)
+          showToast('题目仍在后台生成，稍后再次点击即可直接获取。', { variant: 'info' })
+          return
+        }
+        const retrySeconds = session.pool?.retry_after_seconds ?? 2
+        timer = window.setTimeout(() => void pollExercisePool(), retrySeconds * 1000)
+      } catch (pollError) {
+        if (pollError instanceof DOMException && pollError.name === 'AbortError') return
+        setExercisePoolNodeId(null)
+        showToast(pollError instanceof Error ? pollError.message : '练习题池状态查询失败。', { variant: 'error' })
+      }
+    }
+
+    timer = window.setTimeout(() => void pollExercisePool(), 2000)
+    return () => {
+      controller.abort()
+      if (timer !== null) window.clearTimeout(timer)
+    }
+  }, [exercisePoolNodeId, learner.id, overview?.current_unit.id, showToast])
 
   useEffect(() => {
     const nodeId = overview?.current_unit.id
@@ -660,16 +705,27 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice, 
   }
 
   const handleStartExercise = async () => {
+    const nodeId = overview?.current_unit.id
+    if (!nodeId) return
     setIsStartingExercise(true)
     try {
       const response = await fetch(
-        `/api/learners/${learner.id}/knowledge-base/units/${overview?.current_unit.id}/exercises`,
+        `/api/learners/${learner.id}/knowledge-base/units/${nodeId}/exercises`,
         { method: 'POST' },
       )
       if (!response.ok) throw new Error('本单元练习暂时无法开始。')
       const session = await response.json() as ExerciseSession
-      if (!session.questions.length) throw new Error('本单元还没有可用练习题。')
-      setExerciseSession(session)
+      if (session.questions.length) {
+        setExerciseSession(session)
+        if (session.pool?.status === 'refreshing') {
+          showToast('已先返回当前最佳题目，题池正在后台补充。', { variant: 'info' })
+        }
+      } else if (response.status === 202) {
+        setExercisePoolNodeId(nodeId)
+        showToast('题目已进入后台生成队列，你可以先做别的操作。', { variant: 'info' })
+      } else {
+        throw new Error('本单元还没有可用练习题。')
+      }
     } catch (exerciseError) {
       showToast(exerciseError instanceof Error ? exerciseError.message : '本单元练习暂时无法开始。', { variant: 'error' })
     } finally {
@@ -883,7 +939,7 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice, 
             overview={overview}
             vocabulary={activeUnitVocabulary}
             isStartingLesson={isStartingLesson}
-            isStartingExercise={isStartingExercise}
+            isStartingExercise={isStartingExercise || exercisePoolNodeId !== null}
             isStartingDailyLesson={isStartingDailyLesson}
             isGeneratingReadingMaterial={isGeneratingReadingMaterial}
             isLoadingReadingMaterials={isLoadingUnitReadingMaterials}

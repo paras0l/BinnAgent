@@ -225,6 +225,14 @@
 - 生成题的 provenance 应该记录哪些字段？
 - 如果用户编辑了 AI 生成题，后续追责和质量评估怎么算？
 
+### 30A. 为什么把单元练习生成改成持久化题池和独立 Worker？
+
+- 为什么不继续同步等待，或只用 FastAPI BackgroundTasks？
+- PostgreSQL `SKIP LOCKED`、租约和 active dedupe index 分别解决什么问题？
+- 有少量旧题时为什么返回 `200 refreshing`，完全无题时为什么返回 `202`？
+- 为什么没有一开始就引入 Celery/Redis，未来什么信号会触发迁移？
+- 六维 LLM 评分、确定性门禁和真实作答指标各自承担什么角色？
+
 ### 31. 你如何评价当前 RAG 的技术选型？
 
 - pgvector + HNSW cosine 的优点和限制是什么？

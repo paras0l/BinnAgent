@@ -85,7 +85,8 @@ traces 并关闭 tracing。查看本地管理员账号：
 `metadata` 保存 interaction、scenario、rubric、source evidence 和 estimated seconds。
 `exercise_attempts` 保存学习者答案、正确性、耗时和课程 session。
 
-首次请求某单元练习时，根据该单元知识点生成并持久化经过审核的候选题池，后续复用：
+单元练习使用 PostgreSQL 持久化题池和独立 `exercise-worker`。API 不同步等待 LLM；有题时立即返回当前最佳题并按需入队补池，完全无题时返回 `202 Accepted`，前端轮询题池状态。详细可靠性、容量和评分设计见
+[异步练习题池与质量排序](./exercise-generation-pool.md)。
 
 - `choice_context`：带语境的选择题。
 - `fill_blank`：填空题。
@@ -100,6 +101,7 @@ knowledge points
   -> exercise.unit_candidates (LLM)
   -> schema + deterministic quality gate
   -> exercise.unit_review (independent LLM review)
+  -> six-dimension score + hard thresholds
   -> published unit pool
   -> mastery-aware selection
 ```
@@ -117,17 +119,18 @@ knowledge points
 - 整套题不能重复，认知层级和题型比例必须达标；
 - 独立 reviewer 再检查语境连贯、答案唯一、干扰项质量、知识点对齐和难度合理性。
 
-候选生成或审题失败会重试一次。仍失败时只回退到已存在的教材原题或人工题（题量可少于默认值），旧的
+候选生成或审题失败由持久化任务有限重试。仍失败时只回退到已存在的教材原题或人工题（题量可少于默认值），旧的
 固定模板不会再作为 learner-facing fallback。旧模板生成题只有在
 新题池成功通过门禁后才会归档，避免失败时破坏已有可用数据。
 
-题库按单元缓存，页面打开不会重复调用模型。返回给学习者的题目由
-`LearnerKnowledgeState.mastery_score` 决定目标难度，同时优先保证题型和知识点多样性。
+题池默认低于 16 题触发补充，目标容量为 24，一次返回最多 8 题。Reviewer 对知识对齐、可作答性、自然度、干扰项、解析和创新度评分，前两项低于 0.75 直接拒绝。返回给学习者的题目由
+质量分和 `LearnerKnowledgeState.mastery_score` 共同决定，同时优先保证题型和知识点多样性。
 生成和审题都通过 `PromptExecutor`，使用独立 schema、版本化模板、PromptExecutionRecord
 和离线 eval set。
 
 ```text
 POST /api/learners/{learner_id}/knowledge-base/units/{node_id}/exercises
+GET  /api/learners/{learner_id}/knowledge-base/units/{node_id}/exercise-pool
 POST /api/learners/{learner_id}/knowledge-base/exercises/{question_id}/attempts
 ```
 

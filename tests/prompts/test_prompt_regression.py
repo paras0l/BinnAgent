@@ -53,7 +53,11 @@ from src.prompts import PromptExecutionContext, PromptExecutor
                 "knowledge_points": [{"id": "kp-1", "title": "Good morning!"}],
                 "candidates": [{"knowledgePointId": "kp-1", "stem": "A: Hi. B: ___"}],
             },
-            '{"reviews":[{"index":0,"decision":"accept","reasons":[]}]}',
+            (
+                '{"reviews":[{"index":0,"decision":"accept","reasons":[],"scores":'
+                '{"knowledgeAlignment":0.95,"answerability":0.95,"naturalness":0.9,'
+                '"distractorQuality":0.85,"explanationQuality":0.9,"novelty":0.8}}]}'
+            ),
         ),
         (
             "grammar.micro_lesson.structured",

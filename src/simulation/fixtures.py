@@ -916,7 +916,7 @@ BUILTIN_SCENARIOS.update(
         module_tags=["exercise", "prompt_schema", "quality_gate"],
         entrypoints=[
             "src.knowledge.unit_exercise_generation.lint_candidate",
-            "src.knowledge.exercises.ensure_unit_exercises",
+            "src.knowledge.exercise_pool.process_exercise_generation_run",
         ],
         expected_events=[],
         expected_tool_calls=[],
@@ -925,7 +925,8 @@ BUILTIN_SCENARIOS.update(
         owner_module="exercises",
         change_triggers=[
             "src/knowledge/unit_exercise_generation.py",
-            "src/knowledge/exercises.py",
+            "src/knowledge/exercise_pool.py",
+            "src/knowledge/exercise_worker.py",
             "src/prompts/versions/exercise.unit_*.md",
             "src/simulation/**",
         ],

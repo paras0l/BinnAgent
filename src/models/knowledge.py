@@ -7,11 +7,13 @@ from sqlalchemy import (
     DateTime,
     Float,
     ForeignKey,
+    Index,
     Integer,
     SmallInteger,
     String,
     Text,
     UniqueConstraint,
+    text,
 )
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
@@ -221,10 +223,70 @@ class ExerciseQuestion(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     answer: Mapped[str] = mapped_column(Text, nullable=False)
     explanation: Mapped[str] = mapped_column(Text, nullable=False)
     difficulty: Mapped[float] = mapped_column(Float, nullable=False, default=0.3)
+    quality_score: Mapped[float] = mapped_column(Float, nullable=False, default=0.72, index=True)
+    quality_status: Mapped[str] = mapped_column(
+        String(20), nullable=False, default="accepted", index=True
+    )
+    generator_version: Mapped[str] = mapped_column(
+        String(80), nullable=False, default="curated-v1", index=True
+    )
+    quality_dimensions: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="published")
     metadata_: Mapped[Optional[dict]] = mapped_column(
         "metadata", JSONB, nullable=True, default=dict
     )
+
+
+class ExerciseGenerationRun(UUIDPrimaryKeyMixin, TimestampMixin, Base):
+    __tablename__ = "exercise_generation_runs"
+    __table_args__ = (
+        Index(
+            "uq_exercise_generation_runs_active_dedupe",
+            "dedupe_key",
+            unique=True,
+            postgresql_where=text("status IN ('queued', 'running')"),
+        ),
+        Index(
+            "ix_exercise_generation_runs_claim",
+            "status",
+            "priority",
+            "created_at",
+        ),
+    )
+
+    source_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("knowledge_sources.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    curriculum_node_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("curriculum_nodes.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    requested_by_learner_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("learners.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    dedupe_key: Mapped[str] = mapped_column(String(160), nullable=False)
+    input_hash: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    generator_version: Mapped[str] = mapped_column(String(80), nullable=False, index=True)
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default="queued", index=True)
+    priority: Mapped[int] = mapped_column(Integer, nullable=False, default=100)
+    requested_count: Mapped[int] = mapped_column(Integer, nullable=False, default=16)
+    generated_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    accepted_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    rejected_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    attempt_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    started_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    completed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    lease_expires_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    error_message: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    metrics: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True, default=dict)
 
 
 class ExerciseAttempt(UUIDPrimaryKeyMixin, TimestampMixin, Base):

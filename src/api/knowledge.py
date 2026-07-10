@@ -5,12 +5,12 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Literal
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request, Response, status
 from pydantic import BaseModel, Field
 from sqlalchemy import and_, case, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.api.deps import get_db_session, get_model_router
+from src.api.deps import get_db_session
 from src.knowledge.exercise_grader import answer_to_text, grade_exercise_answer
 from src.config import settings
 from src.db import async_session_factory
@@ -18,11 +18,8 @@ from src.evidence.resolver import evidence_from_attempt, evidence_from_memory_ev
 from src.evidence.types import EvidenceRef
 from src.exercises import ExerciseAttemptService
 from src.exercises.item_mapper import exercise_question_to_item
-from src.knowledge.exercises import ensure_unit_exercises
-from src.knowledge.unit_exercise_generation import (
-    UnitExerciseGenerationUnavailableError,
-    select_unit_exercises_for_learner,
-)
+from src.knowledge.exercise_pool import ExercisePoolSnapshot, get_exercise_pool
+from src.knowledge.unit_exercise_generation import select_unit_exercises_for_learner
 from src.knowledge.processor import process_uploaded_textbook
 from src.knowledge.quality import availability_status_for_quality, quality_summary, score_textbook_quality
 from src.knowledge.rag import retrieve_chunks
@@ -52,7 +49,7 @@ from src.models.knowledge import (
 from src.models.learner import Learner
 from src.models.session import LearningSession, LearningTask
 from src.models.vocabulary import ReviewSchedule, VocabularyItem, VocabularyItemSource
-from src.providers.router import ModelRouter, router as model_router
+from src.providers.router import router as model_router
 from src.runtime.episode import EpisodeRuntime
 from src.runtime.hashing import stable_json_hash
 from src.runtime.schemas import EpisodeTraceView, episode_to_view, event_to_view, tool_call_to_view
@@ -2182,9 +2179,9 @@ async def search_knowledge_chunks(
 async def start_unit_exercises(
     learner_id: uuid.UUID,
     curriculum_node_id: uuid.UUID,
+    response: Response,
     limit: int = Query(default=8, ge=1, le=12),
     db: AsyncSession = Depends(get_db_session),
-    unit_model_router: ModelRouter = Depends(get_model_router),
 ) -> dict[str, Any]:
     await _ensure_learner(db, learner_id)
     node_result = await db.execute(
@@ -2193,31 +2190,93 @@ async def start_unit_exercises(
     node = node_result.scalar_one_or_none()
     if node is None:
         raise HTTPException(status_code=404, detail="Curriculum node not found")
-    try:
-        questions = await ensure_unit_exercises(
-            db,
-            source_id=node.source_id,
-            curriculum_node_id=node.id,
-            learner_id=learner_id,
-            unit_title=node.title,
-            model_router=unit_model_router,
-        )
-    except UnitExerciseGenerationUnavailableError as exc:
-        raise HTTPException(status_code=503, detail="当前单元暂时没有通过质量审核的练习题") from exc
+    pool = await get_exercise_pool(
+        db,
+        source_id=node.source_id,
+        curriculum_node_id=node.id,
+        learner_id=learner_id,
+    )
     selected_questions = await select_unit_exercises_for_learner(
         db,
         learner_id=learner_id,
-        questions=questions,
+        questions=pool.questions,
         limit=limit,
     )
+    if not selected_questions:
+        _set_empty_pool_response_status(response, pool)
+    return _unit_exercise_pool_payload(node=node, pool=pool, questions=selected_questions)
+
+
+@router.get(
+    "/api/learners/{learner_id}/knowledge-base/units/{curriculum_node_id}/exercise-pool"
+)
+async def get_unit_exercise_pool(
+    learner_id: uuid.UUID,
+    curriculum_node_id: uuid.UUID,
+    response: Response,
+    limit: int = Query(default=8, ge=1, le=12),
+    db: AsyncSession = Depends(get_db_session),
+) -> dict[str, Any]:
+    await _ensure_learner(db, learner_id)
+    node_result = await db.execute(
+        select(CurriculumNode).where(CurriculumNode.id == curriculum_node_id)
+    )
+    node = node_result.scalar_one_or_none()
+    if node is None:
+        raise HTTPException(status_code=404, detail="Curriculum node not found")
+    pool = await get_exercise_pool(
+        db,
+        source_id=node.source_id,
+        curriculum_node_id=node.id,
+        learner_id=learner_id,
+    )
+    selected_questions = await select_unit_exercises_for_learner(
+        db,
+        learner_id=learner_id,
+        questions=pool.questions,
+        limit=limit,
+    )
+    if not selected_questions:
+        _set_empty_pool_response_status(response, pool)
+    return _unit_exercise_pool_payload(node=node, pool=pool, questions=selected_questions)
+
+
+def _unit_exercise_pool_payload(
+    *,
+    node: CurriculumNode,
+    pool: ExercisePoolSnapshot,
+    questions: list[ExerciseQuestion],
+) -> dict[str, Any]:
+    run = pool.generation_run
     return {
         "curriculum_node_id": str(node.id),
         "title": f"{node.title} 练习",
         "questions": [
             _exercise_question_payload(question, target_label=node.title)
-            for question in selected_questions
+            for question in questions
         ],
+        "pool": {
+            "status": pool.status,
+            "available_count": pool.available_count,
+            "target_count": pool.target_count,
+            "generation_run_id": str(run.id) if run is not None else None,
+            "generation_status": run.status if run is not None else None,
+            "retry_after_seconds": (
+                2 if run is not None and pool.status in {"generating", "refreshing"} else None
+            ),
+        },
     }
+
+
+def _set_empty_pool_response_status(
+    response: Response,
+    pool: ExercisePoolSnapshot,
+) -> None:
+    if pool.generation_run is None:
+        response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
+        return
+    response.status_code = status.HTTP_202_ACCEPTED
+    response.headers["Retry-After"] = "2"
 
 
 def _exercise_question_payload(question: ExerciseQuestion, *, target_label: str) -> dict[str, Any]:

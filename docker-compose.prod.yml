@@ -69,6 +69,35 @@ services:
       redis:
         condition: service_healthy
 
+  exercise-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    restart: unless-stopped
+    command: python scripts/run_exercise_worker.py
+    environment:
+      BINN_DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-binn}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-binn_agent}
+      BINN_MODEL_PROVIDER: ${BINN_MODEL_PROVIDER:-deepseek}
+      BINN_OLLAMA_BASE_URL: ${BINN_OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      BINN_OLLAMA_CHAT_MODEL: ${BINN_OLLAMA_CHAT_MODEL:-gemma4:e2b}
+      BINN_OLLAMA_UTILITY_MODEL: ${BINN_OLLAMA_UTILITY_MODEL:-gemma4:e2b}
+      BINN_DEEPSEEK_BASE_URL: ${BINN_DEEPSEEK_BASE_URL:-https://api.deepseek.com}
+      BINN_DEEPSEEK_API_KEY: ${BINN_DEEPSEEK_API_KEY:-}
+      BINN_DEEPSEEK_CHAT_MODEL: ${BINN_DEEPSEEK_CHAT_MODEL:-deepseek-v4-flash}
+      BINN_DEEPSEEK_UTILITY_MODEL: ${BINN_DEEPSEEK_UTILITY_MODEL:-deepseek-v4-flash}
+      BINN_LONGCAT_BASE_URL: ${BINN_LONGCAT_BASE_URL:-https://api.longcat.chat/openai}
+      BINN_LONGCAT_API_KEY: ${BINN_LONGCAT_API_KEY:-}
+      BINN_LONGCAT_CHAT_MODEL: ${BINN_LONGCAT_CHAT_MODEL:-LongCat-2.0}
+      BINN_LONGCAT_UTILITY_MODEL: ${BINN_LONGCAT_UTILITY_MODEL:-LongCat-2.0}
+      BINN_LANGFUSE_ENABLED: ${BINN_LANGFUSE_ENABLED:-false}
+      BINN_LANGFUSE_PUBLIC_KEY: ${BINN_LANGFUSE_PUBLIC_KEY:-}
+      BINN_LANGFUSE_SECRET_KEY: ${BINN_LANGFUSE_SECRET_KEY:-}
+      BINN_LANGFUSE_BASE_URL: ${BINN_LANGFUSE_BASE_URL:-http://localhost:3100}
+      BINN_LANGFUSE_ENVIRONMENT: ${BINN_LANGFUSE_ENVIRONMENT:-production}
+    depends_on:
+      app:
+        condition: service_started
+
   web:
     build:
       context: .

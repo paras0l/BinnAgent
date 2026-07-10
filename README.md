@@ -106,6 +106,7 @@ http://localhost:5176，可在 Learners / Recent Episodes 中直接选择 learne
 - [Verification Runtime Audit](docs/architecture/verification-runtime-audit.md)
 - [Prompt Execution Audit](docs/architecture/prompt-execution-audit.md)
 - [Prompt Execution Governance](docs/architecture/prompt-execution-governance.md)
+- [Async Exercise Pool & Worker](docs/architecture/exercise-generation-pool.md)
 - [Textbook Parsing Audit](docs/architecture/textbook-parsing-audit.md)
 - [Textbook Parsing Quality](docs/architecture/textbook-parsing-quality.md)
 - [Textbook Parser Evaluation Audit](docs/architecture/textbook-parser-evaluation-audit.md)
@@ -116,6 +117,7 @@ http://localhost:5176，可在 Learners / Recent Episodes 中直接选择 learne
 - [ExploreCapability Recommendation](docs/explore-capability-recommendation.md)
 - [Agent Runtime / Harness Interview Brief](docs/interview/agent-runtime-harness.md)
 - [Project Interview Bullets](docs/interview/project-bullets.md)
+- [Async Exercise Pool Interview Brief](docs/interview/异步练习题池设计.md)
 - [Issue Roadmap Status](docs/project/issue-roadmap-status.md)
 - [Demo Script](docs/demo/demo-script.md)
 - [Cloud Deployment](docs/deployment-cloud.md)
@@ -127,7 +129,7 @@ http://localhost:5176，可在 Learners / Recent Episodes 中直接选择 learne
 | 能力 | 状态 |
 |------|------|
 | Chat / Memory / Dashboard | 部分实现，Memory v2 已落地 Retain / Recall / Reflect、LearningEpisode、LearnerModelMemory、TeachingStrategyMemory；普通学习端只展示学习状态摘要，Memory Center 已移入 Dev Console |
-| 教材 Knowledge Base / RAG / Exercises | 部分实现，作为冷启动知识来源；已支持 split public textbook pack v2、UnitLearningWorkspace、多教材切换、文档解析/校对、统一 ExerciseItem / ExerciseAttempt、单元阅读语感材料；单元题库已升级为知识点覆盖规划、LLM 批量命题、确定性门禁、独立 LLM 审题、旧模板题自动归档和 mastery-aware 选题 |
+| 教材 Knowledge Base / RAG / Exercises | 部分实现，作为冷启动知识来源；已支持 split public textbook pack v2、UnitLearningWorkspace、多教材切换、文档解析/校对、统一 ExerciseItem / ExerciseAttempt、单元阅读语感材料；单元题库采用 PostgreSQL 持久化任务与独立 Worker 异步补池，支持立即返回/202 轮询、六维质量评分、双重门禁、旧模板题归档和 mastery-aware 选题 |
 | Vocabulary Personal Cards / Practice / Spelling / Word Parts | 部分实现，已新增“词根与词缀”探索入口、四工作区学习页、内置词根词缀库、拆词练习、morphology 前端展示/降级和知识点配套练习验收 |
 | Writing Phrasebook | 基础版已实现 |
 | 群聊学习线索 | 第一版已实现并切到飞书 MCP 兼容方案，支持飞书群来源配置、MCP/OpenAPI 同步、群成员拉取与当前 learner 绑定、原始消息保留/清理、中性 JSON 导入、显式标签即时规则抽取、`@机器人 --help` 群内操作指南回复与去重、无标签消息 pending 队列、低频 LLM 小批量线索提取、收件箱分页接受/忽略/删除，以及接受后写入词汇候选、好句候选或语法学习进度 |
@@ -180,6 +182,7 @@ http://localhost:5176，可在 Learners / Recent Episodes 中直接选择 learne
 | 服务 | 端口 | 说明 |
 |------|------|------|
 | `app` | 8000 | FastAPI 应用 |
+| `exercise-worker` | - | 持久化单元题池生成与审题 Worker |
 | `db` | 5432 | PostgreSQL |
 | `redis` | 6379 | Redis 缓存 |
 | `frontend` | 5175 | Learner App React 开发服务器 |

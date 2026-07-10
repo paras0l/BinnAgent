@@ -10,6 +10,7 @@ from src.api import knowledge as knowledge_api
 from src.api import exercises as exercises_api
 from src.api import deps
 from src.config import settings
+from src.knowledge.exercise_pool import ExercisePoolSnapshot
 from src.main import app
 from src.models.knowledge import (
     CurriculumNode,
@@ -903,8 +904,16 @@ async def test_start_unit_exercises_returns_reviewed_questions(
         )
         question.id = uuid.uuid4()
         questions.append(question)
-    ensure = AsyncMock(return_value=questions)
-    monkeypatch.setattr(knowledge_api, "ensure_unit_exercises", ensure)
+    get_pool = AsyncMock(
+        return_value=ExercisePoolSnapshot(
+            questions=questions,
+            status="ready",
+            available_count=len(questions),
+            target_count=24,
+            generation_run=None,
+        )
+    )
+    monkeypatch.setattr(knowledge_api, "get_exercise_pool", get_pool)
     knowledge_session.execute = AsyncMock(
         side_effect=[_one(learner_id), _one(node), _many([])]
     )
@@ -937,8 +946,16 @@ async def test_start_unit_exercises_returns_reviewed_questions(
     assert first_question["correctAnswer"]
     assert point.title in first_question["options"]
     assert first_question["metadata"]["scenario"]
-    ensure.assert_awaited_once()
-    assert ensure.await_args.kwargs["learner_id"] == learner_id
+    assert payload["pool"] == {
+        "status": "ready",
+        "available_count": 8,
+        "target_count": 24,
+        "generation_run_id": None,
+        "generation_status": None,
+        "retry_after_seconds": None,
+    }
+    get_pool.assert_awaited_once()
+    assert get_pool.await_args.kwargs["learner_id"] == learner_id
 
 
 @pytest.mark.asyncio
@@ -961,13 +978,24 @@ async def test_list_exercises_for_curriculum_target_returns_unified_items(
         answer=point.title,
         explanation=point.summary,
         difficulty=0.3,
+        quality_score=0.88,
+        quality_status="accepted",
+        generator_version="unit-exercise-llm-v1",
         metadata_={"scenario": {"name": "Classroom"}},
     )
     question.id = uuid.uuid4()
     monkeypatch.setattr(
         exercises_api,
-        "ensure_unit_exercises",
-        AsyncMock(return_value=[question]),
+        "get_exercise_pool",
+        AsyncMock(
+            return_value=ExercisePoolSnapshot(
+                questions=[question],
+                status="refreshing",
+                available_count=1,
+                target_count=24,
+                generation_run=None,
+            )
+        ),
     )
     knowledge_session.execute = AsyncMock(
         side_effect=[_one(learner_id), _one(node), _many([])]
@@ -1005,9 +1033,87 @@ async def test_list_exercises_for_curriculum_target_returns_unified_items(
                 "knowledge_point_id": str(point.id),
                 "source_id": str(source.id),
                 "question_type": "choice_context",
+                "quality_score": 0.88,
+                "quality_status": "accepted",
+                "generator_version": "unit-exercise-llm-v1",
             },
         }
     ]
+
+
+@pytest.mark.asyncio
+async def test_start_unit_exercises_returns_202_while_empty_pool_is_generating(
+    client,
+    knowledge_session,
+    monkeypatch,
+):
+    learner_id = uuid.uuid4()
+    source = _source()
+    node = _node(source.id)
+    run = SimpleNamespace(id=uuid.uuid4(), status="queued")
+    monkeypatch.setattr(
+        knowledge_api,
+        "get_exercise_pool",
+        AsyncMock(
+            return_value=ExercisePoolSnapshot(
+                questions=[],
+                status="generating",
+                available_count=0,
+                target_count=24,
+                generation_run=run,
+            )
+        ),
+    )
+    knowledge_session.execute = AsyncMock(side_effect=[_one(learner_id), _one(node)])
+
+    response = await client.post(
+        f"/api/learners/{learner_id}/knowledge-base/units/{node.id}/exercises"
+    )
+
+    assert response.status_code == 202
+    assert response.headers["retry-after"] == "2"
+    assert response.json()["questions"] == []
+    assert response.json()["pool"] == {
+        "status": "generating",
+        "available_count": 0,
+        "target_count": 24,
+        "generation_run_id": str(run.id),
+        "generation_status": "queued",
+        "retry_after_seconds": 2,
+    }
+
+
+@pytest.mark.asyncio
+async def test_start_unit_exercises_returns_503_when_pool_cannot_be_generated(
+    client,
+    knowledge_session,
+    monkeypatch,
+):
+    learner_id = uuid.uuid4()
+    source = _source()
+    node = _node(source.id)
+    monkeypatch.setattr(
+        knowledge_api,
+        "get_exercise_pool",
+        AsyncMock(
+            return_value=ExercisePoolSnapshot(
+                questions=[],
+                status="degraded",
+                available_count=0,
+                target_count=24,
+                generation_run=None,
+            )
+        ),
+    )
+    knowledge_session.execute = AsyncMock(side_effect=[_one(learner_id), _one(node)])
+
+    response = await client.post(
+        f"/api/learners/{learner_id}/knowledge-base/units/{node.id}/exercises"
+    )
+
+    assert response.status_code == 503
+    assert response.json()["pool"]["status"] == "degraded"
+    assert response.json()["pool"]["retry_after_seconds"] is None
 
 
 @pytest.mark.asyncio
