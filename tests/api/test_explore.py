@@ -151,9 +151,12 @@ class TestExploreCapabilities:
         assert response.status_code == 200
         capabilities = response.json()
         capability_ids = {item["capability_id"] for item in capabilities}
-        assert {"grammar-explain", "writing-phrasebook", "vocab-review"}.issubset(
-            capability_ids
-        )
+        assert {
+            "grammar-explain",
+            "writing-phrasebook",
+            "vocab-review",
+            "expression_lab",
+        }.issubset(capability_ids)
         assert all(item["feature_id"] for item in capabilities)
         assert all(item["title"] for item in capabilities)
         assert all(item["category"] for item in capabilities)
@@ -162,6 +165,11 @@ class TestExploreCapabilities:
             item for item in capabilities if item["capability_id"] == "vocabulary-manager"
         )
         assert vocabulary_manager["tool_target"] == "vocabulary-manager"
+        expression_lab = next(
+            item for item in capabilities if item["capability_id"] == "expression_lab"
+        )
+        assert expression_lab["feature_id"] == "expression-lab"
+        assert expression_lab["status"] == "ready"
 
     @pytest.mark.asyncio
     async def test_old_explore_skills_endpoint_removed(self, client):

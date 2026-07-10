@@ -102,6 +102,7 @@ http://localhost:5176，可在 Learners / Recent Episodes 中直接选择 learne
 - [11. Vocabulary Learning](docs/architecture/11-vocabulary-learning.md)
 - [12. Textbook RAG, Langfuse & Exercises](docs/architecture/12-rag-observability-exercises.md)
 - [13. Current Scope and Status](docs/architecture/13-current-scope-and-status.md)
+- [14. Expression Lab](docs/architecture/14-expression-lab.md)
 - [Document Parsing Pipeline](docs/architecture/document-parsing-pipeline.md)
 - [LangGraph Runtime Audit](docs/architecture/langgraph-runtime-audit.md)
 - [Verification Runtime Audit](docs/architecture/verification-runtime-audit.md)
@@ -134,6 +135,7 @@ http://localhost:5176，可在 Learners / Recent Episodes 中直接选择 learne
 | 教材 Knowledge Base / RAG / Exercises | 部分实现，作为冷启动知识来源；已支持 split public textbook pack v2、UnitLearningWorkspace、多教材切换、文档解析/校对、统一 ExerciseItem / ExerciseAttempt、单元阅读语感材料；单元题库采用 PostgreSQL 持久化任务与独立 Worker 异步补池，支持立即返回/202 轮询、六维质量评分、双重门禁、旧模板题归档和 mastery-aware 选题；单元可确认跳过为 100%，并可通过重学重置为 0% |
 | Vocabulary Personal Cards / Practice / Spelling / Word Parts | 部分实现，已新增“词根与词缀”探索入口、四工作区学习页、内置词根词缀库、拆词练习、morphology 前端展示/降级和知识点配套练习验收；训练中可在学习提示区将单词标记为“太简单（已掌握）”，并显著降低后续训练频率 |
 | Writing Phrasebook | 基础版已实现 |
+| Expression Lab 英语表达实验室 | 已实现，支持中文表达缺口、英文草稿、好句迁移、词汇/语法目标和群聊学习线索输入；提供十类 schema 驱动内容块、局部重生成、1–3 题动态加练、确认后保存长期资产、会话恢复/删除，以及 Attempt → LearningEvent → Memory → Recommendation 学习闭环；Explore、Dashboard 辅助入口和群聊表达真实复用追踪已接通 |
 | 群聊学习线索 | 第一版已实现并切到飞书 MCP 兼容方案，支持飞书群来源配置、MCP/OpenAPI 同步、群成员拉取与当前 learner 绑定、原始消息保留/清理、中性 JSON 导入、显式标签即时规则抽取、`@机器人 --help` 群内操作指南回复与去重、无标签消息 pending 队列、低频 LLM 小批量线索提取、收件箱分页接受/忽略/删除，以及接受后写入词汇候选、好句候选或语法学习进度 |
 | ExploreCapability 推荐 | 基础版已实现，Explore Tab 入口由后端 registry 统一管理；Daily Lesson 答题后可推荐 ready 学习能力，点击/忽略事件写入 Memory 和 episode trace |
 | Frontend UI/UX 统一标准 | Issue #20 首轮整改已落地，普通学习端主导航保留 AI对话 / 探索 / 学习中心，Debug/Memory/Runtime 页面移入 Dev Console；Dashboard 首页升级为今日学习驾驶舱，今日学习流第四步接入 AI 对话并按当日成功回复标记完成；学习设置可编辑学习目标和 CEFR 当前水平；KnowledgeBase 将“今日课程任务”保留为训练入口，“本单元材料”的单词表和教材题库改为只读完整列表入口；教材解析治理集中到 Dev Console Textbook Parsing |

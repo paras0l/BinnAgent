@@ -8,6 +8,7 @@ import {
   ClipboardList,
   Clock3,
   FileText,
+  FlaskConical,
   HelpCircle,
   MessageCircle,
   Plus,
@@ -35,6 +36,7 @@ import type { DashboardSummary, Learner, LearnerProfile, MemorySummary, Vocabula
 import { useToast } from '@/hooks/useToast'
 import { useFocusTrap } from '@/hooks/useFocusTrap'
 import type { VocabularyPracticeMode } from '@/pages/VocabularyPracticePage'
+import type { ExpressionLabSourceSeed } from '@/pages/ExpressionLabPage'
 import {
   listGroupLearningSignals,
   listGroupLearningSources,
@@ -87,6 +89,7 @@ interface DashboardPageProps {
   onOpenAiConversation: () => void
   onOpenDailyLearning: () => void
   onOpenGroupLearningSettings: () => void
+  onOpenExpressionLab: (options: { sourceSignal?: ExpressionLabSourceSeed }) => void
   onProfileUpdate?: (patch: Partial<LearnerProfile>) => void
   onStartVocabularyPractice: (mode?: VocabularyPracticeMode) => void
 }
@@ -99,6 +102,7 @@ export function DashboardPage({
   onOpenAiConversation,
   onOpenDailyLearning,
   onOpenGroupLearningSettings,
+  onOpenExpressionLab,
   onProfileUpdate,
   onStartVocabularyPractice,
 }: DashboardPageProps) {
@@ -334,6 +338,7 @@ export function DashboardPage({
         onOpenProfile={() => setActiveWorkspace('profile')}
         onOpenRecords={() => setActiveWorkspace('records')}
         onOpenGroupSignals={() => setActiveWorkspace('group-signals')}
+        onOpenExpressionLab={() => onOpenExpressionLab({})}
         onStartVocabularyPractice={onStartVocabularyPractice}
         groupLearningSummary={groupLearningSummary}
       />
@@ -373,6 +378,7 @@ export function DashboardPage({
           learner={learner}
           onBack={() => setActiveWorkspace('home')}
           onOpenSettings={onOpenGroupLearningSettings}
+          onOpenExpressionLab={onOpenExpressionLab}
         />
       </Suspense>
     )
@@ -600,6 +606,7 @@ function LearningCenterHome({
   onOpenProfile,
   onOpenRecords,
   onOpenGroupSignals,
+  onOpenExpressionLab,
   onStartVocabularyPractice,
 }: {
   learnerName: string
@@ -612,6 +619,7 @@ function LearningCenterHome({
   onOpenProfile: () => void
   onOpenRecords: () => void
   onOpenGroupSignals: () => void
+  onOpenExpressionLab: () => void
   onStartVocabularyPractice: (mode?: VocabularyPracticeMode) => void
 }) {
   const todayPercent = toPercent(summary.today_goal.completed, summary.today_goal.total)
@@ -681,6 +689,7 @@ function LearningCenterHome({
           summary={summary}
           groupLearningSummary={groupLearningSummary}
           onOpenGroupSignals={onOpenGroupSignals}
+          onOpenExpressionLab={onOpenExpressionLab}
           onOpenVocabularyManager={onOpenVocabularyManager}
           onOpenVocabularyTraining={onOpenVocabularyTraining}
           onOpenProfile={onOpenProfile}
@@ -774,6 +783,7 @@ function LearningSideRail({
   summary,
   groupLearningSummary,
   onOpenGroupSignals,
+  onOpenExpressionLab,
   onOpenVocabularyManager,
   onOpenVocabularyTraining,
   onOpenProfile,
@@ -782,6 +792,7 @@ function LearningSideRail({
   summary: DashboardSummary
   groupLearningSummary: GroupLearningCardSummary
   onOpenGroupSignals: () => void
+  onOpenExpressionLab: () => void
   onOpenVocabularyManager: () => void
   onOpenVocabularyTraining: () => void
   onOpenProfile: () => void
@@ -819,6 +830,20 @@ function LearningSideRail({
           <span className="text-xs font-bold text-slate-400">Tools</span>
         </div>
         <div className="mt-3 grid flex-1 content-start gap-2">
+          <button
+            type="button"
+            onClick={onOpenExpressionLab}
+            className="rounded-2xl border border-violet-200 bg-[linear-gradient(135deg,#f5f3ff,#ffffff_55%,#eef2ff)] p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-violet-300 hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          >
+            <span className="flex items-start justify-between gap-3">
+              <span className="min-w-0">
+                <span className="flex items-center gap-2 text-base font-black text-slate-950"><FlaskConical className="size-4 text-violet-600" />英语表达实验室</span>
+                <span className="mt-2 block text-xs leading-5 text-slate-600">把不会说、写不准或想迁移的表达，变成比较、讲解和小练习。</span>
+              </span>
+              {groupLearningSummary.pendingCount > 0 ? <span className="rounded-full bg-violet-600 px-2.5 py-1 text-xs font-black text-white">{groupLearningSummary.pendingCount}</span> : null}
+            </span>
+            <span className="mt-4 flex items-center justify-between gap-3"><span className="text-xs font-bold text-slate-500">{groupLearningSummary.pendingCount > 0 ? `继续处理 ${groupLearningSummary.pendingCount} 条待学习线索` : '也可以手动输入表达'}</span><span className="inline-flex items-center gap-1 text-xs font-black text-violet-700">打开实验室<ArrowRight className="size-3.5" /></span></span>
+          </button>
           <button
             type="button"
             onClick={onOpenGroupSignals}

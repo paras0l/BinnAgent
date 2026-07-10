@@ -24,6 +24,7 @@ import {
 } from '@/components/learning/CapabilityRecommendationCard'
 import { ReasonCard } from '@/components/learning/ReasonCard'
 import type { AppTab, ExplorePreference, Learner, LearnerProfile, PronunciationWorkspace } from '@/types'
+import type { ExpressionInputType } from '@/services/expressionLabApi'
 import { useToast } from '@/hooks/useToast'
 import { GrammarPage } from '@/pages/GrammarPage'
 import { ReadingWorkshopPage } from '@/pages/ReadingWorkshopPage'
@@ -52,6 +53,7 @@ interface ExplorePageProps {
   onDraftPrompt: (prompt: string, skillFocus?: string | null, options?: { autoSend?: boolean }) => void
   onOpenVocabularyManager: () => void
   onOpenPronunciationWorkspace: (workspace: PronunciationWorkspace) => void
+  onOpenExpressionLab: (options: { sessionId?: string | null; initialInputType?: ExpressionInputType; initialText?: string }) => void
 }
 
 interface ExploreFeature {
@@ -64,7 +66,7 @@ interface ExploreFeature {
   status: FeatureStatus
   action: FeatureAction
   prompt?: string
-  toolTarget?: 'dashboard' | 'vocabulary-manager' | 'pronunciation' | 'grammar' | 'writing-phrasebook' | 'word-parts' | 'reading-workshop'
+  toolTarget?: 'dashboard' | 'vocabulary-manager' | 'pronunciation' | 'grammar' | 'writing-phrasebook' | 'word-parts' | 'reading-workshop' | 'expression-lab'
   pronunciationWorkspace?: PronunciationWorkspace
 }
 
@@ -189,6 +191,17 @@ const FEATURES: ExploreFeature[] = [
     prompt: '请作为 CET-4/CET-6 写作老师批改我的作文。请按结构、语法、词汇、内容四项反馈，并提炼我的主要错因。作文如下：\n\n',
   },
   {
+    id: 'expression-lab',
+    category: 'writing',
+    title: '英语表达实验室',
+    description: '把中文意图、英文草稿或群聊表达变成可比较、可练习、可收藏的英语表达。',
+    whenToUse: '知道想说什么却不会自然表达，或写出英文但不确定语法、语气和场景时使用。',
+    outcome: '得到表达方案、语气对比、结构或纠错讲解、小练习，以及可确认保存的学习资产。',
+    status: 'ready',
+    action: 'tool',
+    toolTarget: 'expression-lab',
+  },
+  {
     id: 'writing-phrasebook',
     category: 'writing',
     title: '好句收藏馆',
@@ -307,6 +320,7 @@ export function ExplorePage({
   onDraftPrompt,
   onOpenVocabularyManager,
   onOpenPronunciationWorkspace,
+  onOpenExpressionLab,
 }: ExplorePageProps) {
   const { showToast } = useToast()
   const [preferences, setPreferences] = useState<ExplorePreference[]>([])
@@ -495,6 +509,10 @@ export function ExplorePage({
       }
       if (feature.toolTarget === 'writing-phrasebook') {
         setIsWritingPhrasebookOpen(true)
+        return
+      }
+      if (feature.toolTarget === 'expression-lab') {
+        onOpenExpressionLab({})
         return
       }
       if (feature.toolTarget === 'word-parts') {

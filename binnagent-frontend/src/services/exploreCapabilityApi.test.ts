@@ -11,6 +11,7 @@ describe('exploreCapabilityApi', () => {
   it('keeps the feature to capability map populated', () => {
     expect(Object.keys(FEATURE_CAPABILITY_MAP).length).toBeGreaterThan(0)
     expect(FEATURE_CAPABILITY_MAP['grammar-explain']).toBe('grammar-explain')
+    expect(FEATURE_CAPABILITY_MAP['expression-lab']).toBe('expression_lab')
   })
 
   it('builds capability endpoints and never the removed skills endpoint', () => {

@@ -40,6 +40,7 @@ import type { WordPartAnalysis } from '@/types'
 import type { ExerciseTarget } from '@/types/exercises'
 import { copyTextToClipboard } from '@/utils/clipboard'
 import { learnerBackground } from '@/utils/learnerProfile'
+import { createSafeHtmlDocument, type SafeHtmlStyleMode } from '@/utils/safeHtmlDocument'
 
 interface VocabularyDetailPageProps {
   learner?: Learner
@@ -142,7 +143,8 @@ export function VocabularyDetailPage({
   const morphologyDraft = morphologyDraftState.source === inferredMorphologyText
     ? morphologyDraftState.value
     : inferredMorphologyText
-  const safeHtml = useMemo(() => sanitizeHtml(html), [html])
+  const safeDocument = useMemo(() => createSafeHtmlDocument(html), [html])
+  const safeHtml = safeDocument.bodyHtml
   const canSaveToVocabulary = Boolean(learner && activeTerm.trim() && html.trim())
   const saveButtonLabel = !html.trim()
     ? '先粘贴 HTML 后加入词库'
@@ -434,7 +436,7 @@ export function VocabularyDetailPage({
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <h2 className="text-lg font-black text-slate-950">HTML 输入</h2>
-                  <p className="mt-1 text-sm text-slate-500">扩展回传或手动粘贴 AI 输出的 HTML。</p>
+                  <p className="mt-1 text-sm text-slate-500">扩展回传或手动粘贴 AI 输出的 HTML；安全的内嵌样式会保留。</p>
                 </div>
                 <IconButton
                   label="清空 HTML 内容"
@@ -458,7 +460,10 @@ export function VocabularyDetailPage({
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-2">
                   <FileInput className="size-5 text-indigo-600" />
-                  <h2 className="text-lg font-black text-slate-950">阅读预览</h2>
+                  <div>
+                    <h2 className="text-lg font-black text-slate-950">阅读预览</h2>
+                    {safeHtml ? <PreviewStyleStatus mode={safeDocument.styleMode} /> : null}
+                  </div>
                 </div>
                 <Button
                   variant="secondary"
@@ -475,7 +480,7 @@ export function VocabularyDetailPage({
                 {safeHtml ? (
                   <iframe
                     title={`${activeTerm} 词汇详解`}
-                    srcDoc={detailDocument(safeHtml)}
+                    srcDoc={safeDocument.srcDoc}
                     sandbox=""
                     className="h-full w-full"
                   />
@@ -653,7 +658,7 @@ export function VocabularyDetailPage({
             </div>
             <iframe
               title={`${activeTerm} 沉浸式阅读`}
-              srcDoc={detailDocument(safeHtml)}
+              srcDoc={safeDocument.srcDoc}
               sandbox=""
               className="min-h-0 flex-1 border-0 bg-white"
             />
@@ -873,20 +878,17 @@ function buildVocabularyPrompt(term: string, profileBackground: string) {
 学习者背景：${profileBackground}`
 }
 
-function sanitizeHtml(value: string) {
-  if (!value.trim()) return ''
-  const document = new DOMParser().parseFromString(value, 'text/html')
-  document.querySelectorAll('script, iframe, object, embed, form, link, meta').forEach((node) => node.remove())
-  document.querySelectorAll('*').forEach((element) => {
-    for (const attribute of Array.from(element.attributes)) {
-      if (/^on/i.test(attribute.name) || ['src', 'href', 'action'].includes(attribute.name.toLowerCase())) {
-        element.removeAttribute(attribute.name)
-      }
-    }
-  })
-  return document.body.innerHTML
-}
+function PreviewStyleStatus({ mode }: { mode: SafeHtmlStyleMode }) {
+  const label = mode === 'embedded'
+    ? '安全保真 · 已保留内嵌样式'
+    : mode === 'rejected'
+      ? '检测到外链或危险 CSS · 已使用系统阅读主题'
+      : '无自带样式 · 使用系统阅读主题'
+  const tone = mode === 'embedded'
+    ? 'bg-emerald-50 text-emerald-700'
+    : mode === 'rejected'
+      ? 'bg-amber-50 text-amber-700'
+      : 'bg-slate-100 text-slate-600'
 
-function detailDocument(content: string) {
-  return `<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><style>body{margin:0;padding:28px;font-family:ui-sans-serif,system-ui;color:#0f172a;line-height:1.75}main,article,section{max-width:820px;margin:auto}h1{font-size:30px}h2{font-size:21px;margin-top:28px;color:#3730a3}p,li{font-size:15px}blockquote,.example{margin:14px 0;padding:10px 14px;border-left:4px solid #6366f1;background:#f8fafc}code{padding:2px 5px;border-radius:5px;background:#eef2ff;color:#3730a3}table{width:100%;border-collapse:collapse}th,td{padding:8px;border:1px solid #e2e8f0}</style></head><body>${content}</body></html>`
+  return <p className={`mt-1 inline-flex rounded-full px-2 py-1 text-[11px] font-bold ${tone}`}>{label}</p>
 }

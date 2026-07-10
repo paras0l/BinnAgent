@@ -9,6 +9,7 @@ export const FEATURE_CAPABILITY_MAP: Record<string, string> = {
   'reading-intensive-extensive': 'reading-intensive-extensive',
   'essay-review': 'essay-review',
   'writing-phrasebook': 'writing-phrasebook',
+  'expression-lab': 'expression_lab',
   'grammar-explain': 'grammar-explain',
   'translation-practice': 'translation-practice',
   'speaking-roleplay': 'speaking-roleplay',

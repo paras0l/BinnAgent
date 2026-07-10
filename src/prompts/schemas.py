@@ -1,5 +1,6 @@
 from typing import Any
 
+from src.expression_lab.schemas import EXPRESSION_UI_SCHEMA
 from src.extraction.schemas import WRITING_PHRASE_IMPORT_SCHEMA
 
 VOCABULARY_CARD_SCHEMA: dict[str, Any] = {
@@ -482,6 +483,7 @@ READING_MATERIAL_GENERATION_SCHEMA: dict[str, Any] = {
 }
 
 SCHEMA_REGISTRY: dict[str, dict[str, Any]] = {
+    "ExpressionUiOutput": EXPRESSION_UI_SCHEMA,
     "VocabularyExtractOutput": VOCABULARY_CARD_SCHEMA,
     "WritingPhraseImportOutput": WRITING_PHRASE_IMPORT_SCHEMA,
     "GrammarMicroLessonOutput": GRAMMAR_MICRO_LESSON_SCHEMA,

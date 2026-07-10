@@ -31,7 +31,7 @@ def test_alembic_migrations_have_single_head_revision() -> None:
             parents.update(item for item in down_revision if isinstance(item, str))
 
     heads = revisions - parents
-    assert heads == {"r8s9t0u1v2w3"}
+    assert heads == {"s9t0u1v2w3x4"}
 
 
 def test_learner_invitation_migration_supports_shared_emails_and_relationships() -> None:
@@ -272,3 +272,30 @@ def test_group_learning_migration_adds_sources_messages_and_signals() -> None:
     assert "uq_group_learning_message_source_external" in migration
     assert "uq_group_learning_message_source_hash" in migration
     assert "ix_group_learning_signals_learner_status" in migration
+
+
+def test_expression_lab_migration_adds_scoped_sessions_actions_attempts_and_events() -> None:
+    migration = Path(
+        "alembic/versions/s9t0u1v2w3x4_add_expression_lab.py"
+    ).read_text()
+
+    for table_name in [
+        "expression_lab_sessions",
+        "expression_lab_actions",
+        "expression_lab_attempts",
+        "expression_lab_events",
+    ]:
+        assert table_name in migration
+
+    assert 'down_revision: Union[str, Sequence[str], None] = "r8s9t0u1v2w3"' in migration
+    assert "agent_episodes.id" in migration
+    assert "exercise_attempts.id" in migration
+    assert "ondelete=\"CASCADE\"" in migration
+    assert "ondelete=\"SET NULL\"" in migration
+    assert "uq_expression_lab_action_session_spec" in migration
+    assert "uq_expression_lab_attempt_sequence" in migration
+    assert "ix_expression_lab_sessions_learner_status" in migration
+    assert "ix_expression_lab_events_session_occurred" in migration
+    assert "prompt_hash" in migration
+    assert "raw_prompt" not in migration
+    assert "raw_output" not in migration

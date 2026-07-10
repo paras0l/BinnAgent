@@ -1,6 +1,12 @@
 from src.models.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
 from src.models.auth import EmailVerificationChallenge
 from src.models.error_pattern import ErrorPattern
+from src.models.expression_lab import (
+    ExpressionLabAction,
+    ExpressionLabAttempt,
+    ExpressionLabEvent,
+    ExpressionLabSession,
+)
 from src.models.explore import ExploreFeaturePreference
 from src.models.graph_checkpoint import LearningGraphCheckpoint
 from src.models.group_learning import (
@@ -73,6 +79,10 @@ __all__ = [
     "ConversationMessage",
     "EmailVerificationChallenge",
     "ErrorPattern",
+    "ExpressionLabAction",
+    "ExpressionLabAttempt",
+    "ExpressionLabEvent",
+    "ExpressionLabSession",
     "ExploreFeaturePreference",
     "GroupLearningMessage",
     "GroupLearningParticipant",

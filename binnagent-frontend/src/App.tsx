@@ -1,4 +1,4 @@
-import { Component, lazy, Suspense, useEffect, useState, type ErrorInfo, type ReactNode } from 'react'
+import { Component, lazy, Suspense, useCallback, useEffect, useState, type ErrorInfo, type ReactNode } from 'react'
 import { Header } from './components/layout/Header'
 import { GroupLearningSettingsDialog } from './components/learning/GroupLearningSettingsDialog'
 import { LearningSettingsDialog } from './components/learning/LearningSettingsDialog'
@@ -7,9 +7,21 @@ import { StatusBanner } from './components/ui/StatusBanner'
 import { useToast } from './hooks/useToast'
 import { useLearningPreferences } from './hooks/useLearningPreferences'
 import type { VocabularyPracticeMode } from './pages/VocabularyPracticePage'
+import type { ExpressionLabSourceSeed } from './pages/ExpressionLabPage'
+import type { ExpressionInputType } from './services/expressionLabApi'
 import type { AppTab, Learner, LearnerProfile, PronunciationWorkspace } from './types'
 
-type LearningCenterView = 'home' | 'daily-learning' | 'vocabulary' | 'vocabulary-practice' | 'profile'
+type LearningCenterView = 'home' | 'daily-learning' | 'vocabulary' | 'vocabulary-practice' | 'profile' | 'group-signals'
+
+type ExpressionLabReturnTo = 'explore' | 'dashboard' | 'group-signals'
+
+interface ExpressionLabLaunch {
+  sessionId: string | null
+  sourceSignal?: ExpressionLabSourceSeed | null
+  initialInputType?: ExpressionInputType
+  initialText?: string
+  returnTo: ExpressionLabReturnTo
+}
 
 interface LearnerProfileReadiness {
   learner_id: string
@@ -30,6 +42,10 @@ const DashboardPage = lazy(() =>
 
 const ExplorePage = lazy(() =>
   import('./pages/ExplorePage').then((module) => ({ default: module.ExplorePage }))
+)
+
+const ExpressionLabPage = lazy(() =>
+  import('./pages/ExpressionLabPage').then((module) => ({ default: module.ExpressionLabPage }))
 )
 
 const GrammarPage = lazy(() =>
@@ -116,10 +132,17 @@ function App() {
   const [learnerProfile, setLearnerProfile] = useState<LearnerProfile | null>(null)
   const [learnerProfileReadiness, setLearnerProfileReadiness] = useState<LearnerProfileReadiness | null>(null)
   const [currentLearner, setCurrentLearner] = useState<Learner | null>(() => readCachedLearner())
+  const [expressionLabLaunch, setExpressionLabLaunch] = useState<ExpressionLabLaunch | null>(() => readExpressionLabLocation())
   const [isRestoringLearner, setIsRestoringLearner] = useState(() =>
     Boolean(readLocalStorageItem('binnLearnerId'))
   )
   const { preferences, resetPreferences, updatePreferences } = useLearningPreferences(currentLearner?.id)
+
+  useEffect(() => {
+    const handlePopState = () => setExpressionLabLaunch(readExpressionLabLocation())
+    window.addEventListener('popstate', handlePopState)
+    return () => window.removeEventListener('popstate', handlePopState)
+  }, [])
 
   useEffect(() => {
     const learnerId = readLocalStorageItem('binnLearnerId')
@@ -266,8 +289,45 @@ function App() {
       return
     }
     if (tab === 'dashboard') setLearningCenterView('home')
+    if (expressionLabLaunch) {
+      setExpressionLabLaunch(null)
+      replaceLearnerPath(tab === 'chat' ? '/' : `/${tab}`)
+    }
     setActiveTab(tab)
   }
+
+  const handleOpenExpressionLab = useCallback((launch: Omit<ExpressionLabLaunch, 'sessionId'> & { sessionId?: string | null }) => {
+    const next: ExpressionLabLaunch = { ...launch, sessionId: launch.sessionId ?? null }
+    setExpressionLabLaunch(next)
+    window.history.pushState({ expressionLabReturnTo: next.returnTo }, '', expressionLabPath(next.sessionId))
+  }, [])
+
+  const handleExpressionLabSessionChange = useCallback((sessionId: string | null) => {
+    setExpressionLabLaunch((current) => current ? { ...current, sessionId } : current)
+    const current = readExpressionLabLocation()
+    window.history.replaceState(
+      { expressionLabReturnTo: current?.returnTo ?? 'explore' },
+      '',
+      expressionLabPath(sessionId),
+    )
+  }, [])
+
+  const handleCloseExpressionLab = useCallback(() => {
+    const returnTo = expressionLabLaunch?.returnTo ?? 'explore'
+    setExpressionLabLaunch(null)
+    if (returnTo === 'group-signals') {
+      setLearningCenterView('group-signals')
+      setActiveTab('dashboard')
+      replaceLearnerPath('/dashboard')
+    } else if (returnTo === 'dashboard') {
+      setLearningCenterView('home')
+      setActiveTab('dashboard')
+      replaceLearnerPath('/dashboard')
+    } else {
+      setActiveTab('explore')
+      replaceLearnerPath('/explore')
+    }
+  }, [expressionLabLaunch?.returnTo])
 
   const handleOpenLearnerProfile = () => {
     if (isChatGenerating) {
@@ -381,9 +441,9 @@ function App() {
         onUpdate={updatePreferences}
       />
       <main className="pt-16">
-        {profileSetupBanner}
+        {expressionLabLaunch ? null : profileSetupBanner}
         <RouteErrorBoundary
-          resetKey={`${currentLearner.id}:${activeTab}:${learningCenterView}`}
+          resetKey={`${currentLearner.id}:${activeTab}:${learningCenterView}:${expressionLabLaunch?.sessionId ?? 'no-expression-lab'}`}
           fallback={(reset) => (
             <div className="mx-auto max-w-3xl px-4 py-6 sm:px-6 lg:px-8">
               <StatusBanner
@@ -409,7 +469,19 @@ function App() {
           )}
         >
           <Suspense fallback={<PageLoadingFallback />}>
-          {activeTab === 'chat' ? (
+          {expressionLabLaunch ? (
+            <ExpressionLabPage
+              key={`${expressionLabLaunch.sessionId ?? 'new'}:${expressionLabLaunch.sourceSignal?.id ?? 'manual'}`}
+              learner={currentLearner}
+              learnerProfile={learnerProfile}
+              initialSessionId={expressionLabLaunch.sessionId}
+              sourceSignal={expressionLabLaunch.sourceSignal}
+              initialInputType={expressionLabLaunch.initialInputType}
+              initialText={expressionLabLaunch.initialText}
+              onBack={handleCloseExpressionLab}
+              onSessionChange={handleExpressionLabSessionChange}
+            />
+          ) : activeTab === 'chat' ? (
             <ChatPage
               learner={currentLearner}
               draft={chatDraft}
@@ -435,6 +507,7 @@ function App() {
               onDraftPrompt={handleDraftPrompt}
               onOpenVocabularyManager={openVocabularyManager}
               onOpenPronunciationWorkspace={openPronunciationWorkspace}
+              onOpenExpressionLab={(options) => handleOpenExpressionLab({ ...options, returnTo: 'explore' })}
             />
           ) : activeTab === 'pronunciation' ? (
             <PronunciationPage
@@ -458,18 +531,19 @@ function App() {
               />
             ) : (
               <DashboardPage
-                key={learningCenterView === 'vocabulary' || learningCenterView === 'profile' ? learningCenterView : 'home'}
+                key={learningCenterView === 'vocabulary' || learningCenterView === 'profile' || learningCenterView === 'group-signals' ? learningCenterView : 'home'}
                 learner={currentLearner}
                 learnerProfile={learnerProfile}
                 initialVocabularyListOpen={learningCenterView === 'vocabulary'}
                 initialWorkspace={
-                  learningCenterView === 'vocabulary' || learningCenterView === 'profile'
+                  learningCenterView === 'vocabulary' || learningCenterView === 'profile' || learningCenterView === 'group-signals'
                     ? learningCenterView
                     : 'home'
                 }
                 onOpenAiConversation={() => handleTabChange('chat')}
                 onOpenDailyLearning={() => setLearningCenterView('daily-learning')}
                 onOpenGroupLearningSettings={() => setIsGroupLearningSettingsOpen(true)}
+                onOpenExpressionLab={(options) => handleOpenExpressionLab({ ...options, returnTo: options.sourceSignal ? 'group-signals' : 'dashboard' })}
                 onProfileUpdate={(patch) => void updateLearnerProfile(patch)}
                 onStartVocabularyPractice={(mode) => openVocabularyPractice(mode ?? preferences.defaultPracticeMode)}
               />
@@ -515,6 +589,26 @@ function removeLocalStorageItem(key: string) {
   } catch {
     // Ignore storage cleanup failures.
   }
+}
+
+function readExpressionLabLocation(): ExpressionLabLaunch | null {
+  if (typeof window === 'undefined') return null
+  const match = window.location.pathname.match(/^\/expression-lab\/(new|[^/]+)$/)
+  if (!match) return null
+  const returnTo = window.history.state?.expressionLabReturnTo
+  return {
+    sessionId: match[1] === 'new' ? null : decodeURIComponent(match[1]),
+    returnTo: returnTo === 'dashboard' || returnTo === 'group-signals' ? returnTo : 'explore',
+  }
+}
+
+function expressionLabPath(sessionId: string | null) {
+  return `/expression-lab/${sessionId ? encodeURIComponent(sessionId) : 'new'}`
+}
+
+function replaceLearnerPath(path: string) {
+  if (typeof window === 'undefined') return
+  window.history.replaceState({}, '', path)
 }
 
 export default App

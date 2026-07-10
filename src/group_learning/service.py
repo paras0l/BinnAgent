@@ -8,6 +8,9 @@ from typing import Any
 from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.memory.schemas import MemoryEventInput
+from src.memory.writer import MemoryWriter
+from src.models.expression_lab import ExpressionLabEvent, ExpressionLabSession
 from src.models.group_learning import (
     GroupLearningMessage,
     GroupLearningParticipant,
@@ -17,6 +20,7 @@ from src.models.group_learning import (
 from src.models.learning_progress import LearningProgressItem
 from src.models.vocabulary import VocabularyItem, VocabularyItemSource
 from src.models.writing_phrase import WritingPhrase
+from src.runtime.episode import EpisodeRuntime
 from src.vocabulary.learning import canonical_vocabulary_key
 
 
@@ -37,6 +41,7 @@ class GroupLearningImportResult:
     generated_signal_count: int
     ignored_count: int
     participant_count: int
+    expression_reuse_count: int = 0
 
 
 @dataclass(frozen=True)
@@ -88,6 +93,10 @@ async def import_group_messages(
     duplicate_count = 0
     ignored_count = 0
     generated_signal_count = 0
+    expression_reuse_count = 0
+    expression_lab_phrases = (
+        await _expression_lab_phrases_for_learner(db, source.learner_id) if messages else []
+    )
 
     for raw_message in messages:
         text = normalize_message_text(raw_message.content_text)
@@ -142,6 +151,14 @@ async def import_group_messages(
             elif duplicate.learner_id == source.learner_id and not text.startswith("#"):
                 duplicate.ingestion_status = "pending_llm_analysis"
                 duplicate.processed_at = None
+            if duplicate.learner_id == source.learner_id:
+                expression_reuse_count += await _record_expression_lab_reuses(
+                    db,
+                    source=source,
+                    message=duplicate,
+                    message_text=text,
+                    phrases=expression_lab_phrases,
+                )
             continue
 
         should_analyze = (
@@ -179,6 +196,14 @@ async def import_group_messages(
             ignored_count += 1
             continue
 
+        expression_reuse_count += await _record_expression_lab_reuses(
+            db,
+            source=source,
+            message=message,
+            message_text=text,
+            phrases=expression_lab_phrases,
+        )
+
         if tagged:
             generated_signal_count += await _write_missing_signal_drafts(
                 db,
@@ -193,6 +218,7 @@ async def import_group_messages(
         "imported_count": imported_count,
         "duplicate_count": duplicate_count,
         "generated_signal_count": generated_signal_count,
+        "expression_reuse_count": expression_reuse_count,
         "ignored_count": ignored_count,
     }
     await db.flush()
@@ -202,7 +228,192 @@ async def import_group_messages(
         generated_signal_count=generated_signal_count,
         ignored_count=ignored_count,
         participant_count=len(participants),
+        expression_reuse_count=expression_reuse_count,
     )
+
+
+async def _expression_lab_phrases_for_learner(
+    db: AsyncSession,
+    learner_id: uuid.UUID,
+) -> list[WritingPhrase]:
+    result = await db.execute(
+        select(WritingPhrase).where(
+            WritingPhrase.learner_id == learner_id,
+            WritingPhrase.is_archived.is_(False),
+        )
+    )
+    return [
+        phrase
+        for phrase in result.scalars().all()
+        if phrase.source_type == "expression_lab_session"
+        or bool((phrase.metadata_ or {}).get("expression_lab_session_id"))
+    ]
+
+
+async def _record_expression_lab_reuses(
+    db: AsyncSession,
+    *,
+    source: GroupLearningSource,
+    message: GroupLearningMessage,
+    message_text: str,
+    phrases: list[WritingPhrase],
+) -> int:
+    """Record exact later reuse of a user-confirmed Expression Lab phrase.
+
+    Only the learner's mapped messages reach this function.  The event keeps
+    stable IDs and a content hash instead of copying the raw group message, so
+    normal raw-message retention and deletion rules remain effective.
+    """
+
+    reuse_count = 0
+    for phrase in phrases:
+        if not expression_lab_phrase_matches_message(phrase.text, message_text):
+            continue
+        saved_at = _expression_lab_phrase_saved_at(phrase)
+        if saved_at is None or not _datetime_is_after(message.occurred_at, saved_at):
+            continue
+        session_id = _expression_lab_phrase_session_id(phrase)
+        if session_id is None:
+            continue
+
+        session_result = await db.execute(
+            select(ExpressionLabSession).where(
+                ExpressionLabSession.id == session_id,
+                ExpressionLabSession.learner_id == source.learner_id,
+            )
+        )
+        session = session_result.scalar_one_or_none()
+        if session is None:
+            continue
+
+        event_result = await db.execute(
+            select(ExpressionLabEvent).where(
+                ExpressionLabEvent.session_id == session.id,
+                ExpressionLabEvent.event_type == "expression_reused",
+            )
+        )
+        already_recorded = any(
+            str((event.payload_json or {}).get("group_learning_message_id"))
+            == str(message.id)
+            and str((event.payload_json or {}).get("writing_phrase_id")) == str(phrase.id)
+            for event in event_result.scalars().all()
+        )
+        if already_recorded:
+            continue
+
+        payload = {
+            "group_learning_message_id": str(message.id),
+            "group_learning_source_id": str(source.id),
+            "external_message_id": message.external_message_id,
+            "message_content_hash": message.content_hash,
+            "writing_phrase_id": str(phrase.id),
+            "matched_expression": phrase.text,
+            "expression_lab_action_id": (phrase.metadata_ or {}).get(
+                "expression_lab_action_id"
+            ),
+        }
+        db.add(
+            ExpressionLabEvent(
+                session_id=session.id,
+                event_type="expression_reused",
+                payload_json=payload,
+                occurred_at=message.occurred_at,
+            )
+        )
+        await MemoryWriter(db).record_event(
+            MemoryEventInput(
+                learner_id=source.learner_id,
+                event_type="expression_lab_expression_reused",
+                skill="writing_phrase",
+                subskill="real_context_transfer",
+                source_type="group_learning_message",
+                source_id=str(message.id),
+                payload={
+                    **payload,
+                    "expression_lab_session_id": str(session.id),
+                    "confirmed_asset": True,
+                },
+                confidence=1.0,
+                created_by="system",
+                occurred_at=message.occurred_at,
+            )
+        )
+        if session.episode_id is not None:
+            await EpisodeRuntime(db).append_event(
+                episode_id=session.episode_id,
+                learner_id=source.learner_id,
+                event_type="expression_lab_expression_reused",
+                source_module="group_learning",
+                target_type="writing_phrase",
+                target_id=str(phrase.id),
+                payload=payload,
+            )
+
+        metadata = dict(phrase.metadata_ or {})
+        previous_message_ids = [
+            str(item)
+            for item in metadata.get("expression_lab_reuse_message_ids", [])
+            if item
+        ]
+        phrase.metadata_ = {
+            **metadata,
+            "expression_lab_reuse_count": int(
+                metadata.get("expression_lab_reuse_count") or 0
+            )
+            + 1,
+            "expression_lab_last_reused_at": message.occurred_at.isoformat(),
+            "expression_lab_reuse_message_ids": [
+                *previous_message_ids[-19:],
+                str(message.id),
+            ],
+        }
+        reuse_count += 1
+    return reuse_count
+
+
+def expression_lab_phrase_matches_message(phrase_text: str, message_text: str) -> bool:
+    phrase = _normalize_expression_match_text(phrase_text)
+    message = _normalize_expression_match_text(message_text)
+    if not phrase or not message:
+        return False
+    if phrase == message:
+        return True
+    if len(phrase) < 12 or len(phrase.split()) < 3:
+        return False
+    return f" {phrase} " in f" {message} "
+
+
+def _normalize_expression_match_text(value: str) -> str:
+    return re.sub(r"[^\w']+", " ", value.casefold(), flags=re.UNICODE).strip()
+
+
+def _expression_lab_phrase_session_id(phrase: WritingPhrase) -> uuid.UUID | None:
+    metadata = phrase.metadata_ or {}
+    raw_value = metadata.get("expression_lab_session_id")
+    if not raw_value and phrase.source_type == "expression_lab_session":
+        raw_value = phrase.source_ref
+    try:
+        return uuid.UUID(str(raw_value)) if raw_value else None
+    except (TypeError, ValueError):
+        return None
+
+
+def _expression_lab_phrase_saved_at(phrase: WritingPhrase) -> datetime | None:
+    raw_value = (phrase.metadata_ or {}).get("expression_lab_saved_at")
+    if isinstance(raw_value, str) and raw_value.strip():
+        try:
+            return datetime.fromisoformat(raw_value.replace("Z", "+00:00"))
+        except ValueError:
+            return None
+    return phrase.created_at
+
+
+def _datetime_is_after(value: datetime, threshold: datetime) -> bool:
+    if value.tzinfo is None:
+        value = value.replace(tzinfo=timezone.utc)
+    if threshold.tzinfo is None:
+        threshold = threshold.replace(tzinfo=timezone.utc)
+    return value > threshold
 
 
 async def _write_missing_signal_drafts(

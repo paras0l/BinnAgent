@@ -40,7 +40,34 @@ def test_evaluate_prompts_all_supports_multiple_eval_sets() -> None:
         "graph.feedback",
         "writing_phrase.import",
         "grammar.micro_lesson.structured",
+        "expression_lab.ui_spec",
     }.issubset(prompt_ids)
+
+
+def test_expression_lab_eval_exercises_all_prompt_outcome_paths() -> None:
+    result = _run_cli("--prompt-id", "expression_lab.ui_spec", "--json")
+
+    assert result.returncode == 0, result.stderr
+    payload = json.loads(result.stdout)
+    assert payload["status"] == "passed"
+    assert payload["expectation_failures"] == []
+    assert payload["case_count"] == 6
+    outcomes = {
+        (case["schema_validation_status"], case["decision"])
+        for case in payload["cases"]
+    }
+    assert outcomes == {
+        ("passed", "accepted"),
+        ("repaired", "accepted"),
+        ("fallback", "review_required"),
+        ("failed", "rejected"),
+    }
+    rejected = next(
+        case
+        for case in payload["cases"]
+        if case["case_id"] == "expression_lab_invalid_output_rejected_without_fallback"
+    )
+    assert rejected["fallback_used"] is False
 
 
 def test_evaluate_prompts_fails_when_schema_pass_rate_below_threshold() -> None:

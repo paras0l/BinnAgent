@@ -106,6 +106,7 @@ export interface ImportGroupLearningSummary {
   generated_signal_count: number
   ignored_count: number
   participant_count: number
+  expression_reuse_count: number
 }
 
 export interface GroupLearningSyncNowSummary extends ImportGroupLearningSummary {

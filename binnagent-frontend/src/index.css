@@ -127,6 +127,30 @@ body {
   }
 }
 
+@keyframes expression-block-enter {
+  from {
+    opacity: 0;
+    transform: translateY(0.5rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.expression-block-enter {
+  animation: expression-block-enter 220ms ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .expression-block-enter,
+  .expression-block-enter * {
+    animation: none !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
 @keyframes vocab-confetti-pop {
   0% { opacity: 0; transform: translate(0, 0) rotate(0deg) scale(0.4); }
   20% { opacity: 1; }

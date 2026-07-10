@@ -301,3 +301,19 @@ prompt_registry.register(
         eval_set="evals/prompts/reading_material_generation_v1.jsonl",
     )
 )
+prompt_registry.register(
+    PromptMetadata(
+        id="expression_lab.ui_spec",
+        version="v1",
+        owner="expression_lab",
+        purpose="把表达意图、英文草稿、好句或学习目标生成受控 Expression UI DSL",
+        template_path="versions/expression_lab.ui_spec.v1.md",
+        output_schema="ExpressionUiOutput",
+        model_policy={
+            "default_model": "ollama_utility",
+            "temperature": 0.35,
+            "max_tokens": 6000,
+        },
+        eval_set="evals/prompts/expression_lab_ui_spec_v1.jsonl",
+    )
+)

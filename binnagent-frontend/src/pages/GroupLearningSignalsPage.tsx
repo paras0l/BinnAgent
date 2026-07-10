@@ -37,6 +37,7 @@ import {
   type GroupLearningSource,
 } from '@/services/groupLearningApi'
 import type { Learner } from '@/types'
+import type { ExpressionLabSourceSeed } from '@/pages/ExpressionLabPage'
 
 const GROUP_LEARNING_REFRESH_EVENT = 'binnagent:group-learning-signals-updated'
 const SIGNAL_PAGE_SIZE = 8
@@ -83,9 +84,10 @@ interface GroupLearningSignalsPageProps {
   learner: Learner
   onBack: () => void
   onOpenSettings: () => void
+  onOpenExpressionLab: (options: { sourceSignal: ExpressionLabSourceSeed }) => void
 }
 
-export function GroupLearningSignalsPage({ learner, onBack, onOpenSettings }: GroupLearningSignalsPageProps) {
+export function GroupLearningSignalsPage({ learner, onBack, onOpenSettings, onOpenExpressionLab }: GroupLearningSignalsPageProps) {
   const { showToast } = useToast()
   const [signals, setSignals] = useState<GroupLearningSignal[]>([])
   const [sources, setSources] = useState<GroupLearningSource[]>([])
@@ -400,6 +402,14 @@ export function GroupLearningSignalsPage({ learner, onBack, onOpenSettings }: Gr
                 <SignalCard
                   key={signal.id}
                   signal={signal}
+                  onOpenExpressionLab={() => onOpenExpressionLab({
+                    sourceSignal: {
+                      id: signal.id,
+                      signalType: signal.type,
+                      text: signal.sourceText,
+                      label: signal.title,
+                    },
+                  })}
                   onAccept={() => {
                     void updateSignalStatus(signal.id, 'accepted').then((ok) => {
                       if (ok) showToast(`已${signal.actionLabel}。`, { variant: 'success' })
@@ -449,6 +459,7 @@ function SignalCard({
   onDelete,
   onDismiss,
   onRestore,
+  onOpenExpressionLab,
   signal,
 }: {
   signal: GroupLearningSignal
@@ -456,9 +467,11 @@ function SignalCard({
   onDelete: () => void
   onDismiss: () => void
   onRestore: () => void
+  onOpenExpressionLab: () => void
 }) {
   const isDismissed = signal.status === 'dismissed'
   const isAccepted = signal.status === 'accepted'
+  const opensExpressionLab = isExpressionLabSignal(signal.type)
 
   return (
     <article className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm transition hover:border-indigo-200 hover:shadow-md">
@@ -491,12 +504,16 @@ function SignalCard({
         </div>
 
         <div className="border-t border-slate-100 bg-slate-50 p-4 lg:border-l lg:border-t-0">
-          <p className="text-xs font-black uppercase tracking-wide text-slate-500">接受后写入</p>
+          <p className="text-xs font-black uppercase tracking-wide text-slate-500">{opensExpressionLab ? '完成学习后可选择保存' : '接受后写入'}</p>
           <p className="mt-2 text-sm font-bold leading-6 text-slate-800">{signal.target}</p>
           <div className="mt-5 grid gap-2">
             {isDismissed ? (
               <Button variant="secondary" className="justify-between" onClick={onRestore}>
                 恢复线索<ChevronRight className="size-4" />
+              </Button>
+            ) : opensExpressionLab && !isAccepted ? (
+              <Button className="justify-between bg-primary hover:bg-primary/90" onClick={onOpenExpressionLab}>
+                打开表达实验室<ChevronRight className="size-4" />
               </Button>
             ) : (
               <Button className="justify-between bg-primary hover:bg-primary/90" onClick={onAccept} disabled={isAccepted}>
@@ -701,6 +718,7 @@ function toSignalCategory(value: string): GroupLearningSignal['category'] {
 
 function targetDescription(signal: ApiGroupLearningSignal) {
   if (signal.applied_target_type) return `已写入 ${signal.applied_target_type}`
+  if (isExpressionLabSignal(signal.signal_type)) return '先比较、练习，再由你确认保存好句、词汇或语法点'
   if (signal.signal_type === 'desired_vocabulary') return '写入词汇候选和词汇详解入口'
   if (signal.signal_type === 'good_sentence' || signal.signal_type === 'expression_gap') return '写入好句候选和表达练习'
   if (signal.signal_type === 'grammar_error') return '写入语法推荐和学习画像弱点'
@@ -722,6 +740,10 @@ function accentClass(signalType: string) {
   if (signalType === 'good_sentence') return 'border-amber-200 bg-amber-50 text-amber-800'
   if (signalType === 'note_candidate') return 'border-slate-200 bg-slate-50 text-slate-700'
   return 'border-indigo-200 bg-indigo-50 text-indigo-800'
+}
+
+function isExpressionLabSignal(signalType: string) {
+  return ['expression_gap', 'grammar_error', 'good_sentence', 'desired_vocabulary', 'desired_grammar'].includes(signalType)
 }
 
 function formatSignalTime(value?: string | null) {

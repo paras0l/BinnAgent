@@ -47,6 +47,7 @@ class FeishuMcpSyncResult:
     last_sync_at: datetime
     placeholder: bool = False
     help_reply_count: int = 0
+    expression_reuse_count: int = 0
 
 
 @dataclass(frozen=True)
@@ -132,6 +133,7 @@ class FeishuMcpMessageImporter:
             "imported_count": summary.imported_count,
             "duplicate_count": summary.duplicate_count,
             "generated_signal_count": summary.generated_signal_count,
+            "expression_reuse_count": summary.expression_reuse_count,
             "ignored_count": summary.ignored_count,
         }
         await db.flush()
@@ -351,6 +353,7 @@ def _sync_result(
         next_cursor=next_cursor,
         last_sync_at=_last_sync_at(source),
         help_reply_count=help_reply_count,
+        expression_reuse_count=summary.expression_reuse_count,
     )
 
 

@@ -14,6 +14,7 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from src.extraction.writing_phrase import writing_phrase_regex_fallback_payload  # noqa: E402
+from src.expression_lab.ui_spec_validator import expression_ui_fallback_parser  # noqa: E402
 from src.prompts import PromptExecutionContext, PromptExecutor, PromptMetadata, prompt_registry  # noqa: E402
 
 
@@ -118,18 +119,27 @@ async def evaluate_prompt_metadata(
             context=PromptExecutionContext(source_module="prompt_eval"),
             fallback_parser=_fallback_parser(metadata, variables),
         )
-        results.append(
+        case_result = {
+            "case_id": case.get("case_id"),
+            "schema_validation_status": result.schema_validation_status,
+            "repair_used": result.repair_used,
+            "fallback_used": result.fallback_used,
+            "decision": result.decision,
+            "confidence": result.confidence,
+            "parse_mode": result.parse_mode,
+            "schema_error_summary": result.schema_error_summary,
+        }
+        expected = case.get("expected") if isinstance(case.get("expected"), dict) else {}
+        case_result["expectation_failures"] = [
             {
-                "case_id": case.get("case_id"),
-                "schema_validation_status": result.schema_validation_status,
-                "repair_used": result.repair_used,
-                "fallback_used": result.fallback_used,
-                "decision": result.decision,
-                "confidence": result.confidence,
-                "parse_mode": result.parse_mode,
-                "schema_error_summary": result.schema_error_summary,
+                "field": field,
+                "expected": expected_value,
+                "actual": case_result.get(field),
             }
-        )
+            for field, expected_value in expected.items()
+            if case_result.get(field) != expected_value
+        ]
+        results.append(case_result)
 
     metrics = _metrics(results)
     threshold_failures = []
@@ -142,13 +152,22 @@ async def evaluate_prompt_metadata(
                 "expected": min_schema_pass_rate,
             }
         )
+    expectation_failures = [
+        {
+            "case_id": item["case_id"],
+            "failures": item["expectation_failures"],
+        }
+        for item in results
+        if item["expectation_failures"]
+    ]
     return {
         "prompt_id": metadata.id,
         "version": metadata.version,
         "eval_set": metadata.eval_set,
-        "status": "failed" if threshold_failures else "passed",
+        "status": "failed" if threshold_failures or expectation_failures else "passed",
         "metrics": metrics,
         "threshold_failures": threshold_failures,
+        "expectation_failures": expectation_failures,
         "case_count": len(results),
         "cases": results,
     }
@@ -169,6 +188,32 @@ def _read_eval_set(metadata: PromptMetadata) -> list[dict[str, Any]]:
 
 
 def _fallback_parser(metadata: PromptMetadata, variables: dict[str, Any]):
+    if metadata.id == "expression_lab.ui_spec":
+        if variables.get("disable_fallback") is True:
+            return None
+
+        source = variables.get("source") if isinstance(variables.get("source"), dict) else {}
+        source_type = source.get("type")
+        if source_type not in {"manual", "group_learning_signal"}:
+            source_type = "manual"
+
+        def parse_expression_ui(raw_output: str) -> dict[str, Any] | None:
+            return expression_ui_fallback_parser(
+                raw_output,
+                session_id=_string_or_none(variables.get("session_id")),
+                input_text=_string_or_default(
+                    variables.get("input_text"),
+                    "需要更自然的英语表达",
+                ),
+                input_type=_string_or_default(variables.get("input_type"), "zh_intent"),
+                context=_string_or_none(variables.get("context")),
+                style_goal=_string_or_none(variables.get("style_goal")),
+                source_type=source_type,
+                source_ref=_string_or_none(source.get("source_id")),
+            )
+
+        return parse_expression_ui
+
     if metadata.id != "writing_phrase.import":
         return None
 
@@ -177,6 +222,14 @@ def _fallback_parser(metadata: PromptMetadata, variables: dict[str, Any]):
         return writing_phrase_regex_fallback_payload(raw_output, topic)
 
     return parse
+
+
+def _string_or_none(value: Any) -> str | None:
+    return value if isinstance(value, str) else None
+
+
+def _string_or_default(value: Any, default: str) -> str:
+    return value if isinstance(value, str) and value else default
 
 
 def _metrics(results: list[dict[str, Any]]) -> dict[str, float | None]:

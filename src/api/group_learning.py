@@ -248,6 +248,7 @@ class ImportGroupLearningMessagesResponse(BaseModel):
     generated_signal_count: int
     ignored_count: int
     participant_count: int
+    expression_reuse_count: int = 0
 
 
 class SourceSyncStatusResponse(BaseModel):
@@ -543,6 +544,7 @@ async def sync_source_now(
         generated_signal_count=sync_result.generated_signal_count,
         ignored_count=sync_result.ignored_count,
         participant_count=sync_result.participant_count,
+        expression_reuse_count=sync_result.expression_reuse_count,
         fetched_count=sync_result.fetched_count,
         next_cursor=sync_result.next_cursor,
         last_sync_at=sync_result.last_sync_at,
@@ -771,6 +773,7 @@ async def _import_messages(
         generated_signal_count=summary.generated_signal_count,
         ignored_count=summary.ignored_count,
         participant_count=summary.participant_count,
+        expression_reuse_count=summary.expression_reuse_count,
     )
 
 

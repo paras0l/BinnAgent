@@ -290,7 +290,7 @@ export function GroupLearningSettingsDialog({
       const summary = await syncGroupLearningSourceNow(learner.id, selectedSource.id)
       const detail = summary.placeholder
         ? '同步占位已记录，等待 MCP 参数配置'
-        : `已拉取 ${summary.fetched_count} 条，导入 ${summary.imported_count} 条，重复 ${summary.duplicate_count} 条，生成 ${summary.generated_signal_count} 条候选线索，回复 ${summary.help_reply_count ?? 0} 条帮助`
+        : `已拉取 ${summary.fetched_count} 条，导入 ${summary.imported_count} 条，重复 ${summary.duplicate_count} 条，生成 ${summary.generated_signal_count} 条候选线索，识别 ${summary.expression_reuse_count ?? 0} 次表达复用，回复 ${summary.help_reply_count ?? 0} 条帮助`
       setLastImportSummary(detail)
       markSaved(detail)
       await loadSources()
@@ -380,7 +380,7 @@ export function GroupLearningSettingsDialog({
         }
         const messages = normalizeImportedMessages(parsed)
         void importGroupLearningMessages(selectedSource.id, messages).then((summary) => {
-          setLastImportSummary(`导入成功 ${summary.imported_count} 条 · 重复跳过 ${summary.duplicate_count} 条 · 生成候选线索 ${summary.generated_signal_count} 条 · 成员规则忽略 ${summary.ignored_count} 条`)
+          setLastImportSummary(`导入成功 ${summary.imported_count} 条 · 重复跳过 ${summary.duplicate_count} 条 · 生成候选线索 ${summary.generated_signal_count} 条 · 识别表达复用 ${summary.expression_reuse_count ?? 0} 次 · 成员规则忽略 ${summary.ignored_count} 条`)
           void loadSources()
           void loadParticipants(selectedSource.id)
           notifySignalInboxChanged()
