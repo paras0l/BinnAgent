@@ -7,7 +7,7 @@ from typing import Any, Literal
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request, Response, status
 from pydantic import BaseModel, Field
-from sqlalchemy import and_, case, func, or_, select
+from sqlalchemy import String, and_, case, cast, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.api.deps import get_db_session
@@ -47,6 +47,7 @@ from src.models.knowledge import (
     ParserRun,
 )
 from src.models.learner import Learner
+from src.models.learning_progress import LearningProgressItem
 from src.models.session import LearningSession, LearningTask
 from src.models.vocabulary import ReviewSchedule, VocabularyItem, VocabularyItemSource
 from src.providers.router import router as model_router
@@ -121,6 +122,16 @@ class CompleteLessonResponse(BaseModel):
     next_node_id: uuid.UUID | None = None
     next_unit_title: str | None = None
     all_completed: bool = False
+
+
+class UpdateUnitProgressRequest(BaseModel):
+    action: Literal["skip", "relearn"]
+
+
+class UnitProgressResponse(BaseModel):
+    curriculum_node_id: uuid.UUID
+    status: Literal["skipped", "relearning"]
+    progress: float
 
 
 class UploadResponse(BaseModel):
@@ -1032,9 +1043,25 @@ async def knowledge_base_overview(
     point_statuses = learnable_point_statuses(source)
     mastery_result = await db.execute(
         select(
-            KnowledgePoint.curriculum_node_id,
+            CurriculumNode.id.label("curriculum_node_id"),
             func.count(KnowledgePoint.id).label("point_count"),
             func.avg(func.coalesce(LearnerKnowledgeState.mastery_score, 0.0)).label("average_mastery"),
+            func.max(
+                LearningProgressItem.metadata_["progress_override"].as_float()
+            ).label("progress_override"),
+            func.max(
+                LearningProgressItem.metadata_["progress_mode"].as_string()
+            ).label("progress_mode"),
+        )
+        .select_from(CurriculumNode)
+        .outerjoin(
+            KnowledgePoint,
+            and_(
+                KnowledgePoint.curriculum_node_id == CurriculumNode.id,
+                KnowledgePoint.source_id == source.id,
+                KnowledgePoint.status.in_(point_statuses),
+                KnowledgePoint.type != "text_note",
+            ),
         )
         .outerjoin(
             LearnerKnowledgeState,
@@ -1043,19 +1070,34 @@ async def knowledge_base_overview(
                 LearnerKnowledgeState.learner_id == learner_id,
             ),
         )
-        .where(
-            KnowledgePoint.curriculum_node_id.in_(node_ids),
-            KnowledgePoint.source_id == source.id,
-            KnowledgePoint.status.in_(point_statuses),
-            KnowledgePoint.type != "text_note",
+        .outerjoin(
+            LearningProgressItem,
+            and_(
+                LearningProgressItem.learner_id == learner_id,
+                LearningProgressItem.skill == "knowledge_unit",
+                LearningProgressItem.item_id == cast(CurriculumNode.id, String),
+            ),
         )
-        .group_by(KnowledgePoint.curriculum_node_id)
+        .where(
+            CurriculumNode.id.in_(node_ids),
+        )
+        .group_by(CurriculumNode.id)
     )
-    completed_node_ids: set[uuid.UUID] = {
-        row.curriculum_node_id
-        for row in mastery_result
-        if int(row.point_count or 0) > 0 and float(row.average_mastery or 0.0) >= 0.8
-    }
+    unit_progress_overrides: dict[uuid.UUID, float] = {}
+    unit_progress_modes: dict[uuid.UUID, str] = {}
+    completed_node_ids: set[uuid.UUID] = set()
+    for row in mastery_result:
+        progress_mode = getattr(row, "progress_mode", None)
+        progress_override = getattr(row, "progress_override", None)
+        if progress_mode in {"skipped", "relearning"} and progress_override is not None:
+            normalized_override = max(0.0, min(1.0, float(progress_override)))
+            unit_progress_overrides[row.curriculum_node_id] = normalized_override
+            unit_progress_modes[row.curriculum_node_id] = progress_mode
+            if normalized_override >= 1.0:
+                completed_node_ids.add(row.curriculum_node_id)
+            continue
+        if int(row.point_count or 0) > 0 and float(row.average_mastery or 0.0) >= 0.8:
+            completed_node_ids.add(row.curriculum_node_id)
 
     recommended_node = next(
         (node for node in nodes if node.id not in completed_node_ids), nodes[-1]
@@ -1164,6 +1206,8 @@ async def knowledge_base_overview(
                     else "available"
                 ),
                 "progress": 1.0 if node.id in completed_node_ids else 0.0,
+                "progress_override": unit_progress_overrides.get(node.id),
+                "progress_mode": unit_progress_modes.get(node.id),
                 "estimated_minutes": node.estimated_minutes,
             }
             for node in nodes
@@ -1174,6 +1218,8 @@ async def knowledge_base_overview(
             "title": display_node.title,
             "subtitle": display_node.subtitle or "",
             "estimated_minutes": display_node.estimated_minutes or 20,
+            "progress_override": unit_progress_overrides.get(display_node.id),
+            "progress_mode": unit_progress_modes.get(display_node.id),
         },
         "daily_lesson": {
             "id": f"lesson-{display_node.id}",
@@ -1206,6 +1252,87 @@ async def knowledge_base_overview(
         "path": path,
         "recommendation_reason": recommendation_reason,
     }
+
+
+@router.put(
+    "/api/learners/{learner_id}/knowledge-base/units/{curriculum_node_id}/progress",
+    response_model=UnitProgressResponse,
+)
+async def update_unit_progress(
+    learner_id: uuid.UUID,
+    curriculum_node_id: uuid.UUID,
+    body: UpdateUnitProgressRequest,
+    db: AsyncSession = Depends(get_db_session),
+) -> UnitProgressResponse:
+    await _ensure_learner(db, learner_id)
+    node_result = await db.execute(
+        select(CurriculumNode)
+        .join(KnowledgeSource, KnowledgeSource.id == CurriculumNode.source_id)
+        .where(
+            CurriculumNode.id == curriculum_node_id,
+            CurriculumNode.node_type == "unit",
+            or_(
+                KnowledgeSource.owner_learner_id == learner_id,
+                KnowledgeSource.visibility == "public",
+            ),
+        )
+    )
+    node = node_result.scalar_one_or_none()
+    if node is None:
+        raise HTTPException(status_code=404, detail="Curriculum unit not found")
+
+    progress_result = await db.execute(
+        select(LearningProgressItem).where(
+            LearningProgressItem.learner_id == learner_id,
+            LearningProgressItem.skill == "knowledge_unit",
+            LearningProgressItem.item_id == str(curriculum_node_id),
+        )
+    )
+    item = progress_result.scalar_one_or_none()
+    if item is None:
+        item = LearningProgressItem(
+            learner_id=learner_id,
+            skill="knowledge_unit",
+            item_id=str(curriculum_node_id),
+            title=node.title,
+            status="opened",
+            is_favorite=False,
+            opened_count=0,
+            metadata_={},
+        )
+        db.add(item)
+
+    now = datetime.now(timezone.utc)
+    item.title = node.title
+    if body.action == "skip":
+        item.status = "learned"
+        item.learned_at = now
+        item.metadata_ = {
+            "progress_mode": "skipped",
+            "progress_override": 1.0,
+            "source_id": str(node.source_id),
+        }
+        response_status = "skipped"
+        progress = 1.0
+    else:
+        item.status = "opened"
+        item.learned_at = None
+        item.opened_count = (item.opened_count or 0) + 1
+        item.last_opened_at = now
+        item.metadata_ = {
+            "progress_mode": "relearning",
+            "progress_override": 0.0,
+            "source_id": str(node.source_id),
+        }
+        response_status = "relearning"
+        progress = 0.0
+
+    await db.flush()
+    return UnitProgressResponse(
+        curriculum_node_id=curriculum_node_id,
+        status=response_status,
+        progress=progress,
+    )
 
 
 @router.patch(

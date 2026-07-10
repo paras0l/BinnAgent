@@ -94,6 +94,8 @@ export interface CurriculumNode {
   ordinal: number
   status: 'locked' | 'available' | 'in_progress' | 'completed'
   progress: number
+  progress_override?: number | null
+  progress_mode?: 'skipped' | 'relearning' | null
   estimated_minutes?: number | null
 }
 
@@ -277,6 +279,8 @@ export interface KnowledgeBaseOverview {
     title: string
     subtitle: string
     estimated_minutes: number
+    progress_override?: number | null
+    progress_mode?: 'skipped' | 'relearning' | null
   }
   daily_lesson: {
     id: string

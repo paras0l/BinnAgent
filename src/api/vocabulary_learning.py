@@ -5,7 +5,7 @@ from typing import Any, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field
-from sqlalchemy import select
+from sqlalchemy import and_, case, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.api.deps import get_db_session
@@ -32,6 +32,7 @@ from src.vocabulary.learning import (
     is_unit_wordlist_point,
     learnable_point_statuses,
     mastery_to_dict,
+    mark_item_too_easy,
     record_attempt,
     spelling_feedback,
 )
@@ -71,6 +72,30 @@ class AttemptRequest(BaseModel):
 
 class AdvanceRequest(BaseModel):
     vocabulary_item_id: uuid.UUID
+
+
+def _join_vocabulary_override(query, learner_id: uuid.UUID):
+    return query.outerjoin(
+        VocabularyUserOverride,
+        and_(
+            VocabularyUserOverride.learner_id == learner_id,
+            VocabularyUserOverride.vocabulary_item_id == VocabularyItem.id,
+        ),
+    )
+
+
+def _not_marked_too_easy():
+    return or_(
+        VocabularyUserOverride.id.is_(None),
+        VocabularyUserOverride.review_preference != "too_easy",
+    )
+
+
+def _practice_priority_order():
+    return case(
+        (VocabularyUserOverride.review_preference == "too_easy", 1),
+        else_=0,
+    )
 
 
 async def _ensure_learner(db: AsyncSession, learner_id: uuid.UUID) -> None:
@@ -332,7 +357,7 @@ async def start_practice_session(
         if node is None:
             raise HTTPException(status_code=404, detail="Curriculum node not found")
         await enroll_unit_vocabulary(db, learner_id, node)
-        query = (
+        query = _join_vocabulary_override(
             select(VocabularyItem)
             .join(
                 VocabularyItemSource, VocabularyItemSource.vocabulary_item_id == VocabularyItem.id
@@ -341,21 +366,34 @@ async def start_practice_session(
                 VocabularyItem.learner_id == learner_id,
                 VocabularyItemSource.curriculum_node_id == body.curriculum_node_id,
                 VocabularyItemSource.active.is_(True),
-            )
+            ),
+            learner_id,
         )
         if body.mode == "new":
-            query = query.where(VocabularyItem.review_count == 0)
+            query = query.where(VocabularyItem.review_count == 0, _not_marked_too_easy())
         elif body.mode == "review":
             query = query.where(
-                VocabularyItem.status != "mastered",
                 VocabularyItem.next_review_at <= now,
+                or_(
+                    VocabularyItem.status != "mastered",
+                    VocabularyUserOverride.review_preference == "too_easy",
+                ),
             )
         elif body.mode == "spelling":
-            query = query.where(VocabularyItem.status != "mastered")
+            query = query.where(
+                or_(
+                    VocabularyItem.status != "mastered",
+                    and_(
+                        VocabularyUserOverride.review_preference == "too_easy",
+                        VocabularyItem.next_review_at <= now,
+                    ),
+                )
+            )
         if excluded_ids:
             query = query.where(VocabularyItem.id.not_in(excluded_ids))
         source_item_result = await db.execute(
             query.order_by(
+                _practice_priority_order(),
                 VocabularyItem.review_count.asc(),
                 VocabularyItem.next_review_at.asc().nullsfirst(),
                 VocabularyItem.created_at.asc(),
@@ -363,7 +401,7 @@ async def start_practice_session(
         )
         items = list(source_item_result.scalars().unique().all())
         if not items and body.mode == "new":
-            fallback_query = (
+            fallback_query = _join_vocabulary_override(
                 select(VocabularyItem)
                 .join(
                     VocabularyItemSource,
@@ -374,12 +412,15 @@ async def start_practice_session(
                     VocabularyItemSource.curriculum_node_id == body.curriculum_node_id,
                     VocabularyItemSource.active.is_(True),
                     VocabularyItem.status != "mastered",
-                )
+                    _not_marked_too_easy(),
+                ),
+                learner_id,
             )
             if excluded_ids:
                 fallback_query = fallback_query.where(VocabularyItem.id.not_in(excluded_ids))
             fallback_result = await db.execute(
                 fallback_query.order_by(
+                    _practice_priority_order(),
                     VocabularyItem.review_count.asc(),
                     VocabularyItem.next_review_at.asc().nullsfirst(),
                     VocabularyItem.created_at.asc(),
@@ -389,17 +430,34 @@ async def start_practice_session(
     else:
         conditions = [VocabularyItem.learner_id == learner_id]
         if body.mode == "new":
-            conditions.append(VocabularyItem.review_count == 0)
+            conditions.extend([VocabularyItem.review_count == 0, _not_marked_too_easy()])
         elif body.mode == "review":
-            conditions.extend([VocabularyItem.status != "mastered", VocabularyItem.next_review_at <= now])
+            conditions.extend(
+                [
+                    VocabularyItem.next_review_at <= now,
+                    or_(
+                        VocabularyItem.status != "mastered",
+                        VocabularyUserOverride.review_preference == "too_easy",
+                    ),
+                ]
+            )
         else:
-            conditions.append(VocabularyItem.status != "mastered")
+            conditions.append(
+                or_(
+                    VocabularyItem.status != "mastered",
+                    and_(
+                        VocabularyUserOverride.review_preference == "too_easy",
+                        VocabularyItem.next_review_at <= now,
+                    ),
+                )
+            )
         if excluded_ids:
             conditions.append(VocabularyItem.id.not_in(excluded_ids))
         item_result = await db.execute(
-            select(VocabularyItem)
+            _join_vocabulary_override(select(VocabularyItem), learner_id)
             .where(*conditions)
             .order_by(
+                _practice_priority_order(),
                 VocabularyItem.review_count.asc(),
                 VocabularyItem.next_review_at.asc().nullsfirst(), VocabularyItem.created_at.asc()
             )
@@ -725,6 +783,39 @@ async def advance_practice_session(
         session.completed_at = datetime.now(timezone.utc)
     await db.flush()
     return _summary(session)
+
+
+@router.post("/sessions/{session_id}/too-easy")
+async def mark_current_item_too_easy(
+    learner_id: uuid.UUID,
+    session_id: uuid.UUID,
+    body: AdvanceRequest,
+    db: AsyncSession = Depends(get_db_session),
+) -> dict[str, Any]:
+    session = await _get_session(db, learner_id, session_id)
+    if current_item_id(session) != body.vocabulary_item_id:
+        raise HTTPException(status_code=409, detail="Too-easy mark does not match the current task")
+    item_result = await db.execute(
+        select(VocabularyItem).where(
+            VocabularyItem.id == body.vocabulary_item_id,
+            VocabularyItem.learner_id == learner_id,
+        )
+    )
+    item = item_result.scalar_one_or_none()
+    if item is None:
+        raise HTTPException(status_code=404, detail="Vocabulary item not found")
+
+    await mark_item_too_easy(db, item)
+    session.current_index += 1
+    if session.current_index >= len(session.item_ids):
+        session.status = "completed"
+        session.completed_at = datetime.now(timezone.utc)
+    await db.flush()
+    return {
+        **_summary(session),
+        "marked_item_id": str(item.id),
+        "review_preference": "too_easy",
+    }
 
 
 @router.get("/sessions/{session_id}/summary")

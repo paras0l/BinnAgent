@@ -24,4 +24,13 @@ describe('KnowledgeBasePage daily learning layout', () => {
     expect(source).toContain('retry_after_seconds')
     expect(source).toContain('题目已进入后台生成队列')
   })
+
+  it('supports confirming a unit skip and resetting it for relearning', () => {
+    expect(source).toContain('跳过这个单元？')
+    expect(source).toContain('确认跳过')
+    expect(source).toContain("updateUnitProgress('skip'")
+    expect(source).toContain("updateUnitProgress('relearn'")
+    expect(source).toContain("currentCurriculumNode?.progress_override")
+    expect(source).toContain("isUnitSkipped ? '重学' : '继续学习'")
+  })
 })

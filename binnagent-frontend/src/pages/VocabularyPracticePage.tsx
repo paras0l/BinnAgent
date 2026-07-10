@@ -418,6 +418,31 @@ export function VocabularyPracticePage({
     }
   }, [api, isBusy, loadTask, sessionId, task])
 
+  const markTooEasy = async () => {
+    if (!task || !sessionId || isBusy) return
+    setIsBusy(true)
+    setError(null)
+    try {
+      const response = await fetch(`${api}/sessions/${sessionId}/too-easy`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ vocabulary_item_id: task.vocabulary_item_id }),
+      })
+      if (!response.ok) throw new Error('“太简单”标记暂时无法保存。')
+      const data = await response.json() as SessionSummary
+      if (data.completed >= data.total) {
+        setSummary(data)
+        setPhase('summary')
+      } else {
+        await loadTask(sessionId)
+      }
+    } catch (markError) {
+      setError(markError instanceof Error ? markError.message : '“太简单”标记暂时无法保存。')
+    } finally {
+      setIsBusy(false)
+    }
+  }
+
   const rateAndAdvance = async (rating: 1 | 2 | 3 | 4) => {
     const attempt = await submitAttempt({ rating })
     if (attempt) await advance()
@@ -638,9 +663,11 @@ export function VocabularyPracticePage({
             isMorphologyHintVisible={isMorphologyHintVisible}
             mode={mode}
             sourceLabel={task.sources[0]?.label ?? sourceLabel ?? '我的词汇本'}
+            isBusy={isBusy}
             onEditTerm={() => learnMoreTerm && setDetailTerm(learnMoreTerm)}
             onHint={() => void requestHint()}
             onToggleMorphologyHint={() => setIsMorphologyHintVisible((value) => !value)}
+            onTooEasy={() => void markTooEasy()}
             onReveal={() => {
               if (mode === 'review' && !isReviewRevealed) setIsReviewRevealed(true)
               else void submitAttempt({ reveal: true })
@@ -810,9 +837,11 @@ function TaskSupportPanel({
   mode,
   morphology,
   sourceLabel,
+  isBusy,
   onEditTerm,
   onHint,
   onToggleMorphologyHint,
+  onTooEasy,
   onReveal,
 }: {
   feedback: AttemptFeedback | null
@@ -823,9 +852,11 @@ function TaskSupportPanel({
   morphology: WordPartAnalysis | null
   mode: VocabularyPracticeMode
   sourceLabel: string
+  isBusy: boolean
   onEditTerm: () => void
   onHint: () => void
   onToggleMorphologyHint: () => void
+  onTooEasy: () => void
   onReveal: () => void
 }) {
   const modeLabel = mode === 'new' ? '新词学习' : mode === 'review' ? '今日复习' : '拼写练习'
@@ -878,15 +909,26 @@ function TaskSupportPanel({
             {mode === 'spelling' ? '不认识，先看答案' : '显示答案'}
           </button>
         )}
-        {learnMoreTerm && (
-          <button
-            type="button"
-            onClick={onEditTerm}
-            className="inline-flex items-center justify-center gap-2 rounded-xl border border-indigo-200 bg-white px-4 py-2.5 text-sm font-black text-indigo-700 transition-colors hover:border-indigo-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
-          >
-            编辑词卡 <BookOpen className="size-4" />
-          </button>
-        )}
+        {learnMoreTerm ? (
+          <>
+            <button
+              type="button"
+              onClick={onEditTerm}
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-indigo-200 bg-white px-4 py-2.5 text-sm font-black text-indigo-700 transition-colors hover:border-indigo-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
+            >
+              编辑词卡 <BookOpen className="size-4" />
+            </button>
+            <button
+              type="button"
+              onClick={onTooEasy}
+              disabled={isBusy}
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm font-black text-emerald-700 transition-colors hover:border-emerald-300 hover:bg-emerald-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-500 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <Check className="size-4" />
+              太简单（标记已掌握）
+            </button>
+          </>
+        ) : null}
       </div>
 
       {canShowMorphologyHint ? (

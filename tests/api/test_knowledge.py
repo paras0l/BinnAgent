@@ -22,6 +22,7 @@ from src.models.knowledge import (
     LearnerKnowledgeState,
     ParserRun,
 )
+from src.models.learning_progress import LearningProgressItem
 from src.models.session import LearningSession, LearningTask
 from src.models.vocabulary import ReviewSchedule, VocabularyItem, VocabularyItemSource
 
@@ -299,6 +300,125 @@ async def test_overview_does_not_advance_after_lesson_when_unit_mastery_is_low(
     assert payload["current_node_id"] == str(nodes[0].id)
     assert payload["curriculum"][0]["status"] == "in_progress"
     assert payload["curriculum"][1]["status"] == "available"
+
+
+@pytest.mark.asyncio
+async def test_overview_applies_skipped_and_relearning_unit_progress(
+    client, knowledge_session
+):
+    learner_id = uuid.uuid4()
+    source = _source()
+    nodes = [_node(source.id, 1), _node(source.id, 2)]
+    point = _point(source.id, nodes[0].id)
+    knowledge_session.execute = AsyncMock(
+        side_effect=[
+            _one(learner_id),
+            _many([source]),
+            _one(source),
+            _many(nodes),
+            _rows(
+                [
+                    SimpleNamespace(
+                        curriculum_node_id=nodes[0].id,
+                        point_count=1,
+                        average_mastery=0.1,
+                        progress_override=1.0,
+                        progress_mode="skipped",
+                    ),
+                    SimpleNamespace(
+                        curriculum_node_id=nodes[1].id,
+                        point_count=1,
+                        average_mastery=0.95,
+                        progress_override=0.0,
+                        progress_mode="relearning",
+                    ),
+                ]
+            ),
+            _many([point]),
+            _many([]),
+            _many([]),
+        ]
+    )
+
+    response = await client.get(
+        f"/api/learners/{learner_id}/knowledge-base?node_id={nodes[0].id}"
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["source"]["progress"] == 0.5
+    assert payload["curriculum"][0]["status"] == "completed"
+    assert payload["curriculum"][0]["progress_override"] == 1.0
+    assert payload["curriculum"][0]["progress_mode"] == "skipped"
+    assert payload["curriculum"][1]["status"] == "in_progress"
+    assert payload["curriculum"][1]["progress_override"] == 0.0
+    assert payload["curriculum"][1]["progress_mode"] == "relearning"
+    assert payload["current_unit"]["progress_override"] == 1.0
+
+
+@pytest.mark.asyncio
+async def test_skip_unit_sets_progress_override_to_complete(client, knowledge_session):
+    learner_id = uuid.uuid4()
+    source = _source()
+    node = _node(source.id)
+    knowledge_session.execute = AsyncMock(
+        side_effect=[_one(learner_id), _one(node), _one(None)]
+    )
+
+    response = await client.put(
+        f"/api/learners/{learner_id}/knowledge-base/units/{node.id}/progress",
+        json={"action": "skip"},
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "curriculum_node_id": str(node.id),
+        "status": "skipped",
+        "progress": 1.0,
+    }
+    progress = next(
+        item
+        for item in knowledge_session.added_objects
+        if isinstance(item, LearningProgressItem)
+    )
+    assert progress.status == "learned"
+    assert progress.metadata_["progress_mode"] == "skipped"
+    assert progress.metadata_["progress_override"] == 1.0
+
+
+@pytest.mark.asyncio
+async def test_relearn_unit_resets_progress_override(client, knowledge_session):
+    learner_id = uuid.uuid4()
+    source = _source()
+    node = _node(source.id)
+    progress = LearningProgressItem(
+        learner_id=learner_id,
+        skill="knowledge_unit",
+        item_id=str(node.id),
+        title=node.title,
+        status="learned",
+        opened_count=0,
+        learned_at=datetime.now(timezone.utc),
+        metadata_={"progress_mode": "skipped", "progress_override": 1.0},
+    )
+    progress.id = uuid.uuid4()
+    knowledge_session.execute = AsyncMock(
+        side_effect=[_one(learner_id), _one(node), _one(progress)]
+    )
+
+    response = await client.put(
+        f"/api/learners/{learner_id}/knowledge-base/units/{node.id}/progress",
+        json={"action": "relearn"},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["progress"] == 0.0
+    assert response.json()["status"] == "relearning"
+    assert progress.status == "opened"
+    assert progress.learned_at is None
+    assert progress.opened_count == 1
+    assert progress.metadata_["progress_mode"] == "relearning"
+    assert progress.metadata_["progress_override"] == 0.0
 
 
 @pytest.mark.asyncio

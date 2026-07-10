@@ -1,4 +1,4 @@
-import { AlertCircle, ArrowRight, BookCheck, BookMarked, BookOpen, BookOpenCheck, CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, Clock3, Dumbbell, FileText, GraduationCap, Languages, Layers3, LibraryBig, ListChecks, ListTree, LoaderCircle, Send, Sparkles, Trash2, UploadCloud, X } from 'lucide-react'
+import { AlertCircle, ArrowRight, BookCheck, BookMarked, BookOpen, BookOpenCheck, CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, Clock3, Dumbbell, FileText, GraduationCap, Languages, Layers3, LibraryBig, ListChecks, ListTree, LoaderCircle, RotateCcw, Send, SkipForward, Sparkles, Trash2, UploadCloud, X } from 'lucide-react'
 import { useCallback, useEffect, useId, useMemo, useState, type KeyboardEventHandler, type ReactNode, type Ref } from 'react'
 import type { CapabilityRecommendation } from '@/components/learning/CapabilityRecommendationCard'
 import { PageShell } from '@/components/layout/PageShell'
@@ -107,6 +107,11 @@ interface DeleteSourceTarget {
   title: string
 }
 
+interface UnitProgressTarget {
+  nodeId: string
+  title: string
+}
+
 type KnowledgeWorkspace = 'today' | 'unit' | 'exercises'
 
 interface ReadingWorkshopSeed {
@@ -165,6 +170,8 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice, 
   const [isUploadOpen, setIsUploadOpen] = useState(false)
   const [deleteSourceTarget, setDeleteSourceTarget] = useState<DeleteSourceTarget | null>(null)
   const [isDeletingSource, setIsDeletingSource] = useState(false)
+  const [skipUnitTarget, setSkipUnitTarget] = useState<UnitProgressTarget | null>(null)
+  const [isUpdatingUnitProgress, setIsUpdatingUnitProgress] = useState(false)
   const [lessonSession, setLessonSession] = useState<KnowledgeLessonSession | null>(null)
   const [lessonNodeId, setLessonNodeId] = useState<string | null>(null)
   const [isStartingLesson, setIsStartingLesson] = useState(false)
@@ -530,6 +537,41 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice, 
     await loadOverview(selectedSourceId ?? overview?.source.id, completedNodeId)
   }
 
+  const updateUnitProgress = async (
+    action: 'skip' | 'relearn',
+    target: UnitProgressTarget,
+  ) => {
+    if (isUpdatingUnitProgress) return
+    setIsUpdatingUnitProgress(true)
+    try {
+      const response = await fetch(
+        `/api/learners/${learner.id}/knowledge-base/units/${target.nodeId}/progress`,
+        {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action }),
+        },
+      )
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null) as { detail?: string } | null
+        throw new Error(payload?.detail ?? '单元进度暂时无法更新。')
+      }
+      if (action === 'skip') setSkipUnitTarget(null)
+      showToast(
+        action === 'skip' ? '已跳过当前单元，进度已标记为 100%。' : '已开始重学，当前单元进度已重置为 0%。',
+        { variant: 'success' },
+      )
+      await loadOverview(selectedSourceId ?? overview?.source.id, target.nodeId)
+    } catch (progressError) {
+      showToast(
+        progressError instanceof Error ? progressError.message : '单元进度暂时无法更新。',
+        { variant: 'error' },
+      )
+    } finally {
+      setIsUpdatingUnitProgress(false)
+    }
+  }
+
   const handleStartDailyLesson = async () => {
     if (!overview?.current_unit.id) return
     setIsStartingDailyLesson(true)
@@ -808,7 +850,11 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice, 
   const currentSourceLabel = `${overview.source.title} · ${overview.current_unit.title}`
   const activeWorkspace = KNOWLEDGE_WORKSPACES[0]
   const unitWorkspace = overview.unit_workspace ?? fallbackUnitWorkspace(overview)
-  const unitProgressPercent = normalizePercent(unitWorkspace.mastery_summary.average)
+  const currentCurriculumNode = overview.curriculum.find((node) => node.id === overview.current_unit.id)
+  const unitProgressPercent = normalizePercent(
+    currentCurriculumNode?.progress_override ?? unitWorkspace.mastery_summary.average,
+  )
+  const isUnitSkipped = currentCurriculumNode?.progress_mode === 'skipped'
   const capabilityRecommendations = buildCapabilityRecommendations(
     overview,
     dailyLesson?.next_capability_recommendations ?? [],
@@ -921,8 +967,18 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice, 
             progressPercent={unitProgressPercent}
             capabilityCount={capabilityRecommendations.length}
             isStartingLesson={isStartingLesson}
+            isUpdatingUnitProgress={isUpdatingUnitProgress}
+            isUnitSkipped={isUnitSkipped}
             onBack={onBack}
             onStartLesson={() => void handleStartLesson()}
+            onRelearn={() => void updateUnitProgress('relearn', {
+              nodeId: overview.current_unit.id,
+              title: overview.current_unit.title,
+            })}
+            onSkip={() => setSkipUnitTarget({
+              nodeId: overview.current_unit.id,
+              title: overview.current_unit.title,
+            })}
             onViewMaterials={() => document.getElementById('unit-materials')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
             onOpenCapabilities={() => setIsCapabilityDrawerOpen(true)}
             onOpenCurriculum={() => {
@@ -943,10 +999,16 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice, 
             isStartingDailyLesson={isStartingDailyLesson}
             isGeneratingReadingMaterial={isGeneratingReadingMaterial}
             isLoadingReadingMaterials={isLoadingUnitReadingMaterials}
+            isUnitSkipped={isUnitSkipped}
+            isUpdatingUnitProgress={isUpdatingUnitProgress}
             readingMaterialType={readingMaterialType}
             readingMaterialLength={readingMaterialLength}
             readingMaterials={unitReadingMaterials}
             onStartLesson={() => void handleStartLesson()}
+            onRelearn={() => void updateUnitProgress('relearn', {
+              nodeId: overview.current_unit.id,
+              title: overview.current_unit.title,
+            })}
             onStartVocabulary={(mode) => onStartVocabularyPractice(mode, overview.current_unit.id, currentSourceLabel)}
             onStartExercise={() => void handleStartExercise()}
             onStartDailyLesson={() => void handleStartDailyLesson()}
@@ -1040,6 +1102,17 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice, 
       />
       <UploadTextbookDialog open={isUploadOpen} onClose={() => setIsUploadOpen(false)} onUpload={handleUpload} />
       <ConfirmDialog
+        open={Boolean(skipUnitTarget)}
+        title="跳过这个单元？"
+        description={skipUnitTarget ? `确认跳过「${skipUnitTarget.title}」后，本单元进度会标记为 100%。之后可以随时点击“重学”，把进度重置为 0%。` : ''}
+        confirmLabel="确认跳过"
+        isBusy={isUpdatingUnitProgress}
+        onCancel={() => setSkipUnitTarget(null)}
+        onConfirm={() => {
+          if (skipUnitTarget) void updateUnitProgress('skip', skipUnitTarget)
+        }}
+      />
+      <ConfirmDialog
         open={Boolean(deleteSourceTarget)}
         title="删除这本教材？"
         description={deleteSourceTarget ? `删除后会移除「${deleteSourceTarget.title}」及其解析出的目录、知识点、练习和索引。之后可以重新上传 PDF 生成新的知识库。` : ''}
@@ -1094,8 +1167,12 @@ function CourseHero({
   progressPercent,
   capabilityCount,
   isStartingLesson,
+  isUpdatingUnitProgress,
+  isUnitSkipped,
   onBack,
   onStartLesson,
+  onRelearn,
+  onSkip,
   onViewMaterials,
   onOpenCapabilities,
   onOpenCurriculum,
@@ -1107,8 +1184,12 @@ function CourseHero({
   progressPercent: number
   capabilityCount: number
   isStartingLesson: boolean
+  isUpdatingUnitProgress: boolean
+  isUnitSkipped: boolean
   onBack: () => void
   onStartLesson: () => void
+  onRelearn: () => void
+  onSkip: () => void
   onViewMaterials: () => void
   onOpenCapabilities: () => void
   onOpenCurriculum: () => void
@@ -1184,10 +1265,24 @@ function CourseHero({
           </div>
 
           <div className="mt-6 flex flex-wrap gap-3">
-            <Button onClick={onStartLesson} disabled={isStartingLesson} className="min-w-36">
-              {isStartingLesson ? <LoaderCircle className="size-4 animate-spin" /> : <BookOpen className="size-4" />}
-              继续学习
+            <Button
+              onClick={isUnitSkipped ? onRelearn : onStartLesson}
+              disabled={isStartingLesson || isUpdatingUnitProgress}
+              className="min-w-36"
+            >
+              {isStartingLesson || isUpdatingUnitProgress
+                ? <LoaderCircle className="size-4 animate-spin" />
+                : isUnitSkipped
+                  ? <RotateCcw className="size-4" />
+                  : <BookOpen className="size-4" />}
+              {isUpdatingUnitProgress ? '更新中' : isUnitSkipped ? '重学' : '继续学习'}
             </Button>
+            {!isUnitSkipped ? (
+              <Button variant="ghost" onClick={onSkip} disabled={isUpdatingUnitProgress}>
+                <SkipForward className="size-4" />
+                跳过本单元
+              </Button>
+            ) : null}
             <Button variant="secondary" onClick={onViewMaterials}>
               <BookMarked className="size-4" />
               查看单元材料
@@ -1214,10 +1309,13 @@ function TodayCourseTasks({
   isStartingDailyLesson,
   isGeneratingReadingMaterial,
   isLoadingReadingMaterials,
+  isUnitSkipped,
+  isUpdatingUnitProgress,
   readingMaterialType,
   readingMaterialLength,
   readingMaterials,
   onStartLesson,
+  onRelearn,
   onStartVocabulary,
   onStartExercise,
   onStartDailyLesson,
@@ -1232,10 +1330,13 @@ function TodayCourseTasks({
   isStartingDailyLesson: boolean
   isGeneratingReadingMaterial: boolean
   isLoadingReadingMaterials: boolean
+  isUnitSkipped: boolean
+  isUpdatingUnitProgress: boolean
   readingMaterialType: ReadingMaterialType
   readingMaterialLength: ReadingMaterialLength
   readingMaterials: ReadingMaterialGenerationResponse['material'][]
   onStartLesson: () => void
+  onRelearn: () => void
   onStartVocabulary: (mode: VocabularyPracticeMode) => void
   onStartExercise: () => void
   onStartDailyLesson: () => void
@@ -1252,10 +1353,10 @@ function TodayCourseTasks({
       title: '单元导学',
       description: '先过一遍本单元目标、重点和例句。',
       meta: `预计 ${overview.current_unit.estimated_minutes || 12} 分钟`,
-      status: 'continue',
-      actionLabel: '继续',
-      isLoading: isStartingLesson,
-      onAction: onStartLesson,
+      status: isUnitSkipped ? 'completed' : 'continue',
+      actionLabel: isUnitSkipped ? '重学' : '继续',
+      isLoading: isStartingLesson || isUpdatingUnitProgress,
+      onAction: isUnitSkipped ? onRelearn : onStartLesson,
     },
     {
       icon: <Languages className="size-5" />,

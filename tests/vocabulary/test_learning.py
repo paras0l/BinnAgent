@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime, timedelta, timezone
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -10,9 +11,15 @@ from src.models.vocabulary import (
     VocabularyMasteryVector,
     VocabularyMistake,
     VocabularyPracticeSession,
+    VocabularyUserOverride,
 )
 from src.models.knowledge import KnowledgeLearningEvent, LearnerKnowledgeState
-from src.vocabulary.learning import canonical_vocabulary_key, record_attempt, spelling_feedback
+from src.vocabulary.learning import (
+    canonical_vocabulary_key,
+    mark_item_too_easy,
+    record_attempt,
+    spelling_feedback,
+)
 
 
 def test_canonical_key_normalizes_case_spacing_and_smart_apostrophe() -> None:
@@ -47,6 +54,37 @@ def _scalar_result(values=None, value=None):
     result.scalar_one_or_none.return_value = value
     result.scalars.return_value.all.return_value = [] if values is None else values
     return result
+
+
+@pytest.mark.asyncio
+async def test_mark_item_too_easy_marks_mastered_and_delays_review() -> None:
+    learner_id = uuid.uuid4()
+    item = VocabularyItem(
+        learner_id=learner_id,
+        word="hello",
+        canonical_key="hello",
+        entry_kind="word",
+        status="learning",
+        confidence=0.2,
+        review_count=0,
+        next_review_at=datetime.now(timezone.utc),
+    )
+    item.id = uuid.uuid4()
+    db = MagicMock()
+    db.execute = AsyncMock(return_value=_scalar_result(value=None))
+    added: list[object] = []
+    db.add = MagicMock(side_effect=added.append)
+    before = datetime.now(timezone.utc)
+
+    override = await mark_item_too_easy(db, item)
+
+    assert isinstance(override, VocabularyUserOverride)
+    assert override in added
+    assert override.review_preference == "too_easy"
+    assert override.manual_mastery == "too_easy"
+    assert item.status == "mastered"
+    assert item.confidence == pytest.approx(0.9)
+    assert item.next_review_at >= before + timedelta(days=59)
 
 
 @pytest.mark.asyncio

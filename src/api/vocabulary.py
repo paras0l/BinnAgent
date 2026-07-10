@@ -18,7 +18,7 @@ from src.models.vocabulary import (
     VocabularyUserOverride,
 )
 from src.tools.vocabulary_detail_html import extract_vocabulary_detail_html
-from src.vocabulary.learning import canonical_vocabulary_key, mastery_to_dict
+from src.vocabulary.learning import canonical_vocabulary_key, mark_item_too_easy, mastery_to_dict
 
 router = APIRouter(prefix="/api/learners/{learner_id}/vocabulary", tags=["vocabulary"])
 
@@ -482,9 +482,7 @@ async def update_vocabulary_override(
             item.next_review_at = datetime.now(timezone.utc)
             override.manual_mastery = "relearn"
         elif data["review_preference"] == "too_easy":
-            item.status = "mastered"
-            item.confidence = max(item.confidence, 0.9)
-            override.manual_mastery = "too_easy"
+            await mark_item_too_easy(db, item, override=override)
     if override.preferred_accent in {"uk", "us", "auto"}:
         item.preferred_accent = override.preferred_accent
     await db.commit()

@@ -14,7 +14,12 @@ from src.api.vocabulary_learning import (
 )
 from src.main import app
 from src.models.knowledge import CurriculumNode, KnowledgePoint, KnowledgeSource
-from src.models.vocabulary import VocabularyItem, VocabularyItemSource
+from src.models.vocabulary import (
+    VocabularyItem,
+    VocabularyItemSource,
+    VocabularyPracticeSession,
+    VocabularyUserOverride,
+)
 from src.vocabulary.learning import EnrollmentResult
 
 
@@ -206,3 +211,55 @@ async def test_unit_new_session_falls_back_to_learning_words(monkeypatch) -> Non
 
     assert result.total == 1
     assert result.mode == "new"
+
+
+@pytest.mark.asyncio
+async def test_too_easy_marks_current_word_mastered_and_advances(
+    client, vocabulary_learning_session
+):
+    learner_id = uuid.uuid4()
+    item = VocabularyItem(
+        learner_id=learner_id,
+        word="hello",
+        canonical_key="hello",
+        entry_kind="word",
+        status="learning",
+        confidence=0.2,
+        review_count=0,
+        next_review_at=datetime.now(timezone.utc),
+    )
+    item.id = uuid.uuid4()
+    practice = VocabularyPracticeSession(
+        learner_id=learner_id,
+        mode="new",
+        prompt_mode="context",
+        accent="uk",
+        status="in_progress",
+        item_ids=[str(item.id)],
+        current_index=0,
+        correct_count=0,
+        hinted_count=0,
+        revealed_count=0,
+        started_at=datetime.now(timezone.utc),
+    )
+    practice.id = uuid.uuid4()
+    added: list[object] = []
+    vocabulary_learning_session.add = MagicMock(side_effect=added.append)
+    vocabulary_learning_session.flush = AsyncMock()
+    vocabulary_learning_session.execute = AsyncMock(
+        side_effect=[_one(practice), _one(item), _one(None)]
+    )
+
+    response = await client.post(
+        f"/api/learners/{learner_id}/vocabulary/sessions/{practice.id}/too-easy",
+        json={"vocabulary_item_id": str(item.id)},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["completed"] == 1
+    assert response.json()["review_preference"] == "too_easy"
+    assert practice.status == "completed"
+    assert item.status == "mastered"
+    assert item.confidence == pytest.approx(0.9)
+    override = next(value for value in added if isinstance(value, VocabularyUserOverride))
+    assert override.review_preference == "too_easy"

@@ -26,6 +26,8 @@ from src.models.vocabulary import (
 )
 from src.tools.free_dictionary import lookup_free_dictionary_batch
 
+TOO_EASY_REVIEW_DELAY_DAYS = 60
+
 
 def canonical_vocabulary_key(value: str) -> str:
     value = value.casefold().replace("’", "'").strip()
@@ -607,3 +609,43 @@ async def excluded_item_ids(db: AsyncSession, learner_id: uuid.UUID) -> set[uuid
         )
     )
     return set(result.scalars().all())
+
+
+async def mark_item_too_easy(
+    db: AsyncSession,
+    item: VocabularyItem,
+    *,
+    override: VocabularyUserOverride | None = None,
+) -> VocabularyUserOverride:
+    if override is None:
+        result = await db.execute(
+            select(VocabularyUserOverride).where(
+                VocabularyUserOverride.learner_id == item.learner_id,
+                VocabularyUserOverride.vocabulary_item_id == item.id,
+            )
+        )
+        override = result.scalar_one_or_none()
+    if override is None:
+        override = VocabularyUserOverride(
+            learner_id=item.learner_id,
+            vocabulary_item_id=item.id,
+            meaning_overrides=[],
+            hidden_meaning_ids=[],
+            user_examples=[],
+            user_collocations=[],
+            preferred_accent="auto",
+            review_preference="normal",
+            excluded_from_review=False,
+        )
+        db.add(override)
+
+    now = datetime.now(timezone.utc)
+    delayed_review_at = now + timedelta(days=TOO_EASY_REVIEW_DELAY_DAYS)
+    override.review_preference = "too_easy"
+    override.manual_mastery = "too_easy"
+    override.excluded_from_review = False
+    item.status = "mastered"
+    item.confidence = max(float(item.confidence or 0.0), 0.9)
+    if item.next_review_at is None or item.next_review_at < delayed_review_at:
+        item.next_review_at = delayed_review_at
+    return override
