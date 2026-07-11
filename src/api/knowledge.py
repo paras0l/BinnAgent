@@ -317,6 +317,7 @@ def _source_payload(
     progress: float = 0.0,
     requires_review: bool | None = None,
 ) -> dict[str, Any]:
+    metadata = source.metadata_ or {}
     return {
         **_source_quality_payload(source),
         "id": str(source.id),
@@ -335,6 +336,13 @@ def _source_payload(
         else requires_review,
         "page_count": source.page_count,
         "can_delete": source.visibility == "private",
+        "subject": metadata.get("subject"),
+        "province": metadata.get("province"),
+        "city": metadata.get("city"),
+        "edition_year": metadata.get("edition_year"),
+        "selection_basis_url": metadata.get("selection_basis_url"),
+        "official_material_url": metadata.get("official_material_url"),
+        "official_material_note": metadata.get("official_material_note"),
     }
 
 

@@ -28,6 +28,7 @@ RUN python -m pip install --no-cache-dir -r /tmp/requirements.txt && \
 COPY alembic/ ./alembic/
 COPY alembic.ini ./
 COPY books/ ./books/
+COPY docs/books/audio/ ./docs/books/audio/
 COPY scripts/ ./scripts/
 COPY src/ ./src/
 

@@ -138,6 +138,10 @@ async def test_unit_summary_includes_full_textbook_total(client, vocabulary_lear
         "learning": 1,
         "mastered": 0,
         "due": 1,
+        "core_total": 7,
+        "primary_review_total": 0,
+        "core_enrolled": 1,
+        "primary_review_enrolled": 0,
     }
 
 

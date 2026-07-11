@@ -1,6 +1,7 @@
 import { AlertCircle, ArrowRight, BookCheck, BookMarked, BookOpen, BookOpenCheck, CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, Clock3, Dumbbell, FileText, GraduationCap, Languages, Layers3, LibraryBig, ListChecks, ListTree, LoaderCircle, RotateCcw, Send, SkipForward, Sparkles, Trash2, UploadCloud, X } from 'lucide-react'
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type KeyboardEventHandler, type ReactNode, type Ref } from 'react'
 import type { CapabilityRecommendation } from '@/components/learning/CapabilityRecommendationCard'
+import { GenerativeClassroom, type ClassroomPlan } from '@/components/learning/GenerativeClassroom'
 import { PageShell } from '@/components/layout/PageShell'
 import { CurriculumRail } from '@/components/knowledge/CurriculumRail'
 import { ExerciseSessionDialog } from '@/components/knowledge/ExerciseSessionDialog'
@@ -181,6 +182,8 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice, 
   const [isStartingExercise, setIsStartingExercise] = useState(false)
   const [exercisePoolNodeId, setExercisePoolNodeId] = useState<string | null>(null)
   const [dailyLesson, setDailyLesson] = useState<DailyLessonRuntime | null>(null)
+  const [classroomPlan, setClassroomPlan] = useState<ClassroomPlan | null>(null)
+  const [isLegacyDailyLessonOpen, setIsLegacyDailyLessonOpen] = useState(false)
   const [dailyAnswer, setDailyAnswer] = useState('')
   const [isStartingDailyLesson, setIsStartingDailyLesson] = useState(false)
   const [readingMaterialType, setReadingMaterialType] = useState<ReadingMaterialType>('passage')
@@ -596,23 +599,65 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice, 
     if (!overview?.current_unit.id) return
     setIsStartingDailyLesson(true)
     try {
-      const response = await fetch(`/api/learners/${learner.id}/daily-lessons/start`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          current_curriculum_node_id: overview.current_unit.id,
-          time_budget_minutes: overview.daily_lesson.estimated_minutes,
-          mode_hint: 'textbook_guided',
+      const requestInit = { method: 'POST', headers: { 'Content-Type': 'application/json' } }
+      const restoreOrStartLesson = async (): Promise<DailyLessonRuntime | null> => {
+        if (dailyLesson?.answer_required && dailyLesson.episode_id) return dailyLesson
+        const storedEpisodeId = window.localStorage.getItem(dailyLessonStorageKey)
+        if (storedEpisodeId) {
+          const statusResponse = await fetch(`/api/learners/${learner.id}/daily-lessons/${storedEpisodeId}`)
+          if (statusResponse.ok) {
+            const status = await statusResponse.json() as DailyLessonStatusResponse
+            if (status.checkpoint?.status === 'waiting_user') {
+              return {
+                episode_id: status.episode_id,
+                status: status.episode_status,
+                answer_required: true,
+                checkpoint_id: status.checkpoint.checkpoint_id,
+                checkpoint_status: status.checkpoint.status,
+                resume_from: status.checkpoint.resume_from,
+                prompt: readPrompt(status.checkpoint.prompt_payload),
+                initial_payload: status.checkpoint.prompt_payload ?? {},
+              }
+            }
+          }
+          window.localStorage.removeItem(dailyLessonStorageKey)
+        }
+        const response = await fetch(`/api/learners/${learner.id}/daily-lessons/start`, {
+          ...requestInit,
+          body: JSON.stringify({ current_curriculum_node_id: overview.current_unit.id, time_budget_minutes: overview.daily_lesson.estimated_minutes, mode_hint: 'textbook_guided_classroom' }),
+        })
+        return response.ok ? await response.json() as DailyLessonRuntime : null
+      }
+      const [classroomResponse, started] = await Promise.all([
+        fetch(`/api/learners/${learner.id}/daily-lessons/classroom/compose`, {
+          ...requestInit,
+          body: JSON.stringify({ curriculum_node_id: overview.current_unit.id, time_budget_minutes: overview.daily_lesson.estimated_minutes }),
         }),
-      })
-      if (!response.ok) throw new Error('AI 每日题暂时无法开始。')
-      const started = await response.json() as DailyLessonRuntime
+        restoreOrStartLesson(),
+      ])
+      if (!classroomResponse.ok) {
+        if (started) {
+          setDailyLesson(started)
+          setIsLegacyDailyLessonOpen(true)
+          showToast('AI 课堂编排暂时离线，已切换到原每日题。', { variant: 'warning' })
+          return
+        }
+        throw new Error('AI 课堂暂时无法编排。')
+      }
+      const composed = await classroomResponse.json() as ClassroomPlan
+      setClassroomPlan(composed)
+      if (!started) {
+        setDailyLesson(null)
+        showToast('课堂已打开；评分任务暂时离线，仍可浏览教材与点读。', { variant: 'warning' })
+        return
+      }
       if (started.answer_required && started.episode_id) {
         window.localStorage.setItem(dailyLessonStorageKey, started.episode_id)
         setDailyAnswer('')
         setDailyLesson(started)
       } else {
-        showToast(started.initial_payload?.reason ? String(started.initial_payload.reason) : '当前没有可用的 AI 每日题。', { variant: 'warning' })
+        setDailyLesson(started)
+        showToast('课堂已编排；当前没有评分任务，可先完成教材环节。', { variant: 'warning' })
       }
     } catch (startError) {
       showToast(startError instanceof Error ? startError.message : 'AI 每日题暂时无法开始。', { variant: 'error' })
@@ -986,11 +1031,12 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice, 
             vocabulary={activeUnitVocabulary}
             progressPercent={unitProgressPercent}
             capabilityCount={capabilityRecommendations.length}
-            isStartingLesson={isStartingLesson}
+            hasResumableClassroom={Boolean(dailyLesson?.answer_required || dailyLesson?.checkpoint_status === 'waiting_user')}
+            isStartingLesson={isStartingDailyLesson}
             isUpdatingUnitProgress={isUpdatingUnitProgress}
             isUnitSkipped={isUnitSkipped}
             onBack={onBack}
-            onStartLesson={() => void handleStartLesson()}
+            onStartLesson={() => void handleStartDailyLesson()}
             onRelearn={() => void updateUnitProgress('relearn', {
               nodeId: overview.current_unit.id,
               title: overview.current_unit.title,
@@ -1014,6 +1060,7 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice, 
           <TodayCourseTasks
             overview={overview}
             vocabulary={activeUnitVocabulary}
+            hasResumableClassroom={Boolean(dailyLesson?.answer_required || dailyLesson?.checkpoint_status === 'waiting_user')}
             isStartingLesson={isStartingLesson}
             isStartingExercise={isStartingExercise || exercisePoolNodeId !== null}
             isStartingDailyLesson={isStartingDailyLesson}
@@ -1152,7 +1199,23 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice, 
         onAttempt={handleAttempt}
         onComplete={handleCompleteLesson}
       />
-      <DailyLessonRuntimeDialog
+      {classroomPlan ? (
+        <GenerativeClassroom
+          learnerId={learner.id}
+          plan={classroomPlan}
+          lesson={dailyLesson}
+          prompt={dailyLesson?.prompt ?? readPrompt(dailyLesson?.initial_payload) ?? ''}
+          options={readOptions(dailyLesson?.initial_payload)}
+          answer={dailyAnswer}
+          isSubmitting={isSubmittingDailyAnswer}
+          feedback={readLearningFeedback(dailyLesson?.feedback)}
+          boosterCount={capabilityRecommendations.length}
+          onAnswerChange={setDailyAnswer}
+          onSubmit={(value) => void handleSubmitDailyAnswer(value)}
+          onOpenBoosters={() => setIsCapabilityDrawerOpen(true)}
+          onClose={() => { setClassroomPlan(null); setDailyLesson(null) }}
+        />
+      ) : isLegacyDailyLessonOpen ? <DailyLessonRuntimeDialog
         key={dailyLesson?.episode_id ?? 'closed-daily-lesson'}
         lesson={dailyLesson}
         answer={dailyAnswer}
@@ -1164,8 +1227,8 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice, 
         boosterCount={capabilityRecommendations.length}
         onOpenBoosterDrawer={() => setIsCapabilityDrawerOpen(true)}
         onDismissRecommendation={(item) => void handleDismissDailyCapabilityRecommendation(item)}
-        onClose={() => setDailyLesson(null)}
-      />
+        onClose={() => { setIsLegacyDailyLessonOpen(false); setDailyLesson(null) }}
+      /> : null}
       <ExerciseSessionDialog
         key={exerciseSession?.curriculum_node_id ?? 'closed-exercise'}
         session={exerciseSession}
@@ -1184,6 +1247,7 @@ function CourseHero({
   vocabulary,
   progressPercent,
   capabilityCount,
+  hasResumableClassroom,
   isStartingLesson,
   isUpdatingUnitProgress,
   isUnitSkipped,
@@ -1201,6 +1265,7 @@ function CourseHero({
   vocabulary: UnitVocabularySummary | null
   progressPercent: number
   capabilityCount: number
+  hasResumableClassroom: boolean
   isStartingLesson: boolean
   isUpdatingUnitProgress: boolean
   isUnitSkipped: boolean
@@ -1292,8 +1357,16 @@ function CourseHero({
                 ? <LoaderCircle className="size-4 animate-spin" />
                 : isUnitSkipped
                   ? <RotateCcw className="size-4" />
-                  : <BookOpen className="size-4" />}
-              {isUpdatingUnitProgress ? '更新中' : isUnitSkipped ? '重学' : '继续学习'}
+                  : <Sparkles className="size-4" />}
+              {isUpdatingUnitProgress
+                ? '更新中'
+                : isStartingLesson
+                  ? '正在编排课堂…'
+                  : isUnitSkipped
+                    ? '重学'
+                    : hasResumableClassroom
+                      ? '继续 AI 教材课堂'
+                      : '进入 AI 教材课堂'}
             </Button>
             {!isUnitSkipped ? (
               <Button variant="ghost" onClick={onSkip} disabled={isUpdatingUnitProgress}>
@@ -1322,6 +1395,7 @@ function CourseHero({
 function TodayCourseTasks({
   overview,
   vocabulary,
+  hasResumableClassroom,
   isStartingLesson,
   isStartingExercise,
   isStartingDailyLesson,
@@ -1343,6 +1417,7 @@ function TodayCourseTasks({
 }: {
   overview: KnowledgeBaseOverview
   vocabulary: UnitVocabularySummary | null
+  hasResumableClassroom: boolean
   isStartingLesson: boolean
   isStartingExercise: boolean
   isStartingDailyLesson: boolean
@@ -1378,11 +1453,11 @@ function TodayCourseTasks({
     },
     {
       icon: <Languages className="size-5" />,
-      title: vocabularyEntry.kind === 'review' ? '词汇复习' : vocabularyEntry.kind === 'continue' ? '继续词汇' : '新词预习',
+      title: vocabularyEntry.kind === 'review' ? '词汇复习' : vocabularyEntry.kind === 'continue' ? '继续词汇' : '新词与小学复现',
       description: vocabularyEntry.kind === 'review'
         ? '把到期词汇先拉回稳定记忆。'
         : vocabularyEntry.kind === 'new'
-          ? '认识本单元的新词和核心表达。'
+          ? `学习本册新词，并快速唤醒小学词汇${vocabulary?.primary_review_total ? `（${vocabulary.primary_review_total} 个）` : ''}。`
           : vocabularyEntry.kind === 'continue'
             ? '本单元词汇还在学习中，可以继续巩固。'
           : '本单元暂时没有可练习的词汇。',
@@ -1436,6 +1511,37 @@ function TodayCourseTasks({
 
   return (
     <section aria-labelledby="today-course-tasks-title">
+      <article className="relative mb-5 overflow-hidden rounded-[1.75rem] border border-violet-300/30 bg-[linear-gradient(135deg,#111827_0%,#312e81_52%,#0e7490_100%)] p-5 text-white shadow-[0_20px_50px_rgba(79,70,229,0.24)] sm:p-7">
+        <div className="pointer-events-none absolute -right-16 -top-20 size-56 rounded-full bg-cyan-300/20 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-24 left-1/3 size-52 rounded-full bg-violet-400/25 blur-3xl" />
+        <div className="relative grid gap-5 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+          <div>
+            <p className="inline-flex items-center gap-2 rounded-full border border-cyan-200/20 bg-white/10 px-3 py-1 text-xs font-black tracking-wide text-cyan-200">
+              <Sparkles className="size-3.5" /> AI ORGANIZED CLASS
+            </p>
+            <h2 className="mt-3 text-2xl font-black tracking-tight sm:text-3xl">
+              {hasResumableClassroom ? '继续今天的 AI 教材课堂' : '进入 AI 教材课堂'}
+            </h2>
+            <p className="mt-2 max-w-2xl text-sm font-semibold leading-6 text-indigo-100">
+              围绕 {overview.current_unit.title} · {overview.current_unit.subtitle}，依次完成任务简报、分层词汇、语法掌握、原声听辨、教材原题、AI 诊断和课堂总结。
+            </p>
+            <div className="mt-4 flex flex-wrap gap-2 text-[11px] font-black text-white/80">
+              {['七阶段课堂', '语法掌握证据', '教材原声听辨', 'PDF 原题作答', 'AI 实时诊断', '进度自动保存'].map((label) => (
+                <span key={label} className="rounded-full border border-white/10 bg-white/10 px-2.5 py-1">{label}</span>
+              ))}
+            </div>
+          </div>
+          <Button
+            onClick={onStartDailyLesson}
+            disabled={isStartingDailyLesson}
+            className="min-h-12 justify-center bg-white px-6 text-slate-950 shadow-xl hover:bg-cyan-50 lg:min-w-48"
+          >
+            {isStartingDailyLesson ? <LoaderCircle className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
+            {isStartingDailyLesson ? '正在编排课堂…' : hasResumableClassroom ? '继续 AI 课堂' : '立即进入课堂'}
+            {!isStartingDailyLesson ? <ArrowRight className="size-4" /> : null}
+          </Button>
+        </div>
+      </article>
       <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
         <div>
           <h2 id="today-course-tasks-title" className="text-xl font-black text-slate-950">今日课程任务</h2>
@@ -1468,7 +1574,7 @@ function TodayCourseTasks({
           </Select>
           <Button variant="secondary" onClick={onStartDailyLesson} disabled={isStartingDailyLesson}>
             {isStartingDailyLesson ? <LoaderCircle className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
-            AI 每日题
+            进入 AI 课堂
           </Button>
         </div>
       </div>
@@ -1642,10 +1748,10 @@ function UnitMaterialsSection({
       id: 'vocabulary',
       icon: <Languages className="size-5" />,
       title: '单词表',
-      description: vocabularySection?.count
-        ? `查看本单元收录的全部 ${vocabularySection.count} 个词汇。`
+      description: (vocabulary?.total ?? vocabularySection?.count)
+        ? `查看本单元 ${vocabulary?.core_total ?? '—'} 个本册词汇与 ${vocabulary?.primary_review_total ?? '—'} 个小学复现词。`
         : '本单元暂时没有词汇条目。',
-      meta: `${vocabularySection?.count ?? 0} 个词`,
+      meta: `${vocabulary?.total ?? vocabularySection?.count ?? 0} 个词`,
       actionLabel: '查看全部词汇',
       actionType: 'details',
       disabled: !vocabularySection?.count,
@@ -1681,7 +1787,7 @@ function UnitMaterialsSection({
       description: latestReadingMaterial
         ? latestReadingMaterial.title ?? '继续阅读本单元材料。'
         : '还没有材料时，可以生成本单元短文或对话。',
-      meta: latestReadingMaterial ? `${readingMaterials.length} 篇历史` : `${sectionById.get('vocabulary')?.count ?? 0} 个词可融入`,
+      meta: latestReadingMaterial ? `${readingMaterials.length} 篇历史` : `${vocabulary?.total ?? sectionById.get('vocabulary')?.count ?? 0} 个词可融入`,
       actionLabel: latestReadingMaterial ? '打开最近' : isGeneratingReadingMaterial ? '生成中' : '新生成',
       actionType: 'reading',
       isLoading: isGeneratingReadingMaterial,
@@ -1760,7 +1866,9 @@ function UnitMaterialsSection({
           <p className="mt-1 text-sm text-slate-500">这里只保留入口，不在课程主页展开全部知识点。</p>
         </div>
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-lg bg-white px-3 py-2 text-xs font-bold text-slate-500 shadow-sm" aria-label="本单元词汇统计">
-          <span className="text-slate-800">共 {vocabularySection?.count ?? vocabulary?.total ?? '—'} 词</span>
+          <span className="text-slate-800">共 {vocabulary?.total ?? vocabularySection?.count ?? '—'} 词</span>
+          <span>本册 {vocabulary?.core_total ?? '—'}</span>
+          <span>小学复现 {vocabulary?.primary_review_total ?? '—'}</span>
           <span>新词 {vocabulary?.new ?? '—'}</span>
           <span>学习中 {vocabulary?.learning ?? '—'}</span>
           <span>待复习 {vocabulary?.due ?? '—'}</span>
@@ -2046,7 +2154,20 @@ function TextbookCover({ overview }: { overview: KnowledgeBaseOverview }) {
         <h3 className="mt-2 text-2xl font-black">英语</h3>
         <p className="mt-1 text-sm font-bold text-slate-500">{overview.source.title}</p>
       </div>
-      <p className="text-xs font-bold text-slate-500">{overview.source.publisher || '教材来源'}</p>
+      <div>
+        <p className="text-xs font-bold text-slate-500">{overview.source.publisher || '教材来源'}</p>
+        {overview.source.official_material_url ? (
+          <a
+            href={overview.source.official_material_url}
+            target="_blank"
+            rel="noreferrer"
+            className="mt-2 inline-flex items-center gap-1 text-xs font-black text-indigo-700 underline decoration-indigo-300 underline-offset-4"
+            title={overview.source.official_material_note || '在官方平台查看教材正文'}
+          >
+            <BookOpen className="size-3.5" />官方教材正文
+          </a>
+        ) : null}
+      </div>
     </div>
   )
 }

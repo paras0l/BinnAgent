@@ -18,6 +18,10 @@ binnagent-frontend/dist/
 binnagent-frontend/dist-dev-console/
 remotion-video/node_modules/
 docs/
+!docs/books/
+docs/books/*
+!docs/books/audio/
+!docs/books/audio/**
 tests/
 .vscode/
 .idea/

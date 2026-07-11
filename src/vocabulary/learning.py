@@ -83,7 +83,7 @@ def learnable_point_statuses(source: KnowledgeSource) -> list[str]:
 
 def is_unit_wordlist_point(point: KnowledgePoint) -> bool:
     content = point.content or {}
-    if content.get("role") == "unit_wordlist":
+    if content.get("role") in {"unit_wordlist", "primary_review_wordlist"}:
         return True
     if content.get("origin") == "unit_wordlist_sequence_parser":
         return True
@@ -242,6 +242,7 @@ async def enroll_unit_vocabulary(
                     "unit": node.title,
                     "source_page": point.source_page,
                     "unit_order": (point.content or {}).get("unit_order"),
+                    "vocabulary_band": (point.content or {}).get("vocabulary_band", "core"),
                     "dictionary_provider": (
                         dictionary_entries.get(point.title).provider
                         if dictionary_entries.get(point.title)

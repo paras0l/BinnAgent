@@ -31,7 +31,23 @@ def test_alembic_migrations_have_single_head_revision() -> None:
             parents.update(item for item in down_revision if isinstance(item, str))
 
     heads = revisions - parents
-    assert heads == {"s9t0u1v2w3x4"}
+    assert heads == {"u1v2w3x4y5z6"}
+
+
+def test_changsha_grade7_english_migration_adds_current_public_catalogs() -> None:
+    migration = Path(
+        "alembic/versions/t0u1v2w3x4y5_add_changsha_grade7_english.py"
+    ).read_text()
+
+    assert "长沙市英语 七年级上册（新目标·2024版）" in migration
+    assert "长沙市英语 七年级下册（新目标·2024版）" in migration
+    assert "'published', 'public'" in migration
+    assert "Animal Friends" in migration
+    assert "Happy Birthday!" in migration
+    assert "selection_basis_url" in migration
+    assert "curated_learning_material" in migration
+    assert "knowledge_count=len(units) * 3" in migration
+    assert "Original summary; not textbook full text" in migration
 
 
 def test_learner_invitation_migration_supports_shared_emails_and_relationships() -> None:

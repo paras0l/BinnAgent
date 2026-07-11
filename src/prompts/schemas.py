@@ -482,6 +482,71 @@ READING_MATERIAL_GENERATION_SCHEMA: dict[str, Any] = {
     "additionalProperties": True,
 }
 
+CLASSROOM_UI_SCHEMA: dict[str, Any] = {
+    "type": "object",
+    "properties": {
+        "hero": {
+            "type": "object",
+            "properties": {
+                "eyebrow": {"type": "string"},
+                "title": {"type": "string"},
+                "mission": {"type": "string"},
+                "coach_message": {"type": "string"},
+            },
+            "minProperties": 1,
+            "additionalProperties": True,
+        },
+        "focus": {
+            "type": "object",
+            "properties": {"grammar": {"type": "string"}, "question": {"type": "string"}},
+            "minProperties": 1,
+            "additionalProperties": True,
+        },
+        "language_cards": {
+            "type": "array",
+            "minItems": 3,
+            "maxItems": 8,
+            "items": {
+                "type": "object",
+                "properties": {
+                    "id": {"type": "string"}, "front": {"type": "string"},
+                    "back": {"type": "string"},
+                    "accent": {"type": "string", "enum": ["violet", "cyan", "amber", "rose"]},
+                },
+                "required": ["id", "front", "back", "accent"],
+                "additionalProperties": False,
+            },
+        },
+    },
+    "required": ["hero", "focus", "language_cards"],
+    "additionalProperties": False,
+}
+
+CLASSROOM_TEXTBOOK_COACH_SCHEMA: dict[str, Any] = {
+    "type": "object",
+    "properties": {
+        "diagnosis": {"type": "string"},
+        "evidence": {
+            "oneOf": [
+                {
+                    "type": "array",
+                    "minItems": 1,
+                    "maxItems": 4,
+                    "items": {"type": "string"},
+                },
+                {"type": "string"},
+            ],
+        },
+        "hint": {"type": "string"},
+        "next_action": {
+            "type": "string",
+            "enum": ["relisten", "review_vocabulary", "review_pattern", "continue"],
+        },
+    },
+    "required": ["diagnosis", "evidence", "hint", "next_action"],
+    "additionalProperties": False,
+}
+
 SCHEMA_REGISTRY: dict[str, dict[str, Any]] = {
     "ExpressionUiOutput": EXPRESSION_UI_SCHEMA,
     "VocabularyExtractOutput": VOCABULARY_CARD_SCHEMA,
@@ -498,4 +563,6 @@ SCHEMA_REGISTRY: dict[str, dict[str, Any]] = {
     "VocabularyDetailHtmlOutput": DETAIL_HTML_SCHEMA,
     "ExploreCapabilityRerankOutput": EXPLORE_CAPABILITY_RERANK_SCHEMA,
     "ReadingMaterialGenerationOutput": READING_MATERIAL_GENERATION_SCHEMA,
+    "ClassroomUiOutput": CLASSROOM_UI_SCHEMA,
+    "ClassroomTextbookCoachOutput": CLASSROOM_TEXTBOOK_COACH_SCHEMA,
 }

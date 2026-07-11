@@ -10,8 +10,8 @@ export function buildTodaySteps(summary: DashboardSummary) {
       state: summary.stats.today_reviews === 0 ? 'done' : 'next',
     },
     {
-      title: '继续当前教材单元',
-      description: '按课本单元查看词汇、句式、语法和语音要点。',
+      title: '进入 AI 教材课堂',
+      description: '按七阶段课堂完成新词分层、语法掌握、教材原声听辨、PDF 原题、AI 诊断和学习总结。',
       action: 'lesson',
       badge: summary.today_goal.completed >= summary.today_goal.total ? '已完成' : '主线',
       state: summary.today_goal.completed >= summary.today_goal.total ? 'done' : 'next',

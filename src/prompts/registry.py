@@ -319,6 +319,30 @@ prompt_registry.register(
 )
 prompt_registry.register(
     PromptMetadata(
+        id="classroom.ui.compose",
+        version="v1",
+        owner="classroom",
+        purpose="依据教材单元与学习时间生成受控的每日课堂 Generative UI 文案和语言卡片",
+        template_path="versions/classroom.ui.compose.v1.md",
+        output_schema="ClassroomUiOutput",
+        model_policy={"default_model": "ollama_chat", "temperature": 0.45, "max_tokens": 700},
+        eval_set="evals/prompts/classroom_ui_compose_v1.jsonl",
+    )
+)
+prompt_registry.register(
+    PromptMetadata(
+        id="classroom.textbook.coach",
+        version="v1",
+        owner="classroom",
+        purpose="依据教材原题、单元目标和学生作答诊断卡点并给出最小必要提示",
+        template_path="versions/classroom.textbook.coach.v1.md",
+        output_schema="ClassroomTextbookCoachOutput",
+        model_policy={"default_model": "ollama_chat", "temperature": 0.2, "max_tokens": 900},
+        eval_set="evals/prompts/classroom_textbook_coach_v1.jsonl",
+    )
+)
+prompt_registry.register(
+    PromptMetadata(
         id="expression_lab.ui_spec",
         version="v2",
         owner="expression_lab",

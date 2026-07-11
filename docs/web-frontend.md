@@ -27,7 +27,7 @@ BinnAgent 前端是 `binnagent-frontend/` 下的 React 19 + TypeScript + Vite �
 - `DashboardPage`: 今日复习、学习目标、错因和学习统计。
 - `PronunciationPage`: 发音练习。
 - `GrammarPage`: 语法主题和缓存内容。
-- `KnowledgeBasePage`: 学习者教材入口、教材切换、今日单元、练习任务和课程/练习弹窗；解析治理移入 Dev Console。
+- `KnowledgeBasePage`: 学习者教材入口、教材切换、今日单元、练习任务和 Generative Classroom；解析治理移入 Dev Console。
 - `VocabularyPracticePage`: 单元词汇、review/spelling practice、富词典详情。
 - `VocabularyDetailPage`: 词汇详情页面。
 - `WordPartsPage`: 词根词缀方法入门、内置库、拆词练习和本地掌握记录。
@@ -73,6 +73,8 @@ AI对话 / 探索 / 学习中心
 - `VocabularyDetailPage` 已补生成-回填-保存四步 stepper，生成指令、HTML 回填、个人词卡和构词笔记表单已统一 `name` / `autocomplete` / focus-visible 与省略号占位文案；沉浸阅读具备 dialog 语义、ESC 关闭、焦点恢复和 Tab 循环。
 - `GrammarPage` 已补知识点分类矩阵、已打开/已学习/已缓存/喜爱状态卡、难度掌握分布和生成链路状态卡；预览页 HTML 输入可折叠，沉浸阅读具备 dialog 语义、ESC 关闭、焦点恢复和 Tab 循环；重新生成、清空 HTML、删除目标网站使用确认弹窗。
 - `KnowledgeBasePage` 保留全宽教材学习页，并拆成“今日单元 / 练习任务”两个学习者 workspace；左侧支持多本教材切换，右侧只展示教材信息、学习路径和推荐理由，移动端教材目录和学习概览已升级为带遮罩、dialog 语义、ESC 关闭、焦点恢复和 Tab 循环的抽屉，教材上传 / 课程学习 / 练习弹层也已补同样的键盘与焦点行为。主学习区已补教材学习概览图表，覆盖教材单元、知识点、RAG 片段、待校对、单元掌握、知识点类型、教材路径和解析索引覆盖。解析校对、解析质量、教材结构内部产物、parser/ingest 证据和调试表格统一放入 Dev Console 的 Textbook Parsing。
+- “AI 每日题”现进入全屏 Generative Classroom：桌面显示五段课堂路线和 AI Coach，移动端使用固定阶段导航；依次提供任务简报、可翻转语言卡、教材原声点读、LangGraph AI 挑战和课堂总结。课堂 compose 与 Daily Lesson 恢复/启动并行请求，未完成的 LangGraph checkpoint 不会被重复创建；LLM 输出通过 `ClassroomUiOutput` schema 校验，模型离线时使用同结构 fallback；挑战答题仍写入掌握度、Memory、复习计划、Verification 和能力推荐。
+- 课堂阶段、已完成环节、翻卡和已听 cue 自动保存到 `LearningProgressItem`，再次进入同一单元时恢复；精校 cue 按 Section/Activity 切换并显示已跟读状态，未校对时间轴的单元提供明确的连续播放按钮。
 - 共享练习组件 `AddExerciseForm` / `ExerciseRenderer` 已补练习表单 `name` / `autocomplete` / focus-visible、选项 pressed/focus 状态、提交与生成 loading 文案、练习进度条；`ExerciseSessionDialog` 改为固定高度弹层和内部滚动，并具备 ESC 关闭、焦点恢复和 Tab 循环，让教材练习入口更接近 TaskShell。
 - `DailyLessonRuntimeDialog` 已改为固定头部、内部滚动内容和固定底部 ActionBar，选项补 pressed/focus 状态，提交按钮有 loading 文案，并支持 ESC 关闭、焦点恢复和 Tab 循环。
 - `VocabularyPracticePage` 保持沉浸式一屏一任务，并在顶部明确模式和来源；练习阶段按主任务区、学习辅助区和底部操作区组织，底部操作栏固定可见，中间内容内部滚动，避免用户上下翻动才能评分或进入下一题；核心按钮、进度条和拼写输入已补 `type` / focus-visible / `name` / `autocomplete` 与显式 transition；summary 已补答对率环、本组结果分布和复习负荷条。

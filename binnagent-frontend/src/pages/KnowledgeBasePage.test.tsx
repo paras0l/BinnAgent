@@ -31,7 +31,8 @@ describe('KnowledgeBasePage daily learning layout', () => {
     expect(source).toContain("updateUnitProgress('skip'")
     expect(source).toContain("updateUnitProgress('relearn'")
     expect(source).toContain("currentCurriculumNode?.progress_override")
-    expect(source).toContain("isUnitSkipped ? '重学' : '继续学习'")
+    expect(source).toContain("? '继续 AI 教材课堂'")
+    expect(source).toContain(": '进入 AI 教材课堂'")
   })
 
   it('keeps the unit material word list separate from vocabulary practice', () => {

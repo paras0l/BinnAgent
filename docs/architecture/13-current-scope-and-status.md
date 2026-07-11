@@ -1,6 +1,6 @@
 # 13. Current Scope and Status
 
-> 更新时间：2026-07-10
+> 更新时间：2026-07-11
 > 目的：把当前实现、部分实现和仍处于设计中的内容显性化，避免把架构目标误读成已落地功能。
 
 ## 状态图例
@@ -15,7 +15,7 @@
 
 | 产品线 | 状态 | 说明 |
 |---|---|---|
-| 教材线 | 部分实现 | 多教材 source 库、教材切换、split public textbook pack v2 公共种子、七年级上/下册结构化单元 workspace、单元词汇、RAG chunk、PostgreSQL 持久化任务与独立 Worker 异步补充的单元题池、双门禁六维评分、mastery-aware 选题、单元阅读语感材料生成和前端入口已存在；支持确认跳过单元并将进度记为 100%，也可重学并重置为 0%；八/九年级可上传并走通用解析/校对 fallback |
+| 教材线 | 部分实现 | 多教材 source 库、教材切换、split public textbook pack v2 公共种子、七年级上/下册结构化单元 workspace、RAG chunk、异步单元题池、双门禁六维评分、mastery-aware 选题和单元阅读材料已存在；长沙市七年级上册 2024 版新增完整的 333 条本册词汇与 349 条小学复现词分层目录、10 个单元原声、正文第 1-74 印刷页题图及七阶段 AI 教材课堂；新增全册 10 个确定性 Grammar Lab，记录规则辨析、迁移表达和课堂掌握证据；原 Markdown/PDF 保留不动，应用只使用生成后的结构化清单和题图资产；八/九年级仍走通用上传、解析与校对 fallback |
 | CET 备考线 | 设计中 | 7 天计划、阅读训练、写作二改和周报仍主要在架构文档中 |
 | 通用英语陪伴 | 部分实现 | Chat、Memory 摘要、Dashboard 和词汇沉淀已有基础闭环 |
 | Expression Lab 英语表达实验室 | 已实现 | Explore、群聊学习线索、学习中心辅助入口和手动输入均可进入；支持中文表达缺口、英文草稿、好句迁移、词汇/语法目标，十类 Expression UI block、局部重生成、动态加练、显式确认保存、会话恢复/删除、学习证据闭环和群聊表达真实复用追踪 |
@@ -28,6 +28,7 @@
 |---|---|---|---|---|
 | Learner-scoped isolation | 已新增 current user/current learner dependency、owner 校验和 scoped resource helper；Runtime、Daily Lesson、Memory、Explore、ExerciseAttempt、Debug 高风险路径已加固 | chat、knowledge、vocabulary、writing phrases、reading、dashboard 等部分旧路由仍需继续迁移 | 继续替换直接信任 `learner_id` 的路径，补覆盖剩余 router 的授权测试 | 多用户 Agent 不能只靠前端传 learner_id；学习数据、记忆、trace、推荐都必须有 ownership boundary |
 | LangGraph Daily Lesson Runtime | Daily Lesson 支持 checkpoint / interrupt / resume；等待用户作答时停在 `waiting_user`，answer 后从 `grade_attempt` 恢复并闭合 grading/mastery/memory/review/recommend/verify | 当前主要是单题单 active checkpoint；生产 PostgresSaver 和官方 `interrupt()/Command(resume=...)` 深度集成未完成 | 扩展多步骤 lesson、生产 checkpointer、幂等副作用和更丰富题型 handler | 普通 Agent 一次性生成答案，学习 Agent 必须暂停等待真实用户作答；checkpoint 让学习过程可恢复、可追踪 |
+| Generative Classroom | 新增 `classroom.ui.compose` prompt/schema/eval、确定性 fallback、五阶段课堂 DSL 和全屏响应式 renderer；课堂编排与原 Daily Lesson 并行启动，挑战题复用 grading/mastery/memory/review/recommend/verify；课堂阶段、翻卡和已听 cue 复用 `LearningProgressItem` 按学习者/单元持久化并可跨刷新恢复；2024 上册 10 单元均有连续朗读入口，Starter Unit 1 的 186 段精校 cue 按教材章节切换 | 目前只有 Starter Unit 1 完成逐句时间轴，其余单元使用连续播放模式 | 继续校对其余 9 个单元时间轴，并用真实学习数据优化 LLM 编排 | Generative UI 只负责课堂呈现与节奏，教材事实、评分和学习副作用继续由既有业务层控制 |
 | ExerciseAttempt → Mastery → Memory → Review → Recommendation | 练习提交可生成 ExerciseAttempt，MasteryEngine 更新掌握度，MemoryWriter 写学习证据，ReviewSchedule 安排复习，RecommendationEngine 推荐下一步 | 多 session 长周期掌握度、更多题型、跨模块推荐排序仍不完整 | 增加真实用户反馈闭环、错因聚合、更多 dashboard 可视化 | 个性化不是“换 prompt”，而是由作答证据驱动掌握度、记忆和复习计划 |
 | Expression Lab | `expression_ui.v1` 十类 block、PromptExecutor schema/repair/fallback、learner-scoped session/action/attempt/event、确认式资产保存、动态加练、来源线索闭环、ExpressionAttempt → ExerciseAttempt → LearningEvent → Memory → Recommendation，以及保存表达在后续群聊中的真实复用追踪均已接通 | 由真实使用数据驱动的内容质量与转化指标看板尚未建设 | 由用户体验验收反馈继续打磨内容质量和操作细节，再聚合复制、收藏、练习、完成与真实复用指标 | 生成式 UI 不能让模型控制系统权限；模型只产出受限 DSL 和候选动作，服务端负责 schema、所有权、确认、幂等与业务写入 |
 | Persistent Exercise Pool | 单元练习 API 已与 LLM 延迟解耦：PostgreSQL 保存 `exercise_generation_runs`，独立 Worker 通过 SKIP LOCKED、租约、有限重试和 active dedupe 补池；API 有题立即 200、空池 202，前端轮询；题目保存六维质量分并结合 mastery/覆盖约束选择 8 题 | Worker 心跳与 ownership token、失败告警、真实作答驱动的题目校准尚未完成 | 增加 Dev Console 题池观测、题目曝光/歧义/区分度指标和自动淘汰 | 异步不是简单“加队列”，而是把用户延迟、任务可靠性、内容质量和降级语义一起建模 |

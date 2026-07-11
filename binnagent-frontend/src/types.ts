@@ -255,6 +255,8 @@ export interface KnowledgeBaseOverview {
     requires_review?: boolean
     page_count?: number | null
     can_delete?: boolean
+    official_material_url?: string | null
+    official_material_note?: string | null
   }
   sources: Array<{
     id: string
@@ -271,6 +273,8 @@ export interface KnowledgeBaseOverview {
     requires_review?: boolean
     page_count?: number | null
     can_delete?: boolean
+    official_material_url?: string | null
+    official_material_note?: string | null
   }>
   curriculum: CurriculumNode[]
   current_node_id: string
@@ -449,6 +453,10 @@ export interface UnitVocabularySummary {
   learning: number
   mastered: number
   due: number
+  core_total?: number
+  primary_review_total?: number
+  core_enrolled?: number
+  primary_review_enrolled?: number
 }
 
 export interface ChatMessage {

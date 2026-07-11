@@ -271,7 +271,14 @@ async def unit_vocabulary_summary(
             KnowledgePoint.status.in_(learnable_point_statuses(source)),
         )
     )
-    total = sum(1 for point in points_result.scalars().all() if is_unit_wordlist_point(point))
+    wordlist_points = [
+        point for point in points_result.scalars().all() if is_unit_wordlist_point(point)
+    ]
+    point_bands = {
+        str(point.id): (point.content or {}).get("vocabulary_band", "core")
+        for point in wordlist_points
+    }
+    total = len(wordlist_points)
     result = await db.execute(
         select(VocabularyItem, VocabularyItemSource)
         .join(VocabularyItemSource, VocabularyItemSource.vocabulary_item_id == VocabularyItem.id)
@@ -282,18 +289,33 @@ async def unit_vocabulary_summary(
         )
     )
     rows = result.all()
-    unenrolled = max(0, total - len(rows))
+    enrolled_core = sum(
+        point_bands.get(source.source_id) != "primary_review" for _, source in rows
+    )
+    enrolled_primary = sum(
+        point_bands.get(source.source_id) == "primary_review" for _, source in rows
+    )
+    core_total = sum(band != "primary_review" for band in point_bands.values())
+    primary_total = sum(band == "primary_review" for band in point_bands.values())
     return {
         "unit_id": str(curriculum_node_id),
         "total": total,
         "enrolled": len(rows),
-        "new": unenrolled + sum(item.review_count == 0 for item, _ in rows),
+        "new": max(0, core_total - enrolled_core) + sum(
+            item.review_count == 0
+            and point_bands.get(source.source_id) != "primary_review"
+            for item, source in rows
+        ),
         "learning": sum(item.status in {"learning", "reviewing"} for item, _ in rows),
         "mastered": sum(item.status == "mastered" for item, _ in rows),
         "due": sum(
             item.next_review_at and item.next_review_at <= datetime.now(timezone.utc)
             for item, _ in rows
         ),
+        "core_total": core_total,
+        "primary_review_total": primary_total,
+        "core_enrolled": enrolled_core,
+        "primary_review_enrolled": enrolled_primary,
     }
 
 
@@ -370,7 +392,18 @@ async def start_practice_session(
             learner_id,
         )
         if body.mode == "new":
-            query = query.where(VocabularyItem.review_count == 0, _not_marked_too_easy())
+            query = query.where(
+                VocabularyItem.review_count == 0,
+                or_(
+                    VocabularyItemSource.context_snapshot["vocabulary_band"]
+                    .as_string()
+                    .is_(None),
+                    VocabularyItemSource.context_snapshot["vocabulary_band"]
+                    .as_string()
+                    != "primary_review",
+                ),
+                _not_marked_too_easy(),
+            )
         elif body.mode == "review":
             query = query.where(
                 VocabularyItem.next_review_at <= now,
@@ -411,6 +444,14 @@ async def start_practice_session(
                     VocabularyItem.learner_id == learner_id,
                     VocabularyItemSource.curriculum_node_id == body.curriculum_node_id,
                     VocabularyItemSource.active.is_(True),
+                    or_(
+                        VocabularyItemSource.context_snapshot["vocabulary_band"]
+                        .as_string()
+                        .is_(None),
+                        VocabularyItemSource.context_snapshot["vocabulary_band"]
+                        .as_string()
+                        != "primary_review",
+                    ),
                     VocabularyItem.status != "mastered",
                     _not_marked_too_easy(),
                 ),

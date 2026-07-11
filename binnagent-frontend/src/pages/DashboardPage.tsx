@@ -625,7 +625,7 @@ function LearningCenterHome({
   const todayPercent = toPercent(summary.today_goal.completed, summary.today_goal.total)
   const dueCount = summary.stats.today_reviews
   const focusReasons = buildFocusReasons(summary)
-  const nextActionLabel = dueCount > 0 ? `先复习 ${dueCount} 个词` : '开始今日学习'
+  const nextActionLabel = dueCount > 0 ? `先复习 ${dueCount} 个词` : '进入 AI 教材课堂'
   const routeStatus = todayPercent >= 100 ? '今日任务已收口' : dueCount > 0 ? '先清复习，再进教材' : '可以直接进入教材'
 
   return (
@@ -663,7 +663,7 @@ function LearningCenterHome({
               </Button>
               {dueCount > 0 ? (
                 <Button variant="secondary" className="justify-between" onClick={onOpenDailyLearning}>
-                  进入教材学习<ArrowRight className="size-4" />
+                  进入 AI 教材课堂<ArrowRight className="size-4" />
                 </Button>
               ) : null}
             </div>

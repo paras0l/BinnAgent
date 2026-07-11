@@ -133,12 +133,13 @@ http://localhost:5176，可在 Learners / Recent Episodes 中直接选择 learne
 |------|------|
 | Chat / Memory / Dashboard | 部分实现，Memory v2 已落地 Retain / Recall / Reflect、LearningEpisode、LearnerModelMemory、TeachingStrategyMemory；普通学习端只展示学习状态摘要，Memory Center 已移入 Dev Console |
 | 宠物精灵通知 | 已实现，小冰接管全局 Toast 消息，支持按重要性抢占与配色、重复消息合并、七套统一视觉锚点的高清状态原画、观察/挥手等连续微动作、可调静置动作频率、贴边偷看、记忆变更晶石发光、任务完成庆祝、长耗时陪伴反馈、协作式文案、惯性拖动与跨窗口尺寸位置回收、点击/键盘互动、系统减少动态偏好、功能页首次介绍，以及用户菜单中的精灵设置 |
-| 教材 Knowledge Base / RAG / Exercises | 部分实现，作为冷启动知识来源；已支持 split public textbook pack v2、UnitLearningWorkspace、多教材切换、文档解析/校对、统一 ExerciseItem / ExerciseAttempt、单元阅读语感材料；单元题库采用 PostgreSQL 持久化任务与独立 Worker 异步补池，支持立即返回/202 轮询、六维质量评分、双重门禁、旧模板题归档和 mastery-aware 选题；单元可确认跳过为 100%，并可通过重学重置为 0% |
+| 教材 Knowledge Base / RAG / Exercises | 部分实现，作为冷启动知识来源；已支持 split public textbook pack v2、长沙市七年级人教新目标 2024 版上下册公共目录、UnitLearningWorkspace、多教材切换、文档解析/校对、统一 ExerciseItem / ExerciseAttempt 与单元阅读语感材料；2024 上册已接入 333 条本册词汇、349 条小学复现词、10 个单元连续朗读音频和正文第 1-74 印刷页的完整教材活动页题图，Starter Unit 1 另有 186 段精校时间轴；单元题库采用 PostgreSQL 持久化任务与独立 Worker 异步补池，支持六维质量评分、双重门禁和 mastery-aware 选题 |
 | Vocabulary Personal Cards / Practice / Spelling / Word Parts | 部分实现，已新增“词根与词缀”探索入口、四工作区学习页、内置词根词缀库、拆词练习、morphology 前端展示/降级和知识点配套练习验收；训练中可在学习提示区将单词标记为“太简单（已掌握）”，并显著降低后续训练频率 |
 | Writing Phrasebook | 基础版已实现 |
 | Expression Lab 英语表达实验室 | 已实现，支持中文表达缺口、英文草稿、好句迁移、词汇/语法目标和群聊学习线索输入；提供十类 schema 驱动内容块、局部重生成、1–3 题动态加练、确认后保存长期资产、会话恢复/删除，以及 Attempt → LearningEvent → Memory → Recommendation 学习闭环；Explore、Dashboard 辅助入口和群聊表达真实复用追踪已接通 |
 | 群聊学习线索 | 第一版已实现并切到飞书 MCP 兼容方案，支持飞书群来源配置、MCP/OpenAPI 同步、群成员拉取与当前 learner 绑定、原始消息保留/清理、中性 JSON 导入、显式标签即时规则抽取、`@机器人 --help` 群内操作指南回复与去重、无标签消息 pending 队列、低频 LLM 小批量线索提取、收件箱分页接受/忽略/删除，以及接受后写入词汇候选、好句候选或语法学习进度 |
 | ExploreCapability 推荐 | 基础版已实现，Explore Tab 入口由后端 registry 统一管理；Daily Lesson 答题后可推荐 ready 学习能力，点击/忽略事件写入 Memory 和 episode trace |
+| Generative Classroom | 已实现可体验版本；每日学习升级为任务简报、新词/小学复现、Grammar Lab、教材原声听辨、PDF 原题作答、AI 实时诊断、学习复盘七段课堂；全册 10 个 Grammar Lab 提供明确 can-do 目标、规则归纳、结构模板、易错点、3 道即时辨析和迁移表达，课堂总结展示正确率与个人表达证据；LLM 通过 `PromptExecutor` 对照教材页提取文本、教学重点与学生答案生成 schema 约束的诊断和最小提示，离线时使用确定性兜底；进度、语法答案、迁移表达、教材答案、Daily Lesson checkpoint、Mastery、Memory、复习计划和 ExploreCapability 推荐保持联动 |
 | Frontend UI/UX 统一标准 | Issue #20 首轮整改已落地，普通学习端主导航保留 AI对话 / 探索 / 学习中心，Debug/Memory/Runtime 页面移入 Dev Console；Dashboard 首页升级为今日学习驾驶舱，今日学习流第四步接入 AI 对话并按当日成功回复标记完成；学习设置可编辑学习目标和 CEFR 当前水平；KnowledgeBase 将“今日课程任务”保留为训练入口，“本单元材料”的单词表和教材题库改为只读完整列表入口；教材解析治理集中到 Dev Console Textbook Parsing |
 | Prompt Registry / Schema-first Import / Parser Quality | 基础治理已实现；PromptExecutor 已统一 text/structured/stream prompt 调用，PromptExecutionRecord、结构化校验记录、Prompt Debug API、prompt eval CLI / eval sets、核心 prompt 迁移、画像驱动 prompt 背景和教材解析质量门禁已落地 |
 | Model Provider | 部分实现；本地默认 Ollama，云端可通过环境变量或 Dev Console Debug 页面切换到 DeepSeek / LongCat OpenAI-compatible chat API；RAG embedding 暂时隔离在 Ollama 路径 |
