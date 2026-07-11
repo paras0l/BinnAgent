@@ -8,6 +8,7 @@ interface StatusBannerProps {
   children: ReactNode
   action?: ReactNode
   tone?: StatusTone
+  compact?: boolean
 }
 
 const toneClass: Record<StatusTone, string> = {
@@ -16,16 +17,16 @@ const toneClass: Record<StatusTone, string> = {
   warning: 'border-amber-200 bg-amber-50 text-amber-700',
 }
 
-export function StatusBanner({ title, children, action, tone = 'info' }: StatusBannerProps) {
+export function StatusBanner({ title, children, action, tone = 'info', compact = false }: StatusBannerProps) {
   const Icon = tone === 'success' ? CheckCircle2 : tone === 'warning' ? AlertCircle : Info
 
   return (
-    <div className={`flex flex-col gap-2 rounded-lg border px-3 py-2 text-sm sm:flex-row sm:items-center sm:justify-between ${toneClass[tone]}`}>
+    <div className={`flex flex-col gap-2 text-sm sm:flex-row sm:items-center sm:justify-between ${compact ? 'rounded-md border-0 border-l-2 px-3 py-1.5' : 'rounded-lg border px-3 py-2'} ${toneClass[tone]}`}>
       <div className="flex min-w-0 items-start gap-2">
         <Icon className="mt-0.5 size-4 shrink-0" />
-        <div className="min-w-0">
+        <div className={`min-w-0 ${compact ? 'flex flex-wrap items-baseline gap-x-2' : ''}`}>
           {title && <p className="font-bold">{title}</p>}
-          <div className="leading-6">{children}</div>
+          <div className={compact ? 'leading-5 opacity-85' : 'leading-6'}>{children}</div>
         </div>
       </div>
       {action && <div className="shrink-0">{action}</div>}

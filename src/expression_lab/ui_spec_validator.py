@@ -371,6 +371,12 @@ def build_fixed_fallback(
                             "tone_tags": ["中性"],
                             "naturalness": 88,
                             "difficulty": 2,
+                            "why_it_works": first_zh,
+                            "use_when": _fallback_use_when(context, "neutral"),
+                            "avoid_when": "",
+                            "key_pattern": target_expression,
+                            "example": first,
+                            "example_translation": first_zh,
                             "action_id": "fallback-copy-neutral",
                         },
                         {
@@ -381,6 +387,12 @@ def build_fixed_fallback(
                             "tone_tags": ["委婉"],
                             "naturalness": 91,
                             "difficulty": 2,
+                            "why_it_works": second_zh,
+                            "use_when": _fallback_use_when(context, "soft"),
+                            "avoid_when": "需要明确纠正事实错误或安全风险时。",
+                            "key_pattern": target_expression,
+                            "example": second,
+                            "example_translation": second_zh,
                             "action_id": "fallback-copy-soft",
                         },
                     ]
@@ -445,6 +457,18 @@ def build_fixed_fallback(
         ],
     }
     return ExpressionUiSpec.model_validate(payload).model_dump(mode="json", by_alias=True)
+
+
+def _fallback_use_when(context: str | None, tone: str) -> str:
+    scene = {
+        "daily_chat": "日常聊天",
+        "group_chat": "群聊讨论",
+        "exam_writing": "考试写作",
+        "formal_communication": "正式沟通",
+    }.get(context or "", "一般交流")
+    if tone == "soft":
+        return f"在{scene}中想保留意见、同时降低对抗感时。"
+    return f"在{scene}中需要清楚表达核心意思时。"
 
 
 def _fallback_variants(

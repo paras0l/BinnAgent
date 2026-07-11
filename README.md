@@ -132,6 +132,7 @@ http://localhost:5176，可在 Learners / Recent Episodes 中直接选择 learne
 | 能力 | 状态 |
 |------|------|
 | Chat / Memory / Dashboard | 部分实现，Memory v2 已落地 Retain / Recall / Reflect、LearningEpisode、LearnerModelMemory、TeachingStrategyMemory；普通学习端只展示学习状态摘要，Memory Center 已移入 Dev Console |
+| 宠物精灵通知 | 已实现，小冰接管全局 Toast 消息，支持按重要性抢占与配色、重复消息合并、七套统一视觉锚点的高清状态原画、观察/挥手等连续微动作、可调静置动作频率、贴边偷看、记忆变更晶石发光、任务完成庆祝、长耗时陪伴反馈、协作式文案、惯性拖动与跨窗口尺寸位置回收、点击/键盘互动、系统减少动态偏好、功能页首次介绍，以及用户菜单中的精灵设置 |
 | 教材 Knowledge Base / RAG / Exercises | 部分实现，作为冷启动知识来源；已支持 split public textbook pack v2、UnitLearningWorkspace、多教材切换、文档解析/校对、统一 ExerciseItem / ExerciseAttempt、单元阅读语感材料；单元题库采用 PostgreSQL 持久化任务与独立 Worker 异步补池，支持立即返回/202 轮询、六维质量评分、双重门禁、旧模板题归档和 mastery-aware 选题；单元可确认跳过为 100%，并可通过重学重置为 0% |
 | Vocabulary Personal Cards / Practice / Spelling / Word Parts | 部分实现，已新增“词根与词缀”探索入口、四工作区学习页、内置词根词缀库、拆词练习、morphology 前端展示/降级和知识点配套练习验收；训练中可在学习提示区将单词标记为“太简单（已掌握）”，并显著降低后续训练频率 |
 | Writing Phrasebook | 基础版已实现 |

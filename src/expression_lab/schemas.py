@@ -50,6 +50,12 @@ class VariantItem(StrictModel):
     tone_tags: list[str] = Field(default_factory=list, max_length=6)
     naturalness: int = Field(default=80, ge=0, le=100)
     difficulty: int = Field(default=2, ge=1, le=5)
+    why_it_works: str = Field(default="", max_length=900)
+    use_when: str = Field(default="", max_length=600)
+    avoid_when: str = Field(default="", max_length=600)
+    key_pattern: str = Field(default="", max_length=600)
+    example: str = Field(default="", max_length=1000)
+    example_translation: str = Field(default="", max_length=1000)
     action_id: str | None = Field(default=None, max_length=120)
 
 

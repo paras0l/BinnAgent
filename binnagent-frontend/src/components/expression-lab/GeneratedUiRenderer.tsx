@@ -73,7 +73,7 @@ export function GeneratedUiRenderer({
 }: GeneratedUiRendererProps) {
   if (blocks.length === 0) return <UnsupportedBlock message="生成结果没有可展示的模块，可以重新生成本次内容。" />
   return (
-    <div className="space-y-4" aria-label="生成的表达学习内容">
+    <div className="divide-y divide-slate-100 overflow-hidden rounded-[16px] border border-slate-200 bg-white shadow-[0_6px_20px_rgba(15,23,42,0.04)]" aria-label="生成的表达学习内容">
       {blocks.map((block, index) => {
         const isRegenerating = regeneratingBlockId === block.id
         return (
@@ -186,7 +186,7 @@ function ExpressionBlockCard({
 }) {
   const content = (
     <>
-      <header className="flex flex-col gap-3 border-b border-slate-100 px-4 py-4 sm:flex-row sm:items-start sm:justify-between sm:px-5">
+      <header className="flex flex-col gap-3 px-4 pb-2 pt-5 sm:flex-row sm:items-start sm:justify-between sm:px-5">
         <div className="min-w-0">
           <BlockTypeBadge type={block.type} />
           <h2 className="mt-2 break-words text-lg font-black text-slate-950 [overflow-wrap:anywhere]">{block.title || `学习模块 ${index + 1}`}</h2>
@@ -199,19 +199,19 @@ function ExpressionBlockCard({
           </Button>
         ) : null}
       </header>
-      <div className="p-4 sm:p-5">{children}</div>
+      <div className="px-4 pb-5 pt-2 sm:px-5 sm:pb-6">{children}</div>
     </>
   )
 
   if (block.ui?.collapsible) {
     return (
-      <details className="expression-block-enter overflow-hidden rounded-[13px] border border-slate-200 bg-white shadow-[0_4px_14px_rgba(15,23,42,0.05)]" open>
+      <details className="expression-block-enter bg-white" open>
         <summary className="sr-only">{block.title}<ChevronDown className="size-4" /></summary>
         {content}
       </details>
     )
   }
-  return <section className={`expression-block-enter overflow-hidden rounded-[13px] border bg-white shadow-[0_4px_14px_rgba(15,23,42,0.05)] ${block.ui?.emphasis === 'primary' ? 'border-indigo-200 ring-1 ring-indigo-50' : 'border-slate-200'}`}>{content}</section>
+  return <section className={`expression-block-enter bg-white ${block.ui?.emphasis === 'primary' ? 'bg-gradient-to-b from-indigo-50/25 to-white' : ''}`}>{content}</section>
 }
 
 export function ExpressionBlockSkeleton({ compact = false }: { compact?: boolean }) {

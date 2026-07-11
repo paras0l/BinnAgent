@@ -39,7 +39,7 @@ class GenerationOutcome:
 
 class ExpressionUiSpecGenerator:
     prompt_id = "expression_lab.ui_spec"
-    prompt_version = "v1"
+    prompt_version = "v2"
 
     def __init__(
         self,
@@ -165,8 +165,83 @@ class ExpressionUiSpecGenerator:
                 ),
             )
 
-        degraded = execution.schema_validation_status == "fallback" or bool(
-            validation.removed_block_ids or validation.removed_action_ids
+        initial_quality_issues = _content_quality_issues(
+            validation.render_payload,
+            input_type=session.input_type,
+            needs_practice=session.needs_practice,
+        )
+        quality_retry_attempted = False
+        if initial_quality_issues and mode in {"full", "retry"}:
+            quality_retry_attempted = True
+            retry_variables = {
+                **variables,
+                "generation_mode": "retry",
+                "instruction": (
+                    "上一次结果虽然结构合法，但学习内容不合格。请完整重做，并逐项修复："
+                    + "、".join(initial_quality_issues)
+                ),
+                "current_ui_spec": validation.render_payload,
+            }
+            try:
+                retry_execution = await self.executor.execute(
+                    prompt_id=self.prompt_id,
+                    version=self.prompt_version,
+                    variables=retry_variables,
+                    context=PromptExecutionContext(
+                        learner_id=session.learner_id,
+                        episode_id=session.episode_id,
+                        task_id=f"expression-lab:{session.id}:quality-retry",
+                        source_module="expression_lab",
+                        target_type="expression_lab_session",
+                        target_id=session.id,
+                        metadata={
+                            "generation_mode": "quality_retry",
+                            "quality_issues": list(initial_quality_issues),
+                        },
+                    ),
+                    fallback_parser=lambda raw: expression_ui_fallback_parser(
+                        raw,
+                        session_id=session.id,
+                        input_text=session.input_text,
+                        input_type=session.input_type,
+                        context=session.context,
+                        style_goal=session.style_goal,
+                        source_type=session.source_type,
+                        source_ref=session.source_ref,
+                    ),
+                )
+                if retry_execution.validated_output is not None:
+                    retry_validation = validate_ui_spec(
+                        retry_execution.validated_output,
+                        session_id=session.id,
+                        input_text=session.input_text,
+                        input_type=session.input_type,
+                        context=session.context,
+                        style_goal=session.style_goal,
+                        source_type=session.source_type,
+                        source_ref=session.source_ref,
+                    )
+                    if retry_validation.valid and retry_validation.render_payload is not None:
+                        retry_quality_issues = _content_quality_issues(
+                            retry_validation.render_payload,
+                            input_type=session.input_type,
+                            needs_practice=session.needs_practice,
+                        )
+                        if len(retry_quality_issues) < len(initial_quality_issues):
+                            execution = retry_execution
+                            validation = retry_validation
+            except Exception:
+                pass
+
+        quality_issues = _content_quality_issues(
+            validation.render_payload,
+            input_type=session.input_type,
+            needs_practice=session.needs_practice,
+        )
+        degraded = (
+            execution.schema_validation_status == "fallback"
+            or bool(validation.removed_block_ids or validation.removed_action_ids)
+            or bool(quality_issues)
         )
         diagnostics = {
             "generation_mode": mode,
@@ -180,6 +255,9 @@ class ExpressionUiSpecGenerator:
             "removed_action_ids": list(validation.removed_action_ids),
             "fallback_stage": validation.fallback_stage,
             "context_issue": context_issue,
+            "quality_retry_attempted": quality_retry_attempted,
+            "initial_content_quality_issues": list(initial_quality_issues),
+            "content_quality_issues": list(quality_issues),
         }
         return GenerationOutcome(
             status="partial" if degraded else "ready",
@@ -309,6 +387,67 @@ def generation_variables_json(variables: dict[str, Any]) -> str:
     """Stable helper used by prompt evals and diagnostics."""
 
     return json.dumps(variables, ensure_ascii=False, sort_keys=True)
+
+
+def _content_quality_issues(
+    ui_spec: dict[str, Any],
+    *,
+    input_type: str,
+    needs_practice: bool,
+) -> tuple[str, ...]:
+    """Detect structurally valid output that still fails the learning contract."""
+
+    blocks = [item for item in ui_spec.get("blocks", []) if isinstance(item, dict)]
+    block_types = [str(item.get("type") or "") for item in blocks]
+    issues: list[str] = []
+    expected_first = {
+        "zh_intent": {"expression_variants"},
+        "en_draft": {"sentence_diff"},
+        "good_sentence": {"pattern_diagram"},
+        "learning_target": {"vocabulary_focus", "grammar_focus"},
+    }.get(input_type, set())
+    if not blocks or (expected_first and block_types[0] not in expected_first):
+        issues.append("核心答案必须放在第一个模块")
+    if len(blocks) > 5:
+        issues.append("模块过多，删除重复解释并保留最多 5 个")
+    if needs_practice and "micro_practice" not in block_types:
+        issues.append("缺少新场景迁移练习")
+    if not needs_practice and "micro_practice" in block_types:
+        issues.append("用户未要求练习，不应生成练习模块")
+    if input_type == "good_sentence" and "transfer_builder" not in block_types:
+        issues.append("好句拆解后必须提供可替换槽位的迁移造句器")
+
+    if input_type == "zh_intent":
+        variants_block = next(
+            (item for item in blocks if item.get("type") == "expression_variants"),
+            None,
+        )
+        variants = (
+            variants_block.get("data", {}).get("variants", [])
+            if isinstance(variants_block, dict)
+            else []
+        )
+        first = variants[0] if variants and isinstance(variants[0], dict) else {}
+        required_detail = ("why_it_works", "use_when", "key_pattern", "example")
+        if not first or any(not str(first.get(key) or "").strip() for key in required_detail):
+            issues.append("首选表达缺少选择理由、使用时机、迁移结构或真实例句")
+        first_text = str(first.get("text") or "").strip()
+        actions = [
+            item
+            for item in ui_spec.get("learning_actions", [])
+            if isinstance(item, dict)
+        ]
+        action_types = {
+            str(item.get("type") or "")
+            for item in actions
+            if isinstance(item.get("payload"), dict)
+            and str(item["payload"].get("text") or "").strip() == first_text
+        }
+        required_actions = {"copy_expression", "save_writing_phrase"}
+        if first_text and not required_actions.issubset(action_types):
+            issues.append("首选表达必须可复制、可确认后收藏")
+
+    return tuple(issues)
 
 
 def _model_id(provider: str | None, model: str | None) -> str | None:

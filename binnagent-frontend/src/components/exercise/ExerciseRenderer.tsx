@@ -3,6 +3,7 @@ import { ArrowRight, CheckCircle2, LoaderCircle, RotateCcw, XCircle } from 'luci
 import { Button } from '@/components/ui/Button'
 import { recordExerciseAttempt, saveExerciseAttempt } from '@/services/exerciseRepository'
 import type { ExerciseAttempt, ExerciseItem } from '@/types/exercises'
+import { useToast } from '@/hooks/useToast'
 
 export interface ExerciseRendererProgress {
   completedCount: number
@@ -30,6 +31,7 @@ export function ExerciseRenderer({
   onProgressChange,
   onComplete,
 }: ExerciseRendererProps) {
+  const { showToast, signalMemoryChange } = useToast()
   const [currentIndex, setCurrentIndex] = useState(0)
   const [answersByExerciseId, setAnswersByExerciseId] = useState<Record<string, string>>({})
   const [feedbackByExerciseId, setFeedbackByExerciseId] = useState<Record<string, ExerciseFeedback>>({})
@@ -96,6 +98,15 @@ export function ExerciseRenderer({
           correctAnswer: currentExercise.correctAnswer,
         },
       }))
+      signalMemoryChange(null)
+      showToast(
+        isCorrect ? '我们一起拿下这题了。' : '还差一点，我陪你拆开答案看看。',
+        {
+          title: isCorrect ? '共同进展' : '我们慢一点',
+          variant: isCorrect ? 'success' : 'warning',
+          duration: isCorrect ? 2200 : 3000,
+        },
+      )
     } finally {
       setIsSubmitting(false)
     }
@@ -117,6 +128,11 @@ export function ExerciseRenderer({
 
   const restartGroup = () => {
     setCurrentIndex(0)
+  }
+
+  const finishGroup = () => {
+    showToast('这组练习我们完成了，学习记录也一起收好了。', { title: '一起完成', variant: 'success', duration: 3400 })
+    onComplete?.()
   }
 
   if (!currentExercise) return null
@@ -198,7 +214,7 @@ export function ExerciseRenderer({
               <XCircle className="size-5 text-rose-600" />
             )}
             <p className="text-sm font-black">
-              {currentFeedback.result === 'correct' ? '回答正确' : '回答错误'}
+              {currentFeedback.result === 'correct' ? '我们答对了' : '还差一点，我们一起看看'}
             </p>
           </div>
           {currentFeedback.result === 'incorrect' ? (
@@ -230,7 +246,7 @@ export function ExerciseRenderer({
             <ArrowRight className="size-4" />
           </Button>
         ) : (
-          <Button variant="secondary" onClick={onComplete ?? restartGroup} disabled={Boolean(onComplete) && !currentFeedback}>
+          <Button variant="secondary" onClick={onComplete ? finishGroup : restartGroup} disabled={Boolean(onComplete) && !currentFeedback}>
             {onComplete ? '完成练习' : '回到第一题'}
           </Button>
         )}

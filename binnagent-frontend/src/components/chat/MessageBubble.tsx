@@ -1,6 +1,7 @@
-import { Bot, User } from 'lucide-react'
+import { User } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import { XiaobingAvatar } from '@/components/ui/XiaobingAvatar'
 
 interface MessageBubbleProps {
   role: 'user' | 'assistant'
@@ -21,11 +22,13 @@ export function MessageBubble({ role, content, timestamp, isStreaming }: Message
       className={`group flex gap-3 ${isUser ? 'flex-row-reverse' : ''}`}
       aria-live={isStreaming ? 'polite' : undefined}
     >
-      <div className={`flex size-8 shrink-0 items-center justify-center rounded-full ${
-        isUser ? 'bg-primary text-primary-foreground' : 'bg-accent/20 text-accent'
-      }`}>
-        {isUser ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
-      </div>
+      {isUser ? (
+        <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
+          <User className="h-4 w-4" />
+        </div>
+      ) : (
+        <XiaobingAvatar className="size-8 shrink-0 border border-sky-100 bg-sky-50 shadow-sm" />
+      )}
       
       <div className={`min-w-0 max-w-[80%] rounded-2xl px-4 py-2.5 transition-[box-shadow,transform] duration-150 group-hover:-translate-y-0.5 group-hover:shadow-sm ${
         isUser

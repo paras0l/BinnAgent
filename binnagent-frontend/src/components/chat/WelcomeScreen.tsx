@@ -1,5 +1,6 @@
-import { Bot, BookOpen, MessageSquare, Mic } from 'lucide-react'
+import { BookOpen, MessageSquare, Mic } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
+import { XiaobingAvatar } from '@/components/ui/XiaobingAvatar'
 
 interface WelcomeScreenProps {
   onStartLesson: () => void
@@ -18,9 +19,7 @@ export function WelcomeScreen({
 
   return (
     <div className="flex flex-col items-center justify-center h-full gap-8 p-8">
-      <div className="flex size-20 items-center justify-center rounded-full bg-primary/10">
-        <Bot className="h-10 w-10 text-primary" />
-      </div>
+      <XiaobingAvatar className="size-20 border-2 border-sky-100 bg-sky-50 shadow-[0_8px_24px_rgba(14,165,233,0.16)]" />
       
       <div className="text-center">
         <h2 className="text-2xl font-bold text-foreground">你好！我是 BinnAgent</h2>

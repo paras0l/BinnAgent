@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 import {
   Bot,
   BookOpen,
@@ -9,10 +9,13 @@ import {
   KeyRound,
   LogOut,
   MessageCircle,
+  Sparkles,
   Settings,
   User,
 } from 'lucide-react'
 import type { AppTab, Learner } from '@/types'
+import bookmarkPull from '@/assets/header/bookmark-pull.png'
+import { XiaobingAvatar } from '@/components/ui/XiaobingAvatar'
 import { copyTextToClipboard } from '@/utils/clipboard'
 
 interface HeaderProps {
@@ -22,6 +25,7 @@ interface HeaderProps {
   onLogout: () => void
   onOpenGroupLearningSettings: () => void
   onOpenLearningSettings: () => void
+  onOpenPetSpiritSettings: () => void
   onTabChange: (tab: AppTab) => void
 }
 
@@ -32,12 +36,24 @@ export function Header({
   onLogout,
   onOpenGroupLearningSettings,
   onOpenLearningSettings,
+  onOpenPetSpiritSettings,
   onTabChange,
 }: HeaderProps) {
   const isTabDisabled = (tab: AppTab) => isLocked && tab !== 'chat'
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isInviteCopied, setIsInviteCopied] = useState(false)
+  const [isHeaderCollapsed, setIsHeaderCollapsed] = useState(false)
+  const [isPullVisible, setIsPullVisible] = useState(false)
+  const [isPullRestoring, setIsPullRestoring] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
+  const lastScrollYRef = useRef(0)
+  const lastScrollSourceRef = useRef<EventTarget | null>(null)
+  const isHeaderCollapsedRef = useRef(false)
+  const suppressCollapseUntilRef = useRef(0)
+  const pullStartYRef = useRef<number | null>(null)
+  const isPullRestoringRef = useRef(false)
+  const restoreHeaderTimerRef = useRef<number | null>(null)
+  const hidePullTimerRef = useRef<number | null>(null)
 
   const copyInviteCode = async () => {
     if (!learner.invite_code) return
@@ -53,11 +69,106 @@ export function Header({
     return () => window.removeEventListener('pointerdown', onPointerDown)
   }, [isMenuOpen])
 
+  useEffect(() => {
+    lastScrollYRef.current = window.scrollY
+    lastScrollSourceRef.current = document
+    let frame = 0
+
+    const onScroll = (event: Event) => {
+      const source = event.target
+      const isWindowScroll = source === document
+      const isDesignatedSurface = source instanceof HTMLElement
+        && source.hasAttribute('data-header-scroll-surface')
+      if (!isWindowScroll && !isDesignatedSurface) return
+
+      if (frame) return
+      frame = window.requestAnimationFrame(() => {
+        frame = 0
+        const nextScrollY = Math.max(
+          isDesignatedSurface ? (source as HTMLElement).scrollTop : window.scrollY,
+          0,
+        )
+        const previousScrollY = lastScrollSourceRef.current === source
+          ? lastScrollYRef.current
+          : 0
+        const scrollDelta = nextScrollY - previousScrollY
+
+        if (
+          nextScrollY >= 112
+          && scrollDelta > 0
+          && !isHeaderCollapsedRef.current
+          && !isPullRestoringRef.current
+          && Date.now() >= suppressCollapseUntilRef.current
+        ) {
+          isHeaderCollapsedRef.current = true
+          setIsHeaderCollapsed(true)
+          setIsPullVisible(true)
+          setIsMenuOpen(false)
+        }
+
+        lastScrollYRef.current = nextScrollY
+        lastScrollSourceRef.current = source
+      })
+    }
+
+    window.addEventListener('scroll', onScroll, { capture: true, passive: true })
+    return () => {
+      window.removeEventListener('scroll', onScroll, { capture: true })
+      if (frame) window.cancelAnimationFrame(frame)
+    }
+  }, [])
+
+  useEffect(() => () => {
+    if (restoreHeaderTimerRef.current !== null) window.clearTimeout(restoreHeaderTimerRef.current)
+    if (hidePullTimerRef.current !== null) window.clearTimeout(hidePullTimerRef.current)
+  }, [])
+
+  const restoreHeader = () => {
+    if (!isHeaderCollapsedRef.current || isPullRestoringRef.current) return
+    isPullRestoringRef.current = true
+    suppressCollapseUntilRef.current = Date.now() + 900
+    setIsPullRestoring(true)
+    pullStartYRef.current = null
+
+    restoreHeaderTimerRef.current = window.setTimeout(() => {
+      isHeaderCollapsedRef.current = false
+      setIsHeaderCollapsed(false)
+    }, 118)
+
+    hidePullTimerRef.current = window.setTimeout(() => {
+      setIsPullVisible(false)
+      setIsPullRestoring(false)
+      isPullRestoringRef.current = false
+    }, 520)
+  }
+
+  const onPullStart = (event: ReactPointerEvent<HTMLButtonElement>) => {
+    pullStartYRef.current = event.clientY
+    event.currentTarget.setPointerCapture(event.pointerId)
+  }
+
+  const onPullMove = (event: ReactPointerEvent<HTMLButtonElement>) => {
+    const pullStartY = pullStartYRef.current
+    if (pullStartY === null || event.clientY - pullStartY < 24) return
+    restoreHeader()
+  }
+
+  const onPullEnd = (event: ReactPointerEvent<HTMLButtonElement>) => {
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId)
+    }
+    pullStartYRef.current = null
+  }
+
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 h-16 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="flex h-full items-center justify-between px-3 sm:px-6">
+    <header
+      className="binn-header fixed top-0 left-0 right-0 z-50 h-16 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
+      data-collapsed={isHeaderCollapsed}
+      data-restoring={isPullRestoring}
+    >
+      <div className="binn-header__content flex h-full items-center justify-between px-3 sm:px-6">
         <div className="flex items-center gap-2">
-          <Bot className="h-6 w-6 text-primary" />
+          <XiaobingAvatar className="size-8 border border-sky-100 bg-sky-50 shadow-sm" />
           <span className="hidden text-xl font-bold text-foreground sm:inline">BinnAgent</span>
         </div>
         
@@ -65,10 +176,10 @@ export function Header({
           <nav className="flex gap-0.5 sm:gap-1">
             <button
               onClick={() => onTabChange('chat')}
-              className={`flex items-center gap-2 rounded-lg px-2.5 py-2 text-sm transition-colors focus-visible:outline-2 focus-visible:outline-primary sm:px-4 ${
+              className={`flex items-center gap-2 rounded-full px-2.5 py-2 text-sm transition-colors focus-visible:outline-2 focus-visible:outline-primary sm:px-4 ${
                 activeTab === 'chat'
-                  ? 'bg-primary/10 font-medium text-primary'
-                  : 'text-muted-foreground hover:bg-muted'
+                  ? 'bg-primary/10 font-bold text-primary shadow-[0_2px_8px_rgba(99,102,241,0.12)]'
+                  : 'text-muted-foreground hover:bg-indigo-50/70 hover:text-indigo-700'
               }`}
             >
               <Bot className="h-4 w-4" />
@@ -77,10 +188,10 @@ export function Header({
             <button
               onClick={() => onTabChange('explore')}
               disabled={isTabDisabled('explore')}
-              className={`flex items-center gap-2 rounded-lg px-2.5 py-2 text-sm transition-colors focus-visible:outline-2 focus-visible:outline-primary sm:px-4 ${
+              className={`flex items-center gap-2 rounded-full px-2.5 py-2 text-sm transition-colors focus-visible:outline-2 focus-visible:outline-primary sm:px-4 ${
                 activeTab === 'explore'
-                  ? 'bg-primary/10 font-medium text-primary'
-                  : 'text-muted-foreground hover:bg-muted'
+                  ? 'bg-primary/10 font-bold text-primary shadow-[0_2px_8px_rgba(99,102,241,0.12)]'
+                  : 'text-muted-foreground hover:bg-indigo-50/70 hover:text-indigo-700'
               } disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent`}
               title={isTabDisabled('explore') ? '回答生成中，请先等待完成或取消' : '探索'}
             >
@@ -90,10 +201,10 @@ export function Header({
             <button
               onClick={() => onTabChange('dashboard')}
               disabled={isTabDisabled('dashboard')}
-              className={`flex items-center gap-2 rounded-lg px-2.5 py-2 text-sm transition-colors focus-visible:outline-2 focus-visible:outline-primary sm:px-4 ${
+              className={`flex items-center gap-2 rounded-full px-2.5 py-2 text-sm transition-colors focus-visible:outline-2 focus-visible:outline-primary sm:px-4 ${
                 activeTab === 'dashboard'
-                  ? 'bg-primary/10 font-medium text-primary'
-                  : 'text-muted-foreground hover:bg-muted'
+                  ? 'bg-primary/10 font-bold text-primary shadow-[0_2px_8px_rgba(99,102,241,0.12)]'
+                  : 'text-muted-foreground hover:bg-indigo-50/70 hover:text-indigo-700'
               } disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent`}
               title={isTabDisabled('dashboard') ? '回答生成中，请先等待完成或取消' : '学习中心'}
             >
@@ -154,6 +265,18 @@ export function Header({
                   role="menuitem"
                   onClick={() => {
                     setIsMenuOpen(false)
+                    onOpenPetSpiritSettings()
+                  }}
+                  className="mt-1 flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-bold text-slate-700 transition hover:bg-sky-50 hover:text-sky-700 focus-visible:outline-2 focus-visible:outline-primary"
+                >
+                  <Sparkles className="size-4" />
+                  宠物精灵设置
+                </button>
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => {
+                    setIsMenuOpen(false)
                     onOpenLearningSettings()
                   }}
                   className="mt-2 flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-bold text-slate-700 transition hover:bg-slate-50 hover:text-indigo-700 focus-visible:outline-2 focus-visible:outline-primary"
@@ -192,6 +315,22 @@ export function Header({
           </div>
         </div>
       </div>
+      {isPullVisible ? (
+        <button
+          type="button"
+          className="binn-header__pull"
+          aria-label="展开顶部菜单"
+          title="点击或向下拉动，展开顶部菜单"
+          onClick={restoreHeader}
+          onPointerDown={onPullStart}
+          onPointerMove={onPullMove}
+          onPointerUp={onPullEnd}
+          onPointerCancel={onPullEnd}
+        >
+          <span className="binn-header__pull-art" aria-hidden="true"><img src={bookmarkPull} alt="" draggable={false} /></span>
+          <span className="sr-only">点击或向下拉动以展开顶部菜单</span>
+        </button>
+      ) : null}
     </header>
   )
 }

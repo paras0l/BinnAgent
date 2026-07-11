@@ -314,6 +314,22 @@ prompt_registry.register(
             "temperature": 0.35,
             "max_tokens": 6000,
         },
-        eval_set="evals/prompts/expression_lab_ui_spec_v1.jsonl",
+        status="deprecated",
+    )
+)
+prompt_registry.register(
+    PromptMetadata(
+        id="expression_lab.ui_spec",
+        version="v2",
+        owner="expression_lab",
+        purpose="把表达意图、英文草稿、好句或学习目标生成少而精、可直接使用的受控 Expression UI DSL",
+        template_path="versions/expression_lab.ui_spec.v2.md",
+        output_schema="ExpressionUiOutput",
+        model_policy={
+            "default_model": "ollama_chat",
+            "temperature": 0.25,
+            "max_tokens": 4200,
+        },
+        eval_set="evals/prompts/expression_lab_ui_spec_v2.jsonl",
     )
 )

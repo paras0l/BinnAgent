@@ -1,11 +1,9 @@
-import { Bot } from 'lucide-react'
+import { XiaobingAvatar } from '@/components/ui/XiaobingAvatar'
 
 export function TypingIndicator() {
   return (
     <div className="flex items-center gap-3 px-4 py-2" aria-live="polite" aria-label="AI 正在输入">
-      <div className="flex size-8 items-center justify-center rounded-full bg-accent/20">
-        <Bot className="h-4 w-4 text-accent" />
-      </div>
+      <XiaobingAvatar className="size-8 border border-sky-100 bg-sky-50 shadow-sm" />
       <div className="flex gap-1">
         {[0, 1, 2].map(i => (
           <span

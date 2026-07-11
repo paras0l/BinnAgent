@@ -1,5 +1,5 @@
 import { AlertCircle, ArrowRight, BookCheck, BookMarked, BookOpen, BookOpenCheck, CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, Clock3, Dumbbell, FileText, GraduationCap, Languages, Layers3, LibraryBig, ListChecks, ListTree, LoaderCircle, RotateCcw, Send, SkipForward, Sparkles, Trash2, UploadCloud, X } from 'lucide-react'
-import { useCallback, useEffect, useId, useMemo, useState, type KeyboardEventHandler, type ReactNode, type Ref } from 'react'
+import { useCallback, useEffect, useId, useMemo, useRef, useState, type KeyboardEventHandler, type ReactNode, type Ref } from 'react'
 import type { CapabilityRecommendation } from '@/components/learning/CapabilityRecommendationCard'
 import { PageShell } from '@/components/layout/PageShell'
 import { CurriculumRail } from '@/components/knowledge/CurriculumRail'
@@ -159,7 +159,7 @@ function ingestResultToStatus(result: KnowledgeIngestResult): KnowledgeIngestSta
 }
 
 export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice, onOpenPronunciationWorkspace }: KnowledgeBasePageProps) {
-  const { showToast } = useToast()
+  const { beginPetActivity, completePetActivity, showToast, signalMemoryChange } = useToast()
   const [overview, setOverview] = useState<KnowledgeBaseOverview | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -196,11 +196,25 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice, 
   const [isSubmittingDailyAnswer, setIsSubmittingDailyAnswer] = useState(false)
   const [dismissedDailyRecommendationIds, setDismissedDailyRecommendationIds] = useState<Set<string>>(() => new Set())
   const [busyDailyRecommendationId, setBusyDailyRecommendationId] = useState<string | null>(null)
+  const longActivityRef = useRef<string | null>(null)
   const curriculumPanelId = useId()
   const curriculumTitleId = useId()
   const contextPanelId = useId()
   const contextTitleId = useId()
   const capabilityDrawerTitleId = useId()
+  const isLongActivity = isLoading || isUpdatingUnitProgress || isStartingLesson || isStartingExercise
+    || isStartingDailyLesson || isGeneratingReadingMaterial || isLoadingUnitReadingMaterials || isSubmittingDailyAnswer
+
+  useEffect(() => {
+    if (isLongActivity && !longActivityRef.current) {
+      longActivityRef.current = beginPetActivity('我陪你把教材、练习和学习记录整理到一起，稍等一下。', '我们正在准备')
+      return
+    }
+    if (!isLongActivity && longActivityRef.current) {
+      completePetActivity(longActivityRef.current, '准备好了，我们一起看看下一步。', 'info')
+      longActivityRef.current = null
+    }
+  }, [beginPetActivity, completePetActivity, isLongActivity])
   const { containerRef: curriculumPanelRef, handleKeyDown: handleCurriculumPanelKeyDown } = useFocusTrap<HTMLElement>({
     isActive: isCurriculumRailOpen,
     onEscape: () => setIsCurriculumRailOpen(false),
@@ -518,8 +532,14 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice, 
         hint_count: 0,
       }),
     })
-    if (!response.ok) throw new Error('学习记录保存失败，请重试。')
-    return await response.json() as KnowledgeAttemptResult
+    if (!response.ok) throw new Error('这次学习记录还没保存好，我们一起再试一次。')
+    const result = await response.json() as KnowledgeAttemptResult
+    signalMemoryChange(null)
+    showToast(
+      correct ? '这个知识点我们确认好了。' : '这部分有点难，我们慢一点，之后再回来巩固。',
+      { title: correct ? '共同进展' : '一起安排复习', variant: correct ? 'success' : 'warning', duration: 2800 },
+    )
+    return result
   }
 
   const handleCompleteLesson = async () => {

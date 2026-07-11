@@ -47,27 +47,47 @@ export function ExpressionVariantsBlock(props: ExpressionBlockProps) {
   const { block, actions, actionStates, onAction, onCopy } = props
   const items = asRecords(firstArray(block.data, ['variants', 'expressions', 'items', 'options']))
   return (
-    <div className="grid gap-3 md:grid-cols-2">
+    <div className="space-y-0">
       {items.map((item, index) => {
         const text = firstText(item, ['text', 'expression', 'sentence'])
         const meaning = firstText(item, ['chinese_explanation', 'chinese_meaning', 'meaning', 'translation'])
+        const whyItWorks = firstText(item, ['why_it_works', 'why', 'explanation'])
+        const useWhen = firstText(item, ['use_when', 'usage_note', 'context', 'usage_scene', 'scene'])
+        const avoidWhen = firstText(item, ['avoid_when'])
+        const keyPattern = firstText(item, ['key_pattern', 'pattern', 'template'])
+        const example = firstText(item, ['example', 'example_sentence'])
+        const exampleTranslation = firstText(item, ['example_translation', 'example_chinese'])
         const actionId = firstText(item, ['action_id', 'spec_action_id'])
         const saveAction = findExpressionAction(actions, 'save_writing_phrase', text, actionId)
         const copyAction = findExpressionAction(actions, 'copy_expression', text, actionId)
+        const isRecommended = index === 0
         return (
-          <article key={`${text}-${index}`} className="flex min-w-0 flex-col rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <article key={`${text}-${index}`} className={`flex min-w-0 flex-col ${isRecommended ? 'rounded-xl border border-indigo-200 bg-gradient-to-br from-indigo-50/75 via-white to-amber-50/35 p-4 sm:p-5' : 'border-t border-slate-100 px-1 py-5'}`}>
             <div className="flex flex-wrap gap-2 text-xs font-bold">
-              {firstText(item, ['tone', 'register']) ? <Tag>{firstText(item, ['tone', 'register'])}</Tag> : null}
-              {asStrings(item.tone_tags).map((tag) => <Tag key={tag}>{tag}</Tag>)}
-              {firstText(item, ['context', 'usage_scene', 'scene']) ? <Tag tone="slate">{firstText(item, ['context', 'usage_scene', 'scene'])}</Tag> : null}
-              {displayValue(item.naturalness) ? <Tag tone="green">自然度 {displayValue(item.naturalness)}</Tag> : null}
-              {displayValue(item.difficulty) ? <Tag tone="slate">难度 {displayValue(item.difficulty)}</Tag> : null}
+              {isRecommended ? <Tag tone="amber">当前场景首选</Tag> : <Tag tone="slate">备选 {index + 1}</Tag>}
+              {firstText(item, ['tone', 'register']) ? <Tag tone={semanticToneForLabel(firstText(item, ['tone', 'register']))}>{firstText(item, ['tone', 'register'])}</Tag> : null}
+              {asStrings(item.tone_tags).map((tag, tagIndex) => <Tag key={tag} tone={semanticToneForLabel(tag, tagIndex)}>{tag}</Tag>)}
             </div>
-            <p lang="en" className="mt-4 break-words text-lg font-black leading-8 text-slate-950 [overflow-wrap:anywhere]">{text || `表达 ${index + 1}`}</p>
-            {meaning ? <p className="mt-2 text-sm leading-6 text-slate-600">{meaning}</p> : null}
+            <p lang="en" className={`mt-4 break-words font-black text-slate-950 [overflow-wrap:anywhere] ${isRecommended ? 'text-2xl leading-9 sm:text-[1.7rem]' : 'text-lg leading-8'}`}>{text || `表达 ${index + 1}`}</p>
+            {meaning ? <p className={`mt-2 leading-6 ${isRecommended ? 'text-base font-bold text-slate-700' : 'text-sm text-slate-600'}`}>{meaning}</p> : null}
+            {(useWhen || whyItWorks || keyPattern) ? (
+              <dl className={`mt-4 grid gap-3 ${isRecommended ? 'sm:grid-cols-3' : 'sm:grid-cols-2'}`}>
+                {useWhen ? <ExpressionNote label="什么时候用" value={useWhen} tone="sky" /> : null}
+                {whyItWorks ? <ExpressionNote label="为什么自然" value={whyItWorks} tone="indigo" /> : null}
+                {keyPattern ? <ExpressionNote label="可以迁移的结构" value={keyPattern} tone="amber" lang="en" /> : null}
+              </dl>
+            ) : null}
+            {example ? (
+              <div className="mt-4 rounded-lg border border-slate-200/80 bg-white/80 px-3.5 py-3">
+                <p className="text-[11px] font-black uppercase tracking-wide text-slate-400">真实场景例句</p>
+                <p lang="en" className="mt-1.5 text-sm font-bold leading-6 text-slate-900">{example}</p>
+                {exampleTranslation ? <p className="mt-1 text-xs leading-5 text-slate-500">{exampleTranslation}</p> : null}
+              </div>
+            ) : null}
+            {avoidWhen ? <p className="mt-3 text-xs leading-5 text-rose-700"><span className="font-black">不建议用于：</span>{avoidWhen}</p> : null}
             <div className="mt-auto flex flex-wrap gap-2 pt-4">
-              <Button variant="secondary" className="px-3 py-2 text-xs" onClick={() => onCopy(text, copyAction)} disabled={!text}>
-                <ClipboardCopy className="size-4" />复制
+              <Button variant={isRecommended ? 'primary' : 'secondary'} className="px-3 py-2 text-xs" onClick={() => onCopy(text, copyAction)} disabled={!text}>
+                <ClipboardCopy className="size-4" />{isRecommended ? '复制首选表达' : '复制'}
               </Button>
               {saveAction ? (
                 <ActionButton action={saveAction} state={actionStates[saveAction.id]} onAction={onAction} />
@@ -79,6 +99,11 @@ export function ExpressionVariantsBlock(props: ExpressionBlockProps) {
       {items.length === 0 ? <BlockEmpty text="暂时没有可比较的表达，试试重新生成这个模块。" /> : null}
     </div>
   )
+}
+
+function ExpressionNote({ label, value, tone, lang }: { label: string; value: string; tone: 'sky' | 'indigo' | 'amber'; lang?: string }) {
+  const classes = tone === 'sky' ? 'border-sky-100 bg-sky-50/70' : tone === 'amber' ? 'border-amber-100 bg-amber-50/70' : 'border-indigo-100 bg-indigo-50/70'
+  return <div className={`rounded-lg border px-3 py-2.5 ${classes}`}><dt className="text-[11px] font-black text-slate-500">{label}</dt><dd lang={lang} className="mt-1 text-xs font-bold leading-5 text-slate-800">{value}</dd></div>
 }
 
 export function ToneSpectrumBlock({ block, onCopy, actions }: ExpressionBlockProps) {
@@ -140,7 +165,7 @@ export function SentenceDiffBlock({ block }: ExpressionBlockProps) {
             return (
               <li key={index} className="rounded-xl border border-slate-200 bg-slate-50 p-3">
                 <div className="flex flex-wrap items-center gap-2">
-                  <Tag tone="slate">{changeOperationLabel(operation)}</Tag>
+                  <Tag tone={operationTagTone(operation)}>{changeOperationLabel(operation)}</Tag>
                   {before ? <del lang="en" className="rounded bg-rose-100 px-1.5 py-0.5 text-sm font-bold text-rose-800">{before}</del> : null}
                   {after ? <><ArrowRight className="size-4 text-slate-400" /><ins lang="en" className="rounded bg-emerald-100 px-1.5 py-0.5 text-sm font-bold text-emerald-800 no-underline">{after}</ins></> : null}
                 </div>
@@ -328,7 +353,7 @@ export function MicroPracticeBlock({ block, attempts, onAttempt }: ExpressionBlo
   return (
     <div>
       <div className="flex items-center justify-between gap-3">
-        <Tag>{firstText(question, ['type', 'exercise_type'], '表达练习')}</Tag>
+        <Tag tone="sky">{firstText(question, ['type', 'exercise_type'], '表达练习')}</Tag>
         <span className="text-xs font-bold text-slate-500">{currentIndex + 1} / {normalizedQuestions.length}</span>
       </div>
       <p className="mt-4 text-lg font-black leading-8 text-slate-950">{firstText(question, ['prompt', 'stem', 'question'], '请使用本次表达完成练习。')}</p>
@@ -405,9 +430,11 @@ function ActionButton({ action, state, onAction, compact = false }: { action: Ex
   return <Button variant={failed ? 'secondary' : 'primary'} className={compact ? 'shrink-0 px-3 py-2 text-xs' : 'px-3 py-2 text-xs'} onClick={() => onAction(action)} disabled={saved || saving}>{saving ? <LoaderCircle className="size-4 animate-spin" /> : saved ? <Check className="size-4" /> : failed ? <RotateCcw className="size-4" /> : <Save className="size-4" />}{saving ? '保存中' : saved ? '已保存' : failed ? '重试' : action.label}</Button>
 }
 
-function Tag({ children, tone = 'indigo' }: { children: React.ReactNode; tone?: 'indigo' | 'slate' | 'green' }) {
-  const classes = tone === 'green' ? 'bg-emerald-50 text-emerald-700' : tone === 'slate' ? 'bg-slate-100 text-slate-600' : 'bg-indigo-50 text-indigo-700'
-  return <span className={`inline-flex rounded-md px-2 py-1 text-xs font-bold ${classes}`}>{children}</span>
+const DECORATIVE_TAG_TONES = ['indigo', 'sky', 'violet', 'amber', 'rose'] as const
+
+function Tag({ children, tone = 'indigo' }: { children: React.ReactNode; tone?: 'indigo' | 'slate' | 'green' | 'sky' | 'violet' | 'amber' | 'rose' }) {
+  const classes = TAG_TONE_CLASSES[tone]
+  return <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-black leading-4 ring-1 ring-inset ${classes}`}>{children}</span>
 }
 
 function BlockEmpty({ text }: { text: string }) {
@@ -446,6 +473,13 @@ function changeOperationLabel(operation: string) {
   return '调整'
 }
 
+function operationTagTone(operation: string): TagTone {
+  if (['delete', 'removed'].includes(operation)) return 'rose'
+  if (['add', 'insert', 'added'].includes(operation)) return 'sky'
+  if (operation === 'replace') return 'violet'
+  return 'amber'
+}
+
 function feedbackText(value: unknown) {
   if (typeof value === 'string') return value
   const record = asRecord(value)
@@ -458,7 +492,43 @@ function shorten(value: string, max: number) {
 
 export function BlockTypeBadge({ type }: { type: string }) {
   const icon = type === 'sentence_diff' ? <GitCompareArrows className="size-4" /> : type === 'micro_practice' ? <BookOpenCheck className="size-4" /> : type.includes('focus') ? <Plus className="size-4" /> : <Sparkles className="size-4" />
-  return <span className="inline-flex items-center gap-1 rounded-md bg-indigo-50 px-2 py-1 text-xs font-black text-indigo-700">{icon}{blockTypeLabel(type)}</span>
+  const tone = BLOCK_TYPE_TONES[type] ?? 'indigo'
+  return <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-black leading-4 ring-1 ring-inset ${TAG_TONE_CLASSES[tone]}`}>{icon}{blockTypeLabel(type)}</span>
+}
+
+type TagTone = 'indigo' | 'slate' | 'green' | 'sky' | 'violet' | 'amber' | 'rose'
+
+const TAG_TONE_CLASSES: Record<TagTone, string> = {
+  amber: 'bg-amber-100/75 text-amber-800 ring-amber-200/80',
+  green: 'bg-emerald-100/75 text-emerald-800 ring-emerald-200/80',
+  indigo: 'bg-indigo-100/80 text-indigo-800 ring-indigo-200/80',
+  rose: 'bg-rose-100/75 text-rose-800 ring-rose-200/80',
+  sky: 'bg-sky-100/80 text-sky-800 ring-sky-200/80',
+  slate: 'bg-slate-100 text-slate-700 ring-slate-200',
+  violet: 'bg-violet-100/80 text-violet-800 ring-violet-200/80',
+}
+
+const BLOCK_TYPE_TONES: Record<string, TagTone> = {
+  expression_variants: 'indigo',
+  tone_spectrum: 'violet',
+  sentence_diff: 'sky',
+  pattern_diagram: 'amber',
+  usage_comparison: 'rose',
+  vocabulary_focus: 'sky',
+  grammar_focus: 'violet',
+  micro_practice: 'amber',
+  transfer_builder: 'rose',
+  sandbox_widget: 'indigo',
+}
+
+function semanticToneForLabel(label: string, fallbackIndex = 0): TagTone {
+  const normalized = label.toLocaleLowerCase()
+  if (/委婉|温和|友好|亲切|warm|soft|gentle|polite/.test(normalized)) return 'rose'
+  if (/正式|严谨|学术|书面|formal|academic/.test(normalized)) return 'violet'
+  if (/自然|日常|口语|轻松|natural|casual|spoken/.test(normalized)) return 'sky'
+  if (/直接|强调|坚定|有力|direct|strong|firm/.test(normalized)) return 'amber'
+  if (/中性|通用|neutral|general/.test(normalized)) return 'indigo'
+  return DECORATIVE_TAG_TONES[fallbackIndex % DECORATIVE_TAG_TONES.length]
 }
 
 function blockTypeLabel(type: string) {

@@ -1,7 +1,8 @@
-import { Component, lazy, Suspense, useCallback, useEffect, useState, type ErrorInfo, type ReactNode } from 'react'
+import { Component, lazy, Suspense, useCallback, useEffect, useRef, useState, type ErrorInfo, type ReactNode } from 'react'
 import { Header } from './components/layout/Header'
 import { GroupLearningSettingsDialog } from './components/learning/GroupLearningSettingsDialog'
 import { LearningSettingsDialog } from './components/learning/LearningSettingsDialog'
+import { PetSpiritSettingsDialog } from './components/learning/PetSpiritSettingsDialog'
 import { Button } from './components/ui/Button'
 import { StatusBanner } from './components/ui/StatusBanner'
 import { useToast } from './hooks/useToast'
@@ -70,7 +71,7 @@ const VocabularyPracticePage = lazy(() =>
 
 function PageLoadingFallback({ label = '正在打开学习空间...' }: { label?: string }) {
   return (
-    <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center text-sm text-muted-foreground">
+    <div className="binn-min-viewport-height flex items-center justify-center text-sm text-muted-foreground">
       {label}
     </div>
   )
@@ -112,7 +113,7 @@ class RouteErrorBoundary extends Component<RouteErrorBoundaryProps, RouteErrorBo
 }
 
 function App() {
-  const { showToast } = useToast()
+  const { beginPetActivity, completePetActivity, introduceFeature, petPreferences, resetIntroductions, showToast, signalMemoryChange, updatePetPreferences } = useToast()
   const [activeTab, setActiveTab] = useState<AppTab>('chat')
   const [learningCenterView, setLearningCenterView] = useState<LearningCenterView>('home')
   const [practiceMode, setPracticeMode] = useState<VocabularyPracticeMode>('review')
@@ -127,8 +128,10 @@ function App() {
     skillFocus: string | null
   } | null>(null)
   const [isChatGenerating, setIsChatGenerating] = useState(false)
+  const chatActivityRef = useRef<string | null>(null)
   const [isLearningSettingsOpen, setIsLearningSettingsOpen] = useState(false)
   const [isGroupLearningSettingsOpen, setIsGroupLearningSettingsOpen] = useState(false)
+  const [isPetSpiritSettingsOpen, setIsPetSpiritSettingsOpen] = useState(false)
   const [learnerProfile, setLearnerProfile] = useState<LearnerProfile | null>(null)
   const [learnerProfileReadiness, setLearnerProfileReadiness] = useState<LearnerProfileReadiness | null>(null)
   const [currentLearner, setCurrentLearner] = useState<Learner | null>(() => readCachedLearner())
@@ -137,6 +140,34 @@ function App() {
     Boolean(readLocalStorageItem('binnLearnerId'))
   )
   const { preferences, resetPreferences, updatePreferences } = useLearningPreferences(currentLearner?.id)
+
+  useEffect(() => {
+    if (!currentLearner?.id) return
+    if (expressionLabLaunch) {
+      introduceFeature('expression-lab', '表达实验室', '把一句想说的话放进来，我会陪你拆解、改写，再沉淀成可复用的表达。')
+      return
+    }
+    const introductions: Partial<Record<AppTab, [string, string, string]>> = {
+      chat: ['ai-chat', 'AI 对话', '这里可以自由提问、练习英语，我们也可以接着上次的学习线索继续往前走。'],
+      explore: ['explore', '探索', '这里集合了发音、语法和表达等专项工具，选一个现在最想提升的能力吧。'],
+      dashboard: ['learning-center', '学习中心', '这里能看到学习进度、今日任务和复习入口，适合每天从这里开始。'],
+      pronunciation: ['pronunciation', '发音训练', '在这里可以查音标、跟读并获得发音反馈。'],
+      grammar: ['grammar', '语法学习', '选择一个语法点，我会提供讲解、例句和练习路径。'],
+    }
+    const introduction = introductions[activeTab]
+    if (introduction) introduceFeature(...introduction)
+  }, [activeTab, currentLearner?.id, expressionLabLaunch, introduceFeature])
+
+  useEffect(() => {
+    if (isChatGenerating && !chatActivityRef.current) {
+      chatActivityRef.current = beginPetActivity('我陪你整理思路和学习记录，稍等一下，我们一起看结果。', '正在一起想')
+      return
+    }
+    if (!isChatGenerating && chatActivityRef.current) {
+      completePetActivity(chatActivityRef.current, '整理好了，我们一起看看。', 'info')
+      chatActivityRef.current = null
+    }
+  }, [beginPetActivity, completePetActivity, isChatGenerating])
 
   useEffect(() => {
     const handlePopState = () => setExpressionLabLaunch(readExpressionLabLocation())
@@ -239,8 +270,9 @@ function App() {
       })
       if (!response.ok) throw new Error('Failed to save learner profile')
       setLearnerProfile(await response.json() as LearnerProfile)
+      signalMemoryChange('我把新的学习目标记住了，之后我们会一起按这个方向调整。')
     } catch {
-      showToast('学习画像暂时无法保存，请稍后重试。', { variant: 'warning' })
+      showToast('学习画像这次还没保存好，我们一起再试一次。', { variant: 'warning' })
     }
   }
 
@@ -426,6 +458,7 @@ function App() {
         onLogout={handleLogout}
         onOpenGroupLearningSettings={() => setIsGroupLearningSettingsOpen(true)}
         onOpenLearningSettings={() => setIsLearningSettingsOpen(true)}
+        onOpenPetSpiritSettings={() => setIsPetSpiritSettingsOpen(true)}
         onTabChange={handleTabChange}
       />
       <GroupLearningSettingsDialog
@@ -440,7 +473,14 @@ function App() {
         onReset={resetPreferences}
         onUpdate={updatePreferences}
       />
-      <main className="pt-16">
+      <PetSpiritSettingsDialog
+        open={isPetSpiritSettingsOpen}
+        preferences={petPreferences}
+        onClose={() => setIsPetSpiritSettingsOpen(false)}
+        onResetIntroductions={resetIntroductions}
+        onUpdate={updatePetPreferences}
+      />
+      <main className="binn-app-main">
         {expressionLabLaunch ? null : profileSetupBanner}
         <RouteErrorBoundary
           resetKey={`${currentLearner.id}:${activeTab}:${learningCenterView}:${expressionLabLaunch?.sessionId ?? 'no-expression-lab'}`}

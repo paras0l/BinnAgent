@@ -8,6 +8,7 @@ describe('ChatContainer mobile scroll behavior', () => {
     expect(chatContainerSource).toContain('pauseAutoScrollForReading')
     expect(chatContainerSource).toContain('if (!shouldAutoScrollRef.current) return')
     expect(chatContainerSource).toContain("messages[messages.length - 1]?.role === 'user'")
-    expect(chatContainerSource).toContain('h-[calc(100dvh-4rem)]')
+    expect(chatContainerSource).toContain('binn-viewport-height')
+    expect(chatContainerSource).toContain('data-header-scroll-surface')
   })
 })

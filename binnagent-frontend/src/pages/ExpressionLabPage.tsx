@@ -27,6 +27,7 @@ import { FormField } from '@/components/ui/FormField'
 import { Select } from '@/components/ui/Select'
 import { StatusBanner } from '@/components/ui/StatusBanner'
 import { SurfaceCard } from '@/components/ui/SurfaceCard'
+import { XiaobingAvatar } from '@/components/ui/XiaobingAvatar'
 import { useToast } from '@/hooks/useToast'
 import {
   completeExpressionLabSession,
@@ -90,7 +91,7 @@ export function ExpressionLabPage({
   onBack,
   onSessionChange,
 }: ExpressionLabPageProps) {
-  const { showToast } = useToast()
+  const { beginPetActivity, completePetActivity, showToast } = useToast()
   const [draft, setDraft] = useState<ExpressionLabDraft>(() => initialDraft(
     learner.id,
     learnerProfile,
@@ -115,6 +116,7 @@ export function ExpressionLabPage({
   const [isDeleteOpen, setIsDeleteOpen] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const reportedEventsRef = useRef(new Set<string>())
+  const previousGenerationActiveRef = useRef(false)
 
   const refreshRecent = useCallback(async (signal?: AbortSignal) => {
     try {
@@ -208,6 +210,36 @@ export function ExpressionLabPage({
   const practiceAction = actions.find((action) => action.type === 'create_practice')
   const practiceActionState = practiceAction ? actionStates[practiceAction.id] ?? normalizeActionState(practiceAction.status) : null
   const pageStatus = pageError ? 'error' : session?.status ?? (sessionId || isCreating || isSessionLoading ? 'generating' : 'idle')
+  const isExpressionGenerationActive = isCreating || session?.status === 'generating'
+
+  useEffect(() => {
+    let activityId: string | null = null
+    if (isExpressionGenerationActive) {
+      const timer = window.setTimeout(() => {
+        activityId = beginPetActivity(
+          '我正在先挑出一句真正能用的表达，再把理由和练习整理清楚。',
+          '小冰正在陪你整理',
+        )
+      }, 450)
+      return () => {
+        window.clearTimeout(timer)
+        if (activityId) completePetActivity(activityId)
+      }
+    }
+    return undefined
+  }, [beginPetActivity, completePetActivity, isExpressionGenerationActive])
+
+  useEffect(() => {
+    const previous = previousGenerationActiveRef.current
+    previousGenerationActiveRef.current = isExpressionGenerationActive
+    if (previous && !isExpressionGenerationActive && session && session.status !== 'error') {
+      showToast('整理好了，先看我放在最前面的首选表达。', {
+        title: '表达学习界面已准备好',
+        variant: 'success',
+        motion: 'celebrating',
+      })
+    }
+  }, [isExpressionGenerationActive, session, showToast])
 
   const reportSessionEvent = useCallback((eventType: 'block_viewed' | 'source_opened' | 'sandbox_interaction', payload: Record<string, unknown>, dedupeKey: string) => {
     if (!sessionId) return
@@ -417,11 +449,10 @@ export function ExpressionLabPage({
 
   if (!session || pageStatus === 'generating') {
     return (
-      <PageShell variant="full" className="h-[calc(100dvh-4rem)] overflow-hidden" contentClassName="h-full min-h-0 max-w-[1400px] gap-3 py-3 sm:py-4">
+      <PageShell variant="full" className="binn-viewport-height overflow-hidden" contentClassName="h-full min-h-0 max-w-[1400px] gap-3 py-3 sm:py-4">
         <GeneratingHeader inputText={session?.input_text ?? draft.text} onBack={onBack} />
-        <StatusBanner title="正在生成你的表达学习界面">系统正在比较表达、组织结构并准备练习；已通过校验的模块会在完成后显示。</StatusBanner>
-        <main className="min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1">
-          <div className="space-y-4"><ExpressionBlockSkeleton /><ExpressionBlockSkeleton /><ExpressionBlockSkeleton /></div>
+        <main data-header-scroll-surface className="min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1">
+          <ExpressionLabGeneratingState inputText={session?.input_text ?? draft.text} />
         </main>
         <div className="shrink-0 border-t border-slate-200 bg-white px-3 py-3"><Button variant="secondary" onClick={onBack}><ArrowLeft className="size-4" />退出，稍后从最近会话继续</Button></div>
       </PageShell>
@@ -429,13 +460,13 @@ export function ExpressionLabPage({
   }
 
   return (
-    <PageShell variant="full" className="h-[calc(100dvh-4rem)] overflow-hidden" contentClassName="h-full min-h-0 max-w-[1400px] gap-3 py-3 sm:py-4">
+    <PageShell variant="full" className="binn-viewport-height overflow-hidden" contentClassName="h-full min-h-0 max-w-[1400px] gap-2 py-2.5 sm:py-3">
       <SessionInputSummary session={session} onBack={onBack} onDelete={() => setIsDeleteOpen(true)} onEdit={editAsNew} />
-      {session.status === 'partial' ? <StatusBanner tone="warning" title="部分模块已安全降级">有些生成内容没有通过校验，页面已保留可用模块；你可以单独重新生成。</StatusBanner> : null}
-      {session.status === 'completed' ? <StatusBanner tone="success" title="本次表达学习已完成">已保存 {savedCount} 项学习资产，练习和来源证据也已记录。</StatusBanner> : null}
-      {actionError ? <StatusBanner tone="warning" title="操作没有完成" action={<Button variant="ghost" className="px-3 py-2 text-xs" onClick={() => setActionError(null)}>关闭</Button>}>{actionError}</StatusBanner> : null}
-      <div className="grid min-h-0 flex-1 overflow-hidden xl:grid-cols-[minmax(0,1fr)_340px]">
-        <main className="min-h-0 overflow-y-auto overscroll-contain pb-4 pr-1 xl:pr-4" aria-label="表达学习内容">
+      {session.status === 'partial' ? <StatusBanner compact tone="warning" title="部分模块已安全降级">已保留可用模块，可单独重新生成。</StatusBanner> : null}
+      {session.status === 'completed' ? <StatusBanner compact tone="success" title="本次表达学习已完成">已保存 {savedCount} 项学习资产。</StatusBanner> : null}
+      {actionError ? <StatusBanner compact tone="warning" title="操作没有完成" action={<Button variant="ghost" className="px-3 py-1.5 text-xs" onClick={() => setActionError(null)}>关闭</Button>}>{actionError}</StatusBanner> : null}
+      <div className="grid min-h-0 flex-1 overflow-hidden 2xl:grid-cols-[minmax(0,1fr)_320px]">
+        <main data-header-scroll-surface className="min-h-0 overflow-y-auto overscroll-contain pb-3 pr-1 2xl:pr-4" aria-label="表达学习内容">
           <GeneratedUiRenderer blocks={blocks} attempts={session.attempts} actions={actions} actionStates={actionStates} regeneratingBlockId={regeneratingBlockId} canRegenerate={session.status !== 'completed'} onAction={handleAction} onCopy={(text, action) => void handleCopy(text, action)} onAttempt={handleAttempt} onRegenerate={(blockId) => void handleRegenerate(blockId)} onBlockViewed={handleBlockViewed} onSandboxEvent={handleSandboxEvent} />
         </main>
         <ExpressionEvidenceDrawer session={session} open={isEvidenceOpen} onClose={() => setIsEvidenceOpen(false)} />
@@ -474,12 +505,12 @@ function ExpressionLabStart({
 }) {
   return (
     <PageShell>
-      <FeatureHero eyebrow="Expression Lab" title="英语表达实验室" description="把中文意图、英文草稿、收藏好句或学习线索，变成可比较、可练习、可保存的英语表达。" stats={[{ label: '最近会话', value: recentSessions.length }, { label: '待继续', value: pendingCount, tone: pendingCount > 0 ? 'warning' : 'success' }, { label: '输入方式', value: 4 }, { label: '动态模块', value: 10, tone: 'primary' }]} actions={<Button variant="secondary" onClick={onBack}><ArrowLeft className="size-4" />返回</Button>} />
+      <FeatureHero eyebrow="Expression Lab" title="英语表达实验室" description="先给你一句当前场景能直接使用的英语，再解释选择理由，并用一个新场景练会它。" stats={[{ label: '最近会话', value: recentSessions.length }, { label: '待继续', value: pendingCount, tone: pendingCount > 0 ? 'warning' : 'success' }, { label: '先解决', value: '怎么说', tone: 'primary' }, { label: '再确认', value: '会不会用', tone: 'success' }]} actions={<Button variant="secondary" onClick={onBack}><ArrowLeft className="size-4" />返回</Button>} />
       {sourceSignal ? <StatusBanner title="来自群聊学习线索">已带入“{sourceSignal.label || signalTypeLabel(sourceSignal.signalType)}”的来源消息；打开实验室不会自动接受或写入资产。</StatusBanner> : null}
       <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_330px]">
         <SurfaceCard>
           <div className="flex items-center gap-2"><Beaker className="size-5 text-primary" /><h2 className="text-lg font-black text-slate-950">{learnerName}，这次想解决什么表达？</h2></div>
-          <p className="mt-1 text-sm leading-6 text-slate-500">先选择输入类型，系统会决定最合适的比较、结构、纠错和练习模块。</p>
+          <p className="mt-1 text-sm leading-6 text-slate-500">尽量补充“要对谁说、在什么场景说”。系统会优先给首选表达，不再堆叠重复模块。</p>
           <div className="mt-5 grid gap-2 sm:grid-cols-2" role="group" aria-label="输入类型">
             {INPUT_TYPES.map((item) => <button key={item.id} type="button" aria-pressed={draft.inputType === item.id} onClick={() => onDraftChange({ ...draft, inputType: item.id })} className={`rounded-xl border p-3 text-left transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${draft.inputType === item.id ? 'border-primary bg-primary/10' : 'border-slate-200 bg-white hover:border-primary/30'}`}><span className="block text-sm font-black text-slate-950">{item.label}</span><span className="mt-1 block text-xs leading-5 text-slate-500">{item.description}</span></button>)}
           </div>
@@ -492,8 +523,8 @@ function ExpressionLabStart({
             <LabeledSelect label="目标风格" value={draft.style} onChange={(value) => onDraftChange({ ...draft, style: value })} options={STYLE_OPTIONS} />
             <LabeledSelect label="当前水平" value={draft.level} onChange={(value) => onDraftChange({ ...draft, level: value })} options={LEVEL_OPTIONS} />
           </div>
-          <label className="mt-5 flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4"><input type="checkbox" checked={draft.needsPractice} onChange={(event) => onDraftChange({ ...draft, needsPractice: event.target.checked })} className="mt-1 size-4 accent-indigo-600" /><span><span className="block text-sm font-black text-slate-900">生成 1–3 道小练习</span><span className="mt-1 block text-xs leading-5 text-slate-500">用翻译、改写、填空或情景选择检查是否真正会用。</span></span></label>
-          <Button className="mt-6 w-full py-3" onClick={onCreate} disabled={isCreating || !draft.text.trim()}>{isCreating ? <LoaderCircle className="size-4 animate-spin" /> : <Sparkles className="size-4" />}{isCreating ? '正在创建表达学习界面…' : '生成表达学习界面'}</Button>
+          <label className="mt-5 flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4"><input type="checkbox" checked={draft.needsPractice} onChange={(event) => onDraftChange({ ...draft, needsPractice: event.target.checked })} className="mt-1 size-4 accent-indigo-600" /><span><span className="block text-sm font-black text-slate-900">生成 1–2 道小练习</span><span className="mt-1 block text-xs leading-5 text-slate-500">用翻译、改写、填空或情景选择检查是否真正会用。</span></span></label>
+          <Button className="mt-6 w-full py-3" onClick={onCreate} disabled={isCreating || !draft.text.trim()}>{isCreating ? <LoaderCircle className="size-4 animate-spin" /> : <Sparkles className="size-4" />}{isCreating ? '正在整理首选表达…' : '给我可直接使用的表达'}</Button>
         </SurfaceCard>
         <RecentSessionsPanel sessions={recentSessions} isLoading={isRecentLoading} onOpen={onOpenSession} />
       </div>
@@ -517,14 +548,88 @@ function GeneratingHeader({ inputText, onBack }: { inputText: string; onBack: ()
   return <SurfaceCard className="shrink-0 p-4"><div className="flex items-center justify-between gap-3"><div className="min-w-0"><p className="text-xs font-black uppercase tracking-wide text-primary">正在生成</p><p className="mt-1 truncate text-sm font-black text-slate-900">{inputText}</p></div><Button variant="secondary" className="shrink-0 px-3 py-2 text-xs" onClick={onBack}><ArrowLeft className="size-4" />返回</Button></div></SurfaceCard>
 }
 
+const GENERATION_STAGES = [
+  { title: '理解你真正想表达的意思', detail: '结合使用场景和目标语气，避免只做逐字翻译。' },
+  { title: '筛选自然、能直接使用的表达', detail: '比较措辞差异，把当前场景首选放到最前面。' },
+  { title: '整理理由、例句和迁移练习', detail: '让结果不只是答案，还能真正学会和复用。' },
+]
+
+function ExpressionLabGeneratingState({ inputText }: { inputText: string }) {
+  const [elapsedSeconds, setElapsedSeconds] = useState(0)
+
+  useEffect(() => {
+    const startedAt = Date.now()
+    const timer = window.setInterval(() => {
+      setElapsedSeconds(Math.floor((Date.now() - startedAt) / 1000))
+    }, 1_000)
+    return () => window.clearInterval(timer)
+  }, [])
+
+  const activeStage = Math.min(GENERATION_STAGES.length - 1, Math.floor(elapsedSeconds / 6))
+
+  return (
+    <div className="expression-lab-generating mx-auto flex min-h-full w-full max-w-4xl flex-col justify-center gap-5 py-4 sm:py-8">
+      <section className="relative overflow-hidden rounded-[20px] border border-indigo-100 bg-gradient-to-br from-indigo-50/90 via-white to-sky-50/80 p-5 shadow-[0_16px_48px_rgba(79,70,229,0.10)] sm:p-8">
+        <div className="pointer-events-none absolute -right-20 -top-24 size-64 rounded-full bg-violet-200/30 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-28 -left-20 size-64 rounded-full bg-sky-200/35 blur-3xl" />
+        <div className="relative grid items-center gap-6 md:grid-cols-[180px_minmax(0,1fr)]">
+          <div className="relative mx-auto flex size-40 items-center justify-center">
+            <div className="absolute inset-0 animate-spin rounded-full border border-dashed border-indigo-300/80 [animation-duration:9s]" />
+            <div className="absolute inset-4 animate-spin rounded-full border border-dotted border-sky-300/80 [animation-direction:reverse] [animation-duration:6s]" />
+            <div className="absolute inset-7 rounded-full bg-white/85 shadow-[0_8px_28px_rgba(14,165,233,0.14)]" />
+            <XiaobingAvatar className="relative size-24 animate-[pulse_2.4s_ease-in-out_infinite] border-4 border-white bg-sky-50 shadow-lg" />
+            <span className="absolute bottom-1 right-2 flex size-9 items-center justify-center rounded-full bg-indigo-600 text-white shadow-lg">
+              <Sparkles className="size-4 animate-pulse" />
+            </span>
+          </div>
+
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="rounded-full bg-indigo-100/80 px-2.5 py-1 text-[11px] font-black text-indigo-800 ring-1 ring-inset ring-indigo-200/80">小冰正在工作</span>
+              <span className="text-xs font-bold tabular-nums text-slate-500">已等待 {elapsedSeconds} 秒</span>
+            </div>
+            <h1 className="mt-3 text-xl font-black tracking-tight text-slate-950 sm:text-2xl">正在生成你的表达学习界面<span className="ml-1 inline-flex w-6 justify-start"><span className="animate-pulse">···</span></span></h1>
+            <p className="mt-2 line-clamp-2 text-sm font-bold leading-6 text-slate-600">“{inputText}”</p>
+            <div className="mt-5 h-1.5 overflow-hidden rounded-full bg-indigo-100">
+              <div className="expression-lab-loading-bar h-full w-2/5 rounded-full bg-gradient-to-r from-indigo-500 via-violet-400 to-sky-400" />
+            </div>
+            <p className="mt-3 text-xs leading-5 text-slate-500">复杂表达需要多比较一会儿。你可以离开这个页面，生成会继续进行。</p>
+          </div>
+        </div>
+
+        <ol className="relative mt-7 grid gap-3 md:grid-cols-3" aria-label="生成过程中正在处理的内容">
+          {GENERATION_STAGES.map((stage, index) => {
+            const visited = index < activeStage
+            const active = index === activeStage
+            return (
+              <li key={stage.title} className={`rounded-xl border p-4 transition-all duration-500 ${active ? 'border-indigo-200 bg-white shadow-[0_8px_24px_rgba(79,70,229,0.08)]' : visited ? 'border-sky-100 bg-sky-50/70' : 'border-slate-200/80 bg-white/55'}`}>
+                <div className="flex items-center gap-2">
+                  <span className={`flex size-4 items-center justify-center rounded-full border ${active ? 'border-indigo-500 bg-indigo-500 shadow-[0_0_0_4px_rgba(99,102,241,0.12)]' : visited ? 'border-sky-300 bg-sky-100' : 'border-slate-300 bg-white'}`}>{active ? <span className="size-1.5 animate-pulse rounded-full bg-white" /> : visited ? <span className="size-1.5 rounded-full bg-sky-500" /> : null}</span>
+                  <span className={`text-[11px] font-black ${active ? 'text-indigo-700' : visited ? 'text-sky-700' : 'text-slate-400'}`}>{active ? '正在重点处理' : visited ? '仍在持续校验' : '随后处理'}</span>
+                </div>
+                <p className="mt-3 text-sm font-black leading-6 text-slate-900">{stage.title}</p>
+                <p className="mt-1 text-xs leading-5 text-slate-500">{stage.detail}</p>
+              </li>
+            )
+          })}
+        </ol>
+      </section>
+
+      <div className="space-y-3 opacity-70" aria-hidden="true">
+        <ExpressionBlockSkeleton compact />
+      </div>
+    </div>
+  )
+}
+
 function SessionInputSummary({ session, onBack, onDelete, onEdit }: { session: ExpressionLabSessionDetail; onBack: () => void; onDelete: () => void; onEdit: () => void }) {
   return (
-    <SurfaceCard className="shrink-0 p-4">
+    <section className="shrink-0 border-b border-slate-200 px-1 pb-2.5 pt-1">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><span className="rounded-md bg-indigo-50 px-2 py-1 text-xs font-black text-indigo-700">{inputTypeLabel(session.input_type)}</span>{session.context ? <span className="rounded-md bg-slate-100 px-2 py-1 text-xs font-bold text-slate-600">{optionLabel(CONTEXT_OPTIONS, session.context)}</span> : null}{session.style_goal ? <span className="rounded-md bg-slate-100 px-2 py-1 text-xs font-bold text-slate-600">{optionLabel(STYLE_OPTIONS, session.style_goal)}</span> : null}</div><p className="mt-2 truncate text-base font-black text-slate-950">{session.input_text}</p></div>
+        <div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><span className="rounded-full bg-indigo-100/80 px-2.5 py-1 text-[11px] font-black text-indigo-800 ring-1 ring-inset ring-indigo-200/80">{inputTypeLabel(session.input_type)}</span>{session.context ? <span className="rounded-full bg-sky-100/80 px-2.5 py-1 text-[11px] font-black text-sky-800 ring-1 ring-inset ring-sky-200/80">{optionLabel(CONTEXT_OPTIONS, session.context)}</span> : null}{session.style_goal ? <span className="rounded-full bg-violet-100/80 px-2.5 py-1 text-[11px] font-black text-violet-800 ring-1 ring-inset ring-violet-200/80">{optionLabel(STYLE_OPTIONS, session.style_goal)}</span> : null}</div><p className="mt-2 truncate text-base font-black text-slate-950">{session.input_text}</p></div>
         <div className="flex shrink-0 flex-wrap gap-2"><Button variant="ghost" className="px-3 py-2 text-xs" onClick={onBack}><ArrowLeft className="size-4" />返回</Button><Button variant="secondary" className="px-3 py-2 text-xs" onClick={onEdit}><PenLine className="size-4" />调整输入</Button><Button variant="ghost" className="px-3 py-2 text-xs text-rose-600" onClick={onDelete}><Trash2 className="size-4" />删除</Button></div>
       </div>
-    </SurfaceCard>
+    </section>
   )
 }
 
@@ -533,8 +638,8 @@ function LabeledSelect({ label, value, onChange, options }: { label: string; val
 }
 
 function SessionStatusBadge({ status }: { status: string }) {
-  const className = status === 'completed' ? 'bg-emerald-50 text-emerald-700' : status === 'generating' ? 'bg-sky-50 text-sky-700' : status === 'error' ? 'bg-rose-50 text-rose-700' : status === 'partial' ? 'bg-amber-50 text-amber-700' : 'bg-indigo-50 text-indigo-700'
-  return <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-black ${className}`}>{statusLabel(status)}</span>
+  const className = status === 'completed' ? 'bg-emerald-100/75 text-emerald-800 ring-emerald-200/80' : status === 'generating' ? 'bg-sky-100/80 text-sky-800 ring-sky-200/80' : status === 'error' ? 'bg-rose-100/75 text-rose-800 ring-rose-200/80' : status === 'partial' ? 'bg-amber-100/75 text-amber-800 ring-amber-200/80' : 'bg-indigo-100/80 text-indigo-800 ring-indigo-200/80'
+  return <span className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-black leading-4 ring-1 ring-inset ${className}`}>{statusLabel(status)}</span>
 }
 
 export function readExpressionLabDraft(learnerId: string): ExpressionLabDraft | null {

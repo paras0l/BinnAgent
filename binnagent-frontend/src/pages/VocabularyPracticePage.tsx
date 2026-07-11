@@ -23,6 +23,7 @@ import {
   spellingSafeMorphologyParts,
 } from '@/data/wordParts'
 import { createClientId } from '@/utils/id'
+import { useToast } from '@/hooks/useToast'
 
 export type VocabularyPracticeMode = 'new' | 'review' | 'spelling'
 
@@ -141,6 +142,7 @@ export function VocabularyPracticePage({
   readonlyBackLabel = '返回',
   onExit,
 }: VocabularyPracticePageProps) {
+  const { beginPetActivity, completePetActivity, showToast, signalMemoryChange } = useToast()
   const [mode, setMode] = useState<VocabularyPracticeMode>(initialMode)
   const [limit, setLimit] = useState(preferences?.defaultLimit ?? 10)
   const [isCustomLimit, setIsCustomLimit] = useState(!counts.includes(preferences?.defaultLimit ?? 10))
@@ -314,6 +316,12 @@ export function VocabularyPracticePage({
   }, [phase, readonlyItemId, startPractice])
 
   useEffect(() => {
+    if (phase !== 'loading') return undefined
+    const activityId = beginPetActivity('我陪你把这一组词和发音准备好，很快就能开始。', '我们一起准备')
+    return () => completePetActivity(activityId)
+  }, [beginPetActivity, completePetActivity, phase])
+
+  useEffect(() => {
     if (!preferences?.autoPlayPronunciation || phase !== 'practice' || !task || feedback) return
     if (!['review', 'spelling'].includes(mode)) return
     if (lastAutoPlayedTaskId.current === task.vocabulary_item_id) return
@@ -347,12 +355,18 @@ export function VocabularyPracticePage({
           replay_count: replayCount,
         }),
       })
-      if (!response.ok) throw new Error('学习记录保存失败，请重试。')
+      if (!response.ok) throw new Error('这次记录还没保存好，我们一起再试一次。')
       const nextFeedback = await response.json() as AttemptFeedback
       setFeedback(nextFeedback)
+      signalMemoryChange(null)
+      if (mode === 'spelling' && nextFeedback.result === 'correct') {
+        showToast('我们拼对了！这个词已经更稳了一点。', { title: '一起拿下一词', variant: 'success', duration: 2200 })
+      } else if (mode === 'spelling' && nextFeedback.result === 'incorrect') {
+        showToast('还差一点，我陪你对照字母找线索。', { title: '我们慢一点', variant: 'warning', duration: 2800 })
+      }
       return nextFeedback
     } catch (attemptError) {
-      setError(attemptError instanceof Error ? attemptError.message : '提交失败。')
+      setError(attemptError instanceof Error ? attemptError.message : '这一步还没提交成功，我们慢一点再来。')
       return null
     } finally {
       setIsBusy(false)
@@ -408,6 +422,7 @@ export function VocabularyPracticePage({
       if (data.completed >= data.total) {
         setSummary(data)
         setPhase('summary')
+        showToast('这一组我们完成了，先看看共同拿下了哪些词。', { title: '一起完成', variant: 'success', duration: 3600 })
       } else {
         await loadTask(sessionId)
       }
@@ -416,7 +431,7 @@ export function VocabularyPracticePage({
     } finally {
       setIsBusy(false)
     }
-  }, [api, isBusy, loadTask, sessionId, task])
+  }, [api, isBusy, loadTask, sessionId, showToast, task])
 
   const markTooEasy = async () => {
     if (!task || !sessionId || isBusy) return

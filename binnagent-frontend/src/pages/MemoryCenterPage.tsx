@@ -25,7 +25,7 @@ interface MemoryCenterPageProps {
 }
 
 export function MemoryCenterPage({ learner }: MemoryCenterPageProps) {
-  const { showToast } = useToast()
+  const { showToast, signalMemoryChange } = useToast()
   const [memory, setMemory] = useState<MemoryCenter | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [activeSkill, setActiveSkill] = useState<string>('all')
@@ -71,7 +71,7 @@ export function MemoryCenterPage({ learner }: MemoryCenterPageProps) {
       const response = await debugFetch(`/api/learners/${learner.id}/memory/curate`, { method: 'POST' })
       if (!response.ok) throw new Error('Curate failed')
       await loadMemory()
-      showToast('已整理学习记忆。', { variant: 'success' })
+      signalMemoryChange('我们把学习记忆重新整理好了，下次会更容易接上进度。')
     } catch (err) {
       console.error('Curate memory error:', err)
       showToast('整理记忆失败，请稍后重试。', { variant: 'error' })
@@ -113,7 +113,7 @@ export function MemoryCenterPage({ learner }: MemoryCenterPageProps) {
       })
       if (!response.ok) throw new Error('Update settings failed')
       await loadMemory()
-      showToast('已更新记忆设置。', { variant: 'success' })
+      signalMemoryChange('记忆方式已经按我们的选择更新了。')
     } catch (err) {
       console.error('Memory settings error:', err)
       showToast('更新设置失败，请稍后重试。', { variant: 'error' })
@@ -128,7 +128,7 @@ export function MemoryCenterPage({ learner }: MemoryCenterPageProps) {
       const response = await debugFetch(`/api/learners/${learner.id}/memory/reset-plan`, { method: 'POST' })
       if (!response.ok) throw new Error('Reset plan failed')
       await loadMemory()
-      showToast('已重置学习计划。', { variant: 'success' })
+      signalMemoryChange('学习计划已经重新整理好，我们可以从新的节奏开始。')
     } catch (err) {
       console.error('Reset plan error:', err)
       showToast('重置计划失败，请稍后重试。', { variant: 'error' })
@@ -159,10 +159,12 @@ export function MemoryCenterPage({ learner }: MemoryCenterPageProps) {
       setEditingCard(null)
       setEditText('')
       await loadMemory()
-      showToast('已更新这条记忆。', { variant: 'success' })
+      signalMemoryChange(operation === 'delete'
+        ? '这条记忆已经移除，之后我们不会再用它来判断。'
+        : '这条记忆已经按我们的想法更新了。')
     } catch (err) {
       console.error('Memory control error:', err)
-      showToast('操作失败，请稍后重试。', { variant: 'error' })
+      showToast('这次修改还没保存好，我们一起再试一次。', { variant: 'error' })
     } finally {
       setBusyId(null)
     }
