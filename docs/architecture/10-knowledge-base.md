@@ -208,7 +208,7 @@ ASSESSED_BY       由练习检测
 ```json
 {
   "id": "kp_01J...",
-  "canonical_key": "grammar.relative-clause.defining",
+  "canonical_key": "grammar.defining_relative_clause",
   "type": "grammar",
   "title": "限制性定语从句",
   "language": "zh-CN",
@@ -222,6 +222,8 @@ ASSESSED_BY       由练习检测
   "source_count": 4
 }
 ```
+
+知识点类型、能力维度和稳定标识的统一命名见 [知识点与能力维度术语](15-knowledge-point-terminology.md)。语言知识点仅分为词汇项与语法知识点；听、说、读、写作为正交的能力维度记录练习和掌握证据。
 
 不同类型的 `content` 使用独立 JSON Schema。例如 vocabulary 包含词性、音标、义项、搭配和例句；grammar 包含形式、意义、使用条件、常见错误和对比例句；sentence pattern 包含槽位、约束和可替换示例。
 

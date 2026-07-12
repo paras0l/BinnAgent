@@ -25,7 +25,7 @@ Explore / 群聊学习线索 / 手动输入
 → 创建 generating 会话
 → PromptExecutor 生成并校验 expression_ui.v1
 → 比较表达、查看结构、完成练习
-→ 用户逐项确认保存好句、词汇或语法点
+→ 用户逐项确认保存好句、词汇项或语法知识点
 → 写入 Attempt、LearningEvent、Memory 与后续推荐
 → 完成会话，并在适用时更新来源线索状态
 ```
@@ -140,7 +140,7 @@ candidate → confirming → saving → saved | failed
 
 - 好句写入 WritingPhrase，并记录使用场景、语气、模板和来源 session；
 - 词汇写入 learner-scoped VocabularyItem/来源信息，执行规范化和去重；
-- 语法点写入学习进度或对应语法资产，并保留错误、修正和来源；
+- 语法知识点写入学习进度或对应语法资产，并保留错误、修正和来源；
 - 练习提交同时产生 ExpressionLabAttempt、ExerciseAttempt、LearningEvent 和 Memory 证据，并生成后续推荐。
 - `create_practice` 可由学习者选择 1–3 题和练习重点；系统基于当前会话追加针对性练习，不要求重新开始整个会话。
 
@@ -191,7 +191,7 @@ candidate → confirming → saving → saved | failed
 | 范围 | 必须通过的证据 |
 |---|---|
 | 中文表达缺口 | 生成语气/场景对比、可复制表达、至少一道练习，确认后可保存资产 |
-| 英文草稿修复 | sentence diff、错误解释、语法点与改写练习可用 |
+| 英文草稿修复 | sentence diff、错误解释、语法知识点与改写练习可用 |
 | 好句迁移 | pattern diagram、transfer builder、用户替换预览与造句练习可用 |
 | 完整 DSL | 十种 block 均有 schema 与 renderer；未知 block 显示受控 fallback |
 | Fallback | accepted、repair、unsupported strip、fixed fallback、rejected/text fallback 均有回归测试 |

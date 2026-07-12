@@ -421,6 +421,73 @@ DETAIL_HTML_SCHEMA: dict[str, Any] = {
     "required": ["phonetic", "meanings", "dictionary_senses", "examples", "collocations"],
 }
 
+VOCABULARY_LEARNING_SUPPLEMENT_SCHEMA: dict[str, Any] = {
+    "type": "object",
+    "properties": {
+        "forms": {
+            "type": "array",
+            "maxItems": 7,
+            "items": {
+                "type": "object",
+                "properties": {
+                    "label": {"type": "string"},
+                    "form": {"type": "string"},
+                },
+                "required": ["label", "form"],
+                "additionalProperties": False,
+            },
+        },
+        "collocations": {
+            "type": "array",
+            "minItems": 0,
+            "maxItems": 5,
+            "items": {
+                "type": "object",
+                "properties": {
+                    "collocation": {"type": "string"},
+                    "hint": {"type": "string"},
+                },
+                "required": ["collocation", "hint"],
+                "additionalProperties": False,
+            },
+        },
+        "common_errors": {
+            "type": "array",
+            "maxItems": 3,
+            "items": {
+                "type": "object",
+                "properties": {
+                    "error": {"type": "string"},
+                    "correct": {"type": "string"},
+                    "reason": {"type": "string"},
+                },
+                "required": ["error", "correct", "reason"],
+                "additionalProperties": False,
+            },
+        },
+        "confusions": {
+            "type": "array",
+            "maxItems": 3,
+            "items": {
+                "type": "object",
+                "properties": {
+                    "term": {"type": "string"},
+                    "difference": {"type": "string"},
+                },
+                "required": ["term", "difference"],
+                "additionalProperties": False,
+            },
+        },
+        "must_remember": {
+            "type": "array",
+            "maxItems": 3,
+            "items": {"type": "string"},
+        },
+    },
+    "required": ["forms", "collocations", "common_errors", "confusions", "must_remember"],
+    "additionalProperties": False,
+}
+
 EXPLORE_CAPABILITY_RERANK_SCHEMA: dict[str, Any] = {
     "type": "object",
     "properties": {
@@ -561,6 +628,7 @@ SCHEMA_REGISTRY: dict[str, dict[str, Any]] = {
     "DictionaryLookupOutput": DICTIONARY_LOOKUP_SCHEMA,
     "LocalVocabularyOutput": LOCAL_VOCABULARY_SCHEMA,
     "VocabularyDetailHtmlOutput": DETAIL_HTML_SCHEMA,
+    "VocabularyLearningSupplementOutput": VOCABULARY_LEARNING_SUPPLEMENT_SCHEMA,
     "ExploreCapabilityRerankOutput": EXPLORE_CAPABILITY_RERANK_SCHEMA,
     "ReadingMaterialGenerationOutput": READING_MATERIAL_GENERATION_SCHEMA,
     "ClassroomUiOutput": CLASSROOM_UI_SCHEMA,

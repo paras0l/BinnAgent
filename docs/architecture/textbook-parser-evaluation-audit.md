@@ -46,7 +46,7 @@ process_uploaded_textbook()
 
 `ParserQualityReport` 回答“这次 ingest 自身看起来是否健康”，例如空页、核心词命中、RAG 覆盖和待审数量。
 
-Golden evaluation 回答“当前 parser 是否仍能抽中已知正确答案”，例如指定单元标题、核心词汇、语法点、短语和来源页是否匹配。它不替代 ParserRun，也不写入业务数据库。
+Golden evaluation 回答“当前 parser 是否仍能抽中已知正确答案”，例如指定单元标题、核心词汇项、语法知识点、短语和来源页是否匹配。它不替代 ParserRun，也不写入业务数据库。
 
 ## MVP Profile
 
@@ -54,7 +54,7 @@ Golden evaluation 回答“当前 parser 是否仍能抽中已知正确答案”
 
 | golden profile | source fixture | parser profile | 覆盖 |
 |---|---|---|---|
-| `pep_grade7_upper` | `docs/books/义务教育教科书·英语七年级上册.pdf` | `pep_grade7_upper_v1` | 12 个单元、少量核心词/短语、3 个语法点、空 exercises 集合 |
+| `pep_grade7_upper` | `docs/books/义务教育教科书·英语七年级上册.pdf` | `pep_grade7_upper_v1` | 12 个单元、少量核心词汇项/短语、3 个语法知识点、空 exercises 集合 |
 
 该 profile 重点约束稳定信号：单元标题、核心词命中、语法/短语召回、来源页、脏 token 和重复率。`unit_order_accuracy` 目前只记录 baseline，不作为硬阈值，因为当前 pypdf text layer 解析顺序仍会受版式影响。
 

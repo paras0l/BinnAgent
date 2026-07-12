@@ -666,14 +666,14 @@ const INPUT_TYPES: Array<{ id: ExpressionInputType; label: string; description: 
   { id: 'zh_intent', label: '中文表达缺口', description: '知道中文意思，但不知道英语怎么说。' },
   { id: 'en_draft', label: '英文草稿修复', description: '检查语法、语气和自然度，并给出改写。' },
   { id: 'good_sentence', label: '好句迁移', description: '拆结构、换槽位，把好句变成自己的表达。' },
-  { id: 'learning_target', label: '词汇或语法点', description: '围绕一个词、搭配或规则生成学习界面。' },
+  { id: 'learning_target', label: '词汇项或语法知识点', description: '围绕一个词、搭配或规则生成学习界面。' },
 ]
 const CONTEXT_OPTIONS = [{ value: '', label: '未指定' }, { value: 'daily_chat', label: '日常聊天' }, { value: 'group_chat', label: '群聊讨论' }, { value: 'exam_writing', label: '考试写作' }, { value: 'formal_communication', label: '正式沟通' }]
 const STYLE_OPTIONS = [{ value: '', label: '由系统判断' }, { value: 'natural', label: '自然' }, { value: 'polite', label: '委婉' }, { value: 'formal', label: '正式' }, { value: 'concise', label: '简洁' }, { value: 'persuasive', label: '有说服力' }]
 const LEVEL_OPTIONS = [{ value: '', label: '跟随学习画像' }, { value: 'A1', label: 'A1 入门' }, { value: 'A2', label: 'A2 基础' }, { value: 'B1', label: 'B1 中级' }, { value: 'B2', label: 'B2 中高级' }, { value: 'C1', label: 'C1 高级' }]
 
 function sourceInputType(type?: string): ExpressionInputType | undefined { if (type === 'expression_gap') return 'zh_intent'; if (type === 'grammar_error') return 'en_draft'; if (type === 'good_sentence') return 'good_sentence'; if (type === 'desired_vocabulary' || type === 'desired_grammar') return 'learning_target'; return undefined }
-function inputLabel(type: ExpressionInputType) { return type === 'zh_intent' ? '你想表达的中文意思' : type === 'en_draft' ? '需要修正的英文草稿' : type === 'good_sentence' ? '想理解并迁移的好句' : '想学习的词、搭配或语法点' }
+function inputLabel(type: ExpressionInputType) { return type === 'zh_intent' ? '你想表达的中文意思' : type === 'en_draft' ? '需要修正的英文草稿' : type === 'good_sentence' ? '想理解并迁移的好句' : '想学习的词汇项或语法知识点' }
 function inputPlaceholder(type: ExpressionInputType) { return type === 'zh_intent' ? '例如：这个观点太绝对了，怎样委婉地表达？' : type === 'en_draft' ? '例如：I am agree with you.' : type === 'good_sentence' ? '例如：What matters most is not how fast you learn, but how consistently you practice.' : '例如：be supposed to / because 与 because of' }
 function inputTypeLabel(type: ExpressionInputType) { return INPUT_TYPES.find((item) => item.id === type)?.label ?? type }
 function signalTypeLabel(type: string) { return type === 'expression_gap' ? '表达缺口' : type === 'grammar_error' ? '语法错误' : type === 'good_sentence' ? '好句候选' : type === 'desired_vocabulary' ? '想学词汇' : type === 'desired_grammar' ? '想学语法' : '学习线索' }

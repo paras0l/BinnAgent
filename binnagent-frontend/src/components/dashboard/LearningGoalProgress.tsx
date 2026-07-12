@@ -25,8 +25,8 @@ export function LearningGoalProgress({ dailyGoal, weeklyGoal }: LearningGoalProg
   ]
 
   return (
-    <section className="rounded-xl border bg-card p-6">
-      <h3 className="mb-4 text-lg font-semibold text-foreground">学习目标</h3>
+    <section className="rounded-xl border bg-card p-6" aria-labelledby="learning-goals-title">
+      <h3 id="learning-goals-title" className="mb-4 text-lg font-semibold text-foreground">学习目标</h3>
       <div className="grid gap-4 md:grid-cols-2">
         {goals.map(({ title, goal, icon: Icon }) => {
           const percent = toPercent(goal.completed, goal.total)
@@ -82,6 +82,12 @@ export function LearningGoalProgress({ dailyGoal, weeklyGoal }: LearningGoalProg
                 </div>
                 <div className="h-2 overflow-hidden rounded-full bg-muted">
                   <div
+                    role="progressbar"
+                    aria-label={`${title}进度`}
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-valuenow={percent}
+                    aria-valuetext={`${goal.completed}/${goal.total}，${percent}%`}
                     className={`h-full transition-[width,background-color] duration-500 ${
                       isComplete ? 'bg-success' : 'bg-warning'
                     }`}

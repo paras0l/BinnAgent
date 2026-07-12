@@ -152,7 +152,7 @@ function App() {
       explore: ['explore', '探索', '这里集合了发音、语法和表达等专项工具，选一个现在最想提升的能力吧。'],
       dashboard: ['learning-center', '学习中心', '这里能看到学习进度、今日任务和复习入口，适合每天从这里开始。'],
       pronunciation: ['pronunciation', '发音训练', '在这里可以查音标、跟读并获得发音反馈。'],
-      grammar: ['grammar', '语法学习', '选择一个语法点，我会提供讲解、例句和练习路径。'],
+      grammar: ['grammar', '语法学习', '选择一个语法知识点，我会提供讲解、例句和练习路径。'],
     }
     const introduction = introductions[activeTab]
     if (introduction) introduceFeature(...introduction)

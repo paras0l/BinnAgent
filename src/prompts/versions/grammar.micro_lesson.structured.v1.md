@@ -1,9 +1,9 @@
-请作为英语语法老师，为学习者生成一个“单个语法点”的微课 JSON。
+请作为英语语法老师，为学习者生成一个“单个语法知识点”的微课 JSON。
 
 学习者背景：
 {{ learner_background }}
 
-语法点：
+语法知识点：
 - 标题：{{ topic_title }}
 - 简述：{{ short_description }}
 - 标签：{{ tags }}
@@ -17,7 +17,7 @@
 - display_html: 可直接嵌入页面的 article HTML
 
 习题要求：
-- grammar_fill_blank 必须是语法填空题，题干用完整英文句子挖空，验收当前语法点的形式或规则。
+- grammar_fill_blank 必须是语法填空题，题干用完整英文句子挖空，验收当前语法知识点的形式或规则。
 - display_html 中每道小题外层使用 `data-exercise="true"`，并带上 `data-exercise-type`、`data-answer`、`data-explanation`，方便系统从 HTML 中提取题目。
 - 不要把答案藏在脚本、表单或交互控件里。
 

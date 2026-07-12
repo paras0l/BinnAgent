@@ -134,7 +134,7 @@ http://localhost:5176，可在 Learners / Recent Episodes 中直接选择 learne
 | Chat / Memory / Dashboard | 部分实现，Memory v2 已落地 Retain / Recall / Reflect、LearningEpisode、LearnerModelMemory、TeachingStrategyMemory；普通学习端只展示学习状态摘要，Memory Center 已移入 Dev Console |
 | 宠物精灵通知 | 已实现，小冰接管全局 Toast 消息，支持按重要性抢占与配色、重复消息合并、七套统一视觉锚点的高清状态原画、观察/挥手等连续微动作、可调静置动作频率、贴边偷看、记忆变更晶石发光、任务完成庆祝、长耗时陪伴反馈、协作式文案、惯性拖动与跨窗口尺寸位置回收、点击/键盘互动、系统减少动态偏好、功能页首次介绍，以及用户菜单中的精灵设置 |
 | 教材 Knowledge Base / RAG / Exercises | 部分实现，作为冷启动知识来源；已支持 split public textbook pack v2、长沙市七年级人教新目标 2024 版上下册公共目录、UnitLearningWorkspace、多教材切换、文档解析/校对、统一 ExerciseItem / ExerciseAttempt 与单元阅读语感材料；2024 上册已接入 333 条本册词汇、349 条小学复现词、10 个单元连续朗读音频和正文第 1-74 印刷页的完整教材活动页题图，Starter Unit 1 另有 186 段精校时间轴；单元题库采用 PostgreSQL 持久化任务与独立 Worker 异步补池，支持六维质量评分、双重门禁和 mastery-aware 选题 |
-| Vocabulary Personal Cards / Practice / Spelling / Word Parts | 部分实现，已新增“词根与词缀”探索入口、四工作区学习页、内置词根词缀库、拆词练习、morphology 前端展示/降级和知识点配套练习验收；训练中可在学习提示区将单词标记为“太简单（已掌握）”，并显著降低后续训练频率 |
+| Vocabulary Personal Cards / Practice / Spelling / Word Parts | 部分实现，已新增“词根与词缀”探索入口、四工作区学习页、内置词根词缀库、拆词练习、morphology 前端展示/降级和知识点配套练习验收；“认识新词”已升级为动态内容区、辅助功能区、固定操作区，支持精简/详细切换与按需生成词形、搭配、易错、辨析和必记信息；训练中可将词汇项标记为“太简单（已掌握）”并显著降低后续训练频率 |
 | Writing Phrasebook | 基础版已实现 |
 | Expression Lab 英语表达实验室 | 已实现，支持中文表达缺口、英文草稿、好句迁移、词汇/语法目标和群聊学习线索输入；提供十类 schema 驱动内容块、局部重生成、1–3 题动态加练、确认后保存长期资产、会话恢复/删除，以及 Attempt → LearningEvent → Memory → Recommendation 学习闭环；Explore、Dashboard 辅助入口和群聊表达真实复用追踪已接通 |
 | 群聊学习线索 | 第一版已实现并切到飞书 MCP 兼容方案，支持飞书群来源配置、MCP/OpenAPI 同步、群成员拉取与当前 learner 绑定、原始消息保留/清理、中性 JSON 导入、显式标签即时规则抽取、`@机器人 --help` 群内操作指南回复与去重、无标签消息 pending 队列、低频 LLM 小批量线索提取、收件箱分页接受/忽略/删除，以及接受后写入词汇候选、好句候选或语法学习进度 |
@@ -145,6 +145,7 @@ http://localhost:5176，可在 Learners / Recent Episodes 中直接选择 learne
 | Model Provider | 部分实现；本地默认 Ollama，云端可通过环境变量或 Dev Console Debug 页面切换到 DeepSeek / LongCat OpenAI-compatible chat API；RAG embedding 暂时隔离在 Ollama 路径 |
 | Agent Runtime / Harness | 第二阶段补强中，TaskSpec、AgentEpisode、LearningEvent、EvidenceRef、ToolCallRecord、VerificationReport、MasteryEngine、RecommendationEngine、LearningGraphCheckpoint 和 Dev Console 调试入口已接入；VerificationReport 已升级为 evidence-based deterministic/schema/business_rule/evidence checks，critical 失败会阻止静默 completed；EpisodeTraceView、Graph Runs 和 Textbook Parsing Report 可查看 checkpoint、events、tool calls、prompt execution summary、verification checks、parser evidence 和 review queue；Debug API 默认关闭并需 token |
 | Learner-scoped isolation | Issue #25 第一阶段已实现，新增 current user / current learner dependency、scoped resource helper，并加固 Runtime、Daily Lesson、Memory、Explore、ExerciseAttempt 和 Debug 高风险路径 |
+| 知识点术语 | 已统一领域口径：语言知识点分为词汇项与语法知识点，听 / 说 / 读 / 写作为独立能力维度；稳定标识规范为 `vocabulary.*` / `grammar.*` |
 | 邮箱登录与邀请关系 | 基础版已实现，6 位邮箱验证码、短期签名令牌、重发冷却、错误次数限制、SMTP/本地日志投递、同邮箱多学习者选择、邀请码注册、直接邀请人关系、旧账号邮箱升级和空库 bootstrap 邀请码已落地；正式认证 session 留待远程部署前补齐 |
 | LangGraph daily lesson | 已升级为单题 checkpoint / interrupt / resume 学习闭环；graph 支持可选 checkpointer 编译，start 返回 waiting_user checkpoint/thread/schema/prompt，answer 从 `grade_attempt` 恢复并完成 grading、mastery、memory、review、recommend、verification，验证报告决定 completed / completed_with_warnings / verification_failed |
 | Learner Simulation Agent | Deterministic MVP 已实现，新增 contract/integration/e2e mode 分层、deterministic fake model provider、scenario contract/module_tags、impacted simulation 推导脚本、Agent Runtime 断言增强、metric_groups、baseline comparison、threshold gate、episode runtime knowledge practice、daily_lesson_checkpoint_resume、capability recommendation、verification failure blocks completed status、缺答案不写 memory、mastery 上下行和 LLM JSON repair 回归场景 |
@@ -163,6 +164,10 @@ http://localhost:5176，可在 Learners / Recent Episodes 中直接选择 learne
 - [Web Frontend Design Spec](docs/superpowers/specs/2026-06-12-web-frontend-design.md) — 详细设计规范
 - [Spelling Training UI/UX](docs/superpowers/specs/2026-06-19-spelling-training-uiux.md) — 拼写训练流程、界面状态与交互规范
 - [Unit Reading Fluency Training](docs/superpowers/specs/2026-07-09-unit-reading-fluency.md) — 单元阅读语感训练生成、入口和画像证据规范
+
+### 架构术语
+
+- [知识点与能力维度术语](docs/architecture/15-knowledge-point-terminology.md) — 词汇项、语法知识点、听说读写能力维度与 canonical key 规范
 
 ### 开发指南
 

@@ -38,6 +38,7 @@ export function VocabReviewCard({
         className="flex min-h-64 w-full max-w-md cursor-pointer flex-col items-center justify-center rounded-2xl border bg-card p-8 text-center shadow-sm transition-[border-color,box-shadow] duration-150 hover:border-primary/40 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
         onClick={handleFlip}
         aria-pressed={isFlipped}
+        aria-label={isFlipped ? `${word}，已显示释义；点击返回单词` : `${word}，点击查看释义`}
       >
         <div className="transition-opacity duration-200">
           {!isFlipped ? (
@@ -73,13 +74,13 @@ export function VocabReviewCard({
       </button>
 
       {isFlipped && (
-        <div className="flex gap-2">
+        <div className="grid w-full max-w-md grid-cols-2 gap-2 sm:grid-cols-4" role="group" aria-label="词汇熟悉度评分">
           {ratings.map((rating) => (
             <button
               key={rating.value}
               type="button"
               onClick={() => onRate(rating.value)}
-              className={`rounded-lg px-4 py-2 text-primary-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 ${rating.color}`}
+              className={`min-h-11 rounded-lg px-4 py-2 font-medium text-primary-foreground transition-[filter,transform] hover:brightness-95 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 ${rating.color}`}
             >
               {rating.label}
             </button>
@@ -87,7 +88,7 @@ export function VocabReviewCard({
         </div>
       )}
 
-      <p className="text-sm text-muted-foreground">
+      <p className="text-sm text-muted-foreground" aria-live="polite">
         第 {currentIndex + 1} 个 / 共 {totalCount} 个
       </p>
     </div>
