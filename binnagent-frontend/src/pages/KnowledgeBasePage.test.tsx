@@ -25,14 +25,24 @@ describe('KnowledgeBasePage daily learning layout', () => {
     expect(source).toContain('题目已进入后台生成队列')
   })
 
+  it('can recover a daily challenge without restarting the classroom', () => {
+    expect(source).toContain('handlePrepareDailyChallenge')
+    expect(source).toContain('评分挑战已准备好，可以作答了。')
+    expect(source).toContain('onPrepareChallenge={() => void handlePrepareDailyChallenge()}')
+  })
+
+  it('shows capability boosters above the full-screen classroom', () => {
+    expect(source).toContain('<div className="fixed inset-0 z-[140]">')
+  })
+
   it('supports confirming a unit skip and resetting it for relearning', () => {
     expect(source).toContain('跳过这个单元？')
     expect(source).toContain('确认跳过')
     expect(source).toContain("updateUnitProgress('skip'")
     expect(source).toContain("updateUnitProgress('relearn'")
     expect(source).toContain("currentCurriculumNode?.progress_override")
-    expect(source).toContain("? '继续 AI 教材课堂'")
-    expect(source).toContain(": '进入 AI 教材课堂'")
+    expect(source).toContain("? '继续今天的教材课'")
+    expect(source).toContain(": '开始今天的教材课'")
   })
 
   it('keeps the unit material word list separate from vocabulary practice', () => {
@@ -50,5 +60,16 @@ describe('KnowledgeBasePage daily learning layout', () => {
     expect(materialsSection).not.toContain('vocabularyPracticeEntry(vocabulary)')
     expect(materialsSection).not.toContain("onStartVocabulary('new')")
     expect(materialsSection).not.toContain('onStartExercise')
+  })
+
+  it('shows the 2024 upper-volume cover without cropping it', () => {
+    const cover = source.slice(
+      source.indexOf('function TextbookCover'),
+      source.indexOf('function UnitProgressBar'),
+    )
+
+    expect(cover).toContain('resolveTextbookCover(overview.source)')
+    expect(cover).toContain('object-contain object-center')
+    expect(cover).toContain('object-[78%_center]')
   })
 })

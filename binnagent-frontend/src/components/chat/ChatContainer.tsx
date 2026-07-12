@@ -149,7 +149,7 @@ export function ChatContainer({
   const currentSkillName = activeSkillName || (currentSkillId === 'vocabulary_deposit' ? '词汇 Skill' : null)
 
   return (
-    <div className="binn-viewport-height flex overflow-hidden overscroll-none">
+    <div className="binn-page-canvas binn-viewport-height flex overflow-hidden overscroll-none">
       <ConversationSidebar
         conversations={conversations}
         activeThreadId={threadId}
@@ -161,8 +161,8 @@ export function ChatContainer({
         onSelectThread={handleSelectThread}
       />
 
-      <section className="flex min-w-0 flex-1 flex-col">
-        <div className="flex items-center justify-between border-b px-4 py-3">
+      <section className="flex min-w-0 flex-1 flex-col bg-white/42">
+        <div className="flex items-center justify-between border-b border-slate-200/70 bg-white/72 px-4 py-3 backdrop-blur-sm">
           <div className="min-w-0">
             <p className="truncate text-sm font-semibold text-foreground">
               {activeConversation?.title || (threadId ? '当前对话' : '新对话')}
@@ -204,7 +204,7 @@ export function ChatContainer({
         <div
           ref={messagesPaneRef}
           data-header-scroll-surface
-          className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain p-4"
+          className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain bg-[radial-gradient(circle_at_50%_24%,rgba(255,255,255,0.92),rgba(248,250,252,0.58)_48%,transparent_76%)] p-4"
           aria-live="polite"
           onPointerDown={pauseAutoScrollForReading}
           onScroll={handleMessagesScroll}
@@ -238,7 +238,7 @@ export function ChatContainer({
           )}
         </div>
 
-        <div className="border-t p-4">
+        <div className="border-t border-slate-200/70 bg-white/78 p-4 backdrop-blur-sm">
           {(currentSkillId || skillStatus) && (
             <StatusBanner
               title={currentSkillId ? 'Agent Skill 已启用' : '对话状态'}

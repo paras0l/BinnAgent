@@ -17,14 +17,12 @@ import { FeatureHero } from '@/components/layout/FeatureHero'
 import { PageShell } from '@/components/layout/PageShell'
 import { Button } from '@/components/ui/Button'
 import { FilterChip } from '@/components/ui/FilterChip'
-import { SurfaceCard } from '@/components/ui/SurfaceCard'
 import {
   CapabilityRecommendationCard,
   type CapabilityRecommendation,
 } from '@/components/learning/CapabilityRecommendationCard'
 import { ReasonCard } from '@/components/learning/ReasonCard'
 import type { AppTab, ExplorePreference, Learner, LearnerProfile, PronunciationWorkspace } from '@/types'
-import type { ExpressionInputType } from '@/services/expressionLabApi'
 import { useToast } from '@/hooks/useToast'
 import { GrammarPage } from '@/pages/GrammarPage'
 import { ReadingWorkshopPage } from '@/pages/ReadingWorkshopPage'
@@ -53,7 +51,6 @@ interface ExplorePageProps {
   onDraftPrompt: (prompt: string, skillFocus?: string | null, options?: { autoSend?: boolean }) => void
   onOpenVocabularyManager: () => void
   onOpenPronunciationWorkspace: (workspace: PronunciationWorkspace) => void
-  onOpenExpressionLab: (options: { sessionId?: string | null; initialInputType?: ExpressionInputType; initialText?: string }) => void
 }
 
 interface ExploreFeature {
@@ -66,7 +63,7 @@ interface ExploreFeature {
   status: FeatureStatus
   action: FeatureAction
   prompt?: string
-  toolTarget?: 'dashboard' | 'vocabulary-manager' | 'pronunciation' | 'grammar' | 'writing-phrasebook' | 'word-parts' | 'reading-workshop' | 'expression-lab'
+  toolTarget?: 'dashboard' | 'vocabulary-manager' | 'pronunciation' | 'grammar' | 'writing-phrasebook' | 'word-parts' | 'reading-workshop'
   pronunciationWorkspace?: PronunciationWorkspace
 }
 
@@ -112,7 +109,7 @@ const CATEGORIES: Array<{ id: FeatureCategory; label: string }> = [
   { id: 'exam', label: '考试冲刺' },
 ]
 
-const HIDDEN_EXPLORE_FEATURE_IDS = new Set(['vocab-review', 'vocabulary-manager'])
+const HIDDEN_EXPLORE_FEATURE_IDS = new Set(['vocab-review', 'vocabulary-manager', 'expression-lab'])
 
 const FEATURES: ExploreFeature[] = [
   {
@@ -189,17 +186,6 @@ const FEATURES: ExploreFeature[] = [
     status: 'ready',
     action: 'chat',
     prompt: '请作为 CET-4/CET-6 写作老师批改我的作文。请按结构、语法、词汇、内容四项反馈，并提炼我的主要错因。作文如下：\n\n',
-  },
-  {
-    id: 'expression-lab',
-    category: 'writing',
-    title: '英语表达实验室',
-    description: '把中文意图、英文草稿或群聊表达变成可比较、可练习、可收藏的英语表达。',
-    whenToUse: '知道想说什么却不会自然表达，或写出英文但不确定语法、语气和场景时使用。',
-    outcome: '得到表达方案、语气对比、结构或纠错讲解、小练习，以及可确认保存的学习资产。',
-    status: 'ready',
-    action: 'tool',
-    toolTarget: 'expression-lab',
   },
   {
     id: 'writing-phrasebook',
@@ -320,7 +306,6 @@ export function ExplorePage({
   onDraftPrompt,
   onOpenVocabularyManager,
   onOpenPronunciationWorkspace,
-  onOpenExpressionLab,
 }: ExplorePageProps) {
   const { showToast } = useToast()
   const [preferences, setPreferences] = useState<ExplorePreference[]>([])
@@ -511,10 +496,6 @@ export function ExplorePage({
         setIsWritingPhrasebookOpen(true)
         return
       }
-      if (feature.toolTarget === 'expression-lab') {
-        onOpenExpressionLab({})
-        return
-      }
       if (feature.toolTarget === 'word-parts') {
         setIsWordPartsOpen(true)
         return
@@ -687,7 +668,7 @@ export function ExplorePage({
         }
       />
 
-      <SurfaceCard>
+      <nav aria-label="学习能力分类" className="-mt-1 overflow-x-auto border-y border-slate-200/70 py-3">
         <div className="flex gap-2 overflow-x-auto pb-1">
           {CATEGORIES.map((item) => (
             <FilterChip
@@ -699,7 +680,7 @@ export function ExplorePage({
             </FilterChip>
           ))}
         </div>
-      </SurfaceCard>
+      </nav>
 
       <section>
         <h2 className="mb-3 text-sm font-semibold text-foreground">
@@ -794,7 +775,7 @@ function FeatureCard({
 }) {
   const isTodo = feature.status === 'todo'
   return (
-    <article className="flex min-h-[290px] flex-col rounded-[13px] border border-slate-200 bg-white p-4 shadow-[0_4px_14px_rgba(15,23,42,0.05)] transition-[border-color,box-shadow,transform] duration-150 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-[0_12px_26px_rgba(15,23,42,0.08)]">
+    <article className="flex min-h-[270px] flex-col rounded-2xl border border-slate-200/80 bg-white/88 p-4 shadow-[0_8px_26px_rgba(51,65,85,0.045)] backdrop-blur-sm transition-[border-color,box-shadow] duration-150 hover:border-primary/30 hover:shadow-[0_14px_34px_rgba(51,65,85,0.07)]">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-2">
           <div className="flex size-9 items-center justify-center rounded-lg bg-primary/10 text-primary">

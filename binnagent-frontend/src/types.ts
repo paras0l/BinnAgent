@@ -257,6 +257,10 @@ export interface KnowledgeBaseOverview {
     can_delete?: boolean
     official_material_url?: string | null
     official_material_note?: string | null
+    subject?: string | null
+    province?: string | null
+    city?: string | null
+    edition_year?: number | null
   }
   sources: Array<{
     id: string
@@ -275,6 +279,10 @@ export interface KnowledgeBaseOverview {
     can_delete?: boolean
     official_material_url?: string | null
     official_material_note?: string | null
+    subject?: string | null
+    province?: string | null
+    city?: string | null
+    edition_year?: number | null
   }>
   curriculum: CurriculumNode[]
   current_node_id: string

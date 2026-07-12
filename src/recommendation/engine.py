@@ -175,7 +175,12 @@ class RecommendationEngine:
                 allowed_tools=["rag.retrieve", "exercise.grade", "mastery.update"],
                 evidence_refs=[evidence],
             ),
-            priority_score=0.45,
+            # The classroom challenge is part of the current textbook lesson.  In
+            # that mode it must not be displaced by a generic weak-point repair,
+            # which may not have a prepared exercise for the active unit.
+            priority_score=(
+                1.0 if input.mode_hint == "textbook_guided_classroom" else 0.45
+            ),
             reason=f"继续当前教材节点：{label}。",
             evidence_refs=[evidence],
             estimated_minutes=node.estimated_minutes if node is not None else 10,

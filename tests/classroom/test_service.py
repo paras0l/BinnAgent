@@ -48,6 +48,8 @@ async def test_save_classroom_progress_creates_learning_progress_item() -> None:
         listened_cue_ids=["cue-001", "cue-001", "cue-002"],
         grammar_answers={"g1": "Good morning."},
         grammar_transfer="Good morning. I'm Emma.",
+        vocabulary_confidence={"word-0": "known", "word-1": "fuzzy", "bad": "guessed"},
+        continuous_audio_played=True,
         completed=False,
     )
 
@@ -60,6 +62,8 @@ async def test_save_classroom_progress_creates_learning_progress_item() -> None:
     assert item.metadata_["listened_cue_ids"] == ["cue-001", "cue-002"]
     assert item.metadata_["grammar_answers"] == {"g1": "Good morning."}
     assert item.metadata_["grammar_transfer"] == "Good morning. I'm Emma."
+    assert item.metadata_["vocabulary_confidence"] == {"word-0": "known", "word-1": "fuzzy"}
+    assert item.metadata_["continuous_audio_played"] is True
 
 
 @pytest.mark.asyncio
@@ -75,6 +79,8 @@ async def test_load_classroom_progress_returns_resumable_ui_state() -> None:
             "listened_cue_ids": ["cue-001"],
             "grammar_answers": {"g1": "are"},
             "grammar_transfer": "They are under the desk.",
+            "vocabulary_confidence": {"word-0": "unknown"},
+            "continuous_audio_played": True,
         },
     )
 
@@ -89,4 +95,6 @@ async def test_load_classroom_progress_returns_resumable_ui_state() -> None:
     assert result["flipped_card_ids"] == ["word-0"]
     assert result["grammar_answers"] == {"g1": "are"}
     assert result["grammar_transfer"] == "They are under the desk."
+    assert result["vocabulary_confidence"] == {"word-0": "unknown"}
+    assert result["continuous_audio_played"] is True
     assert result["updated_at"] == updated_at.isoformat()

@@ -2,6 +2,7 @@ import { BookOpen, CheckCircle2, Info, Layers3, Target, TrendingUp, UploadCloud 
 import type { KeyboardEventHandler, Ref } from 'react'
 import { Button } from '@/components/ui/Button'
 import type { KnowledgeBaseOverview } from '@/types'
+import { resolveTextbookCover } from '@/utils/textbookCover'
 
 interface KnowledgeContextPanelProps {
   overview: KnowledgeBaseOverview
@@ -32,6 +33,7 @@ export function KnowledgeContextPanel({
 }: KnowledgeContextPanelProps) {
   const { source } = overview
   const sourceStatus = sourceStatusLabel(source.status)
+  const textbookCover = resolveTextbookCover(source)
   return (
     <aside
       id={panelId}
@@ -46,13 +48,13 @@ export function KnowledgeContextPanel({
       <section className="rounded-2xl border border-slate-200 bg-white p-5">
         <h2 id={titleId} className="text-base font-extrabold text-slate-950">教材信息</h2>
         <div className="mt-5 flex gap-4">
-          {source.grade === 'grade-7' && source.volume === 'upper' ? (
+          {textbookCover ? (
             <img
-              src="/grade7-english-upper-cover.png"
-              alt="人教版英语七年级上册封面"
+              src={textbookCover.src}
+              alt={textbookCover.alt}
               width={96}
               height={144}
-              className="h-36 w-24 shrink-0 rounded-md border border-slate-100 object-cover object-[78%_center] shadow-sm"
+              className={`h-36 w-24 shrink-0 rounded-md border border-slate-100 shadow-sm ${textbookCover.fit === 'contain' ? 'bg-[#f7b83b] object-contain object-center' : 'object-cover object-[78%_center]'}`}
             />
           ) : (
             <div className="flex h-36 w-24 shrink-0 items-center justify-center rounded-md border border-indigo-100 bg-indigo-50 text-indigo-600 shadow-sm">

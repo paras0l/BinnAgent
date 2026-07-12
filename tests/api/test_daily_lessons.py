@@ -161,6 +161,8 @@ async def test_classroom_progress_is_saved_for_current_learner(client, monkeypat
             "listened_cue_ids": ["cue-001"],
             "grammar_answers": {"g1": "am"},
             "grammar_transfer": "I am in Class 1.",
+            "vocabulary_confidence": {"word-0": "known"},
+            "continuous_audio_played": True,
             "completed": False,
         },
     )
@@ -172,6 +174,8 @@ async def test_classroom_progress_is_saved_for_current_learner(client, monkeypat
     assert captured["listened_cue_ids"] == ["cue-001"]
     assert captured["grammar_answers"] == {"g1": "am"}
     assert captured["grammar_transfer"] == "I am in Class 1."
+    assert captured["vocabulary_confidence"] == {"word-0": "known"}
+    assert captured["continuous_audio_played"] is True
 
 
 @pytest.mark.asyncio

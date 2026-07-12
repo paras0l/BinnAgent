@@ -7,12 +7,10 @@ import expressionLabSource from './ExpressionLabPage.tsx?raw'
 import groupSignalsSource from './GroupLearningSignalsPage.tsx?raw'
 
 describe('Expression Lab product entry contracts', () => {
-  it('is a first-class ready Explore capability that opens the product workspace', () => {
-    expect(exploreSource).toContain("id: 'expression-lab'")
-    expect(exploreSource).toContain("title: '英语表达实验室'")
-    expect(exploreSource).toContain("status: 'ready'")
-    expect(exploreSource).toContain("toolTarget: 'expression-lab'")
-    expect(exploreSource).toContain("onOpenExpressionLab({})")
+  it('keeps the expression lab out of Explore while preserving other product entries', () => {
+    expect(exploreSource).toContain("'expression-lab'")
+    expect(exploreSource).not.toContain("title: '英语表达实验室'")
+    expect(exploreSource).not.toContain('onOpenExpressionLab')
   })
 
   it('routes the five specified group learning signals into the lab as the primary action', () => {

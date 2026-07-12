@@ -25,9 +25,22 @@
 }
 
 body {
-  background-color: var(--color-background);
+  background-color: #f7f8fb;
+  background-image:
+    radial-gradient(circle at 8% 4%, rgb(99 102 241 / 0.055), transparent 26rem),
+    radial-gradient(circle at 92% 16%, rgb(34 211 238 / 0.045), transparent 24rem),
+    linear-gradient(180deg, #fbfcff 0%, #f6f7fb 48%, #f8fafc 100%);
+  background-attachment: fixed;
   color: var(--color-foreground);
   font-family: var(--font-sans);
+}
+
+.binn-page-canvas {
+  background-color: #f7f8fb;
+  background-image:
+    radial-gradient(circle at 7% 2%, rgb(99 102 241 / 0.065), transparent 24rem),
+    radial-gradient(circle at 92% 14%, rgb(34 211 238 / 0.05), transparent 22rem),
+    linear-gradient(180deg, rgb(255 255 255 / 0.72), rgb(247 248 251 / 0.92) 26rem);
 }
 
 .pet-spirit {

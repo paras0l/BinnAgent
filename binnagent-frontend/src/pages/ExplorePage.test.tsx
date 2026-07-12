@@ -7,4 +7,10 @@ describe('Explore vocabulary navigation', () => {
     expect(exploreSource).not.toContain("title: '词汇本管理'")
     expect(exploreSource).not.toContain("title: '复习待掌握词汇'")
   })
+
+  it('does not expose the expression lab from explore', () => {
+    expect(exploreSource).toContain("'expression-lab'")
+    expect(exploreSource).not.toContain("title: '英语表达实验室'")
+    expect(exploreSource).not.toContain('onOpenExpressionLab')
+  })
 })

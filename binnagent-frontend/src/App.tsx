@@ -547,7 +547,6 @@ function App() {
               onDraftPrompt={handleDraftPrompt}
               onOpenVocabularyManager={openVocabularyManager}
               onOpenPronunciationWorkspace={openPronunciationWorkspace}
-              onOpenExpressionLab={(options) => handleOpenExpressionLab({ ...options, returnTo: 'explore' })}
             />
           ) : activeTab === 'pronunciation' ? (
             <PronunciationPage

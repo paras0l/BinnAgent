@@ -51,6 +51,8 @@ class ClassroomProgressRequest(BaseModel):
     textbook_task_answers: dict[str, str] = Field(default_factory=dict)
     grammar_answers: dict[str, str] = Field(default_factory=dict)
     grammar_transfer: str = Field(default="", max_length=2000)
+    vocabulary_confidence: dict[str, str] = Field(default_factory=dict)
+    continuous_audio_played: bool = False
     completed: bool = False
 
 
@@ -119,6 +121,8 @@ async def update_daily_classroom_progress(
             textbook_task_answers=body.textbook_task_answers,
             grammar_answers=body.grammar_answers,
             grammar_transfer=body.grammar_transfer,
+            vocabulary_confidence=body.vocabulary_confidence,
+            continuous_audio_played=body.continuous_audio_played,
             completed=body.completed,
         )
     except ClassroomNotFoundError as exc:

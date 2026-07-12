@@ -1,4 +1,4 @@
-import { AlertCircle, ArrowRight, BookCheck, BookMarked, BookOpen, BookOpenCheck, CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, Clock3, Dumbbell, FileText, GraduationCap, Languages, Layers3, LibraryBig, ListChecks, ListTree, LoaderCircle, RotateCcw, Send, SkipForward, Sparkles, Trash2, UploadCloud, X } from 'lucide-react'
+import { AlertCircle, ArrowRight, BookCheck, BookMarked, BookOpen, BookOpenCheck, BookOpenText, CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, Clock3, Dumbbell, FileText, GraduationCap, Languages, Layers3, LibraryBig, ListChecks, ListTree, LoaderCircle, RotateCcw, Send, SkipForward, Sparkles, Trash2, UploadCloud, X } from 'lucide-react'
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type KeyboardEventHandler, type ReactNode, type Ref } from 'react'
 import type { CapabilityRecommendation } from '@/components/learning/CapabilityRecommendationCard'
 import { GenerativeClassroom, type ClassroomPlan } from '@/components/learning/GenerativeClassroom'
@@ -33,6 +33,7 @@ import {
   hasScannedPdfSignal,
   normalizeBlockingReasons,
 } from '@/utils/knowledgeIngest'
+import { resolveTextbookCover } from '@/utils/textbookCover'
 import type {
   ExerciseSession,
   FailedKnowledgeSourceDetail,
@@ -186,6 +187,7 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice, 
   const [isLegacyDailyLessonOpen, setIsLegacyDailyLessonOpen] = useState(false)
   const [dailyAnswer, setDailyAnswer] = useState('')
   const [isStartingDailyLesson, setIsStartingDailyLesson] = useState(false)
+  const [isPreparingDailyChallenge, setIsPreparingDailyChallenge] = useState(false)
   const [readingMaterialType, setReadingMaterialType] = useState<ReadingMaterialType>('passage')
   const [readingMaterialLength, setReadingMaterialLength] = useState<ReadingMaterialLength>('short')
   const [isGeneratingReadingMaterial, setIsGeneratingReadingMaterial] = useState(false)
@@ -663,6 +665,38 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice, 
       showToast(startError instanceof Error ? startError.message : 'AI 每日题暂时无法开始。', { variant: 'error' })
     } finally {
       setIsStartingDailyLesson(false)
+    }
+  }
+
+  const handlePrepareDailyChallenge = async () => {
+    if (!overview?.current_unit.id || isPreparingDailyChallenge) return
+    setIsPreparingDailyChallenge(true)
+    try {
+      const response = await fetch(`/api/learners/${learner.id}/daily-lessons/start`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          current_curriculum_node_id: overview.current_unit.id,
+          time_budget_minutes: overview.daily_lesson.estimated_minutes,
+          mode_hint: 'textbook_guided_classroom',
+        }),
+      })
+      if (!response.ok) throw new Error('评分挑战暂时无法准备，请重试。')
+      const started = await response.json() as DailyLessonRuntime
+      if (!started.answer_required || !started.episode_id) {
+        throw new Error('当前没有可用的评分题，请稍后重试。')
+      }
+      window.localStorage.setItem(dailyLessonStorageKey, started.episode_id)
+      setDailyAnswer('')
+      setDailyLesson(started)
+      showToast('评分挑战已准备好，可以作答了。', { variant: 'success' })
+    } catch (prepareError) {
+      showToast(
+        prepareError instanceof Error ? prepareError.message : '评分挑战暂时无法准备，请重试。',
+        { variant: 'error' },
+      )
+    } finally {
+      setIsPreparingDailyChallenge(false)
     }
   }
 
@@ -1212,8 +1246,10 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice, 
           boosterCount={capabilityRecommendations.length}
           onAnswerChange={setDailyAnswer}
           onSubmit={(value) => void handleSubmitDailyAnswer(value)}
+          onPrepareChallenge={() => void handlePrepareDailyChallenge()}
+          isPreparingChallenge={isPreparingDailyChallenge}
           onOpenBoosters={() => setIsCapabilityDrawerOpen(true)}
-          onClose={() => { setClassroomPlan(null); setDailyLesson(null) }}
+          onClose={() => setClassroomPlan(null)}
         />
       ) : isLegacyDailyLessonOpen ? <DailyLessonRuntimeDialog
         key={dailyLesson?.episode_id ?? 'closed-daily-lesson'}
@@ -1361,12 +1397,12 @@ function CourseHero({
               {isUpdatingUnitProgress
                 ? '更新中'
                 : isStartingLesson
-                  ? '正在编排课堂…'
+                  ? '正在准备课堂…'
                   : isUnitSkipped
                     ? '重学'
                     : hasResumableClassroom
-                      ? '继续 AI 教材课堂'
-                      : '进入 AI 教材课堂'}
+                      ? '继续今天的教材课'
+                      : '开始今天的教材课'}
             </Button>
             {!isUnitSkipped ? (
               <Button variant="ghost" onClick={onSkip} disabled={isUpdatingUnitProgress}>
@@ -1511,33 +1547,32 @@ function TodayCourseTasks({
 
   return (
     <section aria-labelledby="today-course-tasks-title">
-      <article className="relative mb-5 overflow-hidden rounded-[1.75rem] border border-violet-300/30 bg-[linear-gradient(135deg,#111827_0%,#312e81_52%,#0e7490_100%)] p-5 text-white shadow-[0_20px_50px_rgba(79,70,229,0.24)] sm:p-7">
-        <div className="pointer-events-none absolute -right-16 -top-20 size-56 rounded-full bg-cyan-300/20 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-24 left-1/3 size-52 rounded-full bg-violet-400/25 blur-3xl" />
+      <article className="relative mb-5 overflow-hidden rounded-[1.75rem] border border-indigo-100 bg-[#f7f5ef] p-5 shadow-[0_18px_45px_rgba(51,65,85,0.10)] sm:p-7">
+        <div className="pointer-events-none absolute right-0 top-0 h-full w-1.5 bg-indigo-600" />
         <div className="relative grid gap-5 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
           <div>
-            <p className="inline-flex items-center gap-2 rounded-full border border-cyan-200/20 bg-white/10 px-3 py-1 text-xs font-black tracking-wide text-cyan-200">
-              <Sparkles className="size-3.5" /> AI ORGANIZED CLASS
+            <p className="inline-flex items-center gap-2 rounded-full border border-indigo-100 bg-white px-3 py-1 text-xs font-black tracking-wide text-indigo-700">
+              <BookOpenText className="size-3.5" /> TODAY'S LESSON
             </p>
-            <h2 className="mt-3 text-2xl font-black tracking-tight sm:text-3xl">
-              {hasResumableClassroom ? '继续今天的 AI 教材课堂' : '进入 AI 教材课堂'}
+            <h2 className="mt-3 text-2xl font-black tracking-tight text-slate-950 sm:text-3xl">
+              {hasResumableClassroom ? '继续今天的教材课' : '开始今天的教材课'}
             </h2>
-            <p className="mt-2 max-w-2xl text-sm font-semibold leading-6 text-indigo-100">
-              围绕 {overview.current_unit.title} · {overview.current_unit.subtitle}，依次完成任务简报、分层词汇、语法掌握、原声听辨、教材原题、AI 诊断和课堂总结。
+            <p className="mt-2 max-w-2xl text-sm font-semibold leading-6 text-slate-600">
+              围绕 {overview.current_unit.title} · {overview.current_unit.subtitle}，完成一组新词判断、一个句型、一段教材原声和一页原题。
             </p>
-            <div className="mt-4 flex flex-wrap gap-2 text-[11px] font-black text-white/80">
-              {['七阶段课堂', '语法掌握证据', '教材原声听辨', 'PDF 原题作答', 'AI 实时诊断', '进度自动保存'].map((label) => (
-                <span key={label} className="rounded-full border border-white/10 bg-white/10 px-2.5 py-1">{label}</span>
+            <div className="mt-4 flex flex-wrap gap-2 text-[11px] font-black text-slate-600">
+              {['约 30 分钟', '词汇三档判断', '语法迁移句', '教材原声', '原题作答', '自动保存'].map((label) => (
+                <span key={label} className="rounded-full border border-slate-200 bg-white px-2.5 py-1">{label}</span>
               ))}
             </div>
           </div>
           <Button
             onClick={onStartDailyLesson}
             disabled={isStartingDailyLesson}
-            className="min-h-12 justify-center bg-white px-6 text-slate-950 shadow-xl hover:bg-cyan-50 lg:min-w-48"
+            className="min-h-12 justify-center px-6 shadow-lg shadow-indigo-200 lg:min-w-48"
           >
             {isStartingDailyLesson ? <LoaderCircle className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
-            {isStartingDailyLesson ? '正在编排课堂…' : hasResumableClassroom ? '继续 AI 课堂' : '立即进入课堂'}
+            {isStartingDailyLesson ? '正在准备课堂…' : hasResumableClassroom ? '从上次位置继续' : '开始今天的课'}
             {!isStartingDailyLesson ? <ArrowRight className="size-4" /> : null}
           </Button>
         </div>
@@ -1574,7 +1609,7 @@ function TodayCourseTasks({
           </Select>
           <Button variant="secondary" onClick={onStartDailyLesson} disabled={isStartingDailyLesson}>
             {isStartingDailyLesson ? <LoaderCircle className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
-            进入 AI 课堂
+            开始主线课堂
           </Button>
         </div>
       </div>
@@ -2138,14 +2173,14 @@ function ReadingMaterialHistoryDialog({
 }
 
 function TextbookCover({ overview }: { overview: KnowledgeBaseOverview }) {
-  const useCover = overview.source.grade === 'grade-7' && overview.source.volume === 'upper'
-  return useCover ? (
+  const textbookCover = resolveTextbookCover(overview.source)
+  return textbookCover ? (
     <img
-      src="/grade7-english-upper-cover.png"
-      alt={`${overview.source.title}封面`}
+      src={textbookCover.src}
+      alt={textbookCover.alt}
       width={190}
       height={240}
-      className="h-48 w-full rounded-xl border border-slate-100 object-cover object-[78%_center] shadow-sm md:h-full"
+      className={`h-48 w-full rounded-xl border border-slate-100 shadow-sm md:h-full ${textbookCover.fit === 'contain' ? 'bg-[#f7b83b] object-contain object-center' : 'object-cover object-[78%_center]'}`}
     />
   ) : (
     <div className="flex h-48 w-full flex-col justify-between rounded-xl border border-indigo-100 bg-gradient-to-br from-sky-50 to-emerald-50 p-4 text-slate-800 shadow-sm md:h-full">
@@ -2603,7 +2638,7 @@ function CapabilityBoosterDrawer({
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-50">
+    <div className="fixed inset-0 z-[140]">
       <button
         type="button"
         aria-label="关闭能力加练"

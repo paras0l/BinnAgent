@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from src.models.knowledge import LearnerKnowledgeState
+from src.models.knowledge import CurriculumNode, LearnerKnowledgeState
 from src.models.vocabulary import ReviewSchedule
 from src.recommendation.engine import RecommendationEngine
 from src.recommendation.types import RecommendationInput
@@ -32,6 +32,10 @@ class FakeResult:
 
 def _many(values):
     return FakeResult(values=values)
+
+
+def _one(value):
+    return FakeResult(value=value)
 
 
 @pytest.mark.asyncio
@@ -97,6 +101,47 @@ async def test_due_review_recommends_review_due_item():
     assert plan.mode == "review"
     assert plan.tasks[0].task_spec.task_type == "review_due_item"
     assert plan.tasks[0].priority_score == 0.8
+
+
+@pytest.mark.asyncio
+async def test_textbook_classroom_keeps_current_unit_ahead_of_weakness_repair():
+    learner_id = uuid.uuid4()
+    node = CurriculumNode(
+        source_id=uuid.uuid4(),
+        node_type="unit",
+        title="Starter Unit 1",
+        ordinal=1,
+        estimated_minutes=20,
+    )
+    node.id = uuid.uuid4()
+    state = LearnerKnowledgeState(
+        learner_id=learner_id,
+        knowledge_point_id=uuid.uuid4(),
+        status="reviewing",
+        mastery_score=0.07,
+        confidence=0.075,
+        exposure_count=1,
+        correct_count=0,
+        evidence_summary={},
+    )
+    state.id = uuid.uuid4()
+    state.updated_at = datetime.now(timezone.utc)
+    db = AsyncMock()
+    db.execute = AsyncMock(side_effect=[_many([]), _many([state]), _one(node)])
+
+    plan = await RecommendationEngine(db).build_daily_plan(
+        RecommendationInput(
+            learner_id=str(learner_id),
+            current_curriculum_node_id=str(node.id),
+            time_budget_minutes=20,
+            mode_hint="textbook_guided_classroom",
+        )
+    )
+
+    assert plan.mode == "textbook_guided_classroom"
+    assert plan.tasks[0].task_spec.task_type == "learn_knowledge_point"
+    assert plan.tasks[0].task_spec.target.target_id == str(node.id)
+    assert plan.reason.endswith(f"继续当前教材节点：{node.title}。")
 
 
 @pytest.mark.asyncio

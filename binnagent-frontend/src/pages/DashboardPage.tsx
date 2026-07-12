@@ -625,7 +625,7 @@ function LearningCenterHome({
   const todayPercent = toPercent(summary.today_goal.completed, summary.today_goal.total)
   const dueCount = summary.stats.today_reviews
   const focusReasons = buildFocusReasons(summary)
-  const nextActionLabel = dueCount > 0 ? `先复习 ${dueCount} 个词` : '进入 AI 教材课堂'
+  const nextActionLabel = dueCount > 0 ? `先复习 ${dueCount} 个词` : '开始今天的教材课'
   const routeStatus = todayPercent >= 100 ? '今日任务已收口' : dueCount > 0 ? '先清复习，再进教材' : '可以直接进入教材'
 
   return (
@@ -663,7 +663,7 @@ function LearningCenterHome({
               </Button>
               {dueCount > 0 ? (
                 <Button variant="secondary" className="justify-between" onClick={onOpenDailyLearning}>
-                  进入 AI 教材课堂<ArrowRight className="size-4" />
+                  开始今天的教材课<ArrowRight className="size-4" />
                 </Button>
               ) : null}
             </div>
@@ -715,7 +715,7 @@ function TodayLearningFlow({
 }) {
   const steps = buildTodaySteps(summary)
   return (
-    <section className="h-full rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-[0_12px_34px_rgba(15,23,42,0.06)] sm:p-6">
+    <section className="h-full rounded-[1.5rem] border border-slate-200/80 bg-white/84 p-5 shadow-[0_12px_34px_rgba(51,65,85,0.045)] backdrop-blur-sm sm:p-6">
       <div>
         <div>
           <p className="inline-flex items-center gap-2 rounded-full bg-indigo-50 px-3 py-1 text-xs font-black uppercase text-primary">
@@ -729,7 +729,7 @@ function TodayLearningFlow({
         </div>
       </div>
 
-      <div className="mt-6 grid gap-3">
+      <div className="mt-6 divide-y divide-slate-200/70 overflow-hidden rounded-2xl border border-slate-200/70 bg-white/62 px-2">
         {steps.map((step, index) => (
           <button
             key={step.title}
@@ -741,12 +741,12 @@ function TodayLearningFlow({
                   ? onOpenAiConversation
                   : onOpenDailyLearning
             }
-            className={`group grid grid-cols-[42px_minmax(0,1fr)_auto] items-center gap-3 rounded-2xl border px-4 py-3.5 text-left transition hover:-translate-y-0.5 hover:shadow-[0_12px_30px_rgba(15,23,42,0.08)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
+            className={`group grid grid-cols-[42px_minmax(0,1fr)_auto] items-center gap-3 rounded-xl px-3 py-3.5 text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-primary ${
               step.state === 'done'
-                ? 'border-emerald-100 bg-emerald-50/50'
+                ? 'bg-emerald-50/55'
                 : index === 0
-                  ? 'border-indigo-200 bg-[linear-gradient(135deg,#ffffff,#eef2ff)]'
-                  : 'border-slate-200 bg-white hover:border-primary/30'
+                  ? 'bg-indigo-50/75'
+                  : 'hover:bg-slate-50/80'
             }`}
           >
             <span className={`flex size-10 items-center justify-center rounded-xl text-sm font-black shadow-sm ${
@@ -766,13 +766,13 @@ function TodayLearningFlow({
         ))}
       </div>
 
-      <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3 text-sm leading-6 text-slate-600">
+      <div className="mt-5 border-t border-slate-200/80 px-1 pt-4 text-sm leading-6 text-slate-600">
         <p className="flex items-center gap-2 text-xs font-black uppercase text-slate-500">
           <ShieldCheck className="size-3.5 text-primary" />
           为什么现在这样排
         </p>
-        <ul className="mt-2 grid gap-2 sm:grid-cols-2">
-          {reasons.slice(0, 2).map((reason) => <li key={reason} className="rounded-xl bg-white px-3 py-2 shadow-sm">{reason}</li>)}
+        <ul className="mt-2 grid gap-x-6 gap-y-2 sm:grid-cols-2">
+          {reasons.slice(0, 2).map((reason) => <li key={reason} className="flex gap-2 text-xs font-semibold leading-5 before:mt-2 before:size-1.5 before:shrink-0 before:rounded-full before:bg-indigo-300">{reason}</li>)}
         </ul>
       </div>
     </section>
@@ -804,7 +804,7 @@ function LearningSideRail({
 
   return (
     <aside className="flex h-full flex-col gap-4">
-      <section className="rounded-[1.35rem] border border-slate-200 bg-white p-4 shadow-[0_10px_28px_rgba(15,23,42,0.05)]">
+      <section className="rounded-[1.35rem] border border-slate-200/80 bg-white/82 p-4 shadow-[0_10px_28px_rgba(51,65,85,0.04)] backdrop-blur-sm">
         <div className="flex items-center justify-between gap-3">
           <SectionHeading icon={<CalendarDays className="size-4" />} title="最近 7 天" />
           <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-black text-slate-600">{summary.stats.streak_days} 天连续</span>
@@ -824,7 +824,7 @@ function LearningSideRail({
         </div>
       </section>
 
-      <section className="flex flex-1 flex-col rounded-[1.35rem] border border-slate-200 bg-white p-4 shadow-[0_10px_28px_rgba(15,23,42,0.05)]">
+      <section className="flex flex-1 flex-col rounded-[1.35rem] border border-slate-200/80 bg-white/82 p-4 shadow-[0_10px_28px_rgba(51,65,85,0.04)] backdrop-blur-sm">
         <div className="flex items-center justify-between gap-3">
           <p className="text-sm font-black text-slate-950">辅助入口</p>
           <span className="text-xs font-bold text-slate-400">Tools</span>
@@ -833,7 +833,7 @@ function LearningSideRail({
           <button
             type="button"
             onClick={onOpenExpressionLab}
-            className="rounded-2xl border border-violet-200 bg-[linear-gradient(135deg,#f5f3ff,#ffffff_55%,#eef2ff)] p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-violet-300 hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            className="rounded-xl bg-violet-50/75 p-4 text-left transition-colors hover:bg-violet-100/70 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
           >
             <span className="flex items-start justify-between gap-3">
               <span className="min-w-0">
@@ -847,7 +847,7 @@ function LearningSideRail({
           <button
             type="button"
             onClick={onOpenGroupSignals}
-            className="rounded-2xl border border-indigo-200 bg-[linear-gradient(135deg,#eef2ff,#f8fafc_55%,#f0f9ff)] p-4 text-left shadow-sm ring-1 ring-white/70 transition hover:-translate-y-0.5 hover:border-indigo-300 hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            className="rounded-xl bg-indigo-50/75 p-4 text-left transition-colors hover:bg-indigo-100/70 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
           >
             <span className="flex items-start justify-between gap-3">
               <span className="min-w-0">

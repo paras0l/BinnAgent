@@ -205,6 +205,8 @@ async def load_classroom_progress(
         "textbook_task_answers": metadata.get("textbook_task_answers", {}),
         "grammar_answers": metadata.get("grammar_answers", {}),
         "grammar_transfer": metadata.get("grammar_transfer", ""),
+        "vocabulary_confidence": metadata.get("vocabulary_confidence", {}),
+        "continuous_audio_played": bool(metadata.get("continuous_audio_played", False)),
         "status": item.status,
         "updated_at": item.updated_at.isoformat() if item.updated_at else None,
     }
@@ -223,6 +225,8 @@ async def save_classroom_progress(
     textbook_task_answers: dict[str, str] | None = None,
     grammar_answers: dict[str, str] | None = None,
     grammar_transfer: str = "",
+    vocabulary_confidence: dict[str, str] | None = None,
+    continuous_audio_played: bool = False,
     completed: bool,
 ) -> dict[str, Any]:
     node = await db.get(CurriculumNode, curriculum_node_id)
@@ -255,6 +259,12 @@ async def save_classroom_progress(
             if str(key).strip() and str(value).strip()
         },
         "grammar_transfer": grammar_transfer.strip()[:2000],
+        "vocabulary_confidence": {
+            str(key)[:80]: str(value)
+            for key, value in (vocabulary_confidence or {}).items()
+            if str(key).strip() and value in {"known", "fuzzy", "unknown"}
+        },
+        "continuous_audio_played": continuous_audio_played,
         "schema_version": "1.0",
     }
     if item is None:

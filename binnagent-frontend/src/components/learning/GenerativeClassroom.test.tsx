@@ -51,7 +51,7 @@ const PLAN: ClassroomPlan = {
 }
 
 describe('GenerativeClassroom', () => {
-  it('renders the organized route, mission, and AI generation state', () => {
+  it('renders the focused lesson route, mission, and completion standard', () => {
     const html = renderToString(
       <GenerativeClassroom
         learnerId="learner-1"
@@ -70,13 +70,40 @@ describe('GenerativeClassroom', () => {
       />,
     )
 
-    expect(html).toContain('AI 实时编排')
+    expect(html).toContain('今日教材课')
     expect(html).toContain('入场 · 明确任务')
     expect(html).toContain('听辨 · 教材原声')
     expect(html).toContain('语法 · 看懂并会用')
     expect(html).toContain('教材 · 完成原题')
     expect(html).toContain('诊断 · AI 挑战')
     expect(html).toContain('完成问候与自我介绍。')
+    expect(html).toContain('完成标准')
+    expect(html).toContain('收起课堂路径')
+  })
+
+  it('offers a recovery action when the scored challenge is unavailable', () => {
+    const html = renderToString(
+      <GenerativeClassroom
+        learnerId="learner-1"
+        plan={{ ...PLAN, resume: { current_phase_id: 'practice', completed_phase_ids: ['launch', 'notice', 'grammar', 'listen', 'textbook'], flipped_card_ids: [], listened_cue_ids: [], status: 'in_progress', updated_at: null } }}
+        lesson={null}
+        prompt=""
+        options={[]}
+        answer=""
+        isSubmitting={false}
+        feedback={null}
+        boosterCount={0}
+        onAnswerChange={vi.fn()}
+        onSubmit={vi.fn()}
+        onPrepareChallenge={vi.fn()}
+        onOpenBoosters={vi.fn()}
+        onClose={vi.fn()}
+      />,
+    )
+
+    expect(html).toContain('评分挑战还没准备好')
+    expect(html).toContain('重新准备挑战')
+    expect(html).toContain('不需要重做前面的步骤')
   })
 
   it('renders an explicit grammar rule, checks, and transfer task', () => {
@@ -98,8 +125,8 @@ describe('GenerativeClassroom', () => {
       />,
     )
 
-    expect(html).toContain('GRAMMAR LAB')
-    expect(html).toContain('先归纳规则')
+    expect(html).toContain('当前句型')
+    expect(html).toContain('先抓住规则')
     expect(html).toContain('立即辨析')
     expect(html).toContain('自己用出来')
     expect(html).toContain('用合适的问候开启并结束对话')
@@ -126,7 +153,8 @@ describe('GenerativeClassroom', () => {
 
     expect(html).toContain('Section A 教材任务')
     expect(html).toContain('教材第 1 页原题')
-    expect(html).toContain('AI 做题教练')
+    expect(html).toContain('做题提示')
+    expect(html).toContain('按题号记录答案')
     expect(html).toContain('/classroom/textbook-task/task.webp')
   })
 })

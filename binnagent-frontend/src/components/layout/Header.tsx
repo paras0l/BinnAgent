@@ -70,6 +70,7 @@ export function Header({
   }, [isMenuOpen])
 
   useEffect(() => {
+    suppressCollapseUntilRef.current = Date.now() + 1200
     lastScrollYRef.current = window.scrollY
     lastScrollSourceRef.current = document
     let frame = 0
@@ -90,7 +91,7 @@ export function Header({
         )
         const previousScrollY = lastScrollSourceRef.current === source
           ? lastScrollYRef.current
-          : 0
+          : nextScrollY
         const scrollDelta = nextScrollY - previousScrollY
 
         if (
