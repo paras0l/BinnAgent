@@ -1,21 +1,34 @@
 import { User } from 'lucide-react'
+import { useMemo } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { XiaobingAvatar } from '@/components/ui/XiaobingAvatar'
+import { ChatArtifactRenderer } from './artifacts/ChatArtifactRenderer'
+import { parseChatArtifacts } from './artifacts/chatArtifacts'
 
 interface MessageBubbleProps {
+  id: string
   role: 'user' | 'assistant'
   content: string
   timestamp: number
   isStreaming?: boolean
+  onArtifactAction?: (prompt: string) => void
 }
 
-export function MessageBubble({ role, content, timestamp, isStreaming }: MessageBubbleProps) {
+export function MessageBubble({
+  id,
+  role,
+  content,
+  timestamp,
+  isStreaming,
+  onArtifactAction,
+}: MessageBubbleProps) {
   const isUser = role === 'user'
-  
-  const formatTime = (ts: number) => {
-    return new Date(ts).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
-  }
+  const parsed = useMemo(
+    () => isUser || isStreaming ? { content, artifacts: [] } : parseChatArtifacts(id, content),
+    [content, id, isStreaming, isUser],
+  )
+  const hasArtifacts = parsed.artifacts.length > 0
 
   return (
     <div
@@ -30,7 +43,7 @@ export function MessageBubble({ role, content, timestamp, isStreaming }: Message
         <XiaobingAvatar className="size-8 shrink-0 border border-sky-100 bg-sky-50 shadow-sm" />
       )}
       
-      <div className={`min-w-0 max-w-[80%] rounded-2xl px-4 py-2.5 transition-[box-shadow,transform] duration-150 group-hover:-translate-y-0.5 group-hover:shadow-sm ${
+      <div className={`min-w-0 rounded-2xl px-4 py-2.5 transition-[box-shadow,transform] duration-150 group-hover:-translate-y-0.5 group-hover:shadow-sm ${hasArtifacts ? 'max-w-[92%] lg:max-w-[860px]' : 'max-w-[80%]'} ${
         isUser
           ? 'bg-primary text-primary-foreground rounded-tr-sm'
           : 'bg-muted text-foreground rounded-tl-sm'
@@ -43,9 +56,19 @@ export function MessageBubble({ role, content, timestamp, isStreaming }: Message
         ) : (
           <div className="markdown-body text-sm leading-relaxed">
             <ReactMarkdown remarkPlugins={[remarkGfm]}>
-              {content || (isStreaming ? ' ' : '')}
+              {parsed.content || (isStreaming ? ' ' : '')}
             </ReactMarkdown>
             {isStreaming && <span className="animate-pulse">▊</span>}
+            {onArtifactAction
+              ? parsed.artifacts.map((artifact) => (
+                  <ChatArtifactRenderer
+                    key={artifact.id}
+                    artifact={artifact}
+                    disabled={isStreaming}
+                    onAction={onArtifactAction}
+                  />
+                ))
+              : null}
           </div>
         )}
         <span className="mt-1 block text-[10px] opacity-60">
@@ -54,4 +77,8 @@ export function MessageBubble({ role, content, timestamp, isStreaming }: Message
       </div>
     </div>
   )
+}
+
+function formatTime(timestamp: number) {
+  return new Date(timestamp).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
 }

@@ -5,6 +5,7 @@ import {
   buildSandboxDocument,
   isAllowedSandboxMessage,
   sanitizeSandboxHtml,
+  sanitizeSandboxScript,
 } from './SandboxWidget'
 import {
   SUPPORTED_EXPRESSION_BLOCK_TYPES,
@@ -25,6 +26,7 @@ describe('Expression Lab sandbox policy', () => {
     expect(widgetSource).toContain('sandbox="allow-scripts"')
     expect(widgetSource).not.toContain('allow-same-origin')
     expect(widgetSource).toContain('event.source !== iframeRef.current?.contentWindow')
+    expect(widgetSource).toContain('onLoad={() => setFrameLoaded(true)}')
   })
 
   it('builds a document with network, form, frame, object, and base CSP disabled', () => {
@@ -89,6 +91,19 @@ describe('Expression Lab sandbox policy', () => {
     expect(isAllowedSandboxMessage({ ...valid, type: 'navigate' }, 'sandbox-1', 'nonce-1')).toBe(false)
     expect(isAllowedSandboxMessage({ ...valid, payload: {} }, 'sandbox-1', 'nonce-1')).toBe(false)
     expect(isAllowedSandboxMessage({ ...valid, type: 'resize', payload: { height: Number.NaN } }, 'sandbox-1', 'nonce-1')).toBe(false)
+  })
+
+  it('allows ordinary function syntax but blocks the Function constructor', () => {
+    const ordinaryScript = '(function(){ button.addEventListener("click", function(){ return true }) })()'
+    expect(sanitizeSandboxScript(ordinaryScript)).toBe(ordinaryScript)
+    expect(sanitizeSandboxScript('new Function("return secret")()')).toContain('blocked_script')
+    expect(sanitizeSandboxScript('Function("return secret")()')).toContain('blocked_script')
+  })
+
+  it('normalizes generated currentScript root lookup to the stable sandbox bridge root', () => {
+    const script = "const container = document.currentScript?.closest('section');"
+    expect(sanitizeSandboxScript(script)).toContain("binnagent.root.querySelector('section')")
+    expect(widgetSource).toContain('Object.freeze({emit,root})')
   })
 })
 

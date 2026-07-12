@@ -232,10 +232,12 @@ export function ChatContainer({
             messages.map(msg => (
               <MessageBubble
                 key={msg.id}
+                id={msg.id}
                 role={msg.role}
                 content={msg.content}
                 timestamp={msg.timestamp}
                 isStreaming={isLoading && msg.role === 'assistant' && msg === messages[messages.length - 1]}
+                onArtifactAction={(prompt) => guardContextChange(() => sendMessage(prompt))}
               />
             ))
           )}

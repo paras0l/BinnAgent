@@ -68,7 +68,7 @@ class ChatResponse(BaseModel):
 
 TUTOR_SYSTEM_PROMPT = prompt_registry.render(
     prompt_id="tutor.chat",
-    version="v1",
+    version="v2",
     variables={},
 ).prompt
 
@@ -199,7 +199,7 @@ def _model_request(
     model_request.metadata = {
         **(getattr(model_request, "metadata", None) or {}),
         "prompt_id": "tutor.chat",
-        "prompt_version": "v1",
+        "prompt_version": "v2",
     }
     return model_request
 

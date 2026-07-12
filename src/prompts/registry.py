@@ -106,11 +106,12 @@ prompt_registry = PromptRegistry()
 prompt_registry.register(
     PromptMetadata(
         id="tutor.chat",
-        version="v1",
+        version="v2",
         owner="chat",
-        purpose="英语学习助教的基础 system prompt",
-        template_path="versions/tutor.chat.v1.md",
+        purpose="英语学习助教基础对话与安全对话内互动组件",
+        template_path="versions/tutor.chat.v2.md",
         model_policy={"default_model": "ollama_chat", "temperature": 0.7},
+        eval_set="evals/prompts/tutor_chat_v2.jsonl",
     )
 )
 prompt_registry.register(

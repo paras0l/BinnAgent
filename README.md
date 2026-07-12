@@ -137,6 +137,7 @@ http://localhost:5176，可在 Learners / Recent Episodes 中直接选择 learne
 | Vocabulary Personal Cards / Practice / Spelling / Word Parts | 部分实现，已新增“词根与词缀”探索入口、四工作区学习页、内置词根词缀库、拆词练习、morphology 前端展示/降级和知识点配套练习验收；训练中可在学习提示区将单词标记为“太简单（已掌握）”，并显著降低后续训练频率 |
 | Writing Phrasebook | 基础版已实现 |
 | Expression Lab 英语表达实验室 | 已实现，支持中文表达缺口、英文草稿、好句迁移、词汇/语法目标和群聊学习线索输入；提供十类 schema 驱动内容块、局部重生成、1–3 题动态加练、确认后保存长期资产、会话恢复/删除，以及 Attempt → LearningEvent → Memory → Recommendation 学习闭环；Explore、Dashboard 辅助入口和群聊表达真实复用追踪已接通 |
+| 对话内互动 Artifact | 基础版已实现；AI 对话可把自包含 `binnagent-widget` HTML/CSS/JS 渲染为隔离 iframe 微应用，支持自适应高度、白名单事件回传和后续对话；Markdown 图片自动升级为可选择、全屏查看和局部坐标标注的图片板；沙箱禁止网络、存储、父页面访问和未确认业务写入 |
 | 群聊学习线索 | 第一版已实现并切到飞书 MCP 兼容方案，支持飞书群来源配置、MCP/OpenAPI 同步、群成员拉取与当前 learner 绑定、原始消息保留/清理、中性 JSON 导入、显式标签即时规则抽取、`@机器人 --help` 群内操作指南回复与去重、无标签消息 pending 队列、低频 LLM 小批量线索提取、收件箱分页接受/忽略/删除，以及接受后写入词汇候选、好句候选或语法学习进度 |
 | ExploreCapability 推荐 | 基础版已实现，Explore Tab 入口由后端 registry 统一管理；Daily Lesson 答题后可推荐 ready 学习能力，点击/忽略事件写入 Memory 和 episode trace |
 | Generative Classroom | 已实现可体验版本；每日学习采用数字教材桌面，按当前任务、最低完成证据和下一步组织词汇三档判断、Grammar Lab、教材原声听辨、PDF 原题作答、智能诊断与学习复盘；阶段门槛阻止任意跳关，返回不再误记完成，退出保留 Daily Lesson 并可原位恢复，保存状态显示真实时间；全册 10 个 Grammar Lab 提供明确 can-do 目标、规则归纳、结构模板、易错点、3 道即时辨析和迁移表达；LLM 诊断通过 `PromptExecutor` 对照教材与学生答案生成 schema 约束的最小提示，离线时使用确定性兜底；词汇判断、听辨证据、语法答案、迁移表达、教材答案、Daily Lesson checkpoint、Mastery、Memory、复习计划和 ExploreCapability 推荐保持联动 |

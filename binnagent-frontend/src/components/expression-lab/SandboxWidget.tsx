@@ -38,6 +38,7 @@ export function SandboxWidget({ block, actions, onAction, onEvent }: SandboxWidg
   const [instance, setInstance] = useState(0)
   const [height, setHeight] = useState(() => clampHeight(numberValue(block.data.height, 360)))
   const [timedOut, setTimedOut] = useState(false)
+  const [frameLoaded, setFrameLoaded] = useState(false)
   const timeoutMs = clampTimeout(numberValue(block.data.timeout_ms, 8_000))
   const configuredEvents = useMemo(
     () => new Set(asStrings(block.data.allowed_events).filter((type) => ALLOWED_EVENT_TYPES.has(type))),
@@ -47,7 +48,7 @@ export function SandboxWidget({ block, actions, onAction, onEvent }: SandboxWidg
   const document = useMemo(() => buildSandboxDocument(block, nonce), [block, nonce])
 
   useEffect(() => {
-    if (timedOut) return
+    if (timedOut || frameLoaded) return
     const timeout = window.setTimeout(() => {
       setTimedOut(true)
       onEvent?.({ channel: SANDBOX_CHANNEL, block_id: block.id, nonce, type: 'timeout', payload: { timeout_ms: timeoutMs } })
@@ -72,7 +73,7 @@ export function SandboxWidget({ block, actions, onAction, onEvent }: SandboxWidg
       window.clearTimeout(timeout)
       window.removeEventListener('message', handleMessage)
     }
-  }, [actions, block.id, configuredEvents, nonce, onAction, onEvent, timedOut, timeoutMs])
+  }, [actions, block.id, configuredEvents, frameLoaded, nonce, onAction, onEvent, timedOut, timeoutMs])
 
   if (timedOut) {
     return (
@@ -82,6 +83,7 @@ export function SandboxWidget({ block, actions, onAction, onEvent }: SandboxWidg
         <Button variant="secondary" className="mt-4" onClick={() => {
           onEvent?.({ channel: SANDBOX_CHANNEL, block_id: block.id, nonce, type: 'rebuild', payload: { timeout_ms: timeoutMs } })
           setTimedOut(false)
+          setFrameLoaded(false)
           setInstance((value) => value + 1)
         }}><RefreshCw className="size-4" />重建组件</Button>
       </div>
@@ -96,6 +98,7 @@ export function SandboxWidget({ block, actions, onAction, onEvent }: SandboxWidg
       sandbox="allow-scripts"
       referrerPolicy="no-referrer"
       srcDoc={document}
+      onLoad={() => setFrameLoaded(true)}
       className="w-full rounded-xl border border-slate-200 bg-white"
       style={{ height }}
     />
@@ -137,7 +140,7 @@ export function buildSandboxDocument(block: ExpressionUiBlock, nonce: string) {
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; connect-src 'none'; form-action 'none'; navigate-to 'none'; frame-src 'none'; child-src 'none'; object-src 'none'; media-src 'none'; font-src 'none'; img-src data:; style-src 'unsafe-inline'; script-src 'unsafe-inline'; base-uri 'none'">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <style>html{color-scheme:light}*{box-sizing:border-box}body{margin:0;padding:18px;background:#fff;color:#0f172a;font:14px/1.6 ui-sans-serif,system-ui,sans-serif}button,input,textarea,select{font:inherit}button{min-height:40px;border:1px solid #cbd5e1;border-radius:10px;background:#fff;padding:8px 12px;cursor:pointer}button:focus-visible,input:focus-visible{outline:2px solid #6366f1;outline-offset:2px}${css}</style></head>
-<body><main data-expression-lab-widget>${html}</main><script>(()=>{'use strict';const channel=${JSON.stringify(SANDBOX_CHANNEL)};const blockId=${blockId};const nonce=${safeNonce};const emit=(type,payload={})=>{if(!${JSON.stringify([...ALLOWED_EVENT_TYPES])}.includes(type))return;parent.postMessage({channel,block_id:blockId,nonce,type,payload},'*')};Object.defineProperty(window,'binnagent',{value:Object.freeze({emit}),writable:false});for(const key of ['fetch','XMLHttpRequest','WebSocket','EventSource']){try{Object.defineProperty(window,key,{value:undefined,writable:false})}catch{}}try{Object.defineProperty(navigator,'sendBeacon',{value:undefined})}catch{}try{${escapeScript(script)};emit('ready',{height:document.documentElement.scrollHeight})}catch(error){emit('change',{error:'widget_runtime_error'});emit('ready',{height:document.documentElement.scrollHeight,runtime_error:true})}})();</script></body></html>`
+<body><main data-expression-lab-widget>${html}</main><script>(()=>{'use strict';const channel=${JSON.stringify(SANDBOX_CHANNEL)};const blockId=${blockId};const nonce=${safeNonce};const root=document.querySelector('[data-expression-lab-widget]');const emit=(type,payload={})=>{if(!${JSON.stringify([...ALLOWED_EVENT_TYPES])}.includes(type))return;parent.postMessage({channel,block_id:blockId,nonce,type,payload},'*')};Object.defineProperty(window,'binnagent',{value:Object.freeze({emit,root}),writable:false});for(const key of ['fetch','XMLHttpRequest','WebSocket','EventSource']){try{Object.defineProperty(window,key,{value:undefined,writable:false})}catch{}}try{Object.defineProperty(navigator,'sendBeacon',{value:undefined})}catch{}try{${escapeScript(script)};emit('ready',{height:document.documentElement.scrollHeight})}catch(error){emit('change',{error:'widget_runtime_error'});emit('ready',{height:document.documentElement.scrollHeight,runtime_error:true})}})();</script></body></html>`
 }
 
 export function isAllowedSandboxMessage(
@@ -174,10 +177,20 @@ function sanitizeSandboxCss(value: string) {
     .slice(0, 20_000)
 }
 
-function sanitizeSandboxScript(value: string) {
-  const forbidden = /\b(?:fetch|XMLHttpRequest|WebSocket|EventSource|sendBeacon|indexedDB|localStorage|sessionStorage|cookie|parent|top|opener|location|documentURI|baseURI|eval|Function|importScripts|open)\b|\bimport\s*\(|while\s*\(\s*true\s*\)|for\s*\(\s*;\s*;\s*\)/i
-  if (forbidden.test(value)) return `binnagent.emit('change',{error:'blocked_script'});`
-  return value.slice(0, 20_000)
+export function sanitizeSandboxScript(value: string) {
+  const forbidden = /\b(?:fetch|XMLHttpRequest|WebSocket|EventSource|sendBeacon|indexedDB|localStorage|sessionStorage|cookie|parent|top|opener|location|documentURI|baseURI|eval|importScripts|open)\b|\bimport\s*\(|while\s*\(\s*true\s*\)|for\s*\(\s*;\s*;\s*\)/i
+  const functionConstructor = /\b(?:new\s+)?Function\s*\(/
+  if (forbidden.test(value) || functionConstructor.test(value)) {
+    return `binnagent.emit('change',{error:'blocked_script'});`
+  }
+  return normalizeSandboxRootAccess(value).slice(0, 20_000)
+}
+
+function normalizeSandboxRootAccess(value: string) {
+  return value.replace(
+    /document\.currentScript\?\.closest\(\s*(['"])section\1\s*\)/gu,
+    "binnagent.root.querySelector('section') || binnagent.root",
+  )
 }
 
 function escapeScript(value: string) {

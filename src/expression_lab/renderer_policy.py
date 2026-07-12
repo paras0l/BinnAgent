@@ -317,13 +317,14 @@ def sanitize_css(value: str, *, scope: str | None = None) -> tuple[str, tuple[st
 
 _DANGEROUS_JAVASCRIPT = re.compile(
     r"\b(?:fetch|XMLHttpRequest|WebSocket|EventSource|Worker|SharedWorker|"
-    r"importScripts|sendBeacon|eval|Function|indexedDB|localStorage|sessionStorage|"
+    r"importScripts|sendBeacon|eval|indexedDB|localStorage|sessionStorage|"
     r"cookieStore|caches)\b|"
     r"document\s*\.\s*cookie|window\s*\.\s*(?:parent|top|opener)|"
     r"\b(?:parent|top|opener)\s*\.|\bpostMessage\s*\(|"
     r"\blocation\s*(?:=|\.)|\bopen\s*\(",
     re.IGNORECASE,
 )
+_DANGEROUS_FUNCTION_CONSTRUCTOR = re.compile(r"\b(?:new\s+)?Function\s*\(")
 
 
 def sanitize_javascript(value: str) -> tuple[str, tuple[str, ...]]:
@@ -333,7 +334,9 @@ def sanitize_javascript(value: str) -> tuple[str, tuple[str, ...]]:
     )
     if not bounded.strip():
         return "", ()
-    if _DANGEROUS_JAVASCRIPT.search(bounded):
+    if _DANGEROUS_JAVASCRIPT.search(bounded) or _DANGEROUS_FUNCTION_CONSTRUCTOR.search(
+        bounded
+    ):
         return "", ("removed_dangerous_javascript",)
     # The iframe host injects the frozen `binnagent.emit(type, payload)` bridge.
     # Keeping bridge construction in one place prevents protocol drift and makes

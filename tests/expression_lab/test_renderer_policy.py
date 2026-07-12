@@ -108,6 +108,15 @@ def test_sanitize_javascript_exposes_only_the_whitelisted_event_bridge() -> None
     assert "parent" not in sanitized
 
 
+def test_sanitize_javascript_allows_ordinary_function_syntax() -> None:
+    javascript = '(function(){ button.addEventListener("click", function(){ return true; }); })();'
+
+    sanitized, issues = sanitize_javascript(javascript)
+
+    assert javascript in sanitized
+    assert not issues
+
+
 def test_backend_sanitized_javascript_matches_the_frontend_nonce_checked_bridge() -> None:
     frontend_source = Path(
         "binnagent-frontend/src/components/expression-lab/SandboxWidget.tsx"
