@@ -47,6 +47,7 @@ import {
   LEARNING_GOAL_OPTIONS,
   LEVEL_STANDARD_NOTES,
   currentLevelLabel,
+  learningTrackLabel,
   learningGoalLabel,
 } from '@/utils/learnerProfile'
 import { buildTodaySteps } from '@/utils/dashboardLearningFlow'
@@ -1275,6 +1276,9 @@ function ProfileSettingsCard({
         <div className="flex flex-wrap gap-2 text-xs font-bold text-slate-500">
           <span className="rounded-lg bg-slate-100 px-2.5 py-1">
             目标：{learningGoalLabel(learnerProfile?.target_exam)}
+          </span>
+          <span className="rounded-lg bg-indigo-50 px-2.5 py-1 text-indigo-700">
+            主线：{learningTrackLabel(learnerProfile?.target_exam)}
           </span>
           <span className="rounded-lg bg-slate-100 px-2.5 py-1">
             水平：{currentLevelLabel(learnerProfile?.current_level)}

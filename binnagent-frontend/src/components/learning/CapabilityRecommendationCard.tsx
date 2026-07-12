@@ -1,4 +1,4 @@
-import { X } from 'lucide-react'
+import { Clock3, ShieldCheck, X } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 
 export interface CapabilityRecommendation {
@@ -31,6 +31,8 @@ export function CapabilityRecommendationCard({
   onOpen,
   onDismiss,
 }: CapabilityRecommendationCardProps) {
+  const evidenceCount = recommendation.evidence_refs?.length ?? 0
+  const estimatedMinutes = estimatedMinutesForAction(recommendation.action)
   return (
     <article className="flex min-h-[190px] flex-col rounded-lg border border-indigo-100 bg-indigo-50/50 p-4">
       <div className="flex items-start justify-between gap-3">
@@ -52,18 +54,33 @@ export function CapabilityRecommendationCard({
         </button>
       </div>
 
-      <p className="mt-3 flex-1 text-sm leading-6 text-slate-700">{recommendation.reason}</p>
+      <p className="mt-3 text-xs font-black text-indigo-700">为什么推荐</p>
+      <p className="mt-1 flex-1 text-sm leading-6 text-slate-700">{recommendation.reason}</p>
+
+      <div className="mt-3 flex flex-wrap gap-2 text-xs font-bold text-slate-600">
+        <span className="inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 ring-1 ring-indigo-100">
+          <Clock3 className="size-3.5 text-indigo-500" />约 {estimatedMinutes} 分钟
+        </span>
+        <span className="inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 ring-1 ring-indigo-100">
+          <ShieldCheck className="size-3.5 text-emerald-600" />
+          {evidenceCount > 0 ? `依据 ${evidenceCount} 条近期学习记录` : '依据当前学习目标'}
+        </span>
+      </div>
 
       <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-        <p className="text-xs font-bold text-slate-500">
-          evidence_refs: {recommendation.evidence_refs?.length ?? 0}
-        </p>
+        <p className="text-xs font-bold text-slate-500">完成后会更新后续练习安排</p>
         <Button variant="secondary" onClick={() => onOpen(recommendation)} disabled={isBusy}>
           {recommendation.action === 'tool' || recommendation.action === 'vocabulary-detail' ? '打开入口' : '去练习'}
         </Button>
       </div>
     </article>
   )
+}
+
+function estimatedMinutesForAction(action: string) {
+  if (action === 'session') return 20
+  if (action === 'chat') return 10
+  return 8
 }
 
 function labelForCategory(category: string) {

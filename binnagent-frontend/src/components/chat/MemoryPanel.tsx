@@ -100,6 +100,9 @@ export function MemoryPanel({ memory, isCollapsed, isModal = false, onToggleColl
                     memory.latest_thread_title ||
                     '还没有形成对话摘要。持续对话后，我会总结你正在学什么。'}
                 </p>
+                <p className="mt-3 rounded-md bg-indigo-50 p-2 text-xs leading-5 text-indigo-800">
+                  你可以在对话末尾选择“收口本次学习”，让我先总结并请你确认，再沉淀长期学习资产。
+                </p>
               </section>
 
               <section className="rounded-lg border p-4">

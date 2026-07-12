@@ -1,5 +1,5 @@
 import { useRef, useEffect, useState } from 'react'
-import { Brain, MessageSquarePlus, MessagesSquare } from 'lucide-react'
+import { BookCheck, Brain, MessageSquarePlus, MessagesSquare, Route } from 'lucide-react'
 import { useChat } from '@/hooks/useChat'
 import { MessageBubble } from './MessageBubble'
 import { ChatInput } from './ChatInput'
@@ -122,6 +122,12 @@ export function ChatContainer({
   const handleStartLesson = () => guardContextChange(() => sendMessage('开始一节对话课'))
   const handleReviewVocab = () => guardContextChange(() => sendMessage('我想复习今天的词汇'))
   const handlePracticeSpeaking = () => guardContextChange(() => sendMessage('我想练习口语场景'))
+  const handleLearningWrapUp = () => guardContextChange(() => sendMessage(
+    '请帮我收口本次学习：用简短清单总结我学会了什么、暴露了什么问题、建议保存哪些词或表达，以及下一次最值得练什么。需要保存到长期学习资产的内容，请先让我确认。',
+  ))
+  const handleTransferPractice = () => guardContextChange(() => sendMessage(
+    '请根据刚才的对话给我一道最小迁移练习，让我把刚学到的词汇、语法或表达用在一个新语境里。先只出题，等我回答后再反馈。',
+  ))
   const handleSendMessage = (content: string) => {
     if (isLoadingHistory) {
       onLockedAction()
@@ -236,9 +242,25 @@ export function ChatContainer({
           {isLoading && messages[messages.length - 1]?.content === '' && (
             <TypingIndicator />
           )}
+          {!isLoading && messages.length > 1 && messages[messages.length - 1]?.role === 'assistant' ? (
+            <div className="mx-auto flex w-full max-w-3xl flex-wrap gap-2 rounded-xl border border-indigo-100 bg-indigo-50/70 p-3">
+              <p className="w-full text-xs font-bold text-indigo-800">把这次对话变成可继续的学习记录</p>
+              <Button variant="secondary" className="px-3 py-2 text-xs" onClick={handleLearningWrapUp}>
+                <BookCheck className="size-4" />收口本次学习
+              </Button>
+              <Button variant="secondary" className="px-3 py-2 text-xs" onClick={handleTransferPractice}>
+                <Route className="size-4" />做一道迁移练习
+              </Button>
+            </div>
+          ) : null}
         </div>
 
         <div className="border-t border-slate-200/70 bg-white/78 p-4 backdrop-blur-sm">
+          {isLoading ? (
+            <StatusBanner title="正在生成学习反馈">
+              当前对话和草稿已经保留；需要切换任务时可以先取消，回来后仍能从这条会话继续。
+            </StatusBanner>
+          ) : null}
           {(currentSkillId || skillStatus) && (
             <StatusBanner
               title={currentSkillId ? 'Agent Skill 已启用' : '对话状态'}

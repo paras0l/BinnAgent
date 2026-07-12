@@ -36,7 +36,7 @@ import {
   exploreCapabilityStartUrl,
   learnerExploreRecommendationsUrl,
 } from '@/services/exploreCapabilityApi'
-import { promptWithLearnerProfile } from '@/utils/learnerProfile'
+import { learningTrackForGoal, learningTrackLabel, promptWithLearnerProfile } from '@/utils/learnerProfile'
 
 type FeatureCategory = 'all' | 'listening' | 'speaking' | 'reading' | 'writing' | 'vocabulary' | 'grammar' | 'exam'
 type FeatureStatus = 'ready' | 'todo'
@@ -314,6 +314,7 @@ export function ExplorePage({
   const [dismissedRecommendationIds, setDismissedRecommendationIds] = useState<Set<string>>(() => new Set())
   const [category, setCategory] = useState<FeatureCategory>('all')
   const [query, setQuery] = useState('')
+  const [showPlanned, setShowPlanned] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [isVocabularyDetailOpen, setIsVocabularyDetailOpen] = useState(false)
   const [isGrammarOpen, setIsGrammarOpen] = useState(false)
@@ -367,10 +368,12 @@ export function ExplorePage({
     return sourceFeatures.filter((feature) => !HIDDEN_EXPLORE_FEATURE_IDS.has(feature.id))
   }, [capabilitySpecs])
   const featureMap = useMemo(() => new Map(features.map((feature) => [feature.id, feature])), [features])
+  const learningTrack = learningTrackForGoal(learnerProfile?.target_exam)
 
   const visibleFeatures = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase()
     return features
+      .filter((feature) => showPlanned || feature.status === 'ready')
       .filter((feature) => category === 'all' || feature.category === category)
       .filter((feature) => {
         if (!normalizedQuery) return true
@@ -390,13 +393,18 @@ export function ExplorePage({
         if (!Number.isNaN(usedDelta) && usedDelta !== 0) return usedDelta
         return a.title.localeCompare(b.title)
       })
-  }, [category, features, preferenceMap, query])
+  }, [category, features, preferenceMap, query, showPlanned])
 
   const favorites = visibleFeatures.filter((feature) => preferenceMap.get(feature.id)?.is_favorite)
   const recommendedFeatures = useMemo(() => {
-    const preferred = features.filter((feature) => ['word-roots-affixes', 'writing-phrasebook', 'vocabulary-detail'].includes(feature.id))
+    const preferredIds = learningTrack === 'school'
+      ? ['daily-lesson', 'word-roots-affixes', 'reading-intensive-extensive']
+      : learningTrack === 'exam'
+        ? ['cet-reading', 'essay-review', 'writing-phrasebook']
+        : ['speaking-roleplay', 'vocabulary-detail', 'reading-intensive-extensive']
+    const preferred = features.filter((feature) => feature.status === 'ready' && preferredIds.includes(feature.id))
     return preferred.filter((feature) => category === 'all' || feature.category === category).slice(0, 3)
-  }, [category, features])
+  }, [category, features, learningTrack])
   const visibleCapabilityRecommendations = useMemo(
     () => capabilityRecommendations
       .filter((item) => !HIDDEN_EXPLORE_FEATURE_IDS.has(item.feature_id))
@@ -644,11 +652,11 @@ export function ExplorePage({
     <PageShell>
       <FeatureHero
         eyebrow="Explore"
-        title="探索学习能力"
-        description="选择一个想加强的场景，进入对应练习；暂未开放的学习入口会清楚标记。"
+        title={`${learningTrackLabel(learnerProfile?.target_exam)} · 探索`}
+        description="先看最适合当前目标的三个入口，也可以按能力分类寻找专项练习。"
         stats={[
           { label: '可用入口', value: features.filter((feature) => feature.status === 'ready').length, tone: 'success' },
-          { label: '待开发', value: features.filter((feature) => feature.status === 'todo').length, tone: 'warning' },
+          { label: '当前方向', value: learningTrackLabel(learnerProfile?.target_exam), tone: 'primary' },
           { label: '已收藏', value: favorites.length, tone: 'primary' },
           { label: '分类', value: CATEGORIES.length - 1 },
         ]}
@@ -735,7 +743,14 @@ export function ExplorePage({
       )}
 
       <section>
-        <h2 className="mb-3 text-sm font-semibold text-foreground">全部入口</h2>
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-sm font-semibold text-foreground">全部可用工具</h2>
+          {features.some((feature) => feature.status === 'todo') ? (
+            <Button variant="secondary" className="px-3 py-2 text-xs" onClick={() => setShowPlanned((value) => !value)}>
+              {showPlanned ? '隐藏规划中能力' : '查看规划中能力'}
+            </Button>
+          ) : null}
+        </div>
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {visibleFeatures.map((feature) => (
             <FeatureCard

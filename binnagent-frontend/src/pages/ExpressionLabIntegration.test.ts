@@ -51,7 +51,7 @@ describe('Expression Lab stable workspace contract', () => {
     expect(expressionLabSource).toContain('使用场景')
     expect(expressionLabSource).toContain('目标风格')
     expect(expressionLabSource).toContain('当前水平')
-    expect(expressionLabSource).toContain('生成 1–3 道小练习')
+    expect(expressionLabSource).toContain('生成 1–2 道小练习')
     expect(expressionLabSource).toContain("DRAFT_STORAGE_PREFIX = 'binnExpressionLabDraft:v1:'")
   })
 

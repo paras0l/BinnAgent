@@ -244,6 +244,8 @@ function App() {
 
   const updateLearnerProfile = async (patch: Partial<LearnerProfile>) => {
     if (!currentLearner) return
+    const previousProfile = learnerProfile
+    const previousReadiness = learnerProfileReadiness
     const nextProfile: LearnerProfile = {
       learner_id: currentLearner.id,
       target_exam: learnerProfile?.target_exam ?? null,
@@ -272,6 +274,8 @@ function App() {
       setLearnerProfile(await response.json() as LearnerProfile)
       signalMemoryChange('我把新的学习目标记住了，之后我们会一起按这个方向调整。')
     } catch {
+      setLearnerProfile(previousProfile)
+      setLearnerProfileReadiness(previousReadiness)
       showToast('学习画像这次还没保存好，我们一起再试一次。', { variant: 'warning' })
     }
   }

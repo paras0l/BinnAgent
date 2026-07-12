@@ -13,4 +13,12 @@ describe('Explore vocabulary navigation', () => {
     expect(exploreSource).not.toContain("title: '英语表达实验室'")
     expect(exploreSource).not.toContain('onOpenExpressionLab')
   })
+
+  it('prioritizes the learner track and hides planned capabilities by default', () => {
+    expect(exploreSource).toContain('learningTrackForGoal')
+    expect(exploreSource).toContain('learningTrackLabel')
+    expect(exploreSource).toContain("feature.status === 'ready'")
+    expect(exploreSource).toContain('查看规划中能力')
+    expect(exploreSource).toContain('全部可用工具')
+  })
 })

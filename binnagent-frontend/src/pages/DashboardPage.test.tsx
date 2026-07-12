@@ -177,4 +177,9 @@ describe('Dashboard learning profile workspaces', () => {
     expect(dashboardSource).toContain("step.action === 'chat'")
     expect(dashboardSource).toContain('onOpenAiConversation')
   })
+
+  it('shows the product learning track alongside the detailed goal', () => {
+    expect(dashboardSource).toContain('learningTrackLabel')
+    expect(dashboardSource).toContain('主线：')
+  })
 })

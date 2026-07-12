@@ -7,7 +7,12 @@ from typing import Any
 
 import pytest
 
-from src.classroom.service import load_classroom_progress, save_classroom_progress
+from src.classroom.service import (
+    _fallback_spec,
+    _normalize_language_cards,
+    load_classroom_progress,
+    save_classroom_progress,
+)
 from src.models.learning_progress import LearningProgressItem
 
 
@@ -29,6 +34,39 @@ class FakeDb:
 
     async def flush(self) -> None:
         self.flush_count += 1
+
+
+def test_classroom_vocabulary_card_back_contains_definition_only() -> None:
+    source = SimpleNamespace(id=uuid.uuid4(), title="Test textbook", edition="Test")
+    node = SimpleNamespace(
+        id=uuid.uuid4(),
+        source_id=source.id,
+        title="Unit 1",
+        subtitle="Hello",
+        ordinal=1,
+    )
+    point = SimpleNamespace(
+        type="vocabulary",
+        title="hello",
+        summary="hello",
+        content={"words": ["hello"]},
+        source_page="1",
+        status="published",
+    )
+
+    spec = _fallback_spec(node=node, source=source, points=[point], minutes=20)
+
+    assert spec["language_cards"][0]["back"] == "释义待补充"
+    assert "教材语境" not in spec["language_cards"][0]["back"]
+
+
+def test_generated_language_card_instruction_is_removed_from_definition() -> None:
+    cards = _normalize_language_cards([
+        {"id": "hello", "front": "hello", "back": "你好 · 想一个教材语境", "accent": "violet"},
+        {"id": "name", "front": "name", "back": "名字", "accent": "cyan"},
+    ])
+
+    assert [card["back"] for card in cards] == ["你好", "名字"]
 
 
 @pytest.mark.asyncio

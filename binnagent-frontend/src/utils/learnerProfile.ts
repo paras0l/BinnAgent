@@ -1,5 +1,7 @@
 import type { LearnerProfile } from '@/types'
 
+export type LearningTrack = 'school' | 'exam' | 'general'
+
 export const LEARNING_GOAL_OPTIONS = [
   { value: 'zhongkao', label: '通过中考' },
   { value: 'gaokao', label: '通过高考' },
@@ -41,6 +43,21 @@ export function learningGoalLabel(value?: string | null) {
 
 export function currentLevelLabel(value?: string | null) {
   return CURRENT_LEVEL_OPTIONS.find((item) => item.value === value)?.label ?? value ?? '未设置'
+}
+
+export function learningTrackForGoal(value?: string | null): LearningTrack {
+  if (value === 'zhongkao' || value === 'gaokao') return 'school'
+  if (value === 'cet4' || value === 'cet6' || value === 'ielts' || value === 'toefl' || value === 'postgraduate') {
+    return 'exam'
+  }
+  return 'general'
+}
+
+export function learningTrackLabel(value?: string | null) {
+  const track = learningTrackForGoal(value)
+  if (track === 'school') return '同步教材学习'
+  if (track === 'exam') return '考试备考'
+  return '通用英语提升'
 }
 
 export function learnerBackground(profile?: LearnerProfile | null) {

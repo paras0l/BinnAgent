@@ -103,7 +103,7 @@ async def compose_classroom(
                 fallback["hero"] = {**fallback["hero"], **generated.get("hero", {})}
                 fallback["focus"] = {**fallback["focus"], **generated.get("focus", {})}
                 if generated.get("language_cards"):
-                    fallback["language_cards"] = generated["language_cards"]
+                    fallback["language_cards"] = _normalize_language_cards(generated["language_cards"])
                 generation_mode = "llm_generated"
         except Exception:
             # The classroom must remain usable when the model is slow or unavailable.
@@ -372,9 +372,9 @@ def _fallback_spec(*, node: CurriculumNode, source: KnowledgeSource, points: lis
                 "id": f"word-{index}",
                 "front": word,
                 "back": (
-                    f"{catalog_words[index].get('meaning_zh', '')} · 想一个教材语境"
+                    str(catalog_words[index].get("meaning_zh") or "释义待补充").strip()
                     if index < len(catalog_words)
-                    else "说出含义并想一个教材语境"
+                    else "释义待补充"
                 ),
                 "accent": ["violet", "cyan", "amber", "rose"][index % 4],
             }
@@ -409,3 +409,20 @@ def _fallback_spec(*, node: CurriculumNode, source: KnowledgeSource, points: lis
         "textbook_tasks": catalog_unit.get("textbook_tasks", []) if catalog_unit else [],
         "completion": {"xp": 60, "memory_message": "课堂结果会同步到掌握度、学习记忆与复习计划。"},
     }
+
+
+def _normalize_language_cards(cards: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Keep the card back as a definition, never as an embedded exercise instruction."""
+    instruction_markers = ("想一个教材语境", "说出含义并想", "试着用它", "用它造句")
+    normalized: list[dict[str, Any]] = []
+    for card in cards:
+        item = dict(card)
+        back = str(item.get("back") or "释义待补充").strip()
+        for separator in (" · ", "；", ";"):
+            head, found, tail = back.partition(separator)
+            if found and any(marker in tail for marker in instruction_markers):
+                back = head.strip()
+                break
+        item["back"] = back or "释义待补充"
+        normalized.append(item)
+    return normalized
