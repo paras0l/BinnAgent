@@ -1,4 +1,5 @@
 import re
+import json
 import uuid
 from datetime import datetime, timezone
 from typing import Any, Literal
@@ -9,6 +10,7 @@ from sqlalchemy import and_, case, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.api.deps import get_db_session
+from src.config import settings
 from src.memory.explainer import MemoryExplainer
 from src.memory.retriever import MemoryRetriever
 from src.memory.schemas import MemoryEventInput
@@ -23,6 +25,8 @@ from src.models.vocabulary import (
     VocabularyPracticeSession,
     VocabularyUserOverride,
 )
+from src.prompts import PromptExecutionContext, PromptExecutor
+from src.providers.router import router as model_router
 from src.tools.pronunciation import lookup_pronunciations
 from src.vocabulary.learning import (
     canonical_vocabulary_key,
@@ -72,6 +76,14 @@ class AttemptRequest(BaseModel):
 
 class AdvanceRequest(BaseModel):
     vocabulary_item_id: uuid.UUID
+
+
+class VocabularySupplementRequest(BaseModel):
+    vocabulary_item_id: uuid.UUID
+    sections: list[Literal["forms", "collocations", "common_errors", "confusions", "must_remember"]] = Field(
+        min_length=1,
+        max_length=5,
+    )
 
 
 def _join_vocabulary_override(query, learner_id: uuid.UUID):
@@ -613,6 +625,7 @@ async def next_practice_task(
         "entry_kind": item.entry_kind,
         "dictionary_senses": item.dictionary_senses or [],
         "word_forms": item.word_forms or {},
+        "collocations": item.collocations or [],
         "dictionary_tags": item.dictionary_tags or [],
         "meanings": meanings,
         "examples": examples,
@@ -671,6 +684,93 @@ async def get_practice_hint(
     if level == 2:
         return {"level": 2, "hint": f"首字母是 {item.word[:1]}，共 {len(item.word)} 个字符"}
     return {"level": 3, "hint": item.phonetic or f"结尾是 {item.word[-3:]}"}
+
+
+@router.post("/sessions/{session_id}/supplement")
+async def supplement_vocabulary_learning_content(
+    learner_id: uuid.UUID,
+    session_id: uuid.UUID,
+    body: VocabularySupplementRequest,
+    db: AsyncSession = Depends(get_db_session),
+) -> dict[str, list[str]]:
+    session = await _get_session(db, learner_id, session_id)
+    if session.mode != "new":
+        raise HTTPException(status_code=409, detail="Supplement is only available for new words")
+    if current_item_id(session) != body.vocabulary_item_id:
+        raise HTTPException(status_code=409, detail="Supplement does not match the current task")
+    result = await db.execute(
+        select(VocabularyItem).where(
+            VocabularyItem.id == body.vocabulary_item_id,
+            VocabularyItem.learner_id == learner_id,
+        )
+    )
+    item = result.scalar_one_or_none()
+    if item is None:
+        raise HTTPException(status_code=404, detail="Vocabulary item not found")
+    existing_entry = {
+        "senses": item.dictionary_senses or [],
+        "meanings": item.meanings or [],
+        "examples": item.examples or [],
+        "word_forms": item.word_forms or {},
+        "collocations": item.collocations or [],
+    }
+    execution = await PromptExecutor(db=db, model_router=model_router).execute(
+        prompt_id="vocabulary.learning_supplement",
+        variables={
+            "canonical_form": item.word,
+            "entry_type": item.entry_kind,
+            "existing_entry": json.dumps(existing_entry, ensure_ascii=False),
+            "requested_sections": ", ".join(dict.fromkeys(body.sections)),
+        },
+        context=PromptExecutionContext(
+            learner_id=learner_id,
+            source_module="api.vocabulary_learning",
+            task_id="vocabulary_learning_supplement",
+            target_type="vocabulary_item",
+            target_id=str(item.id),
+        ),
+        request_overrides={
+            "task_type": "vocabulary_learning_supplement",
+            "preferred_model": settings.ollama_utility_model,
+            "local_only": True,
+        },
+    )
+    payload = execution.validated_output
+    if execution.decision != "accepted" or not isinstance(payload, dict):
+        raise HTTPException(status_code=503, detail="Supplement content is temporarily unavailable")
+    return {
+        "forms": [
+            f"{value['label']}：{value['form']}"
+            for value in payload.get("forms", [])
+            if isinstance(value, dict)
+            and all(str(value.get(key) or "").strip() for key in ("label", "form"))
+        ],
+        "collocations": [
+            f"{value['collocation']}：{value['hint']}"
+            for value in payload.get("collocations", [])
+            if isinstance(value, dict)
+            and all(str(value.get(key) or "").strip() for key in ("collocation", "hint"))
+        ],
+        "common_errors": [
+            f"{value['error']} → {value['correct']}：{value['reason']}"
+            for value in payload.get("common_errors", [])
+            if isinstance(value, dict)
+            and all(str(value.get(key) or "").strip() for key in ("error", "correct", "reason"))
+        ],
+        "confusions": [
+            f"{value['term']}：{value['difference']}"
+            for value in payload.get("confusions", [])
+            if isinstance(value, dict)
+            and all(str(value.get(key) or "").strip() for key in ("term", "difference"))
+        ],
+        "must_remember": _supplement_strings(payload.get("must_remember")),
+    }
+
+
+def _supplement_strings(value: Any) -> list[str]:
+    if not isinstance(value, list):
+        return []
+    return [str(item).strip() for item in value if isinstance(item, str) and item.strip()]
 
 
 @router.post("/sessions/{session_id}/attempts")

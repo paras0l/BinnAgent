@@ -339,8 +339,8 @@ EXPLORE_CAPABILITIES: dict[str, ExploreCapabilitySpec] = {
         ),
         _capability(
             capability_id="grammar-explain",
-            title="语法微知识点",
-            description="按分类选择小语法点，生成精讲 HTML。",
+            title="语法知识点",
+            description="按分类选择语法知识点，生成精讲 HTML。",
             category="grammar",
             action="tool",
             tool_target="grammar",

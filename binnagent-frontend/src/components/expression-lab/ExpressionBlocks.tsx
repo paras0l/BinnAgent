@@ -282,7 +282,7 @@ export function GrammarFocusBlock({ block, actions, actionStates, onAction }: Ex
   return (
     <div className="grid gap-3">
       {normalizedItems.map((item, index) => {
-        const title = firstText(item, ['topic', 'title', 'name', 'grammar_point'], `语法点 ${index + 1}`)
+        const title = firstText(item, ['topic', 'title', 'name', 'grammar_point'], `语法知识点 ${index + 1}`)
         const minimalPairs = asRecords(item.minimal_pairs)
         const saveAction = findExpressionAction(actions, 'save_grammar_point', title, firstText(item, ['action_id', 'spec_action_id']))
         return (

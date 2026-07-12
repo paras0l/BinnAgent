@@ -562,7 +562,7 @@ export function GrammarPage({ learner, learnerProfile, onBack, backLabel = '返�
     <PageShell>
       <FeatureHero
         eyebrow="Grammar Workspace"
-        title="语法微知识点"
+        title="语法知识点"
         description="选择一个小知识点，生成可读讲解并完成配套练习；保存前先预览内容。"
         stats={[
           { label: '知识点', value: topicOptions.length },
@@ -782,8 +782,8 @@ export function GrammarPage({ learner, learnerProfile, onBack, backLabel = '返�
               learnerId={learner.id}
               target={grammarExerciseTarget}
               messages={{
-                needs_review: '这个语法点练习结果还不稳定，建议先复习讲解再答一次。',
-                unstable: '这个语法点练习结果还不稳定，建议先复习讲解再答一次。',
+                needs_review: '这个语法知识点练习结果还不稳定，建议先复习讲解再答一次。',
+                unstable: '这个语法知识点练习结果还不稳定，建议先复习讲解再答一次。',
               }}
               titles={{
                 needs_review: '建议复习',
@@ -1285,7 +1285,7 @@ function getPendingActionCopy(action: PendingGrammarAction, topicTitle: string, 
 }
 
 function buildGrammarPrompt(topic: GrammarTopic, profileBackground: string) {
-  return `请为英语学习者讲解一个“语法微知识点”：${topic.title}。
+  return `请为英语学习者讲解一个“语法知识点”：${topic.title}。
 
 请严格遵守：
 1. 只讲这个微知识点，不要扩展到“${GRAMMAR_CATEGORY_LABELS[topic.category]}”整个大类，也不要写成长篇语法课。
@@ -1309,7 +1309,7 @@ function createGrammarTopic(title: string): GrammarTopic {
     title: normalizedTitle,
     level: '基础',
     tags: ['教材语法', '单元知识'],
-    shortDescription: `来自教材单元知识的语法点“${normalizedTitle}”，请围绕该标题识别并讲清最核心的规则。`,
+    shortDescription: `来自教材单元知识的语法知识点“${normalizedTitle}”，请围绕该标题识别并讲清最核心的规则。`,
   }
 }
 

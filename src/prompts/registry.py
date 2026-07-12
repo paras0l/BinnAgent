@@ -162,7 +162,7 @@ prompt_registry.register(
         id="grammar.micro_lesson.structured",
         version="v1",
         owner="grammar",
-        purpose="生成单个语法点的结构化微课和展示 HTML",
+        purpose="生成单个语法知识点的结构化微课和展示 HTML",
         template_path="versions/grammar.micro_lesson.structured.v1.md",
         output_schema="GrammarMicroLessonOutput",
         model_policy={"default_model": "external", "temperature": 0.2, "max_tokens": 1800},
@@ -263,6 +263,18 @@ prompt_registry.register(
         output_schema="VocabularyDetailHtmlOutput",
         model_policy={"default_model": "ollama_utility", "temperature": 0.0, "max_tokens": 1000},
         eval_set="evals/prompts/vocabulary_detail_html_extract_v1.jsonl",
+    )
+)
+prompt_registry.register(
+    PromptMetadata(
+        id="vocabulary.learning_supplement",
+        version="v1",
+        owner="vocabulary",
+        purpose="按学习者选择补充词形、搭配、易错、辨析和必记信息",
+        template_path="versions/vocabulary.learning_supplement.v1.md",
+        output_schema="VocabularyLearningSupplementOutput",
+        model_policy={"default_model": "ollama_utility", "temperature": 0.0, "max_tokens": 1200},
+        eval_set="evals/prompts/vocabulary_learning_supplement_v1.jsonl",
     )
 )
 prompt_registry.register(

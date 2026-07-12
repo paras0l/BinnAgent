@@ -171,7 +171,7 @@ const FEATURES: ExploreFeature[] = [
     title: '精读与泛读',
     description: '同一篇材料，精读看结构，泛读抓主旨。',
     whenToUse: '想提升阅读能力，而不是只做题；需要既能快速抓主旨，也能慢下来读懂难句时使用。',
-    outcome: '获得主旨理解、段落功能、难句拆解、语法点提示，并能跳转到语法微知识点继续学习。',
+    outcome: '获得主旨理解、段落功能、难句拆解、语法知识点提示，并能跳转到语法知识点继续学习。',
     status: 'ready',
     action: 'tool',
     toolTarget: 'reading-workshop',
@@ -201,8 +201,8 @@ const FEATURES: ExploreFeature[] = [
   {
     id: 'grammar-explain',
     category: 'grammar',
-    title: '语法微知识点',
-    description: '按分类选择一个小语法点，用外部 AI 生成精讲 HTML。',
+    title: '语法知识点',
+    description: '按分类选择一个语法知识点，用外部 AI 生成精讲 HTML。',
     whenToUse: '遇到主将从现、because 与 because of、which/that 选择这类小规则，想集中学透时使用。',
     outcome: '复制受控 prompt，跳转 DeepSeek 等网站生成 HTML，回到原页面阅读精讲。',
     status: 'ready',
@@ -705,7 +705,7 @@ export function ExplorePage({
                 key={`recommended-${feature.id}`}
                 title={feature.title}
                 reason={feature.whenToUse}
-                evidence={[feature.category === 'vocabulary' ? '词汇复习是学习中心的高频任务' : feature.category === 'writing' ? '写作表达适合沉淀成可练习资产' : '语法微知识点适合短时间集中学透']}
+                evidence={[feature.category === 'vocabulary' ? '词汇项复习是学习中心的高频任务' : feature.category === 'writing' ? '写作表达适合沉淀成可练习资产' : '语法知识点适合短时间集中学透']}
                 outcome={feature.outcome}
                 action={<Button variant="secondary" onClick={() => void handleLaunch(feature)} disabled={isLocked || launchingFeatureId === feature.id}>打开入口</Button>}
               />

@@ -5,7 +5,9 @@ import {
   Headphones,
   Lightbulb,
   LoaderCircle,
+  Plus,
   RotateCcw,
+  Sparkles,
   Volume2,
 } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -63,11 +65,13 @@ interface PracticeTask {
   phonetic_uk?: string | null
   phonetic_us?: string | null
   part_of_speech: string
+  entry_kind?: string
   dictionary_senses: DictionarySense[]
   word_forms: Record<string, string[]>
   dictionary_tags: string[]
   meanings: BilingualMeaning[]
   examples: Array<string | Record<string, unknown>>
+  collocations?: string[]
   mastery?: Record<string, number>
   show_answer_first?: boolean
   pronunciations: Pronunciation[]
@@ -80,6 +84,20 @@ interface PracticeTask {
   example?: string | null
   morphology?: WordPartAnalysis | null
 }
+
+type VocabularySupplementSection = 'forms' | 'collocations' | 'common_errors' | 'confusions' | 'must_remember'
+type VocabularySupplementLoading = VocabularySupplementSection | 'all'
+type VocabularySupplement = Record<VocabularySupplementSection, string[]>
+
+const vocabularySupplementSections: VocabularySupplementSection[] = ['forms', 'collocations', 'common_errors', 'confusions', 'must_remember']
+
+const emptySupplement = (): VocabularySupplement => ({
+  forms: [],
+  collocations: [],
+  common_errors: [],
+  confusions: [],
+  must_remember: [],
+})
 
 interface AttemptFeedback {
   result: 'correct' | 'incorrect' | 'revealed'
@@ -169,7 +187,11 @@ export function VocabularyPracticePage({
   const [readonlyDetail, setReadonlyDetail] = useState<VocabularyItemDetail | null>(null)
   const [isReviewRevealed, setIsReviewRevealed] = useState(false)
   const [isMorphologyHintVisible, setIsMorphologyHintVisible] = useState(false)
+  const [vocabularyDetailMode, setVocabularyDetailMode] = useState<'concise' | 'detailed'>('concise')
+  const [supplement, setSupplement] = useState<VocabularySupplement>(emptySupplement)
+  const [supplementLoading, setSupplementLoading] = useState<VocabularySupplementLoading | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const contentScrollRef = useRef<HTMLDivElement>(null)
   const startedAt = useRef(0)
   const compositionRef = useRef(false)
   const autoJudgeTimer = useRef<number | null>(null)
@@ -210,6 +232,9 @@ export function VocabularyPracticePage({
     setReplayCount(0)
     setIsReviewRevealed(data.mode === 'new' || data.show_answer_first === true)
     setIsMorphologyHintVisible(false)
+    setVocabularyDetailMode('concise')
+    setSupplement(emptySupplement())
+    setSupplementLoading(null)
     setInputWarning(null)
     lastAutoSubmitted.current = ''
     startedAt.current = Date.now()
@@ -480,6 +505,32 @@ export function VocabularyPracticePage({
     setHint(data.hint)
   }
 
+  const requestSupplement = async (section: VocabularySupplementSection | 'all') => {
+    if (!task || !sessionId || supplementLoading) return
+    setSupplementLoading(section)
+    if (section === 'all') setVocabularyDetailMode('detailed')
+    setError(null)
+    const sections = section === 'all' ? vocabularySupplementSections : [section]
+    try {
+      const response = await fetch(`${api}/sessions/${sessionId}/supplement`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ vocabulary_item_id: task.vocabulary_item_id, sections }),
+      })
+      if (!response.ok) throw new Error('补充信息暂时无法生成，请稍后再试。')
+      const data = await response.json() as VocabularySupplement
+      setSupplement((current) => Object.fromEntries(
+        vocabularySupplementSections.map((key) => [key, sections.includes(key) ? data[key] ?? [] : current[key]]),
+      ) as VocabularySupplement)
+      setVocabularyDetailMode('detailed')
+      window.requestAnimationFrame(() => contentScrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' }))
+    } catch (supplementError) {
+      setError(supplementError instanceof Error ? supplementError.message : '补充信息暂时无法生成。')
+    } finally {
+      setSupplementLoading(null)
+    }
+  }
+
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (detailTerm) return
@@ -619,11 +670,23 @@ export function VocabularyPracticePage({
             <div className="shrink-0 border-b border-slate-100 px-4 py-3 sm:px-5">
               <p className="text-xs font-black uppercase tracking-[0.18em] text-indigo-600">当前任务</p>
             </div>
-            <div className={`min-h-0 flex-1 p-4 sm:p-5 lg:overflow-y-auto ${mode === 'review' && isReviewRevealed ? '' : 'flex items-start justify-center text-center sm:items-center'}`}>
+            <div ref={contentScrollRef} className={`min-h-0 flex-1 scroll-pt-4 p-4 sm:p-5 lg:overflow-y-auto ${((mode === 'review' || mode === 'new') && isReviewRevealed) ? '' : 'flex items-start justify-center text-center sm:items-center'}`}>
               <div className="w-full min-w-0">
                 {mode === 'spelling' ? <><p className="text-sm font-black uppercase tracking-[0.18em] text-indigo-600">{feedback ? (feedback.result === 'correct' ? '拼对了' : feedback.result === 'revealed' ? '先记住答案' : '差一点，再看看') : '听发音，拼出这个词'}</p><button type="button" onClick={() => void playAudio()} aria-label="播放发音" className={`mx-auto mt-5 flex size-20 items-center justify-center rounded-full bg-indigo-600 text-white shadow-[0_14px_36px_rgba(79,70,229,0.28)] transition-transform hover:scale-[1.03] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 sm:size-24 ${isPlaying ? 'ring-8 ring-indigo-100' : ''}`}><Volume2 className="size-9 sm:size-10" /></button><p className="mt-3 text-xs font-bold text-slate-400">点击播放 · 空格键重播 · {accent === 'us' ? '美音' : '英音'}</p></> : null}
 
-                {(mode === 'review' || mode === 'new') && isReviewRevealed ? (
+                {mode === 'new' && isReviewRevealed ? (
+                  <NewVocabularyLearningContent
+                    task={task}
+                    accent={accent}
+                    detailMode={vocabularyDetailMode}
+                    supplement={supplement}
+                    onDetailModeChange={(nextMode) => {
+                      setVocabularyDetailMode(nextMode)
+                      window.requestAnimationFrame(() => contentScrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' }))
+                    }}
+                    onPlayAccent={(nextAccent) => void playAudio(nextAccent)}
+                  />
+                ) : mode === 'review' && isReviewRevealed ? (
                   <RichVocabularyEntry
                     word={task.word ?? ''}
                     phonetic={task.phonetic}
@@ -637,7 +700,7 @@ export function VocabularyPracticePage({
                     activeAccent={accent}
                     onPlayAccent={(nextAccent) => void playAudio(nextAccent)}
                     morphology={taskMorphology}
-                    morphologyDefaultOpen={mode === 'new'}
+                    morphologyDefaultOpen={false}
                   />
                 ) : mode === 'review' ? (
                   <div className="mx-auto max-w-2xl">
@@ -679,10 +742,13 @@ export function VocabularyPracticePage({
             mode={mode}
             sourceLabel={task.sources[0]?.label ?? sourceLabel ?? '我的词汇本'}
             isBusy={isBusy}
+            supplement={supplement}
+            supplementLoading={supplementLoading}
             onEditTerm={() => learnMoreTerm && setDetailTerm(learnMoreTerm)}
             onHint={() => void requestHint()}
             onToggleMorphologyHint={() => setIsMorphologyHintVisible((value) => !value)}
             onTooEasy={() => void markTooEasy()}
+            onSupplement={(section) => void requestSupplement(section)}
             onReveal={() => {
               if (mode === 'review' && !isReviewRevealed) setIsReviewRevealed(true)
               else void submitAttempt({ reveal: true })
@@ -843,6 +909,91 @@ function Choice({ selected, onClick, children }: { selected: boolean; onClick: (
   return <button type="button" onClick={onClick} className={`rounded-xl border px-4 py-2.5 text-sm font-bold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 ${selected ? 'border-indigo-500 bg-indigo-50 text-indigo-700' : 'border-slate-200 bg-white text-slate-600 hover:border-indigo-200'}`}>{children}</button>
 }
 
+function NewVocabularyLearningContent({
+  accent,
+  detailMode,
+  onDetailModeChange,
+  onPlayAccent,
+  supplement,
+  task,
+}: {
+  accent: 'uk' | 'us' | 'auto'
+  detailMode: 'concise' | 'detailed'
+  onDetailModeChange: (mode: 'concise' | 'detailed') => void
+  onPlayAccent: (accent: 'uk' | 'us') => void
+  supplement: VocabularySupplement
+  task: PracticeTask
+}) {
+  const word = task.word ?? task.display_word ?? ''
+  const primarySense = task.dictionary_senses[0]
+  const senseRows = task.dictionary_senses.length
+    ? task.dictionary_senses.map((sense) => ({
+        label: sense.part_of_speech || task.part_of_speech,
+        values: sense.meanings_zh ?? [],
+      }))
+    : [{ label: task.part_of_speech, values: task.meanings.map((meaning) => meaning.definition_zh || meaning.definition).filter(Boolean) }]
+  const examples = task.examples.map((example) => typeof example === 'string'
+    ? { en: example, zh: '' }
+    : { en: String(example.en ?? example.example ?? ''), zh: String(example.zh ?? example.translation ?? '') }).filter((example) => example.en)
+  const formRows = Object.entries(task.word_forms).flatMap(([label, values]) => values.map((value) => `${wordFormLabel(label)}：${value}`))
+  const optionalSections = [
+    { key: 'forms' as const, title: '词形变化', values: [...formRows, ...supplement.forms] },
+    { key: 'collocations' as const, title: '常用搭配', values: [...(task.collocations ?? []), ...supplement.collocations] },
+    { key: 'common_errors' as const, title: '常见错误', values: supplement.common_errors },
+    { key: 'confusions' as const, title: '易混辨析', values: supplement.confusions },
+    { key: 'must_remember' as const, title: '最值得记住', values: supplement.must_remember },
+  ].filter((section) => section.values.length)
+
+  return (
+    <article className="mx-auto w-full max-w-4xl text-left">
+      <div className="flex flex-col gap-4 border-b border-slate-100 pb-5 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <h1 className="break-words text-4xl font-black tracking-tight text-slate-950 [overflow-wrap:anywhere] sm:text-5xl">{word}</h1>
+            <span className="rounded-lg bg-indigo-50 px-2.5 py-1 text-xs font-black text-indigo-700">{entryKindLabel(task.entry_kind)}</span>
+          </div>
+          <div className="mt-3 flex flex-wrap items-center gap-2 text-sm font-bold text-slate-500">
+            {task.phonetic_uk || task.phonetic ? <button type="button" onClick={() => onPlayAccent('uk')} className={`rounded-lg px-2 py-1 hover:bg-indigo-50 hover:text-indigo-700 ${accent === 'uk' ? 'bg-indigo-50 text-indigo-700' : ''}`}>英 {task.phonetic_uk ?? task.phonetic} <Volume2 className="ml-1 inline size-3.5" /></button> : null}
+            {task.phonetic_us ? <button type="button" onClick={() => onPlayAccent('us')} className={`rounded-lg px-2 py-1 hover:bg-indigo-50 hover:text-indigo-700 ${accent === 'us' ? 'bg-indigo-50 text-indigo-700' : ''}`}>美 {task.phonetic_us} <Volume2 className="ml-1 inline size-3.5" /></button> : null}
+          </div>
+        </div>
+        <div className="inline-flex shrink-0 rounded-xl bg-slate-100 p-1" aria-label="词汇信息详细程度">
+          {(['concise', 'detailed'] as const).map((item) => <button key={item} type="button" onClick={() => onDetailModeChange(item)} className={`rounded-lg px-3 py-1.5 text-xs font-black transition-colors ${detailMode === item ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}>{item === 'concise' ? '精简' : '详细'}</button>)}
+        </div>
+      </div>
+
+      <div className="mt-5 grid gap-4">
+        <ContentSection eyebrow="核心词义" title={primarySense?.part_of_speech || task.part_of_speech || '常用释义'}>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {senseRows.slice(0, detailMode === 'concise' ? 2 : undefined).map((sense, index) => <div key={`${sense.label}-${index}`} className="rounded-xl bg-slate-50 p-4"><p className="text-xs font-black text-indigo-600">{sense.label}</p><p className="mt-2 text-base font-bold leading-7 text-slate-800">{sense.values.join('；') || '释义待补充'}</p></div>)}
+          </div>
+        </ContentSection>
+
+        <ContentSection eyebrow="真实语境" title="例句">
+          <div className="grid gap-3">
+            {examples.slice(0, detailMode === 'concise' ? 2 : undefined).map((example, index) => <div key={`${example.en}-${index}`} className="border-l-2 border-indigo-200 pl-4"><p className="text-base font-bold leading-7 text-slate-800">{example.en}</p>{example.zh ? <p className="mt-1 text-sm leading-6 text-slate-500">{example.zh}</p> : null}</div>)}
+            {!examples.length ? <p className="text-sm text-slate-400">例句正在完善中，可从右侧打开词卡补充。</p> : null}
+          </div>
+        </ContentSection>
+
+        {detailMode === 'detailed' ? optionalSections.map((section) => <ContentSection key={section.key} eyebrow="补充信息" title={section.title}><ul className="grid gap-2 text-sm font-semibold leading-6 text-slate-700">{section.values.map((value, index) => <li key={`${value}-${index}`} className="rounded-xl bg-slate-50 px-4 py-3">{value}</li>)}</ul></ContentSection>) : null}
+      </div>
+    </article>
+  )
+}
+
+function ContentSection({ children, eyebrow, title }: { children: React.ReactNode; eyebrow: string; title: string }) {
+  return <section className="rounded-2xl border border-slate-200 p-4 sm:p-5"><p className="text-[11px] font-black uppercase tracking-[0.16em] text-indigo-500">{eyebrow}</p><h2 className="mt-1 text-lg font-black text-slate-950">{title}</h2><div className="mt-4">{children}</div></section>
+}
+
+function entryKindLabel(value?: string) {
+  return ({ word: '单词', phrase: '短语', phrasal_verb: '短语动词', idiom: '习语' } as Record<string, string>)[value ?? 'word'] ?? '词汇项'
+}
+
+function wordFormLabel(value: string) {
+  return ({ word_pl: '复数', word_third: '第三人称单数', word_ing: '现在分词', word_past: '过去式', word_done: '过去分词', comparative: '比较级', superlative: '最高级' } as Record<string, string>)[value] ?? value
+}
+
 function TaskSupportPanel({
   feedback,
   hintCount,
@@ -853,10 +1004,13 @@ function TaskSupportPanel({
   morphology,
   sourceLabel,
   isBusy,
+  supplement,
+  supplementLoading,
   onEditTerm,
   onHint,
   onToggleMorphologyHint,
   onTooEasy,
+  onSupplement,
   onReveal,
 }: {
   feedback: AttemptFeedback | null
@@ -868,10 +1022,13 @@ function TaskSupportPanel({
   mode: VocabularyPracticeMode
   sourceLabel: string
   isBusy: boolean
+  supplement: VocabularySupplement
+  supplementLoading: VocabularySupplementLoading | null
   onEditTerm: () => void
   onHint: () => void
   onToggleMorphologyHint: () => void
   onTooEasy: () => void
+  onSupplement: (section: VocabularySupplementSection | 'all') => void
   onReveal: () => void
 }) {
   const modeLabel = mode === 'new' ? '新词学习' : mode === 'review' ? '今日复习' : '拼写练习'
@@ -891,7 +1048,7 @@ function TaskSupportPanel({
   )
 
   return (
-    <aside className="flex min-h-0 flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+    <aside className="flex min-h-0 flex-col gap-3 overflow-y-auto rounded-2xl border border-slate-200 bg-white p-4 shadow-sm lg:overscroll-contain">
       <div>
         <p className="text-xs font-black uppercase tracking-[0.18em] text-indigo-600">学习提示</p>
         <h2 className="mt-2 text-lg font-black text-slate-950">{modeLabel}</h2>
@@ -904,6 +1061,25 @@ function TaskSupportPanel({
       </div>
 
       <div className="grid gap-2">
+        {mode === 'new' ? (
+          <div className="mb-1 rounded-xl border border-indigo-100 bg-indigo-50/60 p-3">
+            <div className="flex items-center gap-2 text-sm font-black text-indigo-900"><Sparkles className="size-4" />按需补充信息</div>
+            <p className="mt-1 text-xs font-semibold leading-5 text-indigo-700/75">只生成你现在需要的部分，完成后会自动切到详细模式。</p>
+            <button type="button" onClick={() => onSupplement('all')} disabled={Boolean(supplementLoading)} className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-indigo-600 px-3 py-2.5 text-sm font-black text-white shadow-sm transition-colors hover:bg-indigo-700 disabled:cursor-wait disabled:opacity-60">
+              {supplementLoading === 'all' ? <LoaderCircle className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
+              {supplementLoading === 'all' ? '正在补充全部信息…' : '一键补充并查看详细'}
+            </button>
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              {([
+                ['forms', '词形变化'], ['collocations', '常用搭配'], ['common_errors', '常见错误'], ['confusions', '易混辨析'], ['must_remember', '必记要点'],
+              ] as Array<[VocabularySupplementSection, string]>).map(([section, label]) => (
+                <button key={section} type="button" onClick={() => onSupplement(section)} disabled={Boolean(supplementLoading)} className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-indigo-200 bg-white px-2.5 py-2 text-xs font-black text-indigo-700 hover:border-indigo-400 disabled:cursor-wait disabled:opacity-55">
+                  {supplementLoading === section ? <LoaderCircle className="size-3.5 animate-spin" /> : supplement[section].length ? <Check className="size-3.5" /> : <Plus className="size-3.5" />}{label}
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : null}
         {!feedback && (
           <button
             type="button"

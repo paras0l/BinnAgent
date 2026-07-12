@@ -718,7 +718,7 @@ function toSignalCategory(value: string): GroupLearningSignal['category'] {
 
 function targetDescription(signal: ApiGroupLearningSignal) {
   if (signal.applied_target_type) return `已写入 ${signal.applied_target_type}`
-  if (isExpressionLabSignal(signal.signal_type)) return '先比较、练习，再由你确认保存好句、词汇或语法点'
+  if (isExpressionLabSignal(signal.signal_type)) return '先比较、练习，再由你确认保存好句、词汇项或语法知识点'
   if (signal.signal_type === 'desired_vocabulary') return '写入词汇候选和词汇详解入口'
   if (signal.signal_type === 'good_sentence' || signal.signal_type === 'expression_gap') return '写入好句候选和表达练习'
   if (signal.signal_type === 'grammar_error') return '写入语法推荐和学习画像弱点'

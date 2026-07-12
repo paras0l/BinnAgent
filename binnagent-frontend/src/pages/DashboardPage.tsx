@@ -625,7 +625,13 @@ function LearningCenterHome({
   const todayPercent = toPercent(summary.today_goal.completed, summary.today_goal.total)
   const dueCount = summary.stats.today_reviews
   const focusReasons = buildFocusReasons(summary)
-  const nextActionLabel = dueCount > 0 ? `先复习 ${dueCount} 个词` : '开始今天的教材课'
+  const isTodayComplete = todayPercent >= 100
+  const nextActionLabel = isTodayComplete ? '继续 AI 自由练习' : dueCount > 0 ? `先复习 ${dueCount} 个词` : '开始今天的教材课'
+  const handleNextAction = isTodayComplete
+    ? onOpenAiConversation
+    : dueCount > 0
+      ? () => onStartVocabularyPractice('review')
+      : onOpenDailyLearning
   const routeStatus = todayPercent >= 100 ? '今日任务已收口' : dueCount > 0 ? '先清复习，再进教材' : '可以直接进入教材'
 
   return (
@@ -658,10 +664,10 @@ function LearningCenterHome({
             </div>
             <ProgressBar value={todayPercent} className="mt-4 bg-slate-100" />
             <div className="mt-4 grid gap-2">
-              <Button className="justify-between shadow-[0_10px_24px_rgba(99,102,241,0.22)]" onClick={dueCount > 0 ? () => onStartVocabularyPractice('review') : onOpenDailyLearning}>
+              <Button className="justify-between shadow-[0_10px_24px_rgba(99,102,241,0.22)]" onClick={handleNextAction}>
                 {nextActionLabel}<ArrowRight className="size-4" />
               </Button>
-              {dueCount > 0 ? (
+              {dueCount > 0 && !isTodayComplete ? (
                 <Button variant="secondary" className="justify-between" onClick={onOpenDailyLearning}>
                   开始今天的教材课<ArrowRight className="size-4" />
                 </Button>
@@ -714,6 +720,7 @@ function TodayLearningFlow({
   onStartVocabularyPractice: (mode?: VocabularyPracticeMode) => void
 }) {
   const steps = buildTodaySteps(summary)
+  const nextStepIndex = steps.findIndex((step) => step.state !== 'done')
   return (
     <section className="h-full rounded-[1.5rem] border border-slate-200/80 bg-white/84 p-5 shadow-[0_12px_34px_rgba(51,65,85,0.045)] backdrop-blur-sm sm:p-6">
       <div>
@@ -730,7 +737,9 @@ function TodayLearningFlow({
       </div>
 
       <div className="mt-6 divide-y divide-slate-200/70 overflow-hidden rounded-2xl border border-slate-200/70 bg-white/62 px-2">
-        {steps.map((step, index) => (
+        {steps.map((step, index) => {
+          const isNextStep = index === nextStepIndex
+          return (
           <button
             key={step.title}
             type="button"
@@ -744,7 +753,7 @@ function TodayLearningFlow({
             className={`group grid grid-cols-[42px_minmax(0,1fr)_auto] items-center gap-3 rounded-xl px-3 py-3.5 text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-primary ${
               step.state === 'done'
                 ? 'bg-emerald-50/55'
-                : index === 0
+                : isNextStep
                   ? 'bg-indigo-50/75'
                   : 'hover:bg-slate-50/80'
             }`}
@@ -763,7 +772,8 @@ function TodayLearningFlow({
             </span>
             <ArrowRight className="size-4 text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-primary" />
           </button>
-        ))}
+          )
+        })}
       </div>
 
       <div className="mt-5 border-t border-slate-200/80 px-1 pt-4 text-sm leading-6 text-slate-600">
@@ -815,6 +825,8 @@ function LearningSideRail({
             return (
               <div
                 key={item.date}
+                role="img"
+                aria-label={`${formatActivityDate(item.date)}，学习量 ${item.count}`}
                 className="aspect-square rounded-[4px] bg-slate-100 ring-1 ring-inset ring-slate-200/70"
                 style={item.count === 0 ? undefined : { backgroundColor: `rgb(79 70 229 / ${intensity.toFixed(2)})` }}
                 title={`${formatActivityDate(item.date)}，学习量 ${item.count}`}

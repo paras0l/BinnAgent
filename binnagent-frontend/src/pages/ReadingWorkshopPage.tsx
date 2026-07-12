@@ -433,7 +433,7 @@ export function ReadingWorkshopPage({
       <FeatureHero
         eyebrow="Reading Workshop"
         title="精读与泛读"
-        description="同一篇材料，精读看结构，泛读抓主旨。先把阅读目标拆开，再把精读里卡住的语法点带到微知识点继续学。"
+        description="同一篇材料，精读看结构，泛读抓主旨。先把阅读目标拆开，再把精读里卡住的语法知识点带到知识点学习中继续学。"
         stats={[
           { label: '词数', value: wordCount },
           { label: '句子', value: sentences.length },
@@ -711,7 +711,7 @@ function InputWorkspace({
             <div className="mt-5 space-y-3">
               <ModeStep title="泛读" text="先限制时间，判断主旨、态度和段落功能。" />
               <ModeStep title="精读" text="再选择难句，拆主干、修饰语和语法卡点。" />
-              <ModeStep title="沉淀" text="最后留下本次材料、句子和去学过的语法点。" />
+              <ModeStep title="沉淀" text="最后留下本次材料、句子和学过的语法知识点。" />
             </div>
           </div>
           <div className="mt-5 rounded-lg border border-primary/20 bg-primary/5 p-4 text-sm leading-6 text-primary">
@@ -1046,9 +1046,9 @@ function IntensiveWorkspace({
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-2">
               <ExternalLink className="h-5 w-5 text-success" />
-              <h2 className="text-lg font-black text-slate-950">发现语法点</h2>
+              <h2 className="text-lg font-black text-slate-950">发现语法知识点</h2>
             </div>
-            <p className="text-xs text-muted-foreground">先标记卡点，再跳转到语法微知识点。</p>
+            <p className="text-xs text-muted-foreground">先标记卡点，再跳转到语法知识点。</p>
           </div>
           <div className="mt-4 grid gap-3 md:grid-cols-2">
             {READING_GRAMMAR_OPTIONS.map((option) => (
@@ -1222,7 +1222,7 @@ function ReviewWorkspace({
         <SurfaceCard>
           <div className="flex items-center gap-2">
             <CheckCircle2 className="h-5 w-5 text-success" />
-            <h2 className="text-lg font-black text-slate-950">语法点去向</h2>
+            <h2 className="text-lg font-black text-slate-950">语法知识点去向</h2>
           </div>
           <div className="mt-4 space-y-3">
             {selectedGrammarOptions.length > 0 ? (
@@ -1232,7 +1232,7 @@ function ReviewWorkspace({
                   <p className="mt-1 text-sm leading-6 text-slate-500">{option.description}</p>
                   <Button className="mt-3 w-full" variant="secondary" onClick={() => onOpenGrammar(option)}>
                     <ExternalLink className="h-4 w-4" />
-                    去学这个语法点
+                    去学这个语法知识点
                   </Button>
                 </div>
               ))
@@ -1254,7 +1254,7 @@ function ReviewWorkspace({
                 </span>
               ))
             ) : (
-              <p className="text-sm text-muted-foreground">还没有从精读句子跳转到语法微知识点。</p>
+              <p className="text-sm text-muted-foreground">还没有从精读句子跳转到语法知识点。</p>
             )}
           </div>
           <div className="mt-5 flex flex-col gap-3">

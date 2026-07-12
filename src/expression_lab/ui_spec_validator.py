@@ -746,7 +746,7 @@ def _fallback_save_actions(
             {
                 "id": "fallback-save-grammar-agree",
                 "type": "save_grammar_point",
-                "label": "记录这个语法点",
+                "label": "记录这个语法知识点",
                 "block_id": "fallback-grammar-focus",
                 "payload": {
                     "topic": "agree 作为动词",
@@ -777,7 +777,7 @@ def _fallback_save_actions(
                 {
                     "id": "fallback-save-grammar-target",
                     "type": "save_grammar_point",
-                    "label": "记录这个语法点",
+                    "label": "记录这个语法知识点",
                     "block_id": "fallback-grammar-focus",
                     "payload": {
                         "topic": input_text[:255],

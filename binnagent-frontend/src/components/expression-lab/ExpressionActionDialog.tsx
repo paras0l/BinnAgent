@@ -91,7 +91,7 @@ export function buildExpressionActionEdits(action: ExpressionSystemAction, value
 function dialogTitle(action: ExpressionSystemAction) {
   if (action.type === 'save_writing_phrase') return '确认收藏表达'
   if (action.type === 'save_vocabulary') return '确认加入词汇本'
-  if (action.type === 'save_grammar_point') return '确认记录语法点'
+  if (action.type === 'save_grammar_point') return '确认记录语法知识点'
   if (action.type === 'create_practice') return '确认生成练习'
   if (action.type === 'dismiss_suggestion') return '确认这条建议不适合你'
   return `确认${action.label}`
@@ -108,7 +108,7 @@ function dialogDescription(action: ExpressionSystemAction) {
 
 function fieldLabel(field: string) {
   const labels: Record<string, string> = {
-    text: '英文表达', chinese_meaning: '中文含义', explanation: '说明', usage_scene: '使用场景', register: '语域 / 语气', template: '迁移模板', examples: '例句（结构化内容）', tags: '标签', word: '单词或短语', meaning: '释义', collocations: '常见搭配', source_expression: '来源表达', topic: '语法点名称', rule: '语法规则', error: '错误示例', correction: '正确示例', minimal_pairs: '最小对比', reason: '推荐原因', count: '练习数量（1–3）', focus: '练习重点',
+    text: '英文表达', chinese_meaning: '中文含义', explanation: '说明', usage_scene: '使用场景', register: '语域 / 语气', template: '迁移模板', examples: '例句（结构化内容）', tags: '标签', word: '单词或短语', meaning: '释义', collocations: '常见搭配', source_expression: '来源表达', topic: '语法知识点名称', rule: '语法规则', error: '错误示例', correction: '正确示例', minimal_pairs: '最小对比', reason: '推荐原因', count: '练习数量（1–3）', focus: '练习重点',
   }
   return labels[field] ?? field
 }

@@ -35,6 +35,25 @@ def test_prompt_registry_lists_core_prompts() -> None:
         "vocabulary.agent.extract",
         "vocabulary.detail_html_extract",
         "vocabulary.local_enrichment",
+        "vocabulary.learning_supplement",
         "grammar.micro_lesson.structured",
         "writing_phrase.import",
     } <= ids
+
+
+def test_vocabulary_learning_supplement_prompt_binds_structured_schema() -> None:
+    rendered = prompt_registry.render(
+        prompt_id="vocabulary.learning_supplement",
+        version="v1",
+        variables={
+            "canonical_form": "shut down",
+            "entry_type": "phrasal_verb",
+            "existing_entry": "{}",
+            "requested_sections": "common_errors, must_remember",
+        },
+    )
+
+    assert "shut down" in rendered.prompt
+    assert "common_errors, must_remember" in rendered.prompt
+    assert rendered.output_schema == "VocabularyLearningSupplementOutput"
+    assert rendered.output_schema_json is not None

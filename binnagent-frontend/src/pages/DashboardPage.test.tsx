@@ -177,4 +177,19 @@ describe('Dashboard learning profile workspaces', () => {
     expect(dashboardSource).toContain("step.action === 'chat'")
     expect(dashboardSource).toContain('onOpenAiConversation')
   })
+
+  it('routes a completed daily plan to optional AI practice', () => {
+    expect(dashboardSource).toContain("isTodayComplete ? '继续 AI 自由练习'")
+    expect(dashboardSource).toContain('? onOpenAiConversation')
+  })
+
+  it('highlights the first unfinished learning step', () => {
+    expect(dashboardSource).toContain("steps.findIndex((step) => step.state !== 'done')")
+    expect(dashboardSource).toContain('const isNextStep = index === nextStepIndex')
+  })
+
+  it('gives each activity cell an accessible learning amount', () => {
+    expect(dashboardSource).toContain('role="img"')
+    expect(dashboardSource).toContain('aria-label={`${formatActivityDate(item.date)}，学习量 ${item.count}`}')
+  })
 })

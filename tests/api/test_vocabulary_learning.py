@@ -1,6 +1,7 @@
 import uuid
 from datetime import datetime, timezone
 from unittest.mock import AsyncMock, MagicMock
+from types import SimpleNamespace
 
 import pytest
 
@@ -267,3 +268,71 @@ async def test_too_easy_marks_current_word_mastered_and_advances(
     assert item.confidence == pytest.approx(0.9)
     override = next(value for value in added if isinstance(value, VocabularyUserOverride))
     assert override.review_preference == "too_easy"
+
+
+@pytest.mark.asyncio
+async def test_new_word_supplement_generates_only_requested_module(
+    client, vocabulary_learning_session, monkeypatch
+):
+    learner_id = uuid.uuid4()
+    item = VocabularyItem(
+        learner_id=learner_id,
+        word="shut down",
+        canonical_key="shut_down",
+        entry_kind="phrasal_verb",
+        dictionary_senses=[{"part_of_speech": "phr v", "meanings_zh": ["关闭"]}],
+        meanings=[],
+        examples=[],
+        word_forms={},
+        collocations=[],
+    )
+    item.id = uuid.uuid4()
+    practice = VocabularyPracticeSession(
+        learner_id=learner_id,
+        mode="new",
+        prompt_mode="context",
+        accent="uk",
+        status="in_progress",
+        item_ids=[str(item.id)],
+        current_index=0,
+        correct_count=0,
+        hinted_count=0,
+        revealed_count=0,
+        started_at=datetime.now(timezone.utc),
+    )
+    practice.id = uuid.uuid4()
+    vocabulary_learning_session.execute = AsyncMock(side_effect=[_one(practice), _one(item)])
+    execute = AsyncMock(return_value=SimpleNamespace(
+        decision="accepted",
+        validated_output={
+            "forms": [{"label": "过去式", "form": "shut down"}],
+            "collocations": [{"collocation": "shut down a computer", "hint": "关闭电脑"}],
+            "common_errors": [{
+                "error": "shut down it",
+                "correct": "shut it down",
+                "reason": "代词作宾语时要放在短语中间",
+            }],
+            "confusions": [],
+            "must_remember": [],
+        },
+    ))
+    monkeypatch.setattr(
+        vocabulary_learning_api,
+        "PromptExecutor",
+        lambda **_: SimpleNamespace(execute=execute),
+    )
+
+    response = await client.post(
+        f"/api/learners/{learner_id}/vocabulary/sessions/{practice.id}/supplement",
+        json={"vocabulary_item_id": str(item.id), "sections": ["common_errors"]},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["common_errors"] == [
+        "shut down it → shut it down：代词作宾语时要放在短语中间"
+    ]
+    assert response.json()["forms"] == ["过去式：shut down"]
+    assert response.json()["collocations"] == ["shut down a computer：关闭电脑"]
+    call = execute.await_args.kwargs
+    assert call["prompt_id"] == "vocabulary.learning_supplement"
+    assert call["variables"]["requested_sections"] == "common_errors"

@@ -21,7 +21,7 @@
 5. 前端自动打开 Reading Workshop：
    - 材料输入页展示生成标题、正文、难度、训练目标。
    - 泛读页记录主旨、态度、中心句。
-   - 精读页选择句子、标记语法点、可跳转语法微知识点。
+   - 精读页选择句子、标记语法知识点、可跳转语法知识点学习页。
    - 复盘页点击“完成阅读”，写入 reading attempt。
 6. Dashboard 阅读能力值通过已有 `ExerciseAttempt.target_type=reading_passage` 统计获得更新。
 
