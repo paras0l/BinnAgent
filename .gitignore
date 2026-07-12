@@ -13,6 +13,7 @@ binnagent-frontend/node_modules/
 binnagent-frontend/dist/
 binnagent-frontend/dist-dev-console/
 .codex-audit
+outputs
 englishwiki/
 tmp/
 var/*
