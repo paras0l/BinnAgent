@@ -31,7 +31,19 @@ def test_alembic_migrations_have_single_head_revision() -> None:
             parents.update(item for item in down_revision if isinstance(item, str))
 
     heads = revisions - parents
-    assert heads == {"v2w3x4y5z6a7"}
+    assert heads == {"y5z6a7b8c9d0"}
+
+
+def test_shared_base_dictionary_migration_separates_source_and_generated_content() -> None:
+    migration = Path(
+        "alembic/versions/y5z6a7b8c9d0_add_shared_base_dictionary.py"
+    ).read_text()
+
+    assert "base_dictionary_builds" in migration
+    assert "base_dictionary_entries" in migration
+    assert "base_dictionary_translations" in migration
+    assert "source_definition_hash" in migration
+    assert "learner_id" not in migration
 
 
 def test_changsha_grade7_english_migration_adds_current_public_catalogs() -> None:

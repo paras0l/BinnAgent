@@ -29,6 +29,7 @@
 | [14-expression-lab.md](./14-expression-lab.md) | 英语表达实验室的生成式 UI、动作确认、沙箱安全和学习闭环 |
 | [15-dynamic-tool-registry-discovery-injection.md](./15-dynamic-tool-registry-discovery-injection.md) | Tool Registry 现状审计，以及动态注册、发现、权限解析、运行时注入与 MCP 演进方案 |
 | [16-reading-led-learning-track.md](./16-reading-led-learning-track.md) | 个性化阅读主线、每日阅读闭环、难度控制、纠错排盲与 Memory 更新 |
+| [17-shared-base-dictionary.md](./17-shared-base-dictionary.md) | Kaikki/WordNet/Tatoeba/wordfreq 共享基础词库、筛选、发布与中文释义生成 |
 | [exercise-generation-pool.md](./exercise-generation-pool.md) | 持久化练习题池、异步 Worker、质量评分、降级与恢复策略 |
 | [document-parsing-pipeline.md](./document-parsing-pipeline.md) | MarkItDown baseline、pypdf fallback、DocumentParseArtifact、质量评估和异步 ingest 状态机 |
 | [textbook-parsing-audit.md](./textbook-parsing-audit.md) | 教材解析链路审计、风险和治理改造结论 |

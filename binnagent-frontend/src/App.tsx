@@ -252,7 +252,7 @@ function App() {
     const previousReadiness = learnerProfileReadiness
     const nextProfile: LearnerProfile = {
       learner_id: currentLearner.id,
-      learning_track: learnerProfile?.learning_track ?? 'school',
+      learning_track: learnerProfile?.learning_track ?? 'reading',
       target_exam: learnerProfile?.target_exam ?? null,
       target_score: learnerProfile?.target_score ?? null,
       exam_date: learnerProfile?.exam_date ?? null,

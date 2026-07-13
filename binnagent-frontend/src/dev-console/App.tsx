@@ -15,6 +15,7 @@ import {
   Route,
   Search,
   ShieldCheck,
+  Shield,
   TerminalSquare,
   Users,
   Wrench,
@@ -32,6 +33,7 @@ import { ModelProviderPage } from './pages/ModelProviderPage'
 import { RecentEpisodesPage } from './pages/RecentEpisodesPage'
 import { TextbookParsingPage } from './pages/TextbookParsingPage'
 import { ToolCatalogPage } from './pages/ToolCatalogPage'
+import { SandboxPermissionsPage } from './pages/SandboxPermissionsPage'
 import { devConsoleRoutes, findDevConsoleRoute, type DevConsoleRouteId } from './routes'
 
 const MemoryCenterPage = lazy(() =>
@@ -290,6 +292,8 @@ function DevConsoleShell({ onClearToken }: { onClearToken: () => void }) {
               <TextbookParsingPage navigate={navigate} />
             ) : routeId === 'tools' ? (
               <ToolCatalogPage />
+            ) : routeId === 'sandbox' ? (
+              <SandboxPermissionsPage />
             ) : routeId === 'tool-call-records' ? (
               episodeId ? (
                 <ToolCallRecordsPage key={episodeId} episodeId={episodeId} />
@@ -1255,6 +1259,7 @@ function routeIcon(routeId: DevConsoleRouteId) {
   if (routeId === 'graph-runs') return <Route className="size-4" />
   if (routeId === 'textbooks') return <BookOpenCheck className="size-4" />
   if (routeId === 'tools') return <Wrench className="size-4" />
+  if (routeId === 'sandbox') return <Shield className="size-4" />
   if (routeId === 'tool-call-records') return <Activity className="size-4" />
   if (routeId === 'evidence') return <Search className="size-4" />
   if (routeId === 'rag') return <Database className="size-4" />

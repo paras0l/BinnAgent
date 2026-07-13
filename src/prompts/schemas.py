@@ -558,6 +558,46 @@ CLASSROOM_TEXTBOOK_COACH_SCHEMA: dict[str, Any] = {
     "additionalProperties": False,
 }
 
+BASE_DICTIONARY_TRANSLATION_SCHEMA: dict[str, Any] = {
+    "type": "object",
+    "additionalProperties": False,
+    "required": ["entries"],
+    "properties": {
+        "entries": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 20,
+            "items": {
+                "type": "object",
+                "additionalProperties": False,
+                "required": ["canonical_key", "senses"],
+                "properties": {
+                    "canonical_key": {"type": "string", "minLength": 1},
+                    "senses": {
+                        "type": "array",
+                        "minItems": 1,
+                        "maxItems": 3,
+                        "items": {
+                            "type": "object",
+                            "additionalProperties": False,
+                            "required": ["sense_key", "definition_zh", "confidence"],
+                            "properties": {
+                                "sense_key": {"type": "string", "minLength": 1},
+                                "definition_zh": {"type": "string", "minLength": 1},
+                                "confidence": {
+                                    "type": "number",
+                                    "minimum": 0,
+                                    "maximum": 1,
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+        }
+    },
+}
+
 SCHEMA_REGISTRY: dict[str, dict[str, Any]] = {
     "ExpressionUiOutput": EXPRESSION_UI_SCHEMA,
     "VocabularyExtractOutput": VOCABULARY_CARD_SCHEMA,
@@ -577,4 +617,5 @@ SCHEMA_REGISTRY: dict[str, dict[str, Any]] = {
     "ReadingSelectionTranslationOutput": READING_SELECTION_TRANSLATION_SCHEMA,
     "ClassroomUiOutput": CLASSROOM_UI_SCHEMA,
     "ClassroomTextbookCoachOutput": CLASSROOM_TEXTBOOK_COACH_SCHEMA,
+    "BaseDictionaryTranslationOutput": BASE_DICTIONARY_TRANSLATION_SCHEMA,
 }

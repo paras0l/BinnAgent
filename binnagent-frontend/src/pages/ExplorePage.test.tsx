@@ -15,7 +15,7 @@ describe('Explore vocabulary navigation', () => {
   })
 
   it('prioritizes the learner track and hides planned capabilities by default', () => {
-    expect(exploreSource).toContain('learningTrackForGoal')
+    expect(exploreSource).toContain("learnerProfile?.learning_track ?? 'reading'")
     expect(exploreSource).toContain('learningTrackLabel')
     expect(exploreSource).toContain("feature.status === 'ready'")
     expect(exploreSource).toContain('查看规划中能力')

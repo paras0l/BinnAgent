@@ -28,6 +28,8 @@ from src.models.knowledge import (
     ParserRun,
 )
 from src.models.learner import Learner, LearnerProfile
+from src.models.expression_lab import SandboxPermissionPolicy
+from src.expression_lab.sandbox_permissions import configure_sandbox_permissions, sandbox_permissions
 from src.models.memory import LearningMemoryEvent
 from src.models.prompt_execution import PromptExecutionRecord
 from src.models.runtime import AgentEpisode
@@ -49,6 +51,35 @@ SIMULATION_REPORT_ROOT = Path("var/simulation")
 
 class ModelProviderSwitchRequest(BaseModel):
     provider: str = Field(..., min_length=1, max_length=40)
+
+
+class SandboxPolicyUpdateRequest(BaseModel):
+    profile: str = Field(default="strict", pattern="^(strict|interactive|trusted_integration)$")
+    allowed_domains: list[str] = Field(default_factory=list, max_length=20)
+
+
+@router.get("/sandbox-policy")
+async def get_sandbox_policy() -> dict[str, Any]:
+    return {"policy": sandbox_permissions().payload()}
+
+
+@router.put("/sandbox-policy")
+async def update_sandbox_policy(
+    body: SandboxPolicyUpdateRequest,
+    db: AsyncSession = Depends(get_db_session),
+) -> dict[str, Any]:
+    try:
+        policy = configure_sandbox_permissions(body.profile, body.allowed_domains)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    row = await db.get(SandboxPermissionPolicy, "global")
+    if row is None:
+        row = SandboxPermissionPolicy(scope="global")
+        db.add(row)
+    row.profile = policy.profile
+    row.allowed_domains = list(policy.allowed_domains)
+    await db.flush()
+    return {"policy": policy.payload(), "updated_at": row.updated_at.isoformat() if row.updated_at else None}
 
 
 @router.get("/learners")

@@ -1,6 +1,6 @@
 import type { DashboardSummary, LearnerProfile } from '@/types'
 
-export function buildTodaySteps(summary: DashboardSummary, learningTrack: LearnerProfile['learning_track'] = 'school') {
+export function buildTodaySteps(summary: DashboardSummary, learningTrack: LearnerProfile['learning_track'] = 'reading') {
   const isReadingTrack = learningTrack === 'reading'
   return [
     {

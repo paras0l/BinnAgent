@@ -70,7 +70,7 @@ class BindLearnerEmailRequest(LookupLearnersRequest):
 
 
 class CreateProfileRequest(BaseModel):
-    learning_track: Literal["school", "exam", "general", "reading"] = "school"
+    learning_track: Literal["school", "exam", "general", "reading"] = "reading"
     target_exam: Optional[str] = Field(default=None, max_length=50)
     target_score: Optional[int] = Field(default=None, ge=0, le=710)
     exam_date: Optional[date] = None
@@ -115,7 +115,7 @@ class ProfileResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     learner_id: uuid.UUID
-    learning_track: str = "school"
+    learning_track: str = "reading"
     target_exam: Optional[str] = None
     target_score: Optional[int] = None
     exam_date: Optional[date] = None
@@ -126,7 +126,7 @@ class ProfileResponse(BaseModel):
     @field_validator("learning_track", mode="before")
     @classmethod
     def default_learning_track(cls, value: object) -> str:
-        return value if isinstance(value, str) and value else "school"
+        return value if isinstance(value, str) and value else "reading"
 
     @field_validator("interest_topics", mode="before")
     @classmethod

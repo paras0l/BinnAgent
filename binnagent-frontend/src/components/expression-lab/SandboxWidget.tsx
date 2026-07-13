@@ -33,19 +33,42 @@ interface SandboxWidgetProps {
   onEvent?: (message: SandboxTelemetryEvent) => void
 }
 
+interface SandboxPermissions {
+  allow_network: boolean
+  allowed_domains: string[]
+}
+
+const STRICT_PERMISSIONS: SandboxPermissions = { allow_network: false, allowed_domains: [] }
+
 export function SandboxWidget({ block, actions, onAction, onEvent }: SandboxWidgetProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const [instance, setInstance] = useState(0)
   const [height, setHeight] = useState(() => clampHeight(numberValue(block.data.height, 360)))
   const [timedOut, setTimedOut] = useState(false)
   const [frameLoaded, setFrameLoaded] = useState(false)
+  const [remotePermissions, setRemotePermissions] = useState<SandboxPermissions | null>(null)
   const timeoutMs = clampTimeout(numberValue(block.data.timeout_ms, 8_000))
   const configuredEvents = useMemo(
     () => new Set(asStrings(block.data.allowed_events).filter((type) => ALLOWED_EVENT_TYPES.has(type))),
     [block.data.allowed_events],
   )
   const nonce = useMemo(() => `${block.id}:${instance}:${cryptoNonce()}`, [block.id, instance])
-  const document = useMemo(() => buildSandboxDocument(block, nonce), [block, nonce])
+  const configuredPermissions = useMemo(
+    () => readSandboxPermissions(block.data.sandbox_permissions),
+    [block.data.sandbox_permissions],
+  )
+  const permissions = configuredPermissions ?? remotePermissions ?? STRICT_PERMISSIONS
+  const document = useMemo(() => buildSandboxDocument(block, nonce, permissions), [block, nonce, permissions])
+
+  useEffect(() => {
+    if (configuredPermissions) return
+    let cancelled = false
+    fetch('/api/sandbox-policy')
+      .then((response) => response.ok ? response.json() as Promise<{ policy?: unknown }> : null)
+      .then((data) => { if (!cancelled) setRemotePermissions(readSandboxPermissions(data?.policy) ?? STRICT_PERMISSIONS) })
+      .catch(() => { if (!cancelled) setRemotePermissions(STRICT_PERMISSIONS) })
+    return () => { cancelled = true }
+  }, [configuredPermissions])
 
   useEffect(() => {
     if (timedOut || frameLoaded) return
@@ -129,18 +152,18 @@ export function sanitizeSandboxHtml(value: string) {
   return document.body.innerHTML
 }
 
-export function buildSandboxDocument(block: ExpressionUiBlock, nonce: string) {
+export function buildSandboxDocument(block: ExpressionUiBlock, nonce: string, permissions: SandboxPermissions = STRICT_PERMISSIONS) {
   const html = sanitizeSandboxHtml(firstText(block.data, ['html', 'markup', 'content']))
   const css = sanitizeSandboxCss(firstText(block.data, ['css', 'styles']))
-  const script = sanitizeSandboxScript(firstText(block.data, ['js', 'javascript', 'script']))
+  const script = sanitizeSandboxScript(firstText(block.data, ['js', 'javascript', 'script']), permissions.allow_network)
   const blockId = JSON.stringify(block.id)
   const safeNonce = JSON.stringify(nonce)
   return `<!doctype html>
 <html lang="zh-CN"><head><meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; connect-src 'none'; form-action 'none'; navigate-to 'none'; frame-src 'none'; child-src 'none'; object-src 'none'; media-src 'none'; font-src 'none'; img-src data:; style-src 'unsafe-inline'; script-src 'unsafe-inline'; base-uri 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; connect-src ${permissions.allow_network && permissions.allowed_domains.length ? permissions.allowed_domains.map((domain) => `https://${domain}`).join(' ') : "'none'"}; form-action 'none'; navigate-to 'none'; frame-src 'none'; child-src 'none'; object-src 'none'; media-src 'none'; font-src 'none'; img-src data:; style-src 'unsafe-inline'; script-src 'unsafe-inline'; base-uri 'none'">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <style>html{color-scheme:light}*{box-sizing:border-box}body{margin:0;padding:18px;background:#fff;color:#0f172a;font:14px/1.6 ui-sans-serif,system-ui,sans-serif}button,input,textarea,select{font:inherit}button{min-height:40px;border:1px solid #cbd5e1;border-radius:10px;background:#fff;padding:8px 12px;cursor:pointer}button:focus-visible,input:focus-visible{outline:2px solid #6366f1;outline-offset:2px}${css}</style></head>
-<body><main data-expression-lab-widget>${html}</main><script>(()=>{'use strict';const channel=${JSON.stringify(SANDBOX_CHANNEL)};const blockId=${blockId};const nonce=${safeNonce};const root=document.querySelector('[data-expression-lab-widget]');let lastBusinessEmit=0;let lastChoice='';const emit=(type,payload={})=>{if(!${JSON.stringify([...ALLOWED_EVENT_TYPES])}.includes(type))return;if(!['ready','resize'].includes(type))lastBusinessEmit=Date.now();parent.postMessage({channel,block_id:blockId,nonce,type,payload},'*')};const textOf=(element)=>String(element?.value||element?.dataset?.value||element?.textContent||'').trim().slice(0,500);root.addEventListener('click',(event)=>{const button=event.target?.closest?.('button,[role="button"]');if(!button)return;const label=textOf(button);const isSubmit=/提交|完成|检查|确认|submit|check|finish/i.test(label)||button.type==='submit'||button.hasAttribute('data-submit');if(!isSubmit){lastChoice=label;return}const before=lastBusinessEmit;setTimeout(()=>{if(lastBusinessEmit!==before)return;const checked=root.querySelector('input:checked,option:checked,[aria-pressed="true"],[data-selected="true"],.selected,.active');const answer=textOf(checked)||lastChoice;emit('answer_submitted',{answer,source:'host_submit_fallback'})},0)},true);Object.defineProperty(window,'binnagent',{value:Object.freeze({emit,root}),writable:false});for(const key of ['fetch','XMLHttpRequest','WebSocket','EventSource']){try{Object.defineProperty(window,key,{value:undefined,writable:false})}catch{}}try{Object.defineProperty(navigator,'sendBeacon',{value:undefined})}catch{}try{${escapeScript(script)};emit('ready',{height:document.documentElement.scrollHeight})}catch(error){emit('change',{error:'widget_runtime_error'});emit('ready',{height:document.documentElement.scrollHeight,runtime_error:true})}})();</script></body></html>`
+<body><main data-expression-lab-widget>${html}</main><script>(()=>{'use strict';const channel=${JSON.stringify(SANDBOX_CHANNEL)};const blockId=${blockId};const nonce=${safeNonce};const root=document.querySelector('[data-expression-lab-widget]');let lastBusinessEmit=0;let lastChoice='';const emit=(type,payload={})=>{if(!${JSON.stringify([...ALLOWED_EVENT_TYPES])}.includes(type))return;if(!['ready','resize'].includes(type))lastBusinessEmit=Date.now();parent.postMessage({channel,block_id:blockId,nonce,type,payload},'*')};const textOf=(element)=>String(element?.value||element?.dataset?.value||element?.textContent||'').trim().slice(0,500);root.addEventListener('click',(event)=>{const button=event.target?.closest?.('button,[role="button"]');if(!button)return;const label=textOf(button);const isSubmit=/提交|完成|检查|确认|submit|check|finish/i.test(label)||button.type==='submit'||button.hasAttribute('data-submit');if(!isSubmit){lastChoice=label;return}const before=lastBusinessEmit;setTimeout(()=>{if(lastBusinessEmit!==before)return;const checked=root.querySelector('input:checked,option:checked,[aria-pressed="true"],[data-selected="true"],.selected,.active');const answer=textOf(checked)||lastChoice;emit('answer_submitted',{answer,source:'host_submit_fallback'})},0)},true);Object.defineProperty(window,'binnagent',{value:Object.freeze({emit,root}),writable:false});for(const key of ${JSON.stringify(permissions.allow_network ? ['XMLHttpRequest', 'WebSocket', 'EventSource'] : ['fetch', 'XMLHttpRequest', 'WebSocket', 'EventSource'])}){try{Object.defineProperty(window,key,{value:undefined,writable:false})}catch{}}try{Object.defineProperty(navigator,'sendBeacon',{value:undefined})}catch{}try{${escapeScript(script)};emit('ready',{height:document.documentElement.scrollHeight})}catch(error){emit('change',{error:'widget_runtime_error'});emit('ready',{height:document.documentElement.scrollHeight,runtime_error:true})}})();</script></body></html>`
 }
 
 export function isAllowedSandboxMessage(
@@ -177,13 +200,20 @@ function sanitizeSandboxCss(value: string) {
     .slice(0, 20_000)
 }
 
-export function sanitizeSandboxScript(value: string) {
-  const forbidden = /\b(?:fetch|XMLHttpRequest|WebSocket|EventSource|sendBeacon|indexedDB|localStorage|sessionStorage|cookie|parent|top|opener|location|documentURI|baseURI|eval|importScripts|open)\b|\bimport\s*\(|while\s*\(\s*true\s*\)|for\s*\(\s*;\s*;\s*\)/i
+export function sanitizeSandboxScript(value: string, allowNetwork = false) {
+  const forbidden = new RegExp(`\\b(?:${allowNetwork ? '' : 'fetch|'}XMLHttpRequest|WebSocket|EventSource|sendBeacon|indexedDB|localStorage|sessionStorage|cookie|parent|top|opener|location|documentURI|baseURI|eval|importScripts|open)\\b|\\bimport\\s*\\(|while\\s*\\(\\s*true\\s*\\)|for\\s*\\(\\s*;\\s*;\\s*\\)`, 'i')
   const functionConstructor = /\b(?:new\s+)?Function\s*\(/
   if (forbidden.test(value) || functionConstructor.test(value)) {
     return `binnagent.emit('change',{error:'blocked_script'});`
   }
   return normalizeSandboxRootAccess(value).slice(0, 20_000)
+}
+
+function readSandboxPermissions(value: unknown): SandboxPermissions | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null
+  const candidate = value as Record<string, unknown>
+  if (typeof candidate.allow_network !== 'boolean' || !Array.isArray(candidate.allowed_domains)) return null
+  return { allow_network: candidate.allow_network, allowed_domains: candidate.allowed_domains.filter((item): item is string => typeof item === 'string') }
 }
 
 function normalizeSandboxRootAccess(value: string) {

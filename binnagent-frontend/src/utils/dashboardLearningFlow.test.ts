@@ -8,6 +8,13 @@ const summary = {
 } as DashboardSummary
 
 describe('buildTodaySteps', () => {
+  it('uses the personalized reading flow by default', () => {
+    const steps = buildTodaySteps(summary)
+
+    expect(steps[1].title).toBe('阅读今天的个性化短文')
+    expect(steps[1].action).toBe('reading')
+  })
+
   it('replaces textbook steps and actions for the reading track', () => {
     const steps = buildTodaySteps(summary, 'reading')
 

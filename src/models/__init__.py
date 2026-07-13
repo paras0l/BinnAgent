@@ -1,11 +1,17 @@
 from src.models.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
 from src.models.auth import EmailVerificationChallenge
+from src.models.base_dictionary import (
+    BaseDictionaryBuild,
+    BaseDictionaryEntry,
+    BaseDictionaryTranslation,
+)
 from src.models.error_pattern import ErrorPattern
 from src.models.expression_lab import (
     ExpressionLabAction,
     ExpressionLabAttempt,
     ExpressionLabEvent,
     ExpressionLabSession,
+    SandboxPermissionPolicy,
 )
 from src.models.explore import ExploreFeaturePreference
 from src.models.graph_checkpoint import LearningGraphCheckpoint
@@ -76,6 +82,9 @@ __all__ = [
     "AgentRun",
     "AgentThread",
     "Base",
+    "BaseDictionaryBuild",
+    "BaseDictionaryEntry",
+    "BaseDictionaryTranslation",
     "ConversationMessage",
     "EmailVerificationChallenge",
     "ErrorPattern",
@@ -83,6 +92,7 @@ __all__ = [
     "ExpressionLabAttempt",
     "ExpressionLabEvent",
     "ExpressionLabSession",
+    "SandboxPermissionPolicy",
     "ExploreFeaturePreference",
     "GroupLearningMessage",
     "GroupLearningParticipant",

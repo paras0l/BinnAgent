@@ -21,6 +21,7 @@ def test_prompt_registry_lists_core_prompts() -> None:
 
     assert {
         "conversation.summary",
+        "base_dictionary.translate_zh",
         "dictionary.lookup",
         "essay.scoring",
         "explore.capability_rerank",

@@ -10,6 +10,7 @@ from typing import Any
 from pydantic import TypeAdapter, ValidationError
 
 from src.expression_lab.renderer_policy import sanitize_html, sanitize_sandbox_widget
+from src.expression_lab.sandbox_permissions import sandbox_permissions
 from src.expression_lab.schemas import (
     ALLOWED_ACTION_TYPES,
     ALLOWED_BLOCK_TYPES,
@@ -145,6 +146,9 @@ def validate_ui_spec(
                 data["html"] = sanitized.html
                 data["css"] = sanitized.css
                 data["javascript"] = sanitized.javascript
+                data["sandbox_attribute"] = sanitized.sandbox_attribute
+                data["csp"] = sanitized.csp
+                data["sandbox_permissions"] = sandbox_permissions().payload()
                 allowed = set(data.get("allowed_events") or [])
                 data["allowed_events"] = sorted(
                     allowed.intersection(

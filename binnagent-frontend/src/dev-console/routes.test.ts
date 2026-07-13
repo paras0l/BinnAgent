@@ -11,6 +11,7 @@ describe('devConsoleRoutes', () => {
         'learners',
         'textbooks',
         'tools',
+        'sandbox',
         'tool-call-records',
         'evidence',
         'rag',
@@ -27,6 +28,7 @@ describe('devConsoleRoutes', () => {
         'Textbook Parsing',
         'Recent Episodes',
         'Tool Registry',
+        'Sandbox Permissions',
         'Tool Call Records',
         'Evidence Debug',
         'RAG Debug',
@@ -43,6 +45,7 @@ describe('devConsoleRoutes', () => {
 
   it('keeps Tool Registry and Tool Call Records as separate routes', () => {
     expect(findDevConsoleRoute('/dev/tools').id).toBe('tools')
+    expect(findDevConsoleRoute('/dev/sandbox').id).toBe('sandbox')
     expect(findDevConsoleRoute('/dev/tool-calls').id).toBe('tool-call-records')
   })
 

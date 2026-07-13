@@ -347,6 +347,7 @@ class TestCreateProfile:
         assert data["current_level"] == "b1"
         assert data["target_score"] == 500
         assert data["daily_time_budget_minutes"] == 60
+        assert data["learning_track"] == "reading"
 
     @pytest.mark.asyncio
     async def test_create_profile_learner_not_found(self, client, mock_session):
@@ -445,7 +446,7 @@ class TestGetProfile:
         assert response.status_code == 200
         assert response.json() == {
             "learner_id": str(learner_id),
-            "learning_track": "school",
+            "learning_track": "reading",
             "target_exam": None,
             "target_score": None,
             "exam_date": None,

@@ -6,6 +6,7 @@ export const devConsoleRoutes = [
   { id: 'textbooks', label: 'Textbook Parsing', path: '/dev/textbooks' },
   { id: 'memory', label: 'Memory Debug', path: '/dev/memory' },
   { id: 'tools', label: 'Tool Registry', path: '/dev/tools' },
+  { id: 'sandbox', label: 'Sandbox Permissions', path: '/dev/sandbox' },
   { id: 'tool-call-records', label: 'Tool Call Records', path: '/dev/tool-calls' },
   { id: 'evidence', label: 'Evidence Debug', path: '/dev/evidence' },
   { id: 'rag', label: 'RAG Debug', path: '/dev/rag' },

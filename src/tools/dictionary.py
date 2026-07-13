@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.prompts import PromptExecutionContext, PromptExecutor
 from src.providers.router import router
+from src.base_dictionary.service import get_entry as get_base_dictionary_entry
 
 
 @dataclass
@@ -622,6 +623,36 @@ class DictionaryTool:
         learner_id: uuid.UUID | None = None,
     ) -> DictionaryLookupResponse:
         word_key = request.word.strip().lower()
+        if db is not None:
+            shared = await get_base_dictionary_entry(db, word_key)
+            if shared is not None:
+                senses = shared["senses"]
+                return DictionaryLookupResponse(
+                    word=shared["lemma"],
+                    phonetic=next(
+                        (
+                            str(sound.get("ipa"))
+                            for sound in shared["pronunciations"]
+                            if sound.get("ipa")
+                        ),
+                        "",
+                    ),
+                    meanings=[
+                        {
+                            "part_of_speech": sense.get("part_of_speech", "unknown"),
+                            "definition": sense.get("definition_en", ""),
+                            "definition_zh": sense.get("definition_zh"),
+                        }
+                        for sense in senses
+                    ],
+                    collocations=[
+                        relation["target"]
+                        for relation in shared["relations"]
+                        if relation.get("type") in {"collocation", "related"}
+                    ],
+                    examples=[example.get("text", "") for example in shared["examples"]],
+                    provider="base_dictionary",
+                )
         entry = LOCAL_DICT.get(word_key)
 
         if entry is not None:

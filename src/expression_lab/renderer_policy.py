@@ -6,6 +6,8 @@ from dataclasses import dataclass
 from html.parser import HTMLParser
 from typing import Final
 
+from src.expression_lab.sandbox_permissions import sandbox_csp, sandbox_permissions
+
 
 SANDBOX_CSP: Final[str] = (
     "default-src 'none'; "
@@ -172,7 +174,19 @@ _POLICY = RendererPolicy(
 def renderer_policy() -> RendererPolicy:
     """Return the immutable policy shared by validation and iframe rendering."""
 
-    return _POLICY
+    state = sandbox_permissions()
+    return RendererPolicy(
+        allowed_tags=_POLICY.allowed_tags,
+        allowed_attributes=_POLICY.allowed_attributes,
+        allowed_svg_attributes=_POLICY.allowed_svg_attributes,
+        allowed_events=_POLICY.allowed_events,
+        sandbox_attribute=_POLICY.sandbox_attribute,
+        max_html_bytes=80_000 if state.profile != "strict" else _POLICY.max_html_bytes,
+        max_css_bytes=60_000 if state.profile != "strict" else _POLICY.max_css_bytes,
+        max_javascript_bytes=60_000 if state.profile != "strict" else _POLICY.max_javascript_bytes,
+        max_timeout_ms=20_000 if state.profile != "strict" else _POLICY.max_timeout_ms,
+        csp=sandbox_csp(state),
+    )
 
 
 class _AllowlistHtmlParser(HTMLParser):
@@ -334,7 +348,11 @@ def sanitize_javascript(value: str) -> tuple[str, tuple[str, ...]]:
     )
     if not bounded.strip():
         return "", ()
-    if _DANGEROUS_JAVASCRIPT.search(bounded) or _DANGEROUS_FUNCTION_CONSTRUCTOR.search(
+    state = sandbox_permissions()
+    dangerous = _DANGEROUS_JAVASCRIPT if not state.allow_network else re.compile(
+        _DANGEROUS_JAVASCRIPT.pattern.replace("fetch|", ""), re.IGNORECASE
+    )
+    if dangerous.search(bounded) or _DANGEROUS_FUNCTION_CONSTRUCTOR.search(
         bounded
     ):
         return "", ("removed_dangerous_javascript",)
@@ -352,9 +370,12 @@ def sanitize_sandbox_widget(
     clean_html, html_issues = sanitize_html(html_value)
     clean_css, css_issues = sanitize_css(css_value)
     clean_javascript, javascript_issues = sanitize_javascript(javascript_value)
+    policy = renderer_policy()
     return SanitizedSandbox(
         html=clean_html,
         css=clean_css,
         javascript=clean_javascript,
         issues=tuple(dict.fromkeys((*html_issues, *css_issues, *javascript_issues))),
+        sandbox_attribute=policy.sandbox_attribute,
+        csp=policy.csp,
     )

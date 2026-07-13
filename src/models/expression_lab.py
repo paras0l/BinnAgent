@@ -20,6 +20,14 @@ from src.db import Base
 from src.models.base import TimestampMixin, UUIDPrimaryKeyMixin
 
 
+class SandboxPermissionPolicy(TimestampMixin, Base):
+    __tablename__ = "sandbox_permission_policies"
+
+    scope: Mapped[str] = mapped_column(String(40), primary_key=True, default="global")
+    profile: Mapped[str] = mapped_column(String(40), nullable=False, default="strict")
+    allowed_domains: Mapped[list] = mapped_column(JSONB, nullable=False, default=list)
+
+
 class ExpressionLabSession(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     __tablename__ = "expression_lab_sessions"
     __table_args__ = (

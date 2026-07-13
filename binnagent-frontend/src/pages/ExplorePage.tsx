@@ -36,7 +36,7 @@ import {
   exploreCapabilityStartUrl,
   learnerExploreRecommendationsUrl,
 } from '@/services/exploreCapabilityApi'
-import { learningTrackForGoal, learningTrackLabel, promptWithLearnerProfile } from '@/utils/learnerProfile'
+import { learningTrackLabel, promptWithLearnerProfile } from '@/utils/learnerProfile'
 
 type FeatureCategory = 'all' | 'listening' | 'speaking' | 'reading' | 'writing' | 'vocabulary' | 'grammar' | 'exam'
 type FeatureStatus = 'ready' | 'todo'
@@ -368,7 +368,7 @@ export function ExplorePage({
     return sourceFeatures.filter((feature) => !HIDDEN_EXPLORE_FEATURE_IDS.has(feature.id))
   }, [capabilitySpecs])
   const featureMap = useMemo(() => new Map(features.map((feature) => [feature.id, feature])), [features])
-  const learningTrack = learningTrackForGoal(learnerProfile?.target_exam)
+  const learningTrack = learnerProfile?.learning_track ?? 'reading'
 
   const visibleFeatures = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase()
@@ -652,11 +652,11 @@ export function ExplorePage({
     <PageShell>
       <FeatureHero
         eyebrow="Explore"
-        title={`${learningTrackLabel(learnerProfile?.target_exam)} · 探索`}
+        title={`${learningTrackLabel(learnerProfile?.target_exam, learningTrack)} · 探索`}
         description="先看最适合当前目标的三个入口，也可以按能力分类寻找专项练习。"
         stats={[
           { label: '可用入口', value: features.filter((feature) => feature.status === 'ready').length, tone: 'success' },
-          { label: '当前方向', value: learningTrackLabel(learnerProfile?.target_exam), tone: 'primary' },
+          { label: '当前方向', value: learningTrackLabel(learnerProfile?.target_exam, learningTrack), tone: 'primary' },
           { label: '已收藏', value: favorites.length, tone: 'primary' },
           { label: '分类', value: CATEGORIES.length - 1 },
         ]}

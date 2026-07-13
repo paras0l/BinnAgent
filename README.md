@@ -105,6 +105,7 @@ http://localhost:5176，可在 Learners / Recent Episodes 中直接选择 learne
 - [14. Expression Lab](docs/architecture/14-expression-lab.md)
 - [15. Dynamic Tool Registry, Discovery & Injection](docs/architecture/15-dynamic-tool-registry-discovery-injection.md)
 - [16. Reading-led Learning Track](docs/architecture/16-reading-led-learning-track.md)
+- [17. Shared Base Dictionary](docs/architecture/17-shared-base-dictionary.md)
 - [Document Parsing Pipeline](docs/architecture/document-parsing-pipeline.md)
 - [LangGraph Runtime Audit](docs/architecture/langgraph-runtime-audit.md)
 - [Verification Runtime Audit](docs/architecture/verification-runtime-audit.md)
@@ -138,6 +139,7 @@ http://localhost:5176，可在 Learners / Recent Episodes 中直接选择 learne
 | 宠物精灵通知 | 已实现，小冰接管全局 Toast 消息，支持按重要性抢占与配色、重复消息合并、七套统一视觉锚点的高清状态原画、观察/挥手等连续微动作、可调静置动作频率、贴边偷看、记忆变更晶石发光、任务完成庆祝、长耗时陪伴反馈、协作式文案、惯性拖动与跨窗口尺寸位置回收、点击/键盘互动、系统减少动态偏好、功能页首次介绍，以及用户菜单中的精灵设置 |
 | 教材 Knowledge Base / RAG / Exercises | 部分实现，作为冷启动知识来源；已支持 split public textbook pack v2、长沙市七年级人教新目标 2024 版上下册公共目录、UnitLearningWorkspace、多教材切换、文档解析/校对、统一 ExerciseItem / ExerciseAttempt 与单元阅读语感材料；2024 上册已接入 333 条本册词汇、349 条小学复现词、10 个单元连续朗读音频和正文第 1-74 印刷页的完整教材活动页题图，Starter Unit 1 另有 186 段精校时间轴；单元题库采用 PostgreSQL 持久化任务与独立 Worker 异步补池，支持六维质量评分、双重门禁和 mastery-aware 选题 |
 | Vocabulary Personal Cards / Practice / Spelling / Word Parts | 部分实现，已新增“词根与词缀”探索入口、四工作区学习页、内置词根词缀库、拆词练习、跨设备掌握进度、本地离线降级、morphology 前端展示/降级和知识点配套练习验收；训练中可在学习提示区将单词标记为“太简单（已掌握）”，并显著降低后续训练频率 |
+| Shared Base Dictionary | 基础管线已实现；共享表、Kaikki/Wiktionary 义项筛选、wordfreq 排序、WordNet 关系、Tatoeba 例句、独立中文释义生成、版本化发布和只读检索 API 已落地；完整约 10,000 词元数据需按文档下载语料后执行构建与抽样验收 |
 | Writing Phrasebook | 基础版已实现 |
 | Expression Lab 英语表达实验室 | 已实现，支持中文表达缺口、英文草稿、好句迁移、词汇/语法目标和群聊学习线索输入；提供十类 schema 驱动内容块、局部重生成、1–3 题动态加练、确认后保存长期资产、会话恢复/删除，以及 Attempt → LearningEvent → Memory → Recommendation 学习闭环；Explore、Dashboard 辅助入口和群聊表达真实复用追踪已接通 |
 | 对话内互动 Artifact | 基础版已实现；普通用户用自然语言即可触发互动练习，内部 `binnagent-widget` HTML/CSS/JS 协议不会在生成或回传时暴露；组件运行在隔离 iframe，作答后须确认才会以自然语言消息和隐藏的结构化上下文继续对话；Markdown 图片可升级为选择、全屏查看和局部坐标标注图片板；沙箱禁止网络、存储、父页面访问和未确认业务写入 |

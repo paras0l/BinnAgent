@@ -205,6 +205,9 @@ class SandboxWidgetData(StrictModel):
     )
     height: int = Field(default=320, ge=160, le=720)
     timeout_ms: int = Field(default=5000, ge=500, le=10_000)
+    sandbox_attribute: str = Field(default="allow-scripts", max_length=100)
+    csp: str = Field(default="", max_length=2000)
+    sandbox_permissions: dict = Field(default_factory=dict)
 
 
 class BaseBlock(StrictModel):

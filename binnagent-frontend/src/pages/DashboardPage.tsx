@@ -338,7 +338,7 @@ export function DashboardPage({
         onOpenAiConversation={onOpenAiConversation}
         onOpenDailyLearning={onOpenDailyLearning}
         onOpenReadingTrack={onOpenReadingTrack}
-        learningTrack={learnerProfile?.learning_track ?? 'school'}
+        learningTrack={learnerProfile?.learning_track ?? 'reading'}
         onOpenVocabularyManager={handleOpenVocabularyManager}
         onOpenVocabularyTraining={handleOpenVocabularyTraining}
         onOpenProfile={() => setActiveWorkspace('profile')}
@@ -1051,7 +1051,7 @@ export function LearningProfileView({
   onProfileUpdate?: (patch: Partial<LearnerProfile>) => void
 }) {
   const [isLevelInfoOpen, setIsLevelInfoOpen] = useState(false)
-  const reasons = buildFocusReasons(summary, learnerProfile?.learning_track ?? 'school')
+  const reasons = buildFocusReasons(summary, learnerProfile?.learning_track ?? 'reading')
   const weaknesses = buildWeaknessList(summary, memorySummary)
   const abilityScores = buildAbilityScores(summary)
   const masteryBuckets = buildMasteryBuckets(summary)
@@ -1316,10 +1316,10 @@ function ProfileSettingsCard({
         <ProfileSelectRow
           label="学习主线"
           name="profile_learning_track"
-          value={learnerProfile?.learning_track ?? 'school'}
+          value={learnerProfile?.learning_track ?? 'reading'}
           options={LEARNING_TRACK_OPTIONS}
           placeholder="选择主线"
-          onChange={(learning_track) => onProfileUpdate({ learning_track: learning_track ?? 'school' })}
+          onChange={(learning_track) => onProfileUpdate({ learning_track: learning_track ?? 'reading' })}
         />
         <ProfileSelectRow
           label="学习目标"
