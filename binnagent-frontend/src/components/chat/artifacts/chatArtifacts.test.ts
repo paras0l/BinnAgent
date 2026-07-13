@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { parseChatArtifacts } from './chatArtifacts'
+import { parseChatArtifacts, sanitizeVisibleAssistantContent, streamingArtifactPreview } from './chatArtifacts'
 
 describe('parseChatArtifacts', () => {
   it('promotes markdown images into an image board and keeps narrative text', () => {
@@ -56,5 +56,20 @@ describe('parseChatArtifacts', () => {
       javascript: 'document.querySelector("#pick").onclick=()=>binnagent.emit("answer",{value:"apple"})',
       height: 420,
     })
+  })
+})
+
+describe('streamingArtifactPreview', () => {
+  it('hides the internal widget protocol while it is streaming', () => {
+    expect(streamingArtifactPreview([
+      '给你一道小测验。',
+      '```binnagent-widget',
+      '<button>内部代码不应显示</button>',
+    ].join('\n'))).toBe('给你一道小测验。\n\n_正在准备互动练习…_')
+  })
+
+  it('redacts the internal protocol name from visible assistant prose', () => {
+    expect(sanitizeVisibleAssistantContent('以下是一个严格只包含一个 `binnagent-widget` 代码块的回答：'))
+      .toBe('请完成下面的互动练习：')
   })
 })

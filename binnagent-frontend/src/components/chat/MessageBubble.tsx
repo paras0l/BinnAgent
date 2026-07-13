@@ -4,7 +4,7 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { XiaobingAvatar } from '@/components/ui/XiaobingAvatar'
 import { ChatArtifactRenderer } from './artifacts/ChatArtifactRenderer'
-import { parseChatArtifacts } from './artifacts/chatArtifacts'
+import { parseChatArtifacts, sanitizeVisibleAssistantContent, streamingArtifactPreview, type ChatArtifactAction } from './artifacts/chatArtifacts'
 
 interface MessageBubbleProps {
   id: string
@@ -12,7 +12,7 @@ interface MessageBubbleProps {
   content: string
   timestamp: number
   isStreaming?: boolean
-  onArtifactAction?: (prompt: string) => void
+  onArtifactAction?: (action: ChatArtifactAction) => void
 }
 
 export function MessageBubble({
@@ -25,7 +25,14 @@ export function MessageBubble({
 }: MessageBubbleProps) {
   const isUser = role === 'user'
   const parsed = useMemo(
-    () => isUser || isStreaming ? { content, artifacts: [] } : parseChatArtifacts(id, content),
+    () => isUser
+      ? { content, artifacts: [] }
+      : isStreaming
+        ? { content: streamingArtifactPreview(content), artifacts: [] }
+        : (() => {
+            const result = parseChatArtifacts(id, content)
+            return { ...result, content: sanitizeVisibleAssistantContent(result.content) }
+          })(),
     [content, id, isStreaming, isUser],
   )
   const hasArtifacts = parsed.artifacts.length > 0

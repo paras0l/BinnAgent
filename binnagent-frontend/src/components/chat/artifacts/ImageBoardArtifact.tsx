@@ -3,12 +3,12 @@ import { createPortal } from 'react-dom'
 import { Check, ChevronLeft, ChevronRight, Maximize2, MessageSquarePlus, Send, X } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { IconButton } from '@/components/ui/IconButton'
-import type { ImageBoardArtifact as ImageBoardArtifactData, ImageBoardItem } from './chatArtifacts'
+import type { ChatArtifactAction, ImageBoardArtifact as ImageBoardArtifactData, ImageBoardItem } from './chatArtifacts'
 
 interface ImageBoardArtifactProps {
   artifact: ImageBoardArtifactData
   disabled?: boolean
-  onAction: (prompt: string) => void
+  onAction: (action: ChatArtifactAction) => void
 }
 
 interface AnnotationPoint {
@@ -42,7 +42,7 @@ export const ImageBoardArtifact = memo(function ImageBoardArtifact({
 
   const attachSelected = () => {
     if (selectedItems.length === 0) return
-    onAction(selectedImagesPrompt(artifact, selectedItems))
+    onAction(selectedImagesAction(artifact, selectedItems))
   }
 
   return (
@@ -135,7 +135,7 @@ function ImageBoardViewer({
   initialIndex: number
   disabled: boolean
   onClose: () => void
-  onAction: (prompt: string) => void
+  onAction: (action: ChatArtifactAction) => void
 }) {
   const [index, setIndex] = useState(initialIndex)
   const [annotationPoint, setAnnotationPoint] = useState<AnnotationPoint | null>(null)
@@ -173,7 +173,7 @@ function ImageBoardViewer({
     event.preventDefault()
     const annotation = note.trim()
     if (!annotation || !annotationPoint || disabled) return
-    onAction(annotationPrompt(artifact, item, annotation, annotationPoint))
+    onAction(annotationAction(artifact, item, annotation, annotationPoint))
     setAnnotationPoint(null)
     setNote('')
     onClose()
@@ -267,33 +267,45 @@ function ImageBoardViewer({
   )
 }
 
-function selectedImagesPrompt(artifact: ImageBoardArtifactData, items: ImageBoardItem[]): string {
-  const references = items.map((item, index) => {
-    const source = compactSource(item.imageUrl)
-    return `${index + 1}. ${item.title}（ID: ${item.id}${source ? `，来源: ${source}` : ''}）`
-  })
-  return [
-    `我从「${artifact.title}」中选择了以下图片，请把它们作为本轮对话的视觉上下文：`,
-    ...references,
-    '请先说明你对这些选择的理解，再根据当前任务继续；涉及保存或生成新内容时先让我确认。',
-  ].join('\n')
+function selectedImagesAction(
+  artifact: ImageBoardArtifactData,
+  items: ImageBoardItem[],
+): ChatArtifactAction {
+  return {
+    message: `我从「${artifact.title}」中选择了 ${items.length} 张图片，请按这些方向继续。`,
+    context: {
+      artifactId: artifact.id,
+      artifactType: artifact.type,
+      artifactTitle: artifact.title,
+      eventType: 'images_selected',
+      payload: { items: items.map((item) => ({ id: item.id, title: item.title, source: compactSource(item.imageUrl) })) },
+    },
+  }
 }
 
-function annotationPrompt(
+function annotationAction(
   artifact: ImageBoardArtifactData,
   item: ImageBoardItem,
   annotation: string,
   point: AnnotationPoint,
-): string {
+): ChatArtifactAction {
   const source = compactSource(item.imageUrl)
-  return [
-    `我在「${artifact.title}」的图片「${item.title}」上添加了局部标注。`,
-    `图片 ID: ${item.id}`,
-    source ? `图片来源: ${source}` : '',
-    `标注位置: x=${point.x.toFixed(4)}, y=${point.y.toFixed(4)}（以图片左上角为原点的归一化坐标）`,
-    `修改要求: ${annotation}`,
-    '请把这视为针对原图该区域的修改要求；默认保留其余构图、尺寸和风格。',
-  ].filter(Boolean).join('\n')
+  return {
+    message: `我对图片「${item.title}」做了局部标注：${annotation}`,
+    context: {
+      artifactId: artifact.id,
+      artifactType: artifact.type,
+      artifactTitle: artifact.title,
+      eventType: 'image_annotated',
+      payload: {
+        imageId: item.id,
+        imageTitle: item.title,
+        source,
+        position: { x: Number(point.x.toFixed(4)), y: Number(point.y.toFixed(4)) },
+        annotation,
+      },
+    },
+  }
 }
 
 function annotationComposerPosition(point: AnnotationPoint): React.CSSProperties {

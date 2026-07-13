@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
-import type { ChatMessage, ChatSkillEvent, ConversationThread, MemorySummary } from '@/types'
+import type { ChatArtifactContext, ChatMessage, ChatSkillEvent, ConversationThread, MemorySummary } from '@/types'
 import { createClientId } from '@/utils/id'
 
 interface HistoryResponse {
@@ -175,7 +175,11 @@ export function useChat(
     }
   }, [learnerId, loadConversations, loadMemorySummary])
 
-  const sendMessage = useCallback(async (content: string, skillId?: string | null) => {
+  const sendMessage = useCallback(async (
+    content: string,
+    skillId?: string | null,
+    artifactContext?: ChatArtifactContext,
+  ) => {
     isSendingRef.current = true
     setSkillStatus('')
     const requestedSkillId = skillId ?? activeSkillId
@@ -210,6 +214,7 @@ export function useChat(
           message: content,
           thread_id: threadId,
           skill_id: requestedSkillId || undefined,
+          artifact_context: artifactContext,
         }),
         signal: controller.signal,
       })

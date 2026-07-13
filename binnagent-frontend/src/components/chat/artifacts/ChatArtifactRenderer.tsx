@@ -1,11 +1,11 @@
-import type { ChatArtifact } from './chatArtifacts'
+import type { ChatArtifact, ChatArtifactAction } from './chatArtifacts'
 import { ImageBoardArtifact } from './ImageBoardArtifact'
 import { InteractiveHtmlArtifact } from './InteractiveHtmlArtifact'
 
 interface ChatArtifactRendererProps {
   artifact: ChatArtifact
   disabled?: boolean
-  onAction: (prompt: string) => void
+  onAction: (action: ChatArtifactAction) => void
 }
 
 export function ChatArtifactRenderer({ artifact, disabled, onAction }: ChatArtifactRendererProps) {

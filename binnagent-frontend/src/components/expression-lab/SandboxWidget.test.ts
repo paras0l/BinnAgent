@@ -105,6 +105,17 @@ describe('Expression Lab sandbox policy', () => {
     expect(sanitizeSandboxScript(script)).toContain("binnagent.root.querySelector('section')")
     expect(widgetSource).toContain('Object.freeze({emit,root})')
   })
+
+  it('adds a submit fallback when generated widgets forget to emit their answer', () => {
+    const document = buildSandboxDocument(
+      sandboxBlock({ html: '<button>提交答案</button>', javascript: '' }),
+      'nonce-submit',
+    )
+
+    expect(document).toContain("emit('answer_submitted'")
+    expect(document).toContain("source:'host_submit_fallback'")
+    expect(document).toContain('lastBusinessEmit')
+  })
 })
 
 describe('Expression Lab generated renderer contract', () => {

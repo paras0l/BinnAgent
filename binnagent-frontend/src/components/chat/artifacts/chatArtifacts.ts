@@ -24,6 +24,17 @@ export interface InteractiveHtmlArtifact {
 
 export type ChatArtifact = ImageBoardArtifact | InteractiveHtmlArtifact
 
+export interface ChatArtifactAction {
+  message: string
+  context: {
+    artifactId: string
+    artifactType: ChatArtifact['type']
+    artifactTitle: string
+    eventType: string
+    payload: Record<string, unknown>
+  }
+}
+
 export interface ParsedChatArtifacts {
   content: string
   artifacts: ChatArtifact[]
@@ -95,6 +106,19 @@ export function parseChatArtifacts(messageId: string, content: string): ParsedCh
     content: contentWithoutImages.replace(/\n{3,}/gu, '\n\n').trim(),
     artifacts,
   }
+}
+
+export function streamingArtifactPreview(content: string): string {
+  const fenceIndex = content.search(/```binnagent-widget\b/iu)
+  if (fenceIndex < 0) return sanitizeVisibleAssistantContent(content)
+  const visible = content.slice(0, fenceIndex).trimEnd()
+  return sanitizeVisibleAssistantContent(`${visible}${visible ? '\n\n' : ''}_正在准备互动练习…_`)
+}
+
+export function sanitizeVisibleAssistantContent(content: string): string {
+  return content
+    .replace(/以下是一个严格只包含一个\s*`?binnagent-widget`?\s*代码块的回答[：:]?/giu, '请完成下面的互动练习：')
+    .replace(/`?binnagent-widget`?/giu, '互动组件')
 }
 
 function collectMatches(source: string, pattern: RegExp): string {

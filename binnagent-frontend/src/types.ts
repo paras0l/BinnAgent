@@ -474,6 +474,14 @@ export interface ChatMessage {
   timestamp: number
 }
 
+export interface ChatArtifactContext {
+  artifactId: string
+  artifactType: 'interactive_html' | 'image_board'
+  artifactTitle: string
+  eventType: string
+  payload: Record<string, unknown>
+}
+
 export interface ChatSkillEvent {
   name: string
   skill_id?: string | null

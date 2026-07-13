@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/Button'
 import { IconButton } from '@/components/ui/IconButton'
 import { StatusBanner } from '@/components/ui/StatusBanner'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
+import type { ChatArtifactAction } from './artifacts/chatArtifacts'
 
 interface ChatContainerProps {
   learnerId: string
@@ -136,6 +137,13 @@ export function ChatContainer({
     onDraftChange('')
     sendMessage(content, skillFocus)
   }
+  const handleArtifactAction = (action: ChatArtifactAction) => {
+    if (isLoading || isLoadingHistory) {
+      onLockedAction()
+      return
+    }
+    void sendMessage(action.message, skillFocus, action.context)
+  }
   const handleNewConversation = () =>
     guardContextChange(() => {
       startNewConversation()
@@ -237,7 +245,7 @@ export function ChatContainer({
                 content={msg.content}
                 timestamp={msg.timestamp}
                 isStreaming={isLoading && msg.role === 'assistant' && msg === messages[messages.length - 1]}
-                onArtifactAction={(prompt) => guardContextChange(() => sendMessage(prompt))}
+                onArtifactAction={handleArtifactAction}
               />
             ))
           )}

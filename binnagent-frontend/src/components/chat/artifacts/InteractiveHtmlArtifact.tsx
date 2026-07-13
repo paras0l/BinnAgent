@@ -3,12 +3,12 @@ import { AlertTriangle, Boxes, MessageSquarePlus, RefreshCw, Send, X } from 'luc
 import { SandboxWidget, type SandboxTelemetryEvent } from '@/components/expression-lab/SandboxWidget'
 import { Button } from '@/components/ui/Button'
 import type { ExpressionUiBlock } from '@/services/expressionLabApi'
-import type { InteractiveHtmlArtifact as InteractiveHtmlArtifactData } from './chatArtifacts'
+import type { ChatArtifactAction, InteractiveHtmlArtifact as InteractiveHtmlArtifactData } from './chatArtifacts'
 
 interface InteractiveHtmlArtifactProps {
   artifact: InteractiveHtmlArtifactData
   disabled?: boolean
-  onAction: (prompt: string) => void
+  onAction: (action: ChatArtifactAction) => void
 }
 
 export const InteractiveHtmlArtifact = memo(function InteractiveHtmlArtifact({
@@ -46,27 +46,31 @@ export const InteractiveHtmlArtifact = memo(function InteractiveHtmlArtifact({
 
   const requestSafeRebuild = () => {
     if (disabled || !runtimeError) return
-    onAction([
-      `对话内互动组件「${artifact.title}」的脚本被安全沙箱拦截。`,
-      `组件 ID: ${artifact.id}`,
-      `错误代码: ${runtimeError}`,
-      '请重新生成这个组件，保留相同学习目标和界面功能。',
-      'JavaScript 只能操作组件内部 DOM，并通过 binnagent.emit() 回传事件。',
-      '不要使用 fetch、XHR、WebSocket、外部资源、localStorage、sessionStorage、Cookie、parent、top、location、open、eval、Function 或动态 import。',
-      '请输出一个新的、完整的 binnagent-widget 代码块。',
-    ].join('\n'))
+    onAction({
+      message: `这个「${artifact.title}」没能正常打开，请帮我重新生成。`,
+      context: {
+        artifactId: artifact.id,
+        artifactType: artifact.type,
+        artifactTitle: artifact.title,
+        eventType: 'safe_rebuild_requested',
+        payload: { error: runtimeError },
+      },
+    })
     setRuntimeError(null)
   }
 
   const sendPendingEvent = () => {
     if (!pendingEvent || disabled) return
-    onAction([
-      `我在对话内互动组件「${artifact.title}」中完成了一次操作。`,
-      `组件 ID: ${artifact.id}`,
-      `事件类型: ${pendingEvent.type}`,
-      `事件数据: ${safeJson(pendingEvent.payload)}`,
-      '请结合当前对话解释结果并继续下一步；任何长期保存操作仍需先让我确认。',
-    ].join('\n'))
+    onAction({
+      message: naturalInteractionMessage(artifact.title, pendingEvent.payload),
+      context: {
+        artifactId: artifact.id,
+        artifactType: artifact.type,
+        artifactTitle: artifact.title,
+        eventType: pendingEvent.type,
+        payload: pendingEvent.payload,
+      },
+    })
     setPendingEvent(null)
   }
 
@@ -153,10 +157,9 @@ export const InteractiveHtmlArtifact = memo(function InteractiveHtmlArtifact({
   )
 })
 
-function safeJson(value: Record<string, unknown>): string {
-  try {
-    return JSON.stringify(value).slice(0, 4_000)
-  } catch {
-    return '{}'
-  }
+function naturalInteractionMessage(title: string, payload: Record<string, unknown>): string {
+  const answer = [payload.answer, payload.value, payload.selection, payload.choice]
+    .find((value) => typeof value === 'string' || typeof value === 'number')
+  if (answer !== undefined) return `我在「${title}」中提交了答案：${String(answer)}。请给我反馈。`
+  return `我完成了「${title}」中的操作，请结合结果继续指导我。`
 }

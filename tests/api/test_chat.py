@@ -45,6 +45,29 @@ def _scalar_one_or_none_result(value):
     return result
 
 
+def test_model_request_includes_confirmed_artifact_context_without_exposing_protocol():
+    learner_id = uuid.uuid4()
+    req = chat_api.ChatRequest(
+        learner_id=learner_id,
+        message="我提交了答案：went。请给我反馈。",
+        artifact_context={
+            "artifactTitle": "一般过去时测试",
+            "eventType": "answer",
+            "payload": {"answer": "went"},
+        },
+    )
+    thread = AgentThread(learner_id=learner_id, metadata_={})
+    thread.id = uuid.uuid4()
+
+    request = chat_api._model_request(req, thread, [])
+
+    assert request.messages[-1]["content"] == req.message
+    context_message = request.messages[-2]["content"]
+    assert "<interaction_result>" in context_message
+    assert '"answer": "went"' in context_message
+    assert "不要向用户展示组件 ID、协议名或原始 JSON" in context_message
+
+
 @pytest.fixture
 def mock_model_router():
     router = AsyncMock(spec=ModelRouter)
