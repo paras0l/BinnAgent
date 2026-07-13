@@ -9,11 +9,13 @@ export interface Learner {
 
 export interface LearnerProfile {
   learner_id: string
+  learning_track?: 'school' | 'exam' | 'general' | 'reading'
   target_exam?: string | null
   target_score?: number | null
   exam_date?: string | null
   current_level?: string | null
   daily_time_budget_minutes?: number | null
+  interest_topics?: string[]
 }
 
 export type AppTab =

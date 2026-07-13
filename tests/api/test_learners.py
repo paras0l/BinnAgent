@@ -445,11 +445,13 @@ class TestGetProfile:
         assert response.status_code == 200
         assert response.json() == {
             "learner_id": str(learner_id),
+            "learning_track": "school",
             "target_exam": None,
             "target_score": None,
             "exam_date": None,
             "current_level": None,
             "daily_time_budget_minutes": None,
+            "interest_topics": [],
         }
 
     @pytest.mark.asyncio

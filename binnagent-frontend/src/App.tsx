@@ -12,7 +12,7 @@ import type { ExpressionLabSourceSeed } from './pages/ExpressionLabPage'
 import type { ExpressionInputType } from './services/expressionLabApi'
 import type { AppTab, Learner, LearnerProfile, PronunciationWorkspace } from './types'
 
-type LearningCenterView = 'home' | 'daily-learning' | 'vocabulary' | 'vocabulary-practice' | 'profile' | 'group-signals'
+type LearningCenterView = 'home' | 'daily-learning' | 'reading' | 'vocabulary' | 'vocabulary-practice' | 'profile' | 'group-signals'
 
 type ExpressionLabReturnTo = 'explore' | 'dashboard' | 'group-signals'
 
@@ -55,6 +55,10 @@ const GrammarPage = lazy(() =>
 
 const KnowledgeBasePage = lazy(() =>
   import('./pages/KnowledgeBasePage').then((module) => ({ default: module.KnowledgeBasePage }))
+)
+
+const ReadingWorkshopPage = lazy(() =>
+  import('./pages/ReadingWorkshopPage').then((module) => ({ default: module.ReadingWorkshopPage }))
 )
 
 const LoginPage = lazy(() =>
@@ -248,11 +252,13 @@ function App() {
     const previousReadiness = learnerProfileReadiness
     const nextProfile: LearnerProfile = {
       learner_id: currentLearner.id,
+      learning_track: learnerProfile?.learning_track ?? 'school',
       target_exam: learnerProfile?.target_exam ?? null,
       target_score: learnerProfile?.target_score ?? null,
       exam_date: learnerProfile?.exam_date ?? null,
       current_level: learnerProfile?.current_level ?? null,
       daily_time_budget_minutes: learnerProfile?.daily_time_budget_minutes ?? null,
+      interest_topics: learnerProfile?.interest_topics ?? [],
       ...patch,
     }
     setLearnerProfile(nextProfile)
@@ -572,6 +578,13 @@ function App() {
                 onStartVocabularyPractice={openVocabularyPractice}
                 onOpenPronunciationWorkspace={openPronunciationWorkspace}
               />
+            ) : learningCenterView === 'reading' ? (
+              <ReadingWorkshopPage
+                learner={currentLearner}
+                learnerProfile={learnerProfile}
+                readingTrackMode
+                onBack={() => setLearningCenterView('home')}
+              />
             ) : (
               <DashboardPage
                 key={learningCenterView === 'vocabulary' || learningCenterView === 'profile' || learningCenterView === 'group-signals' ? learningCenterView : 'home'}
@@ -585,6 +598,7 @@ function App() {
                 }
                 onOpenAiConversation={() => handleTabChange('chat')}
                 onOpenDailyLearning={() => setLearningCenterView('daily-learning')}
+                onOpenReadingTrack={() => setLearningCenterView('reading')}
                 onOpenGroupLearningSettings={() => setIsGroupLearningSettingsOpen(true)}
                 onOpenExpressionLab={(options) => handleOpenExpressionLab({ ...options, returnTo: options.sourceSignal ? 'group-signals' : 'dashboard' })}
                 onProfileUpdate={(patch) => void updateLearnerProfile(patch)}

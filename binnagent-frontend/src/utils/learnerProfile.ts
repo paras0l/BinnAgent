@@ -1,6 +1,13 @@
 import type { LearnerProfile } from '@/types'
 
-export type LearningTrack = 'school' | 'exam' | 'general'
+export type LearningTrack = 'school' | 'exam' | 'general' | 'reading'
+
+export const LEARNING_TRACK_OPTIONS = [
+  { value: 'school', label: '同步教材', description: '按当前教材单元系统推进。' },
+  { value: 'reading', label: '个性化阅读', description: '用兴趣短文带动词汇、语法、理解与排盲。' },
+  { value: 'exam', label: '考试备考', description: '围绕目标考试训练题型与策略。' },
+  { value: 'general', label: '通用英语', description: '综合提升交流与日常英语能力。' },
+] as const
 
 export const LEARNING_GOAL_OPTIONS = [
   { value: 'zhongkao', label: '通过中考' },
@@ -53,8 +60,9 @@ export function learningTrackForGoal(value?: string | null): LearningTrack {
   return 'general'
 }
 
-export function learningTrackLabel(value?: string | null) {
-  const track = learningTrackForGoal(value)
+export function learningTrackLabel(value?: string | null, explicitTrack?: LearningTrack | null) {
+  const track = explicitTrack ?? learningTrackForGoal(value)
+  if (track === 'reading') return '个性化阅读'
   if (track === 'school') return '同步教材学习'
   if (track === 'exam') return '考试备考'
   return '通用英语提升'

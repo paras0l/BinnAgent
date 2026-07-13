@@ -37,6 +37,19 @@ class ReadingTitleSuggestionResponse(BaseModel):
     sentence_count: int
 
 
+class ReadingSelectionTranslationRequest(BaseModel):
+    selection: str = Field(min_length=1, max_length=200)
+    sentence: str = Field(min_length=1, max_length=1500)
+    learner_level: str | None = Field(default=None, max_length=30)
+
+
+class ReadingSelectionTranslationResponse(BaseModel):
+    selection: str
+    translation: str
+    context_note: str
+    confidence: float
+
+
 class ReadingMaterialHistoryRequest(BaseModel):
     title: str | None = Field(default=None, max_length=200)
     text: str = Field(min_length=1, max_length=12000)
@@ -48,11 +61,12 @@ class ReadingMaterialHistoryRequest(BaseModel):
 
 
 class ReadingMaterialGenerationRequest(BaseModel):
-    curriculum_node_id: uuid.UUID
+    curriculum_node_id: uuid.UUID | None = None
     material_type: ReadingMaterialType = "passage"
     length: ReadingMaterialLength = "short"
     goal: ReadingGoal = "mixed"
     level: ReadingLevel | None = None
+    topic: str | None = Field(default=None, max_length=120)
 
 
 class ReadingMaterialCompleteRequest(BaseModel):
@@ -61,6 +75,10 @@ class ReadingMaterialCompleteRequest(BaseModel):
     notes: str | None = Field(default=None, max_length=2000)
     selected_sentence_count: int = Field(default=0, ge=0, le=500)
     grammar_topic_count: int = Field(default=0, ge=0, le=100)
+    unknown_vocabulary: list[str] = Field(default_factory=list, max_length=50)
+    grammar_blind_spots: list[str] = Field(default_factory=list, max_length=30)
+    correction_notes: list[str] = Field(default_factory=list, max_length=30)
+    perceived_difficulty: Literal["too_easy", "right", "challenging", "too_hard"] | None = None
 
 
 class ReadingMaterialHistoryResponse(BaseModel):
@@ -131,6 +149,47 @@ _STOP_WORDS = {
     "with",
     "would",
 }
+
+
+@router.post(
+    "/api/learners/{learner_id}/reading-workshop/selection-translation",
+    response_model=ReadingSelectionTranslationResponse,
+)
+async def translate_reading_selection(
+    learner_id: uuid.UUID,
+    body: ReadingSelectionTranslationRequest,
+    db: AsyncSession = Depends(get_db_session),
+    model_router: ModelRouter = Depends(get_model_router),
+) -> ReadingSelectionTranslationResponse:
+    await _ensure_learner_exists(db, learner_id)
+    selection = " ".join(body.selection.split())
+    sentence = " ".join(body.sentence.split())
+    if selection.lower() not in sentence.lower():
+        raise HTTPException(status_code=422, detail="Selection must appear in the sentence")
+    result = await PromptExecutor(db=db, model_router=model_router).execute(
+        prompt_id="reading.selection_translation",
+        variables={
+            "selection": selection,
+            "sentence": sentence,
+            "learner_level": body.learner_level or "unknown",
+        },
+        context=PromptExecutionContext(
+            learner_id=learner_id,
+            source_module="api.reading",
+            task_id="selection_translation",
+            target_type="reading_selection",
+            target_id=hashlib.sha256(f"{sentence}:{selection}".encode()).hexdigest()[:24],
+        ),
+    )
+    if result.decision != "accepted" or not result.validated_output:
+        raise HTTPException(status_code=502, detail="Selection translation failed schema validation")
+    payload = result.validated_output
+    return ReadingSelectionTranslationResponse(
+        selection=selection,
+        translation=str(payload["translation"]),
+        context_note=str(payload["context_note"]),
+        confidence=float(payload["confidence"]),
+    )
 
 
 @router.post("/api/reading-workshop/title-suggestion", response_model=ReadingTitleSuggestionResponse)
@@ -239,28 +298,36 @@ async def generate_reading_material(
     model_router: ModelRouter = Depends(get_model_router),
 ) -> ReadingMaterialGenerationResponse:
     await _ensure_learner_exists(db, learner_id)
-    node, source = await _get_accessible_curriculum_node(db, learner_id, body.curriculum_node_id)
-    points = await _unit_points(db, node)
-    profile = await _learner_profile(db, learner_id)
-    level = body.level or _reading_level_from_profile(profile)
-    variables = _generation_prompt_variables(
-        learner_id=learner_id,
-        profile=profile,
-        source=source,
-        node=node,
-        points=points,
-        material_type=body.material_type,
-        length=body.length,
-        level=level,
-    )
+    node: CurriculumNode | None = None
+    source: KnowledgeSource | None = None
+    if body.curriculum_node_id is not None:
+        node, source = await _get_accessible_curriculum_node(db, learner_id, body.curriculum_node_id)
+        points = await _unit_points(db, node)
+        profile = await _learner_profile(db, learner_id)
+        level = body.level or _reading_level_from_profile(profile)
+        variables = _generation_prompt_variables(
+            learner_id=learner_id, profile=profile, source=source, node=node, points=points,
+            material_type=body.material_type, length=body.length, level=level,
+        )
+    else:
+        profile = await _learner_profile(db, learner_id)
+        level = body.level or _reading_level_from_profile(profile)
+        variables = _personalized_generation_prompt_variables(
+            learner_id=learner_id,
+            profile=profile,
+            material_type=body.material_type,
+            length=body.length,
+            level=level,
+            topic=body.topic,
+        )
     result = await PromptExecutor(db=db, model_router=model_router).execute(
         prompt_id="reading.material_generation",
         variables=variables,
         context=PromptExecutionContext(
             learner_id=learner_id,
             source_module="api.reading",
-            target_type="curriculum_node",
-            target_id=node.id,
+            target_type="curriculum_node" if node else "learner_reading_track",
+            target_id=node.id if node else learner_id,
             metadata={
                 "material_type": body.material_type,
                 "length": body.length,
@@ -296,10 +363,12 @@ async def generate_reading_material(
         "prompt_execution_record_id": str(result.execution_record_id) if result.execution_record_id else None,
         "schema_validation_status": result.schema_validation_status,
         "repair_used": result.repair_used,
-        "source_id": str(source.id),
-        "source_title": source.title,
-        "unit_title": node.title,
-        "unit_subtitle": node.subtitle,
+        "source_id": str(source.id) if source else None,
+        "source_title": source.title if source else "个性化阅读主线",
+        "unit_title": node.title if node else None,
+        "unit_subtitle": node.subtitle if node else None,
+        "learning_track": "school" if node else "reading",
+        "requested_topic": body.topic,
         "length": body.length,
         "theme": payload.get("theme"),
         "grammar_focus": payload.get("grammar_focus") or [],
@@ -310,7 +379,7 @@ async def generate_reading_material(
     }
     material = ReadingMaterialHistory(
         learner_id=learner_id,
-        curriculum_node_id=node.id,
+        curriculum_node_id=node.id if node else None,
         title=str(payload["title"]).strip()[:200],
         text=stored_text,
         text_hash=_text_hash(normalized_text),
@@ -375,6 +444,10 @@ async def complete_reading_material(
                 "material_type": material.material_type,
                 "curriculum_node_id": str(material.curriculum_node_id) if material.curriculum_node_id else None,
                 "notes": body.notes,
+                "unknown_vocabulary": body.unknown_vocabulary,
+                "grammar_blind_spots": body.grammar_blind_spots,
+                "correction_notes": body.correction_notes,
+                "perceived_difficulty": body.perceived_difficulty,
             },
             source_context={
                 "source": material.source,
@@ -558,6 +631,46 @@ def _generation_prompt_variables(
         "grammar_focus": [_point_focus_payload(point) for point in grammar_points[:8]],
         "vocabulary_focus": [_point_focus_payload(point) for point in vocabulary_points[:16]],
         "theme_focus": [_point_focus_payload(point) for point in text_notes[:8]],
+    }
+
+
+def _personalized_generation_prompt_variables(
+    *,
+    learner_id: uuid.UUID,
+    profile: LearnerProfile | None,
+    material_type: ReadingMaterialType,
+    length: ReadingMaterialLength,
+    level: ReadingLevel,
+    topic: str | None,
+) -> dict[str, Any]:
+    interests = profile.interest_topics if profile and isinstance(profile.interest_topics, list) else []
+    weak_skills = profile.weak_skills if profile and isinstance(profile.weak_skills, list) else []
+    selected_topic = topic.strip() if topic and topic.strip() else (interests[0] if interests else "everyday discovery")
+    return {
+        "material_type": material_type,
+        "length_label": "120-180 words" if length == "short" else "260-420 words",
+        "learner_profile": {
+            "learner_id": str(learner_id),
+            "current_level": profile.current_level if profile else None,
+            "target_exam": profile.target_exam if profile else None,
+            "learning_track": "reading",
+            "interest_topics": interests,
+            "weak_skills": weak_skills,
+            "daily_time_budget_minutes": profile.daily_time_budget_minutes if profile else None,
+            "reading_level": level,
+        },
+        "unit_context": {
+            "source_title": "BinnAgent personalized reading track",
+            "unit_title": selected_topic,
+            "objectives": [
+                "expand useful vocabulary through context",
+                "notice one or two reusable grammar patterns",
+                "check comprehension and expose blind spots",
+            ],
+        },
+        "grammar_focus": weak_skills[:4],
+        "vocabulary_focus": [],
+        "theme_focus": [selected_topic, *interests[:4]],
     }
 
 

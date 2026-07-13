@@ -45,6 +45,7 @@ import {
 import {
   CURRENT_LEVEL_OPTIONS,
   LEARNING_GOAL_OPTIONS,
+  LEARNING_TRACK_OPTIONS,
   LEVEL_STANDARD_NOTES,
   currentLevelLabel,
   learningTrackLabel,
@@ -89,6 +90,7 @@ interface DashboardPageProps {
   initialVocabularyListOpen?: boolean
   onOpenAiConversation: () => void
   onOpenDailyLearning: () => void
+  onOpenReadingTrack: () => void
   onOpenGroupLearningSettings: () => void
   onOpenExpressionLab: (options: { sourceSignal?: ExpressionLabSourceSeed }) => void
   onProfileUpdate?: (patch: Partial<LearnerProfile>) => void
@@ -102,6 +104,7 @@ export function DashboardPage({
   initialWorkspace = 'home',
   onOpenAiConversation,
   onOpenDailyLearning,
+  onOpenReadingTrack,
   onOpenGroupLearningSettings,
   onOpenExpressionLab,
   onProfileUpdate,
@@ -334,6 +337,8 @@ export function DashboardPage({
         summary={summary}
         onOpenAiConversation={onOpenAiConversation}
         onOpenDailyLearning={onOpenDailyLearning}
+        onOpenReadingTrack={onOpenReadingTrack}
+        learningTrack={learnerProfile?.learning_track ?? 'school'}
         onOpenVocabularyManager={handleOpenVocabularyManager}
         onOpenVocabularyTraining={handleOpenVocabularyTraining}
         onOpenProfile={() => setActiveWorkspace('profile')}
@@ -602,6 +607,8 @@ function LearningCenterHome({
   groupLearningSummary,
   onOpenAiConversation,
   onOpenDailyLearning,
+  onOpenReadingTrack,
+  learningTrack,
   onOpenVocabularyManager,
   onOpenVocabularyTraining,
   onOpenProfile,
@@ -615,6 +622,8 @@ function LearningCenterHome({
   groupLearningSummary: GroupLearningCardSummary
   onOpenAiConversation: () => void
   onOpenDailyLearning: () => void
+  onOpenReadingTrack: () => void
+  learningTrack: LearnerProfile['learning_track']
   onOpenVocabularyManager: () => void
   onOpenVocabularyTraining: () => void
   onOpenProfile: () => void
@@ -625,9 +634,11 @@ function LearningCenterHome({
 }) {
   const todayPercent = toPercent(summary.today_goal.completed, summary.today_goal.total)
   const dueCount = summary.stats.today_reviews
-  const focusReasons = buildFocusReasons(summary)
-  const nextActionLabel = dueCount > 0 ? `先复习 ${dueCount} 个词` : '开始今天的教材课'
-  const routeStatus = todayPercent >= 100 ? '今日任务已收口' : dueCount > 0 ? '先清复习，再进教材' : '可以直接进入教材'
+  const focusReasons = buildFocusReasons(summary, learningTrack)
+  const isReadingTrack = learningTrack === 'reading'
+  const nextActionLabel = dueCount > 0 ? `先复习 ${dueCount} 个词` : isReadingTrack ? '生成今天的个性化阅读' : '开始今天的教材课'
+  const routeStatus = todayPercent >= 100 ? '今日任务已收口' : dueCount > 0 ? '先清复习，再进主线' : isReadingTrack ? '可以开始今日阅读' : '可以直接进入教材'
+  const openMainTrack = isReadingTrack ? onOpenReadingTrack : onOpenDailyLearning
 
   return (
     <PageShell>
@@ -646,7 +657,9 @@ function LearningCenterHome({
               {learnerName}，今天从这里开始
             </h1>
             <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-500">
-              先完成当前最该做的一步，再继续教材。系统会按复习、学习、检查题、AI 对话的顺序带你往前走。
+              {isReadingTrack
+                ? '今天从一篇刚好够得着的短文开始。读完再处理生词、语法盲点和理解偏差，下一篇会据此调整。'
+                : '先完成当前最该做的一步，再继续教材。系统会按复习、学习、检查题、AI 对话的顺序带你往前走。'}
             </p>
           </div>
           <div className="rounded-2xl border border-white/80 bg-white/85 p-4 shadow-[0_10px_30px_rgba(15,23,42,0.08)] backdrop-blur">
@@ -659,12 +672,12 @@ function LearningCenterHome({
             </div>
             <ProgressBar value={todayPercent} className="mt-4 bg-slate-100" />
             <div className="mt-4 grid gap-2">
-              <Button className="justify-between shadow-[0_10px_24px_rgba(99,102,241,0.22)]" onClick={dueCount > 0 ? () => onStartVocabularyPractice('review') : onOpenDailyLearning}>
+              <Button className="justify-between shadow-[0_10px_24px_rgba(99,102,241,0.22)]" onClick={dueCount > 0 ? () => onStartVocabularyPractice('review') : openMainTrack}>
                 {nextActionLabel}<ArrowRight className="size-4" />
               </Button>
               {dueCount > 0 ? (
-                <Button variant="secondary" className="justify-between" onClick={onOpenDailyLearning}>
-                  开始今天的教材课<ArrowRight className="size-4" />
+                <Button variant="secondary" className="justify-between" onClick={openMainTrack}>
+                  {isReadingTrack ? '开始今天的个性化阅读' : '开始今天的教材课'}<ArrowRight className="size-4" />
                 </Button>
               ) : null}
             </div>
@@ -682,8 +695,10 @@ function LearningCenterHome({
         <TodayLearningFlow
           reasons={focusReasons}
           summary={summary}
+          learningTrack={learningTrack}
           onOpenAiConversation={onOpenAiConversation}
           onOpenDailyLearning={onOpenDailyLearning}
+          onOpenReadingTrack={onOpenReadingTrack}
           onStartVocabularyPractice={onStartVocabularyPractice}
         />
         <LearningSideRail
@@ -702,19 +717,24 @@ function LearningCenterHome({
 }
 
 function TodayLearningFlow({
+  learningTrack,
   reasons,
   summary,
   onOpenAiConversation,
   onOpenDailyLearning,
+  onOpenReadingTrack,
   onStartVocabularyPractice,
 }: {
+  learningTrack: LearnerProfile['learning_track']
   reasons: string[]
   summary: DashboardSummary
   onOpenAiConversation: () => void
   onOpenDailyLearning: () => void
+  onOpenReadingTrack: () => void
   onStartVocabularyPractice: (mode?: VocabularyPracticeMode) => void
 }) {
-  const steps = buildTodaySteps(summary)
+  const isReadingTrack = learningTrack === 'reading'
+  const steps = buildTodaySteps(summary, learningTrack)
   return (
     <section className="h-full rounded-[1.5rem] border border-slate-200/80 bg-white/84 p-5 shadow-[0_12px_34px_rgba(51,65,85,0.045)] backdrop-blur-sm sm:p-6">
       <div>
@@ -725,7 +745,9 @@ function TodayLearningFlow({
           </p>
           <h2 className="mt-2 text-2xl font-black text-slate-950">按顺序完成，不用挑入口</h2>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
-            建议 20-25 分钟。按复习、教材、检查题、AI 对话推进，今天只完成一组清晰任务。
+            {isReadingTrack
+              ? '建议 20-25 分钟。按复习、泛读、精读排盲、AI 迁移表达推进。'
+              : '建议 20-25 分钟。按复习、教材、检查题、AI 对话推进，今天只完成一组清晰任务。'}
           </p>
         </div>
       </div>
@@ -740,7 +762,9 @@ function TodayLearningFlow({
                 ? () => onStartVocabularyPractice('review')
                 : step.action === 'chat'
                   ? onOpenAiConversation
-                  : onOpenDailyLearning
+                  : step.action === 'reading'
+                    ? onOpenReadingTrack
+                    : onOpenDailyLearning
             }
             className={`group grid grid-cols-[42px_minmax(0,1fr)_auto] items-center gap-3 rounded-xl px-3 py-3.5 text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-primary ${
               step.state === 'done'
@@ -1027,7 +1051,7 @@ export function LearningProfileView({
   onProfileUpdate?: (patch: Partial<LearnerProfile>) => void
 }) {
   const [isLevelInfoOpen, setIsLevelInfoOpen] = useState(false)
-  const reasons = buildFocusReasons(summary)
+  const reasons = buildFocusReasons(summary, learnerProfile?.learning_track ?? 'school')
   const weaknesses = buildWeaknessList(summary, memorySummary)
   const abilityScores = buildAbilityScores(summary)
   const masteryBuckets = buildMasteryBuckets(summary)
@@ -1278,7 +1302,7 @@ function ProfileSettingsCard({
             目标：{learningGoalLabel(learnerProfile?.target_exam)}
           </span>
           <span className="rounded-lg bg-indigo-50 px-2.5 py-1 text-indigo-700">
-            主线：{learningTrackLabel(learnerProfile?.target_exam)}
+            主线：{learningTrackLabel(learnerProfile?.target_exam, learnerProfile?.learning_track)}
           </span>
           <span className="rounded-lg bg-slate-100 px-2.5 py-1">
             水平：{currentLevelLabel(learnerProfile?.current_level)}
@@ -1289,6 +1313,14 @@ function ProfileSettingsCard({
         这两项会进入用户画像，后续语法、词汇、写作和对话 prompt 会按目标和当前水平调整。
       </p>
       <div className="mt-4 grid gap-4 lg:grid-cols-2">
+        <ProfileSelectRow
+          label="学习主线"
+          name="profile_learning_track"
+          value={learnerProfile?.learning_track ?? 'school'}
+          options={LEARNING_TRACK_OPTIONS}
+          placeholder="选择主线"
+          onChange={(learning_track) => onProfileUpdate({ learning_track: learning_track ?? 'school' })}
+        />
         <ProfileSelectRow
           label="学习目标"
           name="profile_learning_goal"
@@ -1955,12 +1987,19 @@ function groupLearningCardCopy(summary: GroupLearningCardSummary) {
   return statusCopy[summary.state]
 }
 
-function buildFocusReasons(summary: DashboardSummary) {
+function buildFocusReasons(summary: DashboardSummary, learningTrack: LearnerProfile['learning_track']) {
   const reasons = []
+  const isReadingTrack = learningTrack === 'reading'
   if (summary.stats.today_reviews > 0) reasons.push(`今天有 ${summary.stats.today_reviews} 个词汇到期，需要先主动回忆。`)
   if (summary.error_patterns[0]) reasons.push(`${summary.error_patterns[0].name} 最近出现 ${summary.error_patterns[0].count} 次，适合安排短练习。`)
-  if (summary.today_goal.completed < summary.today_goal.total) reasons.push(`今日目标还剩 ${summary.today_goal.total - summary.today_goal.completed} 项，适合继续教材主线。`)
-  return reasons.length > 0 ? reasons : ['今天没有明显积压任务，可以用一节 10 分钟教材练习建立学习节奏。']
+  if (summary.today_goal.completed < summary.today_goal.total) {
+    reasons.push(isReadingTrack
+      ? `今日目标还剩 ${summary.today_goal.total - summary.today_goal.completed} 项，适合完成一篇个性化阅读。`
+      : `今日目标还剩 ${summary.today_goal.total - summary.today_goal.completed} 项，适合继续教材主线。`)
+  }
+  return reasons.length > 0
+    ? reasons
+    : [isReadingTrack ? '今天没有明显积压任务，可以从一篇感兴趣的短文开始。' : '今天没有明显积压任务，可以用一节 10 分钟教材练习建立学习节奏。']
 }
 
 function ProgressBar({ value, className = '' }: { value: number; className?: string }) {

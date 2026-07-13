@@ -104,6 +104,7 @@ http://localhost:5176，可在 Learners / Recent Episodes 中直接选择 learne
 - [13. Current Scope and Status](docs/architecture/13-current-scope-and-status.md)
 - [14. Expression Lab](docs/architecture/14-expression-lab.md)
 - [15. Dynamic Tool Registry, Discovery & Injection](docs/architecture/15-dynamic-tool-registry-discovery-injection.md)
+- [16. Reading-led Learning Track](docs/architecture/16-reading-led-learning-track.md)
 - [Document Parsing Pipeline](docs/architecture/document-parsing-pipeline.md)
 - [LangGraph Runtime Audit](docs/architecture/langgraph-runtime-audit.md)
 - [Verification Runtime Audit](docs/architecture/verification-runtime-audit.md)
@@ -133,6 +134,7 @@ http://localhost:5176，可在 Learners / Recent Episodes 中直接选择 learne
 | 能力 | 状态 |
 |------|------|
 | Chat / Memory / Dashboard | 部分实现，Memory v2 已落地 Retain / Recall / Reflect、LearningEpisode、LearnerModelMemory、TeachingStrategyMemory；普通学习端只展示学习状态摘要，Memory Center 已移入 Dev Console |
+| Reading-led Learning Track | 基础版已实现；学习者可从画像自由切换到个性化阅读主线，Dashboard 会将唯一主动作改为今日阅读；短文按当前水平、兴趣、薄弱点与时间预算生成，并通过泛读、精读、纠错复盘把阅读证据写回 Memory；阅读工作台内置可收缩的上下文助手，可携带当前材料、选句、划词与笔记持续提问 |
 | 宠物精灵通知 | 已实现，小冰接管全局 Toast 消息，支持按重要性抢占与配色、重复消息合并、七套统一视觉锚点的高清状态原画、观察/挥手等连续微动作、可调静置动作频率、贴边偷看、记忆变更晶石发光、任务完成庆祝、长耗时陪伴反馈、协作式文案、惯性拖动与跨窗口尺寸位置回收、点击/键盘互动、系统减少动态偏好、功能页首次介绍，以及用户菜单中的精灵设置 |
 | 教材 Knowledge Base / RAG / Exercises | 部分实现，作为冷启动知识来源；已支持 split public textbook pack v2、长沙市七年级人教新目标 2024 版上下册公共目录、UnitLearningWorkspace、多教材切换、文档解析/校对、统一 ExerciseItem / ExerciseAttempt 与单元阅读语感材料；2024 上册已接入 333 条本册词汇、349 条小学复现词、10 个单元连续朗读音频和正文第 1-74 印刷页的完整教材活动页题图，Starter Unit 1 另有 186 段精校时间轴；单元题库采用 PostgreSQL 持久化任务与独立 Worker 异步补池，支持六维质量评分、双重门禁和 mastery-aware 选题 |
 | Vocabulary Personal Cards / Practice / Spelling / Word Parts | 部分实现，已新增“词根与词缀”探索入口、四工作区学习页、内置词根词缀库、拆词练习、跨设备掌握进度、本地离线降级、morphology 前端展示/降级和知识点配套练习验收；训练中可在学习提示区将单词标记为“太简单（已掌握）”，并显著降低后续训练频率 |

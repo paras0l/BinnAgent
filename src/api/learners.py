@@ -1,7 +1,7 @@
 import hmac
 import uuid
 from datetime import date
-from typing import Optional
+from typing import Literal, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -70,11 +70,13 @@ class BindLearnerEmailRequest(LookupLearnersRequest):
 
 
 class CreateProfileRequest(BaseModel):
+    learning_track: Literal["school", "exam", "general", "reading"] = "school"
     target_exam: Optional[str] = Field(default=None, max_length=50)
     target_score: Optional[int] = Field(default=None, ge=0, le=710)
     exam_date: Optional[date] = None
     current_level: Optional[str] = Field(default=None, max_length=20)
     daily_time_budget_minutes: Optional[int] = Field(default=None, ge=1, le=600)
+    interest_topics: list[str] = Field(default_factory=list, max_length=20)
 
     @field_validator("target_exam", "current_level")
     @classmethod
@@ -113,11 +115,23 @@ class ProfileResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     learner_id: uuid.UUID
+    learning_track: str = "school"
     target_exam: Optional[str] = None
     target_score: Optional[int] = None
     exam_date: Optional[date] = None
     current_level: Optional[str] = None
     daily_time_budget_minutes: Optional[int] = None
+    interest_topics: list[str] = Field(default_factory=list)
+
+    @field_validator("learning_track", mode="before")
+    @classmethod
+    def default_learning_track(cls, value: object) -> str:
+        return value if isinstance(value, str) and value else "school"
+
+    @field_validator("interest_topics", mode="before")
+    @classmethod
+    def default_interest_topics(cls, value: object) -> list[str]:
+        return value if isinstance(value, list) else []
 
 
 class ProfileReadinessResponse(BaseModel):
@@ -288,11 +302,13 @@ async def create_profile(
 
     profile = LearnerProfile(
         learner_id=learner_id,
+        learning_track=body.learning_track,
         target_exam=body.target_exam,
         target_score=body.target_score,
         exam_date=body.exam_date,
         current_level=body.current_level,
         daily_time_budget_minutes=body.daily_time_budget_minutes,
+        interest_topics=body.interest_topics,
     )
     db.add(profile)
     await db.flush()
@@ -318,10 +334,12 @@ async def upsert_profile(
         db.add(profile)
 
     profile.target_exam = body.target_exam
+    profile.learning_track = body.learning_track
     profile.target_score = body.target_score
     profile.exam_date = body.exam_date
     profile.current_level = body.current_level
     profile.daily_time_budget_minutes = body.daily_time_budget_minutes
+    profile.interest_topics = body.interest_topics
     await db.flush()
     await db.refresh(profile)
     return profile

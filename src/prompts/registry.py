@@ -300,6 +300,31 @@ prompt_registry.register(
         output_schema="ReadingMaterialGenerationOutput",
         model_policy={"default_model": "ollama_utility", "temperature": 0.4, "max_tokens": 1800},
         eval_set="evals/prompts/reading_material_generation_v1.jsonl",
+        status="deprecated",
+    )
+)
+prompt_registry.register(
+    PromptMetadata(
+        id="reading.selection_translation",
+        version="v1",
+        owner="reading",
+        purpose="结合原句语境把学习者在阅读中划选的英语单词或短语翻译为中文",
+        template_path="versions/reading.selection_translation.v1.md",
+        output_schema="ReadingSelectionTranslationOutput",
+        model_policy={"default_model": "ollama_utility", "temperature": 0.1, "max_tokens": 500},
+        eval_set="evals/prompts/reading_selection_translation_v1.jsonl",
+    )
+)
+prompt_registry.register(
+    PromptMetadata(
+        id="reading.material_generation",
+        version="v2",
+        owner="reading",
+        purpose="按教材或自由阅读主线的目标、兴趣、薄弱点与水平生成可泛读后精读的个性化材料",
+        template_path="versions/reading.material_generation.v2.md",
+        output_schema="ReadingMaterialGenerationOutput",
+        model_policy={"default_model": "ollama_utility", "temperature": 0.4, "max_tokens": 1800},
+        eval_set="evals/prompts/reading_material_generation_v2.jsonl",
     )
 )
 prompt_registry.register(

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useId, useMemo, useState } from 'react'
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
 import {
   ArrowLeft,
   BookOpenCheck,
@@ -9,18 +9,25 @@ import {
   Gauge,
   History,
   Highlighter,
+  Languages,
   Layers3,
   ListChecks,
+  LoaderCircle,
+  MessageCircle,
+  PanelLeftClose,
   PanelLeftOpen,
+  PanelRightClose,
+  PanelRightOpen,
   PencilLine,
   RotateCw,
   Save,
+  Send,
   SearchCheck,
   Timer,
 } from 'lucide-react'
 import { FeatureHero } from '@/components/layout/FeatureHero'
 import { PageShell } from '@/components/layout/PageShell'
-import { WorkspaceTabs, type WorkspaceTab } from '@/components/layout/WorkspaceTabs'
+import type { WorkspaceTab } from '@/components/layout/WorkspaceTabs'
 import { ExerciseBlock } from '@/components/exercise/ExerciseBlock'
 import { Button } from '@/components/ui/Button'
 import { FormField } from '@/components/ui/FormField'
@@ -51,9 +58,12 @@ import {
   type ReadingTrainingGoal,
   type ReadingWorkspace,
 } from '@/data/readingWorkshop'
-import type { Learner } from '@/types'
+import type { Learner, LearnerProfile } from '@/types'
 import type { ExerciseTarget } from '@/types/exercises'
 import { GrammarPage } from '@/pages/GrammarPage'
+import { buildReadingCoachContext } from '@/utils/readingCoachContext'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 
 interface ReadingWorkshopPageProps {
   learner: Learner
@@ -61,6 +71,8 @@ interface ReadingWorkshopPageProps {
   initialMaterial?: ReadingMaterial
   initialMaterialId?: string | null
   initialSourceLabel?: string | null
+  learnerProfile?: LearnerProfile | null
+  readingTrackMode?: boolean
 }
 
 interface ExtensiveNotes {
@@ -81,6 +93,7 @@ type TitleSuggestionStatus = 'idle' | 'checking' | 'suggested' | 'incomplete' | 
 type MaterialHistoryStatus = 'idle' | 'loading' | 'ready' | 'error'
 type MaterialSaveStatus = 'idle' | 'saving' | 'saved' | 'error'
 type MaterialCompleteStatus = 'idle' | 'saving' | 'completed' | 'error'
+type ReadingCoachMessage = { id: string; role: 'user' | 'assistant'; content: string }
 
 const SAMPLE_TEXT = `Many students believe that reading faster simply means moving their eyes quickly across a page. However, effective readers do more than race through words. They first notice the title, predict the topic, and look for sentences that show the writer's main point. When a sentence becomes difficult, they slow down, find the main verb, and separate extra information from the core meaning.`
 
@@ -124,6 +137,8 @@ export function ReadingWorkshopPage({
   initialMaterial,
   initialMaterialId = null,
   initialSourceLabel = null,
+  learnerProfile,
+  readingTrackMode = false,
 }: ReadingWorkshopPageProps) {
   const hasInitialMaterial = Boolean(initialMaterial?.text.trim())
   const [workspace, setWorkspace] = useState<ReadingWorkspace>('input')
@@ -150,6 +165,16 @@ export function ReadingWorkshopPage({
   const [selectedGrammarOptionIds, setSelectedGrammarOptionIds] = useState<string[]>([])
   const [openedGrammarTopics, setOpenedGrammarTopics] = useState<string[]>([])
   const [grammarTopic, setGrammarTopic] = useState<string | null>(null)
+  const [generationTopic, setGenerationTopic] = useState(learnerProfile?.interest_topics?.[0] ?? '')
+  const [generationStatus, setGenerationStatus] = useState<'idle' | 'generating' | 'error'>('idle')
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
+  const [isCoachCollapsed, setIsCoachCollapsed] = useState(false)
+  const [coachThreadId, setCoachThreadId] = useState<string | null>(null)
+  const [coachMessages, setCoachMessages] = useState<ReadingCoachMessage[]>([])
+  const [coachDraft, setCoachDraft] = useState('')
+  const [coachStatus, setCoachStatus] = useState<'idle' | 'sending' | 'error'>('idle')
+  const [activeTextSelection, setActiveTextSelection] = useState<string | null>(null)
+  const readingTimeBudget = learnerProfile?.daily_time_budget_minutes ?? 15
 
   const sentences = useMemo(() => splitReadingSentences(material.text), [material.text])
   const keywordCandidates = useMemo(() => buildKeywordCandidates(material.text), [material.text])
@@ -178,6 +203,68 @@ export function ReadingWorkshopPage({
     [sentences, visitedSentenceIds]
   )
   const canUseMaterial = material.text.trim().length > 0
+
+  const askReadingCoach = useCallback(async () => {
+    const message = coachDraft.trim()
+    if (!message || coachStatus === 'sending') return
+
+    const userMessage: ReadingCoachMessage = {
+      id: `reading-coach-user-${Date.now()}`,
+      role: 'user',
+      content: message,
+    }
+    setCoachMessages((current) => [...current, userMessage])
+    setCoachDraft('')
+    setCoachStatus('sending')
+
+    try {
+      const response = await fetch('/api/chat/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          learner_id: learner.id,
+          message,
+          thread_id: coachThreadId,
+          skill_focus: 'reading',
+          artifact_context: buildReadingCoachContext({
+            material,
+            materialId: activeMaterialId,
+            workspace,
+            currentSentence: selectedSentence,
+            selectedText: activeTextSelection,
+            extensiveNotes,
+            intensiveNotes,
+            grammarTopics: selectedGrammarOptions.map((option) => option.label),
+          }),
+        }),
+      })
+      if (!response.ok) throw new Error('Reading coach request failed')
+      const result = await response.json() as { reply: string; thread_id: string }
+      setCoachThreadId(result.thread_id)
+      setCoachMessages((current) => [...current, {
+        id: `reading-coach-assistant-${Date.now()}`,
+        role: 'assistant',
+        content: result.reply,
+      }])
+      setCoachStatus('idle')
+    } catch (error) {
+      console.error('Reading coach error:', error)
+      setCoachStatus('error')
+    }
+  }, [
+    activeMaterialId,
+    activeTextSelection,
+    coachDraft,
+    coachStatus,
+    coachThreadId,
+    extensiveNotes,
+    intensiveNotes,
+    learner.id,
+    material,
+    selectedGrammarOptions,
+    selectedSentence,
+    workspace,
+  ])
 
   const loadMaterialHistory = useCallback(async () => {
     setHistoryStatus('loading')
@@ -331,7 +418,7 @@ export function ReadingWorkshopPage({
     setMaterial((current) => ({ ...current, text }))
   }
 
-  const restoreMaterial = (item: ReadingMaterialHistoryItem) => {
+  const restoreMaterial = useCallback((item: ReadingMaterialHistoryItem) => {
     setMaterial({
       title: item.title ?? '',
       text: item.text,
@@ -353,7 +440,32 @@ export function ReadingWorkshopPage({
     setSelectedGrammarOptionIds([])
     setOpenedGrammarTopics([])
     setWorkspace('input')
-  }
+  }, [])
+
+  const generatePersonalizedMaterial = useCallback(async () => {
+    setGenerationStatus('generating')
+    try {
+      const response = await fetch(`/api/learners/${learner.id}/reading-workshop/generated-materials`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          material_type: 'passage',
+          length: readingTimeBudget >= 25 ? 'long' : 'short',
+          goal: 'mixed',
+          topic: generationTopic.trim() || null,
+        }),
+      })
+      if (!response.ok) throw new Error('Failed to generate personalized reading')
+      const payload = await response.json() as { material: ReadingMaterialHistoryItem }
+      restoreMaterial(payload.material)
+      setSaveStatus('saved')
+      setGenerationStatus('idle')
+      setWorkspace('extensive')
+      void loadMaterialHistory()
+    } catch {
+      setGenerationStatus('error')
+    }
+  }, [generationTopic, learner.id, loadMaterialHistory, readingTimeBudget, restoreMaterial])
 
   const selectSentence = (sentence: ReadingSentence) => {
     setSelectedSentenceId(sentence.id)
@@ -388,6 +500,8 @@ export function ReadingWorkshopPage({
         body: JSON.stringify({
           selected_sentence_count: visitedSentenceIds.length,
           grammar_topic_count: selectedGrammarOptionIds.length,
+          grammar_blind_spots: selectedGrammarOptions.map((option) => option.label),
+          correction_notes: [extensiveNotes.attitude, intensiveNotes.evidenceNote].filter(Boolean),
           notes: [
             extensiveNotes.gist ? `gist: ${extensiveNotes.gist}` : '',
             intensiveNotes.mainStructure ? `structure: ${intensiveNotes.mainStructure}` : '',
@@ -405,12 +519,15 @@ export function ReadingWorkshopPage({
     }
   }, [
     activeMaterialId,
+    extensiveNotes.attitude,
     extensiveNotes.gist,
+    intensiveNotes.evidenceNote,
     intensiveNotes.mainStructure,
     learner.id,
     material.text,
     saveCurrentMaterial,
     selectedGrammarOptionIds.length,
+    selectedGrammarOptions,
     visitedSentenceIds.length,
   ])
 
@@ -429,7 +546,7 @@ export function ReadingWorkshopPage({
   }
 
   return (
-    <PageShell>
+    <PageShell variant="full" contentClassName="min-h-[calc(100vh-4rem)]">
       <FeatureHero
         eyebrow="Reading Workshop"
         title="精读与泛读"
@@ -448,9 +565,61 @@ export function ReadingWorkshopPage({
         }
       />
 
-      <WorkspaceTabs tabs={WORKSPACE_TABS} activeTab={workspace} onChange={openWorkspace} />
+      {readingTrackMode ? (
+        <SurfaceCard className="border-indigo-200 bg-[linear-gradient(135deg,#eef2ff,#ffffff_55%,#ecfeff)]">
+          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-end">
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.2em] text-primary">今日个性化阅读</p>
+              <h2 className="mt-2 text-2xl font-black text-slate-950">让内容追着你的兴趣和盲点走</h2>
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                BinnAgent 会按 {learnerProfile?.current_level?.toUpperCase() ?? '当前水平'}、
+                {readingTimeBudget} 分钟预算和近期薄弱点控制篇幅；读完记录的生词与语法会影响下一篇。
+              </p>
+            </div>
+            <div>
+              <FormField
+                label="今天想读什么"
+                name="personalized_reading_topic"
+                value={generationTopic}
+                onChange={(event) => setGenerationTopic(event.target.value)}
+                placeholder="留空则根据兴趣与近期学习自动选择"
+              />
+              <Button
+                className="mt-3 w-full justify-center"
+                disabled={generationStatus === 'generating'}
+                onClick={() => void generatePersonalizedMaterial()}
+              >
+                <RotateCw className={`h-4 w-4 ${generationStatus === 'generating' ? 'animate-spin' : ''}`} />
+                {generationStatus === 'generating' ? '正在定制阅读材料' : '生成今天的阅读'}
+              </Button>
+              {generationStatus === 'error' ? (
+                <p className="mt-2 text-xs font-bold text-rose-700">生成暂时失败，可以重试或从历史材料继续。</p>
+              ) : null}
+            </div>
+          </div>
+        </SurfaceCard>
+      ) : null}
 
-      {workspace === 'input' && (
+      <div className={`grid min-w-0 items-start gap-5 transition-[grid-template-columns] duration-200 motion-reduce:transition-none ${
+        isSidebarCollapsed
+          ? 'lg:grid-cols-[76px_minmax(0,1fr)]'
+          : 'lg:grid-cols-[240px_minmax(0,1fr)] xl:grid-cols-[260px_minmax(0,1fr)]'
+      }`}>
+        <ReadingWorkspaceSidebar
+          activeWorkspace={workspace}
+          canUseMaterial={canUseMaterial}
+          collapsed={isSidebarCollapsed}
+          onChange={openWorkspace}
+          onToggleCollapsed={() => setIsSidebarCollapsed((current) => !current)}
+        />
+
+        <div className={`grid min-w-0 items-start gap-5 transition-[grid-template-columns] duration-200 motion-reduce:transition-none ${
+          isCoachCollapsed
+            ? 'xl:grid-cols-[minmax(0,1fr)_76px]'
+            : 'xl:grid-cols-[minmax(0,1fr)_360px]'
+        }`}>
+        <div className="min-w-0">
+          {workspace === 'input' && (
         <InputWorkspace
           material={material}
           canUseMaterial={canUseMaterial}
@@ -480,9 +649,9 @@ export function ReadingWorkshopPage({
           saveStatus={saveStatus}
           titleSuggestionStatus={titleSuggestionStatus}
         />
-      )}
+          )}
 
-      {workspace === 'extensive' && (
+          {workspace === 'extensive' && (
         <ExtensiveWorkspace
           material={material}
           canUseMaterial={canUseMaterial}
@@ -493,13 +662,14 @@ export function ReadingWorkshopPage({
           onNotesChange={(key, value) => setExtensiveNotes((current) => ({ ...current, [key]: value }))}
           onOpenWorkspace={openWorkspace}
         />
-      )}
+          )}
 
-      {workspace === 'intensive' && (
+          {workspace === 'intensive' && (
         <IntensiveWorkspace
           canUseMaterial={canUseMaterial}
           focusHints={selectedSentenceHints}
           learnerId={learner.id}
+          learnerLevel={learnerProfile?.current_level ?? null}
           notes={intensiveNotes}
           selectedGrammarOptionIds={selectedGrammarOptionIds}
           selectedSentence={selectedSentence}
@@ -511,10 +681,11 @@ export function ReadingWorkshopPage({
           onOpenWorkspace={openWorkspace}
           onSelectSentence={selectSentence}
           onToggleGrammarOption={toggleGrammarOption}
+          onReadingSelectionChange={setActiveTextSelection}
         />
-      )}
+          )}
 
-      {workspace === 'review' && (
+          {workspace === 'review' && (
         <ReviewWorkspace
           extensiveNotes={extensiveNotes}
           intensiveNotes={intensiveNotes}
@@ -532,8 +703,230 @@ export function ReadingWorkshopPage({
           onOpenGrammar={openGrammarOption}
           onOpenWorkspace={openWorkspace}
         />
-      )}
+          )}
+        </div>
+        <ReadingCoachSidebar
+          collapsed={isCoachCollapsed}
+          draft={coachDraft}
+          messages={coachMessages}
+          status={coachStatus}
+          hasMaterial={canUseMaterial}
+          onDraftChange={setCoachDraft}
+          onSend={() => void askReadingCoach()}
+          onToggleCollapsed={() => setIsCoachCollapsed((current) => !current)}
+        />
+        </div>
+      </div>
     </PageShell>
+  )
+}
+
+function ReadingCoachSidebar({
+  collapsed,
+  draft,
+  messages,
+  status,
+  hasMaterial,
+  onDraftChange,
+  onSend,
+  onToggleCollapsed,
+}: {
+  collapsed: boolean
+  draft: string
+  messages: ReadingCoachMessage[]
+  status: 'idle' | 'sending' | 'error'
+  hasMaterial: boolean
+  onDraftChange: (value: string) => void
+  onSend: () => void
+  onToggleCollapsed: () => void
+}) {
+  const messageListRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    messageListRef.current?.scrollTo({ top: messageListRef.current.scrollHeight, behavior: 'smooth' })
+  }, [messages, status])
+
+  if (collapsed) {
+    return (
+      <aside className="flex items-center gap-3 rounded-2xl border border-indigo-200 bg-indigo-50 p-2 shadow-[0_8px_24px_rgba(15,23,42,0.05)] xl:sticky xl:top-5 xl:flex-col">
+        <button
+          type="button"
+          onClick={onToggleCollapsed}
+          className="flex size-10 items-center justify-center rounded-xl bg-primary text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          aria-label="展开阅读助手"
+          title="展开阅读助手"
+        >
+          <PanelRightOpen className="size-4" />
+        </button>
+        <MessageCircle className="size-5 text-primary" />
+        <span className="text-xs font-black tracking-[0.18em] text-indigo-900 xl:[writing-mode:vertical-rl]">阅读助手</span>
+        {messages.length > 0 ? (
+          <span className="flex size-6 items-center justify-center rounded-full bg-white text-xs font-black text-primary">{messages.length}</span>
+        ) : null}
+      </aside>
+    )
+  }
+
+  return (
+    <aside className="flex min-h-[540px] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_8px_24px_rgba(15,23,42,0.05)] xl:sticky xl:top-5 xl:h-[calc(100vh-6rem)] xl:max-h-[780px]">
+      <div className="flex items-start justify-between gap-3 border-b border-slate-200 bg-[linear-gradient(135deg,#eef2ff,#ffffff)] p-4">
+        <div className="flex min-w-0 items-start gap-3">
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary text-white">
+            <MessageCircle className="size-5" />
+          </span>
+          <div>
+            <h2 className="text-base font-black text-slate-950">阅读助手</h2>
+            <p className="mt-0.5 text-xs leading-5 text-slate-500">已同步当前文章、精读位置和笔记</p>
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={onToggleCollapsed}
+          className="hidden size-9 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 hover:border-indigo-200 hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary xl:flex"
+          aria-label="收起阅读助手"
+          title="收起阅读助手"
+        >
+          <PanelRightClose className="size-4" />
+        </button>
+      </div>
+
+      <div ref={messageListRef} className="min-h-0 flex-1 space-y-3 overflow-y-auto p-4" aria-live="polite">
+        {messages.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-indigo-200 bg-indigo-50/60 p-4 text-sm leading-6 text-slate-600">
+            <p className="font-black text-indigo-950">不用重复粘贴文章</p>
+            <p className="mt-1">可以直接问“这句话怎么拆”“作者为什么这样写”或“检查我的主旨判断”。</p>
+          </div>
+        ) : messages.map((message) => (
+          <div key={message.id} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+            <div className={`max-w-[92%] rounded-2xl px-3.5 py-2.5 text-sm leading-6 ${
+              message.role === 'user'
+                ? 'rounded-br-md bg-primary text-white'
+                : 'rounded-bl-md bg-slate-100 text-slate-700'
+            }`}>
+              {message.role === 'assistant' ? (
+                <div className="prose prose-sm max-w-none prose-p:my-1 prose-ul:my-1 prose-ol:my-1">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkdown>
+                </div>
+              ) : message.content}
+            </div>
+          </div>
+        ))}
+        {status === 'sending' ? (
+          <div className="flex items-center gap-2 text-sm font-bold text-slate-500">
+            <LoaderCircle className="size-4 animate-spin text-primary" /> BinnAgent 正在结合当前阅读位置思考…
+          </div>
+        ) : null}
+        {status === 'error' ? (
+          <p className="rounded-lg bg-rose-50 px-3 py-2 text-sm font-bold text-rose-700">回复暂时失败，问题已保留，可以再次发送。</p>
+        ) : null}
+      </div>
+
+      <form
+        className="border-t border-slate-200 p-3"
+        onSubmit={(event) => {
+          event.preventDefault()
+          onSend()
+        }}
+      >
+        <label htmlFor="reading-coach-question" className="sr-only">向阅读助手提问</label>
+        <textarea
+          id="reading-coach-question"
+          value={draft}
+          disabled={!hasMaterial || status === 'sending'}
+          onChange={(event) => onDraftChange(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter' && !event.shiftKey) {
+              event.preventDefault()
+              onSend()
+            }
+          }}
+          rows={3}
+          placeholder={hasMaterial ? '针对当前文章提问…' : '请先添加阅读材料'}
+          className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm leading-6 text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-primary focus:bg-white disabled:cursor-not-allowed disabled:opacity-60"
+        />
+        <div className="mt-2 flex items-center justify-between gap-3">
+          <p className="text-[11px] text-slate-400">Enter 发送 · Shift+Enter 换行</p>
+          <Button type="submit" className="size-9 px-0 py-0" disabled={!draft.trim() || !hasMaterial || status === 'sending'} aria-label="发送问题">
+            <Send className="size-4" />
+          </Button>
+        </div>
+      </form>
+    </aside>
+  )
+}
+
+function ReadingWorkspaceSidebar({
+  activeWorkspace,
+  canUseMaterial,
+  collapsed,
+  onChange,
+  onToggleCollapsed,
+}: {
+  activeWorkspace: ReadingWorkspace
+  canUseMaterial: boolean
+  collapsed: boolean
+  onChange: (workspace: ReadingWorkspace) => void
+  onToggleCollapsed: () => void
+}) {
+  const activeIndex = WORKSPACE_TABS.findIndex((item) => item.id === activeWorkspace)
+  return (
+    <aside className={`rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_8px_24px_rgba(15,23,42,0.05)] transition-[padding] duration-200 motion-reduce:transition-none lg:sticky lg:top-5 ${collapsed ? 'lg:px-2' : ''}`}>
+      <div className="flex items-start justify-between gap-2 px-2 pb-3 pt-1">
+        <div className={collapsed ? 'lg:hidden' : ''}>
+          <p className="text-xs font-black uppercase tracking-[0.18em] text-primary">Reading Flow</p>
+          <h2 className="mt-1 text-base font-black text-slate-950">阅读学习路径</h2>
+          <p className="mt-1 text-xs leading-5 text-slate-500">先完整理解，再逐层排盲和沉淀。</p>
+        </div>
+        <button
+          type="button"
+          onClick={onToggleCollapsed}
+          className="hidden size-9 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 transition-colors hover:border-indigo-200 hover:bg-indigo-50 hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary lg:flex"
+          aria-label={collapsed ? '展开阅读学习路径' : '收起阅读学习路径'}
+          title={collapsed ? '展开侧边栏' : '收起侧边栏'}
+        >
+          {collapsed ? <PanelLeftOpen className="size-4" /> : <PanelLeftClose className="size-4" />}
+        </button>
+      </div>
+      <nav className="grid gap-2 sm:grid-cols-2 lg:grid-cols-1" aria-label="阅读工作区">
+        {WORKSPACE_TABS.map((item, index) => {
+          const active = item.id === activeWorkspace
+          const visited = index < activeIndex || (canUseMaterial && item.id === 'input')
+          return (
+            <button
+              key={item.id}
+              type="button"
+              title={collapsed ? `${item.label} · ${item.description}` : undefined}
+              aria-current={active ? 'step' : undefined}
+              onClick={() => onChange(item.id)}
+              className={`group flex min-w-0 items-center gap-3 rounded-xl border px-3 py-3 text-left transition-[border-color,background-color,box-shadow] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
+                active
+                  ? 'border-indigo-200 bg-indigo-50 shadow-sm'
+                  : 'border-transparent bg-slate-50 hover:border-slate-200 hover:bg-white'
+              }`}
+            >
+              <span className={`flex size-9 shrink-0 items-center justify-center rounded-lg text-sm font-black ${
+                active
+                  ? 'bg-primary text-primary-foreground'
+                  : visited
+                    ? 'bg-emerald-100 text-emerald-700'
+                    : 'bg-white text-slate-500 ring-1 ring-slate-200'
+              }`}>
+                {visited && !active ? '✓' : index + 1}
+              </span>
+              <span className={`min-w-0 flex-1 ${collapsed ? 'lg:hidden' : ''}`}>
+                <span className={`block truncate text-sm font-black ${active ? 'text-indigo-950' : 'text-slate-800'}`}>{item.label}</span>
+                <span className="mt-0.5 block truncate text-xs text-slate-500">{item.description}</span>
+              </span>
+              <span className={`size-2 shrink-0 rounded-full ${collapsed ? 'lg:hidden' : ''} ${active ? 'bg-primary' : 'bg-slate-300'}`} />
+            </button>
+          )
+        })}
+      </nav>
+      <div className={`mt-3 rounded-xl border border-slate-100 bg-slate-50 px-3 py-2.5 ${collapsed ? 'lg:hidden' : ''}`}>
+        <p className="text-xs font-bold text-slate-500">当前阶段</p>
+        <p className="mt-1 text-sm font-black text-slate-900">{WORKSPACE_TABS[activeIndex]?.label}</p>
+      </div>
+    </aside>
   )
 }
 
@@ -804,7 +1197,7 @@ function ExtensiveWorkspace({
           </div>
         </div>
 
-        <div className="mt-5 max-h-[460px] overflow-y-auto rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm leading-7 text-slate-700">
+        <div className="mt-5 max-h-[560px] overflow-y-auto whitespace-pre-wrap rounded-lg border border-slate-200 bg-slate-50 p-5 text-base leading-8 text-slate-700 sm:p-6 sm:text-lg sm:leading-9">
           {material.text}
         </div>
       </SurfaceCard>
@@ -883,6 +1276,7 @@ function IntensiveWorkspace({
   canUseMaterial,
   focusHints,
   learnerId,
+  learnerLevel,
   notes,
   selectedGrammarOptionIds,
   selectedSentence,
@@ -894,10 +1288,12 @@ function IntensiveWorkspace({
   onOpenWorkspace,
   onSelectSentence,
   onToggleGrammarOption,
+  onReadingSelectionChange,
 }: {
   canUseMaterial: boolean
   focusHints: ReadingSentenceHint[]
   learnerId: string
+  learnerLevel: string | null
   notes: IntensiveNotes
   selectedGrammarOptionIds: string[]
   selectedSentence: ReadingSentence | null
@@ -909,7 +1305,13 @@ function IntensiveWorkspace({
   onOpenWorkspace: (workspace: ReadingWorkspace) => void
   onSelectSentence: (sentence: ReadingSentence) => void
   onToggleGrammarOption: (optionId: string) => void
+  onReadingSelectionChange: (text: string | null) => void
 }) {
+  const [mode, setMode] = useState<'sentence_list' | 'full_text'>('sentence_list')
+  const [selection, setSelection] = useState<{ text: string; sentence: ReadingSentence } | null>(null)
+  const [translation, setTranslation] = useState<{ translation: string; context_note: string } | null>(null)
+  const [translationStatus, setTranslationStatus] = useState<'idle' | 'loading' | 'error'>('idle')
+  const fullTextRef = useRef<HTMLDivElement>(null)
   const [isSentenceListOpen, setIsSentenceListOpen] = useState(false)
   const isSentenceListDrawer = useMediaQuery('(max-width: 1279px)')
   const sentenceListPanelId = useId()
@@ -926,9 +1328,61 @@ function IntensiveWorkspace({
     selectedGrammarOptionIds.includes(option.id)
   )
 
+  const captureSelection = () => {
+    const browserSelection = window.getSelection()
+    const text = browserSelection?.toString().trim() ?? ''
+    const range = browserSelection && browserSelection.rangeCount > 0 ? browserSelection.getRangeAt(0) : null
+    if (!text || text.length > 200 || !range || !fullTextRef.current?.contains(range.commonAncestorContainer)) {
+      setSelection(null)
+      onReadingSelectionChange(null)
+      setTranslation(null)
+      return
+    }
+    const sentence = sentences.find((item) => item.text.toLowerCase().includes(text.toLowerCase()))
+    if (!sentence) return
+    setSelection({ text, sentence })
+    onReadingSelectionChange(text)
+    setTranslation(null)
+    setTranslationStatus('idle')
+  }
+
+  const translateSelection = async () => {
+    if (!selection) return
+    setTranslationStatus('loading')
+    try {
+      const response = await fetch(`/api/learners/${learnerId}/reading-workshop/selection-translation`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          selection: selection.text,
+          sentence: selection.sentence.text,
+          learner_level: learnerLevel,
+        }),
+      })
+      if (!response.ok) throw new Error('Selection translation failed')
+      const result = await response.json() as { translation: string; context_note: string }
+      setTranslation(result)
+      setTranslationStatus('idle')
+    } catch {
+      setTranslationStatus('error')
+    }
+  }
+
   return (
-    <section className="grid gap-5 xl:grid-cols-[340px_minmax(0,1fr)]">
-      <Button
+    <div className="grid gap-5">
+      <SurfaceCard className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-xs font-black uppercase tracking-[0.18em] text-primary">Intensive Mode</p>
+          <h2 className="mt-1 text-lg font-black text-slate-950">选择你的精读方式</h2>
+        </div>
+        <div className="grid grid-cols-2 gap-2 rounded-xl border border-slate-200 bg-slate-50 p-1" role="group" aria-label="精读模式">
+          <button type="button" aria-pressed={mode === 'sentence_list'} onClick={() => setMode('sentence_list')} className={`rounded-lg px-3 py-2 text-sm font-black transition-colors ${mode === 'sentence_list' ? 'bg-primary text-white shadow-sm' : 'text-slate-600 hover:bg-white'}`}>逐句精读</button>
+          <button type="button" aria-pressed={mode === 'full_text'} onClick={() => setMode('full_text')} className={`rounded-lg px-3 py-2 text-sm font-black transition-colors ${mode === 'full_text' ? 'bg-primary text-white shadow-sm' : 'text-slate-600 hover:bg-white'}`}>全文选读</button>
+        </div>
+      </SurfaceCard>
+
+      <section className={`grid gap-5 ${mode === 'sentence_list' ? 'xl:grid-cols-[340px_minmax(0,1fr)]' : 'xl:grid-cols-[minmax(0,1.1fr)_minmax(480px,0.9fr)]'}`}>
+      {mode === 'sentence_list' ? <Button
         variant="secondary"
         className="xl:hidden"
         onClick={() => setIsSentenceListOpen((current) => !current)}
@@ -937,9 +1391,9 @@ function IntensiveWorkspace({
       >
         <PanelLeftOpen className="h-4 w-4" />
         {isSentenceListOpen ? '收起句子列表' : '展开句子列表'}
-      </Button>
+      </Button> : null}
 
-      {isSentenceListDrawer && isSentenceListOpen ? (
+      {mode === 'sentence_list' && isSentenceListDrawer && isSentenceListOpen ? (
         <button
           type="button"
           aria-label="收起句子列表"
@@ -947,7 +1401,7 @@ function IntensiveWorkspace({
           className="fixed inset-x-0 bottom-0 top-16 z-30 bg-slate-950/30 transition-opacity duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary motion-reduce:transition-none xl:hidden"
         />
       ) : null}
-      <div
+      {mode === 'sentence_list' ? <div
         id={sentenceListPanelId}
         ref={isSentenceListDrawer ? sentenceListPanelRef : undefined}
         role={isSentenceListDrawer ? 'dialog' : undefined}
@@ -986,7 +1440,51 @@ function IntensiveWorkspace({
             ))}
           </div>
         </SurfaceCard>
-      </div>
+      </div> : (
+        <SurfaceCard>
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-primary">Full Text Selection</p>
+              <h2 className="mt-1 text-lg font-black text-slate-950">全文自主选句</h2>
+              <p className="mt-1 text-sm leading-6 text-slate-500">点击一句进入右侧精读；拖选单词或短语可查看语境翻译。</p>
+            </div>
+            <Languages className="size-5 shrink-0 text-primary" />
+          </div>
+          <div ref={fullTextRef} onMouseUp={captureSelection} className="mt-5 max-h-[70vh] overflow-y-auto rounded-xl border border-slate-200 bg-slate-50 p-5 text-base leading-8 text-slate-800 sm:p-7 sm:text-lg sm:leading-9">
+            {sentences.map((sentence) => (
+              <button
+                key={sentence.id}
+                type="button"
+                onClick={() => onSelectSentence(sentence)}
+                className={`mr-1 inline rounded px-1 text-left transition-colors focus-visible:outline-2 focus-visible:outline-primary ${selectedSentenceId === sentence.id ? 'bg-indigo-100 text-indigo-950' : 'hover:bg-amber-100'}`}
+              >
+                {sentence.text}
+              </button>
+            ))}
+          </div>
+          {selection ? (
+            <div className="mt-4 rounded-xl border border-indigo-200 bg-indigo-50 p-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-xs font-black text-indigo-600">已选择</p>
+                  <p className="mt-1 text-base font-black text-indigo-950">{selection.text}</p>
+                </div>
+                <Button disabled={translationStatus === 'loading'} onClick={() => void translateSelection()}>
+                  <Languages className="size-4" />{translationStatus === 'loading' ? '正在翻译' : '划词翻译'}
+                </Button>
+              </div>
+              {translation ? (
+                <div className="mt-3 rounded-lg bg-white p-3">
+                  <p className="text-base font-black text-slate-950">{translation.translation}</p>
+                  <p className="mt-1 text-sm leading-6 text-slate-600">{translation.context_note}</p>
+                  <Button variant="secondary" className="mt-3" onClick={() => onNotesChange('phraseNotes', [notes.phraseNotes, `${selection.text}：${translation.translation}（${translation.context_note}）`].filter(Boolean).join('\n'))}>记入词组笔记</Button>
+                </div>
+              ) : null}
+              {translationStatus === 'error' ? <p className="mt-2 text-sm font-bold text-rose-700">翻译暂时失败，请重新选择后再试。</p> : null}
+            </div>
+          ) : null}
+        </SurfaceCard>
+      )}
 
       <div className="grid gap-5">
         <SurfaceCard>
@@ -1081,7 +1579,8 @@ function IntensiveWorkspace({
           </div>
         ) : null}
       </div>
-    </section>
+      </section>
+    </div>
   )
 }
 

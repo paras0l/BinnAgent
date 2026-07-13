@@ -1,0 +1,1 @@
+{"case_id":"reading_selection_context_translation","input":{"selection":"create space for","sentence":"Good technology can create space for human attention rather than remove it.","learner_level":"b1"},"raw_output":"{\"translation\":\"为……腾出空间\",\"context_note\":\"这里不是创造物理空间，而是表示让人类有更多时间和注意力处理重要任务。\",\"confidence\":0.96}","expected":{"decision":"accepted"}}

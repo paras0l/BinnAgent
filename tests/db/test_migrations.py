@@ -31,7 +31,7 @@ def test_alembic_migrations_have_single_head_revision() -> None:
             parents.update(item for item in down_revision if isinstance(item, str))
 
     heads = revisions - parents
-    assert heads == {"u1v2w3x4y5z6"}
+    assert heads == {"v2w3x4y5z6a7"}
 
 
 def test_changsha_grade7_english_migration_adds_current_public_catalogs() -> None:

@@ -482,6 +482,17 @@ READING_MATERIAL_GENERATION_SCHEMA: dict[str, Any] = {
     "additionalProperties": True,
 }
 
+READING_SELECTION_TRANSLATION_SCHEMA: dict[str, Any] = {
+    "type": "object",
+    "additionalProperties": False,
+    "required": ["translation", "context_note", "confidence"],
+    "properties": {
+        "translation": {"type": "string", "minLength": 1, "maxLength": 500},
+        "context_note": {"type": "string", "minLength": 1, "maxLength": 500},
+        "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+    },
+}
+
 CLASSROOM_UI_SCHEMA: dict[str, Any] = {
     "type": "object",
     "properties": {
@@ -563,6 +574,7 @@ SCHEMA_REGISTRY: dict[str, dict[str, Any]] = {
     "VocabularyDetailHtmlOutput": DETAIL_HTML_SCHEMA,
     "ExploreCapabilityRerankOutput": EXPLORE_CAPABILITY_RERANK_SCHEMA,
     "ReadingMaterialGenerationOutput": READING_MATERIAL_GENERATION_SCHEMA,
+    "ReadingSelectionTranslationOutput": READING_SELECTION_TRANSLATION_SCHEMA,
     "ClassroomUiOutput": CLASSROOM_UI_SCHEMA,
     "ClassroomTextbookCoachOutput": CLASSROOM_TEXTBOOK_COACH_SCHEMA,
 }

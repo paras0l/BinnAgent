@@ -65,6 +65,7 @@ class LearnerProfile(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         unique=True,
         nullable=False,
     )
+    learning_track: Mapped[str] = mapped_column(String(20), nullable=False, default="school")
     target_exam: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
     target_score: Mapped[Optional[int]] = mapped_column(SmallInteger, nullable=True)
     exam_date: Mapped[Optional[date]] = mapped_column(Date, nullable=True)

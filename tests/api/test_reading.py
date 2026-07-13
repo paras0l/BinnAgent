@@ -107,6 +107,51 @@ class FakeDialogueAsPassageModelRouter:
         )
 
 
+class FakeSelectionTranslationRouter:
+    async def chat(self, request: ChatRequest) -> ChatResponse:
+        return ChatResponse(
+            provider="fake",
+            model="fake-translation",
+            content=(
+                '{"translation":"为……腾出空间","context_note":'
+                '"这里表示让人类有更多时间和注意力。","confidence":0.96}'
+            ),
+        )
+
+
+@pytest.mark.asyncio
+async def test_translate_reading_selection_uses_sentence_context(client, mock_session):
+    learner_id = uuid.uuid4()
+    mock_session.execute = AsyncMock(return_value=_one(learner_id))
+    app.dependency_overrides[deps.get_model_router] = lambda: FakeSelectionTranslationRouter()
+
+    response = await client.post(
+        f"/api/learners/{learner_id}/reading-workshop/selection-translation",
+        json={
+            "selection": "create space for",
+            "sentence": "Good technology can create space for human attention rather than remove it.",
+            "learner_level": "b1",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json()["translation"] == "为……腾出空间"
+    assert response.json()["confidence"] == 0.96
+
+
+@pytest.mark.asyncio
+async def test_translate_reading_selection_rejects_text_outside_sentence(client, mock_session):
+    learner_id = uuid.uuid4()
+    mock_session.execute = AsyncMock(return_value=_one(learner_id))
+
+    response = await client.post(
+        f"/api/learners/{learner_id}/reading-workshop/selection-translation",
+        json={"selection": "unrelated phrase", "sentence": "This is the original sentence."},
+    )
+
+    assert response.status_code == 422
+
+
 @pytest.mark.asyncio
 async def test_suggest_reading_title_for_complete_material(client):
     response = await client.post(
@@ -396,6 +441,10 @@ async def test_complete_reading_material_records_reading_attempt(client, mock_se
             "comprehension_score": 86,
             "selected_sentence_count": 2,
             "grammar_topic_count": 1,
+            "unknown_vocabulary": ["uncertainty"],
+            "grammar_blind_spots": ["relative clauses"],
+            "correction_notes": ["I first misunderstood the writer's attitude."],
+            "perceived_difficulty": "right",
         },
     )
 
@@ -406,3 +455,6 @@ async def test_complete_reading_material_records_reading_attempt(client, mock_se
     assert created_attempt.target_type == "reading_passage"
     assert created_attempt.result == "correct"
     assert created_attempt.metadata_["reading_value"] > 0
+    assert created_attempt.metadata_["unknown_vocabulary"] == ["uncertainty"]
+    assert created_attempt.metadata_["grammar_blind_spots"] == ["relative clauses"]
+    assert created_attempt.metadata_["perceived_difficulty"] == "right"
