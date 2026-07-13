@@ -91,6 +91,31 @@ class TestLearningProgress:
         assert isinstance(created, LearningProgressItem)
 
     @pytest.mark.asyncio
+    async def test_upsert_word_part_progress_preserves_mastery_metadata(self, client, mock_session):
+        learner_id = uuid.uuid4()
+        mock_session.execute = AsyncMock(side_effect=[_one(learner_id), _one(None)])
+
+        response = await client.put(
+            f"/api/learners/{learner_id}/learning-progress/word_part/root-port",
+            json={
+                "title": "port",
+                "mark_learned": True,
+                "metadata": {
+                    "progress_status": "mastered",
+                    "practiced_count": 3,
+                    "last_practiced_at": "2026-07-12T12:00:00Z",
+                },
+            },
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["skill"] == "word_part"
+        assert data["status"] == "learned"
+        assert data["metadata"]["progress_status"] == "mastered"
+        assert data["metadata"]["practiced_count"] == 3
+
+    @pytest.mark.asyncio
     async def test_upsert_learned_progress_marks_learned(self, client, mock_session):
         learner_id = uuid.uuid4()
         item = LearningProgressItem(

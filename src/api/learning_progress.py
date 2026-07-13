@@ -16,7 +16,7 @@ router = APIRouter(
     tags=["learning-progress"],
 )
 
-LearningSkill = Literal["grammar", "pronunciation", "writing_phrase"]
+LearningSkill = Literal["grammar", "pronunciation", "writing_phrase", "word_part"]
 ProgressStatus = Literal["opened", "learned"]
 
 

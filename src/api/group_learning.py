@@ -323,6 +323,26 @@ class SignalListResponse(BaseModel):
     total_pages: int
 
 
+class ImportedMessageResponse(BaseModel):
+    id: uuid.UUID
+    source_id: uuid.UUID
+    source_display_name: str
+    external_message_id: str
+    content_preview: str | None = None
+    ingestion_status: str
+    occurred_at: datetime
+    imported_at: datetime
+    signal_count: int = 0
+
+
+class ImportedMessageListResponse(BaseModel):
+    items: list[ImportedMessageResponse]
+    total: int
+    page: int
+    page_size: int
+    total_pages: int
+
+
 class UpdateSignalRequest(BaseModel):
     action: SignalAction
 
@@ -339,6 +359,63 @@ async def list_sources(
     )
     sources = result.scalars().all()
     return [await _source_response(db, source) for source in sources]
+
+
+@router.get("/messages", response_model=ImportedMessageListResponse)
+async def list_imported_messages(
+    source_id: uuid.UUID | None = Query(default=None),
+    ingestion_status: str | None = Query(default=None, max_length=40),
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=10, ge=1, le=50),
+    learner: Learner = Depends(require_learner_access),
+    db: AsyncSession = Depends(get_db_session),
+) -> ImportedMessageListResponse:
+    signal_count = (
+        select(func.count(GroupLearningSignal.id))
+        .where(GroupLearningSignal.message_id == GroupLearningMessage.id)
+        .correlate(GroupLearningMessage)
+        .scalar_subquery()
+    )
+    query = (
+        select(GroupLearningMessage, GroupLearningSource, signal_count.label("signal_count"))
+        .join(GroupLearningSource, GroupLearningSource.id == GroupLearningMessage.source_id)
+        .where(
+            GroupLearningSource.learner_id == learner.id,
+            GroupLearningMessage.learner_id == learner.id,
+        )
+    )
+    if source_id is not None:
+        query = query.where(GroupLearningMessage.source_id == source_id)
+    if ingestion_status and ingestion_status.strip():
+        query = query.where(GroupLearningMessage.ingestion_status == ingestion_status.strip())
+
+    total = int((await db.execute(select(func.count()).select_from(query.subquery()))).scalar_one() or 0)
+    result = await db.execute(
+        query.order_by(GroupLearningMessage.created_at.desc(), GroupLearningMessage.id.desc())
+        .offset((page - 1) * page_size)
+        .limit(page_size)
+    )
+    items = [
+        ImportedMessageResponse(
+            id=message.id,
+            source_id=message.source_id,
+            source_display_name=source.display_name,
+            external_message_id=message.external_message_id,
+            content_preview=_content_preview(message.content_text),
+            ingestion_status=message.ingestion_status,
+            occurred_at=message.occurred_at,
+            imported_at=message.created_at,
+            signal_count=count,
+        )
+        for message, source, count in result.all()
+    ]
+    return ImportedMessageListResponse(
+        items=items,
+        total=total,
+        page=page,
+        page_size=page_size,
+        total_pages=max(1, (total + page_size - 1) // page_size),
+    )
 
 
 @router.post("/sources", response_model=SourceResponse, status_code=status.HTTP_201_CREATED)
@@ -982,3 +1059,10 @@ def _signal_category(signal_type: str) -> str:
     if signal_type == "note_candidate":
         return "note"
     return "intent"
+
+
+def _content_preview(content: str | None, limit: int = 120) -> str | None:
+    if not content:
+        return None
+    normalized = " ".join(content.split())
+    return normalized if len(normalized) <= limit else f"{normalized[:limit].rstrip()}…"

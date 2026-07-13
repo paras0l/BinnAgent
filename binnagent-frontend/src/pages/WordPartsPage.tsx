@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   ArrowLeft,
   BarChart3,
@@ -23,6 +23,7 @@ import { Button } from '@/components/ui/Button'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { FilterChip } from '@/components/ui/FilterChip'
 import { SurfaceCard } from '@/components/ui/SurfaceCard'
+import { useToast } from '@/hooks/useToast'
 import {
   MORPHOLOGY_KIND_LABELS,
   WORD_PART_EXERCISES,
@@ -35,7 +36,7 @@ import {
   type WordPartFilterKind,
   type WordPartFilterLevel,
 } from '@/data/wordParts'
-import type { Learner, WordPart, WordPartProgress, WordPartProgressStatus } from '@/types'
+import type { Learner, LearningProgressItem, WordPart, WordPartProgress, WordPartProgressStatus } from '@/types'
 import type { ExerciseTarget } from '@/types/exercises'
 
 interface WordPartsPageProps {
@@ -45,13 +46,14 @@ interface WordPartsPageProps {
 
 type WordPartsWorkspace = 'method' | 'library' | 'practice' | 'progress'
 
-const STORAGE_KEY = 'binnWordPartsProgress:v1'
+const STORAGE_KEY_PREFIX = 'binnWordPartsProgress:v2'
+const LEGACY_STORAGE_KEY = 'binnWordPartsProgress:v1'
 
 const WORKSPACE_TABS: WorkspaceTab<WordPartsWorkspace>[] = [
   { id: 'method', label: '方法入门', description: '先学拆词法', icon: <Layers3 className="size-4" /> },
   { id: 'library', label: '词根词缀库', description: '查找和标记', icon: <LibraryBig className="size-4" /> },
   { id: 'practice', label: '拆词练习', description: '提示和答案', icon: <Lightbulb className="size-4" /> },
-  { id: 'progress', label: '我的掌握', description: '本地进度', icon: <BarChart3 className="size-4" /> },
+  { id: 'progress', label: '我的掌握', description: '跨设备同步', icon: <BarChart3 className="size-4" /> },
 ]
 
 const KIND_FILTERS: WordPartFilterKind[] = ['all', 'prefix', 'root', 'suffix']
@@ -65,6 +67,8 @@ const STATUS_LABELS: Record<WordPartProgressStatus, string> = {
 }
 
 export function WordPartsPage({ learner, onBack }: WordPartsPageProps) {
+  const { showToast } = useToast()
+  const storageKey = `${STORAGE_KEY_PREFIX}:${learner?.id ?? 'local'}`
   const [workspace, setWorkspace] = useState<WordPartsWorkspace>('method')
   const [query, setQuery] = useState('')
   const [kind, setKind] = useState<WordPartFilterKind>('all')
@@ -74,11 +78,31 @@ export function WordPartsPage({ learner, onBack }: WordPartsPageProps) {
   const [visibleHintCount, setVisibleHintCount] = useState(1)
   const [isAnswerVisible, setIsAnswerVisible] = useState(false)
   const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false)
-  const [progress, setProgress] = useState<Record<string, WordPartProgress>>(() => loadProgress())
+  const [progress, setProgress] = useState<Record<string, WordPartProgress>>(() => loadProgress(storageKey))
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(Object.values(progress)))
-  }, [progress])
+    localStorage.setItem(storageKey, JSON.stringify(Object.values(progress)))
+  }, [progress, storageKey])
+
+  useEffect(() => {
+    if (!learner) return
+    let isMounted = true
+    fetch(`/api/learners/${learner.id}/learning-progress?skill=word_part`)
+      .then((response) => {
+        if (!response.ok) throw new Error('Failed to load word-part progress')
+        return response.json() as Promise<LearningProgressItem[]>
+      })
+      .then((items) => {
+        if (!isMounted || items.length === 0) return
+        setProgress((current) => mergeProgress(current, progressFromBackend(items)))
+      })
+      .catch(() => {
+        if (isMounted) showToast('词根词缀进度暂时无法同步，已使用本地记录。', { variant: 'warning' })
+      })
+    return () => {
+      isMounted = false
+    }
+  }, [learner, showToast])
 
   const visibleParts = useMemo(() => searchWordParts(query, kind, level), [kind, level, query])
   const selectedPart = WORD_PARTS.find((item) => item.id === selectedPartId) ?? visibleParts[0] ?? WORD_PARTS[0]
@@ -102,17 +126,47 @@ export function WordPartsPage({ learner, onBack }: WordPartsPageProps) {
   const progressKindRows = useMemo(() => getKindProgressRows(progress), [progress])
   const practiceTrend = useMemo(() => getPracticeTrend(progressValues), [progressValues])
 
+  const persistPartProgress = useCallback(async (record: WordPartProgress) => {
+    if (!learner) return
+    const part = WORD_PARTS.find((item) => item.id === record.wordPartId)
+    try {
+      const response = await fetch(
+        `/api/learners/${learner.id}/learning-progress/word_part/${encodeURIComponent(record.wordPartId)}`,
+        {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: part?.form ?? record.wordPartId,
+            status: record.status === 'mastered' ? 'learned' : 'opened',
+            metadata: {
+              progress_status: record.status,
+              practiced_count: record.practicedCount,
+              last_practiced_at: record.lastPracticedAt,
+              kind: part?.kind,
+              meaning: part?.meaning,
+            },
+          }),
+        },
+      )
+      if (!response.ok) throw new Error('Failed to persist word-part progress')
+    } catch {
+      showToast('进度已保存在本机，服务器同步暂时失败。', { variant: 'warning' })
+    }
+  }, [learner, showToast])
+
   const updatePartStatus = (wordPartId: string, status: WordPartProgressStatus, practiced = false) => {
     setProgress((current) => {
       const existing = current[wordPartId]
+      const next = {
+        wordPartId,
+        status,
+        practicedCount: (existing?.practicedCount ?? 0) + (practiced ? 1 : 0),
+        lastPracticedAt: new Date().toISOString(),
+      }
+      void persistPartProgress(next)
       return {
         ...current,
-        [wordPartId]: {
-          wordPartId,
-          status,
-          practicedCount: (existing?.practicedCount ?? 0) + (practiced ? 1 : 0),
-          lastPracticedAt: new Date().toISOString(),
-        },
+        [wordPartId]: next,
       }
     })
   }
@@ -468,7 +522,7 @@ export function WordPartsPage({ learner, onBack }: WordPartsPageProps) {
               onClick={() => setIsResetConfirmOpen(true)}
               className="mt-5 w-full justify-center"
             >
-              <RotateCcw className="size-4" />重置本地记录
+              <RotateCcw className="size-4" />重置掌握记录
             </Button>
           </SurfaceCard>
 
@@ -515,11 +569,19 @@ export function WordPartsPage({ learner, onBack }: WordPartsPageProps) {
       <ConfirmDialog
         open={isResetConfirmOpen}
         title="重置词根词缀记录？"
-        description="这会清空本机保存的词根词缀练习次数和掌握状态，不会影响后端学习记录。"
+        description="这会把本机和服务器上的词根词缀练习次数与掌握状态重置为未学习。"
         confirmLabel="重置"
         danger
         onCancel={() => setIsResetConfirmOpen(false)}
         onConfirm={() => {
+          Object.keys(progress).forEach((wordPartId) => {
+            void persistPartProgress({
+              wordPartId,
+              status: 'new',
+              practicedCount: 0,
+              lastPracticedAt: new Date().toISOString(),
+            })
+          })
           setProgress({})
           setIsResetConfirmOpen(false)
         }}
@@ -799,13 +861,48 @@ function getPracticeTrend(progressValues: WordPartProgress[]) {
   return practiced.length > 0 ? practiced : [0, 0, 0, 0, 0, 0, 0, 0]
 }
 
-function loadProgress(): Record<string, WordPartProgress> {
+function progressFromBackend(items: LearningProgressItem[]): Record<string, WordPartProgress> {
+  return Object.fromEntries(items.flatMap((item) => {
+    const status = item.metadata.progress_status
+    if (!isWordPartProgressStatus(status) || status === 'new') return []
+    const practicedCount = Number(item.metadata.practiced_count)
+    const lastPracticedAt = item.metadata.last_practiced_at
+    return [[item.item_id, {
+      wordPartId: item.item_id,
+      status,
+      practicedCount: Number.isFinite(practicedCount) && practicedCount > 0 ? practicedCount : 0,
+      lastPracticedAt: typeof lastPracticedAt === 'string' ? lastPracticedAt : item.updated_at,
+    } satisfies WordPartProgress]]
+  }))
+}
+
+function isWordPartProgressStatus(value: unknown): value is WordPartProgressStatus {
+  return value === 'new' || value === 'learning' || value === 'familiar' || value === 'mastered'
+}
+
+function mergeProgress(
+  local: Record<string, WordPartProgress>,
+  remote: Record<string, WordPartProgress>,
+): Record<string, WordPartProgress> {
+  const merged = { ...local }
+  for (const [wordPartId, remoteRecord] of Object.entries(remote)) {
+    const localRecord = local[wordPartId]
+    if (!localRecord || Date.parse(remoteRecord.lastPracticedAt) >= Date.parse(localRecord.lastPracticedAt)) {
+      merged[wordPartId] = remoteRecord
+    }
+  }
+  return merged
+}
+
+function loadProgress(storageKey: string): Record<string, WordPartProgress> {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
+    const raw = localStorage.getItem(storageKey) ?? localStorage.getItem(LEGACY_STORAGE_KEY)
     if (!raw) return {}
     const parsed = JSON.parse(raw) as WordPartProgress[]
     if (!Array.isArray(parsed)) return {}
-    return Object.fromEntries(parsed.map((item) => [item.wordPartId, item]))
+    return Object.fromEntries(parsed.filter((item) => (
+      item && typeof item.wordPartId === 'string' && isWordPartProgressStatus(item.status)
+    )).map((item) => [item.wordPartId, item]))
   } catch {
     return {}
   }

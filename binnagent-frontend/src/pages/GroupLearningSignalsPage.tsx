@@ -28,12 +28,14 @@ import { StatusBanner } from '@/components/ui/StatusBanner'
 import { useToast } from '@/hooks/useToast'
 import {
   deleteGroupLearningSignal,
+  listGroupLearningImportedMessages,
   listGroupLearningSignals,
   listGroupLearningSources,
   syncGroupLearningSourceNow,
   updateGroupLearningSource,
   updateGroupLearningSignal,
   type GroupLearningSignal as ApiGroupLearningSignal,
+  type GroupLearningImportedMessage,
   type GroupLearningSource,
 } from '@/services/groupLearningApi'
 import type { Learner } from '@/types'
@@ -91,6 +93,7 @@ export function GroupLearningSignalsPage({ learner, onBack, onOpenSettings, onOp
   const { showToast } = useToast()
   const [signals, setSignals] = useState<GroupLearningSignal[]>([])
   const [sources, setSources] = useState<GroupLearningSource[]>([])
+  const [recentImports, setRecentImports] = useState<GroupLearningImportedMessage[]>([])
   const [activeFilter, setActiveFilter] = useState<SignalCategory>('all')
   const [query, setQuery] = useState('')
   const [page, setPage] = useState(1)
@@ -116,12 +119,12 @@ export function GroupLearningSignalsPage({ learner, onBack, onOpenSettings, onOp
   }, [activeFilter, learner.id, page, query, showToast])
 
   const loadSources = useCallback(async () => {
-    try {
-      const items = await listGroupLearningSources(learner.id)
-      setSources(items)
-    } catch {
-      setSources([])
-    }
+    const [sourceResult, importResult] = await Promise.allSettled([
+      listGroupLearningSources(learner.id),
+      listGroupLearningImportedMessages(learner.id),
+    ])
+    setSources(sourceResult.status === 'fulfilled' ? sourceResult.value : [])
+    setRecentImports(importResult.status === 'fulfilled' ? importResult.value.items : [])
   }, [learner.id])
 
   useEffect(() => {
@@ -446,12 +449,55 @@ export function GroupLearningSignalsPage({ learner, onBack, onOpenSettings, onOp
 
           <aside className="space-y-4">
             <SourceSetupPanel sources={sources} />
+            <RecentImportsPanel items={recentImports} />
             <PipelinePanel />
           </aside>
         </section>
       </div>
     </div>
   )
+}
+
+function RecentImportsPanel({ items }: { items: GroupLearningImportedMessage[] }) {
+  return (
+    <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="flex items-center gap-2">
+        <Database className="size-5 text-primary" />
+        <div>
+          <h2 className="text-base font-black text-slate-950">最近导入</h2>
+          <p className="mt-1 text-xs leading-5 text-slate-500">仅展示已归属当前学习者的消息短预览。</p>
+        </div>
+      </div>
+      <div className="mt-4 grid gap-2">
+        {items.length ? items.map((item) => (
+          <article key={item.id} className="rounded-lg border border-slate-100 bg-slate-50 px-3 py-2.5">
+            <div className="flex items-center justify-between gap-2 text-xs">
+              <span className="min-w-0 truncate font-black text-slate-700">{item.source_display_name}</span>
+              <span className="shrink-0 text-slate-400">{formatSignalTime(item.imported_at)}</span>
+            </div>
+            <p className="mt-1.5 line-clamp-2 text-sm leading-5 text-slate-700">{item.content_preview || '非文本消息'}</p>
+            <p className="mt-1.5 text-xs font-bold text-slate-500">
+              {ingestionStatusLabel(item.ingestion_status)} · {item.signal_count} 条线索
+            </p>
+          </article>
+        )) : (
+          <div className="rounded-lg border border-dashed border-slate-200 px-3 py-5 text-center text-sm text-slate-500">
+            完成首次导入后可在这里核对记录
+          </div>
+        )}
+      </div>
+    </section>
+  )
+}
+
+function ingestionStatusLabel(status: string) {
+  const labels: Record<string, string> = {
+    processed: '已处理',
+    pending_llm_analysis: '待分析',
+    ignored: '已忽略',
+    help_replied: '已回复帮助',
+  }
+  return labels[status] ?? status
 }
 
 function SignalCard({

@@ -144,8 +144,35 @@ export interface GroupLearningSignalPage {
   total_pages: number
 }
 
+export interface GroupLearningImportedMessage {
+  id: string
+  source_id: string
+  source_display_name: string
+  external_message_id: string
+  content_preview?: string | null
+  ingestion_status: string
+  occurred_at: string
+  imported_at: string
+  signal_count: number
+}
+
+export interface GroupLearningImportedMessagePage {
+  items: GroupLearningImportedMessage[]
+  total: number
+  page: number
+  page_size: number
+  total_pages: number
+}
+
 export async function listGroupLearningSources(learnerId: string) {
   return apiJson<GroupLearningSource[]>(`/api/learners/${learnerId}/group-learning/sources`)
+}
+
+export async function listGroupLearningImportedMessages(learnerId: string, page = 1, pageSize = 5) {
+  const params = new URLSearchParams({ page: String(page), page_size: String(pageSize) })
+  return apiJson<GroupLearningImportedMessagePage>(
+    `/api/learners/${learnerId}/group-learning/messages?${params.toString()}`,
+  )
 }
 
 export async function createGroupLearningSource(
