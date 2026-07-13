@@ -31,6 +31,7 @@ import { LearnersPage } from './pages/LearnersPage'
 import { ModelProviderPage } from './pages/ModelProviderPage'
 import { RecentEpisodesPage } from './pages/RecentEpisodesPage'
 import { TextbookParsingPage } from './pages/TextbookParsingPage'
+import { ToolCatalogPage } from './pages/ToolCatalogPage'
 import { devConsoleRoutes, findDevConsoleRoute, type DevConsoleRouteId } from './routes'
 
 const MemoryCenterPage = lazy(() =>
@@ -51,13 +52,6 @@ const DEBUG_TEXTAREA_CLASS =
 const DEBUG_MONO_TEXTAREA_CLASS = `${DEBUG_TEXTAREA_CLASS} font-mono`
 const DEBUG_DARK_INPUT_CLASS =
   'rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white transition-colors placeholder:text-slate-500 focus-visible:border-cyan-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300'
-
-interface ToolSpec {
-  name: string
-  description?: string
-  input_schema?: unknown
-  output_schema?: unknown
-}
 
 interface ToolCallRecord {
   id?: string
@@ -295,7 +289,7 @@ function DevConsoleShell({ onClearToken }: { onClearToken: () => void }) {
             ) : routeId === 'textbooks' ? (
               <TextbookParsingPage navigate={navigate} />
             ) : routeId === 'tools' ? (
-              <ToolRegistryPage />
+              <ToolCatalogPage />
             ) : routeId === 'tool-call-records' ? (
               episodeId ? (
                 <ToolCallRecordsPage key={episodeId} episodeId={episodeId} />
@@ -432,62 +426,6 @@ function ContextBar({
         </Button>
       </div>
     </div>
-  )
-}
-
-function ToolRegistryPage() {
-  const [tools, setTools] = useState<ToolSpec[] | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-
-  const loadTools = useCallback(async () => {
-    setIsLoading(true)
-    setError(null)
-    try {
-      const response = await debugFetch('/api/tools')
-      if (!response.ok) throw new Error('Tool Registry unavailable')
-      setTools(await response.json() as ToolSpec[])
-    } catch (err) {
-      console.error('Tool Registry load error:', err)
-      setError('Tool Registry 暂时无法加载。')
-    } finally {
-      setIsLoading(false)
-    }
-  }, [])
-
-  useEffect(() => {
-    const timer = window.setTimeout(() => void loadTools(), 0)
-    return () => window.clearTimeout(timer)
-  }, [loadTools])
-
-  if (isLoading && !tools) return <LoadingState title="正在读取 Tool Registry" description="正在请求 /api/tools..." />
-  if (error) {
-    return (
-      <ErrorState
-        title="Tool Registry 不可用"
-        description={error}
-        action={<Button variant="secondary" onClick={() => void loadTools()}><RefreshCw className="size-4" />重试</Button>}
-      />
-    )
-  }
-
-  return (
-    <section className="grid gap-4 xl:grid-cols-2">
-      {(tools ?? []).map((tool) => (
-        <SurfaceCard key={tool.name}>
-          <div className="flex items-start gap-3">
-            <Wrench className="mt-1 size-5 text-cyan-300" />
-            <div className="min-w-0">
-              <h2 className="break-words font-mono text-sm font-black text-slate-950">{tool.name}</h2>
-              <p className="mt-2 text-sm leading-6 text-slate-600">{tool.description ?? 'No description'}</p>
-              <pre className="mt-3 max-h-48 overflow-auto rounded-lg bg-slate-50 p-3 text-xs text-slate-600">
-                {JSON.stringify({ input_schema: tool.input_schema, output_schema: tool.output_schema }, null, 2)}
-              </pre>
-            </div>
-          </div>
-        </SurfaceCard>
-      ))}
-    </section>
   )
 }
 

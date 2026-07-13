@@ -36,10 +36,13 @@ from src.api.writing_phrases import router as writing_phrases_router
 from src.cache import close_redis
 from src.observability import shutdown_observability
 from src.providers.router import router as model_router
+from src.tools.catalog import tool_catalog
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+    await tool_catalog.initialize()
+    app.state.tool_catalog = tool_catalog
     try:
         yield
     finally:

@@ -27,6 +27,7 @@
 | [12-rag-observability-exercises.md](./12-rag-observability-exercises.md) | 教材 RAG、Langfuse 观测和练习题闭环 |
 | [13-current-scope-and-status.md](./13-current-scope-and-status.md) | 当前实现状态、产品线边界和 issue 落地表 |
 | [14-expression-lab.md](./14-expression-lab.md) | 英语表达实验室的生成式 UI、动作确认、沙箱安全和学习闭环 |
+| [15-dynamic-tool-registry-discovery-injection.md](./15-dynamic-tool-registry-discovery-injection.md) | Tool Registry 现状审计，以及动态注册、发现、权限解析、运行时注入与 MCP 演进方案 |
 | [exercise-generation-pool.md](./exercise-generation-pool.md) | 持久化练习题池、异步 Worker、质量评分、降级与恢复策略 |
 | [document-parsing-pipeline.md](./document-parsing-pipeline.md) | MarkItDown baseline、pypdf fallback、DocumentParseArtifact、质量评估和异步 ingest 状态机 |
 | [textbook-parsing-audit.md](./textbook-parsing-audit.md) | 教材解析链路审计、风险和治理改造结论 |

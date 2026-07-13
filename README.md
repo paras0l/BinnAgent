@@ -103,6 +103,7 @@ http://localhost:5176，可在 Learners / Recent Episodes 中直接选择 learne
 - [12. Textbook RAG, Langfuse & Exercises](docs/architecture/12-rag-observability-exercises.md)
 - [13. Current Scope and Status](docs/architecture/13-current-scope-and-status.md)
 - [14. Expression Lab](docs/architecture/14-expression-lab.md)
+- [15. Dynamic Tool Registry, Discovery & Injection](docs/architecture/15-dynamic-tool-registry-discovery-injection.md)
 - [Document Parsing Pipeline](docs/architecture/document-parsing-pipeline.md)
 - [LangGraph Runtime Audit](docs/architecture/langgraph-runtime-audit.md)
 - [Verification Runtime Audit](docs/architecture/verification-runtime-audit.md)
@@ -144,7 +145,7 @@ http://localhost:5176，可在 Learners / Recent Episodes 中直接选择 learne
 | Frontend UI/UX 统一标准 | Issue #20 首轮整改已落地，普通学习端主导航保留 AI对话 / 探索 / 学习中心，Debug/Memory/Runtime 页面移入 Dev Console；Dashboard 首页提供唯一优先动作；学习目标归并为同步教材、考试备考、通用英语三条产品主线，Explore 按主线推荐并默认隐藏规划中能力；推荐卡显示学习依据、预计时长和完成收益；AI 对话支持显式学习收口、迁移练习与恢复说明；学习设置可编辑学习目标和 CEFR 当前水平，保存失败会回滚界面状态；教材解析治理集中到 Dev Console Textbook Parsing |
 | Prompt Registry / Schema-first Import / Parser Quality | 基础治理已实现；PromptExecutor 已统一 text/structured/stream prompt 调用，PromptExecutionRecord、结构化校验记录、Prompt Debug API、prompt eval CLI / eval sets、核心 prompt 迁移、画像驱动 prompt 背景和教材解析质量门禁已落地 |
 | Model Provider | 部分实现；本地默认 Ollama，云端可通过环境变量或 Dev Console Debug 页面切换到 DeepSeek / LongCat OpenAI-compatible chat API；RAG embedding 暂时隔离在 Ollama 路径 |
-| Agent Runtime / Harness | 第二阶段补强中，TaskSpec、AgentEpisode、LearningEvent、EvidenceRef、ToolCallRecord、VerificationReport、MasteryEngine、RecommendationEngine、LearningGraphCheckpoint 和 Dev Console 调试入口已接入；VerificationReport 已升级为 evidence-based deterministic/schema/business_rule/evidence checks，critical 失败会阻止静默 completed；EpisodeTraceView、Graph Runs 和 Textbook Parsing Report 可查看 checkpoint、events、tool calls、prompt execution summary、verification checks、parser evidence 和 review queue；Debug API 默认关闭并需 token |
+| Agent Runtime / Harness | 第二阶段补强中，TaskSpec、AgentEpisode、LearningEvent、EvidenceRef、ToolCallRecord、VerificationReport、MasteryEngine、RecommendationEngine、LearningGraphCheckpoint 和 Dev Console 调试入口已接入；Tool Catalog 第一阶段支持应用级发现、revision/spec hash、刷新、启停、健康监控、allowlist 解析和 schema/timeout 执行治理，Dev Console 可管理和监控生命周期；真实业务 wrapper 全量迁移与通用 MCP discovery 待完成；VerificationReport 的 critical 失败会阻止静默 completed；Debug API 默认关闭并需 token |
 | Learner-scoped isolation | Issue #25 第一阶段已实现，新增 current user / current learner dependency、scoped resource helper，并加固 Runtime、Daily Lesson、Memory、Explore、ExerciseAttempt 和 Debug 高风险路径 |
 | 邮箱登录与邀请关系 | 基础版已实现，6 位邮箱验证码、短期签名令牌、重发冷却、错误次数限制、SMTP/本地日志投递、同邮箱多学习者选择、邀请码注册、直接邀请人关系、旧账号邮箱升级和空库 bootstrap 邀请码已落地；正式认证 session 留待远程部署前补齐 |
 | LangGraph daily lesson | 已升级为单题 checkpoint / interrupt / resume 学习闭环；graph 支持可选 checkpointer 编译，start 返回 waiting_user checkpoint/thread/schema/prompt，answer 从 `grade_attempt` 恢复并完成 grading、mastery、memory、review、recommend、verification，验证报告决定 completed / completed_with_warnings / verification_failed |
