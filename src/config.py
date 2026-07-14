@@ -83,6 +83,10 @@ class Settings(BaseSettings):
         ),
     )
     explore_llm_rerank_enabled: bool = True
+    adaptive_learning_enabled: bool = True
+    adaptive_semantic_confidence_threshold: float = 0.65
+    dkt_shadow_enabled: bool = True
+    dkt_policy_enabled: bool = False
 
 
 settings = Settings()

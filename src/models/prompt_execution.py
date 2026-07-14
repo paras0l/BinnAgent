@@ -43,6 +43,12 @@ class PromptExecutionRecord(UUIDPrimaryKeyMixin, Base):
     input_schema: Mapped[Optional[str]] = mapped_column(String(160), nullable=True)
     output_schema: Mapped[Optional[str]] = mapped_column(String(160), nullable=True)
     model_policy_snapshot: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
+    adaptive_policy_snapshot: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
+    teaching_policy_decision_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("teaching_policy_decisions.id", ondelete="SET NULL"),
+        nullable=True,
+    )
     langfuse_trace_id: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     langfuse_observation_id: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     schema_validation_status: Mapped[str] = mapped_column(String(30), nullable=False)

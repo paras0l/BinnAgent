@@ -373,6 +373,10 @@ class PromptExecutor:
             input_schema=rendered.input_schema,
             output_schema=rendered.output_schema,
             model_policy_snapshot=dict(rendered.model_policy),
+            adaptive_policy_snapshot=dict(context.metadata.get("teaching_policy") or {}),
+            teaching_policy_decision_id=_optional_uuid(
+                context.metadata.get("teaching_policy_decision_id")
+            ),
             langfuse_trace_id=langfuse_trace_id,
             langfuse_observation_id=langfuse_observation_id,
             schema_validation_status=schema_validation_status,
@@ -392,6 +396,15 @@ class PromptExecutor:
         if inspect.isawaitable(flush_result):
             await flush_result
         return record.id
+
+
+def _optional_uuid(value: Any) -> uuid.UUID | None:
+    if value is None:
+        return None
+    try:
+        return uuid.UUID(str(value))
+    except (TypeError, ValueError):
+        return None
 
 
 def _chat_request(

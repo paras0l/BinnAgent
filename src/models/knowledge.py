@@ -145,16 +145,16 @@ class KnowledgePoint(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     __tablename__ = "knowledge_points"
     __table_args__ = (UniqueConstraint("canonical_key", name="uq_knowledge_points_canonical_key"),)
 
-    source_id: Mapped[uuid.UUID] = mapped_column(
+    source_id: Mapped[Optional[uuid.UUID]] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("knowledge_sources.id", ondelete="CASCADE"),
-        nullable=False,
+        nullable=True,
         index=True,
     )
-    curriculum_node_id: Mapped[uuid.UUID] = mapped_column(
+    curriculum_node_id: Mapped[Optional[uuid.UUID]] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("curriculum_nodes.id", ondelete="CASCADE"),
-        nullable=False,
+        nullable=True,
         index=True,
     )
     canonical_key: Mapped[str] = mapped_column(String(255), nullable=False)
@@ -165,6 +165,67 @@ class KnowledgePoint(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     difficulty: Mapped[float] = mapped_column(Float, nullable=False, default=0.2)
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="published")
     content: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True, default=dict)
+
+
+class GrammarCanDoProfile(UUIDPrimaryKeyMixin, TimestampMixin, Base):
+    """Assessment-ready metadata for a canonical grammar KnowledgePoint."""
+
+    __tablename__ = "grammar_can_do_profiles"
+    __table_args__ = (
+        UniqueConstraint("knowledge_point_id", name="uq_grammar_can_do_profile_point"),
+        Index("ix_grammar_can_do_category_cefr", "category", "cefr_level"),
+    )
+
+    knowledge_point_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("knowledge_points.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    external_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True, unique=True)
+    category: Mapped[str] = mapped_column(String(60), nullable=False)
+    subcategory: Mapped[str] = mapped_column(String(100), nullable=False)
+    cefr_level: Mapped[str] = mapped_column(String(4), nullable=False)
+    construct_type: Mapped[str] = mapped_column(String(20), nullable=False)
+    guideword: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    lexical_range: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    can_do_statement: Mapped[str] = mapped_column(Text, nullable=False)
+    success_criteria: Mapped[list] = mapped_column(JSONB, nullable=False, default=list)
+    failure_criteria: Mapped[list] = mapped_column(JSONB, nullable=False, default=list)
+    positive_examples: Mapped[list] = mapped_column(JSONB, nullable=False, default=list)
+    negative_examples: Mapped[list] = mapped_column(JSONB, nullable=False, default=list)
+    prerequisites: Mapped[list] = mapped_column(JSONB, nullable=False, default=list)
+    detection_hints: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
+    catalog_version: Mapped[str] = mapped_column(String(40), nullable=False, default="g7-v1")
+    source_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    source_attribution: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+
+
+class GrammarCurriculumMapping(UUIDPrimaryKeyMixin, TimestampMixin, Base):
+    __tablename__ = "grammar_curriculum_mappings"
+    __table_args__ = (
+        UniqueConstraint(
+            "knowledge_point_id",
+            "curriculum_node_id",
+            name="uq_grammar_curriculum_mapping",
+        ),
+    )
+
+    knowledge_point_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("knowledge_points.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    curriculum_node_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("curriculum_nodes.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    relation_type: Mapped[str] = mapped_column(String(20), nullable=False, default="teaches")
+    evidence_source: Mapped[str] = mapped_column(String(80), nullable=False, default="curated")
+    confidence: Mapped[float] = mapped_column(Float, nullable=False, default=1.0)
 
 
 class KnowledgeChunk(UUIDPrimaryKeyMixin, TimestampMixin, Base):
@@ -223,6 +284,11 @@ class ExerciseQuestion(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     answer: Mapped[str] = mapped_column(Text, nullable=False)
     explanation: Mapped[str] = mapped_column(Text, nullable=False)
     difficulty: Mapped[float] = mapped_column(Float, nullable=False, default=0.3)
+    difficulty_prior: Mapped[float] = mapped_column(Float, nullable=False, default=0.3)
+    difficulty_calibrated: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    difficulty_model_version: Mapped[str] = mapped_column(
+        String(80), nullable=False, default="irt-prior-v1"
+    )
     quality_score: Mapped[float] = mapped_column(Float, nullable=False, default=0.72, index=True)
     quality_status: Mapped[str] = mapped_column(
         String(20), nullable=False, default="accepted", index=True
@@ -352,6 +418,12 @@ class LearnerKnowledgeState(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="learning")
     mastery_score: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
     confidence: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    ability: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    predicted_success: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    dkt_shadow_prediction: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    state_model_version: Mapped[str] = mapped_column(
+        String(80), nullable=False, default="irt-1pl-v1"
+    )
     exposure_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     correct_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     last_seen_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)

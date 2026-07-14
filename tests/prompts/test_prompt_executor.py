@@ -66,6 +66,33 @@ async def test_prompt_executor_success_writes_prompt_execution_record() -> None:
 
 
 @pytest.mark.asyncio
+async def test_prompt_executor_persists_compiled_teaching_policy() -> None:
+    db = FakeDb()
+    policy_id = uuid.uuid4()
+
+    await PromptExecutor(db=db).execute_with_raw_output(
+        prompt_id="writing_phrase.import",
+        version="v1",
+        variables={"topic": "articles", "task_type": "extract_phrases"},
+        raw_output='{"candidates": []}',
+        context=PromptExecutionContext(
+            source_module="tests.prompt_executor",
+            metadata={
+                "teaching_policy_decision_id": str(policy_id),
+                "teaching_policy": {
+                    "difficulty_band": [0.15, 0.35],
+                    "support_level": "guided",
+                    "max_new_concepts": 1,
+                },
+            },
+        ),
+    )
+
+    assert db.records[0].teaching_policy_decision_id == policy_id
+    assert db.records[0].adaptive_policy_snapshot["support_level"] == "guided"
+
+
+@pytest.mark.asyncio
 async def test_prompt_executor_fallback_record_is_review_required() -> None:
     db = FakeDb()
 

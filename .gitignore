@@ -25,3 +25,6 @@ var/simulation/*
 var/parser_eval/*
 !var/parser_eval/baselines/
 !var/parser_eval/baselines/*.json
+# Licensed/private catalog snapshots (see docs/architecture/19-grammar-can-do-core.md)
+data/private/egp/*
+!data/private/egp/.gitkeep

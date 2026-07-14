@@ -137,13 +137,24 @@ async def evaluate_prompt_metadata(
                 "actual": case_result.get(field),
             }
             for field, expected_value in expected.items()
+            if field not in {"must_contain", "must_not_contain", "notes"}
             if case_result.get(field) != expected_value
         ]
+        for required in expected.get("must_contain", []):
+            if required not in raw_output:
+                case_result["expectation_failures"].append(
+                    {"field": "must_contain", "expected": required, "actual": "missing"}
+                )
+        for forbidden in expected.get("must_not_contain", []):
+            if forbidden in raw_output:
+                case_result["expectation_failures"].append(
+                    {"field": "must_not_contain", "expected": forbidden, "actual": "present"}
+                )
         results.append(case_result)
 
     metrics = _metrics(results)
     threshold_failures = []
-    if metrics["schema_pass_rate"] < min_schema_pass_rate:
+    if metadata.output_schema and metrics["schema_pass_rate"] < min_schema_pass_rate:
         threshold_failures.append(
             {
                 "metric": "schema_pass_rate",

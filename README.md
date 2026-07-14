@@ -8,6 +8,7 @@ BinnAgent 是面向英语学习场景的个性化 Agent 系统。它不是普通
 
 - **LangGraph Runtime**：Daily Lesson 支持 checkpoint / interrupt / resume，等待真实用户作答后再继续评分和反馈。
 - **Memory + Mastery**：用学习证据更新掌握度、错因、复习计划和个性化推荐。
+- **Adaptive Learning Core**：AssessmentEvidence → IRT/FSRS → DKT shadow → TeachingPolicy，支持幂等、fallback、时间旅行测试和完整决策 trace。
 - **PromptExecutor + Schema-first**：结构化 LLM 输出必须经过 schema validation / repair / fallback decision 后才能进入业务写入。
 - **Simulation / Evaluation**：contract / integration / e2e 分层回归，覆盖学习闭环、Prompt schema、Memory/Mastery 和 Runtime trace。
 - **Dev Console**：集中查看 EpisodeTrace、ToolCall、PromptExecution、VerificationReport、Memory、RAG 和解析质量。
@@ -106,6 +107,8 @@ http://localhost:5176，可在 Learners / Recent Episodes 中直接选择 learne
 - [15. Dynamic Tool Registry, Discovery & Injection](docs/architecture/15-dynamic-tool-registry-discovery-injection.md)
 - [16. Reading-led Learning Track](docs/architecture/16-reading-led-learning-track.md)
 - [17. Shared Base Dictionary](docs/architecture/17-shared-base-dictionary.md)
+- [18. Adaptive Learning Core](docs/architecture/18-adaptive-learning-core.md)
+- [19. Grammar Can-do Core](docs/architecture/19-grammar-can-do-core.md)
 - [Document Parsing Pipeline](docs/architecture/document-parsing-pipeline.md)
 - [LangGraph Runtime Audit](docs/architecture/langgraph-runtime-audit.md)
 - [Verification Runtime Audit](docs/architecture/verification-runtime-audit.md)
@@ -146,8 +149,10 @@ http://localhost:5176，可在 Learners / Recent Episodes 中直接选择 learne
 | 群聊学习线索 | 第一版已实现并切到飞书 MCP 兼容方案，支持飞书群来源配置、MCP/OpenAPI 同步、群成员拉取与当前 learner 绑定、原始消息保留/清理、中性 JSON 导入、显式标签即时规则抽取、`@机器人 --help` 群内操作指南回复与去重、无标签消息 pending 队列、低频 LLM 小批量线索提取、最近导入记录、收件箱分页接受/忽略/删除，以及接受后写入词汇候选、好句候选或语法学习进度 |
 | ExploreCapability 推荐 | 基础版已实现，Explore Tab 入口由后端 registry 统一管理；Daily Lesson 答题后可推荐 ready 学习能力，点击/忽略事件写入 Memory 和 episode trace |
 | Generative Classroom | 已实现可体验版本；每日学习采用数字教材桌面，按当前任务、最低完成证据和下一步组织词汇三档判断、Grammar Lab、教材原声听辨、PDF 原题作答、智能诊断与学习复盘；阶段门槛阻止任意跳关，返回不再误记完成，退出保留 Daily Lesson 并可原位恢复，保存状态显示真实时间；全册 10 个 Grammar Lab 提供明确 can-do 目标、规则归纳、结构模板、易错点、3 道即时辨析和迁移表达；LLM 诊断通过 `PromptExecutor` 对照教材与学生答案生成 schema 约束的最小提示，离线时使用确定性兜底；词汇判断、听辨证据、语法答案、迁移表达、教材答案、Daily Lesson checkpoint、Mastery、Memory、复习计划和 ExploreCapability 推荐保持联动 |
+| Grammar Can-do Core | 完整目录版已实现；按论文口径导入 1,211 个带例句 EGP can-do（3,600 learner examples、19 类、A1–C2），保留 EGP ID、guideword、FORM/USE 和来源致谢；复用 AssessmentEvidence、IRT、DKT shadow 与 FSRS 聚合辨认/回忆/产出，Grammar Workspace 支持矩阵、搜索、CEFR/类别筛选、分批渲染和证据详情。EGP 原始快照因 Cambridge 许可要求保持 gitignored，部署时使用授权导出幂等导入 |
 | Frontend UI/UX 统一标准 | Issue #20 首轮整改已落地，普通学习端主导航保留 AI对话 / 探索 / 学习中心，Debug/Memory/Runtime 页面移入 Dev Console；Dashboard 首页提供唯一优先动作；学习目标归并为同步教材、考试备考、通用英语三条产品主线，Explore 按主线推荐并默认隐藏规划中能力；推荐卡显示学习依据、预计时长和完成收益；AI 对话支持显式学习收口、迁移练习与恢复说明；学习设置可编辑学习目标和 CEFR 当前水平，保存失败会回滚界面状态；教材解析治理集中到 Dev Console Textbook Parsing |
 | Prompt Registry / Schema-first Import / Parser Quality | 基础治理已实现；PromptExecutor 已统一 text/structured/stream prompt 调用，PromptExecutionRecord、结构化校验记录、Prompt Debug API、prompt eval CLI / eval sets、核心 prompt 迁移、画像驱动 prompt 背景和教材解析质量门禁已落地 |
+| Adaptive Learning Core | 第一阶段已实现；统一 AssessmentEvidence、IRT/1PL 能力解释、可注入时钟的 FSRS/DSR 调度、DKT shadow/fallback、TeachingPolicyCompiler、幂等审计链和 PromptExecution 策略快照已落地；真实 DKT 仍保持影子模式，待序列数据积累和离线校准后再灰度接管 |
 | Model Provider | 部分实现；默认使用 LongCat，仍可通过环境变量或 Dev Console Debug 页面切换到 Ollama / DeepSeek；RAG embedding 暂时隔离在 Ollama 路径 |
 | Agent Runtime / Harness | 第二阶段补强中，TaskSpec、AgentEpisode、LearningEvent、EvidenceRef、ToolCallRecord、VerificationReport、MasteryEngine、RecommendationEngine、LearningGraphCheckpoint 和 Dev Console 调试入口已接入；Tool Catalog 第一阶段支持应用级发现、revision/spec hash、刷新、启停、健康监控、allowlist 解析和 schema/timeout 执行治理，Dev Console 可管理和监控生命周期；真实业务 wrapper 全量迁移与通用 MCP discovery 待完成；VerificationReport 的 critical 失败会阻止静默 completed；Debug API 默认关闭并需 token |
 | Learner-scoped isolation | Issue #25 第一阶段已实现，新增 current user / current learner dependency、scoped resource helper，并加固 Runtime、Daily Lesson、Memory、Explore、ExerciseAttempt 和 Debug 高风险路径 |

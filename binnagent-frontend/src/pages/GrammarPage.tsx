@@ -7,6 +7,7 @@ import {
   ExternalLink,
   FileInput,
   Maximize2,
+  MapPinned,
   Plus,
   Puzzle,
   RefreshCw,
@@ -40,6 +41,7 @@ import { useFocusTrap } from '@/hooks/useFocusTrap'
 import type { ExerciseTarget } from '@/types/exercises'
 import { copyTextToClipboard } from '@/utils/clipboard'
 import { learnerBackground } from '@/utils/learnerProfile'
+import { GrammarMapPanel } from '@/components/grammar/GrammarMapPanel'
 
 type CategoryFilter = 'all' | GrammarCategory
 
@@ -75,7 +77,7 @@ const PROMPT_VERSION = 'v1'
 const EXTENSION_PATH = '/Users/binge/Documents/BinnAgent/browser-extension/grammar-autofill'
 
 type CacheStatus = 'idle' | 'loading' | 'hit' | 'miss' | 'saving' | 'saved' | 'error' | 'bypassed'
-type GrammarWorkspace = 'topics' | 'generate' | 'preview' | 'practice' | 'settings'
+type GrammarWorkspace = 'map' | 'topics' | 'generate' | 'preview' | 'practice' | 'settings'
 type PendingGrammarAction = 'regenerate-topic' | 'clear-html' | 'remove-target' | null
 
 interface GrammarCategoryRow {
@@ -93,6 +95,7 @@ interface GrammarLevelRow {
 }
 
 const GRAMMAR_WORKSPACE_TABS: WorkspaceTab<GrammarWorkspace>[] = [
+  { id: 'map', label: '语法地图', description: '查看掌握证据', icon: <MapPinned className="h-4 w-4" /> },
   { id: 'topics', label: '知识点', description: '选择微知识点', icon: <Search className="h-4 w-4" /> },
   { id: 'generate', label: '生成指令', description: '复制并跳转', icon: <ExternalLink className="h-4 w-4" /> },
   { id: 'preview', label: '预览回填', description: '粘贴 HTML', icon: <FileInput className="h-4 w-4" /> },
@@ -172,7 +175,7 @@ export function GrammarPage({ learner, learnerProfile, onBack, backLabel = '返�
   const [isImmersiveReading, setIsImmersiveReading] = useState(false)
   const [isPreviewInputOpen, setIsPreviewInputOpen] = useState(true)
   const [pendingAction, setPendingAction] = useState<PendingGrammarAction>(null)
-  const [workspace, setWorkspace] = useState<GrammarWorkspace>('topics')
+  const [workspace, setWorkspace] = useState<GrammarWorkspace>('map')
   const [renderedPrompt, setRenderedPrompt] = useState<{ topicId: string; prompt: string; prompt_hash: string; version: string } | null>(null)
   const immersiveTitleId = useId()
   const { containerRef: immersiveReaderRef, handleKeyDown: handleImmersiveReaderKeyDown } = useFocusTrap<HTMLDivElement>({
@@ -580,6 +583,8 @@ export function GrammarPage({ learner, learnerProfile, onBack, backLabel = '返�
       />
 
       <WorkspaceTabs tabs={GRAMMAR_WORKSPACE_TABS} activeTab={workspace} onChange={setWorkspace} />
+
+      {workspace === 'map' && <GrammarMapPanel learnerId={learner.id} />}
 
       {workspace === 'topics' && (
         <SurfaceCard className="min-h-[620px]">

@@ -31,7 +31,24 @@ def test_alembic_migrations_have_single_head_revision() -> None:
             parents.update(item for item in down_revision if isinstance(item, str))
 
     heads = revisions - parents
-    assert heads == {"y5z6a7b8c9d0"}
+    assert heads == {"b8c9d0e1f2a4"}
+
+
+def test_adaptive_learning_migration_adds_traceable_state_models() -> None:
+    migration = Path(
+        "alembic/versions/z6a7b8c9d0e1_add_adaptive_learning_core.py"
+    ).read_text()
+
+    for table in (
+        "assessment_evidence",
+        "knowledge_state_updates",
+        "fsrs_review_states",
+        "dkt_shadow_predictions",
+        "teaching_policy_decisions",
+        "adaptive_decision_traces",
+    ):
+        assert table in migration
+    assert 'down_revision: Union[str, Sequence[str], None] = "y5z6a7b8c9d0"' in migration
 
 
 def test_shared_base_dictionary_migration_separates_source_and_generated_content() -> None:

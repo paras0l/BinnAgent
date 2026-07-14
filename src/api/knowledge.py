@@ -2560,7 +2560,18 @@ async def _update_exercise_mastery_and_review(
             response_time_ms=body.response_time_ms,
             source="knowledge.exercise_attempt",
             evidence_refs=[EvidenceRef(**ref) for ref in evidence_refs],
-            metadata={"attempt_id": str(attempt_id), "question_id": str(question.id)},
+            metadata={
+                "attempt_id": str(attempt_id),
+                "question_id": str(question.id),
+                "evidence_mode": "production"
+                if question.question_type in {"short_answer", "writing", "translation"}
+                else "recall",
+                "semantic_confidence": 1.0,
+                "interaction_type": "assessment",
+                "item_difficulty_prior": question.difficulty_calibrated
+                if question.difficulty_calibrated is not None
+                else question.difficulty_prior,
+            },
         )
     )
     review = ReviewSchedule(

@@ -1,4 +1,12 @@
 from src.models.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
+from src.models.adaptive import (
+    AssessmentEvidence,
+    DecisionTrace,
+    DKTShadowPrediction,
+    FSRSReviewState,
+    KnowledgeStateUpdate,
+    TeachingPolicyDecision,
+)
 from src.models.auth import EmailVerificationChallenge
 from src.models.base_dictionary import (
     BaseDictionaryBuild,
@@ -26,6 +34,8 @@ from src.models.knowledge import (
     ExerciseAttempt,
     ExerciseGenerationRun,
     ExerciseQuestion,
+    GrammarCanDoProfile,
+    GrammarCurriculumMapping,
     KnowledgeChunk,
     KnowledgeLearningEvent,
     KnowledgePoint,
@@ -78,6 +88,7 @@ from src.models.writing_phrase import (
 
 __all__ = [
     "AgentEvent",
+    "AssessmentEvidence",
     "AgentEpisode",
     "AgentRun",
     "AgentThread",
@@ -87,6 +98,8 @@ __all__ = [
     "BaseDictionaryTranslation",
     "ConversationMessage",
     "EmailVerificationChallenge",
+    "DecisionTrace",
+    "DKTShadowPrediction",
     "ErrorPattern",
     "ExpressionLabAction",
     "ExpressionLabAttempt",
@@ -98,6 +111,7 @@ __all__ = [
     "GroupLearningParticipant",
     "GroupLearningSignal",
     "GroupLearningSource",
+    "FSRSReviewState",
     "Learner",
     "LearnerProfile",
     "LearningSession",
@@ -105,10 +119,13 @@ __all__ = [
     "ExerciseAttempt",
     "ExerciseGenerationRun",
     "ExerciseQuestion",
+    "GrammarCanDoProfile",
+    "GrammarCurriculumMapping",
     "KnowledgeChunk",
     "KnowledgeLearningEvent",
     "KnowledgePoint",
     "KnowledgeSource",
+    "KnowledgeStateUpdate",
     "LearnerKnowledgeState",
     "LearnerMemorySettings",
     "LearnerModelMemory",
@@ -130,6 +147,7 @@ __all__ = [
     "ToolCall",
     "ToolCallRecord",
     "TeachingStrategyMemory",
+    "TeachingPolicyDecision",
     "UUIDPrimaryKeyMixin",
     "VocabularyItem",
     "VocabularyItemSource",
