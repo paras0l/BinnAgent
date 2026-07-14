@@ -1,0 +1,41 @@
+{
+  "catalog_version": "egp-1211-v1",
+  "entry_count": 1211,
+  "example_count": 3600,
+  "source_row_count": 1222,
+  "rows_with_examples": 1215,
+  "selection_rule": "non-empty can-do and example containing CEFR A1-C2 learner metadata",
+  "excluded_row_count": 11,
+  "source_sha256": "525e60f55968b8581b5e5a5a81e8552992eaeae0db7486c3a623d659a0e0a911",
+  "source_url": "https://englishprofile.org/?menu=egp-online",
+  "citation": "O’Keeffe, A. and Mark, G. (2017). The English Grammar Profile of learner competence: Methodology and key findings. International Journal of Corpus Linguistics, 22(4), 457–489.",
+  "levels": {
+    "A1": 108,
+    "A2": 286,
+    "B1": 336,
+    "B2": 242,
+    "C1": 128,
+    "C2": 111
+  },
+  "categories": {
+    "ADJECTIVES": 79,
+    "ADVERBS": 69,
+    "CLAUSES": 134,
+    "CONJUNCTIONS": 24,
+    "DETERMINERS": 67,
+    "DISCOURSE MARKERS": 11,
+    "FOCUS": 15,
+    "FUTURE": 71,
+    "MODALITY": 237,
+    "NEGATION": 31,
+    "NOUNS": 56,
+    "PASSIVES": 39,
+    "PAST": 93,
+    "PREPOSITIONS": 15,
+    "PRESENT": 38,
+    "PRONOUNS": 118,
+    "QUESTIONS": 35,
+    "REPORTED SPEECH": 17,
+    "VERBS": 62
+  }
+}
