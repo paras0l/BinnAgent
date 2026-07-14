@@ -3,10 +3,13 @@ import {
   BookOpen,
   Check,
   Clipboard,
+  Database,
   ExternalLink,
   FileInput,
+  Languages,
   Maximize2,
   RefreshCw,
+  Search,
   X,
 } from 'lucide-react'
 import { useCallback, useEffect, useId, useMemo, useState } from 'react'
@@ -55,7 +58,7 @@ const TARGET_URL = 'https://chat.deepseek.com/'
 type VocabularyDetailWorkspace = 'term' | 'generate' | 'return' | 'card'
 
 const WORKSPACE_TABS: WorkspaceTab<VocabularyDetailWorkspace>[] = [
-  { id: 'term', label: '词条输入', description: '选择目标词', icon: <BookOpen className="size-4" /> },
+  { id: 'term', label: '基础词库', description: '查询共享词条', icon: <Database className="size-4" /> },
   { id: 'generate', label: '生成指令', description: '指令与跳转', icon: <ExternalLink className="size-4" /> },
   { id: 'return', label: '回填预览', description: 'HTML 与阅读', icon: <FileInput className="size-4" /> },
   { id: 'card', label: '词卡沉淀', description: '保存与编辑', icon: <Check className="size-4" /> },
@@ -73,6 +76,40 @@ interface PersonalCardDetail {
   }
   morphology?: WordPartAnalysis | null
   mistakes?: Array<{ id: string; mistake_type: string; note?: string | null; correction?: string | null }>
+}
+
+interface BaseDictionaryEntry {
+  id: string
+  canonical_key: string
+  lemma: string
+  entry_kind: string
+  frequency_zipf: number
+  frequency_rank: number
+  parts_of_speech: string[]
+  pronunciations: Array<{ ipa?: string; audio?: string; text?: string }>
+  forms: string[]
+  senses: Array<{
+    sense_key: string
+    part_of_speech?: string
+    definition_en: string
+    definition_zh?: string | null
+    tags?: string[]
+  }>
+  relations: Array<{ type?: string; target?: string; source?: string }>
+  examples: Array<{
+    text?: string
+    translation_zh?: string | null
+    source?: string
+    source_id?: string
+  }>
+  source_attribution: Record<string, unknown>
+  build_version: string
+}
+
+type DictionaryLookupState = {
+  key: string
+  status: 'idle' | 'loading' | 'found' | 'missing' | 'error'
+  entry: BaseDictionaryEntry | null
 }
 
 export function VocabularyDetailPage({
@@ -124,6 +161,20 @@ export function VocabularyDetailPage({
   })
   const [workspace, setWorkspace] = useState<VocabularyDetailWorkspace>('term')
   const [cardDetail, setCardDetail] = useState<PersonalCardDetail | null>(null)
+  const [dictionaryLookup, setDictionaryLookup] = useState<DictionaryLookupState>({
+    key: '',
+    status: 'idle',
+    entry: null,
+  })
+  const [dictionaryLookupRequest, setDictionaryLookupRequest] = useState(0)
+  const [isAddingDictionaryEntry, setIsAddingDictionaryEntry] = useState(false)
+  const activeDictionaryKey = activeTerm.trim().toLocaleLowerCase()
+  const activeDictionaryState = !activeDictionaryKey
+    ? { key: '', status: 'idle' as const, entry: null }
+    : dictionaryLookup.key === activeDictionaryKey
+      ? dictionaryLookup
+      : { key: activeDictionaryKey, status: 'loading' as const, entry: null }
+  const dictionaryEntry = activeDictionaryState.entry
   const activeMorphology = useMemo(
     () => cardDetail?.morphology ?? inferWordPartAnalysis(activeTerm),
     [activeTerm, cardDetail?.morphology],
@@ -185,6 +236,30 @@ export function VocabularyDetailPage({
     window.addEventListener('message', handleReturnedHtml)
     return () => window.removeEventListener('message', handleReturnedHtml)
   }, [showToast, updateHtml])
+
+  useEffect(() => {
+    const query = activeTerm.trim()
+    const key = query.toLocaleLowerCase()
+    if (!query) return
+    const controller = new AbortController()
+    fetch(`/api/dictionary/entries/${encodeURIComponent(query)}`, {
+      signal: controller.signal,
+    })
+      .then(async (response) => {
+        if (response.status === 404) {
+          setDictionaryLookup({ key, status: 'missing', entry: null })
+          return
+        }
+        if (!response.ok) throw new Error('Dictionary lookup failed')
+        const entry = await response.json() as BaseDictionaryEntry
+        setDictionaryLookup({ key, status: 'found', entry })
+      })
+      .catch((error: unknown) => {
+        if (error instanceof DOMException && error.name === 'AbortError') return
+        setDictionaryLookup({ key, status: 'error', entry: null })
+      })
+    return () => controller.abort()
+  }, [activeTerm, dictionaryLookupRequest])
 
   useEffect(() => {
     if (!learner || !activeTerm.trim()) {
@@ -249,7 +324,44 @@ export function VocabularyDetailPage({
       input: nextTerm,
       active: nextTerm,
     })
-    setWorkspace('generate')
+    setDictionaryLookupRequest((request) => request + 1)
+    setWorkspace('term')
+  }
+
+  const addDictionaryEntryToVocabulary = async () => {
+    if (!learner || !dictionaryEntry) {
+      showToast('当前没有学习者，无法加入个人词汇本。', { variant: 'error' })
+      return
+    }
+    setIsAddingDictionaryEntry(true)
+    try {
+      const response = await fetch(`/api/learners/${learner.id}/vocabulary/add`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ word: dictionaryEntry.lemma }),
+      })
+      if (!response.ok) throw new Error('Failed to add dictionary entry')
+      const detailResponse = await fetch(
+        `/api/learners/${learner.id}/vocabulary/detail?term=${encodeURIComponent(dictionaryEntry.lemma)}`,
+      )
+      if (detailResponse.ok) {
+        const detail = await detailResponse.json() as PersonalCardDetail
+        setCardDetail(detail)
+        setCardForm({
+          display_form_override: detail.user_override.display_form_override ?? '',
+          user_understanding: detail.user_override.user_understanding ?? '',
+          user_examples_text: (detail.user_override.user_examples ?? []).join('\n'),
+          user_notes: detail.user_override.user_notes ?? '',
+          review_preference: detail.user_override.review_preference ?? 'normal',
+        })
+      }
+      onVocabularyChanged?.()
+      showToast(`已从基础词库将 ${dictionaryEntry.lemma} 加入个人词汇本。`, { variant: 'success' })
+    } catch {
+      showToast('加入个人词汇本失败，请稍后再试。', { variant: 'error' })
+    } finally {
+      setIsAddingDictionaryEntry(false)
+    }
   }
 
   const addToVocabulary = async () => {
@@ -339,10 +451,20 @@ export function VocabularyDetailPage({
           description="输入单词、词组或句子里的目标词，生成结构化详解；保存前可编辑个人理解、例句和复习偏好。"
           stats={[
             { label: '当前词条', value: activeTerm || '待输入', tone: activeTerm ? 'primary' : 'default' },
+            {
+              label: '基础词库',
+              value: activeDictionaryState.status === 'found'
+                ? '已命中'
+                : activeDictionaryState.status === 'loading'
+                  ? '查询中'
+                  : activeDictionaryState.status === 'missing'
+                    ? '未收录'
+                    : '待查询',
+              tone: activeDictionaryState.status === 'found' ? 'success' : activeDictionaryState.status === 'missing' ? 'warning' : 'default',
+            },
             { label: '词卡状态', value: cardDetail ? '已存在' : '未保存', tone: cardDetail ? 'success' : 'warning' },
             { label: 'HTML 回填', value: html.trim() ? '已回填' : '待回填', tone: html.trim() ? 'success' : 'warning' },
             { label: '构词分析', value: activeMorphology ? '可展示' : '待补充', tone: activeMorphology ? 'success' : 'warning' },
-            { label: '目标网站', value: 'DeepSeek' },
           ]}
           actions={
             <Button variant="secondary" onClick={onBack}>
@@ -361,41 +483,62 @@ export function VocabularyDetailPage({
         />
 
         {workspace === 'term' && (
-          <section className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
-            <SurfaceCard>
-              <FormField
-                label="目标词条"
-                description="支持单词、词组，也可以输入句子中的目标词。"
-                value={termInput}
-                onChange={(event) => setTermState({
-                  sourceTerm: normalizedTerm,
-                  input: event.target.value,
-                  active: activeTerm,
-                })}
-                onKeyDown={(event) => {
-                  if (event.key === 'Enter') applyTermInput()
-                }}
-                name="vocabulary_detail_term"
-                autoComplete="off"
-                placeholder="例如：significant / look up / take off…"
-              />
-              <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-                <Button onClick={applyTermInput}>应用 / 生成指令</Button>
-                <Button variant="secondary" onClick={() => setWorkspace('return')}>查看回填预览</Button>
-              </div>
-            </SurfaceCard>
+          <div className="grid gap-5">
+            <section className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
+              <SurfaceCard>
+                <FormField
+                  label="查询基础词库"
+                  description="支持英文单词、固定搭配和短语动词；查询所有学习者共享的基础词库。"
+                  value={termInput}
+                  onChange={(event) => setTermState({
+                    sourceTerm: normalizedTerm,
+                    input: event.target.value,
+                    active: activeTerm,
+                  })}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter') applyTermInput()
+                  }}
+                  name="vocabulary_detail_term"
+                  autoComplete="off"
+                  placeholder="例如：significant / look up / take off…"
+                />
+                <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+                  <Button onClick={applyTermInput}>
+                    <Search className="size-4" />查询基础词库
+                  </Button>
+                  <Button variant="secondary" onClick={() => setWorkspace('generate')} disabled={!activeTerm.trim()}>
+                    生成扩展详解
+                  </Button>
+                </div>
+              </SurfaceCard>
 
-            <SurfaceCard>
-              <h2 className="text-base font-black text-slate-950">当前状态</h2>
-              <div className="mt-4 grid gap-3 text-sm">
-                <StatusLine label="当前词条" value={activeTerm || '待输入'} />
-                <StatusLine label="词卡状态" value={cardDetail ? '已存在' : '未保存'} tone={cardDetail ? 'success' : 'warning'} />
-                <StatusLine label="HTML 回填" value={html.trim() ? '已回填' : '待回填'} tone={html.trim() ? 'success' : 'warning'} />
-                <StatusLine label="目标网站" value="DeepSeek" />
-              </div>
-              <MorphologySummaryCard morphology={activeMorphology} compact />
-            </SurfaceCard>
-          </section>
+              <SurfaceCard>
+                <h2 className="text-base font-black text-slate-950">当前状态</h2>
+                <div className="mt-4 grid gap-3 text-sm">
+                  <StatusLine label="当前词条" value={activeTerm || '待输入'} />
+                  <StatusLine
+                    label="基础词库"
+                    value={dictionaryLookupLabel(activeDictionaryState.status)}
+                    tone={activeDictionaryState.status === 'found' ? 'success' : activeDictionaryState.status === 'missing' ? 'warning' : 'default'}
+                  />
+                  <StatusLine label="词卡状态" value={cardDetail ? '已存在' : '未保存'} tone={cardDetail ? 'success' : 'warning'} />
+                  {dictionaryEntry ? <StatusLine label="词库版本" value={dictionaryEntry.build_version} /> : null}
+                </div>
+                <MorphologySummaryCard morphology={activeMorphology} compact />
+              </SurfaceCard>
+            </section>
+
+            <BaseDictionaryResult
+              entry={dictionaryEntry}
+              status={activeDictionaryState.status}
+              term={activeTerm}
+              canAdd={Boolean(learner && dictionaryEntry && !cardDetail)}
+              isSaved={Boolean(cardDetail)}
+              isAdding={isAddingDictionaryEntry}
+              onAdd={() => void addDictionaryEntryToVocabulary()}
+              onGenerate={() => setWorkspace('generate')}
+            />
+          </div>
         )}
 
         {workspace === 'generate' && (
@@ -668,6 +811,180 @@ export function VocabularyDetailPage({
   )
 }
 
+function BaseDictionaryResult({
+  canAdd,
+  entry,
+  isAdding,
+  isSaved,
+  onAdd,
+  onGenerate,
+  status,
+  term,
+}: {
+  canAdd: boolean
+  entry: BaseDictionaryEntry | null
+  isAdding: boolean
+  isSaved: boolean
+  onAdd: () => void
+  onGenerate: () => void
+  status: DictionaryLookupState['status']
+  term: string
+}) {
+  if (status === 'idle') {
+    return (
+      <SurfaceCard>
+        <EmptyState
+          icon={<Database className="size-5" />}
+          title="查询共享基础词库"
+          description="输入英文单词或短语，可直接查看常用义项、发音、词形、语义关系和 Tatoeba 例句。"
+        />
+      </SurfaceCard>
+    )
+  }
+  if (status === 'loading') {
+    return (
+      <SurfaceCard className="flex items-center gap-3 text-sm font-bold text-slate-600">
+        <RefreshCw className="size-4 animate-spin text-primary" />
+        正在查询基础词库…
+      </SurfaceCard>
+    )
+  }
+  if (status === 'missing' || status === 'error' || !entry) {
+    return (
+      <SurfaceCard>
+        <EmptyState
+          icon={<Search className="size-5" />}
+          title={status === 'missing' ? `基础词库暂未收录“${term}”` : '基础词库查询失败'}
+          description={status === 'missing'
+            ? '可以继续生成扩展详解；之后也能将确认过的内容沉淀到个人词汇本。'
+            : '请稍后重试，或先使用扩展详解流程。'}
+          action={<Button variant="secondary" onClick={onGenerate}>生成扩展详解</Button>}
+        />
+      </SurfaceCard>
+    )
+  }
+
+  const ipaValues = Array.from(new Set(entry.pronunciations.map((item) => item.ipa).filter(Boolean)))
+  const relations = entry.relations.filter((item) => item.target).slice(0, 18)
+
+  return (
+    <SurfaceCard>
+      <div className="flex flex-col gap-4 border-b border-slate-200 pb-5 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <Database className="size-5 text-primary" />
+            <p className="text-xs font-black uppercase tracking-[0.16em] text-primary">Shared Base Dictionary</p>
+            <span className="rounded-full bg-emerald-100 px-2 py-1 text-[11px] font-black text-emerald-800">基础词库命中</span>
+          </div>
+          <h2 className="mt-3 break-words text-3xl font-black tracking-tight text-slate-950">{entry.lemma}</h2>
+          <div className="mt-2 flex flex-wrap items-center gap-2 text-sm font-semibold text-slate-500">
+            <span>{dictionaryEntryKindLabel(entry.entry_kind)}</span>
+            {entry.parts_of_speech.length ? <span>· {entry.parts_of_speech.join(' / ')}</span> : null}
+            <span>· 高频排序 #{entry.frequency_rank}</span>
+            <span>· Zipf {entry.frequency_zipf.toFixed(2)}</span>
+          </div>
+          {ipaValues.length ? (
+            <p className="mt-3 font-mono text-sm font-bold text-indigo-700">{ipaValues.slice(0, 4).join(' · ')}</p>
+          ) : null}
+        </div>
+        <div className="flex shrink-0 flex-col gap-2 sm:w-48">
+          <Button onClick={onAdd} disabled={!canAdd || isAdding} className="justify-center">
+            {isAdding ? '正在加入…' : isSaved ? '已在个人词汇本' : '加入个人词汇本'}
+          </Button>
+          <Button variant="secondary" onClick={onGenerate} className="justify-center">生成扩展详解</Button>
+        </div>
+      </div>
+
+      <section className="mt-5">
+        <div className="flex items-center gap-2">
+          <Languages className="size-4 text-indigo-600" />
+          <h3 className="text-base font-black text-slate-950">常用义项</h3>
+        </div>
+        <div className="mt-3 grid gap-3">
+          {entry.senses.map((sense, index) => (
+            <article key={sense.sense_key} className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="flex size-6 items-center justify-center rounded-md bg-indigo-100 text-xs font-black text-indigo-700">{index + 1}</span>
+                {sense.part_of_speech ? <span className="rounded-md bg-white px-2 py-1 text-xs font-black text-slate-600">{sense.part_of_speech}</span> : null}
+                {(sense.tags ?? []).slice(0, 3).map((tag) => <span key={tag} className="text-xs font-semibold text-slate-400">{tag}</span>)}
+              </div>
+              <p className="mt-3 text-base font-black leading-7 text-slate-950">
+                {sense.definition_zh || '中文释义正在分批生成'}
+              </p>
+              <p className="mt-1 text-sm leading-6 text-slate-600">{sense.definition_en}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      {entry.forms.length ? (
+        <section className="mt-6 border-t border-slate-200 pt-5">
+          <h3 className="text-sm font-black text-slate-900">词形与变体</h3>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {entry.forms.map((form) => <span key={form} className="rounded-lg bg-slate-100 px-2.5 py-1.5 text-xs font-bold text-slate-700">{form}</span>)}
+          </div>
+        </section>
+      ) : null}
+
+      {relations.length ? (
+        <section className="mt-6 border-t border-slate-200 pt-5">
+          <h3 className="text-sm font-black text-slate-900">WordNet 语义关系</h3>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {relations.map((relation, index) => (
+              <span key={`${relation.type}-${relation.target}-${index}`} className="rounded-lg border border-indigo-100 bg-indigo-50 px-2.5 py-1.5 text-xs font-bold text-indigo-800">
+                {relationTypeLabel(relation.type)} · {relation.target}
+              </span>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {entry.examples.length ? (
+        <section className="mt-6 border-t border-slate-200 pt-5">
+          <h3 className="text-sm font-black text-slate-900">Tatoeba 例句</h3>
+          <div className="mt-3 grid gap-3">
+            {entry.examples.slice(0, 3).map((example, index) => (
+              <article key={`${example.source_id ?? index}-${example.text}`} className="rounded-xl bg-emerald-50/70 p-4">
+                <p className="text-sm font-bold leading-6 text-slate-900">{example.text}</p>
+                {example.translation_zh ? <p className="mt-1 text-sm leading-6 text-slate-600">{example.translation_zh}</p> : null}
+                <p className="mt-2 text-[11px] font-bold uppercase tracking-wide text-emerald-700">Tatoeba · {example.source_id ?? 'source'}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      <p className="mt-6 border-t border-slate-200 pt-4 text-xs font-semibold text-slate-400">
+        词库版本 {entry.build_version} · 英文义项来自 Kaikki/Wiktionary · 语义关系来自 WordNet
+      </p>
+    </SurfaceCard>
+  )
+}
+
+function dictionaryLookupLabel(status: DictionaryLookupState['status']) {
+  if (status === 'found') return '已命中'
+  if (status === 'loading') return '查询中'
+  if (status === 'missing') return '未收录'
+  if (status === 'error') return '查询失败'
+  return '待查询'
+}
+
+function dictionaryEntryKindLabel(kind: string) {
+  if (kind === 'phrasal_verb') return '短语动词'
+  if (kind === 'fixed_expression') return '固定表达'
+  if (kind === 'phrase') return '短语'
+  return '词元'
+}
+
+function relationTypeLabel(type?: string) {
+  if (type === 'synonym') return '近义'
+  if (type === 'antonym') return '反义'
+  if (type === 'hypernym') return '上位'
+  if (type === 'hyponym') return '下位'
+  if (type === 'entailment') return '蕴含'
+  return type || '相关'
+}
+
 function VocabularyDetailStepper({
   activeTerm,
   cardDetail,
@@ -689,7 +1006,7 @@ function VocabularyDetailStepper({
   }> = [
     {
       id: 'term',
-      label: '选择词条',
+      label: '查询词库',
       description: activeTerm ? activeTerm : '先输入目标词',
       isComplete: Boolean(activeTerm.trim()),
     },

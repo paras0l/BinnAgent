@@ -11,6 +11,8 @@ from sqlalchemy import String, and_, case, cast, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.api.deps import get_db_session
+from src.base_dictionary.enrichment import vocabulary_enrichment
+from src.base_dictionary.service import get_entry as get_base_dictionary_entry
 from src.knowledge.exercise_grader import answer_to_text, grade_exercise_answer
 from src.config import settings
 from src.db import async_session_factory
@@ -1873,15 +1875,28 @@ async def record_knowledge_attempt(
         )
         vocab = vocab_result.scalar_one_or_none()
         if vocab is None:
+            shared = vocabulary_enrichment(
+                await get_base_dictionary_entry(db, point.title)
+            )
             vocab = VocabularyItem(
                 learner_id=learner_id,
                 word=point.title,
                 canonical_key=canonical_vocabulary_key(point.title),
-                entry_kind=(point.content or {}).get("entry_kind") or "word",
+                entry_kind=shared.get("entry_kind")
+                or (point.content or {}).get("entry_kind")
+                or "word",
                 preferred_accent="auto",
+                phonetic=shared.get("phonetic"),
                 level=(point.content or {}).get("grade") or "unknown",
-                meanings=[point.summary],
+                meanings=shared.get("meanings") or [point.summary],
+                dictionary_senses=shared.get("dictionary_senses") or [],
+                word_forms=shared.get("word_forms") or {},
+                dictionary_tags=shared.get("dictionary_tags") or [],
+                collocations=shared.get("collocations") or [],
+                examples=shared.get("examples") or [],
                 source_ref=f"knowledge:{point.id}",
+                dictionary_provider=shared.get("dictionary_provider"),
+                dictionary_enriched_at=(now if shared else None),
                 status="learning",
                 confidence=mastery,
                 next_review_at=learner_state.next_review_at,

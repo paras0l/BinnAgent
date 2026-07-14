@@ -15,11 +15,108 @@ def mock_db():
 
 
 @pytest.fixture
-def store(mock_db):
-    return VocabularyStore(db=mock_db)
+def base_dictionary_lookup():
+    return AsyncMock(return_value=None)
+
+
+@pytest.fixture
+def store(mock_db, base_dictionary_lookup):
+    return VocabularyStore(db=mock_db, base_dictionary_lookup=base_dictionary_lookup)
 
 
 class TestAddWord:
+    @pytest.mark.asyncio
+    async def test_add_word_fills_missing_details_from_shared_dictionary(
+        self, mock_db, base_dictionary_lookup
+    ):
+        learner_id = uuid.uuid4()
+        base_dictionary_lookup.return_value = {
+            "entry_kind": "word",
+            "build_version": "2026-07-12.1",
+            "parts_of_speech": ["noun"],
+            "pronunciations": [{"ipa": "/ˈlaɪbrəri/"}],
+            "forms": ["libraries"],
+            "senses": [
+                {
+                    "sense_key": "library-n-1",
+                    "part_of_speech": "noun",
+                    "definition_en": "a place where books are kept",
+                    "definition_zh": "图书馆",
+                    "confidence": 0.99,
+                }
+            ],
+            "relations": [],
+            "examples": [{"text": "I study in the library.", "source": "tatoeba"}],
+        }
+        result = MagicMock()
+        result.scalar_one_or_none.return_value = None
+        mock_db.execute = AsyncMock(return_value=result)
+        mock_db.commit = AsyncMock()
+        mock_db.refresh = AsyncMock()
+        store = VocabularyStore(
+            db=mock_db,
+            base_dictionary_lookup=base_dictionary_lookup,
+        )
+
+        await store.add_word(learner_id=learner_id, word="library", source_ref="textbook:1")
+
+        item = mock_db.add.call_args.args[0]
+        assert item.phonetic == "/ˈlaɪbrəri/"
+        assert item.meanings[0]["definition_zh"] == "图书馆"
+        assert item.examples[0]["source"] == "tatoeba"
+        assert item.dictionary_provider == "base_dictionary"
+        assert item.source_ref == "textbook:1"
+
+    @pytest.mark.asyncio
+    async def test_existing_item_prefers_shared_dictionary_when_backfilling(
+        self, mock_db, base_dictionary_lookup
+    ):
+        existing = VocabularyItem(
+            id=uuid.uuid4(),
+            learner_id=uuid.uuid4(),
+            word="library",
+            canonical_key="library",
+            entry_kind="word",
+            status="learning",
+            meanings=[],
+            examples=[],
+        )
+        base_dictionary_lookup.return_value = {
+            "entry_kind": "word",
+            "build_version": "2026-07-12.1",
+            "parts_of_speech": ["noun"],
+            "pronunciations": [],
+            "forms": [],
+            "senses": [
+                {
+                    "sense_key": "library-n-1",
+                    "part_of_speech": "noun",
+                    "definition_en": "a place where books are kept",
+                    "definition_zh": "图书馆",
+                }
+            ],
+            "relations": [],
+            "examples": [],
+        }
+        result = MagicMock()
+        result.scalar_one_or_none.return_value = existing
+        mock_db.execute = AsyncMock(return_value=result)
+        mock_db.commit = AsyncMock()
+        mock_db.refresh = AsyncMock()
+        store = VocabularyStore(
+            db=mock_db,
+            base_dictionary_lookup=base_dictionary_lookup,
+        )
+
+        await store.add_word(
+            learner_id=existing.learner_id,
+            word="library",
+            meanings=[{"definition": "incoming fallback"}],
+        )
+
+        assert existing.meanings[0]["definition_zh"] == "图书馆"
+        assert existing.dictionary_provider == "base_dictionary"
+
     @pytest.mark.asyncio
     async def test_add_word_creates_new_item(self, store, mock_db):
         learner_id = uuid.uuid4()

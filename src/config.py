@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     ollama_chat_model: str = "gemma4:e2b"
     ollama_utility_model: str = "gemma4:e2b"
     ollama_embedding_model: str = "nomic-embed-text:latest"
-    model_provider: str = "ollama"
+    model_provider: str = "longcat"
     deepseek_base_url: str = "https://api.deepseek.com"
     deepseek_api_key: str | None = None
     deepseek_chat_model: str = "deepseek-v4-flash"

@@ -718,7 +718,9 @@ async def test_attempt_updates_mastery_and_writes_memory_events(client, knowledg
 
 
 @pytest.mark.asyncio
-async def test_vocabulary_attempt_adds_word_and_textbook_source(client, knowledge_session):
+async def test_vocabulary_attempt_adds_word_and_textbook_source(
+    client, knowledge_session, monkeypatch
+):
     learner_id = uuid.uuid4()
     source = _source()
     node = _node(source.id)
@@ -736,6 +738,10 @@ async def test_vocabulary_attempt_adds_word_and_textbook_source(client, knowledg
             _one(None),
             _one(None),
         ]
+    )
+    monkeypatch.setattr(
+        "src.api.knowledge.get_base_dictionary_entry",
+        AsyncMock(return_value=None),
     )
 
     response = await client.post(

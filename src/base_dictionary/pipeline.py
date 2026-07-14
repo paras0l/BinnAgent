@@ -136,14 +136,22 @@ def collect_kaikki_entries(
     *,
     frequency: Callable[[str], float],
     config: BuildConfig,
+    allowed_word_keys: set[str] | None = None,
 ) -> list[DictionaryEntry]:
     grouped: dict[str, list[dict[str, Any]]] = defaultdict(list)
     display_forms: dict[str, str] = {}
+    frequency_by_key: dict[str, float] = {}
     for item in items:
         lemma = str(item.get("word") or "").strip()
         key = canonical_key(lemma)
         if not _valid_lemma(key):
             continue
+        if allowed_word_keys is not None and " " not in key and key not in allowed_word_keys:
+            continue
+        if " " in key:
+            zipf = frequency_by_key.setdefault(key, float(frequency(key)))
+            if zipf < config.min_phrase_zipf:
+                continue
         senses = _clean_senses(item, config.max_senses)
         if not senses:
             continue
@@ -154,7 +162,11 @@ def collect_kaikki_entries(
     for key, variants in grouped.items():
         pos = sorted({str(item.get("pos") or "unknown") for item in variants})
         kind = classify_entry(key, pos)
-        zipf = float(frequency(key))
+        zipf = (
+            frequency_by_key[key]
+            if key in frequency_by_key
+            else float(frequency(key))
+        )
         minimum = config.min_word_zipf if kind == "word" else config.min_phrase_zipf
         if zipf < minimum:
             continue
@@ -277,10 +289,15 @@ def attach_relations(entries: list[DictionaryEntry], provider: RelationProvider)
             entry.source_attribution["relations"] = "Princeton WordNet 3.0"
 
 
-def _sentence_score(sentence: str, lemma: str) -> tuple[int, int, str] | None:
+def _sentence_score(
+    sentence: str,
+    lemma: str,
+    *,
+    tokens: list[str] | None = None,
+) -> tuple[int, int, str] | None:
     if "http://" in sentence or "https://" in sentence or len(sentence) > 180:
         return None
-    tokens = [canonical_key(token) for token in _TOKEN_RE.findall(sentence)]
+    tokens = tokens or [canonical_key(token) for token in _TOKEN_RE.findall(sentence)]
     if not tokens or f" {' '.join(tokens)} ".find(f" {lemma} ") < 0:
         return None
     length = len(tokens)
@@ -296,15 +313,27 @@ def attach_examples(
     examples_per_entry: int = 3,
 ) -> None:
     by_token: dict[str, list[DictionaryEntry]] = defaultdict(list)
+    token_entry_counts: dict[str, int] = defaultdict(int)
     for entry in entries:
         for token in set(entry.canonical_key.split()):
-            by_token[token].append(entry)
+            token_entry_counts[token] += 1
+    for entry in entries:
+        anchor = min(
+            set(entry.canonical_key.split()),
+            key=lambda token: (token_entry_counts[token], token),
+        )
+        by_token[anchor].append(entry)
     candidates: dict[str, list[tuple[tuple[int, int, str], SentencePair]]] = defaultdict(list)
     for pair in pairs:
-        sentence_tokens = set(canonical_key(token) for token in _TOKEN_RE.findall(pair.english))
+        normalized_tokens = [canonical_key(token) for token in _TOKEN_RE.findall(pair.english)]
+        sentence_tokens = set(normalized_tokens)
         possible = {id(entry): entry for token in sentence_tokens for entry in by_token.get(token, [])}
         for entry in possible.values():
-            score = _sentence_score(pair.english, entry.canonical_key)
+            score = _sentence_score(
+                pair.english,
+                entry.canonical_key,
+                tokens=normalized_tokens,
+            )
             if score is not None:
                 candidates[entry.canonical_key].append((score, pair))
     for entry in entries:
@@ -337,8 +366,14 @@ def build_dictionary(
     config: BuildConfig = BuildConfig(),
     relation_provider: RelationProvider | None = None,
     sentence_pairs: Iterable[SentencePair] | None = None,
+    allowed_word_keys: set[str] | None = None,
 ) -> list[DictionaryEntry]:
-    entries = collect_kaikki_entries(items, frequency=frequency, config=config)
+    entries = collect_kaikki_entries(
+        items,
+        frequency=frequency,
+        config=config,
+        allowed_word_keys=allowed_word_keys,
+    )
     if relation_provider is not None:
         attach_relations(entries, relation_provider)
     if sentence_pairs is not None:

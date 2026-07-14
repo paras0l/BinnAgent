@@ -7,6 +7,8 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.base_dictionary.enrichment import vocabulary_enrichment
+from src.base_dictionary.service import get_entries as get_base_dictionary_entries
 from src.models.knowledge import (
     CurriculumNode,
     KnowledgeLearningEvent,
@@ -132,10 +134,17 @@ async def enroll_unit_vocabulary(
     items_by_key = {
         item.canonical_key: item for item in (item_result.scalars().all() if item_result else [])
     }
+    shared_entries = await get_base_dictionary_entries(db, keys) if keys else {}
+    shared_fields = {
+        key: vocabulary_enrichment(payload) for key, payload in shared_entries.items()
+    }
     lookup_words = [
         point.title
         for point, key in zip(points, keys, strict=True)
-        if key not in items_by_key or items_by_key[key].dictionary_enriched_at is None
+        if (
+            key not in items_by_key or items_by_key[key].dictionary_enriched_at is None
+        )
+        and not shared_fields.get(key, {}).get("meanings")
     ]
     dictionary_entries = await lookup_free_dictionary_batch(lookup_words) if lookup_words else {}
     newly_added = 0
@@ -143,34 +152,46 @@ async def enroll_unit_vocabulary(
     for point, key in zip(points, keys, strict=True):
         item = items_by_key.get(key)
         dictionary_entry = dictionary_entries.get(point.title)
+        shared = shared_fields.get(key, {})
         if item is None:
             item = VocabularyItem(
                 learner_id=learner_id,
                 word=point.title,
                 canonical_key=key,
-                entry_kind=_entry_kind(point.title),
+                entry_kind=shared.get("entry_kind") or _entry_kind(point.title),
                 preferred_accent="auto",
-                phonetic=dictionary_entry.phonetic if dictionary_entry else None,
+                phonetic=shared.get("phonetic")
+                or (dictionary_entry.phonetic if dictionary_entry else None),
                 phonetic_uk=dictionary_entry.phonetic_uk if dictionary_entry else None,
                 phonetic_us=dictionary_entry.phonetic_us if dictionary_entry else None,
                 audio_url=dictionary_entry.audio_url if dictionary_entry else None,
                 audio_uk=dictionary_entry.audio_uk if dictionary_entry else None,
                 audio_us=dictionary_entry.audio_us if dictionary_entry else None,
                 level=source.grade,
-                meanings=dictionary_entry.meanings if dictionary_entry else [],
-                dictionary_senses=(
-                    dictionary_entry.dictionary_senses if dictionary_entry else []
-                ),
-                word_forms=dictionary_entry.word_forms if dictionary_entry else {},
-                dictionary_tags=dictionary_entry.dictionary_tags if dictionary_entry else [],
-                collocations=[],
-                examples=dictionary_entry.examples if dictionary_entry else [],
+                meanings=shared.get("meanings")
+                or (dictionary_entry.meanings if dictionary_entry else []),
+                dictionary_senses=shared.get("dictionary_senses")
+                or (dictionary_entry.dictionary_senses if dictionary_entry else []),
+                word_forms=shared.get("word_forms")
+                or (dictionary_entry.word_forms if dictionary_entry else {}),
+                dictionary_tags=shared.get("dictionary_tags")
+                or (dictionary_entry.dictionary_tags if dictionary_entry else []),
+                collocations=shared.get("collocations") or [],
+                examples=shared.get("examples")
+                or (dictionary_entry.examples if dictionary_entry else []),
                 source_ref=f"knowledge:{point.id}",
-                dictionary_provider=(dictionary_entry.provider if dictionary_entry else None),
+                dictionary_provider=(
+                    "base_dictionary"
+                    if shared
+                    else dictionary_entry.provider
+                    if dictionary_entry
+                    else None
+                ),
                 dictionary_enriched_at=(
-                    None
-                    if dictionary_entry and dictionary_entry.provider.endswith("_error")
-                    else datetime.now(timezone.utc)
+                    datetime.now(timezone.utc)
+                    if shared
+                    or (dictionary_entry and not dictionary_entry.provider.endswith("_error"))
+                    else None
                 ),
                 status="learning",
                 confidence=0.0,
@@ -182,18 +203,34 @@ async def enroll_unit_vocabulary(
             newly_added += 1
         else:
             already_known += 1
-            if dictionary_entry:
-                item.phonetic = dictionary_entry.phonetic
+            if shared:
+                for field_name in (
+                    "phonetic",
+                    "meanings",
+                    "dictionary_senses",
+                    "word_forms",
+                    "dictionary_tags",
+                    "collocations",
+                    "examples",
+                ):
+                    if not getattr(item, field_name, None) and shared.get(field_name):
+                        setattr(item, field_name, shared[field_name])
+                item.dictionary_provider = "base_dictionary"
+                item.dictionary_enriched_at = datetime.now(timezone.utc)
+            elif dictionary_entry:
+                item.phonetic = item.phonetic or dictionary_entry.phonetic
                 item.phonetic_uk = dictionary_entry.phonetic_uk
                 item.phonetic_us = dictionary_entry.phonetic_us
                 item.audio_url = dictionary_entry.audio_url
                 item.audio_uk = dictionary_entry.audio_uk
                 item.audio_us = dictionary_entry.audio_us
-                item.meanings = dictionary_entry.meanings
-                item.dictionary_senses = dictionary_entry.dictionary_senses
-                item.word_forms = dictionary_entry.word_forms
-                item.dictionary_tags = dictionary_entry.dictionary_tags
-                item.examples = dictionary_entry.examples
+                item.meanings = item.meanings or dictionary_entry.meanings
+                item.dictionary_senses = (
+                    item.dictionary_senses or dictionary_entry.dictionary_senses
+                )
+                item.word_forms = item.word_forms or dictionary_entry.word_forms
+                item.dictionary_tags = item.dictionary_tags or dictionary_entry.dictionary_tags
+                item.examples = item.examples or dictionary_entry.examples
                 item.dictionary_provider = dictionary_entry.provider
                 item.dictionary_enriched_at = (
                     None

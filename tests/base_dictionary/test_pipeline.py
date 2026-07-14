@@ -74,3 +74,21 @@ def test_normalization_and_entry_classification() -> None:
     assert classify_entry("look up", ["verb"]) == "phrasal_verb"
     assert classify_entry("in spite of", ["phrase"]) == "phrase"
     assert classify_entry("learn", ["verb"]) == "word"
+
+
+def test_build_can_preselect_common_words_before_collecting_entries() -> None:
+    source = [
+        item("common", "adj", [{"glosses": ["occurring often"]}]),
+        item("specialized", "adj", [{"glosses": ["requiring specialist knowledge"]}]),
+        item("take off", "verb", [{"glosses": ["to leave the ground"]}]),
+    ]
+    frequencies = {"common": 5.5, "specialized": 3.5, "take off": 4.8}
+
+    entries = build_dictionary(
+        source,
+        frequency=lambda term: frequencies[term],
+        config=BuildConfig(word_limit=10, phrase_limit=10, min_phrase_zipf=2.0),
+        allowed_word_keys={"common"},
+    )
+
+    assert [entry.canonical_key for entry in entries] == ["common", "take off"]

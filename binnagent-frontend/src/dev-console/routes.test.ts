@@ -10,6 +10,7 @@ describe('devConsoleRoutes', () => {
         'episodes',
         'learners',
         'textbooks',
+        'dictionary',
         'tools',
         'sandbox',
         'tool-call-records',
@@ -26,6 +27,7 @@ describe('devConsoleRoutes', () => {
         'Model Provider',
         'Learners',
         'Textbook Parsing',
+        'Base Dictionary',
         'Recent Episodes',
         'Tool Registry',
         'Sandbox Permissions',
@@ -46,6 +48,7 @@ describe('devConsoleRoutes', () => {
   it('keeps Tool Registry and Tool Call Records as separate routes', () => {
     expect(findDevConsoleRoute('/dev/tools').id).toBe('tools')
     expect(findDevConsoleRoute('/dev/sandbox').id).toBe('sandbox')
+    expect(findDevConsoleRoute('/dev/dictionary').id).toBe('dictionary')
     expect(findDevConsoleRoute('/dev/tool-calls').id).toBe('tool-call-records')
   })
 

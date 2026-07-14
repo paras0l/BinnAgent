@@ -7,6 +7,20 @@
 已有 Dictionary Tool 在数据库会话可用时优先读取共享词库，未命中才走原有本地词典或
 LLM fallback。
 
+运行时接入遵循“已有内容不覆盖、缺失内容优先补全”：
+
+- 教材单元批量入词汇本使用一次批量词库查询，教材知识点练习入词汇本与
+  `VocabularyStore.add_word()` 也会按规范化词元查询基础词库；个人词卡缺少音标、义项、
+  词形、例句或关系字段时优先复制共享内容，保留原始 `source_ref` 和所有已有字段。
+- 阅读精读划词翻译先精确查询基础词库；命中带中文释义的常用义项时直接返回并标记
+  `source=base_dictionary`，只有未命中或中文义项缺失时才调用
+  `reading.selection_translation` 模型。
+- 词汇详解页默认从 `/api/dictionary/entries/{term}` 查询共享词条，直接展示常用义项、发音、
+  词形、WordNet 关系和 Tatoeba 例句；命中后可通过个人词汇本 `add` 接口写入，缺失字段仍
+  由共享词库补全。未命中时才引导进入扩展 HTML 详解生成流程。
+- Dev Console 的 `Base Dictionary` 页面通过单一聚合接口展示当前发布版本、活跃词条、类型
+  分布、英文义项、中文释义、例句和 WordNet 关系覆盖率，以及构建参数与来源清单。
+
 首版构建目标：
 
 - 约 10,000 个常用英文词元；
@@ -59,6 +73,12 @@ Tatoeba 使用 English → Mandarin Chinese 的 custom sentence-pair TSV（四�
 sentence id、英文文本、中文 sentence id、中文文本）。
 
 ```bash
+.venv/bin/python scripts/build_base_dictionary.py prepare-tatoeba \
+  --english var/dictionary/raw/tatoeba/eng_sentences.tsv.bz2 \
+  --chinese var/dictionary/raw/tatoeba/cmn_sentences.tsv.bz2 \
+  --links var/dictionary/raw/tatoeba/links.tar.bz2 \
+  --output var/dictionary/raw/tatoeba-eng-cmn.tsv
+
 .venv/bin/python scripts/build_base_dictionary.py build \
   --kaikki var/dictionary/raw/kaikki-en.jsonl \
   --tatoeba var/dictionary/raw/tatoeba-eng-cmn.tsv \
@@ -79,6 +99,11 @@ alembic upgrade head
 `build` 不连接数据库；相同输入和依赖版本产生稳定排序。`load` 保存 staged 文件 SHA-256
 并幂等 upsert，当前构建中消失的旧条目标记为 inactive。中文生成支持分批重复执行，已存在
 译文的词条默认跳过。
+
+当前开发数据库已发布 `2026-07-13.2`：12,000 个活跃词条，其中 10,000 个词元、
+1,566 个短语、434 个短语动词；9,535 条带 WordNet 关系，8,623 条带 Tatoeba 例句。
+中文义项使用 LongCat 分批续跑，Dev Console 直接展示实时覆盖率，不把未完成批次伪装成
+完整覆盖。
 
 ## 来源与许可
 

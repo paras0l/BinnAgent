@@ -4,6 +4,7 @@ export const devConsoleRoutes = [
   { id: 'episodes', label: 'Recent Episodes', path: '/dev/episodes' },
   { id: 'graph-runs', label: 'Graph Runs', path: '/dev/graph-runs' },
   { id: 'textbooks', label: 'Textbook Parsing', path: '/dev/textbooks' },
+  { id: 'dictionary', label: 'Base Dictionary', path: '/dev/dictionary' },
   { id: 'memory', label: 'Memory Debug', path: '/dev/memory' },
   { id: 'tools', label: 'Tool Registry', path: '/dev/tools' },
   { id: 'sandbox', label: 'Sandbox Permissions', path: '/dev/sandbox' },

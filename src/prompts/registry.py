@@ -257,13 +257,13 @@ prompt_registry.register(
 prompt_registry.register(
     PromptMetadata(
         id="base_dictionary.translate_zh",
-        version="v1",
+        version="v2",
         owner="base_dictionary",
         purpose="将已筛选的英文词典义项独立翻译为简明中文释义",
-        template_path="versions/base_dictionary.translate_zh.v1.md",
+        template_path="versions/base_dictionary.translate_zh.v2.md",
         output_schema="BaseDictionaryTranslationOutput",
         model_policy={"default_model": "ollama_utility", "temperature": 0.0, "max_tokens": 2400},
-        eval_set="evals/prompts/base_dictionary_translate_zh_v1.jsonl",
+        eval_set="evals/prompts/base_dictionary_translate_zh_v2.jsonl",
     )
 )
 prompt_registry.register(

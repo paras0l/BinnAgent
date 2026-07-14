@@ -10,6 +10,8 @@ from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.api.deps import get_db_session, get_model_router
+from src.base_dictionary.enrichment import reading_translation
+from src.base_dictionary.service import get_entry as get_base_dictionary_entry
 from src.exercises import ExerciseAttemptCreate, ExerciseAttemptService, ExerciseTarget
 from src.models.knowledge import CurriculumNode, KnowledgePoint, KnowledgeSource
 from src.models.learner import Learner, LearnerProfile
@@ -48,6 +50,8 @@ class ReadingSelectionTranslationResponse(BaseModel):
     translation: str
     context_note: str
     confidence: float
+    source: Literal["base_dictionary", "model"] = "model"
+    build_version: str | None = None
 
 
 class ReadingMaterialHistoryRequest(BaseModel):
@@ -166,6 +170,14 @@ async def translate_reading_selection(
     sentence = " ".join(body.sentence.split())
     if selection.lower() not in sentence.lower():
         raise HTTPException(status_code=422, detail="Selection must appear in the sentence")
+    shared_translation = reading_translation(
+        await get_base_dictionary_entry(db, selection)
+    )
+    if shared_translation is not None:
+        return ReadingSelectionTranslationResponse(
+            selection=selection,
+            **shared_translation,
+        )
     result = await PromptExecutor(db=db, model_router=model_router).execute(
         prompt_id="reading.selection_translation",
         variables={
@@ -189,6 +201,7 @@ async def translate_reading_selection(
         translation=str(payload["translation"]),
         context_note=str(payload["context_note"]),
         confidence=float(payload["confidence"]),
+        source="model",
     )
 
 

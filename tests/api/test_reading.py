@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime, timezone
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -125,18 +125,63 @@ async def test_translate_reading_selection_uses_sentence_context(client, mock_se
     mock_session.execute = AsyncMock(return_value=_one(learner_id))
     app.dependency_overrides[deps.get_model_router] = lambda: FakeSelectionTranslationRouter()
 
-    response = await client.post(
-        f"/api/learners/{learner_id}/reading-workshop/selection-translation",
-        json={
-            "selection": "create space for",
-            "sentence": "Good technology can create space for human attention rather than remove it.",
-            "learner_level": "b1",
-        },
-    )
+    with patch(
+        "src.api.reading.get_base_dictionary_entry",
+        new=AsyncMock(return_value=None),
+    ):
+        response = await client.post(
+            f"/api/learners/{learner_id}/reading-workshop/selection-translation",
+            json={
+                "selection": "create space for",
+                "sentence": "Good technology can create space for human attention rather than remove it.",
+                "learner_level": "b1",
+            },
+        )
 
     assert response.status_code == 200
     assert response.json()["translation"] == "为……腾出空间"
     assert response.json()["confidence"] == 0.96
+    assert response.json()["source"] == "model"
+
+
+@pytest.mark.asyncio
+async def test_translate_reading_selection_prefers_shared_dictionary(client, mock_session):
+    learner_id = uuid.uuid4()
+    mock_session.execute = AsyncMock(return_value=_one(learner_id))
+    shared = {
+        "build_version": "2026-07-12.1",
+        "senses": [
+            {
+                "part_of_speech": "noun",
+                "definition_en": "a place where books are kept",
+                "definition_zh": "图书馆",
+                "confidence": 0.99,
+            }
+        ],
+    }
+
+    with patch(
+        "src.api.reading.get_base_dictionary_entry",
+        new=AsyncMock(return_value=shared),
+    ):
+        response = await client.post(
+            f"/api/learners/{learner_id}/reading-workshop/selection-translation",
+            json={
+                "selection": "library",
+                "sentence": "Tom helps Lily find the library.",
+                "learner_level": "a2",
+            },
+        )
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "selection": "library",
+        "translation": "图书馆",
+        "context_note": "noun · a place where books are kept",
+        "confidence": 0.99,
+        "source": "base_dictionary",
+        "build_version": "2026-07-12.1",
+    }
 
 
 @pytest.mark.asyncio

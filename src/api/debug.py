@@ -28,6 +28,11 @@ from src.models.knowledge import (
     ParserRun,
 )
 from src.models.learner import Learner, LearnerProfile
+from src.models.base_dictionary import (
+    BaseDictionaryBuild,
+    BaseDictionaryEntry,
+    BaseDictionaryTranslation,
+)
 from src.models.expression_lab import SandboxPermissionPolicy
 from src.expression_lab.sandbox_permissions import configure_sandbox_permissions, sandbox_permissions
 from src.models.memory import LearningMemoryEvent
@@ -56,6 +61,96 @@ class ModelProviderSwitchRequest(BaseModel):
 class SandboxPolicyUpdateRequest(BaseModel):
     profile: str = Field(default="strict", pattern="^(strict|interactive|trusted_integration)$")
     allowed_domains: list[str] = Field(default_factory=list, max_length=20)
+
+
+@router.get("/base-dictionary/metadata")
+async def base_dictionary_metadata(
+    db: AsyncSession = Depends(get_db_session),
+) -> dict[str, Any]:
+    build_result = await db.execute(
+        select(BaseDictionaryBuild)
+        .where(BaseDictionaryBuild.status == "published")
+        .order_by(BaseDictionaryBuild.completed_at.desc().nullslast())
+        .limit(1)
+    )
+    build = build_result.scalars().first()
+
+    entry_result = await db.execute(
+        select(
+            func.count(BaseDictionaryEntry.id),
+            func.coalesce(func.sum(func.jsonb_array_length(BaseDictionaryEntry.senses)), 0),
+            func.count(BaseDictionaryEntry.id).filter(
+                func.jsonb_array_length(BaseDictionaryEntry.examples) > 0
+            ),
+            func.count(BaseDictionaryEntry.id).filter(
+                func.jsonb_array_length(BaseDictionaryEntry.relations) > 0
+            ),
+        ).where(BaseDictionaryEntry.active.is_(True))
+    )
+    total_entries, total_senses, entries_with_examples, entries_with_relations = (
+        entry_result.one()
+    )
+
+    kind_result = await db.execute(
+        select(BaseDictionaryEntry.entry_kind, func.count(BaseDictionaryEntry.id))
+        .where(BaseDictionaryEntry.active.is_(True))
+        .group_by(BaseDictionaryEntry.entry_kind)
+        .order_by(BaseDictionaryEntry.entry_kind)
+    )
+    entries_by_kind = {kind: count for kind, count in kind_result.all()}
+
+    translation_result = await db.execute(
+        select(
+            func.count(func.distinct(BaseDictionaryTranslation.entry_id)),
+            func.count(BaseDictionaryTranslation.id),
+        )
+        .join(
+            BaseDictionaryEntry,
+            BaseDictionaryEntry.id == BaseDictionaryTranslation.entry_id,
+        )
+        .where(
+            BaseDictionaryEntry.active.is_(True),
+            BaseDictionaryTranslation.locale == "zh-CN",
+        )
+    )
+    translated_entries, translated_senses = translation_result.one()
+    total_entries = int(total_entries or 0)
+    total_senses = int(total_senses or 0)
+
+    def coverage(value: int, total: int) -> float:
+        return round(value / total, 4) if total else 0.0
+
+    return {
+        "build": (
+            {
+                "version": build.version,
+                "status": build.status,
+                "started_at": build.started_at.isoformat(),
+                "completed_at": build.completed_at.isoformat() if build.completed_at else None,
+                "source_manifest": build.source_manifest or {},
+                "selection_config": build.selection_config or {},
+                "statistics": build.statistics or {},
+            }
+            if build is not None
+            else None
+        ),
+        "entries": {
+            "total": total_entries,
+            "by_kind": entries_by_kind,
+            "total_senses": total_senses,
+            "with_examples": int(entries_with_examples or 0),
+            "with_relations": int(entries_with_relations or 0),
+            "example_coverage": coverage(int(entries_with_examples or 0), total_entries),
+            "relation_coverage": coverage(int(entries_with_relations or 0), total_entries),
+        },
+        "translations": {
+            "locale": "zh-CN",
+            "entries": int(translated_entries or 0),
+            "senses": int(translated_senses or 0),
+            "entry_coverage": coverage(int(translated_entries or 0), total_entries),
+            "sense_coverage": coverage(int(translated_senses or 0), total_senses),
+        },
+    }
 
 
 @router.get("/sandbox-policy")

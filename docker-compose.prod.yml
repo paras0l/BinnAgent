@@ -32,7 +32,7 @@ services:
       BINN_DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-binn}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-binn_agent}
       BINN_REDIS_URL: redis://redis:6379/0
       BINN_KNOWLEDGE_UPLOAD_DIR: /app/var/knowledge/uploads
-      BINN_MODEL_PROVIDER: ${BINN_MODEL_PROVIDER:-deepseek}
+      BINN_MODEL_PROVIDER: ${BINN_MODEL_PROVIDER:-longcat}
       BINN_OLLAMA_BASE_URL: ${BINN_OLLAMA_BASE_URL:-http://host.docker.internal:11434}
       BINN_OLLAMA_CHAT_MODEL: ${BINN_OLLAMA_CHAT_MODEL:-gemma4:e2b}
       BINN_OLLAMA_UTILITY_MODEL: ${BINN_OLLAMA_UTILITY_MODEL:-gemma4:e2b}
@@ -86,7 +86,7 @@ services:
     command: python scripts/run_exercise_worker.py
     environment:
       BINN_DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-binn}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-binn_agent}
-      BINN_MODEL_PROVIDER: ${BINN_MODEL_PROVIDER:-deepseek}
+      BINN_MODEL_PROVIDER: ${BINN_MODEL_PROVIDER:-longcat}
       BINN_OLLAMA_BASE_URL: ${BINN_OLLAMA_BASE_URL:-http://host.docker.internal:11434}
       BINN_OLLAMA_CHAT_MODEL: ${BINN_OLLAMA_CHAT_MODEL:-gemma4:e2b}
       BINN_OLLAMA_UTILITY_MODEL: ${BINN_OLLAMA_UTILITY_MODEL:-gemma4:e2b}

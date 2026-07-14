@@ -2,6 +2,7 @@ import { lazy, Suspense, useCallback, useEffect, useState } from 'react'
 import {
   Activity,
   BarChart3,
+  BookA,
   BookOpenCheck,
   BrainCircuit,
   Database,
@@ -34,6 +35,7 @@ import { RecentEpisodesPage } from './pages/RecentEpisodesPage'
 import { TextbookParsingPage } from './pages/TextbookParsingPage'
 import { ToolCatalogPage } from './pages/ToolCatalogPage'
 import { SandboxPermissionsPage } from './pages/SandboxPermissionsPage'
+import { BaseDictionaryPage } from './pages/BaseDictionaryPage'
 import { devConsoleRoutes, findDevConsoleRoute, type DevConsoleRouteId } from './routes'
 
 const MemoryCenterPage = lazy(() =>
@@ -290,6 +292,8 @@ function DevConsoleShell({ onClearToken }: { onClearToken: () => void }) {
               )
             ) : routeId === 'textbooks' ? (
               <TextbookParsingPage navigate={navigate} />
+            ) : routeId === 'dictionary' ? (
+              <BaseDictionaryPage />
             ) : routeId === 'tools' ? (
               <ToolCatalogPage />
             ) : routeId === 'sandbox' ? (
@@ -1258,6 +1262,7 @@ function routeIcon(routeId: DevConsoleRouteId) {
   if (routeId === 'episodes') return <Activity className="size-4" />
   if (routeId === 'graph-runs') return <Route className="size-4" />
   if (routeId === 'textbooks') return <BookOpenCheck className="size-4" />
+  if (routeId === 'dictionary') return <BookA className="size-4" />
   if (routeId === 'tools') return <Wrench className="size-4" />
   if (routeId === 'sandbox') return <Shield className="size-4" />
   if (routeId === 'tool-call-records') return <Activity className="size-4" />

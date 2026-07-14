@@ -39,7 +39,7 @@ services:
       BINN_OLLAMA_CHAT_MODEL: ${BINN_OLLAMA_CHAT_MODEL:-gemma4:e2b}
       BINN_OLLAMA_UTILITY_MODEL: ${BINN_OLLAMA_UTILITY_MODEL:-gemma4:e2b}
       BINN_OLLAMA_EMBEDDING_MODEL: ${BINN_OLLAMA_EMBEDDING_MODEL:-nomic-embed-text:latest}
-      BINN_MODEL_PROVIDER: ${BINN_MODEL_PROVIDER:-ollama}
+      BINN_MODEL_PROVIDER: ${BINN_MODEL_PROVIDER:-longcat}
       BINN_DEEPSEEK_BASE_URL: ${BINN_DEEPSEEK_BASE_URL:-https://api.deepseek.com}
       BINN_DEEPSEEK_API_KEY: ${BINN_DEEPSEEK_API_KEY:-}
       BINN_DEEPSEEK_CHAT_MODEL: ${BINN_DEEPSEEK_CHAT_MODEL:-deepseek-v4-flash}
@@ -86,7 +86,7 @@ services:
     command: python scripts/run_exercise_worker.py
     environment:
       BINN_DATABASE_URL: postgresql+asyncpg://binn:binn@db:5432/binn_agent
-      BINN_MODEL_PROVIDER: ${BINN_MODEL_PROVIDER:-ollama}
+      BINN_MODEL_PROVIDER: ${BINN_MODEL_PROVIDER:-longcat}
       BINN_OLLAMA_BASE_URL: http://host.docker.internal:11434
       BINN_OLLAMA_CHAT_MODEL: ${BINN_OLLAMA_CHAT_MODEL:-gemma4:e2b}
       BINN_OLLAMA_UTILITY_MODEL: ${BINN_OLLAMA_UTILITY_MODEL:-gemma4:e2b}

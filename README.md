@@ -139,7 +139,7 @@ http://localhost:5176，可在 Learners / Recent Episodes 中直接选择 learne
 | 宠物精灵通知 | 已实现，小冰接管全局 Toast 消息，支持按重要性抢占与配色、重复消息合并、七套统一视觉锚点的高清状态原画、观察/挥手等连续微动作、可调静置动作频率、贴边偷看、记忆变更晶石发光、任务完成庆祝、长耗时陪伴反馈、协作式文案、惯性拖动与跨窗口尺寸位置回收、点击/键盘互动、系统减少动态偏好、功能页首次介绍，以及用户菜单中的精灵设置 |
 | 教材 Knowledge Base / RAG / Exercises | 部分实现，作为冷启动知识来源；已支持 split public textbook pack v2、长沙市七年级人教新目标 2024 版上下册公共目录、UnitLearningWorkspace、多教材切换、文档解析/校对、统一 ExerciseItem / ExerciseAttempt 与单元阅读语感材料；2024 上册已接入 333 条本册词汇、349 条小学复现词、10 个单元连续朗读音频和正文第 1-74 印刷页的完整教材活动页题图，Starter Unit 1 另有 186 段精校时间轴；单元题库采用 PostgreSQL 持久化任务与独立 Worker 异步补池，支持六维质量评分、双重门禁和 mastery-aware 选题 |
 | Vocabulary Personal Cards / Practice / Spelling / Word Parts | 部分实现，已新增“词根与词缀”探索入口、四工作区学习页、内置词根词缀库、拆词练习、跨设备掌握进度、本地离线降级、morphology 前端展示/降级和知识点配套练习验收；训练中可在学习提示区将单词标记为“太简单（已掌握）”，并显著降低后续训练频率 |
-| Shared Base Dictionary | 基础管线已实现；共享表、Kaikki/Wiktionary 义项筛选、wordfreq 排序、WordNet 关系、Tatoeba 例句、独立中文释义生成、版本化发布和只读检索 API 已落地；完整约 10,000 词元数据需按文档下载语料后执行构建与抽样验收 |
+| Shared Base Dictionary | 已实现并接入学习路径；共享表、Kaikki/Wiktionary 义项筛选、wordfreq 排序、WordNet 关系、Tatoeba 例句、独立中文释义生成、版本化发布和只读检索 API 已落地；词汇详解可直接查询共享词条并加入个人词汇本，教材/对话词汇入本与精读划词翻译也优先查共享词库，Dev Console 可查看版本、数量和内容覆盖率 |
 | Writing Phrasebook | 基础版已实现 |
 | Expression Lab 英语表达实验室 | 已实现，支持中文表达缺口、英文草稿、好句迁移、词汇/语法目标和群聊学习线索输入；提供十类 schema 驱动内容块、局部重生成、1–3 题动态加练、确认后保存长期资产、会话恢复/删除，以及 Attempt → LearningEvent → Memory → Recommendation 学习闭环；Explore、Dashboard 辅助入口和群聊表达真实复用追踪已接通 |
 | 对话内互动 Artifact | 基础版已实现；普通用户用自然语言即可触发互动练习，内部 `binnagent-widget` HTML/CSS/JS 协议不会在生成或回传时暴露；组件运行在隔离 iframe，作答后须确认才会以自然语言消息和隐藏的结构化上下文继续对话；Markdown 图片可升级为选择、全屏查看和局部坐标标注图片板；沙箱禁止网络、存储、父页面访问和未确认业务写入 |
@@ -148,7 +148,7 @@ http://localhost:5176，可在 Learners / Recent Episodes 中直接选择 learne
 | Generative Classroom | 已实现可体验版本；每日学习采用数字教材桌面，按当前任务、最低完成证据和下一步组织词汇三档判断、Grammar Lab、教材原声听辨、PDF 原题作答、智能诊断与学习复盘；阶段门槛阻止任意跳关，返回不再误记完成，退出保留 Daily Lesson 并可原位恢复，保存状态显示真实时间；全册 10 个 Grammar Lab 提供明确 can-do 目标、规则归纳、结构模板、易错点、3 道即时辨析和迁移表达；LLM 诊断通过 `PromptExecutor` 对照教材与学生答案生成 schema 约束的最小提示，离线时使用确定性兜底；词汇判断、听辨证据、语法答案、迁移表达、教材答案、Daily Lesson checkpoint、Mastery、Memory、复习计划和 ExploreCapability 推荐保持联动 |
 | Frontend UI/UX 统一标准 | Issue #20 首轮整改已落地，普通学习端主导航保留 AI对话 / 探索 / 学习中心，Debug/Memory/Runtime 页面移入 Dev Console；Dashboard 首页提供唯一优先动作；学习目标归并为同步教材、考试备考、通用英语三条产品主线，Explore 按主线推荐并默认隐藏规划中能力；推荐卡显示学习依据、预计时长和完成收益；AI 对话支持显式学习收口、迁移练习与恢复说明；学习设置可编辑学习目标和 CEFR 当前水平，保存失败会回滚界面状态；教材解析治理集中到 Dev Console Textbook Parsing |
 | Prompt Registry / Schema-first Import / Parser Quality | 基础治理已实现；PromptExecutor 已统一 text/structured/stream prompt 调用，PromptExecutionRecord、结构化校验记录、Prompt Debug API、prompt eval CLI / eval sets、核心 prompt 迁移、画像驱动 prompt 背景和教材解析质量门禁已落地 |
-| Model Provider | 部分实现；本地默认 Ollama，云端可通过环境变量或 Dev Console Debug 页面切换到 DeepSeek / LongCat OpenAI-compatible chat API；RAG embedding 暂时隔离在 Ollama 路径 |
+| Model Provider | 部分实现；默认使用 LongCat，仍可通过环境变量或 Dev Console Debug 页面切换到 Ollama / DeepSeek；RAG embedding 暂时隔离在 Ollama 路径 |
 | Agent Runtime / Harness | 第二阶段补强中，TaskSpec、AgentEpisode、LearningEvent、EvidenceRef、ToolCallRecord、VerificationReport、MasteryEngine、RecommendationEngine、LearningGraphCheckpoint 和 Dev Console 调试入口已接入；Tool Catalog 第一阶段支持应用级发现、revision/spec hash、刷新、启停、健康监控、allowlist 解析和 schema/timeout 执行治理，Dev Console 可管理和监控生命周期；真实业务 wrapper 全量迁移与通用 MCP discovery 待完成；VerificationReport 的 critical 失败会阻止静默 completed；Debug API 默认关闭并需 token |
 | Learner-scoped isolation | Issue #25 第一阶段已实现，新增 current user / current learner dependency、scoped resource helper，并加固 Runtime、Daily Lesson、Memory、Explore、ExerciseAttempt 和 Debug 高风险路径 |
 | 邮箱登录与邀请关系 | 基础版已实现，6 位邮箱验证码、短期签名令牌、重发冷却、错误次数限制、SMTP/本地日志投递、同邮箱多学习者选择、邀请码注册、直接邀请人关系、旧账号邮箱升级和空库 bootstrap 邀请码已落地；正式认证 session 留待远程部署前补齐 |
@@ -187,7 +187,7 @@ http://localhost:5176，可在 Learners / Recent Episodes 中直接选择 learne
 | API | FastAPI (Python 3.11+) |
 | 编排 | LangGraph |
 | 数据库 | PostgreSQL + pgvector + SQLAlchemy |
-| LLM | Ollama (gemma4:e2b) |
+| LLM | LongCat 2.0（默认 chat / utility）+ Ollama（embedding） |
 | 前端 | React 19 + TypeScript + Tailwind CSS v4 |
 
 ## 服务端口

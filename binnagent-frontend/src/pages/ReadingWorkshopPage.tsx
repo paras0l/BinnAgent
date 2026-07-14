@@ -1309,7 +1309,12 @@ function IntensiveWorkspace({
 }) {
   const [mode, setMode] = useState<'sentence_list' | 'full_text'>('sentence_list')
   const [selection, setSelection] = useState<{ text: string; sentence: ReadingSentence } | null>(null)
-  const [translation, setTranslation] = useState<{ translation: string; context_note: string } | null>(null)
+  const [translation, setTranslation] = useState<{
+    translation: string
+    context_note: string
+    source: 'base_dictionary' | 'model'
+    build_version?: string | null
+  } | null>(null)
   const [translationStatus, setTranslationStatus] = useState<'idle' | 'loading' | 'error'>('idle')
   const fullTextRef = useRef<HTMLDivElement>(null)
   const [isSentenceListOpen, setIsSentenceListOpen] = useState(false)
@@ -1346,6 +1351,10 @@ function IntensiveWorkspace({
     setTranslationStatus('idle')
   }
 
+  const captureSelectionAfterPointer = () => {
+    window.requestAnimationFrame(captureSelection)
+  }
+
   const translateSelection = async () => {
     if (!selection) return
     setTranslationStatus('loading')
@@ -1360,7 +1369,12 @@ function IntensiveWorkspace({
         }),
       })
       if (!response.ok) throw new Error('Selection translation failed')
-      const result = await response.json() as { translation: string; context_note: string }
+      const result = await response.json() as {
+        translation: string
+        context_note: string
+        source: 'base_dictionary' | 'model'
+        build_version?: string | null
+      }
       setTranslation(result)
       setTranslationStatus('idle')
     } catch {
@@ -1450,16 +1464,22 @@ function IntensiveWorkspace({
             </div>
             <Languages className="size-5 shrink-0 text-primary" />
           </div>
-          <div ref={fullTextRef} onMouseUp={captureSelection} className="mt-5 max-h-[70vh] overflow-y-auto rounded-xl border border-slate-200 bg-slate-50 p-5 text-base leading-8 text-slate-800 sm:p-7 sm:text-lg sm:leading-9">
+          <div ref={fullTextRef} onPointerUp={captureSelectionAfterPointer} className="mt-5 max-h-[70vh] select-text overflow-y-auto rounded-xl border border-slate-200 bg-slate-50 p-5 text-base leading-8 text-slate-800 sm:p-7 sm:text-lg sm:leading-9">
             {sentences.map((sentence) => (
-              <button
-                key={sentence.id}
-                type="button"
-                onClick={() => onSelectSentence(sentence)}
-                className={`mr-1 inline rounded px-1 text-left transition-colors focus-visible:outline-2 focus-visible:outline-primary ${selectedSentenceId === sentence.id ? 'bg-indigo-100 text-indigo-950' : 'hover:bg-amber-100'}`}
-              >
-                {sentence.text}
-              </button>
+              <span key={sentence.id} className="mr-1 inline">
+                <span className={`cursor-text select-text rounded px-1 ${selectedSentenceId === sentence.id ? 'bg-indigo-100 text-indigo-950' : ''}`}>
+                  {sentence.text}
+                </span>
+                <button
+                  type="button"
+                  aria-label={`拆解句子 ${sentence.id}`}
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={() => onSelectSentence(sentence)}
+                  className="ml-0.5 mr-1 inline rounded bg-indigo-50 px-1.5 py-0.5 align-middle text-[10px] font-black leading-5 text-indigo-600 hover:bg-indigo-100 focus-visible:outline-2 focus-visible:outline-primary"
+                >
+                  拆句
+                </button>
+              </span>
             ))}
           </div>
           {selection ? (
@@ -1475,7 +1495,14 @@ function IntensiveWorkspace({
               </div>
               {translation ? (
                 <div className="mt-3 rounded-lg bg-white p-3">
-                  <p className="text-base font-black text-slate-950">{translation.translation}</p>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="text-base font-black text-slate-950">{translation.translation}</p>
+                    {translation.source === 'base_dictionary' ? (
+                      <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-black text-emerald-800">
+                        基础词库
+                      </span>
+                    ) : null}
+                  </div>
                   <p className="mt-1 text-sm leading-6 text-slate-600">{translation.context_note}</p>
                   <Button variant="secondary" className="mt-3" onClick={() => onNotesChange('phraseNotes', [notes.phraseNotes, `${selection.text}：${translation.translation}（${translation.context_note}）`].filter(Boolean).join('\n'))}>记入词组笔记</Button>
                 </div>
