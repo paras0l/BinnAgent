@@ -10,8 +10,8 @@ async def test_catalog_refresh_builds_versioned_snapshot():
 
     view = await manager.refresh()
 
-    assert view.tool_count == 8
-    assert view.enabled_count == 8
+    assert view.tool_count == 13
+    assert view.enabled_count == 13
     assert view.revision != "uninitialized"
     assert all(tool.version and tool.spec_hash for tool in view.tools)
 

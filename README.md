@@ -9,6 +9,7 @@ BinnAgent 是面向英语学习场景的个性化 Agent 系统。它不是普通
 - **LangGraph Runtime**：Daily Lesson 支持 checkpoint / interrupt / resume，等待真实用户作答后再继续评分和反馈。
 - **Memory + Mastery**：用学习证据更新掌握度、错因、复习计划和个性化推荐。
 - **Adaptive Learning Core**：AssessmentEvidence → IRT/FSRS → DKT shadow → TeachingPolicy，支持幂等、fallback、时间旅行测试和完整决策 trace。
+- **Can-do Agent Tools**：提供题目/疑问匹配、作答证据分析、学习状态读取和幂等证据写入五个受治理工具，模型不能直接传入 learner 或覆盖掌握概率。
 - **PromptExecutor + Schema-first**：结构化 LLM 输出必须经过 schema validation / repair / fallback decision 后才能进入业务写入。
 - **Simulation / Evaluation**：contract / integration / e2e 分层回归，覆盖学习闭环、Prompt schema、Memory/Mastery 和 Runtime trace。
 - **Dev Console**：集中查看 EpisodeTrace、ToolCall、PromptExecution、VerificationReport、Memory、RAG 和解析质量。
@@ -124,6 +125,11 @@ http://localhost:5176，可在 Learners / Recent Episodes 中直接选择 learne
 - [Simulation / Evaluation Audit](docs/architecture/simulation-evaluation-audit.md)
 - [ExploreCapability Recommendation](docs/explore-capability-recommendation.md)
 - [Agent Runtime / Harness Interview Brief](docs/interview/agent-runtime-harness.md)
+- [AI Agent、Tools 与 Function Calling 面试指南](docs/interview/AI-Agent-Tools-Function-Calling面试指南.md)
+- [LangGraph 深度面试题、参考回答与压力追问](docs/interview/LangGraph深度面试题与追问.md)
+- [FastAPI 深度面试题、参考回答与压力追问](docs/interview/FastAPI深度面试题与追问.md)
+- [MCP 深度面试题、参考回答与压力追问](docs/interview/MCP深度面试题与追问.md)
+- [Agent Harness：可观测、可追踪、可解释面试指南](docs/interview/Agent-Harness可观测可追踪可解释面试指南.md)
 - [Project Interview Bullets](docs/interview/project-bullets.md)
 - [Async Exercise Pool Interview Brief](docs/interview/异步练习题池设计.md)
 - [Issue Roadmap Status](docs/project/issue-roadmap-status.md)
@@ -154,7 +160,7 @@ http://localhost:5176，可在 Learners / Recent Episodes 中直接选择 learne
 | Prompt Registry / Schema-first Import / Parser Quality | 基础治理已实现；PromptExecutor 已统一 text/structured/stream prompt 调用，PromptExecutionRecord、结构化校验记录、Prompt Debug API、prompt eval CLI / eval sets、核心 prompt 迁移、画像驱动 prompt 背景和教材解析质量门禁已落地 |
 | Adaptive Learning Core | 第一阶段已实现；统一 AssessmentEvidence、IRT/1PL 能力解释、可注入时钟的 FSRS/DSR 调度、DKT shadow/fallback、TeachingPolicyCompiler、幂等审计链和 PromptExecution 策略快照已落地；真实 DKT 仍保持影子模式，待序列数据积累和离线校准后再灰度接管 |
 | Model Provider | 部分实现；默认使用 LongCat，仍可通过环境变量或 Dev Console Debug 页面切换到 Ollama / DeepSeek；RAG embedding 暂时隔离在 Ollama 路径 |
-| Agent Runtime / Harness | 第二阶段补强中，TaskSpec、AgentEpisode、LearningEvent、EvidenceRef、ToolCallRecord、VerificationReport、MasteryEngine、RecommendationEngine、LearningGraphCheckpoint 和 Dev Console 调试入口已接入；Tool Catalog 第一阶段支持应用级发现、revision/spec hash、刷新、启停、健康监控、allowlist 解析和 schema/timeout 执行治理，Dev Console 可管理和监控生命周期；真实业务 wrapper 全量迁移与通用 MCP discovery 待完成；VerificationReport 的 critical 失败会阻止静默 completed；Debug API 默认关闭并需 token |
+| Agent Runtime / Harness | 第二阶段补强中，TaskSpec、AgentEpisode、LearningEvent、EvidenceRef、ToolCallRecord、VerificationReport、MasteryEngine、RecommendationEngine、LearningGraphCheckpoint 和 Dev Console 调试入口已接入；Tool Catalog 第一阶段支持应用级发现、revision/spec hash、刷新、启停、健康监控、allowlist 解析和 schema/timeout 执行治理，并新增 `find_can_do_for_item`、`find_can_do_for_query`、`analyze_learner_response`、`get_learner_knowledge_state`、`record_learning_evidence` 五个真实业务 wrapper；其余 wrapper 全量迁移与通用 MCP discovery 待完成；VerificationReport 的 critical 失败会阻止静默 completed；Debug API 默认关闭并需 token |
 | Learner-scoped isolation | Issue #25 第一阶段已实现，新增 current user / current learner dependency、scoped resource helper，并加固 Runtime、Daily Lesson、Memory、Explore、ExerciseAttempt 和 Debug 高风险路径 |
 | 邮箱登录与邀请关系 | 基础版已实现，6 位邮箱验证码、短期签名令牌、重发冷却、错误次数限制、SMTP/本地日志投递、同邮箱多学习者选择、邀请码注册、直接邀请人关系、旧账号邮箱升级和空库 bootstrap 邀请码已落地；正式认证 session 留待远程部署前补齐 |
 | LangGraph daily lesson | 已升级为单题 checkpoint / interrupt / resume 学习闭环；graph 支持可选 checkpointer 编译，start 返回 waiting_user checkpoint/thread/schema/prompt，answer 从 `grade_attempt` 恢复并完成 grading、mastery、memory、review、recommend、verification，验证报告决定 completed / completed_with_warnings / verification_failed |

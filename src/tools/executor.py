@@ -1,3 +1,5 @@
+import uuid
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.tools.catalog import tool_catalog
@@ -8,8 +10,9 @@ async def execute_tool(
     input: ToolExecutionInput,
     *,
     db: AsyncSession | None = None,
+    learner_id: uuid.UUID | None = None,
 ) -> ToolExecutionResult:
-    return await tool_catalog.execute(input, db=db)
+    return await tool_catalog.execute(input, db=db, learner_id=learner_id)
 
 
 def list_default_tools() -> list:

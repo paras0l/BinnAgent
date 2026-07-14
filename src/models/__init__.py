@@ -5,6 +5,7 @@ from src.models.adaptive import (
     DKTShadowPrediction,
     FSRSReviewState,
     KnowledgeStateUpdate,
+    LearningEvidenceEvent,
     TeachingPolicyDecision,
 )
 from src.models.auth import EmailVerificationChallenge
@@ -115,6 +116,7 @@ __all__ = [
     "Learner",
     "LearnerProfile",
     "LearningSession",
+    "LearningEvidenceEvent",
     "CurriculumNode",
     "ExerciseAttempt",
     "ExerciseGenerationRun",

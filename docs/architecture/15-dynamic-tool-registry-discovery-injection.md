@@ -1,12 +1,12 @@
 # 15. Dynamic Tool Registry、Discovery 与 Runtime Injection
 
-> 状态：Phase 1 基础设施已实现；真实业务 wrapper、LangGraph 全量迁移与通用 MCP discovery 待完成  
-> 审计日期：2026-07-12  
+> 状态：Phase 1 基础设施和首批 can-do 学习 wrapper 已实现；LangGraph 全量迁移与通用 MCP discovery 待完成
+> 审计日期：2026-07-14
 > 范围：内部 Python tools、MCP tools、LangGraph runtime、TaskSpec、权限与审计
 
 ## 1. 结论
 
-BinnAgent 已从静态 Tool Registry 骨架升级为应用级 Tool Catalog 第一阶段，但还没有完成真实业务 wrapper、LangGraph 全量迁移和通用 MCP discovery。
+BinnAgent 已从静态 Tool Registry 骨架升级为应用级 Tool Catalog 第一阶段，并完成首批五个 can-do 学习业务 wrapper；LangGraph 全量迁移和通用 MCP discovery 尚未完成。
 
 2026-07-12 已落地：
 
@@ -18,6 +18,14 @@ BinnAgent 已从静态 Tool Registry 骨架升级为应用级 Tool Catalog 第�
 - Dev Console Catalog、生命周期监控、重新发现、启停和权限解析诊断；
 - registry、resolver、gateway 和 debug API 回归测试。
 
+2026-07-14 新增：
+
+- `find_can_do_for_item`、`find_can_do_for_query`、`analyze_learner_response`、`get_learner_knowledge_state`、`record_learning_evidence` 五个真实 binding；
+- learner/db 可信执行上下文，与模型可见 payload 分离；
+- can-do primary/alternatives、atomic KC、文本证据、置信度和 `whether`/`wh-word` 术语冲突保留；
+- `(learner_id, event_id)` 数据库级幂等、原始证据/匹配器版本审计、撤销后状态重放；
+- 状态写入复用 `MasteryEngine`，LLM 参数不能直接覆盖 IRT/DKT/FSRS 状态。
+
 原有静态能力包括：
 
 - `src/tools/registry.py` 提供进程内 `register/get/list_tools/execute`；
@@ -28,11 +36,11 @@ BinnAgent 已从静态 Tool Registry 骨架升级为应用级 Tool Catalog 第�
 
 当前仍未形成的闭环：
 
-- 兼容层 `build_default_tool_registry()` 仍是静态实现；应用执行入口已切到 catalog，但默认内部 binding 仍是占位 handler；
+- 兼容层 `build_default_tool_registry()` 仍是静态实现；应用执行入口已切到 catalog，旧八个 core binding 仍是占位 handler，五个 can-do learning binding 已是真实实现；
 - 没有 entry point、模块 manifest、数据库配置或 MCP server 的自动发现；
 - 已有启动时 catalog、显式刷新、状态计数与 revision；尚无外部 provider 探活、跨进程 revision 和持久化版本快照；
 - gateway 已能强制调用方传入的 `allowed_tools`，但现有 LangGraph/业务调用尚未全部迁入 gateway；
-- learner、current user、episode、数据库会话等上下文没有由可信 runtime 注入；
+- can-do 工具已可信注入 learner 和数据库会话；current user、episode、approval 等完整 `ToolContext` 仍待扩展；
 - 没有把筛选后的工具注入 LangGraph 节点或模型 tool calling；
 - 业务节点通常直接 import service，未经过统一执行网关；
 - schema 与 timeout 已执行；retry、approval、scope 和 risk policy 仍待落实；

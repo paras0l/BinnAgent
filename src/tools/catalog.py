@@ -12,6 +12,7 @@ from src.runtime.episode import EpisodeRuntime
 from src.runtime.hashing import stable_json_hash
 from src.tools.types import (
     ToolCatalogView,
+    ToolExecutionContext,
     ToolExecutionInput,
     ToolExecutionResult,
     ToolResolutionItem,
@@ -19,7 +20,10 @@ from src.tools.types import (
     ToolSpec,
 )
 
-ToolHandler = Callable[[dict[str, Any]], dict[str, Any] | Awaitable[dict[str, Any]]]
+ToolHandler = Callable[
+    [dict[str, Any], ToolExecutionContext],
+    dict[str, Any] | Awaitable[dict[str, Any]],
+]
 
 
 @dataclass(frozen=True)
@@ -146,6 +150,7 @@ class ToolCatalogManager:
         input: ToolExecutionInput,
         *,
         db: AsyncSession | None = None,
+        learner_id=None,
     ) -> ToolExecutionResult:
         await self.initialize()
         binding = self._bindings.get(input.tool_name)
@@ -167,7 +172,10 @@ class ToolCatalogManager:
 
         started = asyncio.get_running_loop().time()
         try:
-            raw = binding.handler(input.payload)
+            raw = binding.handler(
+                input.payload,
+                ToolExecutionContext(db=db, learner_id=learner_id),
+            )
             output = await asyncio.wait_for(
                 raw if inspect.isawaitable(raw) else _completed(raw),
                 timeout=spec.timeout_ms / 1000,
@@ -269,7 +277,7 @@ def _discover_internal_tools() -> list[ToolBinding]:
         ("recommendation.plan", "Build a daily learning recommendation plan."),
         ("verification.verify_episode", "Verify an AgentEpisode against required checks."),
     ]
-    return [
+    bindings = [
         ToolBinding(
             spec=ToolSpec(
                 name=name,
@@ -285,13 +293,138 @@ def _discover_internal_tools() -> list[ToolBinding]:
         )
         for name, description in tools
     ]
+    bindings.extend(_learning_tool_bindings())
+    return bindings
 
 
 def _default_handler(name: str) -> ToolHandler:
-    def handler(payload: dict[str, Any]) -> dict[str, Any]:
+    def handler(payload: dict[str, Any], _: ToolExecutionContext) -> dict[str, Any]:
         return {"tool_name": name, "status": "accepted", "payload": payload}
 
     return handler
+
+
+def _learning_tool_bindings() -> list[ToolBinding]:
+    from src.tools.learning_tools import (
+        AnalyzeLearnerResponseInput,
+        FindCanDoForItemInput,
+        FindCanDoForQueryInput,
+        GetLearnerKnowledgeStateInput,
+        RecordLearningEvidenceInput,
+        analyze_learner_response,
+        find_can_do_for_item,
+        find_can_do_for_query,
+        get_learner_knowledge_state,
+        record_learning_evidence,
+        tool_input_schema,
+    )
+
+    async def item_handler(payload, context):
+        return await find_can_do_for_item(
+            _require_db(context), FindCanDoForItemInput.model_validate(payload)
+        )
+
+    async def query_handler(payload, context):
+        return await find_can_do_for_query(
+            _require_db(context), FindCanDoForQueryInput.model_validate(payload)
+        )
+
+    def analyze_handler(payload, _context):
+        return analyze_learner_response(AnalyzeLearnerResponseInput.model_validate(payload))
+
+    async def state_handler(payload, context):
+        return await get_learner_knowledge_state(
+            _require_db(context),
+            _require_learner(context),
+            GetLearnerKnowledgeStateInput.model_validate(payload),
+        )
+
+    async def record_handler(payload, context):
+        return await record_learning_evidence(
+            _require_db(context),
+            _require_learner(context),
+            RecordLearningEvidenceInput.model_validate(payload),
+        )
+
+    object_output = {"type": "object", "additionalProperties": True}
+    definitions = [
+        (
+            "find_can_do_for_item",
+            "Match an exercise to one primary can-do and evidence-backed atomic knowledge items.",
+            FindCanDoForItemInput,
+            item_handler,
+            "read",
+            "safe",
+            ["db"],
+        ),
+        (
+            "find_can_do_for_query",
+            "Match a learner question to can-do statements and atomic knowledge items.",
+            FindCanDoForQueryInput,
+            query_handler,
+            "read",
+            "safe",
+            ["db"],
+        ),
+        (
+            "analyze_learner_response",
+            "Classify target evidence as success, unsuccessful, no-attempt, or unrelated error.",
+            AnalyzeLearnerResponseInput,
+            analyze_handler,
+            "read",
+            "safe",
+            [],
+        ),
+        (
+            "get_learner_knowledge_state",
+            "Read DKT, IRT, recent evidence, review due state, and common errors for the current learner.",
+            GetLearnerKnowledgeStateInput,
+            state_handler,
+            "read",
+            "safe",
+            ["db", "learner_id"],
+        ),
+        (
+            "record_learning_evidence",
+            "Idempotently record observations and update derived learner state without accepting mastery values.",
+            RecordLearningEvidenceInput,
+            record_handler,
+            "write",
+            "keyed",
+            ["db", "learner_id"],
+        ),
+    ]
+    return [
+        ToolBinding(
+            spec=ToolSpec(
+                name=name,
+                version="1.0.0",
+                description=description,
+                input_schema=tool_input_schema(input_model),
+                output_schema=object_output,
+                risk_level=risk,
+                source="internal",
+                provider_ref="binnagent.learning_tools",
+                injected_fields=injected_fields,
+                idempotency=idempotency,
+                required_scopes=["learner:read"] if risk == "read" else ["learner:write"],
+            ),
+            handler=handler,
+        )
+        for name, description, input_model, handler, risk, idempotency, injected_fields in definitions
+    ]
+
+
+def _require_db(context: ToolExecutionContext) -> AsyncSession:
+    if context.db is None:
+        raise ValueError("trusted database context is required")
+    return context.db
+
+
+def _require_learner(context: ToolExecutionContext):
+    if context.learner_id is None:
+        raise ValueError("trusted learner context is required")
+    return context.learner_id
 
 
 def _validate_candidates(candidates: list[ToolBinding]) -> None:

@@ -1,7 +1,20 @@
+import uuid
+from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
 from pydantic import BaseModel, Field
+
+if TYPE_CHECKING:
+    from sqlalchemy.ext.asyncio import AsyncSession
+
+
+@dataclass(frozen=True)
+class ToolExecutionContext:
+    """Trusted runtime values that are never accepted from a model payload."""
+
+    db: "AsyncSession | None" = None
+    learner_id: uuid.UUID | None = None
 
 
 class ToolSpec(BaseModel):

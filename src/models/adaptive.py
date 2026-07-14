@@ -116,3 +116,29 @@ class DecisionTrace(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     status: Mapped[str] = mapped_column(String(30), nullable=False)
     reason: Mapped[str] = mapped_column(String(160), nullable=False)
     trace_payload: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
+
+
+class LearningEvidenceEvent(UUIDPrimaryKeyMixin, TimestampMixin, Base):
+    """Idempotency envelope and audit record for agent-authored observations."""
+
+    __tablename__ = "learning_evidence_events"
+    __table_args__ = (
+        UniqueConstraint("learner_id", "event_id", name="uq_learning_evidence_event"),
+        Index("ix_learning_evidence_event_learner", "learner_id", "created_at"),
+    )
+
+    learner_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("learners.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    event_id: Mapped[str] = mapped_column(String(255), nullable=False)
+    source: Mapped[str] = mapped_column(String(50), nullable=False)
+    question_id: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    observations: Mapped[list] = mapped_column(JSONB, nullable=False, default=list)
+    raw_evidence: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
+    matcher_model_version: Mapped[str] = mapped_column(String(80), nullable=False)
+    status: Mapped[str] = mapped_column(String(30), nullable=False)
+    result: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
+    revoked_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    revoke_reason: Mapped[Optional[str]] = mapped_column(Text, nullable=True)

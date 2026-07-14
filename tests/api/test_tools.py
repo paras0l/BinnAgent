@@ -23,7 +23,7 @@ async def test_tool_catalog_lifecycle_and_resolution_api(client):
     catalog_response = await client.get("/api/tools/catalog", headers=headers)
     assert catalog_response.status_code == 200
     catalog = catalog_response.json()
-    assert catalog["tool_count"] == 8
+    assert catalog["tool_count"] == 13
     assert catalog["revision"]
 
     disabled = await client.post("/api/tools/memory.write/disable", headers=headers)

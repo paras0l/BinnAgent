@@ -31,7 +31,22 @@ def test_alembic_migrations_have_single_head_revision() -> None:
             parents.update(item for item in down_revision if isinstance(item, str))
 
     heads = revisions - parents
-    assert heads == {"b8c9d0e1f2a4"}
+    assert heads == {"c9d0e1f2a3b5"}
+
+
+def test_agent_learning_evidence_migration_is_idempotent_and_auditable() -> None:
+    migration = Path(
+        "alembic/versions/c9d0e1f2a3b5_add_agent_learning_evidence_events.py"
+    ).read_text()
+
+    assert "learning_evidence_events" in migration
+    assert "uq_learning_evidence_event" in migration
+    assert "raw_evidence" in migration
+    assert "matcher_model_version" in migration
+    assert "revoked_at" in migration
+    assert "grammar.reported_question.word_order" in migration
+    assert "grammar.reported_speech.backshift" in migration
+    assert "vocabulary.collocation.make_a_decision" in migration
 
 
 def test_adaptive_learning_migration_adds_traceable_state_models() -> None:
