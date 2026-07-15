@@ -97,6 +97,33 @@ export interface ReadingMaterialCompleteResponse {
   message: string
 }
 
+export interface ReadingCompletionStateInput {
+  hasMaterial: boolean
+  hasExtensiveEvidence: boolean
+  analyzedSentenceCount: number
+  goal: ReadingTrainingGoal
+  isRecorded: boolean
+}
+
+export interface ReadingCompletionState {
+  completion: Record<ReadingWorkspace, boolean>
+  canComplete: boolean
+  missingLabels: string[]
+}
+
+export interface ReadingCompletionPayloadInput {
+  clientAttemptId: string
+  analyzedSentenceIds: string[]
+  goal: ReadingTrainingGoal
+  extensiveEvidence: {
+    gist: string
+    centralSentence: string
+  }
+  grammarTopicCount: number
+  grammarBlindSpots: string[]
+  notes: string | null
+}
+
 export const READING_LEVEL_LABELS: Record<ReadingLevel, string> = {
   junior: '初中',
   cet4: 'CET-4',
@@ -221,8 +248,76 @@ const COMMON_READING_WORDS = new Set([
 
 const SENTENCE_PATTERN = /[^.!?]+(?:[.!?]+["')\]]*)?|[^.!?]+$/g
 const ENGLISH_WORD_PATTERN = /[A-Za-z]+(?:[-'][A-Za-z]+)?/g
-const NONFINITE_PATTERN = /\b(to\s+[a-z]+|[a-z]+ing|[a-z]+ed)\b/i
+const NONFINITE_PARTICIPLE_PATTERN = /\b(?:am|is|are|was|were|be|been|being|have|has|had|keep|keeps|kept|start|starts|started|begin|begins|began|continue|continues|continued)\s+[a-z]{3,}(?:ing|ed)\b|\b[a-z]{3,}(?:ing|ed)\s+(?:by|in|on|at|with|without|for|from)\b/i
 const PREPOSITIONAL_PHRASE_PATTERN = /\b(in|on|at|for|with|without|by|from|of|about|after|before|during|through)\s+[a-z]/i
+
+// A conservative verb lexicon avoids treating every "to + word" prepositional
+// phrase (for example, "to school" or "to London") as an infinitive.
+const COMMON_INFINITIVE_VERBS = new Set([
+  'add',
+  'answer',
+  'ask',
+  'be',
+  'become',
+  'begin',
+  'build',
+  'change',
+  'check',
+  'choose',
+  'compare',
+  'complete',
+  'continue',
+  'create',
+  'decide',
+  'describe',
+  'develop',
+  'discover',
+  'do',
+  'explain',
+  'find',
+  'finish',
+  'focus',
+  'follow',
+  'get',
+  'give',
+  'help',
+  'identify',
+  'improve',
+  'include',
+  'keep',
+  'know',
+  'learn',
+  'make',
+  'notice',
+  'practice',
+  'prepare',
+  'read',
+  'remember',
+  'review',
+  'see',
+  'show',
+  'start',
+  'study',
+  'take',
+  'think',
+  'try',
+  'understand',
+  'use',
+  'work',
+  'write',
+])
+
+function hasNonfiniteForm(sentence: string): boolean {
+  if (NONFINITE_PARTICIPLE_PATTERN.test(sentence)) return true
+
+  return Array.from(sentence.matchAll(/\bto\s+([A-Za-z]+)\b/g)).some((match) => {
+    const candidate = match[1].toLowerCase()
+    return (
+      COMMON_INFINITIVE_VERBS.has(candidate)
+      || /(?:ate|en|ify|ise|ize)$/.test(candidate)
+    )
+  })
+}
 
 export function splitReadingSentences(text: string): ReadingSentence[] {
   const normalized = text.replace(/\s+/g, ' ').trim()
@@ -250,7 +345,73 @@ export function estimateReadingMinutes(text: string, level: ReadingLevel): numbe
     general: 125,
   }
   const wordCount = countEnglishWords(text)
+  if (wordCount === 0) return 0
   return Math.max(1, Math.ceil(wordCount / wordsPerMinute[level]))
+}
+
+export function buildReadingCompletionState({
+  hasMaterial,
+  hasExtensiveEvidence,
+  analyzedSentenceCount,
+  goal,
+  isRecorded,
+}: ReadingCompletionStateInput): ReadingCompletionState {
+  const completion: Record<ReadingWorkspace, boolean> = {
+    input: hasMaterial,
+    extensive: hasMaterial && hasExtensiveEvidence,
+    intensive: hasMaterial && analyzedSentenceCount > 0,
+    review: hasMaterial && isRecorded,
+  }
+  const missingLabels: string[] = []
+
+  if (!completion.input) missingLabels.push('添加阅读材料')
+  if (goal !== 'intensive' && !completion.extensive) missingLabels.push('完成泛读记录')
+  if (goal !== 'extensive' && !completion.intensive) missingLabels.push('完成至少 1 个精读句')
+
+  return {
+    completion,
+    canComplete: missingLabels.length === 0,
+    missingLabels,
+  }
+}
+
+export function buildReadingCompletionPayload({
+  clientAttemptId,
+  analyzedSentenceIds,
+  goal,
+  extensiveEvidence,
+  grammarTopicCount,
+  grammarBlindSpots,
+  notes,
+}: ReadingCompletionPayloadInput) {
+  return {
+    client_attempt_id: clientAttemptId,
+    selected_sentence_count: analyzedSentenceIds.length,
+    analyzed_sentence_ids: analyzedSentenceIds,
+    ...(goal !== 'intensive' ? {
+      extensive_evidence: {
+        gist: extensiveEvidence.gist.trim(),
+        central_sentence: extensiveEvidence.centralSentence.trim(),
+      },
+    } : {}),
+    grammar_topic_count: grammarTopicCount,
+    grammar_blind_spots: grammarBlindSpots,
+    correction_notes: [] as string[],
+    notes,
+  }
+}
+
+export function fingerprintReadingCompletionPayload(
+  payload: ReturnType<typeof buildReadingCompletionPayload>
+): string {
+  const evidence = { ...payload, client_attempt_id: '' }
+  const serialized = JSON.stringify(evidence)
+  let hash = 2166136261
+  for (let index = 0; index < serialized.length; index += 1) {
+    hash ^= serialized.charCodeAt(index)
+    hash = Math.imul(hash, 16777619)
+  }
+  return `reading-evidence-${(hash >>> 0).toString(16).padStart(8, '0')}`
 }
 
 export function buildKeywordCandidates(text: string, limit = 8): ReadingKeywordCandidate[] {
@@ -275,9 +436,10 @@ export function buildKeywordCandidates(text: string, limit = 8): ReadingKeywordC
 
 export function suggestGrammarOptionIds(sentence: string): string[] {
   const normalized = ` ${sentence.toLowerCase()} `
-  return READING_GRAMMAR_OPTIONS.filter((option) =>
-    option.signalWords.some((signal) => normalized.includes(signal.toLowerCase()))
-  ).map((option) => option.id)
+  return READING_GRAMMAR_OPTIONS.filter((option) => {
+    if (option.id === 'nonfinite-modifier') return hasNonfiniteForm(sentence)
+    return option.signalWords.some((signal) => normalized.includes(signal.toLowerCase()))
+  }).map((option) => option.id)
 }
 
 export function buildSentenceFocusHints(sentence: string): ReadingSentenceHint[] {
@@ -300,7 +462,7 @@ export function buildSentenceFocusHints(sentence: string): ReadingSentenceHint[]
     })
   }
 
-  if (NONFINITE_PATTERN.test(sentence)) {
+  if (hasNonfiniteForm(sentence)) {
     hints.push({
       id: 'nonfinite',
       label: '非谓语线索',

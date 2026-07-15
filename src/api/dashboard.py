@@ -3,12 +3,12 @@ from collections import Counter
 from datetime import date, datetime, timedelta, timezone
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.api.deps import get_db_session
+from src.api.deps import get_db_session, require_learner_access
 from src.models.error_pattern import ErrorPattern
 from src.models.knowledge import ExerciseAttempt, LearnerKnowledgeState
 from src.models.learner import Learner
@@ -90,12 +90,6 @@ class DashboardResponse(BaseModel):
     profile: DashboardProfileData = Field(default_factory=DashboardProfileData)
 
 
-async def _ensure_learner_exists(db: AsyncSession, learner_id: uuid.UUID) -> None:
-    result = await db.execute(select(Learner.id).where(Learner.id == learner_id))
-    if result.scalar_one_or_none() is None:
-        raise HTTPException(status_code=404, detail="Learner not found")
-
-
 def _first_text(value: Any) -> str | None:
     if isinstance(value, list) and value:
         first = value[0]
@@ -151,10 +145,29 @@ def _streak_days(sessions: list[LearningSession]) -> int:
 
 
 def _score_from_attempts(attempts: list[ExerciseAttempt]) -> int | None:
-    if not attempts:
+    gradable_attempts = [
+        attempt for attempt in attempts if attempt.result in {"correct", "incorrect"}
+    ]
+    if not gradable_attempts:
         return None
-    correct_count = sum(1 for attempt in attempts if attempt.correct)
-    return round(correct_count / len(attempts) * 100)
+    correct_count = sum(1 for attempt in gradable_attempts if attempt.correct)
+    return round(correct_count / len(gradable_attempts) * 100)
+
+
+def _reading_score_from_attempts(attempts: list[ExerciseAttempt]) -> tuple[int | None, int]:
+    scores: list[float] = []
+    for attempt in attempts:
+        metadata = attempt.metadata_ or {}
+        if metadata.get("source") == "reading_workshop_completion":
+            value = metadata.get("comprehension_score")
+            if isinstance(value, (int, float)):
+                scores.append(max(0.0, min(100.0, float(value))))
+            continue
+        if attempt.result in {"correct", "incorrect"}:
+            scores.append(100.0 if attempt.correct else 0.0)
+    if not scores:
+        return None, 0
+    return _clamp_percent(sum(scores) / len(scores)), len(scores)
 
 
 def _progress_score(items: list[LearningProgressItem]) -> int | None:
@@ -236,6 +249,9 @@ def _profile_ability_scores(
             vocab_vector_scores.append(vector_score * 100)
     vocab_vector = _average(vocab_vector_scores)
     listening_vector = _average([vector.listening * 100 for vector in mastery_vectors])
+    reading_score, reading_evidence_count = _reading_score_from_attempts(
+        attempts_by_skill.get("reading", [])
+    )
 
     skill_sources = {
         "词汇": [
@@ -254,7 +270,7 @@ def _profile_ability_scores(
             ),
         ],
         "阅读": [
-            (_score_from_attempts(attempts_by_skill.get("reading", [])), len(attempts_by_skill.get("reading", []))),
+            (reading_score, reading_evidence_count),
         ],
         "写作": [
             (_score_from_attempts(attempts_by_skill.get("writing", [])), len(attempts_by_skill.get("writing", []))),
@@ -330,6 +346,8 @@ def _profile_trend(
                     correct += 1
         for attempt in exercise_attempts:
             if attempt.created_at and attempt.created_at.astimezone(timezone.utc).date() == day:
+                if attempt.result not in {"correct", "incorrect"}:
+                    continue
                 total += 1
                 if attempt.correct:
                     correct += 1
@@ -346,9 +364,9 @@ def _profile_trend(
 @router.get("", response_model=DashboardResponse)
 async def get_dashboard(
     learner_id: uuid.UUID,
+    _: Learner = Depends(require_learner_access),
     db: AsyncSession = Depends(get_db_session),
 ) -> DashboardResponse:
-    await _ensure_learner_exists(db, learner_id)
     now = datetime.now(timezone.utc)
     today = now.date()
 

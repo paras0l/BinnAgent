@@ -3,11 +3,13 @@ from datetime import datetime, timezone
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+from sqlalchemy.exc import IntegrityError
 
+import src.api.reading as reading_api
 from src.api import deps
 from src.main import app
 from src.models.knowledge import CurriculumNode, KnowledgePoint, KnowledgeSource
-from src.models.learner import LearnerProfile
+from src.models.learner import Learner, LearnerProfile
 from src.models.knowledge import ExerciseAttempt
 from src.models.reading import ReadingMaterialHistory
 from src.providers.base import ChatRequest, ChatResponse
@@ -19,6 +21,15 @@ def mock_session():
     added_objects = []
     session.add = MagicMock(side_effect=added_objects.append)
     session.flush = AsyncMock()
+
+    class _NestedTransaction:
+        async def __aenter__(self):
+            return session
+
+        async def __aexit__(self, exc_type, exc, tb):
+            return False
+
+    session.begin_nested = MagicMock(return_value=_NestedTransaction())
 
     async def _refresh(instance):
         if getattr(instance, "id", None) is None:
@@ -51,6 +62,12 @@ def _first(value):
     result = MagicMock()
     result.first.return_value = value
     return result
+
+
+def _learner(learner_id: uuid.UUID, owner_user_id: uuid.UUID) -> Learner:
+    learner = Learner(nickname=f"learner-{learner_id.hex[:6]}", tenant_id=owner_user_id)
+    learner.id = learner_id
+    return learner
 
 
 def _history(learner_id: uuid.UUID) -> ReadingMaterialHistory:
@@ -247,6 +264,7 @@ async def test_save_reading_material_history(client, mock_session):
             "text": "Many students read for the main idea. Effective readers slow down for hard sentences.",
             "level": "cet4",
             "goal": "mixed",
+            "generation_context": {"prompt_id": "forged-client-prompt"},
         },
     )
 
@@ -259,8 +277,48 @@ async def test_save_reading_material_history(client, mock_session):
     assert data["material_type"] == "passage"
     assert data["word_count"] == 14
     assert data["sentence_count"] == 2
+    assert data["source"] == "reading_workshop"
+    assert data["generation_context"] == {}
     created = mock_session.added_objects[0]
     assert isinstance(created, ReadingMaterialHistory)
+
+
+@pytest.mark.asyncio
+async def test_resaving_generated_material_preserves_provenance(client, mock_session):
+    learner_id = uuid.uuid4()
+    original_node_id = uuid.uuid4()
+    material = _history(learner_id)
+    material.source = "unit_llm_generation"
+    material.curriculum_node_id = original_node_id
+    material.generation_context = {
+        "prompt_id": "reading.material_generation",
+        "prompt_version": "2.1.0",
+        "source_title": "Grade 7 English",
+    }
+    original_generation_context = dict(material.generation_context)
+    mock_session.execute = AsyncMock(side_effect=[_one(learner_id), _one(material)])
+
+    response = await client.post(
+        f"/api/learners/{learner_id}/reading-workshop/materials",
+        json={
+            "title": "Updated reading title",
+            "text": material.text,
+            "level": "cet4",
+            "goal": "intensive",
+            "curriculum_node_id": str(uuid.uuid4()),
+            "source": "reading_workshop",
+            "generation_context": {"prompt_id": "forged-client-prompt"},
+        },
+    )
+
+    assert response.status_code == 201
+    data = response.json()
+    assert data["source"] == "unit_llm_generation"
+    assert data["curriculum_node_id"] == str(original_node_id)
+    assert data["generation_context"] == original_generation_context
+    assert material.source == "unit_llm_generation"
+    assert material.curriculum_node_id == original_node_id
+    assert material.generation_context == original_generation_context
 
 
 @pytest.mark.asyncio
@@ -331,6 +389,49 @@ async def test_list_reading_material_history_unknown_learner_returns_404(client,
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("method", "path_suffix", "payload"),
+    [
+        (
+            "POST",
+            "selection-translation",
+            {"selection": "library", "sentence": "Tom visits the library."},
+        ),
+        ("GET", "materials", None),
+        ("POST", "materials", {"text": "A short reading material."}),
+        ("POST", "generated-materials", {}),
+        ("POST", "materials/{material_id}/complete", {}),
+    ],
+)
+async def test_reading_workshop_routes_reject_cross_user_access(
+    client,
+    mock_session,
+    method,
+    path_suffix,
+    payload,
+):
+    owner_user_id = uuid.uuid4()
+    other_user_id = uuid.uuid4()
+    learner_id = uuid.uuid4()
+    material_id = uuid.uuid4()
+    mock_session.execute = AsyncMock(
+        return_value=_one(_learner(learner_id, owner_user_id))
+    )
+
+    response = await client.request(
+        method,
+        (
+            f"/api/learners/{learner_id}/reading-workshop/"
+            f"{path_suffix.format(material_id=material_id)}"
+        ),
+        headers={"X-User-Id": str(other_user_id)},
+        json=payload,
+    )
+
+    assert response.status_code == 403
+
+
+@pytest.mark.asyncio
 async def test_generate_unit_reading_material(client, mock_session):
     learner_id = uuid.uuid4()
     source_id = uuid.uuid4()
@@ -392,6 +493,7 @@ async def test_generate_unit_reading_material(client, mock_session):
             _first((node, source)),
             _many(points),
             _one(profile),
+            _one(None),
         ]
     )
     app.dependency_overrides[deps.get_model_router] = lambda: FakeReadingModelRouter()
@@ -414,6 +516,97 @@ async def test_generate_unit_reading_material(client, mock_session):
     assert data["material"]["generation_context"]["grammar_focus"] == ["be 动词"]
     created_material = [item for item in mock_session.added_objects if isinstance(item, ReadingMaterialHistory)][0]
     assert created_material.material_type == "passage"
+
+
+@pytest.mark.asyncio
+async def test_generate_reading_material_reuses_duplicate_model_output(
+    client,
+    mock_session,
+):
+    learner_id = uuid.uuid4()
+    source_id = uuid.uuid4()
+    node_id = uuid.uuid4()
+    source = KnowledgeSource(
+        id=source_id,
+        owner_learner_id=None,
+        title="Grade 7 English",
+        filename="book.pdf",
+        grade="grade-7",
+        status="published",
+        visibility="public",
+        sha256="x" * 64,
+        file_size=100,
+    )
+    node = CurriculumNode(
+        id=node_id,
+        source_id=source_id,
+        node_type="unit",
+        title="Unit 1",
+        ordinal=1,
+    )
+    profile = LearnerProfile(learner_id=learner_id, current_level="a2")
+
+    async def execute(statement):
+        sql = str(statement)
+        if "reading_material_histories" in sql:
+            materials = [
+                item
+                for item in mock_session.added_objects
+                if isinstance(item, ReadingMaterialHistory)
+            ]
+            return _one(materials[-1] if materials else None)
+        if "knowledge_points" in sql:
+            return _many([])
+        if "learner_profiles" in sql:
+            return _one(profile)
+        if "curriculum_nodes" in sql:
+            return _first((node, source))
+        return _one(learner_id)
+
+    mock_session.execute = AsyncMock(side_effect=execute)
+    app.dependency_overrides[deps.get_model_router] = lambda: FakeReadingModelRouter()
+    payload = {
+        "curriculum_node_id": str(node_id),
+        "material_type": "passage",
+        "length": "short",
+        "goal": "mixed",
+    }
+
+    first = await client.post(
+        f"/api/learners/{learner_id}/reading-workshop/generated-materials",
+        json=payload,
+    )
+    duplicate = await client.post(
+        f"/api/learners/{learner_id}/reading-workshop/generated-materials",
+        json=payload,
+    )
+
+    assert first.status_code == 201
+    assert duplicate.status_code == 201
+    assert duplicate.json()["material"]["id"] == first.json()["material"]["id"]
+    materials = [
+        item for item in mock_session.added_objects if isinstance(item, ReadingMaterialHistory)
+    ]
+    assert len(materials) == 1
+
+
+@pytest.mark.asyncio
+async def test_reading_material_insert_recovers_unique_hash_race(mock_session):
+    learner_id = uuid.uuid4()
+    candidate = _history(learner_id)
+    existing = _history(learner_id)
+    existing.text_hash = candidate.text_hash
+    mock_session.flush = AsyncMock(
+        side_effect=IntegrityError("insert", {}, Exception("duplicate key"))
+    )
+    mock_session.execute = AsyncMock(return_value=_one(existing))
+
+    resolved = await reading_api._insert_reading_material_or_get_existing(
+        mock_session,
+        candidate,
+    )
+
+    assert resolved is existing
 
 
 @pytest.mark.asyncio
@@ -477,13 +670,21 @@ async def test_generate_passage_rejects_dialogue_format(client, mock_session):
 async def test_complete_reading_material_records_reading_attempt(client, mock_session):
     learner_id = uuid.uuid4()
     material = _history(learner_id)
-    mock_session.execute = AsyncMock(side_effect=[_one(learner_id), _one(material)])
+    mock_session.execute = AsyncMock(
+        side_effect=[_one(learner_id), _one(material), _one(None)]
+    )
 
     response = await client.post(
         f"/api/learners/{learner_id}/reading-workshop/materials/{material.id}/complete",
         json={
+            "client_attempt_id": "reading-attempt-0001",
             "duration_seconds": 240,
             "comprehension_score": 86,
+            "extensive_evidence": {
+                "gist": "Effective readers change speed based on the sentence.",
+                "central_sentence": "Effective readers slow down for hard sentences.",
+            },
+            "analyzed_sentence_ids": ["reading-sentence-1", "reading-sentence-2"],
             "selected_sentence_count": 2,
             "grammar_topic_count": 1,
             "unknown_vocabulary": ["uncertainty"],
@@ -498,8 +699,136 @@ async def test_complete_reading_material_records_reading_attempt(client, mock_se
     assert data["material_id"] == str(material.id)
     created_attempt = [item for item in mock_session.added_objects if isinstance(item, ExerciseAttempt)][0]
     assert created_attempt.target_type == "reading_passage"
-    assert created_attempt.result == "correct"
+    assert created_attempt.result == "completed"
+    assert created_attempt.correct is False
+    assert created_attempt.metadata_["client_attempt_id"] == "reading-attempt-0001"
     assert created_attempt.metadata_["reading_value"] > 0
+    assert created_attempt.metadata_["selected_sentence_count"] == 2
+    assert created_attempt.metadata_["extensive_evidence"]["gist"].startswith(
+        "Effective readers"
+    )
     assert created_attempt.metadata_["unknown_vocabulary"] == ["uncertainty"]
     assert created_attempt.metadata_["grammar_blind_spots"] == ["relative clauses"]
     assert created_attempt.metadata_["perceived_difficulty"] == "right"
+
+
+@pytest.mark.asyncio
+async def test_complete_reading_material_is_idempotent_for_client_attempt_id(
+    client,
+    mock_session,
+):
+    learner_id = uuid.uuid4()
+    material = _history(learner_id)
+
+    async def execute(statement):
+        sql = str(statement)
+        if "exercise_attempts" in sql:
+            attempts = [
+                item for item in mock_session.added_objects if isinstance(item, ExerciseAttempt)
+            ]
+            return _one(attempts[-1] if attempts else None)
+        if "reading_material_histories" in sql:
+            return _one(material)
+        return _one(learner_id)
+
+    mock_session.execute = AsyncMock(side_effect=execute)
+    payload = {
+        "client_attempt_id": "reading-attempt-retry-1",
+        "extensive_evidence": {
+            "gist": "Effective readers change their reading speed.",
+            "central_sentence": "Effective readers slow down for hard sentences.",
+        },
+        "analyzed_sentence_ids": ["reading-sentence-1"],
+    }
+
+    first = await client.post(
+        f"/api/learners/{learner_id}/reading-workshop/materials/{material.id}/complete",
+        json=payload,
+    )
+    retry = await client.post(
+        f"/api/learners/{learner_id}/reading-workshop/materials/{material.id}/complete",
+        json=payload,
+    )
+
+    assert first.status_code == 200
+    assert retry.status_code == 200
+    assert retry.json() == first.json()
+    attempts = [item for item in mock_session.added_objects if isinstance(item, ExerciseAttempt)]
+    assert len(attempts) == 1
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("goal", "payload"),
+    [
+        ("extensive", {}),
+        ("extensive", {"notes": "A non-structured note cannot complete the stage."}),
+        (
+            "extensive",
+            {"extensive_evidence": {"gist": "A gist", "central_sentence": "   "}},
+        ),
+        ("extensive", {"extensive_evidence": {"gist": "A gist"}}),
+        ("intensive", {}),
+        ("intensive", {"selected_sentence_count": 1}),
+        ("intensive", {"analyzed_sentence_ids": ["   "]}),
+        (
+            "mixed",
+            {
+                "extensive_evidence": {
+                    "gist": "A gist",
+                    "central_sentence": "A central sentence.",
+                }
+            },
+        ),
+        ("mixed", {"analyzed_sentence_ids": ["reading-sentence-1"]}),
+    ],
+)
+async def test_complete_reading_material_rejects_empty_goal_evidence(
+    client,
+    mock_session,
+    goal,
+    payload,
+):
+    learner_id = uuid.uuid4()
+    material = _history(learner_id)
+    material.goal = goal
+    mock_session.execute = AsyncMock(side_effect=[_one(learner_id), _one(material)])
+
+    response = await client.post(
+        f"/api/learners/{learner_id}/reading-workshop/materials/{material.id}/complete",
+        json={"client_attempt_id": "reading-attempt-invalid", **payload},
+    )
+
+    assert response.status_code == 422
+    assert not any(isinstance(item, ExerciseAttempt) for item in mock_session.added_objects)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "sentence_ids",
+    [
+        ["not-a-material-sentence"],
+        ["reading-sentence-3"],
+        ["reading-sentence-1", " reading-sentence-1 "],
+    ],
+)
+async def test_complete_reading_material_rejects_invalid_analyzed_sentence_ids(
+    client,
+    mock_session,
+    sentence_ids,
+):
+    learner_id = uuid.uuid4()
+    material = _history(learner_id)
+    material.goal = "intensive"
+    mock_session.execute = AsyncMock(side_effect=[_one(learner_id), _one(material)])
+
+    response = await client.post(
+        f"/api/learners/{learner_id}/reading-workshop/materials/{material.id}/complete",
+        json={
+            "client_attempt_id": "reading-attempt-invalid-sentence",
+            "analyzed_sentence_ids": sentence_ids,
+        },
+    )
+
+    assert response.status_code == 422
+    assert not any(isinstance(item, ExerciseAttempt) for item in mock_session.added_objects)

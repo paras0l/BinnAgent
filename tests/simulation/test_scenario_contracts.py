@@ -32,3 +32,11 @@ def test_daily_lesson_runtime_closure_scenarios_exist() -> None:
     }
 
     assert required <= set(BUILTIN_SCENARIOS)
+
+
+def test_reading_workshop_completion_scenario_exists() -> None:
+    scenario = BUILTIN_SCENARIOS["reading_workshop_completion_evidence_idempotency"]
+
+    assert scenario.owner_module == "reading"
+    assert "idempotency" in scenario.module_tags
+    assert "src/api/reading.py" in scenario.change_triggers

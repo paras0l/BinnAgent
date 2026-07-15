@@ -155,6 +155,12 @@ class ScenarioRunner:
             return await self._generate_exercise_with_repair(step, context)
         if step.action == "validate_unit_exercise_candidate":
             return self._validate_unit_exercise_candidate(step)
+        if step.action == "save_reading_material":
+            return await self._save_reading_material(step, context)
+        if step.action == "complete_reading_material":
+            return await self._complete_reading_material(step, context)
+        if step.action == "reading_dashboard":
+            return await self._reading_dashboard(context)
         raise ValueError(f"Unsupported simulation action: {step.action}")
 
     def _validate_unit_exercise_candidate(self, step: SimulationStep) -> dict[str, Any]:
@@ -202,6 +208,88 @@ class ScenarioRunner:
         if learner_id:
             context["learner_id"] = learner_id
         return {"status_code": response.status_code, "json": payload}
+
+    async def _save_reading_material(
+        self,
+        step: SimulationStep,
+        context: dict[str, Any],
+    ) -> dict[str, Any]:
+        learner_id = _require_context(context, "learner_id")
+        body = {
+            "title": step.payload.get("title", "A Better Way to Read"),
+            "text": step.payload.get(
+                "text",
+                (
+                    "Good readers first identify the writer's main idea. They then slow down "
+                    "for difficult sentences and connect each detail to the central message."
+                ),
+            ),
+            "level": step.payload.get("level", "junior"),
+            "goal": step.payload.get("goal", "mixed"),
+            "material_type": step.payload.get("material_type", "passage"),
+        }
+        response = await self._request(
+            "POST",
+            f"/api/learners/{learner_id}/reading-workshop/materials",
+            json=body,
+        )
+        payload = _json_or_empty(response)
+        if isinstance(payload, dict) and payload.get("id"):
+            context["reading_material_id"] = payload["id"]
+            context["reading_material_goal"] = payload.get("goal") or body["goal"]
+        return {
+            "status_code": response.status_code,
+            "material": payload,
+        }
+
+    async def _complete_reading_material(
+        self,
+        step: SimulationStep,
+        context: dict[str, Any],
+    ) -> dict[str, Any]:
+        learner_id = _require_context(context, "learner_id")
+        material_id = _require_context(context, "reading_material_id")
+        response = await self._request(
+            "POST",
+            f"/api/learners/{learner_id}/reading-workshop/materials/{material_id}/complete",
+            json=dict(step.payload),
+        )
+        payload = _json_or_empty(response)
+        previous_attempt_id = context.get("reading_completion_attempt_id")
+        attempt_id = payload.get("attempt_id") if isinstance(payload, dict) else None
+        idempotent_replay = bool(previous_attempt_id and attempt_id == previous_attempt_id)
+        if attempt_id and previous_attempt_id is None:
+            context["reading_completion_attempt_id"] = attempt_id
+        if isinstance(payload, dict) and payload:
+            context["reading_completion"] = payload
+        return {
+            "status_code": response.status_code,
+            "completion": payload,
+            "idempotent_replay": idempotent_replay,
+        }
+
+    async def _reading_dashboard(self, context: dict[str, Any]) -> dict[str, Any]:
+        learner_id = _require_context(context, "learner_id")
+        response = await self._request("GET", f"/api/learners/{learner_id}/dashboard")
+        payload = _json_or_empty(response)
+        ability_scores = (
+            ((payload.get("profile") or {}).get("ability_scores") or [])
+            if isinstance(payload, dict)
+            else []
+        )
+        reading_ability = next(
+            (
+                item
+                for item in ability_scores
+                if isinstance(item, dict) and item.get("label") == "阅读"
+            ),
+            {},
+        )
+        return {
+            "status_code": response.status_code,
+            "dashboard": payload,
+            "reading_ability": reading_ability,
+        }
 
     async def _chat(self, step: SimulationStep, context: dict[str, Any]) -> dict[str, Any]:
         learner_id = _require_context(context, "learner_id")

@@ -6,8 +6,10 @@
   "scripts": {
     "dev": "vite",
     "dev:console": "VITE_APP_TARGET=dev-console vite",
+    "dev:review": "VITE_APP_TARGET=review vite --port 5177",
     "build": "tsc -b && vite build",
     "build:console": "VITE_APP_TARGET=dev-console tsc -b && VITE_APP_TARGET=dev-console vite build",
+    "build:sites": "tsc -b && VITE_APP_TARGET=review vite build && node scripts/prepare-sites-build.mjs",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run"

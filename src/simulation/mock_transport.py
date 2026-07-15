@@ -23,6 +23,10 @@ def build_contract_transport(scenario: SimulationScenario) -> httpx.MockTranspor
         "verification_failed": scenario.id == "daily_lesson_verification_failure_blocks_completed_status",
         "capability_clicked": False,
         "last_vocabulary_mode": "new",
+        "reading_material": None,
+        "reading_material_id": str(uuid.uuid4()),
+        "reading_attempt_id": str(uuid.uuid4()),
+        "reading_completions": {},
     }
     return httpx.MockTransport(lambda request: _handle(request, state))
 
@@ -83,6 +87,19 @@ def _handle(request: httpx.Request, state: dict[str, Any]) -> httpx.Response:
         )
     if method == "POST" and path == f"/api/learners/{learner_id}/exercises/generate":
         return httpx.Response(200, json=[_generated_exercise()])
+    if method == "POST" and path == f"/api/learners/{learner_id}/reading-workshop/materials":
+        return _save_reading_material(request, state)
+    if (
+        method == "POST"
+        and path
+        == (
+            f"/api/learners/{learner_id}/reading-workshop/materials/"
+            f"{state['reading_material_id']}/complete"
+        )
+    ):
+        return _complete_reading_material(request, state)
+    if method == "GET" and path == f"/api/learners/{learner_id}/dashboard":
+        return _reading_dashboard(state)
     return httpx.Response(404, json={"detail": f"contract mock route not found: {method} {path}"})
 
 
@@ -345,6 +362,144 @@ def _generated_exercise() -> dict[str, Any]:
         "explanation": "Good morning is used in the morning.",
         "difficulty": "easy",
     }
+
+
+def _save_reading_material(request: httpx.Request, state: dict[str, Any]) -> httpx.Response:
+    body = _json_body(request)
+    text = str(body.get("text") or "").strip()
+    material = {
+        "id": state["reading_material_id"],
+        "learner_id": state["learner_id"],
+        "title": body.get("title"),
+        "text": text,
+        "level": body.get("level", "general"),
+        "goal": body.get("goal", "mixed"),
+        "material_type": body.get("material_type", "passage"),
+        "word_count": len(text.split()),
+        "sentence_count": 2,
+        "source": "reading_workshop",
+        "curriculum_node_id": None,
+        "generation_context": {},
+        "created_at": "2026-07-14T00:00:00+00:00",
+        "updated_at": "2026-07-14T00:00:00+00:00",
+    }
+    state["reading_material"] = material
+    return httpx.Response(201, json=material)
+
+
+def _complete_reading_material(request: httpx.Request, state: dict[str, Any]) -> httpx.Response:
+    material = state.get("reading_material")
+    if not isinstance(material, dict):
+        return httpx.Response(404, json={"detail": "Reading material not found"})
+
+    body = _json_body(request)
+    client_attempt_id = str(body.get("client_attempt_id") or "").strip()
+    if not 8 <= len(client_attempt_id) <= 100:
+        return httpx.Response(422, json={"detail": "Invalid client attempt id"})
+
+    extensive_evidence = body.get("extensive_evidence")
+    has_extensive_evidence = (
+        isinstance(extensive_evidence, dict)
+        and bool(str(extensive_evidence.get("gist") or "").strip())
+        and bool(str(extensive_evidence.get("central_sentence") or "").strip())
+    )
+    analyzed_sentence_ids = body.get("analyzed_sentence_ids")
+    normalized_sentence_ids = (
+        [str(value).strip() for value in analyzed_sentence_ids]
+        if isinstance(analyzed_sentence_ids, list)
+        else []
+    )
+    if len(normalized_sentence_ids) > 500:
+        return httpx.Response(
+            422,
+            json={"detail": "analyzed_sentence_ids must contain at most 500 values"},
+        )
+    if any(not sentence_id for sentence_id in normalized_sentence_ids):
+        return httpx.Response(
+            422,
+            json={"detail": "analyzed_sentence_ids must not contain blank values"},
+        )
+    if any(len(sentence_id) > 100 for sentence_id in normalized_sentence_ids):
+        return httpx.Response(
+            422,
+            json={"detail": "analyzed_sentence_ids values must be at most 100 characters"},
+        )
+    if len(normalized_sentence_ids) != len(set(normalized_sentence_ids)):
+        return httpx.Response(
+            422,
+            json={"detail": "analyzed_sentence_ids must not contain duplicate values"},
+        )
+    has_intensive_evidence = bool(normalized_sentence_ids)
+    goal = material.get("goal")
+    if goal in {"extensive", "mixed"} and not has_extensive_evidence:
+        return httpx.Response(
+            422,
+            json={"detail": "Extensive reading completion requires reading evidence"},
+        )
+    if goal in {"intensive", "mixed"} and not has_intensive_evidence:
+        return httpx.Response(
+            422,
+            json={"detail": "Intensive reading completion requires analyzed sentence ids"},
+        )
+    allowed_sentence_ids = {
+        f"reading-sentence-{index}"
+        for index in range(1, int(material.get("sentence_count") or 0) + 1)
+    }
+    unknown_sentence_ids = [
+        sentence_id
+        for sentence_id in normalized_sentence_ids
+        if sentence_id not in allowed_sentence_ids
+    ]
+    if unknown_sentence_ids:
+        return httpx.Response(
+            422,
+            json={"detail": "analyzed_sentence_ids must reference sentences in this reading material"},
+        )
+
+    existing = state["reading_completions"].get(client_attempt_id)
+    if existing is not None:
+        return httpx.Response(200, json=existing["response"])
+
+    comprehension_score = body.get("comprehension_score")
+    reading_value = int(comprehension_score) if isinstance(comprehension_score, int) else 60
+    response = {
+        "material_id": state["reading_material_id"],
+        "attempt_id": state["reading_attempt_id"],
+        "reading_value": reading_value,
+        "message": "阅读训练已记录。",
+    }
+    state["reading_completions"][client_attempt_id] = {
+        "response": response,
+        "comprehension_score": comprehension_score,
+        "reading_value": reading_value,
+    }
+    return httpx.Response(200, json=response)
+
+
+def _reading_dashboard(state: dict[str, Any]) -> httpx.Response:
+    completions = list(state["reading_completions"].values())
+    ability_scores: list[dict[str, Any]] = []
+    scored_completions = [
+        item
+        for item in completions
+        if isinstance(item.get("comprehension_score"), (int, float))
+    ]
+    if scored_completions:
+        scores = [
+            max(0.0, min(100.0, float(item["comprehension_score"])))
+            for item in scored_completions
+        ]
+        ability_scores.append(
+            {
+                "label": "阅读",
+                "value": round(sum(scores) / len(scores)),
+                "evidence_count": len(scored_completions),
+            }
+        )
+    return httpx.Response(
+        200,
+        json={"profile": {"ability_scores": ability_scores}},
+    )
 
 
 def _seed_vocabulary(state: dict[str, Any], words: list[str]) -> None:

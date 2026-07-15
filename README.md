@@ -144,7 +144,7 @@ http://localhost:5176，可在 Learners / Recent Episodes 中直接选择 learne
 | 能力 | 状态 |
 |------|------|
 | Chat / Memory / Dashboard | 部分实现，Memory v2 已落地 Retain / Recall / Reflect、LearningEpisode、LearnerModelMemory、TeachingStrategyMemory；普通学习端只展示学习状态摘要，Memory Center 已移入 Dev Console |
-| Reading-led Learning Track | 基础版已实现；学习者可从画像自由切换到个性化阅读主线，Dashboard 会将唯一主动作改为今日阅读；短文按当前水平、兴趣、薄弱点与时间预算生成，并通过泛读、精读、纠错复盘把阅读证据写回 Memory；阅读工作台内置可收缩的上下文助手，可携带当前材料、选句、划词与笔记持续提问 |
+| Reading-led Learning Track | 核心闭环已实现并完成发布前体验加固；学习者可从画像切换到个性化阅读主线，按水平、兴趣、薄弱点与时间预算生成短文；工作台支持真实证据阶段状态、逐句独立笔记、按材料隔离的 7 天本机草稿恢复、顶部导航与材料切换防丢失、来源溯源和响应式助手抽屉；完成记录具备结构化证据、幂等重试、learner 权限校验和中性阅读投入值，未评分完成不会被误算为能力分或 100% 正确；另提供 Sites 团队验收构建，使用隔离示例数据验证完整前端交互，不冒充远程生产后端 |
 | 宠物精灵通知 | 已实现，小冰接管全局 Toast 消息，支持按重要性抢占与配色、重复消息合并、七套统一视觉锚点的高清状态原画、观察/挥手等连续微动作、可调静置动作频率、贴边偷看、记忆变更晶石发光、任务完成庆祝、长耗时陪伴反馈、协作式文案、惯性拖动与跨窗口尺寸位置回收、点击/键盘互动、系统减少动态偏好、功能页首次介绍，以及用户菜单中的精灵设置 |
 | 教材 Knowledge Base / RAG / Exercises | 部分实现，作为冷启动知识来源；已支持 split public textbook pack v2、长沙市七年级人教新目标 2024 版上下册公共目录、UnitLearningWorkspace、多教材切换、文档解析/校对、统一 ExerciseItem / ExerciseAttempt 与单元阅读语感材料；2024 上册已接入 333 条本册词汇、349 条小学复现词、10 个单元连续朗读音频和正文第 1-74 印刷页的完整教材活动页题图，Starter Unit 1 另有 186 段精校时间轴；单元题库采用 PostgreSQL 持久化任务与独立 Worker 异步补池，支持六维质量评分、双重门禁和 mastery-aware 选题 |
 | Vocabulary Personal Cards / Practice / Spelling / Word Parts | 部分实现，已新增“词根与词缀”探索入口、四工作区学习页、内置词根词缀库、拆词练习、跨设备掌握进度、本地离线降级、morphology 前端展示/降级和知识点配套练习验收；训练中可在学习提示区将单词标记为“太简单（已掌握）”，并显著降低后续训练频率 |
@@ -161,10 +161,10 @@ http://localhost:5176，可在 Learners / Recent Episodes 中直接选择 learne
 | Adaptive Learning Core | 第一阶段已实现；统一 AssessmentEvidence、IRT/1PL 能力解释、可注入时钟的 FSRS/DSR 调度、DKT shadow/fallback、TeachingPolicyCompiler、幂等审计链和 PromptExecution 策略快照已落地；真实 DKT 仍保持影子模式，待序列数据积累和离线校准后再灰度接管 |
 | Model Provider | 部分实现；默认使用 LongCat，仍可通过环境变量或 Dev Console Debug 页面切换到 Ollama / DeepSeek；RAG embedding 暂时隔离在 Ollama 路径 |
 | Agent Runtime / Harness | 第二阶段补强中，TaskSpec、AgentEpisode、LearningEvent、EvidenceRef、ToolCallRecord、VerificationReport、MasteryEngine、RecommendationEngine、LearningGraphCheckpoint 和 Dev Console 调试入口已接入；Tool Catalog 第一阶段支持应用级发现、revision/spec hash、刷新、启停、健康监控、allowlist 解析和 schema/timeout 执行治理，并新增 `find_can_do_for_item`、`find_can_do_for_query`、`analyze_learner_response`、`get_learner_knowledge_state`、`record_learning_evidence` 五个真实业务 wrapper；其余 wrapper 全量迁移与通用 MCP discovery 待完成；VerificationReport 的 critical 失败会阻止静默 completed；Debug API 默认关闭并需 token |
-| Learner-scoped isolation | Issue #25 第一阶段已实现，新增 current user / current learner dependency、scoped resource helper，并加固 Runtime、Daily Lesson、Memory、Explore、ExerciseAttempt 和 Debug 高风险路径 |
+| Learner-scoped isolation | Issue #25 第一阶段已实现，新增 current user / current learner dependency、scoped resource helper，并加固 Runtime、Daily Lesson、Memory、Explore、ExerciseAttempt、Chat、Reading Workshop、Dashboard 和 Debug 高风险路径 |
 | 邮箱登录与邀请关系 | 基础版已实现，6 位邮箱验证码、短期签名令牌、重发冷却、错误次数限制、SMTP/本地日志投递、同邮箱多学习者选择、邀请码注册、直接邀请人关系、旧账号邮箱升级和空库 bootstrap 邀请码已落地；正式认证 session 留待远程部署前补齐 |
 | LangGraph daily lesson | 已升级为单题 checkpoint / interrupt / resume 学习闭环；graph 支持可选 checkpointer 编译，start 返回 waiting_user checkpoint/thread/schema/prompt，answer 从 `grade_attempt` 恢复并完成 grading、mastery、memory、review、recommend、verification，验证报告决定 completed / completed_with_warnings / verification_failed |
-| Learner Simulation Agent | Deterministic MVP 已实现，新增 contract/integration/e2e mode 分层、deterministic fake model provider、scenario contract/module_tags、impacted simulation 推导脚本、Agent Runtime 断言增强、metric_groups、baseline comparison、threshold gate、episode runtime knowledge practice、daily_lesson_checkpoint_resume、capability recommendation、verification failure blocks completed status、缺答案不写 memory、mastery 上下行和 LLM JSON repair 回归场景 |
+| Learner Simulation Agent | Deterministic MVP 已实现，新增 contract/integration/e2e mode 分层、deterministic fake model provider、scenario contract/module_tags、impacted simulation 推导脚本、Agent Runtime 断言增强、metric_groups、baseline comparison、threshold gate、episode runtime knowledge practice、daily_lesson_checkpoint_resume、capability recommendation、阅读完成证据/幂等/Dashboard 计分、verification failure blocks completed status、缺答案不写 memory、mastery 上下行和 LLM JSON repair 回归场景 |
 | CET reading / writing / weekly report | 设计中 |
 | CI backend lint/test + frontend lint/test/build/build:console | 已实现 |
 

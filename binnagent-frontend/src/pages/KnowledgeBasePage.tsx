@@ -21,11 +21,12 @@ import { deleteKnowledgeSource } from '@/api/knowledge'
 import {
   READING_MATERIAL_LENGTH_LABELS,
   READING_MATERIAL_TYPE_LABELS,
-  type ReadingMaterial,
   type ReadingMaterialGenerationResponse,
+  type ReadingMaterialHistoryItem,
   type ReadingMaterialLength,
   type ReadingMaterialType,
 } from '@/data/readingWorkshop'
+import type { ReadingNavigationBlockerChangeHandler } from '@/data/readingWorkshopSession'
 import { exploreCapabilityEventUrl } from '@/services/exploreCapabilityApi'
 import { fetchExercisesForTarget } from '@/services/exerciseRepository'
 import {
@@ -58,6 +59,7 @@ interface KnowledgeBasePageProps {
   onBack: () => void
   onStartVocabularyPractice: (mode: VocabularyPracticeMode, nodeId: string, sourceLabel: string) => void
   onOpenPronunciationWorkspace: (workspace: PronunciationWorkspace) => void
+  onReadingNavigationBlockerChange?: ReadingNavigationBlockerChangeHandler
 }
 
 interface KnowledgeOverviewError {
@@ -117,7 +119,7 @@ interface UnitProgressTarget {
 type KnowledgeWorkspace = 'today' | 'unit' | 'exercises'
 
 interface ReadingWorkshopSeed {
-  material: ReadingMaterial
+  material: ReadingMaterialHistoryItem
   materialId: string
   sourceLabel: string
 }
@@ -160,7 +162,13 @@ function ingestResultToStatus(result: KnowledgeIngestResult): KnowledgeIngestSta
   }
 }
 
-export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice, onOpenPronunciationWorkspace }: KnowledgeBasePageProps) {
+export function KnowledgeBasePage({
+  learner,
+  onBack,
+  onStartVocabularyPractice,
+  onOpenPronunciationWorkspace,
+  onReadingNavigationBlockerChange,
+}: KnowledgeBasePageProps) {
   const { beginPetActivity, completePetActivity, showToast, signalMemoryChange } = useToast()
   const [overview, setOverview] = useState<KnowledgeBaseOverview | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -703,13 +711,7 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice, 
   const openReadingMaterial = (material: ReadingMaterialGenerationResponse['material']) => {
     if (!overview) return
     setReadingWorkshopSeed({
-      material: {
-        title: material.title ?? '',
-        text: material.text,
-        level: material.level,
-        goal: material.goal,
-        material_type: material.material_type,
-      },
+      material,
       materialId: material.id,
       sourceLabel: `${overview.current_unit.title} · ${overview.current_unit.subtitle || '阅读语感'}`,
     })
@@ -973,7 +975,9 @@ export function KnowledgeBasePage({ learner, onBack, onStartVocabularyPractice, 
         initialMaterial={readingWorkshopSeed.material}
         initialMaterialId={readingWorkshopSeed.materialId}
         initialSourceLabel={readingWorkshopSeed.sourceLabel}
+        onNavigationBlockerChange={onReadingNavigationBlockerChange}
         onBack={() => setReadingWorkshopSeed(null)}
+        backLabel="返回单元学习"
       />
     )
   }

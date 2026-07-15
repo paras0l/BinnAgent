@@ -24,3 +24,11 @@ def test_impacted_simulations_knowledge_changes_include_runtime_knowledge_practi
     ids = {item["id"] for item in payload["scenarios"]}
     assert "episode_runtime_knowledge_practice" in ids
     assert "knowledge" in payload["module_tags"]
+
+
+def test_impacted_simulations_reading_changes_include_completion_contract() -> None:
+    payload = impacted_payload(["src/api/reading.py"])
+
+    ids = {item["id"] for item in payload["scenarios"]}
+    assert "reading_workshop_completion_evidence_idempotency" in ids
+    assert "reading" in payload["module_tags"]

@@ -124,6 +124,32 @@ class TestExerciseAttempts:
         }
 
     @pytest.mark.asyncio
+    async def test_summary_does_not_treat_neutral_completion_as_incorrect(
+        self, client, mock_session
+    ):
+        learner_id = uuid.uuid4()
+        attempt = _attempt(
+            learner_id,
+            "reading-completion",
+            "completed",
+            datetime(2026, 6, 30, 10, 2, tzinfo=timezone.utc),
+        )
+        attempt.target_type = "reading_passage"
+        mock_session.execute = AsyncMock(side_effect=[_one(learner_id), _many([attempt])])
+
+        response = await client.get(
+            f"/api/learners/{learner_id}/exercise-attempts/summary",
+            params={"target_type": "reading_passage"},
+        )
+
+        assert response.status_code == 200
+        assert response.json()["correct"] == 0
+        assert response.json()["incorrect"] == 0
+        assert response.json()["accuracy"] == 0
+        assert response.json()["lastResult"] == "completed"
+        assert response.json()["needsReview"] is False
+
+    @pytest.mark.asyncio
     async def test_create_attempt_accepts_frontend_payload(self, client, mock_session):
         learner_id = uuid.uuid4()
         mock_session.execute = AsyncMock(return_value=_one(learner_id))

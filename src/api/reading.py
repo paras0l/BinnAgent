@@ -5,15 +5,16 @@ from datetime import datetime, timezone
 from typing import Any, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 from sqlalchemy import or_, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.api.deps import get_db_session, get_model_router
+from src.api.deps import get_db_session, get_model_router, require_learner_access
 from src.base_dictionary.enrichment import reading_translation
 from src.base_dictionary.service import get_entry as get_base_dictionary_entry
 from src.exercises import ExerciseAttemptCreate, ExerciseAttemptService, ExerciseTarget
-from src.models.knowledge import CurriculumNode, KnowledgePoint, KnowledgeSource
+from src.models.knowledge import CurriculumNode, ExerciseAttempt, KnowledgePoint, KnowledgeSource
 from src.models.learner import Learner, LearnerProfile
 from src.models.reading import ReadingMaterialHistory
 from src.prompts import PromptExecutionContext, PromptExecutor
@@ -61,7 +62,6 @@ class ReadingMaterialHistoryRequest(BaseModel):
     goal: ReadingGoal = "mixed"
     material_type: ReadingMaterialType = "passage"
     curriculum_node_id: uuid.UUID | None = None
-    generation_context: dict[str, Any] = Field(default_factory=dict)
 
 
 class ReadingMaterialGenerationRequest(BaseModel):
@@ -73,16 +73,57 @@ class ReadingMaterialGenerationRequest(BaseModel):
     topic: str | None = Field(default=None, max_length=120)
 
 
+class ReadingExtensiveEvidence(BaseModel):
+    gist: str = Field(min_length=1, max_length=2000)
+    central_sentence: str = Field(min_length=1, max_length=1500)
+
+    @field_validator("gist", "central_sentence")
+    @classmethod
+    def evidence_must_not_be_blank(cls, value: str) -> str:
+        normalized = value.strip()
+        if not normalized:
+            raise ValueError("Reading evidence must not be blank")
+        return normalized
+
+
 class ReadingMaterialCompleteRequest(BaseModel):
+    client_attempt_id: str = Field(min_length=8, max_length=100)
     duration_seconds: int | None = Field(default=None, ge=0, le=24 * 60 * 60)
     comprehension_score: int | None = Field(default=None, ge=0, le=100)
     notes: str | None = Field(default=None, max_length=2000)
+    extensive_evidence: ReadingExtensiveEvidence | None = None
+    analyzed_sentence_ids: list[str] = Field(default_factory=list, max_length=500)
     selected_sentence_count: int = Field(default=0, ge=0, le=500)
     grammar_topic_count: int = Field(default=0, ge=0, le=100)
     unknown_vocabulary: list[str] = Field(default_factory=list, max_length=50)
     grammar_blind_spots: list[str] = Field(default_factory=list, max_length=30)
     correction_notes: list[str] = Field(default_factory=list, max_length=30)
     perceived_difficulty: Literal["too_easy", "right", "challenging", "too_hard"] | None = None
+
+    @field_validator("client_attempt_id")
+    @classmethod
+    def client_attempt_id_must_not_be_blank(cls, value: str) -> str:
+        normalized = value.strip()
+        if len(normalized) < 8:
+            raise ValueError("client_attempt_id must contain at least 8 non-whitespace characters")
+        return normalized
+
+    @field_validator("analyzed_sentence_ids")
+    @classmethod
+    def normalize_analyzed_sentence_ids(cls, values: list[str]) -> list[str]:
+        normalized: list[str] = []
+        seen: set[str] = set()
+        for value in values:
+            sentence_id = value.strip()
+            if not sentence_id:
+                raise ValueError("analyzed_sentence_ids must not contain blank values")
+            if len(sentence_id) > 100:
+                raise ValueError("analyzed_sentence_ids values must be at most 100 characters")
+            if sentence_id in seen:
+                raise ValueError("analyzed_sentence_ids must not contain duplicate values")
+            normalized.append(sentence_id)
+            seen.add(sentence_id)
+        return normalized
 
 
 class ReadingMaterialHistoryResponse(BaseModel):
@@ -162,10 +203,10 @@ _STOP_WORDS = {
 async def translate_reading_selection(
     learner_id: uuid.UUID,
     body: ReadingSelectionTranslationRequest,
+    _: Learner = Depends(require_learner_access),
     db: AsyncSession = Depends(get_db_session),
     model_router: ModelRouter = Depends(get_model_router),
 ) -> ReadingSelectionTranslationResponse:
-    await _ensure_learner_exists(db, learner_id)
     selection = " ".join(body.selection.split())
     sentence = " ".join(body.sentence.split())
     if selection.lower() not in sentence.lower():
@@ -232,9 +273,9 @@ async def list_reading_materials(
     learner_id: uuid.UUID,
     curriculum_node_id: uuid.UUID | None = Query(default=None),
     limit: int = Query(default=20, ge=1, le=50),
+    _: Learner = Depends(require_learner_access),
     db: AsyncSession = Depends(get_db_session),
 ) -> list[ReadingMaterialHistory]:
-    await _ensure_learner_exists(db, learner_id)
     query = select(ReadingMaterialHistory).where(ReadingMaterialHistory.learner_id == learner_id)
     if curriculum_node_id is not None:
         await _get_accessible_curriculum_node(db, learner_id, curriculum_node_id)
@@ -255,11 +296,9 @@ async def list_reading_materials(
 async def save_reading_material(
     learner_id: uuid.UUID,
     body: ReadingMaterialHistoryRequest,
+    _: Learner = Depends(require_learner_access),
     db: AsyncSession = Depends(get_db_session),
 ) -> ReadingMaterialHistory:
-    await _ensure_learner_exists(db, learner_id)
-    if body.curriculum_node_id is not None:
-        await _get_accessible_curriculum_node(db, learner_id, body.curriculum_node_id)
     stored_text = body.text.strip()
     normalized_text = _normalize_text(stored_text)
     words = _words(normalized_text)
@@ -275,21 +314,23 @@ async def save_reading_material(
     )
     material = result.scalar_one_or_none()
     if material is None:
-        material = ReadingMaterialHistory(
+        if body.curriculum_node_id is not None:
+            await _get_accessible_curriculum_node(db, learner_id, body.curriculum_node_id)
+        candidate = ReadingMaterialHistory(
             learner_id=learner_id,
             text=stored_text,
             text_hash=text_hash,
             source="reading_workshop",
+            curriculum_node_id=body.curriculum_node_id,
+            generation_context={},
         )
-        db.add(material)
+        material = await _insert_reading_material_or_get_existing(db, candidate)
 
     material.title = normalized_title
     material.text = stored_text
     material.level = body.level
     material.goal = body.goal
     material.material_type = body.material_type
-    material.curriculum_node_id = body.curriculum_node_id
-    material.generation_context = body.generation_context or {}
     material.word_count = len(words)
     material.sentence_count = len(sentences)
     material.updated_at = datetime.now(timezone.utc)
@@ -307,10 +348,10 @@ async def save_reading_material(
 async def generate_reading_material(
     learner_id: uuid.UUID,
     body: ReadingMaterialGenerationRequest,
+    _: Learner = Depends(require_learner_access),
     db: AsyncSession = Depends(get_db_session),
     model_router: ModelRouter = Depends(get_model_router),
 ) -> ReadingMaterialGenerationResponse:
-    await _ensure_learner_exists(db, learner_id)
     node: CurriculumNode | None = None
     source: KnowledgeSource | None = None
     if body.curriculum_node_id is not None:
@@ -390,21 +431,34 @@ async def generate_reading_material(
         "comprehension_checks": payload.get("comprehension_checks") or [],
         "confidence": payload.get("confidence"),
     }
-    material = ReadingMaterialHistory(
-        learner_id=learner_id,
-        curriculum_node_id=node.id if node else None,
-        title=str(payload["title"]).strip()[:200],
-        text=stored_text,
-        text_hash=_text_hash(normalized_text),
-        level=level,
-        goal=body.goal,
-        material_type=body.material_type,
-        word_count=len(words),
-        sentence_count=len(sentences),
-        source="unit_llm_generation",
-        generation_context=generation_context,
+    text_hash = _text_hash(normalized_text)
+    existing_result = await db.execute(
+        select(ReadingMaterialHistory).where(
+            ReadingMaterialHistory.learner_id == learner_id,
+            ReadingMaterialHistory.text_hash == text_hash,
+        )
     )
-    db.add(material)
+    material = existing_result.scalar_one_or_none()
+    if material is None:
+        candidate = ReadingMaterialHistory(
+            learner_id=learner_id,
+            text=stored_text,
+            text_hash=text_hash,
+            source="unit_llm_generation",
+        )
+        material = await _insert_reading_material_or_get_existing(db, candidate)
+
+    material.curriculum_node_id = node.id if node else None
+    material.title = str(payload["title"]).strip()[:200]
+    material.text = stored_text
+    material.level = level
+    material.goal = body.goal
+    material.material_type = body.material_type
+    material.word_count = len(words)
+    material.sentence_count = len(sentences)
+    material.source = "unit_llm_generation"
+    material.generation_context = generation_context
+    material.updated_at = datetime.now(timezone.utc)
     await db.flush()
     await db.refresh(material)
 
@@ -422,18 +476,43 @@ async def complete_reading_material(
     learner_id: uuid.UUID,
     material_id: uuid.UUID,
     body: ReadingMaterialCompleteRequest,
+    _: Learner = Depends(require_learner_access),
     db: AsyncSession = Depends(get_db_session),
 ) -> ReadingMaterialCompleteResponse:
-    await _ensure_learner_exists(db, learner_id)
     result = await db.execute(
         select(ReadingMaterialHistory).where(
             ReadingMaterialHistory.id == material_id,
             ReadingMaterialHistory.learner_id == learner_id,
-        )
+        ).with_for_update()
     )
     material = result.scalar_one_or_none()
     if material is None:
         raise HTTPException(status_code=404, detail="Reading material not found")
+
+    _validate_completion_evidence(material.goal, body)
+    _validate_analyzed_sentence_ids(material, body.analyzed_sentence_ids)
+    existing_result = await db.execute(
+        select(ExerciseAttempt)
+        .where(
+            ExerciseAttempt.learner_id == learner_id,
+            ExerciseAttempt.target_type == "reading_passage",
+            ExerciseAttempt.target_id == str(material.id),
+            ExerciseAttempt.metadata_["source"].as_string()
+            == "reading_workshop_completion",
+            ExerciseAttempt.metadata_["client_attempt_id"].as_string()
+            == body.client_attempt_id,
+        )
+        .limit(1)
+    )
+    existing_attempt = existing_result.scalar_one_or_none()
+    if existing_attempt is not None:
+        existing_reading_value = int((existing_attempt.metadata_ or {}).get("reading_value") or 0)
+        return ReadingMaterialCompleteResponse(
+            material_id=material.id,
+            attempt_id=existing_attempt.id,
+            reading_value=max(0, min(100, existing_reading_value)),
+            message="阅读训练已记录；未评分的完成事件不会计入能力分或正确率。",
+        )
 
     reading_value = _reading_value(material, body)
     attempt = await ExerciseAttemptService(db).save_attempt(
@@ -446,13 +525,18 @@ async def complete_reading_material(
                 label=material.title or "Reading material",
             ),
             answer="completed",
-            result="correct",
+            result="completed",
+            client_attempt_id=body.client_attempt_id,
             metadata={
                 "source": "reading_workshop_completion",
                 "reading_value": reading_value,
                 "comprehension_score": body.comprehension_score,
                 "duration_seconds": body.duration_seconds,
-                "selected_sentence_count": body.selected_sentence_count,
+                "selected_sentence_count": len(body.analyzed_sentence_ids),
+                "analyzed_sentence_ids": body.analyzed_sentence_ids,
+                "extensive_evidence": (
+                    body.extensive_evidence.model_dump() if body.extensive_evidence else None
+                ),
                 "grammar_topic_count": body.grammar_topic_count,
                 "material_type": material.material_type,
                 "curriculum_node_id": str(material.curriculum_node_id) if material.curriculum_node_id else None,
@@ -479,15 +563,8 @@ async def complete_reading_material(
         material_id=material.id,
         attempt_id=attempt.id,
         reading_value=reading_value,
-        message="阅读训练已记录，学习画像的阅读值会随练习记录更新。",
+        message="阅读训练已记录；未评分的完成事件不会计入能力分或正确率。",
     )
-
-
-async def _ensure_learner_exists(db: AsyncSession, learner_id: uuid.UUID) -> None:
-    result = await db.execute(select(Learner.id).where(Learner.id == learner_id))
-    if result.scalar_one_or_none() is None:
-        raise HTTPException(status_code=404, detail="Learner not found")
-
 
 async def _get_accessible_curriculum_node(
     db: AsyncSession,
@@ -752,8 +829,9 @@ def _reading_value(material: ReadingMaterialHistory, body: ReadingMaterialComple
         base += 5
     if material.goal == "mixed":
         base += 10
-    if body.selected_sentence_count:
-        base += min(15, body.selected_sentence_count * 2)
+    analyzed_sentence_count = len(body.analyzed_sentence_ids)
+    if analyzed_sentence_count:
+        base += min(15, analyzed_sentence_count * 2)
     if body.grammar_topic_count:
         base += min(10, body.grammar_topic_count * 2)
     if body.comprehension_score is not None:
@@ -761,5 +839,62 @@ def _reading_value(material: ReadingMaterialHistory, body: ReadingMaterialComple
     return max(10, min(100, base))
 
 
+def _validate_completion_evidence(
+    goal: ReadingGoal,
+    body: ReadingMaterialCompleteRequest,
+) -> None:
+    has_extensive_evidence = body.extensive_evidence is not None
+    has_intensive_evidence = bool(body.analyzed_sentence_ids)
+
+    if goal in {"extensive", "mixed"} and not has_extensive_evidence:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail="Extensive reading completion requires a gist and central sentence",
+        )
+    if goal in {"intensive", "mixed"} and not has_intensive_evidence:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail="Intensive reading completion requires at least one analyzed sentence",
+        )
+
+
+def _validate_analyzed_sentence_ids(
+    material: ReadingMaterialHistory,
+    sentence_ids: list[str],
+) -> None:
+    allowed_ids = {
+        f"reading-sentence-{index}"
+        for index in range(1, material.sentence_count + 1)
+    }
+    unknown_ids = [sentence_id for sentence_id in sentence_ids if sentence_id not in allowed_ids]
+    if unknown_ids:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail="analyzed_sentence_ids must reference sentences in this reading material",
+        )
+
+
 def _text_hash(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+async def _insert_reading_material_or_get_existing(
+    db: AsyncSession,
+    candidate: ReadingMaterialHistory,
+) -> ReadingMaterialHistory:
+    try:
+        async with db.begin_nested():
+            db.add(candidate)
+            await db.flush()
+        return candidate
+    except IntegrityError:
+        result = await db.execute(
+            select(ReadingMaterialHistory).where(
+                ReadingMaterialHistory.learner_id == candidate.learner_id,
+                ReadingMaterialHistory.text_hash == candidate.text_hash,
+            )
+        )
+        existing = result.scalar_one_or_none()
+        if existing is None:
+            raise
+        return existing

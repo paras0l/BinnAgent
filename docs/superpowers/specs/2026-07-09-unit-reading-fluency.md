@@ -9,7 +9,7 @@
 1. 在单元学习界面增加“阅读语感训练”入口。
 2. LLM 生成的材料必须结合当前单元语法、主题、核心词汇和 learner profile。
 3. 生成内容进入现有 Reading Workshop，而不是新建孤立页面。
-4. 完成阅读后写入 reading exercise attempt，让 Dashboard / 学习画像的阅读值获得证据。
+4. 完成阅读后写入中性 reading exercise attempt；只有理解题分数或可评分阅读题才进入 Dashboard 能力分。
 5. 所有结构化 LLM 输出必须走 PromptExecutor、schema validation 和 prompt eval fixture。
 
 ## 用户流程
@@ -23,7 +23,7 @@
    - 泛读页记录主旨、态度、中心句。
    - 精读页选择句子、标记语法点、可跳转语法微知识点。
    - 复盘页点击“完成阅读”，写入 reading attempt。
-6. Dashboard 阅读能力值通过已有 `ExerciseAttempt.target_type=reading_passage` 统计获得更新。
+6. Dashboard 保留 `ExerciseAttempt.target_type=reading_passage` 记录，但未评分完成不进入能力分或正确率。
 
 ## 后端设计
 
@@ -69,7 +69,7 @@
   - `exercise_id=reading-material-{material_id}`
   - `metadata.reading_value`
   - `source_context.generation_context`
-- 不直接更新 mastery，先作为 Dashboard/画像阅读能力证据。
+- 不直接更新 mastery；阅读投入值只描述材料长度与精读覆盖，不作为能力分。
 
 ## Prompt 设计
 
@@ -116,7 +116,7 @@
 - 支持从外部传入初始材料。
 - 保存后维护 active material id。
 - 复盘页展示“完成阅读”按钮。
-- 完成后调用 completion API，并显示 reading_value 反馈。
+- 完成后调用 completion API，并把 `reading_value` 明确展示为阅读投入值，而非正确率或能力分。
 
 ## 验收标准
 

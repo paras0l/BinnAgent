@@ -1,7 +1,7 @@
 import uuid
 from collections.abc import AsyncIterator
 from datetime import datetime, timezone
-from json import dumps
+from json import dumps, loads
 import logging
 from typing import Any
 
@@ -12,7 +12,7 @@ from pydantic import BaseModel, Field, field_validator
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.api.deps import get_db_session, get_model_router
+from src.api.deps import get_current_user, get_db_session, get_model_router
 from src.agents.vocabulary_agent import (
     VOCABULARY_AGENT_NAME,
     VocabularyAgentResult,
@@ -32,6 +32,7 @@ from src.models.vocabulary import VocabularyAttempt, VocabularyItem
 from src.prompts import PromptExecutionContext, PromptExecutor, prompt_registry
 from src.providers.base import ChatRequest as ModelChatRequest
 from src.providers.router import ModelRouter
+from src.security.ownership import CurrentUser, get_learner_for_user
 
 router = APIRouter(prefix="/api/chat", tags=["chat"])
 logger = logging.getLogger(__name__)
@@ -72,6 +73,85 @@ TUTOR_SYSTEM_PROMPT = prompt_registry.render(
     version="v2",
     variables={},
 ).prompt
+
+_ARTIFACT_CONTEXT_MAX_CHARS = 8_000
+_ARTIFACT_MATERIAL_TEXT_MAX_CHARS = 1_800
+
+
+def _bounded_artifact_context(context: dict[str, Any] | None) -> dict[str, Any] | None:
+    if not context:
+        return None
+
+    normalized = loads(dumps(context, ensure_ascii=False))
+    payload = normalized.get("payload")
+    if isinstance(payload, dict):
+        material = payload.get("material")
+        if isinstance(material, dict):
+            text = material.get("text")
+            if isinstance(text, str) and len(text) > _ARTIFACT_MATERIAL_TEXT_MAX_CHARS:
+                material["text"] = text[:_ARTIFACT_MATERIAL_TEXT_MAX_CHARS].rstrip()
+                material["text_truncated"] = True
+                material["original_text_length"] = len(text)
+
+    if len(dumps(normalized, ensure_ascii=False)) <= _ARTIFACT_CONTEXT_MAX_CHARS:
+        return normalized
+
+    compact_payload: dict[str, Any] = {}
+    if isinstance(payload, dict):
+        for key in ("contextVersion", "instruction", "workspace", "focus", "learnerWork"):
+            if key in payload:
+                compact_payload[key] = payload[key]
+        material = payload.get("material")
+        if isinstance(material, dict):
+            compact_payload["material"] = {
+                key: material[key]
+                for key in (
+                    "id",
+                    "title",
+                    "level",
+                    "goal",
+                    "text",
+                    "text_truncated",
+                    "original_text_length",
+                )
+                if key in material
+            }
+
+    compact = {
+        key: normalized[key]
+        for key in ("artifactId", "artifactType", "artifactTitle", "eventType")
+        if key in normalized
+    }
+    if compact_payload:
+        compact["payload"] = compact_payload
+
+    for string_limit in (1_000, 500, 240):
+        bounded = _bound_json_value(compact, string_limit=string_limit, list_limit=30)
+        if len(dumps(bounded, ensure_ascii=False)) <= _ARTIFACT_CONTEXT_MAX_CHARS:
+            return bounded
+
+    return {
+        "artifactType": str(normalized.get("artifactType") or "unknown")[:100],
+        "artifactTitle": str(normalized.get("artifactTitle") or "")[:240],
+        "eventType": str(normalized.get("eventType") or "")[:100],
+        "context_truncated": True,
+    }
+
+
+def _bound_json_value(value: Any, *, string_limit: int, list_limit: int) -> Any:
+    if isinstance(value, str):
+        return value if len(value) <= string_limit else value[:string_limit].rstrip()
+    if isinstance(value, list):
+        return [
+            _bound_json_value(item, string_limit=string_limit, list_limit=list_limit)
+            for item in value[:list_limit]
+        ]
+    if isinstance(value, dict):
+        return {
+            str(key): _bound_json_value(item, string_limit=string_limit, list_limit=list_limit)
+            for key, item in value.items()
+        }
+    return value
 
 
 async def _get_or_create_thread(
@@ -189,8 +269,9 @@ def _model_request(
             }
         )
     else:
-        if req.artifact_context:
-            context_json = dumps(req.artifact_context, ensure_ascii=False)[:8_000]
+        artifact_context = _bounded_artifact_context(req.artifact_context)
+        if artifact_context:
+            context_json = dumps(artifact_context, ensure_ascii=False)
             messages.append(
                 {
                     "role": "system",
@@ -522,7 +603,7 @@ async def _persist_stream_chat_turn(
                 thread=thread,
                 assistant_reply=assistant_reply,
                 skill=skill,
-                user_metadata={"artifact_context": req.artifact_context},
+                user_metadata={"artifact_context": _bounded_artifact_context(req.artifact_context)},
                 assistant_metadata={"memory_context": _memory_context_metadata(memory_context)},
             )
             await db.commit()
@@ -554,7 +635,14 @@ async def chat_send(
     background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db_session),
     model_router: ModelRouter = Depends(get_model_router),
+    current_user: CurrentUser = Depends(get_current_user),
 ) -> ChatResponse:
+    await get_learner_for_user(
+        db,
+        current_user.user_id,
+        req.learner_id,
+        allow_unclaimed_learners=current_user.allow_unclaimed_learners,
+    )
     thread = await _get_or_create_thread(req, db, persist_new=False)
     skill = _resolve_skill(req, thread)
     history = await _conversation_history(req, db, thread)
@@ -582,7 +670,7 @@ async def chat_send(
         thread=thread,
         user_metadata={
             "memory_context": _memory_context_metadata(memory_context),
-            "artifact_context": req.artifact_context,
+            "artifact_context": _bounded_artifact_context(req.artifact_context),
         },
         assistant_metadata={},
     )
@@ -888,7 +976,14 @@ async def chat_stream(
     req: ChatRequest,
     db: AsyncSession = Depends(get_db_session),
     model_router: ModelRouter = Depends(get_model_router),
+    current_user: CurrentUser = Depends(get_current_user),
 ) -> StreamingResponse:
+    await get_learner_for_user(
+        db,
+        current_user.user_id,
+        req.learner_id,
+        allow_unclaimed_learners=current_user.allow_unclaimed_learners,
+    )
     thread = await _get_or_create_thread(req, db, persist_new=False)
     skill = _resolve_skill(req, thread)
     history = await _conversation_history(req, db, thread)

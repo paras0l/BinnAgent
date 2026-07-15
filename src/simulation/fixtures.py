@@ -892,6 +892,134 @@ BUILTIN_SCENARIOS.update(
             "src/simulation/**",
         ],
     ),
+    "reading_workshop_completion_evidence_idempotency": SimulationScenario(
+        id="reading_workshop_completion_evidence_idempotency",
+        name="Reading workshop completion evidence is validated and idempotent",
+        persona_id="grade7_low_vocab",
+        steps=[
+            SimulationStep(
+                name="create_learner",
+                action="create_learner",
+                assertions=[{"type": "exists", "path": "json.id"}],
+            ),
+            SimulationStep(
+                name="save_mixed_reading_material",
+                action="save_reading_material",
+                payload={
+                    "goal": "mixed",
+                    "level": "junior",
+                    "title": "A Better Way to Read",
+                },
+                assertions=[
+                    {"type": "status_code", "path": "status_code", "equals": 201},
+                    {"type": "exists", "path": "material.id"},
+                    {"type": "equals", "path": "material.goal", "value": "mixed"},
+                ],
+            ),
+            SimulationStep(
+                name="reject_completion_without_intensive_evidence",
+                action="complete_reading_material",
+                payload={
+                    "client_attempt_id": "sim-reading-missing-intensive",
+                    "extensive_evidence": {
+                        "gist": "Good readers connect details to the main idea.",
+                        "central_sentence": "Good readers first identify the writer's main idea.",
+                    },
+                    "comprehension_score": 78,
+                },
+                assertions=[
+                    {"type": "status_code", "path": "status_code", "equals": 422},
+                ],
+            ),
+            SimulationStep(
+                name="reject_completion_with_unknown_sentence_id",
+                action="complete_reading_material",
+                payload={
+                    "client_attempt_id": "sim-reading-unknown-sentence",
+                    "extensive_evidence": {
+                        "gist": "Good readers connect details to the main idea.",
+                        "central_sentence": "Good readers first identify the writer's main idea.",
+                    },
+                    "analyzed_sentence_ids": ["reading-sentence-99"],
+                    "comprehension_score": 78,
+                },
+                assertions=[
+                    {"type": "status_code", "path": "status_code", "equals": 422},
+                ],
+            ),
+            SimulationStep(
+                name="complete_with_mixed_evidence",
+                action="complete_reading_material",
+                payload={
+                    "client_attempt_id": "sim-reading-completion-001",
+                    "extensive_evidence": {
+                        "gist": "Good readers connect details to the main idea.",
+                        "central_sentence": "Good readers first identify the writer's main idea.",
+                    },
+                    "analyzed_sentence_ids": ["reading-sentence-1"],
+                    "comprehension_score": 78,
+                },
+                assertions=[
+                    {"type": "status_code", "path": "status_code", "equals": 200},
+                    {"type": "exists", "path": "completion.attempt_id"},
+                    {"type": "equals", "path": "idempotent_replay", "value": False},
+                ],
+            ),
+            SimulationStep(
+                name="retry_completion_with_same_client_attempt_id",
+                action="complete_reading_material",
+                payload={
+                    "client_attempt_id": "sim-reading-completion-001",
+                    "extensive_evidence": {
+                        "gist": "Good readers connect details to the main idea.",
+                        "central_sentence": "Good readers first identify the writer's main idea.",
+                    },
+                    "analyzed_sentence_ids": ["reading-sentence-1"],
+                    "comprehension_score": 78,
+                },
+                assertions=[
+                    {"type": "status_code", "path": "status_code", "equals": 200},
+                    {"type": "exists", "path": "completion.attempt_id"},
+                    {"type": "equals", "path": "idempotent_replay", "value": True},
+                ],
+            ),
+            SimulationStep(
+                name="reading_dashboard_uses_evidence_score_once",
+                action="reading_dashboard",
+                assertions=[
+                    {"type": "status_code", "path": "status_code", "equals": 200},
+                    {"type": "equals", "path": "reading_ability.value", "value": 78},
+                    {"type": "equals", "path": "reading_ability.evidence_count", "value": 1},
+                ],
+            ),
+        ],
+        module_tags=["reading", "exercise", "dashboard", "idempotency"],
+        entrypoints=[
+            "/api/learners/{learner_id}/reading-workshop/materials",
+            "/api/learners/{learner_id}/reading-workshop/materials/{material_id}/complete",
+            "/api/learners/{learner_id}/dashboard",
+        ],
+        expected_events=[],
+        expected_tool_calls=[],
+        expected_state_changes=[
+            "reading_material_saved",
+            "incomplete_reading_evidence_rejected",
+            "unknown_reading_sentence_rejected",
+            "reading_completion_saved",
+            "reading_completion_retry_reused",
+            "reading_dashboard_score_updated_once",
+        ],
+        required_metrics=["api_success_rate", "assertion_pass_rate"],
+        owner_module="reading",
+        change_triggers=[
+            "src/api/reading.py",
+            "src/api/dashboard.py",
+            "src/models/reading.py",
+            "src/models/knowledge.py",
+            "src/exercises/**",
+            "src/simulation/**",
+        ],
+    ),
     "unit_exercise_rejects_template_context_mismatch": SimulationScenario(
         id="unit_exercise_rejects_template_context_mismatch",
         name="Unit exercise quality gate rejects leaked target template",

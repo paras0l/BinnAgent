@@ -4,10 +4,12 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
+import src.api.dashboard as dashboard_api
 from src.api import deps
 from src.main import app
 from src.models.error_pattern import ErrorPattern
 from src.models.knowledge import ExerciseAttempt, LearnerKnowledgeState
+from src.models.learner import Learner
 from src.models.learning_progress import LearningProgressItem
 from src.models.session import LearningSession
 from src.models.vocabulary import ReviewSchedule, VocabularyItem, VocabularyMasteryVector
@@ -37,6 +39,76 @@ def _many(values: list):
     result = MagicMock()
     result.scalars.return_value.all.return_value = values
     return result
+
+
+def _reading_attempt(
+    learner_id: uuid.UUID,
+    *,
+    reading_value: object,
+    comprehension_score: object = None,
+) -> ExerciseAttempt:
+    attempt = ExerciseAttempt(
+        learner_id=learner_id,
+        submitted_answer="completed",
+        correct=False,
+        exercise_id="reading-material-score",
+        target_type="reading_passage",
+        target_id="material-score",
+        target_label="Workshop reading",
+        answer="completed",
+        result="completed",
+        metadata_={
+            "source": "reading_workshop_completion",
+            "reading_value": reading_value,
+            "comprehension_score": comprehension_score,
+        },
+        source_context={},
+    )
+    attempt.id = uuid.uuid4()
+    return attempt
+
+
+def test_reading_score_uses_only_graded_or_comprehension_evidence():
+    learner_id = uuid.uuid4()
+
+    score, evidence_count = dashboard_api._reading_score_from_attempts(
+        [
+            _reading_attempt(learner_id, reading_value=15, comprehension_score=90),
+            _reading_attempt(learner_id, reading_value=140),
+        ]
+    )
+
+    assert score == 90
+    assert evidence_count == 1
+
+
+def test_reading_score_ignores_ungraded_workshop_completion():
+    learner_id = uuid.uuid4()
+
+    score, evidence_count = dashboard_api._reading_score_from_attempts(
+        [_reading_attempt(learner_id, reading_value=100)]
+    )
+
+    assert score is None
+    assert evidence_count == 0
+
+
+@pytest.mark.asyncio
+async def test_dashboard_rejects_cross_user_access(client, mock_session):
+    learner_id = uuid.uuid4()
+    owner_user_id = uuid.uuid4()
+    learner = Learner(nickname="Owned learner", tenant_id=owner_user_id)
+    learner.id = learner_id
+    mock_session.execute = AsyncMock(return_value=_one(learner))
+
+    response = await client.get(
+        f"/api/learners/{learner_id}/dashboard",
+        headers={"X-User-Id": str(uuid.uuid4())},
+    )
+
+    assert response.status_code == 403
+    assert response.json()["detail"] == "Learner access denied"
+    assert mock_session.execute.await_count == 1
 
 
 @pytest.mark.asyncio
@@ -113,6 +185,26 @@ async def test_dashboard_profile_uses_real_backend_evidence(client, mock_session
     reading_attempt.id = uuid.uuid4()
     reading_attempt.created_at = now
 
+    reading_workshop_attempt = ExerciseAttempt(
+        learner_id=learner_id,
+        submitted_answer="completed",
+        correct=False,
+        exercise_id="reading-material-1",
+        target_type="reading_passage",
+        target_id="material-1",
+        target_label="Workshop reading",
+        answer="completed",
+        result="completed",
+        metadata_={
+            "source": "reading_workshop_completion",
+            "reading_value": 62,
+            "comprehension_score": 86,
+        },
+        source_context={},
+    )
+    reading_workshop_attempt.id = uuid.uuid4()
+    reading_workshop_attempt.created_at = now
+
     grammar_attempt = ExerciseAttempt(
         learner_id=learner_id,
         submitted_answer="does",
@@ -170,7 +262,7 @@ async def test_dashboard_profile_uses_real_backend_evidence(client, mock_session
             _many([knowledge_state]),
             _many([vector]),
             _many([grammar_progress]),
-            _many([reading_attempt, grammar_attempt]),
+            _many([reading_attempt, reading_workshop_attempt, grammar_attempt]),
             _many([review]),
             _many([review]),
         ]
@@ -189,7 +281,8 @@ async def test_dashboard_profile_uses_real_backend_evidence(client, mock_session
     ability_scores = {item["label"]: item for item in profile["ability_scores"]}
     assert ability_scores["词汇"]["evidence_count"] == 3
     assert ability_scores["语法"]["value"] == 100
-    assert ability_scores["阅读"]["value"] == 0
+    assert ability_scores["阅读"]["value"] == 43
+    assert ability_scores["阅读"]["evidence_count"] == 2
     assert ability_scores["听力"]["value"] == 50
     assert {bucket["label"] for bucket in profile["mastery_buckets"]} == {
         "新学",

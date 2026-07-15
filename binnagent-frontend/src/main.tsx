@@ -4,6 +4,8 @@ installChunkLoadRecovery()
 
 if (import.meta.env.VITE_APP_TARGET === 'dev-console') {
   void import('./dev-main')
+} else if (import.meta.env.VITE_APP_TARGET === 'review') {
+  void import('./review-main')
 } else {
   void import('./learner-main')
 }

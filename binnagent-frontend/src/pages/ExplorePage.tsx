@@ -37,6 +37,7 @@ import {
   learnerExploreRecommendationsUrl,
 } from '@/services/exploreCapabilityApi'
 import { learningTrackLabel, promptWithLearnerProfile } from '@/utils/learnerProfile'
+import type { ReadingNavigationBlockerChangeHandler } from '@/data/readingWorkshopSession'
 
 type FeatureCategory = 'all' | 'listening' | 'speaking' | 'reading' | 'writing' | 'vocabulary' | 'grammar' | 'exam'
 type FeatureStatus = 'ready' | 'todo'
@@ -51,6 +52,7 @@ interface ExplorePageProps {
   onDraftPrompt: (prompt: string, skillFocus?: string | null, options?: { autoSend?: boolean }) => void
   onOpenVocabularyManager: () => void
   onOpenPronunciationWorkspace: (workspace: PronunciationWorkspace) => void
+  onReadingNavigationBlockerChange?: ReadingNavigationBlockerChangeHandler
 }
 
 interface ExploreFeature {
@@ -306,6 +308,7 @@ export function ExplorePage({
   onDraftPrompt,
   onOpenVocabularyManager,
   onOpenPronunciationWorkspace,
+  onReadingNavigationBlockerChange,
 }: ExplorePageProps) {
   const { showToast } = useToast()
   const [preferences, setPreferences] = useState<ExplorePreference[]>([])
@@ -637,7 +640,15 @@ export function ExplorePage({
   }
 
   if (isReadingWorkshopOpen) {
-    return <ReadingWorkshopPage learner={learner} onBack={() => setIsReadingWorkshopOpen(false)} />
+    return (
+      <ReadingWorkshopPage
+        learner={learner}
+        learnerProfile={learnerProfile}
+        onNavigationBlockerChange={onReadingNavigationBlockerChange}
+        onBack={() => setIsReadingWorkshopOpen(false)}
+        backLabel="返回探索"
+      />
+    )
   }
 
   if (isWritingPhrasebookOpen) {

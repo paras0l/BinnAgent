@@ -18,7 +18,7 @@ ExerciseTargetType = Literal[
     "writing_phrase",
     "pronunciation_item",
 ]
-ExerciseAttemptResult = Literal["correct", "incorrect"]
+ExerciseAttemptResult = Literal["correct", "incorrect", "completed"]
 ExerciseLearningStatus = Literal["mastered", "needs_review", "unstable", "not_started"]
 
 
@@ -175,8 +175,9 @@ def build_exercise_attempt_summary(attempts: list[ExerciseAttempt]) -> ExerciseA
     ordered_attempts = sorted(attempts, key=_attempt_created_at, reverse=True)
     total = len(ordered_attempts)
     correct = sum(1 for attempt in ordered_attempts if _attempt_result(attempt) == "correct")
-    incorrect = total - correct
-    accuracy = round((correct / total) * 100) if total > 0 else 0
+    incorrect = sum(1 for attempt in ordered_attempts if _attempt_result(attempt) == "incorrect")
+    gradable_total = correct + incorrect
+    accuracy = round((correct / gradable_total) * 100) if gradable_total > 0 else 0
     last_attempt = ordered_attempts[0] if ordered_attempts else None
     last_result = _attempt_result(last_attempt) if last_attempt is not None else None
 
@@ -187,7 +188,7 @@ def build_exercise_attempt_summary(attempts: list[ExerciseAttempt]) -> ExerciseA
         accuracy=accuracy,
         last_attempt_at=last_attempt.created_at if last_attempt is not None else None,
         last_result=last_result,
-        needs_review=total > 0 and (last_result == "incorrect" or accuracy < 70),
+        needs_review=gradable_total > 0 and (last_result == "incorrect" or accuracy < 70),
         learning_status=_learning_status(total, accuracy, last_result),
     )
 
@@ -199,6 +200,8 @@ def _learning_status(
 ) -> ExerciseLearningStatus:
     if total == 0:
         return "not_started"
+    if last_result == "completed":
+        return "unstable"
     if last_result == "incorrect":
         return "needs_review"
     if accuracy >= 80 and last_result == "correct":
@@ -207,7 +210,7 @@ def _learning_status(
 
 
 def _attempt_result(attempt: ExerciseAttempt) -> ExerciseAttemptResult:
-    if attempt.result in ("correct", "incorrect"):
+    if attempt.result in ("correct", "incorrect", "completed"):
         return attempt.result
     return "correct" if attempt.correct else "incorrect"
 

@@ -18,7 +18,8 @@ router = APIRouter(
     tags=["exercise-attempts"],
 )
 
-ExerciseAttemptResult = Literal["correct", "incorrect"]
+ExerciseAttemptResult = Literal["correct", "incorrect", "completed"]
+ExerciseAttemptCreateResult = Literal["correct", "incorrect"]
 ExerciseLearningStatus = Literal["mastered", "needs_review", "unstable", "not_started"]
 
 
@@ -48,7 +49,7 @@ class ExerciseAttemptCreateRequest(BaseModel):
     )
     target: ExerciseTargetPayload
     answer: str = Field(min_length=1)
-    result: ExerciseAttemptResult
+    result: ExerciseAttemptCreateResult
     created_at: datetime | None = Field(
         default=None,
         validation_alias=AliasChoices("createdAt", "created_at"),

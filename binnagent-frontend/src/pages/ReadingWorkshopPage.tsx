@@ -30,8 +30,10 @@ import { PageShell } from '@/components/layout/PageShell'
 import type { WorkspaceTab } from '@/components/layout/WorkspaceTabs'
 import { ExerciseBlock } from '@/components/exercise/ExerciseBlock'
 import { Button } from '@/components/ui/Button'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { FormField } from '@/components/ui/FormField'
 import { Select } from '@/components/ui/Select'
+import { StatusBanner } from '@/components/ui/StatusBanner'
 import { SurfaceCard } from '@/components/ui/SurfaceCard'
 import { useFocusTrap } from '@/hooks/useFocusTrap'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
@@ -39,10 +41,13 @@ import {
   READING_GOAL_LABELS,
   READING_GRAMMAR_OPTIONS,
   READING_LEVEL_LABELS,
+  buildReadingCompletionPayload,
+  buildReadingCompletionState,
   buildKeywordCandidates,
   buildSentenceFocusHints,
   countEnglishWords,
   estimateReadingMinutes,
+  fingerprintReadingCompletionPayload,
   splitReadingSentences,
   suggestGrammarOptionIds,
   uniqueList,
@@ -58,6 +63,19 @@ import {
   type ReadingTrainingGoal,
   type ReadingWorkspace,
 } from '@/data/readingWorkshop'
+import {
+  READING_DRAFT_VERSION,
+  clearReadingWorkshopDraft,
+  createClientAttemptId,
+  deriveReadingSourceLabel,
+  readReadingWorkshopDraft,
+  readingDraftPersistenceAction,
+  readingMaterialDraftScope,
+  writeReadingWorkshopDraft,
+  type ReadingNavigationBlocker,
+  type ReadingNavigationBlockerChangeHandler,
+  type ReadingWorkshopDraftV1,
+} from '@/data/readingWorkshopSession'
 import type { Learner, LearnerProfile } from '@/types'
 import type { ExerciseTarget } from '@/types/exercises'
 import { GrammarPage } from '@/pages/GrammarPage'
@@ -68,11 +86,13 @@ import remarkGfm from 'remark-gfm'
 interface ReadingWorkshopPageProps {
   learner: Learner
   onBack: () => void
-  initialMaterial?: ReadingMaterial
+  backLabel?: string
+  initialMaterial?: ReadingMaterial | ReadingMaterialHistoryItem
   initialMaterialId?: string | null
   initialSourceLabel?: string | null
   learnerProfile?: LearnerProfile | null
   readingTrackMode?: boolean
+  onNavigationBlockerChange?: ReadingNavigationBlockerChangeHandler
 }
 
 interface ExtensiveNotes {
@@ -88,12 +108,30 @@ interface IntensiveNotes {
   evidenceNote: string
 }
 
+type IntensiveNotesBySentenceId = Record<string, IntensiveNotes>
+
+type PendingMaterialSwitch =
+  | { kind: 'sample' }
+  | { kind: 'history'; item: ReadingMaterialHistoryItem }
+  | { kind: 'generated'; item: ReadingMaterialHistoryItem }
+  | { kind: 'generate' }
+  | { kind: 'back' }
+  | { kind: 'external-navigation'; navigate: () => void }
+  | { kind: 'edit'; text: string }
+
 type TitleMode = 'empty' | 'auto' | 'user'
 type TitleSuggestionStatus = 'idle' | 'checking' | 'suggested' | 'incomplete' | 'error'
 type MaterialHistoryStatus = 'idle' | 'loading' | 'ready' | 'error'
 type MaterialSaveStatus = 'idle' | 'saving' | 'saved' | 'error'
 type MaterialCompleteStatus = 'idle' | 'saving' | 'completed' | 'error'
 type ReadingCoachMessage = { id: string; role: 'user' | 'assistant'; content: string }
+
+interface PendingCoachRequest {
+  controller: AbortController
+  message: string
+  revision: number
+  userMessageId: string
+}
 
 const SAMPLE_TEXT = `Many students believe that reading faster simply means moving their eyes quickly across a page. However, effective readers do more than race through words. They first notice the title, predict the topic, and look for sentences that show the writer's main point. When a sentence becomes difficult, they slow down, find the main verb, and separate extra information from the core meaning.`
 
@@ -131,49 +169,117 @@ const READING_GRAMMAR_EXERCISE_TARGET_IDS: Record<string, string> = {
   '定语从句中 which/that 的选择': 'which-that-relative',
 }
 
+const READING_GRAMMAR_EXERCISE_TARGETS: Record<string, ExerciseTarget> = Object.fromEntries(
+  READING_GRAMMAR_OPTIONS.map((option) => [option.id, getGrammarExerciseTargetFromReadingOption(option)])
+)
+
 export function ReadingWorkshopPage({
   learner,
   onBack,
+  backLabel = '返回探索',
   initialMaterial,
   initialMaterialId = null,
   initialSourceLabel = null,
   learnerProfile,
   readingTrackMode = false,
+  onNavigationBlockerChange,
 }: ReadingWorkshopPageProps) {
+  const hasExplicitInitialMaterial = initialMaterial !== undefined
   const hasInitialMaterial = Boolean(initialMaterial?.text.trim())
-  const [workspace, setWorkspace] = useState<ReadingWorkspace>('input')
-  const [material, setMaterial] = useState<ReadingMaterial>(() => (
-    hasInitialMaterial
-      ? { ...initialMaterial, material_type: initialMaterial?.material_type ?? 'passage' } as ReadingMaterial
-      : EMPTY_MATERIAL
-  ))
-  const [extensiveNotes, setExtensiveNotes] = useState<ExtensiveNotes>(EMPTY_EXTENSIVE_NOTES)
-  const [intensiveNotes, setIntensiveNotes] = useState<IntensiveNotes>(EMPTY_INTENSIVE_NOTES)
-  const [titleMode, setTitleMode] = useState<TitleMode>(hasInitialMaterial && initialMaterial?.title ? 'auto' : 'empty')
-  const [titleSuggestionStatus, setTitleSuggestionStatus] = useState<TitleSuggestionStatus>(
-    hasInitialMaterial && initialMaterial?.title ? 'suggested' : 'idle'
+  const initialDraftScopeId = readingMaterialDraftScope(
+    initialMaterialId ?? (isReadingMaterialHistoryItem(initialMaterial) ? initialMaterial.id : null)
   )
-  const [autoTitleSourceText, setAutoTitleSourceText] = useState(hasInitialMaterial ? initialMaterial?.text ?? '' : '')
+  const [storedDraft] = useState<ReadingWorkshopDraftV1 | null>(() => (
+    readReadingWorkshopDraft(learner.id, hasExplicitInitialMaterial ? initialDraftScopeId : undefined)
+  ))
+  const recoveredDraft = hasExplicitInitialMaterial && storedDraft?.material.text !== initialMaterial?.text
+    ? null
+    : storedDraft
+  const initialMaterialRecord = isReadingMaterialHistoryItem(initialMaterial) ? initialMaterial : null
+  const recoveredMaterialRecord = hasExplicitInitialMaterial ? null : recoveredDraft?.activeMaterialRecord ?? null
+  const resolvedInitialMaterialId = initialMaterialId
+    ?? initialMaterialRecord?.id
+    ?? recoveredDraft?.activeMaterialId
+    ?? null
+  const seededMaterial = hasExplicitInitialMaterial
+    ? { ...initialMaterial, material_type: initialMaterial?.material_type ?? 'passage' } as ReadingMaterial
+    : recoveredDraft?.material ?? EMPTY_MATERIAL
+  const [workspace, setWorkspace] = useState<ReadingWorkspace>(() => (
+    seededMaterial.text.trim() ? recoveredDraft?.workspace ?? 'input' : 'input'
+  ))
+  const [material, setMaterial] = useState<ReadingMaterial>(() => (
+    seededMaterial
+  ))
+  const [extensiveNotes, setExtensiveNotes] = useState<ExtensiveNotes>(
+    recoveredDraft?.extensiveNotes ?? EMPTY_EXTENSIVE_NOTES
+  )
+  const [intensiveNotesBySentenceId, setIntensiveNotesBySentenceId] = useState<IntensiveNotesBySentenceId>(
+    recoveredDraft?.intensiveNotesBySentenceId ?? {}
+  )
+  const [titleMode, setTitleMode] = useState<TitleMode>(
+    recoveredDraft?.titleMode ?? (hasInitialMaterial && initialMaterial?.title ? 'auto' : 'empty')
+  )
+  const [titleSuggestionStatus, setTitleSuggestionStatus] = useState<TitleSuggestionStatus>(
+    recoveredDraft?.titleSuggestionStatus
+      ?? (hasInitialMaterial && initialMaterial?.title ? 'suggested' : 'idle')
+  )
+  const [autoTitleSourceText, setAutoTitleSourceText] = useState(
+    recoveredDraft?.autoTitleSourceText ?? (hasInitialMaterial ? initialMaterial?.text ?? '' : '')
+  )
   const [materialHistory, setMaterialHistory] = useState<ReadingMaterialHistoryItem[]>([])
-  const [activeMaterialId, setActiveMaterialId] = useState<string | null>(initialMaterialId)
+  const [activeMaterialId, setActiveMaterialId] = useState<string | null>(resolvedInitialMaterialId)
+  const [activeMaterialRecord, setActiveMaterialRecord] = useState<ReadingMaterialHistoryItem | null>(
+    initialMaterialRecord ?? recoveredMaterialRecord
+  )
   const [historyStatus, setHistoryStatus] = useState<MaterialHistoryStatus>('idle')
-  const [saveStatus, setSaveStatus] = useState<MaterialSaveStatus>(initialMaterialId ? 'saved' : 'idle')
-  const [completeStatus, setCompleteStatus] = useState<MaterialCompleteStatus>('idle')
-  const [completionResult, setCompletionResult] = useState<ReadingMaterialCompleteResponse | null>(null)
-  const [selectedSentenceId, setSelectedSentenceId] = useState<string | null>(hasInitialMaterial ? 'reading-sentence-1' : null)
-  const [visitedSentenceIds, setVisitedSentenceIds] = useState<string[]>(hasInitialMaterial ? ['reading-sentence-1'] : [])
-  const [selectedGrammarOptionIds, setSelectedGrammarOptionIds] = useState<string[]>([])
-  const [openedGrammarTopics, setOpenedGrammarTopics] = useState<string[]>([])
+  const [saveStatus, setSaveStatus] = useState<MaterialSaveStatus>(
+    recoveredDraft?.saveStatus ?? (resolvedInitialMaterialId ? 'saved' : 'idle')
+  )
+  const [completeStatus, setCompleteStatus] = useState<MaterialCompleteStatus>(
+    recoveredDraft?.completeStatus ?? 'idle'
+  )
+  const [completionResult, setCompletionResult] = useState<ReadingMaterialCompleteResponse | null>(
+    recoveredDraft?.completionResult ?? null
+  )
+  const [selectedSentenceId, setSelectedSentenceId] = useState<string | null>(recoveredDraft?.selectedSentenceId ?? null)
+  const [selectedGrammarOptionIds, setSelectedGrammarOptionIds] = useState<string[]>(
+    recoveredDraft?.selectedGrammarOptionIds ?? []
+  )
+  const [openedGrammarTopics, setOpenedGrammarTopics] = useState<string[]>(recoveredDraft?.openedGrammarTopics ?? [])
   const [grammarTopic, setGrammarTopic] = useState<string | null>(null)
   const [generationTopic, setGenerationTopic] = useState(learnerProfile?.interest_topics?.[0] ?? '')
   const [generationStatus, setGenerationStatus] = useState<'idle' | 'generating' | 'error'>('idle')
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
-  const [isCoachCollapsed, setIsCoachCollapsed] = useState(false)
-  const [coachThreadId, setCoachThreadId] = useState<string | null>(null)
-  const [coachMessages, setCoachMessages] = useState<ReadingCoachMessage[]>([])
-  const [coachDraft, setCoachDraft] = useState('')
+  const [isCoachCollapsed, setIsCoachCollapsed] = useState(true)
+  const [coachThreadId, setCoachThreadId] = useState<string | null>(recoveredDraft?.coachThreadId ?? null)
+  const [coachMessages, setCoachMessages] = useState<ReadingCoachMessage[]>(recoveredDraft?.coachMessages ?? [])
+  const [coachDraft, setCoachDraft] = useState(recoveredDraft?.coachDraft ?? '')
   const [coachStatus, setCoachStatus] = useState<'idle' | 'sending' | 'error'>('idle')
   const [activeTextSelection, setActiveTextSelection] = useState<string | null>(null)
+  const [pendingMaterialSwitch, setPendingMaterialSwitch] = useState<PendingMaterialSwitch | null>(null)
+  const [queuedGeneratedMaterial, setQueuedGeneratedMaterial] = useState<ReadingMaterialHistoryItem | null>(null)
+  const [showDraftRecoveryNotice, setShowDraftRecoveryNotice] = useState(Boolean(recoveredDraft))
+  const [clientAttemptId, setClientAttemptId] = useState(
+    recoveredDraft?.clientAttemptId ?? createClientAttemptId()
+  )
+  const [attemptSubmitted, setAttemptSubmitted] = useState(recoveredDraft?.attemptSubmitted ?? false)
+  const [lastSubmittedEvidenceFingerprint, setLastSubmittedEvidenceFingerprint] = useState<string | null>(
+    recoveredDraft?.lastSubmittedEvidenceFingerprint ?? null
+  )
+  const [draftScopeId, setDraftScopeId] = useState(recoveredDraft?.scopeId ?? initialDraftScopeId)
+  const materialRevisionRef = useRef(0)
+  const completionRevisionRef = useRef(0)
+  const dataRevisionRef = useRef(0)
+  const coachRevisionRef = useRef(0)
+  const saveRequestSequenceRef = useRef(0)
+  const completionRequestSequenceRef = useRef(0)
+  const generationRequestSequenceRef = useRef(0)
+  const saveAbortControllerRef = useRef<AbortController | null>(null)
+  const completionAbortControllerRef = useRef<AbortController | null>(null)
+  const generationAbortControllerRef = useRef<AbortController | null>(null)
+  const coachRequestRef = useRef<PendingCoachRequest | null>(null)
+  const pendingMaterialSwitchRef = useRef(pendingMaterialSwitch)
+  const skipPersistOnUnmountRef = useRef(false)
   const readingTimeBudget = learnerProfile?.daily_time_budget_minutes ?? 15
 
   const sentences = useMemo(() => splitReadingSentences(material.text), [material.text])
@@ -181,8 +287,18 @@ export function ReadingWorkshopPage({
   const wordCount = useMemo(() => countEnglishWords(material.text), [material.text])
   const estimatedMinutes = useMemo(() => estimateReadingMinutes(material.text, material.level), [material.level, material.text])
   const selectedSentence = useMemo(
-    () => sentences.find((sentence) => sentence.id === selectedSentenceId) ?? sentences[0] ?? null,
+    () => selectedSentenceId
+      ? sentences.find((sentence) => sentence.id === selectedSentenceId) ?? null
+      : null,
     [selectedSentenceId, sentences]
+  )
+  const intensiveNotes = useMemo(
+    () => selectedSentence ? intensiveNotesBySentenceId[selectedSentence.id] ?? EMPTY_INTENSIVE_NOTES : EMPTY_INTENSIVE_NOTES,
+    [intensiveNotesBySentenceId, selectedSentence]
+  )
+  const analyzedSentences = useMemo(
+    () => sentences.filter((sentence) => isSentenceAnalysisComplete(intensiveNotesBySentenceId[sentence.id])),
+    [intensiveNotesBySentenceId, sentences]
   )
   const selectedSentenceHints = useMemo(
     () => buildSentenceFocusHints(selectedSentence?.text ?? ''),
@@ -196,26 +312,173 @@ export function ReadingWorkshopPage({
     () => READING_GRAMMAR_OPTIONS.filter((option) => selectedGrammarOptionIds.includes(option.id)),
     [selectedGrammarOptionIds]
   )
-  const visitedSentences = useMemo(
-    () => visitedSentenceIds
-      .map((id) => sentences.find((sentence) => sentence.id === id))
-      .filter((sentence): sentence is ReadingSentence => Boolean(sentence)),
-    [sentences, visitedSentenceIds]
-  )
   const canUseMaterial = material.text.trim().length > 0
+  const hasExtensiveEvidence = Boolean(extensiveNotes.gist.trim() && extensiveNotes.centralSentence.trim())
+  const hasSessionWork = Boolean(
+    extensiveNotes.gist.trim()
+    || extensiveNotes.attitude.trim()
+    || extensiveNotes.paragraphFunction.trim()
+    || extensiveNotes.centralSentence.trim()
+    || Object.values(intensiveNotesBySentenceId).some(hasAnyIntensiveNote)
+    || selectedGrammarOptionIds.length
+    || openedGrammarTopics.length
+    || coachMessages.length
+  )
+  const hasUnsavedMaterial = Boolean(
+    saveStatus !== 'saved' && (material.text.trim() || material.title.trim())
+  )
+  const hasDataAtRisk = Boolean(
+    hasSessionWork
+    || coachDraft.trim()
+    || hasUnsavedMaterial
+    || saveStatus === 'saving'
+    || completeStatus === 'saving'
+    || generationStatus === 'generating'
+  )
+  const activeSourceLabel = useMemo(() => deriveReadingSourceLabel({
+    record: activeMaterialRecord,
+    initialMaterialId: resolvedInitialMaterialId,
+    initialSourceLabel,
+  }), [activeMaterialRecord, initialSourceLabel, resolvedInitialMaterialId])
+  const completionState = useMemo(() => buildReadingCompletionState({
+    hasMaterial: canUseMaterial,
+    hasExtensiveEvidence,
+    analyzedSentenceCount: analyzedSentences.length,
+    goal: material.goal,
+    isRecorded: completeStatus === 'completed',
+  }), [analyzedSentences.length, canUseMaterial, completeStatus, hasExtensiveEvidence, material.goal])
+
+  useEffect(() => {
+    if (!onNavigationBlockerChange) return
+    const blocker: ReadingNavigationBlocker = (navigate) => {
+      if (!hasDataAtRisk) {
+        skipPersistOnUnmountRef.current = true
+        clearReadingWorkshopDraft(learner.id, draftScopeId)
+        return false
+      }
+      setPendingMaterialSwitch({ kind: 'external-navigation', navigate })
+      return true
+    }
+    onNavigationBlockerChange(blocker)
+    return () => onNavigationBlockerChange(null)
+  }, [draftScopeId, hasDataAtRisk, learner.id, onNavigationBlockerChange])
+
+  const invalidateCoachRequest = useCallback((preserveQuestion: boolean) => {
+    coachRevisionRef.current += 1
+    const pending = coachRequestRef.current
+    coachRequestRef.current = null
+    pending?.controller.abort()
+    if (pending) {
+      setCoachMessages((current) => current.filter((item) => item.id !== pending.userMessageId))
+      if (preserveQuestion) {
+        setCoachDraft((current) => current.trim() ? current : pending.message)
+      }
+    }
+    setCoachStatus('idle')
+  }, [])
+
+  const invalidateCompletion = useCallback(() => {
+    completionRevisionRef.current += 1
+    completionRequestSequenceRef.current += 1
+    completionAbortControllerRef.current?.abort()
+    completionAbortControllerRef.current = null
+  }, [])
+
+  const markEvidenceMutation = useCallback(() => {
+    dataRevisionRef.current += 1
+    invalidateCompletion()
+    if (attemptSubmitted) {
+      setClientAttemptId(createClientAttemptId())
+      setAttemptSubmitted(false)
+      setLastSubmittedEvidenceFingerprint(null)
+    }
+    setCompleteStatus('idle')
+    setCompletionResult(null)
+  }, [attemptSubmitted, invalidateCompletion])
+
+  const markMaterialMutation = useCallback((preserveCoachQuestion: boolean) => {
+    materialRevisionRef.current += 1
+    dataRevisionRef.current += 1
+    saveRequestSequenceRef.current += 1
+    saveAbortControllerRef.current?.abort()
+    saveAbortControllerRef.current = null
+    invalidateCompletion()
+    invalidateCoachRequest(preserveCoachQuestion)
+    if (attemptSubmitted) {
+      setClientAttemptId(createClientAttemptId())
+      setAttemptSubmitted(false)
+      setLastSubmittedEvidenceFingerprint(null)
+    }
+    setSaveStatus('idle')
+    setCompleteStatus('idle')
+    setCompletionResult(null)
+  }, [attemptSubmitted, invalidateCoachRequest, invalidateCompletion])
+
+  const resetReadingSession = useCallback(() => {
+    markMaterialMutation(false)
+    setWorkspace('input')
+    setExtensiveNotes(EMPTY_EXTENSIVE_NOTES)
+    setIntensiveNotesBySentenceId({})
+    setSelectedSentenceId(null)
+    setSelectedGrammarOptionIds([])
+    setOpenedGrammarTopics([])
+    setGrammarTopic(null)
+    setCompleteStatus('idle')
+    setCompletionResult(null)
+    setCoachThreadId(null)
+    setCoachMessages([])
+    setCoachDraft('')
+    setCoachStatus('idle')
+    setActiveTextSelection(null)
+    setClientAttemptId(createClientAttemptId())
+    setAttemptSubmitted(false)
+    setLastSubmittedEvidenceFingerprint(null)
+  }, [markMaterialMutation])
+
+  const updateIntensiveNote = useCallback((key: keyof IntensiveNotes, value: string) => {
+    if (!selectedSentence) return
+    markEvidenceMutation()
+    setIntensiveNotesBySentenceId((current) => ({
+      ...current,
+      [selectedSentence.id]: {
+        ...(current[selectedSentence.id] ?? EMPTY_INTENSIVE_NOTES),
+        [key]: value,
+      },
+    }))
+  }, [markEvidenceMutation, selectedSentence])
+
+  const updateExtensiveNote = useCallback((key: keyof ExtensiveNotes, value: string) => {
+    markEvidenceMutation()
+    setExtensiveNotes((current) => ({ ...current, [key]: value }))
+  }, [markEvidenceMutation])
 
   const askReadingCoach = useCallback(async () => {
     const message = coachDraft.trim()
     if (!message || coachStatus === 'sending') return
 
+    const revision = coachRevisionRef.current
+    const controller = new AbortController()
     const userMessage: ReadingCoachMessage = {
       id: `reading-coach-user-${Date.now()}`,
       role: 'user',
       content: message,
     }
+    dataRevisionRef.current += 1
     setCoachMessages((current) => [...current, userMessage])
     setCoachDraft('')
     setCoachStatus('sending')
+    coachRequestRef.current = {
+      controller,
+      message,
+      revision,
+      userMessageId: userMessage.id,
+    }
+
+    const isCurrentRequest = () => (
+      coachRequestRef.current?.controller === controller
+      && coachRevisionRef.current === revision
+      && !controller.signal.aborted
+    )
 
     try {
       const response = await fetch('/api/chat/send', {
@@ -237,9 +500,13 @@ export function ReadingWorkshopPage({
             grammarTopics: selectedGrammarOptions.map((option) => option.label),
           }),
         }),
+        signal: controller.signal,
       })
       if (!response.ok) throw new Error('Reading coach request failed')
       const result = await response.json() as { reply: string; thread_id: string }
+      if (!isCurrentRequest()) return
+      coachRequestRef.current = null
+      dataRevisionRef.current += 1
       setCoachThreadId(result.thread_id)
       setCoachMessages((current) => [...current, {
         id: `reading-coach-assistant-${Date.now()}`,
@@ -248,7 +515,11 @@ export function ReadingWorkshopPage({
       }])
       setCoachStatus('idle')
     } catch (error) {
+      if (!isCurrentRequest()) return
+      coachRequestRef.current = null
       console.error('Reading coach error:', error)
+      setCoachMessages((current) => current.filter((item) => item.id !== userMessage.id))
+      setCoachDraft(message)
       setCoachStatus('error')
     }
   }, [
@@ -265,6 +536,17 @@ export function ReadingWorkshopPage({
     selectedSentence,
     workspace,
   ])
+
+  useEffect(() => () => {
+    saveAbortControllerRef.current?.abort()
+    completionAbortControllerRef.current?.abort()
+    generationAbortControllerRef.current?.abort()
+    coachRequestRef.current?.controller.abort()
+  }, [])
+
+  useEffect(() => {
+    pendingMaterialSwitchRef.current = pendingMaterialSwitch
+  }, [pendingMaterialSwitch])
 
   const loadMaterialHistory = useCallback(async () => {
     setHistoryStatus('loading')
@@ -285,10 +567,146 @@ export function ReadingWorkshopPage({
     return () => window.clearTimeout(timer)
   }, [loadMaterialHistory])
 
+  const localDraft = useMemo<ReadingWorkshopDraftV1>(() => ({
+    version: READING_DRAFT_VERSION,
+    learnerId: learner.id,
+    scopeId: draftScopeId,
+    savedAt: recoveredDraft?.savedAt ?? 0,
+    workspace,
+    material,
+    extensiveNotes,
+    intensiveNotesBySentenceId,
+    selectedSentenceId,
+    selectedGrammarOptionIds,
+    openedGrammarTopics,
+    coachThreadId,
+    coachMessages: coachMessages.slice(-50),
+    coachDraft,
+    activeMaterialId,
+    activeMaterialRecord,
+    saveStatus: saveStatus === 'saved' ? 'saved' : 'idle',
+    titleMode,
+    titleSuggestionStatus,
+    autoTitleSourceText,
+    clientAttemptId,
+    attemptSubmitted,
+    lastSubmittedEvidenceFingerprint,
+    completeStatus: completionResult ? 'completed' : attemptSubmitted ? 'error' : 'idle',
+    completionResult,
+  }), [
+    activeMaterialId,
+    activeMaterialRecord,
+    attemptSubmitted,
+    autoTitleSourceText,
+    clientAttemptId,
+    coachDraft,
+    coachMessages,
+    coachThreadId,
+    completionResult,
+    draftScopeId,
+    extensiveNotes,
+    intensiveNotesBySentenceId,
+    learner.id,
+    lastSubmittedEvidenceFingerprint,
+    material,
+    openedGrammarTopics,
+    recoveredDraft?.savedAt,
+    saveStatus,
+    selectedGrammarOptionIds,
+    selectedSentenceId,
+    titleMode,
+    titleSuggestionStatus,
+    workspace,
+  ])
+  const shouldPersistLocalDraft = Boolean(
+    material.text.trim()
+    || material.title.trim()
+    || hasSessionWork
+    || coachDraft.trim()
+  )
+  const latestLocalDraftRef = useRef(localDraft)
+  const shouldPersistLocalDraftRef = useRef(shouldPersistLocalDraft)
+  useEffect(() => {
+    latestLocalDraftRef.current = localDraft
+    shouldPersistLocalDraftRef.current = shouldPersistLocalDraft
+  }, [localDraft, shouldPersistLocalDraft])
+  const persistLatestLocalDraft = useCallback(() => {
+    const latestDraft = latestLocalDraftRef.current
+    const action = readingDraftPersistenceAction({
+      skipPersist: skipPersistOnUnmountRef.current,
+      hasContent: shouldPersistLocalDraftRef.current,
+    })
+    if (action === 'skip') return
+    if (action === 'write') {
+      writeReadingWorkshopDraft(latestDraft)
+    } else {
+      clearReadingWorkshopDraft(learner.id, latestDraft.scopeId)
+    }
+  }, [learner.id])
+
+  useEffect(() => {
+    const timer = window.setTimeout(persistLatestLocalDraft, 350)
+    return () => window.clearTimeout(timer)
+  }, [localDraft, persistLatestLocalDraft])
+
+  useEffect(() => {
+    const handlePageHide = () => persistLatestLocalDraft()
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') persistLatestLocalDraft()
+    }
+    window.addEventListener('pagehide', handlePageHide)
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => {
+      window.removeEventListener('pagehide', handlePageHide)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      persistLatestLocalDraft()
+    }
+  }, [persistLatestLocalDraft])
+
+  useEffect(() => {
+    if (!hasDataAtRisk) return
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      persistLatestLocalDraft()
+      event.preventDefault()
+      event.returnValue = ''
+    }
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
+  }, [hasDataAtRisk, persistLatestLocalDraft])
+
+  const moveDraftScope = useCallback((
+    nextScopeId: string,
+    migratedDraftPatch?: Partial<ReadingWorkshopDraftV1>,
+  ) => {
+    const currentScopeId = latestLocalDraftRef.current.scopeId
+    if (currentScopeId === nextScopeId) return
+    const movedDraft = {
+      ...latestLocalDraftRef.current,
+      ...migratedDraftPatch,
+      scopeId: nextScopeId,
+    }
+    latestLocalDraftRef.current = movedDraft
+    if (migratedDraftPatch) {
+      writeReadingWorkshopDraft(movedDraft)
+    }
+    clearReadingWorkshopDraft(learner.id, currentScopeId)
+    setDraftScopeId(nextScopeId)
+  }, [learner.id])
+
   const saveCurrentMaterial = useCallback(async () => {
     const text = material.text.trim()
     if (!text) return null
 
+    saveAbortControllerRef.current?.abort()
+    const controller = new AbortController()
+    const requestSequence = ++saveRequestSequenceRef.current
+    const materialRevision = materialRevisionRef.current
+    saveAbortControllerRef.current = controller
+    const isCurrentRequest = () => (
+      saveRequestSequenceRef.current === requestSequence
+      && materialRevisionRef.current === materialRevision
+      && !controller.signal.aborted
+    )
     setSaveStatus('saving')
     try {
       const response = await fetch(`/api/learners/${learner.id}/reading-workshop/materials`, {
@@ -300,11 +718,20 @@ export function ReadingWorkshopPage({
           level: material.level,
           goal: material.goal,
           material_type: material.material_type ?? 'passage',
+          curriculum_node_id: activeMaterialRecord?.curriculum_node_id ?? null,
         }),
+        signal: controller.signal,
       })
       if (!response.ok) throw new Error('Failed to save reading material')
       const saved = (await response.json()) as ReadingMaterialHistoryItem
+      if (!isCurrentRequest()) return null
+      moveDraftScope(readingMaterialDraftScope(saved.id), {
+        activeMaterialId: saved.id,
+        activeMaterialRecord: saved,
+        saveStatus: 'saved',
+      })
       setActiveMaterialId(saved.id)
+      setActiveMaterialRecord(saved)
       setMaterialHistory((current) => [
         saved,
         ...current.filter((item) => item.id !== saved.id),
@@ -312,11 +739,16 @@ export function ReadingWorkshopPage({
       setSaveStatus('saved')
       return saved
     } catch (error) {
+      if (!isCurrentRequest()) return null
       console.error('Reading material save error:', error)
       setSaveStatus('error')
       return null
+    } finally {
+      if (saveAbortControllerRef.current === controller) {
+        saveAbortControllerRef.current = null
+      }
     }
-  }, [learner.id, material.goal, material.level, material.material_type, material.text, material.title])
+  }, [activeMaterialRecord, learner.id, material.goal, material.level, material.material_type, material.text, material.title, moveDraftScope])
 
   useEffect(() => {
     const text = material.text.trim()
@@ -340,6 +772,7 @@ export function ReadingWorkshopPage({
         .then((data) => {
           if (!data.is_complete || !data.suggested_title) {
             if (titleMode === 'auto') {
+              markMaterialMutation(true)
               setMaterial((current) => ({ ...current, title: '' }))
               setTitleMode('empty')
               setAutoTitleSourceText('')
@@ -347,6 +780,7 @@ export function ReadingWorkshopPage({
             setTitleSuggestionStatus('incomplete')
             return
           }
+          markMaterialMutation(true)
           setMaterial((current) => ({ ...current, title: data.suggested_title ?? current.title }))
           setTitleMode('auto')
           setAutoTitleSourceText(text)
@@ -363,22 +797,27 @@ export function ReadingWorkshopPage({
       window.clearTimeout(timer)
       controller.abort()
     }
-  }, [autoTitleSourceText, material.text, titleMode])
+  }, [autoTitleSourceText, markMaterialMutation, material.text, titleMode])
 
   const openWorkspace = (nextWorkspace: ReadingWorkspace) => {
+    if (nextWorkspace !== 'input' && !canUseMaterial) return
     if (nextWorkspace === 'intensive' && sentences[0] && !selectedSentenceId) {
       setSelectedSentenceId(sentences[0].id)
-      setVisitedSentenceIds((current) => uniqueList([...current, sentences[0].id]))
     }
     setWorkspace(nextWorkspace)
   }
 
-  const startTraining = (nextWorkspace: ReadingWorkspace) => {
-    void saveCurrentMaterial()
+  const startTraining = async (nextWorkspace: ReadingWorkspace) => {
+    if (!activeMaterialId || saveStatus !== 'saved') {
+      const saved = await saveCurrentMaterial()
+      if (!saved) return
+    }
     openWorkspace(nextWorkspace)
   }
 
-  const loadSampleMaterial = () => {
+  const applySampleMaterial = () => {
+    moveDraftScope(readingMaterialDraftScope(null))
+    resetReadingSession()
     setMaterial({
       title: 'How Effective Readers Work',
       text: SAMPLE_TEXT,
@@ -387,27 +826,34 @@ export function ReadingWorkshopPage({
       material_type: 'passage',
     })
     setActiveMaterialId(null)
+    setActiveMaterialRecord(null)
+    setSaveStatus('idle')
     setTitleMode('auto')
     setTitleSuggestionStatus('suggested')
     setAutoTitleSourceText(SAMPLE_TEXT)
-    setSelectedSentenceId('reading-sentence-1')
-    setVisitedSentenceIds(['reading-sentence-1'])
-    setWorkspace('input')
+  }
+
+  const loadSampleMaterial = () => {
+    if (hasDataAtRisk) {
+      setPendingMaterialSwitch({ kind: 'sample' })
+      return
+    }
+    applySampleMaterial()
   }
 
   const updateTitle = (title: string) => {
+    if (title === material.title) return
+    markMaterialMutation(true)
     setTitleMode('user')
-    setSaveStatus('idle')
-    setCompleteStatus('idle')
-    setCompletionResult(null)
     setMaterial((current) => ({ ...current, title }))
   }
 
-  const updateText = (text: string) => {
+  const applyTextUpdate = (text: string) => {
+    moveDraftScope(readingMaterialDraftScope(null))
+    if (text !== material.text) resetReadingSession()
     setSaveStatus('idle')
     setActiveMaterialId(null)
-    setCompleteStatus('idle')
-    setCompletionResult(null)
+    setActiveMaterialRecord(null)
     if (!text.trim() && titleMode !== 'user') {
       setTitleMode('empty')
       setAutoTitleSourceText('')
@@ -418,7 +864,20 @@ export function ReadingWorkshopPage({
     setMaterial((current) => ({ ...current, text }))
   }
 
+  const updateText = (text: string) => {
+    const hasEditRisk = hasSessionWork || Boolean(coachDraft.trim()) || completeStatus === 'saving'
+    if (text !== material.text && hasEditRisk) {
+      setPendingMaterialSwitch({ kind: 'edit', text })
+      return
+    }
+    applyTextUpdate(text)
+  }
+
   const restoreMaterial = useCallback((item: ReadingMaterialHistoryItem) => {
+    const nextScopeId = readingMaterialDraftScope(item.id)
+    const scopedDraft = readReadingWorkshopDraft(learner.id, nextScopeId)
+    moveDraftScope(nextScopeId)
+    resetReadingSession()
     setMaterial({
       title: item.title ?? '',
       text: item.text,
@@ -427,22 +886,44 @@ export function ReadingWorkshopPage({
       material_type: item.material_type,
     })
     setActiveMaterialId(item.id)
+    setActiveMaterialRecord(item)
     setTitleMode(item.title ? 'user' : 'empty')
     setTitleSuggestionStatus(item.title ? 'suggested' : 'idle')
     setAutoTitleSourceText(item.title ? item.text : '')
-    setSaveStatus('idle')
-    setCompleteStatus('idle')
-    setCompletionResult(null)
-    setExtensiveNotes(EMPTY_EXTENSIVE_NOTES)
-    setIntensiveNotes(EMPTY_INTENSIVE_NOTES)
-    setSelectedSentenceId(null)
-    setVisitedSentenceIds([])
-    setSelectedGrammarOptionIds([])
-    setOpenedGrammarTopics([])
-    setWorkspace('input')
-  }, [])
+    setSaveStatus('saved')
+    if (scopedDraft?.material.text === item.text) {
+      setWorkspace(scopedDraft.workspace)
+      setExtensiveNotes(scopedDraft.extensiveNotes)
+      setIntensiveNotesBySentenceId(scopedDraft.intensiveNotesBySentenceId)
+      setSelectedSentenceId(scopedDraft.selectedSentenceId)
+      setSelectedGrammarOptionIds(scopedDraft.selectedGrammarOptionIds)
+      setOpenedGrammarTopics(scopedDraft.openedGrammarTopics)
+      setCoachThreadId(scopedDraft.coachThreadId)
+      setCoachMessages(scopedDraft.coachMessages)
+      setCoachDraft(scopedDraft.coachDraft)
+      setClientAttemptId(scopedDraft.clientAttemptId)
+      setAttemptSubmitted(scopedDraft.attemptSubmitted)
+      setLastSubmittedEvidenceFingerprint(scopedDraft.lastSubmittedEvidenceFingerprint)
+      setCompleteStatus(scopedDraft.completeStatus)
+      setCompletionResult(scopedDraft.completionResult)
+      setShowDraftRecoveryNotice(true)
+    }
+  }, [learner.id, moveDraftScope, resetReadingSession])
 
-  const generatePersonalizedMaterial = useCallback(async () => {
+  const requestRestoreMaterial = useCallback((item: ReadingMaterialHistoryItem) => {
+    if (hasDataAtRisk) {
+      setPendingMaterialSwitch({ kind: 'history', item })
+      return
+    }
+    restoreMaterial(item)
+  }, [hasDataAtRisk, restoreMaterial])
+
+  const performPersonalizedMaterialGeneration = useCallback(async () => {
+    const requestSequence = ++generationRequestSequenceRef.current
+    const startingDataRevision = dataRevisionRef.current
+    const controller = new AbortController()
+    generationAbortControllerRef.current?.abort()
+    generationAbortControllerRef.current = controller
     setGenerationStatus('generating')
     try {
       const response = await fetch(`/api/learners/${learner.id}/reading-workshop/generated-materials`, {
@@ -454,25 +935,60 @@ export function ReadingWorkshopPage({
           goal: 'mixed',
           topic: generationTopic.trim() || null,
         }),
+        signal: controller.signal,
       })
       if (!response.ok) throw new Error('Failed to generate personalized reading')
       const payload = await response.json() as { material: ReadingMaterialHistoryItem }
-      restoreMaterial(payload.material)
-      setSaveStatus('saved')
+      if (
+        generationRequestSequenceRef.current !== requestSequence
+        || controller.signal.aborted
+      ) return
+      setMaterialHistory((current) => [
+        payload.material,
+        ...current.filter((item) => item.id !== payload.material.id),
+      ].slice(0, 20))
       setGenerationStatus('idle')
-      setWorkspace('extensive')
+      if (dataRevisionRef.current !== startingDataRevision) {
+        if (pendingMaterialSwitchRef.current) {
+          setQueuedGeneratedMaterial(payload.material)
+        } else {
+          setPendingMaterialSwitch({ kind: 'generated', item: payload.material })
+        }
+      } else {
+        restoreMaterial(payload.material)
+        setSaveStatus('saved')
+        setWorkspace('extensive')
+      }
       void loadMaterialHistory()
-    } catch {
+    } catch (error) {
+      if (
+        controller.signal.aborted
+        || generationRequestSequenceRef.current !== requestSequence
+      ) return
+      console.error('Personalized reading generation error:', error)
       setGenerationStatus('error')
+    } finally {
+      if (generationAbortControllerRef.current === controller) {
+        generationAbortControllerRef.current = null
+      }
     }
   }, [generationTopic, learner.id, loadMaterialHistory, readingTimeBudget, restoreMaterial])
 
+  const requestPersonalizedMaterialGeneration = useCallback(() => {
+    if (hasDataAtRisk) {
+      setPendingMaterialSwitch({ kind: 'generate' })
+      return
+    }
+    void performPersonalizedMaterialGeneration()
+  }, [hasDataAtRisk, performPersonalizedMaterialGeneration])
+
   const selectSentence = (sentence: ReadingSentence) => {
     setSelectedSentenceId(sentence.id)
-    setVisitedSentenceIds((current) => uniqueList([...current, sentence.id]))
+    setActiveTextSelection(null)
   }
 
   const toggleGrammarOption = (optionId: string) => {
+    markEvidenceMutation()
     setSelectedGrammarOptionIds((current) => (
       current.includes(optionId)
         ? current.filter((id) => id !== optionId)
@@ -481,54 +997,143 @@ export function ReadingWorkshopPage({
   }
 
   const openGrammarOption = (option: ReadingGrammarOption) => {
+    markEvidenceMutation()
     setSelectedGrammarOptionIds((current) => uniqueList([...current, option.id]))
     setOpenedGrammarTopics((current) => uniqueList([...current, option.grammarTopicTitle]))
     setGrammarTopic(option.grammarTopicTitle)
   }
 
   const completeReadingMaterial = useCallback(async () => {
-    if (!material.text.trim()) return
+    if (!completionState.canComplete) return
+    completionAbortControllerRef.current?.abort()
+    const controller = new AbortController()
+    const requestSequence = ++completionRequestSequenceRef.current
+    const completionRevision = completionRevisionRef.current
+    const materialRevision = materialRevisionRef.current
+    completionAbortControllerRef.current = controller
+    const isCurrentRequest = () => (
+      completionRequestSequenceRef.current === requestSequence
+      && completionRevisionRef.current === completionRevision
+      && materialRevisionRef.current === materialRevision
+      && !controller.signal.aborted
+    )
     setCompleteStatus('saving')
     setCompletionResult(null)
     try {
-      const saved = activeMaterialId ? null : await saveCurrentMaterial()
-      const materialId = activeMaterialId ?? saved?.id
-      if (!materialId) throw new Error('请先保存阅读材料。')
+      let materialId: string
+      if (!activeMaterialId || saveStatus !== 'saved') {
+        const saved = await saveCurrentMaterial()
+        if (!isCurrentRequest()) return
+        if (!saved) throw new Error('请先保存阅读材料。')
+        materialId = saved.id
+      } else {
+        materialId = activeMaterialId
+      }
+      const intensiveSummary = analyzedSentences.flatMap((sentence) => {
+        const notes = intensiveNotesBySentenceId[sentence.id] ?? EMPTY_INTENSIVE_NOTES
+        return [
+          `Sentence ${sentence.order}: ${sentence.text}`,
+          notes.mainStructure ? `主干：${notes.mainStructure}` : '',
+          notes.phraseNotes ? `词组：${notes.phraseNotes}` : '',
+          notes.evidenceNote ? `证据：${notes.evidenceNote}` : '',
+        ].filter(Boolean)
+      })
+      const completionNotes = [
+        extensiveNotes.gist ? `主旨：${extensiveNotes.gist}` : '',
+        extensiveNotes.attitude ? `态度：${extensiveNotes.attitude}` : '',
+        extensiveNotes.paragraphFunction ? `段落功能：${extensiveNotes.paragraphFunction}` : '',
+        extensiveNotes.centralSentence ? `中心句：${extensiveNotes.centralSentence}` : '',
+        ...intensiveSummary,
+      ].filter(Boolean).join('\n').slice(0, 2000)
+      const completionPayloadInput = {
+        analyzedSentenceIds: analyzedSentences.map((sentence) => sentence.id),
+        goal: material.goal,
+        extensiveEvidence: {
+          gist: extensiveNotes.gist,
+          centralSentence: extensiveNotes.centralSentence,
+        },
+        grammarTopicCount: selectedGrammarOptionIds.length,
+        grammarBlindSpots: selectedGrammarOptions.map((option) => option.label),
+        notes: completionNotes || null,
+      }
+      let requestAttemptId = clientAttemptId
+      let completionPayload = buildReadingCompletionPayload({
+        ...completionPayloadInput,
+        clientAttemptId: requestAttemptId,
+      })
+      let evidenceFingerprint = fingerprintReadingCompletionPayload(completionPayload)
+      if (
+        attemptSubmitted
+        && lastSubmittedEvidenceFingerprint
+        && lastSubmittedEvidenceFingerprint !== evidenceFingerprint
+      ) {
+        requestAttemptId = createClientAttemptId()
+        completionPayload = buildReadingCompletionPayload({
+          ...completionPayloadInput,
+          clientAttemptId: requestAttemptId,
+        })
+        evidenceFingerprint = fingerprintReadingCompletionPayload(completionPayload)
+        setClientAttemptId(requestAttemptId)
+      }
+      const uncertainSubmissionDraft: ReadingWorkshopDraftV1 = {
+        ...latestLocalDraftRef.current,
+        clientAttemptId: requestAttemptId,
+        attemptSubmitted: true,
+        lastSubmittedEvidenceFingerprint: evidenceFingerprint,
+        completeStatus: 'error',
+        completionResult: null,
+      }
+      latestLocalDraftRef.current = uncertainSubmissionDraft
+      writeReadingWorkshopDraft(uncertainSubmissionDraft)
+      setAttemptSubmitted(true)
+      setLastSubmittedEvidenceFingerprint(evidenceFingerprint)
       const response = await fetch(`/api/learners/${learner.id}/reading-workshop/materials/${materialId}/complete`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          selected_sentence_count: visitedSentenceIds.length,
-          grammar_topic_count: selectedGrammarOptionIds.length,
-          grammar_blind_spots: selectedGrammarOptions.map((option) => option.label),
-          correction_notes: [extensiveNotes.attitude, intensiveNotes.evidenceNote].filter(Boolean),
-          notes: [
-            extensiveNotes.gist ? `gist: ${extensiveNotes.gist}` : '',
-            intensiveNotes.mainStructure ? `structure: ${intensiveNotes.mainStructure}` : '',
-          ].filter(Boolean).join('\n') || null,
-        }),
+        body: JSON.stringify(completionPayload),
+        signal: controller.signal,
       })
       if (!response.ok) throw new Error('阅读完成记录保存失败。')
       const data = await response.json() as ReadingMaterialCompleteResponse
+      if (!isCurrentRequest()) return
+      const completedDraft: ReadingWorkshopDraftV1 = {
+        ...latestLocalDraftRef.current,
+        activeMaterialId: data.material_id,
+        clientAttemptId: requestAttemptId,
+        attemptSubmitted: true,
+        lastSubmittedEvidenceFingerprint: evidenceFingerprint,
+        completeStatus: 'completed',
+        completionResult: data,
+      }
+      latestLocalDraftRef.current = completedDraft
+      writeReadingWorkshopDraft(completedDraft)
       setActiveMaterialId(data.material_id)
       setCompletionResult(data)
       setCompleteStatus('completed')
     } catch (error) {
+      if (!isCurrentRequest()) return
       console.error('Reading completion error:', error)
       setCompleteStatus('error')
+    } finally {
+      if (completionAbortControllerRef.current === controller) {
+        completionAbortControllerRef.current = null
+      }
     }
   }, [
     activeMaterialId,
-    extensiveNotes.attitude,
-    extensiveNotes.gist,
-    intensiveNotes.evidenceNote,
-    intensiveNotes.mainStructure,
+    analyzedSentences,
+    attemptSubmitted,
+    clientAttemptId,
+    completionState.canComplete,
+    extensiveNotes,
+    intensiveNotesBySentenceId,
     learner.id,
-    material.text,
+    lastSubmittedEvidenceFingerprint,
+    material.goal,
     saveCurrentMaterial,
+    saveStatus,
     selectedGrammarOptionIds.length,
     selectedGrammarOptions,
-    visitedSentenceIds.length,
   ])
 
   if (grammarTopic) {
@@ -545,8 +1150,41 @@ export function ReadingWorkshopPage({
     )
   }
 
+  const clearCurrentDraftForExit = () => {
+    skipPersistOnUnmountRef.current = true
+    clearReadingWorkshopDraft(learner.id, draftScopeId)
+  }
+
+  const requestBack = () => {
+    if (hasDataAtRisk) {
+      setPendingMaterialSwitch({ kind: 'back' })
+      return
+    }
+    clearCurrentDraftForExit()
+    onBack()
+  }
+
+  const liveStatusMessage = getReadingLiveStatusMessage({
+    coachStatus,
+    completeStatus,
+    generationStatus,
+    saveStatus,
+  })
+  const pendingDialogCopy = getPendingMaterialDialogCopy(pendingMaterialSwitch)
+  const closePendingMaterialDialog = () => {
+    if (queuedGeneratedMaterial) {
+      setPendingMaterialSwitch({ kind: 'generated', item: queuedGeneratedMaterial })
+      setQueuedGeneratedMaterial(null)
+      return
+    }
+    setPendingMaterialSwitch(null)
+  }
+
   return (
     <PageShell variant="full" contentClassName="min-h-[calc(100vh-4rem)]">
+      <p className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+        {liveStatusMessage}
+      </p>
       <FeatureHero
         eyebrow="Reading Workshop"
         title="精读与泛读"
@@ -554,16 +1192,34 @@ export function ReadingWorkshopPage({
         stats={[
           { label: '词数', value: wordCount },
           { label: '句子', value: sentences.length },
-          { label: '建议泛读', value: `${estimatedMinutes} 分钟`, tone: 'primary' },
+          { label: '建议泛读', value: estimatedMinutes ? `${estimatedMinutes} 分钟` : '—', tone: 'primary' },
           { label: '训练目标', value: READING_GOAL_LABELS[material.goal], tone: 'success' },
         ]}
         actions={
-          <Button variant="secondary" onClick={onBack}>
+          <Button variant="secondary" onClick={requestBack}>
             <ArrowLeft className="h-4 w-4" />
-            返回探索
+            {backLabel}
           </Button>
         }
       />
+
+      {showDraftRecoveryNotice ? (
+        <StatusBanner
+          tone="success"
+          title="已恢复上次阅读进度"
+          action={
+            <button
+              type="button"
+              className="text-xs font-black underline decoration-emerald-300 underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700"
+              onClick={() => setShowDraftRecoveryNotice(false)}
+            >
+              知道了
+            </button>
+          }
+        >
+          材料、阅读笔记和助手对话已从本机草稿恢复。
+        </StatusBanner>
+      ) : null}
 
       {readingTrackMode ? (
         <SurfaceCard className="border-indigo-200 bg-[linear-gradient(135deg,#eef2ff,#ffffff_55%,#ecfeff)]">
@@ -573,7 +1229,7 @@ export function ReadingWorkshopPage({
               <h2 className="mt-2 text-2xl font-black text-slate-950">让内容追着你的兴趣和盲点走</h2>
               <p className="mt-2 text-sm leading-6 text-slate-600">
                 BinnAgent 会按 {learnerProfile?.current_level?.toUpperCase() ?? '当前水平'}、
-                {readingTimeBudget} 分钟预算和近期薄弱点控制篇幅；读完记录的生词与语法会影响下一篇。
+                {readingTimeBudget} 分钟预算和近期薄弱点控制篇幅；完成后会保存本次阅读证据和材料历史，方便继续复盘。
               </p>
             </div>
             <div>
@@ -587,7 +1243,7 @@ export function ReadingWorkshopPage({
               <Button
                 className="mt-3 w-full justify-center"
                 disabled={generationStatus === 'generating'}
-                onClick={() => void generatePersonalizedMaterial()}
+                onClick={requestPersonalizedMaterialGeneration}
               >
                 <RotateCw className={`h-4 w-4 ${generationStatus === 'generating' ? 'animate-spin' : ''}`} />
                 {generationStatus === 'generating' ? '正在定制阅读材料' : '生成今天的阅读'}
@@ -609,6 +1265,7 @@ export function ReadingWorkshopPage({
           activeWorkspace={workspace}
           canUseMaterial={canUseMaterial}
           collapsed={isSidebarCollapsed}
+          stageCompletion={completionState.completion}
           onChange={openWorkspace}
           onToggleCollapsed={() => setIsSidebarCollapsed((current) => !current)}
         />
@@ -616,7 +1273,7 @@ export function ReadingWorkshopPage({
         <div className={`grid min-w-0 items-start gap-5 transition-[grid-template-columns] duration-200 motion-reduce:transition-none ${
           isCoachCollapsed
             ? 'xl:grid-cols-[minmax(0,1fr)_76px]'
-            : 'xl:grid-cols-[minmax(0,1fr)_360px]'
+            : '2xl:grid-cols-[minmax(0,1fr)_360px]'
         }`}>
         <div className="min-w-0">
           {workspace === 'input' && (
@@ -625,23 +1282,19 @@ export function ReadingWorkshopPage({
           canUseMaterial={canUseMaterial}
           onLoadSample={loadSampleMaterial}
           onRefreshHistory={loadMaterialHistory}
-          onRestoreHistory={restoreMaterial}
+          onRestoreHistory={requestRestoreMaterial}
           onSaveMaterial={() => void saveCurrentMaterial()}
-          onStartTraining={startTraining}
+          onStartTraining={(nextWorkspace) => void startTraining(nextWorkspace)}
           onTitleChange={updateTitle}
           onTextChange={updateText}
           onLevelChange={(level) => {
-            setSaveStatus('idle')
-            setActiveMaterialId(null)
-            setCompleteStatus('idle')
-            setCompletionResult(null)
+            if (level === material.level) return
+            markMaterialMutation(true)
             setMaterial((current) => ({ ...current, level }))
           }}
           onGoalChange={(goal) => {
-            setSaveStatus('idle')
-            setActiveMaterialId(null)
-            setCompleteStatus('idle')
-            setCompletionResult(null)
+            if (goal === material.goal) return
+            markMaterialMutation(true)
             setMaterial((current) => ({ ...current, goal }))
           }}
           historyItems={materialHistory}
@@ -659,7 +1312,7 @@ export function ReadingWorkshopPage({
           keywordCandidates={keywordCandidates}
           notes={extensiveNotes}
           wordCount={wordCount}
-          onNotesChange={(key, value) => setExtensiveNotes((current) => ({ ...current, [key]: value }))}
+          onNotesChange={updateExtensiveNote}
           onOpenWorkspace={openWorkspace}
         />
           )}
@@ -676,7 +1329,7 @@ export function ReadingWorkshopPage({
           selectedSentenceId={selectedSentence?.id ?? null}
           sentences={sentences}
           suggestedGrammarOptionIds={suggestedGrammarOptionIds}
-          onNotesChange={(key, value) => setIntensiveNotes((current) => ({ ...current, [key]: value }))}
+          onNotesChange={updateIntensiveNote}
           onOpenGrammar={openGrammarOption}
           onOpenWorkspace={openWorkspace}
           onSelectSentence={selectSentence}
@@ -688,17 +1341,19 @@ export function ReadingWorkshopPage({
           {workspace === 'review' && (
         <ReviewWorkspace
           extensiveNotes={extensiveNotes}
-          intensiveNotes={intensiveNotes}
+          intensiveNotesBySentenceId={intensiveNotesBySentenceId}
           keywordCandidates={keywordCandidates}
           material={material}
           openedGrammarTopics={openedGrammarTopics}
           selectedGrammarOptions={selectedGrammarOptions}
-          selectedSentences={visitedSentences}
+          selectedSentences={analyzedSentences}
           sentences={sentences}
           wordCount={wordCount}
           completeStatus={completeStatus}
           completionResult={completionResult}
-          sourceLabel={initialSourceLabel}
+          canComplete={completionState.canComplete}
+          missingLabels={completionState.missingLabels}
+          sourceLabel={activeSourceLabel}
           onCompleteReading={() => void completeReadingMaterial()}
           onOpenGrammar={openGrammarOption}
           onOpenWorkspace={openWorkspace}
@@ -711,12 +1366,45 @@ export function ReadingWorkshopPage({
           messages={coachMessages}
           status={coachStatus}
           hasMaterial={canUseMaterial}
-          onDraftChange={setCoachDraft}
+          onDraftChange={(value) => {
+            dataRevisionRef.current += 1
+            setCoachDraft(value)
+          }}
           onSend={() => void askReadingCoach()}
           onToggleCollapsed={() => setIsCoachCollapsed((current) => !current)}
         />
         </div>
       </div>
+
+      <ConfirmDialog
+        open={Boolean(pendingMaterialSwitch)}
+        title={pendingDialogCopy.title}
+        description={pendingDialogCopy.description}
+        confirmLabel={pendingDialogCopy.confirmLabel}
+        cancelLabel="继续本次阅读"
+        danger
+        onCancel={closePendingMaterialDialog}
+        onConfirm={() => {
+          const pending = pendingMaterialSwitch
+          closePendingMaterialDialog()
+          if (pending?.kind === 'sample') applySampleMaterial()
+          if (pending?.kind === 'history') restoreMaterial(pending.item)
+          if (pending?.kind === 'generated') {
+            restoreMaterial(pending.item)
+            setWorkspace('extensive')
+          }
+          if (pending?.kind === 'edit') applyTextUpdate(pending.text)
+          if (pending?.kind === 'generate') void performPersonalizedMaterialGeneration()
+          if (pending?.kind === 'back') {
+            clearCurrentDraftForExit()
+            onBack()
+          }
+          if (pending?.kind === 'external-navigation') {
+            clearCurrentDraftForExit()
+            pending.navigate()
+          }
+        }}
+      />
     </PageShell>
   )
 }
@@ -741,14 +1429,24 @@ function ReadingCoachSidebar({
   onToggleCollapsed: () => void
 }) {
   const messageListRef = useRef<HTMLDivElement>(null)
+  const isCoachDrawer = useMediaQuery('(max-width: 1535px)')
+  const coachPanelTitleId = useId()
+  const { containerRef: coachPanelRef, handleKeyDown: handleCoachPanelKeyDown } = useFocusTrap<HTMLElement>({
+    isActive: isCoachDrawer && !collapsed,
+    onEscape: onToggleCollapsed,
+  })
 
   useEffect(() => {
-    messageListRef.current?.scrollTo({ top: messageListRef.current.scrollHeight, behavior: 'smooth' })
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    messageListRef.current?.scrollTo({
+      top: messageListRef.current.scrollHeight,
+      behavior: reducedMotion ? 'auto' : 'smooth',
+    })
   }, [messages, status])
 
   if (collapsed) {
     return (
-      <aside className="flex items-center gap-3 rounded-2xl border border-indigo-200 bg-indigo-50 p-2 shadow-[0_8px_24px_rgba(15,23,42,0.05)] xl:sticky xl:top-5 xl:flex-col">
+      <aside className="fixed bottom-4 left-4 z-[105] flex max-w-[calc(100vw-10rem)] items-center gap-3 rounded-2xl border border-indigo-200 bg-indigo-50 p-2 shadow-[0_8px_24px_rgba(15,23,42,0.12)] xl:sticky xl:bottom-auto xl:left-auto xl:top-5 xl:z-auto xl:max-w-none xl:flex-col xl:shadow-[0_8px_24px_rgba(15,23,42,0.05)]">
         <button
           type="button"
           onClick={onToggleCollapsed}
@@ -768,21 +1466,38 @@ function ReadingCoachSidebar({
   }
 
   return (
-    <aside className="flex min-h-[540px] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_8px_24px_rgba(15,23,42,0.05)] xl:sticky xl:top-5 xl:h-[calc(100vh-6rem)] xl:max-h-[780px]">
+    <>
+      {isCoachDrawer ? (
+        <button
+          type="button"
+          aria-label="收起阅读助手"
+          onClick={onToggleCollapsed}
+          className="fixed inset-0 z-[110] bg-slate-950/30 transition-opacity duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary motion-reduce:transition-none 2xl:hidden"
+        />
+      ) : null}
+    <aside
+      ref={isCoachDrawer ? coachPanelRef : undefined}
+      role={isCoachDrawer ? 'dialog' : undefined}
+      aria-modal={isCoachDrawer ? 'true' : undefined}
+      aria-labelledby={isCoachDrawer ? coachPanelTitleId : undefined}
+      tabIndex={isCoachDrawer ? -1 : undefined}
+      onKeyDown={isCoachDrawer ? handleCoachPanelKeyDown : undefined}
+      className="fixed bottom-0 right-0 top-0 z-[120] flex w-[min(92vw,24rem)] flex-col overflow-hidden border-l border-slate-200 bg-white shadow-2xl focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-primary 2xl:sticky 2xl:top-5 2xl:z-auto 2xl:h-[calc(100vh-6rem)] 2xl:max-h-[780px] 2xl:w-auto 2xl:rounded-2xl 2xl:border"
+    >
       <div className="flex items-start justify-between gap-3 border-b border-slate-200 bg-[linear-gradient(135deg,#eef2ff,#ffffff)] p-4">
         <div className="flex min-w-0 items-start gap-3">
           <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary text-white">
             <MessageCircle className="size-5" />
           </span>
           <div>
-            <h2 className="text-base font-black text-slate-950">阅读助手</h2>
+            <h2 id={coachPanelTitleId} className="text-base font-black text-slate-950">阅读助手</h2>
             <p className="mt-0.5 text-xs leading-5 text-slate-500">已同步当前文章、精读位置和笔记</p>
           </div>
         </div>
         <button
           type="button"
           onClick={onToggleCollapsed}
-          className="hidden size-9 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 hover:border-indigo-200 hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary xl:flex"
+          className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 hover:border-indigo-200 hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
           aria-label="收起阅读助手"
           title="收起阅读助手"
         >
@@ -835,6 +1550,7 @@ function ReadingCoachSidebar({
           disabled={!hasMaterial || status === 'sending'}
           onChange={(event) => onDraftChange(event.target.value)}
           onKeyDown={(event) => {
+            if (event.nativeEvent.isComposing) return
             if (event.key === 'Enter' && !event.shiftKey) {
               event.preventDefault()
               onSend()
@@ -852,6 +1568,7 @@ function ReadingCoachSidebar({
         </div>
       </form>
     </aside>
+    </>
   )
 }
 
@@ -859,12 +1576,14 @@ function ReadingWorkspaceSidebar({
   activeWorkspace,
   canUseMaterial,
   collapsed,
+  stageCompletion,
   onChange,
   onToggleCollapsed,
 }: {
   activeWorkspace: ReadingWorkspace
   canUseMaterial: boolean
   collapsed: boolean
+  stageCompletion: Record<ReadingWorkspace, boolean>
   onChange: (workspace: ReadingWorkspace) => void
   onToggleCollapsed: () => void
 }) {
@@ -890,15 +1609,18 @@ function ReadingWorkspaceSidebar({
       <nav className="grid gap-2 sm:grid-cols-2 lg:grid-cols-1" aria-label="阅读工作区">
         {WORKSPACE_TABS.map((item, index) => {
           const active = item.id === activeWorkspace
-          const visited = index < activeIndex || (canUseMaterial && item.id === 'input')
+          const completed = stageCompletion[item.id]
+          const disabled = item.id !== 'input' && !canUseMaterial
           return (
             <button
               key={item.id}
               type="button"
               title={collapsed ? `${item.label} · ${item.description}` : undefined}
               aria-current={active ? 'step' : undefined}
+              aria-disabled={disabled || undefined}
+              disabled={disabled}
               onClick={() => onChange(item.id)}
-              className={`group flex min-w-0 items-center gap-3 rounded-xl border px-3 py-3 text-left transition-[border-color,background-color,box-shadow] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
+              className={`group flex min-w-0 items-center gap-3 rounded-xl border px-3 py-3 text-left transition-[border-color,background-color,box-shadow] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-50 ${
                 active
                   ? 'border-indigo-200 bg-indigo-50 shadow-sm'
                   : 'border-transparent bg-slate-50 hover:border-slate-200 hover:bg-white'
@@ -907,11 +1629,11 @@ function ReadingWorkspaceSidebar({
               <span className={`flex size-9 shrink-0 items-center justify-center rounded-lg text-sm font-black ${
                 active
                   ? 'bg-primary text-primary-foreground'
-                  : visited
+                  : completed
                     ? 'bg-emerald-100 text-emerald-700'
                     : 'bg-white text-slate-500 ring-1 ring-slate-200'
               }`}>
-                {visited && !active ? '✓' : index + 1}
+                {completed && !active ? '✓' : index + 1}
               </span>
               <span className={`min-w-0 flex-1 ${collapsed ? 'lg:hidden' : ''}`}>
                 <span className={`block truncate text-sm font-black ${active ? 'text-indigo-950' : 'text-slate-800'}`}>{item.label}</span>
@@ -964,7 +1686,7 @@ function InputWorkspace({
   titleSuggestionStatus: TitleSuggestionStatus
 }) {
   const [isHistoryOpen, setIsHistoryOpen] = useState(false)
-  const isHistoryDrawer = useMediaQuery('(max-width: 1279px)')
+  const isHistoryDrawer = useMediaQuery('(max-width: 1535px)')
   const historyPanelId = useId()
   const historyTitleId = useId()
   const { containerRef: historyPanelRef, handleKeyDown: handleHistoryPanelKeyDown } = useFocusTrap<HTMLDivElement>({
@@ -986,7 +1708,7 @@ function InputWorkspace({
   } satisfies Record<MaterialSaveStatus, string>
 
   return (
-    <section className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
+    <section className="grid gap-5 2xl:grid-cols-[minmax(0,1fr)_360px]">
       <SurfaceCard>
         <div className="flex items-center gap-2">
           <FileText className="h-5 w-5 text-primary" />
@@ -1065,7 +1787,7 @@ function InputWorkspace({
 
       <Button
         variant="secondary"
-        className="xl:hidden"
+        className="2xl:hidden"
         onClick={() => setIsHistoryOpen((current) => !current)}
         aria-expanded={isHistoryOpen}
         aria-controls={historyPanelId}
@@ -1079,7 +1801,7 @@ function InputWorkspace({
           type="button"
           aria-label="收起材料历史"
           onClick={() => setIsHistoryOpen(false)}
-          className="fixed inset-x-0 bottom-0 top-16 z-30 bg-slate-950/30 transition-opacity duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary motion-reduce:transition-none xl:hidden"
+          className="fixed inset-0 z-[110] bg-slate-950/30 transition-opacity duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary motion-reduce:transition-none 2xl:hidden"
         />
       ) : null}
       <div
@@ -1091,8 +1813,8 @@ function InputWorkspace({
         tabIndex={isHistoryDrawer ? -1 : undefined}
         onKeyDown={isHistoryDrawer ? handleHistoryPanelKeyDown : undefined}
         className={isHistoryOpen
-          ? 'fixed bottom-0 right-0 top-16 z-40 w-[min(88vw,24rem)] overflow-y-auto overscroll-contain transition-[transform,opacity] duration-200 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-primary motion-reduce:transition-none xl:static xl:w-auto xl:overflow-visible'
-          : 'hidden xl:block'
+          ? 'fixed bottom-0 right-0 top-0 z-[120] w-[min(88vw,24rem)] overflow-y-auto overscroll-contain transition-[transform,opacity] duration-200 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-primary motion-reduce:transition-none 2xl:static 2xl:w-auto 2xl:overflow-visible'
+          : 'hidden 2xl:block'
         }
       >
         <SurfaceCard className="flex min-h-full flex-col justify-between">
@@ -1184,7 +1906,7 @@ function ExtensiveWorkspace({
   }
 
   return (
-    <section className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_390px]">
+    <section className="grid gap-5 2xl:grid-cols-[minmax(0,1fr)_390px]">
       <SurfaceCard>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
@@ -1308,7 +2030,7 @@ function IntensiveWorkspace({
   onReadingSelectionChange: (text: string | null) => void
 }) {
   const [mode, setMode] = useState<'sentence_list' | 'full_text'>('sentence_list')
-  const [selection, setSelection] = useState<{ text: string; sentence: ReadingSentence } | null>(null)
+  const [selection, setSelection] = useState<{ id: number; text: string; sentence: ReadingSentence } | null>(null)
   const [translation, setTranslation] = useState<{
     translation: string
     context_note: string
@@ -1316,15 +2038,22 @@ function IntensiveWorkspace({
     build_version?: string | null
   } | null>(null)
   const [translationStatus, setTranslationStatus] = useState<'idle' | 'loading' | 'error'>('idle')
+  const selectionSequenceRef = useRef(0)
+  const selectionIdentityRef = useRef<number | null>(null)
+  const translationRequestSequenceRef = useRef(0)
+  const translationAbortControllerRef = useRef<AbortController | null>(null)
   const fullTextRef = useRef<HTMLDivElement>(null)
   const [isSentenceListOpen, setIsSentenceListOpen] = useState(false)
-  const isSentenceListDrawer = useMediaQuery('(max-width: 1279px)')
+  const isSentenceListDrawer = useMediaQuery('(max-width: 1535px)')
   const sentenceListPanelId = useId()
   const sentenceListTitleId = useId()
   const { containerRef: sentenceListPanelRef, handleKeyDown: handleSentenceListPanelKeyDown } = useFocusTrap<HTMLDivElement>({
     isActive: isSentenceListDrawer && isSentenceListOpen,
     onEscape: () => setIsSentenceListOpen(false),
   })
+
+  useEffect(() => () => translationAbortControllerRef.current?.abort(), [])
+
   if (!canUseMaterial) {
     return <EmptyMaterialCard onOpenInput={() => onOpenWorkspace('input')} />
   }
@@ -1332,20 +2061,48 @@ function IntensiveWorkspace({
   const selectedGrammarOptions = READING_GRAMMAR_OPTIONS.filter((option) =>
     selectedGrammarOptionIds.includes(option.id)
   )
+  const isCurrentSentenceAnalyzed = isSentenceAnalysisComplete(notes)
+
+  const clearTextSelection = () => {
+    selectionIdentityRef.current = null
+    translationRequestSequenceRef.current += 1
+    translationAbortControllerRef.current?.abort()
+    translationAbortControllerRef.current = null
+    setSelection(null)
+    setTranslation(null)
+    setTranslationStatus('idle')
+    onReadingSelectionChange(null)
+  }
+
+  const selectSentenceForAnalysis = (sentence: ReadingSentence) => {
+    clearTextSelection()
+    onSelectSentence(sentence)
+  }
 
   const captureSelection = () => {
     const browserSelection = window.getSelection()
     const text = browserSelection?.toString().trim() ?? ''
     const range = browserSelection && browserSelection.rangeCount > 0 ? browserSelection.getRangeAt(0) : null
     if (!text || text.length > 200 || !range || !fullTextRef.current?.contains(range.commonAncestorContainer)) {
-      setSelection(null)
-      onReadingSelectionChange(null)
-      setTranslation(null)
+      clearTextSelection()
       return
     }
-    const sentence = sentences.find((item) => item.text.toLowerCase().includes(text.toLowerCase()))
-    if (!sentence) return
-    setSelection({ text, sentence })
+    const startSentenceId = findReadingSentenceId(range.startContainer)
+    const endSentenceId = findReadingSentenceId(range.endContainer)
+    const sentence = startSentenceId && startSentenceId === endSentenceId
+      ? sentences.find((item) => item.id === startSentenceId)
+      : null
+    if (!sentence) {
+      clearTextSelection()
+      return
+    }
+    translationRequestSequenceRef.current += 1
+    translationAbortControllerRef.current?.abort()
+    translationAbortControllerRef.current = null
+    const selectionId = ++selectionSequenceRef.current
+    selectionIdentityRef.current = selectionId
+    onSelectSentence(sentence)
+    setSelection({ id: selectionId, text, sentence })
     onReadingSelectionChange(text)
     setTranslation(null)
     setTranslationStatus('idle')
@@ -1357,6 +2114,16 @@ function IntensiveWorkspace({
 
   const translateSelection = async () => {
     if (!selection) return
+    translationAbortControllerRef.current?.abort()
+    const controller = new AbortController()
+    const requestSequence = ++translationRequestSequenceRef.current
+    const selectionId = selection.id
+    translationAbortControllerRef.current = controller
+    const isCurrentRequest = () => (
+      selectionIdentityRef.current === selectionId
+      && translationRequestSequenceRef.current === requestSequence
+      && !controller.signal.aborted
+    )
     setTranslationStatus('loading')
     try {
       const response = await fetch(`/api/learners/${learnerId}/reading-workshop/selection-translation`, {
@@ -1367,6 +2134,7 @@ function IntensiveWorkspace({
           sentence: selection.sentence.text,
           learner_level: learnerLevel,
         }),
+        signal: controller.signal,
       })
       if (!response.ok) throw new Error('Selection translation failed')
       const result = await response.json() as {
@@ -1375,10 +2143,17 @@ function IntensiveWorkspace({
         source: 'base_dictionary' | 'model'
         build_version?: string | null
       }
+      if (!isCurrentRequest()) return
       setTranslation(result)
       setTranslationStatus('idle')
-    } catch {
+    } catch (error) {
+      if (!isCurrentRequest()) return
+      console.error('Reading selection translation error:', error)
       setTranslationStatus('error')
+    } finally {
+      if (translationAbortControllerRef.current === controller) {
+        translationAbortControllerRef.current = null
+      }
     }
   }
 
@@ -1395,10 +2170,10 @@ function IntensiveWorkspace({
         </div>
       </SurfaceCard>
 
-      <section className={`grid gap-5 ${mode === 'sentence_list' ? 'xl:grid-cols-[340px_minmax(0,1fr)]' : 'xl:grid-cols-[minmax(0,1.1fr)_minmax(480px,0.9fr)]'}`}>
+      <section className={`grid gap-5 ${mode === 'sentence_list' ? '2xl:grid-cols-[340px_minmax(0,1fr)]' : '2xl:grid-cols-[minmax(0,1.1fr)_minmax(480px,0.9fr)]'}`}>
       {mode === 'sentence_list' ? <Button
         variant="secondary"
-        className="xl:hidden"
+        className="2xl:hidden"
         onClick={() => setIsSentenceListOpen((current) => !current)}
         aria-expanded={isSentenceListOpen}
         aria-controls={sentenceListPanelId}
@@ -1412,7 +2187,7 @@ function IntensiveWorkspace({
           type="button"
           aria-label="收起句子列表"
           onClick={() => setIsSentenceListOpen(false)}
-          className="fixed inset-x-0 bottom-0 top-16 z-30 bg-slate-950/30 transition-opacity duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary motion-reduce:transition-none xl:hidden"
+          className="fixed inset-0 z-[110] bg-slate-950/30 transition-opacity duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary motion-reduce:transition-none 2xl:hidden"
         />
       ) : null}
       {mode === 'sentence_list' ? <div
@@ -1424,8 +2199,8 @@ function IntensiveWorkspace({
         tabIndex={isSentenceListDrawer ? -1 : undefined}
         onKeyDown={isSentenceListDrawer ? handleSentenceListPanelKeyDown : undefined}
         className={isSentenceListOpen
-          ? 'fixed bottom-0 left-0 top-16 z-40 w-[min(88vw,24rem)] overflow-y-auto overscroll-contain transition-[transform,opacity] duration-200 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-primary motion-reduce:transition-none xl:static xl:w-auto xl:overflow-visible'
-          : 'hidden xl:block'
+          ? 'fixed bottom-0 left-0 top-0 z-[120] w-[min(88vw,24rem)] overflow-y-auto overscroll-contain transition-[transform,opacity] duration-200 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-primary motion-reduce:transition-none 2xl:static 2xl:w-auto 2xl:overflow-visible'
+          : 'hidden 2xl:block'
         }
       >
         <SurfaceCard className="min-h-full">
@@ -1438,8 +2213,9 @@ function IntensiveWorkspace({
               <button
                 key={sentence.id}
                 type="button"
+                aria-pressed={selectedSentenceId === sentence.id}
                 onClick={() => {
-                  onSelectSentence(sentence)
+                  selectSentenceForAnalysis(sentence)
                   setIsSentenceListOpen(false)
                 }}
                 className={`w-full rounded-lg border p-3 text-left text-sm leading-6 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
@@ -1464,17 +2240,24 @@ function IntensiveWorkspace({
             </div>
             <Languages className="size-5 shrink-0 text-primary" />
           </div>
-          <div ref={fullTextRef} onPointerUp={captureSelectionAfterPointer} className="mt-5 max-h-[70vh] select-text overflow-y-auto rounded-xl border border-slate-200 bg-slate-50 p-5 text-base leading-8 text-slate-800 sm:p-7 sm:text-lg sm:leading-9">
+          <div
+            ref={fullTextRef}
+            lang="en"
+            tabIndex={0}
+            onPointerUp={captureSelectionAfterPointer}
+            onKeyUp={captureSelectionAfterPointer}
+            className="mt-5 max-h-[70vh] select-text overflow-y-auto rounded-xl border border-slate-200 bg-slate-50 p-5 text-base leading-8 text-slate-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary sm:p-7 sm:text-lg sm:leading-9"
+          >
             {sentences.map((sentence) => (
               <span key={sentence.id} className="mr-1 inline">
-                <span className={`cursor-text select-text rounded px-1 ${selectedSentenceId === sentence.id ? 'bg-indigo-100 text-indigo-950' : ''}`}>
+                <span data-reading-sentence-id={sentence.id} className={`cursor-text select-text rounded px-1 ${selectedSentenceId === sentence.id ? 'bg-indigo-100 text-indigo-950' : ''}`}>
                   {sentence.text}
                 </span>
                 <button
                   type="button"
-                  aria-label={`拆解句子 ${sentence.id}`}
+                  aria-label={`拆解第 ${sentence.order} 句`}
                   onMouseDown={(event) => event.preventDefault()}
-                  onClick={() => onSelectSentence(sentence)}
+                  onClick={() => selectSentenceForAnalysis(sentence)}
                   className="ml-0.5 mr-1 inline rounded bg-indigo-50 px-1.5 py-0.5 align-middle text-[10px] font-black leading-5 text-indigo-600 hover:bg-indigo-100 focus-visible:outline-2 focus-visible:outline-primary"
                 >
                   拆句
@@ -1504,7 +2287,19 @@ function IntensiveWorkspace({
                     ) : null}
                   </div>
                   <p className="mt-1 text-sm leading-6 text-slate-600">{translation.context_note}</p>
-                  <Button variant="secondary" className="mt-3" onClick={() => onNotesChange('phraseNotes', [notes.phraseNotes, `${selection.text}：${translation.translation}（${translation.context_note}）`].filter(Boolean).join('\n'))}>记入词组笔记</Button>
+                  <Button
+                    variant="secondary"
+                    className="mt-3"
+                    disabled={selectedSentenceId !== selection.sentence.id}
+                    onClick={() => onNotesChange(
+                      'phraseNotes',
+                      [notes.phraseNotes, `${selection.text}：${translation.translation}（${translation.context_note}）`]
+                        .filter(Boolean)
+                        .join('\n')
+                    )}
+                  >
+                    记入词组笔记
+                  </Button>
                 </div>
               ) : null}
               {translationStatus === 'error' ? <p className="mt-2 text-sm font-bold text-rose-700">翻译暂时失败，请重新选择后再试。</p> : null}
@@ -1561,6 +2356,21 @@ function IntensiveWorkspace({
                   placeholder="这句话支持了哪一个细节…"
                 />
               </div>
+              <div className="mt-4 flex flex-col gap-3 rounded-xl border border-indigo-100 bg-indigo-50/60 p-4 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-sm leading-6 text-indigo-950">
+                  {isCurrentSentenceAnalyzed
+                    ? '本句分析已记入复盘，可以继续下一句或查看沉淀结果。'
+                    : '填写主干，并补充词组或细节证据，即可完成本句。'}
+                </p>
+                <Button
+                  className="shrink-0"
+                  disabled={!isCurrentSentenceAnalyzed}
+                  onClick={() => onOpenWorkspace('review')}
+                >
+                  <ClipboardList className="h-4 w-4" />
+                  完成本句，进入复盘
+                </Button>
+              </div>
             </>
           ) : (
             <p className="mt-4 text-sm text-muted-foreground">材料中还没有可选择的句子。</p>
@@ -1599,7 +2409,7 @@ function IntensiveWorkspace({
               <ExerciseBlock
                 key={option.id}
                 learnerId={learnerId}
-                target={getGrammarExerciseTargetFromReadingOption(option)}
+                target={READING_GRAMMAR_EXERCISE_TARGETS[option.id]}
                 limit={3}
               />
             ))}
@@ -1612,12 +2422,14 @@ function IntensiveWorkspace({
 }
 
 function ReviewWorkspace({
+  canComplete,
   completeStatus,
   completionResult,
   extensiveNotes,
-  intensiveNotes,
+  intensiveNotesBySentenceId,
   keywordCandidates,
   material,
+  missingLabels,
   openedGrammarTopics,
   selectedGrammarOptions,
   selectedSentences,
@@ -1628,12 +2440,14 @@ function ReviewWorkspace({
   onOpenGrammar,
   onOpenWorkspace,
 }: {
+  canComplete: boolean
   completeStatus: MaterialCompleteStatus
   completionResult: ReadingMaterialCompleteResponse | null
   extensiveNotes: ExtensiveNotes
-  intensiveNotes: IntensiveNotes
+  intensiveNotesBySentenceId: IntensiveNotesBySentenceId
   keywordCandidates: ReadingKeywordCandidate[]
   material: ReadingMaterial
+  missingLabels: string[]
   openedGrammarTopics: string[]
   selectedGrammarOptions: ReadingGrammarOption[]
   selectedSentences: ReadingSentence[]
@@ -1645,7 +2459,7 @@ function ReviewWorkspace({
   onOpenWorkspace: (workspace: ReadingWorkspace) => void
 }) {
   return (
-    <section className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
+    <section className="grid gap-5 2xl:grid-cols-[minmax(0,1fr)_360px]">
       <SurfaceCard>
         <div className="flex items-center gap-2">
           <ClipboardList className="h-5 w-5 text-primary" />
@@ -1657,7 +2471,7 @@ function ReviewWorkspace({
           <MetricTile label="目标" value={READING_GOAL_LABELS[material.goal]} />
         </div>
 
-        <div className="mt-5 grid gap-4 xl:grid-cols-3">
+        <div className="mt-5 grid gap-4 2xl:grid-cols-3">
           <KeywordFrequencyChart keywords={keywordCandidates.slice(0, 8)} />
           <SentenceDifficultyHeatmap sentences={sentences} selectedSentences={selectedSentences} />
           <GrammarTroubleChart
@@ -1669,9 +2483,9 @@ function ReviewWorkspace({
         <div className="mt-5 grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
           <ReadingFlowProgress
             extensiveNotes={extensiveNotes}
-            intensiveNotes={intensiveNotes}
-            openedGrammarTopics={openedGrammarTopics}
-            selectedGrammarOptions={selectedGrammarOptions}
+            intensiveNotesBySentenceId={intensiveNotesBySentenceId}
+            goal={material.goal}
+            isRecorded={completeStatus === 'completed'}
             selectedSentences={selectedSentences}
             sentences={sentences}
           />
@@ -1679,41 +2493,32 @@ function ReviewWorkspace({
         </div>
 
         <div className="mt-5 grid gap-4 lg:grid-cols-2">
-          <ReviewBlock
-            title="泛读记录"
-            items={[
-              ['主旨', extensiveNotes.gist],
-              ['态度', extensiveNotes.attitude],
-              ['段落功能', extensiveNotes.paragraphFunction],
-              ['中心句', extensiveNotes.centralSentence],
-            ]}
-          />
-          <ReviewBlock
-            title="精读记录"
-            items={[
-              ['主干', intensiveNotes.mainStructure],
-              ['词组搭配', intensiveNotes.phraseNotes],
-              ['细节证据', intensiveNotes.evidenceNote],
-            ]}
-          />
-        </div>
-
-        <div className="mt-5">
-          <h3 className="text-sm font-black text-slate-950">选择过的句子</h3>
-          <div className="mt-3 space-y-2">
-            {selectedSentences.length > 0 ? (
-              selectedSentences.map((sentence) => (
-                <p key={sentence.id} className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm leading-6 text-slate-600">
-                  <span className="font-black text-slate-950">Sentence {sentence.order}: </span>
-                  {sentence.text}
-                </p>
-              ))
-            ) : (
-              <p className="rounded-lg border border-dashed border-slate-200 p-3 text-sm text-muted-foreground">
-                还没有在精读模式里选择句子。
-              </p>
-            )}
-          </div>
+          {material.goal !== 'intensive' ? (
+            <ReviewBlock
+              title="泛读记录"
+              items={[
+                ['主旨', extensiveNotes.gist],
+                ['态度', extensiveNotes.attitude],
+                ['段落功能', extensiveNotes.paragraphFunction],
+                ['中心句', extensiveNotes.centralSentence],
+              ]}
+            />
+          ) : null}
+          {material.goal !== 'extensive' ? (
+            <div className="grid gap-3">
+              {selectedSentences.length > 0 ? selectedSentences.map((sentence) => (
+                <SentenceReviewBlock
+                  key={sentence.id}
+                  sentence={sentence}
+                  notes={intensiveNotesBySentenceId[sentence.id] ?? EMPTY_INTENSIVE_NOTES}
+                />
+              )) : (
+                <div className="rounded-lg border border-dashed border-slate-200 p-4 text-sm text-muted-foreground">
+                  还没有完成可沉淀的精读句。
+                </div>
+              )}
+            </div>
+          ) : null}
         </div>
       </SurfaceCard>
 
@@ -1724,20 +2529,30 @@ function ReviewWorkspace({
             <h2 className="text-lg font-black text-slate-950">完成阅读</h2>
           </div>
           <p className="mt-3 text-sm leading-6 text-slate-600">
-            {sourceLabel ? `${sourceLabel} · ` : ''}完成后会写入阅读画像证据，学习中心的阅读值会随练习记录更新。
+            {sourceLabel ? `${sourceLabel} · ` : ''}完成后会保存阅读练习证据；投入值按材料长度与精读覆盖估算，不代表正确率或能力分。
           </p>
-          {completionResult ? (
-            <div className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm font-bold text-emerald-700">
-              已记录阅读值 +{completionResult.reading_value}
-            </div>
-          ) : completeStatus === 'error' ? (
-            <div className="mt-4 rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm font-bold text-rose-700">
-              完成记录保存失败，请稍后重试。
-            </div>
-          ) : null}
+          <div className="mt-4">
+            {completionResult ? (
+              <StatusBanner tone="success" title="阅读练习证据已保存">
+                本次阅读投入值 +{completionResult.reading_value}，用于呈现练习投入，不代表答题正确率。
+              </StatusBanner>
+            ) : completeStatus === 'error' ? (
+              <StatusBanner tone="warning" title="记录保存失败">
+                请检查网络后重试；当前笔记仍保留在页面中。
+              </StatusBanner>
+            ) : !canComplete ? (
+              <StatusBanner tone="warning" title="还差一点才能沉淀">
+                请先{missingLabels.join('、')}。
+              </StatusBanner>
+            ) : (
+              <StatusBanner title="已达到沉淀条件">
+                确认后会写入本次阅读证据。
+              </StatusBanner>
+            )}
+          </div>
           <Button
             className="mt-5 w-full"
-            disabled={completeStatus === 'saving' || completeStatus === 'completed'}
+            disabled={!canComplete || completeStatus === 'saving' || completeStatus === 'completed'}
             onClick={onCompleteReading}
           >
             <CheckCircle2 className="h-4 w-4" />
@@ -1846,26 +2661,30 @@ function GrammarOptionCard({
 
 function ReadingFlowProgress({
   extensiveNotes,
-  intensiveNotes,
-  openedGrammarTopics,
-  selectedGrammarOptions,
+  goal,
+  intensiveNotesBySentenceId,
+  isRecorded,
   selectedSentences,
   sentences,
 }: {
   extensiveNotes: ExtensiveNotes
-  intensiveNotes: IntensiveNotes
-  openedGrammarTopics: string[]
-  selectedGrammarOptions: ReadingGrammarOption[]
+  goal: ReadingTrainingGoal
+  intensiveNotesBySentenceId: IntensiveNotesBySentenceId
+  isRecorded: boolean
   selectedSentences: ReadingSentence[]
   sentences: ReadingSentence[]
 }) {
   const steps = [
-    { label: '主旨', done: Boolean(extensiveNotes.gist.trim()) },
-    { label: '态度', done: Boolean(extensiveNotes.attitude.trim()) },
-    { label: '中心句', done: Boolean(extensiveNotes.centralSentence.trim()) },
-    { label: '精读句', done: selectedSentences.length > 0 },
-    { label: '主干', done: Boolean(intensiveNotes.mainStructure.trim()) },
-    { label: '语法卡点', done: selectedGrammarOptions.length > 0 || openedGrammarTopics.length > 0 },
+    { label: '阅读材料', done: sentences.length > 0 },
+    ...(goal !== 'intensive' ? [{
+      label: '泛读证据',
+      done: Boolean(extensiveNotes.gist.trim() && extensiveNotes.centralSentence.trim()),
+    }] : []),
+    ...(goal !== 'extensive' ? [{
+      label: '精读句',
+      done: selectedSentences.some((sentence) => isSentenceAnalysisComplete(intensiveNotesBySentenceId[sentence.id])),
+    }] : []),
+    { label: '沉淀记录', done: isRecorded },
   ]
   const completed = steps.filter((step) => step.done).length
   const percent = steps.length > 0 ? Math.round((completed / steps.length) * 100) : 0
@@ -1877,7 +2696,7 @@ function ReadingFlowProgress({
         <div>
           <p className="text-sm font-black text-slate-950">阅读流程进度</p>
           <p className="mt-1 text-xs leading-5 text-muted-foreground">
-            泛读、精读和语法沉淀的完成状态会集中到这里。
+            按当前训练目标计算，只有留下有效证据才会记为完成。
           </p>
         </div>
         <span className="text-2xl font-black text-slate-950">{percent}%</span>
@@ -1900,7 +2719,9 @@ function ReadingFlowProgress({
         ))}
       </div>
       <p className="mt-3 text-xs font-semibold text-muted-foreground">
-        精读覆盖 {selectedSentences.length}/{sentences.length} 句，约 {sentenceCoverage}%。
+        {goal === 'extensive'
+          ? '本次为泛读目标，精读句不计入完成条件。'
+          : `精读覆盖 ${selectedSentences.length}/${sentences.length} 句，约 ${sentenceCoverage}%。`}
       </p>
     </div>
   )
@@ -2187,6 +3008,33 @@ function formatHistoryTime(value: string) {
   })
 }
 
+function SentenceReviewBlock({
+  notes,
+  sentence,
+}: {
+  notes: IntensiveNotes
+  sentence: ReadingSentence
+}) {
+  return (
+    <div className="rounded-lg border border-slate-200 p-4">
+      <p className="text-xs font-black uppercase tracking-[0.14em] text-primary">Sentence {sentence.order}</p>
+      <p lang="en" className="mt-2 text-sm font-bold leading-6 text-slate-800">{sentence.text}</p>
+      <div className="mt-4 grid gap-3">
+        {[
+          ['主干', notes.mainStructure],
+          ['词组搭配', notes.phraseNotes],
+          ['细节证据', notes.evidenceNote],
+        ].map(([label, value]) => (
+          <div key={label}>
+            <p className="text-xs font-bold text-slate-500">{label}</p>
+            <p className="mt-1 min-h-6 whitespace-pre-wrap text-sm leading-6 text-slate-700">{value.trim() || '未填写'}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 function ReviewBlock({ title, items }: { title: string; items: Array<[string, string]> }) {
   return (
     <div className="rounded-lg border border-slate-200 p-4">
@@ -2201,4 +3049,92 @@ function ReviewBlock({ title, items }: { title: string; items: Array<[string, st
       </div>
     </div>
   )
+}
+
+function isReadingMaterialHistoryItem(
+  value: ReadingMaterial | ReadingMaterialHistoryItem | undefined
+): value is ReadingMaterialHistoryItem {
+  return Boolean(value && 'id' in value && typeof value.id === 'string')
+}
+
+function hasAnyIntensiveNote(notes: IntensiveNotes): boolean {
+  return Boolean(notes.mainStructure.trim() || notes.phraseNotes.trim() || notes.evidenceNote.trim())
+}
+
+function isSentenceAnalysisComplete(notes: IntensiveNotes | undefined): boolean {
+  return Boolean(
+    notes?.mainStructure.trim()
+    && (notes.phraseNotes.trim() || notes.evidenceNote.trim())
+  )
+}
+
+function getPendingMaterialDialogCopy(pending: PendingMaterialSwitch | null): {
+  title: string
+  description: string
+  confirmLabel: string
+} {
+  switch (pending?.kind) {
+    case 'edit':
+      return {
+        title: '修改材料并重置进度？',
+        description: '当前的泛读、精读笔记和阅读助手记录会被清空；新文本会保留为未保存状态。',
+        confirmLabel: '重置并修改',
+      }
+    case 'generate':
+      return {
+        title: '生成新材料并替换当前进度？',
+        description: '材料生成成功后才会切换；当前笔记和阅读助手记录会一直保留到那时。',
+        confirmLabel: '生成并切换',
+      }
+    case 'generated':
+      return {
+        title: '新材料已生成，是否切换？',
+        description: '生成期间检测到新的阅读记录，因此没有自动替换。切换会清空当前笔记和阅读助手记录。',
+        confirmLabel: '切换到新材料',
+      }
+    case 'back':
+    case 'external-navigation':
+      return {
+        title: '离开本次阅读？',
+        description: '未保存材料、阅读笔记或助手草稿会从当前工作区移除；已保存材料仍可从历史中找回。',
+        confirmLabel: '确认离开',
+      }
+    default:
+      return {
+        title: '切换阅读材料？',
+        description: '当前的未保存材料、泛读与精读笔记和阅读助手记录会被清空。',
+        confirmLabel: '切换材料',
+      }
+  }
+}
+
+function getReadingLiveStatusMessage({
+  coachStatus,
+  completeStatus,
+  generationStatus,
+  saveStatus,
+}: {
+  coachStatus: 'idle' | 'sending' | 'error'
+  completeStatus: MaterialCompleteStatus
+  generationStatus: 'idle' | 'generating' | 'error'
+  saveStatus: MaterialSaveStatus
+}): string {
+  if (completeStatus === 'saving') return '正在记录阅读证据。'
+  if (completeStatus === 'completed') return '阅读练习证据已保存。'
+  if (completeStatus === 'error') return '阅读证据记录失败，请重试。'
+  if (generationStatus === 'generating') return '正在生成个性化阅读材料。'
+  if (generationStatus === 'error') return '个性化阅读材料生成失败，请重试。'
+  if (saveStatus === 'saving') return '正在保存阅读材料。'
+  if (saveStatus === 'saved') return '阅读材料已保存。'
+  if (saveStatus === 'error') return '阅读材料保存失败，请重试。'
+  if (coachStatus === 'sending') return '阅读助手正在回复。'
+  if (coachStatus === 'error') return '阅读助手回复失败，问题已保留。'
+  return ''
+}
+
+function findReadingSentenceId(node: Node): string | null {
+  const element = node.nodeType === Node.ELEMENT_NODE
+    ? node as Element
+    : node.parentElement
+  return element?.closest<HTMLElement>('[data-reading-sentence-id]')?.dataset.readingSentenceId ?? null
 }

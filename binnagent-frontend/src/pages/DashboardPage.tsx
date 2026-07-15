@@ -658,7 +658,7 @@ function LearningCenterHome({
             </h1>
             <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-500">
               {isReadingTrack
-                ? '今天从一篇刚好够得着的短文开始。读完再处理生词、语法盲点和理解偏差，下一篇会据此调整。'
+                ? '今天从一篇刚好够得着的短文开始。读完后在复盘中核对主旨、中心句、精读笔记和语法卡点，并保留材料与练习证据。'
                 : '先完成当前最该做的一步，再继续教材。系统会按复习、学习、检查题、AI 对话的顺序带你往前走。'}
             </p>
           </div>

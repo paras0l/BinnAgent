@@ -1,4 +1,5 @@
 import uuid
+from json import dumps, loads
 from unittest.mock import AsyncMock
 from unittest.mock import MagicMock
 
@@ -66,6 +67,52 @@ def test_model_request_includes_confirmed_artifact_context_without_exposing_prot
     assert "<interaction_result>" in context_message
     assert '"answer": "went"' in context_message
     assert "不要向用户展示组件 ID、协议名或原始 JSON" in context_message
+
+
+def test_model_request_bounds_long_reading_context_as_valid_json_without_losing_work():
+    learner_id = uuid.uuid4()
+    artifact_context = {
+        "artifactId": "reading-1",
+        "artifactType": "reading_session",
+        "artifactTitle": "Long reading",
+        "eventType": "reading_coach_question",
+        "payload": {
+            "workspace": "intensive",
+            "material": {
+                "id": "reading-1",
+                "title": "Long reading",
+                "text": "A" * 12_000,
+                "level": "general",
+                "goal": "mixed",
+            },
+            "focus": {"sentence": "The focused sentence.", "selectedText": "focused"},
+            "learnerWork": {
+                "extensiveNotes": {"gist": "The learner's gist."},
+                "intensiveNotes": {"mainStructure": "Subject plus predicate."},
+            },
+        },
+    }
+    req = chat_api.ChatRequest(
+        learner_id=learner_id,
+        message="Explain this sentence.",
+        artifact_context=artifact_context,
+    )
+    thread = AgentThread(learner_id=learner_id, metadata_={})
+    thread.id = uuid.uuid4()
+
+    request = chat_api._model_request(req, thread, [])
+
+    context_message = request.messages[-2]["content"]
+    serialized = context_message.split("<interaction_result>", 1)[1].split(
+        "</interaction_result>", 1
+    )[0]
+    parsed = loads(serialized)
+    assert len(serialized) <= 8_000
+    assert parsed["payload"]["focus"]["selectedText"] == "focused"
+    assert parsed["payload"]["learnerWork"]["extensiveNotes"]["gist"] == (
+        "The learner's gist."
+    )
+    assert parsed["payload"]["material"]["text_truncated"] is True
 
 
 @pytest.fixture
@@ -238,6 +285,69 @@ class TestChatSend:
         mock_model_router.chat.assert_awaited_once()
 
     @pytest.mark.asyncio
+    async def test_chat_send_rejects_cross_user_access(
+        self, client, mock_model_router, mock_session
+    ):
+        owner_user_id = uuid.uuid4()
+        other_user_id = uuid.uuid4()
+        learner = Learner(nickname="Owned learner", tenant_id=owner_user_id)
+        learner.id = mock_session.learner_id
+        mock_session.execute = AsyncMock(return_value=_scalar_one_or_none_result(learner))
+
+        response = await client.post(
+            "/api/chat/send",
+            headers={"X-User-Id": str(other_user_id)},
+            json={"learner_id": str(learner.id), "message": "读取这位学习者的记忆"},
+        )
+
+        assert response.status_code == 403
+        assert response.json()["detail"] == "Learner access denied"
+        mock_model_router.chat.assert_not_awaited()
+        assert mock_session.added_objects == []
+
+    @pytest.mark.asyncio
+    async def test_chat_send_persists_only_bounded_artifact_context(
+        self, client, mock_model_router, mock_session
+    ):
+        mock_model_router.chat = AsyncMock(
+            return_value=ModelChatResponse(
+                provider="ollama",
+                model="gemma4:e2b",
+                content="Focus feedback.",
+            )
+        )
+        artifact_context = {
+            "artifactType": "reading_session",
+            "artifactTitle": "Long reading",
+            "eventType": "reading_coach_question",
+            "payload": {
+                "material": {"text": "A" * 12_000},
+                "focus": {"selectedText": "important phrase"},
+                "learnerWork": {"intensiveNotes": {"mainStructure": "S + V"}},
+            },
+        }
+
+        response = await client.post(
+            "/api/chat/send",
+            json={
+                "learner_id": str(mock_session.learner_id),
+                "message": "Explain the phrase.",
+                "artifact_context": artifact_context,
+            },
+        )
+
+        assert response.status_code == 200
+        user_message = next(
+            item
+            for item in mock_session.added_objects
+            if isinstance(item, ConversationMessage) and item.role == "user"
+        )
+        persisted = user_message.metadata_["artifact_context"]
+        assert len(dumps(persisted, ensure_ascii=False)) <= 8_000
+        assert persisted["payload"]["focus"]["selectedText"] == "important phrase"
+        assert persisted["payload"]["material"]["text_truncated"] is True
+
+    @pytest.mark.asyncio
     async def test_chat_send_uses_skill_focus_in_system_message(
         self, client, mock_model_router, mock_session
     ):
@@ -323,6 +433,7 @@ class TestChatSend:
         max_result.scalar_one_or_none.return_value = 2
         mock_session.execute = AsyncMock(
             side_effect=[
+                learner_result,
                 learner_result,
                 thread_result,
                 history_result,
@@ -575,6 +686,27 @@ class TestChatLearningSnapshot:
 
 
 class TestChatStream:
+    @pytest.mark.asyncio
+    async def test_chat_stream_rejects_cross_user_access_before_model_or_writes(
+        self, client, mock_model_router, mock_session
+    ):
+        owner_user_id = uuid.uuid4()
+        other_user_id = uuid.uuid4()
+        learner = Learner(nickname="Owned learner", tenant_id=owner_user_id)
+        learner.id = mock_session.learner_id
+        mock_session.execute = AsyncMock(return_value=_scalar_one_or_none_result(learner))
+
+        response = await client.post(
+            "/api/chat/stream",
+            headers={"X-User-Id": str(other_user_id)},
+            json={"learner_id": str(learner.id), "message": "读取这位学习者的记忆"},
+        )
+
+        assert response.status_code == 403
+        assert response.json()["detail"] == "Learner access denied"
+        mock_model_router.stream_chat.assert_not_called()
+        assert mock_session.added_objects == []
+
     @pytest.mark.asyncio
     async def test_chat_stream_returns_sse_and_persists_messages(
         self, client, mock_model_router, mock_session, mock_stream_persist_session

@@ -10,6 +10,11 @@ import { useLearningPreferences } from './hooks/useLearningPreferences'
 import type { VocabularyPracticeMode } from './pages/VocabularyPracticePage'
 import type { ExpressionLabSourceSeed } from './pages/ExpressionLabPage'
 import type { ExpressionInputType } from './services/expressionLabApi'
+import {
+  runWithReadingNavigationBlocker,
+  type ReadingNavigationBlocker,
+  type ReadingNavigationBlockerChangeHandler,
+} from './data/readingWorkshopSession'
 import type { AppTab, Learner, LearnerProfile, PronunciationWorkspace } from './types'
 
 type LearningCenterView = 'home' | 'daily-learning' | 'reading' | 'vocabulary' | 'vocabulary-practice' | 'profile' | 'group-signals'
@@ -133,6 +138,7 @@ function App() {
   } | null>(null)
   const [isChatGenerating, setIsChatGenerating] = useState(false)
   const chatActivityRef = useRef<string | null>(null)
+  const readingNavigationBlockerRef = useRef<ReadingNavigationBlocker | null>(null)
   const [isLearningSettingsOpen, setIsLearningSettingsOpen] = useState(false)
   const [isGroupLearningSettingsOpen, setIsGroupLearningSettingsOpen] = useState(false)
   const [isPetSpiritSettingsOpen, setIsPetSpiritSettingsOpen] = useState(false)
@@ -286,19 +292,29 @@ function App() {
     }
   }
 
+  const handleReadingNavigationBlockerChange = useCallback<ReadingNavigationBlockerChangeHandler>((blocker) => {
+    readingNavigationBlockerRef.current = blocker
+  }, [])
+
+  const navigateWithReadingGuard = useCallback((navigate: () => void) => {
+    runWithReadingNavigationBlocker(readingNavigationBlockerRef.current, navigate)
+  }, [])
+
   const handleLogout = () => {
     if (isChatGenerating) {
       showToast('回答生成中，请先等待完成或点击取消。', { variant: 'warning' })
       return
     }
-    removeLocalStorageItem('binnLearnerId')
-    removeLocalStorageItem('binnLearner')
-    setCurrentLearner(null)
-    setLearnerProfile(null)
-    setLearnerProfileReadiness(null)
-    setActiveTab('chat')
-    setChatDraft('')
-    setChatSkillFocus(null)
+    navigateWithReadingGuard(() => {
+      removeLocalStorageItem('binnLearnerId')
+      removeLocalStorageItem('binnLearner')
+      setCurrentLearner(null)
+      setLearnerProfile(null)
+      setLearnerProfileReadiness(null)
+      setActiveTab('chat')
+      setChatDraft('')
+      setChatSkillFocus(null)
+    })
   }
 
   const handleDraftPrompt = (
@@ -330,12 +346,19 @@ function App() {
       showToast('回答生成中，请先等待完成或点击取消。', { variant: 'warning' })
       return
     }
-    if (tab === 'dashboard') setLearningCenterView('home')
-    if (expressionLabLaunch) {
-      setExpressionLabLaunch(null)
-      replaceLearnerPath(tab === 'chat' ? '/' : `/${tab}`)
+    const navigate = () => {
+      if (tab === 'dashboard') setLearningCenterView('home')
+      if (expressionLabLaunch) {
+        setExpressionLabLaunch(null)
+        replaceLearnerPath(tab === 'chat' ? '/' : `/${tab}`)
+      }
+      setActiveTab(tab)
     }
-    setActiveTab(tab)
+    if (tab === activeTab && tab !== 'dashboard' && !expressionLabLaunch) {
+      navigate()
+      return
+    }
+    navigateWithReadingGuard(navigate)
   }
 
   const handleOpenExpressionLab = useCallback((launch: Omit<ExpressionLabLaunch, 'sessionId'> & { sessionId?: string | null }) => {
@@ -376,8 +399,10 @@ function App() {
       showToast('回答生成中，请先等待完成或点击取消。', { variant: 'warning' })
       return
     }
-    setLearningCenterView('profile')
-    setActiveTab('dashboard')
+    navigateWithReadingGuard(() => {
+      setLearningCenterView('profile')
+      setActiveTab('dashboard')
+    })
   }
 
   const openVocabularyPractice = (mode: VocabularyPracticeMode, nodeId?: string | null, sourceLabel?: string | null) => {
@@ -557,6 +582,7 @@ function App() {
               onDraftPrompt={handleDraftPrompt}
               onOpenVocabularyManager={openVocabularyManager}
               onOpenPronunciationWorkspace={openPronunciationWorkspace}
+              onReadingNavigationBlockerChange={handleReadingNavigationBlockerChange}
             />
           ) : activeTab === 'pronunciation' ? (
             <PronunciationPage
@@ -577,13 +603,16 @@ function App() {
                 onBack={() => setLearningCenterView('home')}
                 onStartVocabularyPractice={openVocabularyPractice}
                 onOpenPronunciationWorkspace={openPronunciationWorkspace}
+                onReadingNavigationBlockerChange={handleReadingNavigationBlockerChange}
               />
             ) : learningCenterView === 'reading' ? (
               <ReadingWorkshopPage
                 learner={currentLearner}
                 learnerProfile={learnerProfile}
                 readingTrackMode
+                onNavigationBlockerChange={handleReadingNavigationBlockerChange}
                 onBack={() => setLearningCenterView('home')}
+                backLabel="返回学习中心"
               />
             ) : (
               <DashboardPage
