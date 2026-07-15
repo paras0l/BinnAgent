@@ -97,6 +97,86 @@ export interface ReadingMaterialCompleteResponse {
   message: string
 }
 
+export type ReadingSentenceAnalysisOutcome = 'SUCCESS' | 'UNSUCCESSFUL' | 'NO_ATTEMPT'
+export type SentenceAnalysisFailure = { title: string; message: string }
+
+export async function sentenceAnalysisFailureFromResponse(
+  response: Response
+): Promise<SentenceAnalysisFailure> {
+  let detail = ''
+  try {
+    const payload = (await response.json()) as { detail?: unknown }
+    detail = typeof payload.detail === 'string' ? payload.detail : ''
+  } catch {
+    // The status code still provides a useful fallback when the body is not JSON.
+  }
+  if (response.status === 502 && detail.includes('schema validation')) {
+    return {
+      title: '模型输出格式未通过校验',
+      message: '模型已经完成分析，但返回字段不完整。你的作答仍保留在本地，可以直接重试。',
+    }
+  }
+  if (response.status === 408 || response.status === 504) {
+    return {
+      title: '句子分析请求超时',
+      message: '模型本次响应时间过长。你的作答仍保留在本地，可以直接重试。',
+    }
+  }
+  if (response.status === 429) {
+    return {
+      title: '模型当前请求较多',
+      message: '请稍后直接重试，你的作答仍保留在本地。',
+    }
+  }
+  return {
+    title: '句子分析暂时失败',
+    message: detail || '你的作答仍保留在本地，可以直接重试。',
+  }
+}
+
+export interface ReadingSentenceAnalysisResponse {
+  material_id: string
+  sentence_id: string
+  sentence: string
+  event_id: string
+  workflow_stage: 'review'
+  outcome: ReadingSentenceAnalysisOutcome
+  score: number
+  confidence: number
+  feedback: string
+  correct_analysis: {
+    main_structure: string
+    clause_layers: string[]
+    phrases: Array<{ text: string; role: string; meaning: string }>
+    sentence_meaning: string
+  }
+  teaching: {
+    required: boolean
+    explanation: string
+    steps: string[]
+    checkpoint: string
+  }
+  can_do_points: Array<{
+    can_do_id: string
+    knowledge_point_id: string
+    statement: string
+    cefr_level: string
+    category: string
+    subcategory: string
+    confidence: number
+    mastery_before: number | null
+    mastery_after: number | null
+    evidence_status: string
+  }>
+  error_patterns: Array<{
+    tag: string
+    description: string
+    recommended_drill: string
+  }>
+  mastery_updated: boolean
+  prompt_execution_record_id: string | null
+}
+
 export interface ReadingCompletionStateInput {
   hasMaterial: boolean
   hasExtensiveEvidence: boolean

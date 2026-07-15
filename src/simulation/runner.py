@@ -157,6 +157,8 @@ class ScenarioRunner:
             return self._validate_unit_exercise_candidate(step)
         if step.action == "save_reading_material":
             return await self._save_reading_material(step, context)
+        if step.action == "analyze_reading_sentence":
+            return await self._analyze_reading_sentence(step, context)
         if step.action == "complete_reading_material":
             return await self._complete_reading_material(step, context)
         if step.action == "reading_dashboard":
@@ -266,6 +268,23 @@ class ScenarioRunner:
             "status_code": response.status_code,
             "completion": payload,
             "idempotent_replay": idempotent_replay,
+        }
+
+    async def _analyze_reading_sentence(
+        self,
+        step: SimulationStep,
+        context: dict[str, Any],
+    ) -> dict[str, Any]:
+        learner_id = _require_context(context, "learner_id")
+        material_id = _require_context(context, "reading_material_id")
+        response = await self._request(
+            "POST",
+            f"/api/learners/{learner_id}/reading-workshop/materials/{material_id}/sentence-analysis",
+            json=dict(step.payload),
+        )
+        return {
+            "status_code": response.status_code,
+            "analysis": _json_or_empty(response),
         }
 
     async def _reading_dashboard(self, context: dict[str, Any]) -> dict[str, Any]:

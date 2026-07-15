@@ -105,6 +105,7 @@ class PromptExecutor:
             provider=response.provider,
             model=response.model,
             finish_reason=response.finish_reason,
+            provider_repair_used=bool(response.usage.get("retry_count")),
             langfuse_trace_id=langfuse_trace_id,
             langfuse_observation_id=langfuse_observation_id,
         )
@@ -154,6 +155,7 @@ class PromptExecutor:
             provider=response.provider,
             model=response.model,
             finish_reason=response.finish_reason,
+            provider_repair_used=bool(response.usage.get("retry_count")),
             langfuse_trace_id=langfuse_trace_id,
             langfuse_observation_id=langfuse_observation_id,
         )
@@ -211,6 +213,7 @@ class PromptExecutor:
             provider=None,
             model=None,
             finish_reason=finish_reason,
+            provider_repair_used=False,
             langfuse_trace_id=langfuse_trace_id,
             langfuse_observation_id=langfuse_observation_id,
         )
@@ -250,6 +253,7 @@ class PromptExecutor:
             provider=None,
             model=None,
             finish_reason=None,
+            provider_repair_used=False,
             langfuse_trace_id=langfuse_trace_id,
             langfuse_observation_id=langfuse_observation_id,
         )
@@ -264,13 +268,14 @@ class PromptExecutor:
         provider: str | None,
         model: str | None,
         finish_reason: str | None,
+        provider_repair_used: bool,
         langfuse_trace_id: str | None,
         langfuse_observation_id: str | None,
     ) -> PromptExecutionResult:
         payload: dict[str, Any] | None = None
         schema_validation_status = "not_applicable"
         schema_error_summary: str | None = None
-        repair_used = False
+        repair_used = provider_repair_used
         fallback_used = False
         parse_mode = "text_only"
         decision = "accepted"
@@ -278,8 +283,8 @@ class PromptExecutor:
         if rendered.output_schema_json is not None:
             validation = maybe_validate_json_text(raw_output, rendered.output_schema_json)
             payload = validation.payload
-            repair_used = validation.repair_used
-            parse_mode = validation.parse_mode
+            repair_used = provider_repair_used or validation.repair_used
+            parse_mode = "provider_repair" if provider_repair_used else validation.parse_mode
             schema_error_summary = validation.error_summary
             if validation.valid and payload is not None:
                 schema_validation_status = "repaired" if repair_used else "passed"
@@ -438,18 +443,23 @@ def _chat_request(
         preferred_model=preferred_model,
     )
 
+    metadata = {
+        "prompt_id": rendered.prompt_id,
+        "prompt_version": rendered.version,
+        "prompt_hash": rendered.prompt_hash,
+        "input_hash": rendered.input_hash,
+    }
+    thinking = overrides.get("thinking", policy.get("thinking"))
+    if thinking in {"enabled", "disabled"}:
+        metadata["thinking"] = str(thinking)
+
     return ChatRequest(
         messages=messages or [{"role": "user", "content": rendered.prompt}],
         task_type=str(overrides.get("task_type") or rendered.prompt_id),
         temperature=float(overrides.get("temperature", policy.get("temperature", 0.3))),
         max_tokens=int(overrides.get("max_tokens", policy.get("max_tokens", 2000))),
         response_schema=rendered.output_schema_json,
-        metadata={
-            "prompt_id": rendered.prompt_id,
-            "prompt_version": rendered.version,
-            "prompt_hash": rendered.prompt_hash,
-            "input_hash": rendered.input_hash,
-        },
+        metadata=metadata,
         preferred_provider=str(preferred_provider),
         preferred_model=preferred_model,
         local_only=bool(overrides.get("local_only", policy.get("local_only", True))),

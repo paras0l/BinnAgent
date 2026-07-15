@@ -68,6 +68,85 @@ async def test_chat_repairs_invalid_structured_json() -> None:
     assert response.usage["retry_count"] == 1
     repair_request = mock_client.chat.await_args_list[1].args[0]
     assert repair_request.task_type.endswith(".json_repair")
+    assert "回复不是合法的 JSON 对象" in repair_request.messages[-1]["content"]
+
+
+@pytest.mark.asyncio
+async def test_chat_repairs_schema_invalid_json_with_validation_error() -> None:
+    router = ModelRouter()
+    router.set_default_provider("ollama")
+    mock_client = AsyncMock()
+    mock_client.chat = AsyncMock(
+        side_effect=[
+            ChatResponse(
+                provider="ollama",
+                model="test",
+                content='{"feedback":"ok"}',
+                structured={"feedback": "ok"},
+            ),
+            ChatResponse(
+                provider="ollama",
+                model="test",
+                content='{"feedback":"ok","confidence":0.9}',
+                structured={"feedback": "ok", "confidence": 0.9},
+            ),
+        ]
+    )
+    router.register("ollama", mock_client)
+    schema = {
+        "type": "object",
+        "required": ["feedback", "confidence"],
+        "properties": {
+            "feedback": {"type": "string"},
+            "confidence": {"type": "number"},
+        },
+    }
+
+    response = await router.chat(
+        ChatRequest(
+            messages=[{"role": "user", "content": "return json"}],
+            response_schema=schema,
+            metadata={"thinking": "disabled"},
+        )
+    )
+
+    assert response.structured == {"feedback": "ok", "confidence": 0.9}
+    repair_request = mock_client.chat.await_args_list[1].args[0]
+    assert "'confidence' is a required property" in repair_request.messages[-1]["content"]
+    assert repair_request.metadata["thinking"] == "disabled"
+    assert response.usage["retry_count"] == 1
+
+
+@pytest.mark.asyncio
+async def test_chat_returns_failed_repair_for_prompt_executor_validation() -> None:
+    router = ModelRouter()
+    router.set_default_provider("ollama")
+    mock_client = AsyncMock()
+    invalid = ChatResponse(
+        provider="ollama",
+        model="test",
+        content='{"feedback":"ok"}',
+        structured={"feedback": "ok"},
+    )
+    mock_client.chat = AsyncMock(side_effect=[invalid, invalid])
+    router.register("ollama", mock_client)
+
+    response = await router.chat(
+        ChatRequest(
+            messages=[{"role": "user", "content": "return json"}],
+            response_schema={
+                "type": "object",
+                "required": ["feedback", "confidence"],
+                "properties": {
+                    "feedback": {"type": "string"},
+                    "confidence": {"type": "number"},
+                },
+            },
+        )
+    )
+
+    assert response.usage["repair_failed"] is True
+    assert "confidence" in response.usage["repair_error"]
 
 
 @pytest.mark.asyncio

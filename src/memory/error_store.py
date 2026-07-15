@@ -19,6 +19,9 @@ class ErrorStore:
         description: str | None = None,
         severity: str | None = None,
         evidence_ref: str | None = None,
+        subskill: str | None = None,
+        confidence: float | None = None,
+        recommended_drill: str | None = None,
         commit: bool = True,
     ) -> ErrorPattern:
         now = datetime.now(timezone.utc)
@@ -35,6 +38,14 @@ class ErrorStore:
         if existing:
             existing.frequency += 1
             existing.last_seen_at = now
+            if description:
+                existing.description = description
+            if subskill:
+                existing.subskill = subskill
+            if confidence is not None:
+                existing.confidence = max(float(existing.confidence or 0.0), confidence)
+            if recommended_drill:
+                existing.recommended_drill = recommended_drill
 
             if evidence_ref:
                 refs = list(existing.evidence_refs) if existing.evidence_refs else []
@@ -60,7 +71,11 @@ class ErrorStore:
             description=description,
             frequency=1,
             severity=severity,
+            subskill=subskill,
+            confidence=confidence if confidence is not None else 0.5,
+            recommended_drill=recommended_drill,
             evidence_refs=[evidence_ref] if evidence_ref else [],
+            first_seen_at=now,
             last_seen_at=now,
         )
         self.db.add(error)

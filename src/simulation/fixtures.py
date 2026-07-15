@@ -917,6 +917,41 @@ BUILTIN_SCENARIOS.update(
                 ],
             ),
             SimulationStep(
+                name="sentence_attempt_updates_dynamic_can_do_mastery",
+                action="analyze_reading_sentence",
+                payload={
+                    "sentence_id": "reading-sentence-1",
+                    "client_attempt_id": "sim-reading-sentence-attempt",
+                    "analysis": {
+                        "main_structure": "Good readers identify the main idea",
+                        "phrase_notes": "identify the main idea",
+                        "evidence_note": "first 表示顺序",
+                    },
+                },
+                assertions=[
+                    {"type": "status_code", "path": "status_code", "equals": 200},
+                    {"type": "equals", "path": "analysis.outcome", "value": "SUCCESS"},
+                    {"type": "equals", "path": "analysis.mastery_updated", "value": True},
+                    {"type": "equals", "path": "analysis.can_do_points.0.evidence_status", "value": "applied"},
+                ],
+            ),
+            SimulationStep(
+                name="sentence_no_attempt_enters_teaching_without_mastery",
+                action="analyze_reading_sentence",
+                payload={
+                    "sentence_id": "reading-sentence-2",
+                    "client_attempt_id": "sim-reading-sentence-no-attempt",
+                    "unable_to_analyze": True,
+                    "analysis": {},
+                },
+                assertions=[
+                    {"type": "status_code", "path": "status_code", "equals": 200},
+                    {"type": "equals", "path": "analysis.outcome", "value": "NO_ATTEMPT"},
+                    {"type": "equals", "path": "analysis.teaching.required", "value": True},
+                    {"type": "equals", "path": "analysis.mastery_updated", "value": False},
+                ],
+            ),
+            SimulationStep(
                 name="reject_completion_without_intensive_evidence",
                 action="complete_reading_material",
                 payload={
@@ -996,6 +1031,7 @@ BUILTIN_SCENARIOS.update(
         module_tags=["reading", "exercise", "dashboard", "idempotency"],
         entrypoints=[
             "/api/learners/{learner_id}/reading-workshop/materials",
+            "/api/learners/{learner_id}/reading-workshop/materials/{material_id}/sentence-analysis",
             "/api/learners/{learner_id}/reading-workshop/materials/{material_id}/complete",
             "/api/learners/{learner_id}/dashboard",
         ],
@@ -1003,6 +1039,8 @@ BUILTIN_SCENARIOS.update(
         expected_tool_calls=[],
         expected_state_changes=[
             "reading_material_saved",
+            "reading_sentence_attempt_updated_can_do_mastery",
+            "reading_sentence_no_attempt_taught_without_mastery",
             "incomplete_reading_evidence_rejected",
             "unknown_reading_sentence_rejected",
             "reading_completion_saved",

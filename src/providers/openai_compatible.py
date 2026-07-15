@@ -167,13 +167,25 @@ class OpenAICompatibleClient(ModelClient):
         return headers
 
     def _chat_payload(self, request: ChatRequest, *, stream: bool) -> dict[str, Any]:
+        messages = request.messages
+        if request.response_schema and not self.supports_response_format:
+            messages = [
+                *messages,
+                {
+                    "role": "user",
+                    "content": _compact_json_schema_instruction(request.response_schema),
+                },
+            ]
         payload: dict[str, Any] = {
             "model": request.preferred_model or self.chat_model,
-            "messages": request.messages,
+            "messages": messages,
             "stream": stream,
             "temperature": request.temperature,
             "max_tokens": request.max_tokens,
         }
+        thinking = request.metadata.get("thinking")
+        if self.provider == "longcat" and thinking in {"enabled", "disabled"}:
+            payload["thinking"] = {"type": thinking}
         if request.response_schema and self.supports_response_format:
             payload["response_format"] = {"type": "json_object"}
         return payload
@@ -214,6 +226,19 @@ def _usage(data: dict[str, Any]) -> dict[str, Any]:
     if "total_tokens" in raw_usage:
         usage["total_tokens"] = raw_usage["total_tokens"]
     return usage
+
+
+def _compact_json_schema_instruction(response_schema: dict[str, Any]) -> str:
+    compact_schema = json.dumps(
+        response_schema,
+        ensure_ascii=False,
+        separators=(",", ":"),
+    )
+    return (
+        "严格按下面的压缩 JSON Schema 输出一个 JSON 对象；必填字段不得省略，"
+        "不要输出解释、Markdown 或代码块：\n"
+        f"{compact_schema}"
+    )
 
 
 def _structured_content(content: str) -> dict[str, Any] | None:

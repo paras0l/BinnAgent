@@ -317,6 +317,40 @@ prompt_registry.register(
 )
 prompt_registry.register(
     PromptMetadata(
+        id="reading.sentence_analysis",
+        version="v1",
+        owner="reading",
+        purpose="评估学习者对精读句子的自主拆解，动态映射 Can-Do 并生成纠错或教学复盘",
+        template_path="versions/reading.sentence_analysis.v1.md",
+        output_schema="ReadingSentenceAnalysisOutput",
+        model_policy={
+            "default_model": "ollama_utility",
+            "temperature": 0.15,
+            "max_tokens": 1100,
+            "thinking": "disabled",
+        },
+        eval_set="evals/prompts/reading_sentence_analysis_v1.jsonl",
+    )
+)
+prompt_registry.register(
+    PromptMetadata(
+        id="reading.sentence_analysis_no_attempt",
+        version="v1",
+        owner="reading",
+        purpose="在学习者暂时无法自主拆句时生成精简的句子教学与复盘内容",
+        template_path="versions/reading.sentence_analysis_no_attempt.v1.md",
+        output_schema="ReadingSentenceNoAttemptOutput",
+        model_policy={
+            "default_model": "ollama_utility",
+            "temperature": 0.1,
+            "max_tokens": 800,
+            "thinking": "disabled",
+        },
+        eval_set="evals/prompts/reading_sentence_analysis_no_attempt_v1.jsonl",
+    )
+)
+prompt_registry.register(
+    PromptMetadata(
         id="reading.selection_translation",
         version="v1",
         owner="reading",

@@ -2,10 +2,11 @@ import type {
   ReadingMaterial,
   ReadingMaterialCompleteResponse,
   ReadingMaterialHistoryItem,
+  ReadingSentenceAnalysisResponse,
   ReadingWorkspace,
 } from './readingWorkshop'
 
-export const READING_DRAFT_VERSION = 2
+export const READING_DRAFT_VERSION = 3
 const READING_DRAFT_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000
 const SCRATCH_READING_DRAFT_SCOPE = 'scratch'
 
@@ -32,7 +33,7 @@ type ReadingDraftTitleMode = 'empty' | 'auto' | 'user'
 type ReadingDraftTitleSuggestionStatus = 'idle' | 'checking' | 'suggested' | 'incomplete' | 'error'
 
 export interface ReadingWorkshopDraftV1 {
-  version: 2
+  version: 3
   learnerId: string
   scopeId: string
   savedAt: number
@@ -40,6 +41,7 @@ export interface ReadingWorkshopDraftV1 {
   material: ReadingMaterial
   extensiveNotes: ReadingDraftExtensiveNotes
   intensiveNotesBySentenceId: Record<string, ReadingDraftIntensiveNotes>
+  sentenceAnalysisBySentenceId: Record<string, ReadingSentenceAnalysisResponse>
   selectedSentenceId: string | null
   selectedGrammarOptionIds: string[]
   openedGrammarTopics: string[]
@@ -164,7 +166,7 @@ export function normalizeReadingWorkshopDraft(
   learnerId: string,
   expectedScopeId = SCRATCH_READING_DRAFT_SCOPE,
 ): ReadingWorkshopDraftV1 | null {
-  if (!isRecord(value) || (value.version !== 1 && value.version !== READING_DRAFT_VERSION) || value.learnerId !== learnerId) return null
+  if (!isRecord(value) || ![1, 2, READING_DRAFT_VERSION].includes(Number(value.version)) || value.learnerId !== learnerId) return null
   const scopeId = value.version === 1
     ? SCRATCH_READING_DRAFT_SCOPE
     : typeof value.scopeId === 'string' ? value.scopeId : ''
@@ -211,6 +213,7 @@ export function normalizeReadingWorkshopDraft(
     material: value.material,
     extensiveNotes: value.extensiveNotes,
     intensiveNotesBySentenceId: value.intensiveNotesBySentenceId,
+    sentenceAnalysisBySentenceId: normalizeSentenceAnalysisResults(value.sentenceAnalysisBySentenceId),
     selectedSentenceId,
     selectedGrammarOptionIds: stringArray(value.selectedGrammarOptionIds),
     openedGrammarTopics: stringArray(value.openedGrammarTopics),
@@ -322,6 +325,33 @@ function isReadingCompletionResult(value: unknown): value is ReadingMaterialComp
     && typeof value.attempt_id === 'string'
     && typeof value.reading_value === 'number'
     && typeof value.message === 'string'
+}
+
+function normalizeSentenceAnalysisResults(value: unknown): Record<string, ReadingSentenceAnalysisResponse> {
+  if (!isRecord(value)) return {}
+  return Object.fromEntries(
+    Object.entries(value).filter((entry): entry is [string, ReadingSentenceAnalysisResponse] => (
+      isReadingSentenceAnalysisResult(entry[1])
+    ))
+  )
+}
+
+function isReadingSentenceAnalysisResult(value: unknown): value is ReadingSentenceAnalysisResponse {
+  return isRecord(value)
+    && typeof value.material_id === 'string'
+    && typeof value.sentence_id === 'string'
+    && typeof value.sentence === 'string'
+    && typeof value.event_id === 'string'
+    && value.workflow_stage === 'review'
+    && (value.outcome === 'SUCCESS' || value.outcome === 'UNSUCCESSFUL' || value.outcome === 'NO_ATTEMPT')
+    && typeof value.score === 'number'
+    && typeof value.confidence === 'number'
+    && typeof value.feedback === 'string'
+    && isRecord(value.correct_analysis)
+    && isRecord(value.teaching)
+    && Array.isArray(value.can_do_points)
+    && Array.isArray(value.error_patterns)
+    && typeof value.mastery_updated === 'boolean'
 }
 
 function isReadingWorkspace(value: unknown): value is ReadingWorkspace {

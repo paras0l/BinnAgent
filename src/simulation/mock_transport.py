@@ -27,6 +27,7 @@ def build_contract_transport(scenario: SimulationScenario) -> httpx.MockTranspor
         "reading_material_id": str(uuid.uuid4()),
         "reading_attempt_id": str(uuid.uuid4()),
         "reading_completions": {},
+        "reading_sentence_analyses": {},
     }
     return httpx.MockTransport(lambda request: _handle(request, state))
 
@@ -89,6 +90,15 @@ def _handle(request: httpx.Request, state: dict[str, Any]) -> httpx.Response:
         return httpx.Response(200, json=[_generated_exercise()])
     if method == "POST" and path == f"/api/learners/{learner_id}/reading-workshop/materials":
         return _save_reading_material(request, state)
+    if (
+        method == "POST"
+        and path
+        == (
+            f"/api/learners/{learner_id}/reading-workshop/materials/"
+            f"{state['reading_material_id']}/sentence-analysis"
+        )
+    ):
+        return _analyze_reading_sentence(request, state)
     if (
         method == "POST"
         and path
@@ -385,6 +395,72 @@ def _save_reading_material(request: httpx.Request, state: dict[str, Any]) -> htt
     }
     state["reading_material"] = material
     return httpx.Response(201, json=material)
+
+
+def _analyze_reading_sentence(request: httpx.Request, state: dict[str, Any]) -> httpx.Response:
+    material = state.get("reading_material")
+    if not isinstance(material, dict):
+        return httpx.Response(404, json={"detail": "Reading material not found"})
+    body = _json_body(request)
+    sentence_id = str(body.get("sentence_id") or "")
+    client_attempt_id = str(body.get("client_attempt_id") or "")
+    cache_key = f"{sentence_id}:{client_attempt_id}"
+    existing = state["reading_sentence_analyses"].get(cache_key)
+    if existing:
+        return httpx.Response(200, json=existing)
+    unable = bool(body.get("unable_to_analyze"))
+    response = {
+        "material_id": state["reading_material_id"],
+        "sentence_id": sentence_id,
+        "sentence": "Good readers first identify the writer's main idea.",
+        "event_id": f"reading-sentence-analysis:{state['reading_material_id']}:{client_attempt_id}",
+        "workflow_stage": "review",
+        "outcome": "NO_ATTEMPT" if unable else "SUCCESS",
+        "score": 0.0 if unable else 0.9,
+        "confidence": 0.94,
+        "feedback": "先定位主句谓语，再处理修饰信息。",
+        "correct_analysis": {
+            "main_structure": "Good readers identify the main idea",
+            "clause_layers": [],
+            "phrases": [],
+            "sentence_meaning": "优秀的读者先确定作者的主旨。",
+        },
+        "teaching": {
+            "required": unable,
+            "explanation": "先找主语和谓语。" if unable else "",
+            "steps": ["找主语", "找谓语"] if unable else [],
+            "checkpoint": "谁做了什么？" if unable else "",
+        },
+        "can_do_points": [
+            {
+                "can_do_id": "egp:simulation-reading",
+                "knowledge_point_id": state["target_id"],
+                "statement": "能识别句子主干与修饰信息。",
+                "cefr_level": "A2",
+                "category": "句子结构",
+                "subcategory": "主干识别",
+                "confidence": 0.9,
+                "mastery_before": None if unable else 0.4,
+                "mastery_after": None if unable else 0.58,
+                "evidence_status": "teaching_only" if unable else "applied",
+            }
+        ],
+        "error_patterns": (
+            [
+                {
+                    "tag": "no_attempt",
+                    "description": "暂时无法独立开始拆句。",
+                    "recommended_drill": "先找主谓，再处理修饰语",
+                }
+            ]
+            if unable
+            else []
+        ),
+        "mastery_updated": not unable,
+        "prompt_execution_record_id": None,
+    }
+    state["reading_sentence_analyses"][cache_key] = response
+    return httpx.Response(200, json=response)
 
 
 def _complete_reading_material(request: httpx.Request, state: dict[str, Any]) -> httpx.Response:

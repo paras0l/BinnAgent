@@ -19,8 +19,11 @@
 画像与近期证据
   -> 选择主题、篇幅和难度
   -> 自主泛读（主旨、态度、推断）
-  -> 精读排盲（句子结构、词汇、语法）
-  -> 理解纠错与迁移
+  -> 精读先答（学习者先提交主干、词组与证据，或明确“分析不出来”）
+  -> 动态召回 Grammar Can-Do 候选
+  -> PromptExecutor 结构化评估与正确拆解
+  -> 有效尝试：写入 Can-Do 级 AssessmentEvidence / Mastery / ErrorPattern
+  -> 无法作答：只展示教学内容并写入复盘，不误写掌握度
   -> 写入 learner-scoped Attempt evidence
   -> 保存 Dashboard 阅读练习证据；仅理解分或可评分题进入能力分
   -> 后续再接 Memory 与下一篇难度调节
@@ -48,6 +51,10 @@
 - 复盘记录“哪里理解错了、为什么错、下次如何识别”，而不仅是完成状态。
 - 工作区在中小屏上保留正文阅读宽度；材料历史、句子列表和阅读助手以焦点可控的抽屉呈现。
 - 每个句子独立保存主干、词组与证据笔记；切换句子不得复用上一句的笔记。
+- 正确拆解、教学内容和 Can-Do 映射必须在学习者提交自己的分析之后才出现，避免答案泄漏污染掌握证据。
+- “发现知识点”不得使用前端固定卡片；服务端从 `GrammarCanDoProfile` 动态召回候选，结构化评估只能从候选 ID 中选择，低置信或无匹配时不更新掌握度。
+- 学习者明确“分析不出来”时进入教学复盘：展示主干、从句层级、短语功能、整句含义、拆解步骤和自检题；该路径可沉淀错误模式与教学建议，但不是掌握度测评。
+- 沉淀复盘优先回答“本次结论、关键卡点、下一步练什么”；逐句卡默认展示结论、关键纠错、正确主干和教学步骤，原作答与完整结构渐进展开，关键词/难度/覆盖率等过程图表默认收起为辅助证据。
 - 阶段完成状态与最终“完成阅读”必须由实际泛读/精读证据驱动，不以点过页签代替学习证据。
 - 替换或修改材料前必须明确确认，避免静默丢失本次笔记和助手上下文。
 - 保存、生成、划词翻译、阅读助手和完成请求必须隔离异步响应；旧文章的响应不得写入新会话。
@@ -55,18 +62,24 @@
 
 ## 5. Memory 更新边界
 
-阅读完成通过 `ExerciseAttemptService` 创建 learner-scoped `reading_passage` evidence。当前前端实际提交：
+句子分析和整篇完成是两类不同证据。
+
+句子分析使用 `reading.sentence_analysis` 的 schema-first 输出。只有学习者先做了实质尝试，且模型从动态 Can-Do 候选中形成可靠映射时，才通过 `record_learning_evidence()` 写入 production evidence，并复用 IRT / FSRS / TeachingPolicy 更新掌握度。`UNSUCCESSFUL` 会同时写入带推荐练习的 reading sentence error pattern；`NO_ATTEMPT` 改走 800-token 的 `reading.sentence_analysis_no_attempt` 教学专用 Prompt，由后端确定性补充 outcome/score/error pattern，只写 `LearningEvidenceEvent`、`LearningMemoryEvent` 和教学复盘，不降低或提高掌握度。事件 ID 由 material、sentence 与 client attempt 组成，重试复用已保存的结构化结果，避免重复更新错误频次或 mastery。
+
+整篇阅读完成继续通过 `ExerciseAttemptService` 创建 learner-scoped `reading_passage` evidence。当前前端实际提交：
 
 - 泛读主旨与中心句。
 - 已完成分析且属于当前材料的句子 ID。
 - 语法卡点和合并后的泛读/逐句精读笔记。
 - 材料目标、类型、来源上下文和服务端计算的阅读投入值。
 
-完成事件使用中性 `completed`，不进入正确率；`client_attempt_id` 与材料行锁保证重试不会重复记账。服务端阅读投入值只描述材料长度和精读覆盖，不代表理解正确性；Dashboard 仅使用真实理解分或可评分阅读题计算能力分，不使用投入值兜底。后端已经预留耗时、理解分、生词和主观难度字段，但当前 UI 尚未采集；MemoryWriter 的细粒度 Retain 也尚未接通，因此产品文案不得承诺这些记录已经影响下一篇。生成内容不能绕过确认直接写入词汇、语法掌握度或长期资产。
+完成事件使用中性 `completed`，不进入正确率；`client_attempt_id` 与材料行锁保证重试不会重复记账。服务端阅读投入值只描述材料长度和精读覆盖，不代表理解正确性；Dashboard 仅使用真实理解分或可评分阅读题计算能力分，不使用投入值兜底。后端已经预留耗时、理解分、生词和主观难度字段，但当前 UI 尚未采集。生成内容不能绕过确认直接写入词汇、语法掌握度或长期资产。
+
+精读页面当前是浏览器表单与 FastAPI 之间的显式人机边界，不属于 Daily Lesson LangGraph，因此此处不使用 `interrupt()/Command(resume=...)`。若未来把多句精读纳入 LangGraph，必须使用 checkpointer、稳定 thread ID，并把 mastery / memory 副作用放在恢复后的独立节点中。
 
 ## 6. 当前实现与后续
 
-当前已完成显式 `learning_track`、主线自由切换、Dashboard 阅读主动作、无教材个性化生成、按时间预算控制篇幅、Prompt v2/eval、阅读证据扩展、历史恢复、按材料隔离的 7 天本机草稿恢复、全局导航防丢失、逐句独立笔记、目标化完成门槛、完成幂等、中性阅读投入记录、材料来源保护、learner ownership 校验、异步竞态隔离，以及桌面/移动端的响应式工作区与阅读助手抽屉。
+当前已完成显式 `learning_track`、主线自由切换、Dashboard 阅读主动作、无教材个性化生成、按时间预算控制篇幅、Prompt v2/eval、阅读证据扩展、历史恢复、按材料隔离的 7 天本机草稿恢复、全局导航防丢失、逐句独立笔记、先答后教的句子分析、动态 Can-Do 映射、Can-Do 级掌握度与错误模式更新、无作答教学复盘、分层式沉淀复盘、目标化完成门槛、完成幂等、中性阅读投入记录、材料来源保护、learner ownership 校验、异步竞态隔离，以及桌面/移动端的响应式工作区与阅读助手抽屉。
 
 团队验收构建使用 `npm run build:sites` 生成 Sites Worker 入口、静态资源与 SPA 回退。该构建复用真实 `ReadingWorkshopPage`，通过页面顶栏明确标记的隔离示例数据模拟本次范围内的 API，因此可验证材料保存、个性化生成、泛读/精读证据、阅读助手、完成门槛和本机草稿恢复，但不得作为远程 FastAPI、数据库、模型服务或真实多用户认证已经上线的证据。
 

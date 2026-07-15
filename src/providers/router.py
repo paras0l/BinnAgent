@@ -1,6 +1,8 @@
 import json
 from typing import Any, AsyncIterator
 
+from jsonschema import Draft202012Validator
+
 from src.config import settings
 from src.providers.base import (
     ChatRequest,
@@ -40,7 +42,8 @@ class ModelRouter:
         routed_request = self._routed_chat_request(request, provider)
         client = self._get_or_create_client(provider)
         response = await client.chat(routed_request)
-        if request.response_schema and response.structured is None:
+        schema_error = _structured_schema_error(response, request.response_schema)
+        if request.response_schema and schema_error is not None:
             repair_request = ChatRequest(
                 messages=[
                     *routed_request.messages,
@@ -51,8 +54,10 @@ class ModelRouter:
                     {
                         "role": "user",
                         "content": (
-                            "请修复上一条回复，使其成为严格合法的 JSON。"
-                            "只输出 JSON，不要添加解释、Markdown 或代码块。"
+                            "请修复上一条回复，使其通过目标 JSON Schema 校验。"
+                            f"当前校验错误：{schema_error}。"
+                            "保留原有语义，只修正结构、字段和类型；"
+                            "必填字段不得省略，只输出 JSON。"
                         ),
                     },
                 ],
@@ -60,32 +65,28 @@ class ModelRouter:
                 temperature=0,
                 max_tokens=routed_request.max_tokens,
                 response_schema=routed_request.response_schema,
+                metadata=routed_request.metadata,
                 preferred_provider=provider,
                 preferred_model=routed_request.preferred_model,
                 local_only=routed_request.local_only,
             )
             repaired = await client.chat(repair_request)
-            if repaired.structured is not None:
+            repaired_schema_error = _structured_schema_error(repaired, request.response_schema)
+            if repaired_schema_error is None:
                 repaired.usage = {
                     **repaired.usage,
                     "retry_count": 1,
-                    "repair_reason": "invalid_json",
+                    "repair_reason": schema_error,
                 }
                 return repaired
-            try:
-                repaired.structured = json.loads(repaired.content)
-                repaired.usage = {
-                    **repaired.usage,
-                    "retry_count": 1,
-                    "repair_reason": "invalid_json",
-                }
-                return repaired
-            except (json.JSONDecodeError, TypeError):
-                response.usage = {
-                    **response.usage,
-                    "retry_count": 1,
-                    "repair_failed": True,
-                }
+            repaired.usage = {
+                **repaired.usage,
+                "retry_count": 1,
+                "repair_reason": schema_error,
+                "repair_failed": True,
+                "repair_error": repaired_schema_error,
+            }
+            return repaired
         return response
 
     async def stream_chat(self, request: ChatRequest) -> AsyncIterator[ChatStreamChunk]:
@@ -192,6 +193,34 @@ def _create_client(provider: str) -> ModelClient:
             supports_response_format=False,
         )
     raise ValueError(f"Unsupported model provider: {provider}")
+
+
+def _structured_schema_error(
+    response: ChatResponse,
+    response_schema: dict[str, Any] | None,
+) -> str | None:
+    if response_schema is None:
+        return None
+    payload = response.structured
+    if not isinstance(payload, dict):
+        try:
+            parsed = json.loads(response.content)
+        except (json.JSONDecodeError, TypeError):
+            return "回复不是合法的 JSON 对象"
+        if not isinstance(parsed, dict):
+            return f"顶层必须是 JSON 对象，实际为 {type(parsed).__name__}"
+        payload = parsed
+        response.structured = parsed
+
+    errors = sorted(
+        Draft202012Validator(response_schema).iter_errors(payload),
+        key=lambda error: [str(part) for part in error.absolute_path],
+    )
+    if not errors:
+        return None
+    error = errors[0]
+    path = ".".join(str(part) for part in error.absolute_path) or "$"
+    return f"{path}: {error.message}"
 
 
 def _provider_summary(name: str, health: dict[str, Any]) -> dict[str, Any]:

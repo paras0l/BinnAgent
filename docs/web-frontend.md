@@ -80,7 +80,7 @@ AI对话 / 探索 / 学习中心
 - `VocabularyPracticePage` 保持沉浸式一屏一任务，并在顶部明确模式和来源；练习阶段按主任务区、学习辅助区和底部操作区组织，底部操作栏固定可见，中间内容内部滚动，避免用户上下翻动才能评分或进入下一题；核心按钮、进度条和拼写输入已补 `type` / focus-visible / `name` / `autocomplete` 与显式 transition；summary 已补答对率环、本组结果分布和复习负荷条。
 - `WordPartsPage` 按“方法入门 / 词根词缀库 / 拆词练习 / 我的掌握”四个 workspace 组织，复用 `PageShell`、`FeatureHero`、`WorkspaceTabs`、`SurfaceCard`、`FilterChip` 和统一 `Button`。
 - `WordPartsPage` 的“我的掌握”已补整体掌握堆叠条、prefix/root/suffix 掌握条和练习次数趋势；拆词练习答案已补展开/收起动效、`aria-expanded` 和提示计数 live 状态；重置本地记录使用确认弹窗。
-- `ReadingWorkshopPage` 的材料历史和精读句子列表已支持移动端抽屉，具备遮罩、dialog 语义、ESC 关闭、焦点恢复和 Tab 循环；复盘页已补关键词频次条、句子难度热力图、语法卡点分布、阅读流程进度和正文高亮覆盖，泛读/精读沉淀可图形化回看。
+- `ReadingWorkshopPage` 的材料历史和精读句子列表已支持移动端抽屉，具备遮罩、dialog 语义、ESC 关闭、焦点恢复和 Tab 循环；精读句必须先提交自主拆解或明确“分析不出来”，再进入动态 Can-Do 评估/教学复盘；沉淀复盘按“本次重点 → 逐句纠错 → Can-Do 证据 → 下一步”组织，逐句卡优先展示结论、关键错误、正确主干和教学步骤，原作答/从句/短语按需展开，关键词频次、句子难度、流程进度和正文覆盖统一降为默认收起的辅助数据；句子分析失败会区分模型 Schema、超时、限流、材料保存和网络错误，同时保留本地作答供原地重试。
 - `WritingPhrasebookPage` 继续作为专项资产库页面，保留 `PageShell`、`FeatureHero`、`WorkspaceTabs` 的既有较好实现；主操作、详情操作、导入操作、练习推进和编辑抽屉关键按钮已接入统一 `Button` / `IconButton`，练习页补充进度条、题型分布、已填写统计和移动端句式列表抽屉，写作调用页已补写作位置覆盖、句式功能分布和难度分布，编辑抽屉和练习句式列表都具备 dialog 语义、ESC 关闭、焦点恢复、Tab 循环和必要的删除确认。
 - `PronunciationPage` 的 Minimal Pairs / Records 已从占位页升级为可用工作区，支持易混音组练习、本地自评记录、音标完成度、shadowing 自评分布、shadowing 练习次数趋势和最小对立音清晰率图表；音标详情移动端 bottom sheet 与 Shadowing 句子列表抽屉都具备遮罩、dialog 语义、ESC 关闭、焦点恢复和 Tab 循环，当前句已补原句播放状态、节奏条、重音词可视化、本地麦克风录音、实时波形、回放和重录。
 - Dev Console 的 `EpisodeDebugPage` 已补 Graph Run Overview、Node Waterfall、Event Rhythm、Tool Latency 和 Verification Map，Graph Runs 可先通过图形化链路扫读，再下钻表格/JSON。

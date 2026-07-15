@@ -130,21 +130,26 @@ async def find_can_do_for_query(
     db: AsyncSession, payload: FindCanDoForQueryInput
 ) -> dict[str, Any]:
     text = " ".join([payload.query, *payload.conversation_context])
-    candidates = await _rank_candidates(db, text, payload.top_k)
+    ranked_candidates = await _rank_candidates(db, text, payload.top_k)
     atomic = _atomic_kcs(text, _suggested_correction(text))
-    matches = [
+    candidates = [
         {
             "can_do_id": _can_do_id(candidate.profile, candidate.point),
             "knowledge_point_id": str(candidate.point.id),
+            "statement": candidate.profile.can_do_statement,
+            "cefr_level": candidate.profile.cefr_level,
+            "category": candidate.profile.category,
+            "subcategory": candidate.profile.subcategory,
             "confidence": candidate.score,
             "reason": candidate.reason,
         }
-        for candidate in candidates
-        if candidate.score >= 0.35
+        for candidate in ranked_candidates
     ]
+    matches = [candidate for candidate in candidates if candidate["confidence"] >= 0.35]
     return {
         "intent": _query_intent(payload.query),
         "matches": matches,
+        "candidates": candidates,
         "atomic_kcs": [item["id"] for item in atomic],
         "evidence": [item["evidence"] for item in atomic],
         "recommended_response_level": payload.user_level or "A2",

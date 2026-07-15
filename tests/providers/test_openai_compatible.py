@@ -75,3 +75,52 @@ async def test_health_check_without_api_key_is_not_reachable() -> None:
     assert result["provider"] == "longcat"
     assert result["api_key_configured"] is False
     assert result["reachable"] is False
+
+
+@pytest.mark.asyncio
+async def test_chat_injects_compact_schema_when_provider_lacks_response_format() -> None:
+    client = OpenAICompatibleClient(
+        provider="longcat",
+        base_url="https://api.example.test",
+        api_key="secret",
+        chat_model="LongCat-2.0",
+        supports_response_format=False,
+    )
+    mock_http = MagicMock(spec=httpx.AsyncClient)
+    mock_http.post = AsyncMock(
+        return_value=_mock_response(
+            {
+                "model": "LongCat-2.0",
+                "choices": [
+                    {
+                        "message": {"content": '{"confidence":0.9,"feedback":"ok"}'},
+                        "finish_reason": "stop",
+                    }
+                ],
+            }
+        )
+    )
+    client._client = mock_http
+    schema = {
+        "type": "object",
+        "required": ["confidence", "feedback"],
+        "properties": {
+            "confidence": {"type": "number"},
+            "feedback": {"type": "string"},
+        },
+    }
+
+    await client.chat(
+        ChatRequest(
+            messages=[{"role": "user", "content": "return json"}],
+            response_schema=schema,
+            metadata={"thinking": "disabled"},
+        )
+    )
+
+    payload = mock_http.post.call_args.kwargs["json"]
+    assert "response_format" not in payload
+    assert payload["thinking"] == {"type": "disabled"}
+    assert payload["messages"][-1]["role"] == "user"
+    assert '"required":["confidence","feedback"]' in payload["messages"][-1]["content"]
+    assert "必填字段不得省略" in payload["messages"][-1]["content"]

@@ -8,6 +8,7 @@ from sqlalchemy.exc import IntegrityError
 import src.api.reading as reading_api
 from src.api import deps
 from src.main import app
+from src.models.adaptive import LearningEvidenceEvent
 from src.models.knowledge import CurriculumNode, KnowledgePoint, KnowledgeSource
 from src.models.learner import Learner, LearnerProfile
 from src.models.knowledge import ExerciseAttempt
@@ -134,6 +135,188 @@ class FakeSelectionTranslationRouter:
                 '"这里表示让人类有更多时间和注意力。","confidence":0.96}'
             ),
         )
+
+
+class FakeSentenceAnalysisRouter:
+    def __init__(self, *, outcome: str = "SUCCESS") -> None:
+        self.outcome = outcome
+
+    async def chat(self, request: ChatRequest) -> ChatResponse:
+        no_attempt = self.outcome == "NO_ATTEMPT"
+        error_patterns = (
+            '[{"tag":"no_attempt","description":"暂时无法独立拆句。",'
+            '"recommended_drill":"先括从句再抽主干"}]'
+            if no_attempt
+            else "[]"
+        )
+        content = (
+            "{"
+            '"confidence":0.94,'
+            '"feedback":"先定位主句谓语，再处理从句。",'
+            '"correct_analysis":{'
+            '"main_structure":"Effective readers slow down",'
+            '"clause_layers":["When 引导时间状语从句"],'
+            '"phrases":[{"text":"slow down","role":"谓语","meaning":"放慢速度"}],'
+            '"sentence_meaning":"当句子困难时，高效阅读者会放慢速度。"},'
+            f'"teaching":{{"required":{str(no_attempt).lower()},'
+            '"explanation":"先括出 when 从句。",'
+            '"steps":["括出从句","读取主干"],'
+            '"checkpoint":"主句的主语和谓语是什么？"},'
+            '"selected_can_do_ids":["egp:42"]'
+        )
+        if request.task_type == "reading.sentence_analysis_no_attempt":
+            content += "}"
+        else:
+            content += (
+                f',"outcome":"{self.outcome}",'
+                f'"score":{0 if no_attempt else 0.9},'
+                f'"error_patterns":{error_patterns}'
+                "}"
+            )
+        return ChatResponse(
+            provider="fake",
+            model="fake-sentence-analysis",
+            content=content,
+        )
+
+
+def _learning_event(learner_id: uuid.UUID, event_id: str) -> LearningEvidenceEvent:
+    event = LearningEvidenceEvent(
+        learner_id=learner_id,
+        event_id=event_id,
+        source="reading_sentence_analysis",
+        observations=[],
+        raw_evidence={},
+        matcher_model_version="test",
+        status="applied",
+        result={},
+    )
+    event.id = uuid.uuid4()
+    return event
+
+
+@pytest.mark.asyncio
+async def test_sentence_analysis_updates_dynamic_can_do_mastery_after_learner_attempt(
+    client,
+    mock_session,
+):
+    learner_id = uuid.uuid4()
+    material = _history(learner_id)
+    event_id = f"reading-sentence-analysis:{material.id}:sentence-attempt-0001"
+    event = _learning_event(learner_id, event_id)
+    mock_session.execute = AsyncMock(
+        side_effect=[_one(learner_id), _one(material), _one(None), _one(event)]
+    )
+    app.dependency_overrides[deps.get_model_router] = lambda: FakeSentenceAnalysisRouter()
+    candidate = {
+        "can_do_id": "egp:42",
+        "knowledge_point_id": str(uuid.uuid4()),
+        "statement": "能用 when 引导时间状语从句。",
+        "cefr_level": "A2",
+        "category": "连接与从句",
+        "subcategory": "时间状语从句",
+        "confidence": 0.88,
+    }
+    evidence = {
+        "status": "applied",
+        "observation_results": [
+            {
+                "knowledge_id": "egp:42",
+                "status": "applied",
+                "mastery_before": 0.4,
+                "mastery_after": 0.58,
+            }
+        ],
+    }
+
+    with (
+        patch(
+            "src.api.reading.find_can_do_for_query",
+            new=AsyncMock(return_value={"candidates": [candidate], "matcher_version": "test"}),
+        ),
+        patch(
+            "src.api.reading.record_learning_evidence",
+            new=AsyncMock(return_value=evidence),
+        ) as record_evidence,
+    ):
+        response = await client.post(
+            f"/api/learners/{learner_id}/reading-workshop/materials/{material.id}/sentence-analysis",
+            json={
+                "sentence_id": "reading-sentence-2",
+                "client_attempt_id": "sentence-attempt-0001",
+                "analysis": {
+                    "main_structure": "Effective readers slow down",
+                    "phrase_notes": "slow down",
+                    "evidence_note": "for hard sentences",
+                },
+            },
+        )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["outcome"] == "SUCCESS"
+    assert data["mastery_updated"] is True
+    assert data["can_do_points"][0]["can_do_id"] == "egp:42"
+    assert data["can_do_points"][0]["mastery_before"] == 0.4
+    assert data["can_do_points"][0]["mastery_after"] == 0.58
+    observation = record_evidence.await_args.args[2].observations[0]
+    assert observation.evidence_mode == "production"
+    assert observation.knowledge_id == "egp:42"
+
+
+@pytest.mark.asyncio
+async def test_sentence_analysis_no_attempt_teaches_without_updating_mastery(
+    client,
+    mock_session,
+):
+    learner_id = uuid.uuid4()
+    material = _history(learner_id)
+    mock_session.execute = AsyncMock(
+        side_effect=[_one(learner_id), _one(material), _one(None)]
+    )
+    app.dependency_overrides[deps.get_model_router] = lambda: FakeSentenceAnalysisRouter(
+        outcome="NO_ATTEMPT"
+    )
+    candidate = {
+        "can_do_id": "egp:42",
+        "knowledge_point_id": str(uuid.uuid4()),
+        "statement": "能用 when 引导时间状语从句。",
+        "cefr_level": "A2",
+        "category": "连接与从句",
+        "subcategory": "时间状语从句",
+        "confidence": 0.88,
+    }
+
+    with (
+        patch(
+            "src.api.reading.find_can_do_for_query",
+            new=AsyncMock(return_value={"candidates": [candidate], "matcher_version": "test"}),
+        ),
+        patch("src.api.reading.record_learning_evidence", new=AsyncMock()) as record_evidence,
+        patch("src.api.reading.ErrorStore.record_error", new=AsyncMock()) as record_error,
+    ):
+        response = await client.post(
+            f"/api/learners/{learner_id}/reading-workshop/materials/{material.id}/sentence-analysis",
+            json={
+                "sentence_id": "reading-sentence-2",
+                "client_attempt_id": "sentence-attempt-0002",
+                "unable_to_analyze": True,
+                "analysis": {},
+            },
+        )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["outcome"] == "NO_ATTEMPT"
+    assert data["teaching"]["required"] is True
+    assert data["mastery_updated"] is False
+    assert data["can_do_points"][0]["evidence_status"] == "teaching_only"
+    record_evidence.assert_not_awaited()
+    record_error.assert_awaited_once()
+    assert (
+        record_error.await_args.kwargs["recommended_drill"]
+        == "先定位谓语，再括出从句和修饰语"
+    )
 
 
 @pytest.mark.asyncio
@@ -400,6 +583,15 @@ async def test_list_reading_material_history_unknown_learner_returns_404(client,
         ("GET", "materials", None),
         ("POST", "materials", {"text": "A short reading material."}),
         ("POST", "generated-materials", {}),
+        (
+            "POST",
+            "materials/{material_id}/sentence-analysis",
+            {
+                "sentence_id": "reading-sentence-1",
+                "client_attempt_id": "sentence-attempt-cross-user",
+                "unable_to_analyze": True,
+            },
+        ),
         ("POST", "materials/{material_id}/complete", {}),
     ],
 )

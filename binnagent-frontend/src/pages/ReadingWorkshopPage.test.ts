@@ -1,8 +1,12 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import appSource from '@/App.tsx?raw'
-import type { ReadingMaterialHistoryItem } from '@/data/readingWorkshop'
+import {
+  sentenceAnalysisFailureFromResponse,
+  type ReadingMaterialHistoryItem,
+} from '@/data/readingWorkshop'
 import exploreSource from '@/pages/ExplorePage.tsx?raw'
 import knowledgeBaseSource from '@/pages/KnowledgeBasePage.tsx?raw'
+import readingWorkshopSource from '@/pages/ReadingWorkshopPage.tsx?raw'
 import {
   deriveReadingSourceLabel,
   normalizeReadingWorkshopDraft,
@@ -35,7 +39,7 @@ const UNTITLED_HISTORY_ITEM: ReadingMaterialHistoryItem = {
 
 function buildDraft(scopeId: string, text: string): ReadingWorkshopDraftV1 {
   return {
-    version: 2,
+    version: 3,
     learnerId: 'learner-1',
     scopeId,
     savedAt: Date.now(),
@@ -43,6 +47,7 @@ function buildDraft(scopeId: string, text: string): ReadingWorkshopDraftV1 {
     material: { title: '', text, level: 'general', goal: 'mixed', material_type: 'passage' },
     extensiveNotes: { gist: '', attitude: '', paragraphFunction: '', centralSentence: '' },
     intensiveNotesBySentenceId: {},
+    sentenceAnalysisBySentenceId: {},
     selectedSentenceId: null,
     selectedGrammarOptionIds: [],
     openedGrammarTopics: [],
@@ -75,6 +80,16 @@ function createLocalStorageMock() {
 afterEach(() => vi.unstubAllGlobals())
 
 describe('ReadingWorkshopPage session helpers', () => {
+  it('shows a specific retryable message for sentence-analysis schema failures', async () => {
+    const failure = await sentenceAnalysisFailureFromResponse(new Response(
+      JSON.stringify({ detail: 'Reading sentence analysis failed schema validation' }),
+      { status: 502, headers: { 'Content-Type': 'application/json' } }
+    ))
+
+    expect(failure.title).toBe('模型输出格式未通过校验')
+    expect(failure.message).toContain('作答仍保留在本地')
+  })
+
   it('recovers an untitled saved material and replaces an invalid attempt id', () => {
     const draft = normalizeReadingWorkshopDraft({
       version: 1,
@@ -114,6 +129,7 @@ describe('ReadingWorkshopPage session helpers', () => {
     expect(draft?.saveStatus).toBe('saved')
     expect(draft?.coachMessages).toHaveLength(1)
     expect(draft?.clientAttemptId.length).toBeGreaterThanOrEqual(8)
+    expect(draft?.sentenceAnalysisBySentenceId).toEqual({})
   })
 
   it('derives the displayed source from the active record after a material switch', () => {
@@ -213,5 +229,17 @@ describe('ReadingWorkshopPage session helpers', () => {
     expect(appSource).toContain('onNavigationBlockerChange={handleReadingNavigationBlockerChange}')
     expect(exploreSource).toContain('onNavigationBlockerChange={onReadingNavigationBlockerChange}')
     expect(knowledgeBaseSource).toContain('onNavigationBlockerChange={onReadingNavigationBlockerChange}')
+  })
+
+  it('keeps review conclusions ahead of supporting charts and progressively reveals details', () => {
+    const priorityIndex = readingWorkshopSource.indexOf('本次最重要的收获')
+    const sentenceReviewIndex = readingWorkshopSource.indexOf('逐句精读复盘')
+    const supportingDataIndex = readingWorkshopSource.indexOf('学习过程数据')
+
+    expect(priorityIndex).toBeGreaterThan(-1)
+    expect(sentenceReviewIndex).toBeGreaterThan(priorityIndex)
+    expect(supportingDataIndex).toBeGreaterThan(sentenceReviewIndex)
+    expect(readingWorkshopSource).toContain('查看完整拆解与我的作答')
+    expect(readingWorkshopSource).toContain('<details className="group">')
   })
 })

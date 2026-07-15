@@ -14,11 +14,22 @@ from src.api.deps import get_db_session, get_model_router, require_learner_acces
 from src.base_dictionary.enrichment import reading_translation
 from src.base_dictionary.service import get_entry as get_base_dictionary_entry
 from src.exercises import ExerciseAttemptCreate, ExerciseAttemptService, ExerciseTarget
+from src.memory.error_store import ErrorStore
+from src.memory.schemas import MemoryEventInput
+from src.memory.writer import MemoryWriter
+from src.models.adaptive import LearningEvidenceEvent
 from src.models.knowledge import CurriculumNode, ExerciseAttempt, KnowledgePoint, KnowledgeSource
 from src.models.learner import Learner, LearnerProfile
 from src.models.reading import ReadingMaterialHistory
 from src.prompts import PromptExecutionContext, PromptExecutor
 from src.providers.router import ModelRouter
+from src.tools.learning_tools import (
+    FindCanDoForQueryInput,
+    LearningObservationInput,
+    RecordLearningEvidenceInput,
+    find_can_do_for_query,
+    record_learning_evidence,
+)
 
 router = APIRouter(tags=["reading-workshop"])
 
@@ -53,6 +64,91 @@ class ReadingSelectionTranslationResponse(BaseModel):
     confidence: float
     source: Literal["base_dictionary", "model"] = "model"
     build_version: str | None = None
+
+
+class ReadingSentenceAnalysisNotes(BaseModel):
+    main_structure: str = Field(default="", max_length=2000)
+    phrase_notes: str = Field(default="", max_length=2000)
+    evidence_note: str = Field(default="", max_length=2000)
+
+    def has_substantive_attempt(self) -> bool:
+        return any(
+            len(value.strip()) >= 2
+            for value in (self.main_structure, self.phrase_notes, self.evidence_note)
+        )
+
+
+class ReadingSentenceAnalysisRequest(BaseModel):
+    sentence_id: str = Field(min_length=1, max_length=100)
+    client_attempt_id: str = Field(min_length=8, max_length=100)
+    analysis: ReadingSentenceAnalysisNotes = Field(default_factory=ReadingSentenceAnalysisNotes)
+    unable_to_analyze: bool = False
+    response_time_ms: int | None = Field(default=None, ge=0, le=24 * 60 * 60 * 1000)
+
+    @field_validator("sentence_id", "client_attempt_id")
+    @classmethod
+    def sentence_analysis_ids_must_not_be_blank(cls, value: str) -> str:
+        normalized = value.strip()
+        if not normalized:
+            raise ValueError("value must not be blank")
+        return normalized
+
+
+class ReadingSentencePhraseAnalysis(BaseModel):
+    text: str
+    role: str
+    meaning: str
+
+
+class ReadingSentenceCorrectAnalysis(BaseModel):
+    main_structure: str
+    clause_layers: list[str] = Field(default_factory=list)
+    phrases: list[ReadingSentencePhraseAnalysis] = Field(default_factory=list)
+    sentence_meaning: str
+
+
+class ReadingSentenceTeachingContent(BaseModel):
+    required: bool
+    explanation: str
+    steps: list[str] = Field(default_factory=list)
+    checkpoint: str
+
+
+class ReadingSentenceCanDoResult(BaseModel):
+    can_do_id: str
+    knowledge_point_id: uuid.UUID
+    statement: str
+    cefr_level: str
+    category: str
+    subcategory: str
+    confidence: float
+    mastery_before: float | None = None
+    mastery_after: float | None = None
+    evidence_status: str
+
+
+class ReadingSentenceErrorPatternResult(BaseModel):
+    tag: str
+    description: str
+    recommended_drill: str
+
+
+class ReadingSentenceAnalysisResponse(BaseModel):
+    material_id: uuid.UUID
+    sentence_id: str
+    sentence: str
+    event_id: str
+    workflow_stage: Literal["review"] = "review"
+    outcome: Literal["SUCCESS", "UNSUCCESSFUL", "NO_ATTEMPT"]
+    score: float = Field(ge=0, le=1)
+    confidence: float = Field(ge=0, le=1)
+    feedback: str
+    correct_analysis: ReadingSentenceCorrectAnalysis
+    teaching: ReadingSentenceTeachingContent
+    can_do_points: list[ReadingSentenceCanDoResult] = Field(default_factory=list)
+    error_patterns: list[ReadingSentenceErrorPatternResult] = Field(default_factory=list)
+    mastery_updated: bool
+    prompt_execution_record_id: uuid.UUID | None = None
 
 
 class ReadingMaterialHistoryRequest(BaseModel):
@@ -244,6 +340,266 @@ async def translate_reading_selection(
         confidence=float(payload["confidence"]),
         source="model",
     )
+
+
+@router.post(
+    "/api/learners/{learner_id}/reading-workshop/materials/{material_id}/sentence-analysis",
+    response_model=ReadingSentenceAnalysisResponse,
+)
+async def analyze_reading_sentence(
+    learner_id: uuid.UUID,
+    material_id: uuid.UUID,
+    body: ReadingSentenceAnalysisRequest,
+    _: Learner = Depends(require_learner_access),
+    db: AsyncSession = Depends(get_db_session),
+    model_router: ModelRouter = Depends(get_model_router),
+) -> ReadingSentenceAnalysisResponse:
+    material_result = await db.execute(
+        select(ReadingMaterialHistory).where(
+            ReadingMaterialHistory.id == material_id,
+            ReadingMaterialHistory.learner_id == learner_id,
+        )
+    )
+    material = material_result.scalar_one_or_none()
+    if material is None:
+        raise HTTPException(status_code=404, detail="Reading material not found")
+    sentence = _reading_sentence_by_id(material, body.sentence_id)
+    event_id = f"reading-sentence-analysis:{material.id}:{body.client_attempt_id}"
+
+    existing_result = await db.execute(
+        select(LearningEvidenceEvent).where(
+            LearningEvidenceEvent.learner_id == learner_id,
+            LearningEvidenceEvent.event_id == event_id,
+        )
+    )
+    existing = existing_result.scalar_one_or_none()
+    stored_response = (existing.result or {}).get("reading_analysis") if existing else None
+    if isinstance(stored_response, dict):
+        return ReadingSentenceAnalysisResponse.model_validate(stored_response)
+
+    unable_to_analyze = body.unable_to_analyze or not body.analysis.has_substantive_attempt()
+    candidate_result = await find_can_do_for_query(
+        db,
+        FindCanDoForQueryInput(
+            query=f"分析这个英语句子的句法、从句与语法功能：{sentence}",
+            user_level=material.level,
+            top_k=8,
+        ),
+    )
+    candidates = list(candidate_result.get("candidates") or candidate_result.get("matches") or [])
+    prompt_id = (
+        "reading.sentence_analysis_no_attempt"
+        if unable_to_analyze
+        else "reading.sentence_analysis"
+    )
+    execution = await PromptExecutor(db=db, model_router=model_router).execute(
+        prompt_id=prompt_id,
+        variables={
+            "sentence": sentence,
+            "learner_level": material.level,
+            "unable_to_analyze": unable_to_analyze,
+            "learner_analysis": body.analysis.model_dump(mode="json"),
+            "can_do_candidates": candidates,
+        },
+        context=PromptExecutionContext(
+            learner_id=learner_id,
+            source_module="api.reading",
+            task_id="sentence_analysis",
+            target_type="reading_passage",
+            target_id=material.id,
+            metadata={"sentence_id": body.sentence_id, "event_id": event_id},
+        ),
+    )
+    if execution.decision != "accepted" or not execution.validated_output:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Reading sentence analysis failed schema validation",
+        )
+    payload = dict(execution.validated_output)
+    if unable_to_analyze:
+        payload = {
+            **payload,
+            "outcome": "NO_ATTEMPT",
+            "score": 0.0,
+            "teaching": {**dict(payload["teaching"]), "required": True},
+            "error_patterns": [],
+        }
+
+    candidate_by_id = {str(item["can_do_id"]): item for item in candidates}
+    selected_ids = list(
+        dict.fromkeys(
+            str(value)
+            for value in payload.get("selected_can_do_ids") or []
+            if str(value) in candidate_by_id
+        )
+    )
+    assessable_ids = [
+        can_do_id
+        for can_do_id in selected_ids
+        if float(candidate_by_id[can_do_id].get("confidence") or 0.0) >= 0.35
+    ]
+    outcome = str(payload["outcome"])
+    if outcome == "NO_ATTEMPT":
+        payload["score"] = 0.0
+        payload["teaching"] = {**dict(payload["teaching"]), "required": True}
+    if outcome != "SUCCESS" and not payload.get("error_patterns"):
+        payload["error_patterns"] = [
+            {
+                "tag": "no_attempt" if outcome == "NO_ATTEMPT" else "analysis_incomplete",
+                "description": (
+                    "暂时无法独立开始长句拆解。"
+                    if outcome == "NO_ATTEMPT"
+                    else str(payload["feedback"])
+                ),
+                "recommended_drill": (
+                    "先定位谓语，再括出从句和修饰语"
+                    if outcome == "NO_ATTEMPT"
+                    else "对照正确主干重做本句"
+                ),
+            }
+        ]
+    evidence_result: dict[str, Any]
+    if outcome != "NO_ATTEMPT" and assessable_ids:
+        evidence_result = await record_learning_evidence(
+            db,
+            learner_id,
+            RecordLearningEvidenceInput(
+                source="reading_sentence_analysis",
+                question_id=f"{material.id}:{body.sentence_id}",
+                event_id=event_id,
+                observations=[
+                    LearningObservationInput(
+                        knowledge_id=can_do_id,
+                        outcome="SUCCESS" if outcome == "SUCCESS" else "UNSUCCESSFUL",
+                        confidence=float(payload["confidence"]),
+                        evidence={
+                            "learner_answer": body.analysis.model_dump(mode="json"),
+                            "expected_answer": payload["correct_analysis"],
+                            "sentence": sentence,
+                            "sentence_id": body.sentence_id,
+                            "response_time_ms": body.response_time_ms,
+                        },
+                        evidence_mode="production",
+                        item_difficulty_prior=0.55,
+                    )
+                    for can_do_id in assessable_ids
+                ],
+                raw_evidence={
+                    "material_id": str(material.id),
+                    "sentence_id": body.sentence_id,
+                    "analysis": body.analysis.model_dump(mode="json"),
+                },
+            ),
+        )
+        event_result = await db.execute(
+            select(LearningEvidenceEvent).where(
+                LearningEvidenceEvent.learner_id == learner_id,
+                LearningEvidenceEvent.event_id == event_id,
+            )
+        )
+        event = event_result.scalar_one()
+    else:
+        evidence_result = {"status": "no_updates", "observation_results": []}
+        event = LearningEvidenceEvent(
+            learner_id=learner_id,
+            event_id=event_id,
+            source="reading_sentence_analysis",
+            question_id=f"{material.id}:{body.sentence_id}",
+            observations=[],
+            raw_evidence={
+                "material_id": str(material.id),
+                "sentence_id": body.sentence_id,
+                "analysis": body.analysis.model_dump(mode="json"),
+                "unable_to_analyze": unable_to_analyze,
+            },
+            matcher_model_version=str(candidate_result.get("matcher_version") or "unknown"),
+            status="no_updates",
+            result={},
+        )
+        db.add(event)
+        await db.flush()
+
+    observation_by_id = {
+        str(item.get("knowledge_id")): item
+        for item in evidence_result.get("observation_results") or []
+    }
+    can_do_points = [
+        ReadingSentenceCanDoResult(
+            can_do_id=can_do_id,
+            knowledge_point_id=uuid.UUID(str(candidate_by_id[can_do_id]["knowledge_point_id"])),
+            statement=str(candidate_by_id[can_do_id]["statement"]),
+            cefr_level=str(candidate_by_id[can_do_id]["cefr_level"]),
+            category=str(candidate_by_id[can_do_id]["category"]),
+            subcategory=str(candidate_by_id[can_do_id]["subcategory"]),
+            confidence=float(candidate_by_id[can_do_id]["confidence"]),
+            mastery_before=observation_by_id.get(can_do_id, {}).get("mastery_before"),
+            mastery_after=observation_by_id.get(can_do_id, {}).get("mastery_after"),
+            evidence_status=str(observation_by_id.get(can_do_id, {}).get("status") or "teaching_only"),
+        )
+        for can_do_id in selected_ids
+    ]
+    error_patterns = [
+        ReadingSentenceErrorPatternResult.model_validate(item)
+        for item in payload.get("error_patterns") or []
+    ]
+    for item in error_patterns if outcome != "SUCCESS" else []:
+        await ErrorStore(db).record_error(
+            learner_id=learner_id,
+            skill="reading",
+            subskill="sentence_analysis",
+            pattern=f"reading_sentence_{item.tag}",
+            description=item.description,
+            severity="medium" if outcome == "UNSUCCESSFUL" else "low",
+            confidence=float(payload["confidence"]),
+            recommended_drill=item.recommended_drill,
+            evidence_ref=f"learning_evidence_event:{event.id}",
+            commit=False,
+        )
+
+    response = ReadingSentenceAnalysisResponse(
+        material_id=material.id,
+        sentence_id=body.sentence_id,
+        sentence=sentence,
+        event_id=event_id,
+        outcome=outcome,
+        score=float(payload["score"]),
+        confidence=float(payload["confidence"]),
+        feedback=str(payload["feedback"]),
+        correct_analysis=ReadingSentenceCorrectAnalysis.model_validate(payload["correct_analysis"]),
+        teaching=ReadingSentenceTeachingContent.model_validate(payload["teaching"]),
+        can_do_points=can_do_points,
+        error_patterns=error_patterns,
+        mastery_updated=any(item.evidence_status == "applied" for item in can_do_points),
+        prompt_execution_record_id=execution.execution_record_id,
+    )
+    await MemoryWriter(db).record_event(
+        MemoryEventInput(
+            learner_id=learner_id,
+            event_type="reading_sentence_analysis_review",
+            skill="reading",
+            subskill="sentence_analysis",
+            source_type="learning_evidence_event",
+            source_id=str(event.id),
+            payload={
+                "summary": response.feedback,
+                "material_id": str(material.id),
+                "sentence_id": body.sentence_id,
+                "outcome": response.outcome,
+                "score": response.score,
+                "can_do_ids": [item.can_do_id for item in can_do_points],
+                "error_patterns": [item.tag for item in error_patterns],
+                "teaching_required": response.teaching.required,
+                "recommended_review": response.teaching.steps,
+            },
+            confidence=response.confidence,
+        )
+    )
+    event.result = {
+        **dict(event.result or {}),
+        "reading_analysis": response.model_dump(mode="json"),
+    }
+    await db.flush()
+    return response
 
 
 @router.post("/api/reading-workshop/title-suggestion", response_model=ReadingTitleSuggestionResponse)
@@ -872,6 +1228,26 @@ def _validate_analyzed_sentence_ids(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail="analyzed_sentence_ids must reference sentences in this reading material",
         )
+
+
+def _reading_sentence_by_id(
+    material: ReadingMaterialHistory,
+    sentence_id: str,
+) -> str:
+    match = re.fullmatch(r"reading-sentence-([1-9][0-9]*)", sentence_id)
+    sentences = _split_sentences(_normalize_text(material.text))
+    if match is None:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail="sentence_id must reference a sentence in this reading material",
+        )
+    sentence_index = int(match.group(1)) - 1
+    if sentence_index >= len(sentences):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail="sentence_id must reference a sentence in this reading material",
+        )
+    return sentences[sentence_index]
 
 
 def _text_hash(text: str) -> str:

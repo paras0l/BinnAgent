@@ -493,6 +493,124 @@ READING_SELECTION_TRANSLATION_SCHEMA: dict[str, Any] = {
     },
 }
 
+READING_SENTENCE_ANALYSIS_SCHEMA: dict[str, Any] = {
+    "type": "object",
+    "additionalProperties": False,
+    "required": [
+        "outcome",
+        "score",
+        "confidence",
+        "feedback",
+        "correct_analysis",
+        "teaching",
+        "selected_can_do_ids",
+        "error_patterns",
+    ],
+    "properties": {
+        "outcome": {
+            "type": "string",
+            "enum": ["SUCCESS", "UNSUCCESSFUL", "NO_ATTEMPT"],
+        },
+        "score": {"type": "number", "minimum": 0, "maximum": 1},
+        "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+        "feedback": {"type": "string", "minLength": 1, "maxLength": 240},
+        "correct_analysis": {
+            "type": "object",
+            "additionalProperties": False,
+            "required": ["main_structure", "clause_layers", "phrases", "sentence_meaning"],
+            "properties": {
+                "main_structure": {"type": "string", "minLength": 1, "maxLength": 240},
+                "clause_layers": {
+                    "type": "array",
+                    "maxItems": 6,
+                    "items": {"type": "string", "minLength": 1, "maxLength": 240},
+                },
+                "phrases": {
+                    "type": "array",
+                    "maxItems": 6,
+                    "items": {
+                        "type": "object",
+                        "additionalProperties": False,
+                        "required": ["text", "role", "meaning"],
+                        "properties": {
+                            "text": {"type": "string", "minLength": 1, "maxLength": 200},
+                            "role": {"type": "string", "minLength": 1, "maxLength": 160},
+                            "meaning": {"type": "string", "minLength": 1, "maxLength": 200},
+                        },
+                    },
+                },
+                "sentence_meaning": {"type": "string", "minLength": 1, "maxLength": 500},
+            },
+        },
+        "teaching": {
+            "type": "object",
+            "additionalProperties": False,
+            "required": ["required", "explanation", "steps", "checkpoint"],
+            "properties": {
+                "required": {"type": "boolean"},
+                "explanation": {"type": "string", "maxLength": 500},
+                "steps": {
+                    "type": "array",
+                    "maxItems": 4,
+                    "items": {"type": "string", "minLength": 1, "maxLength": 240},
+                },
+                "checkpoint": {"type": "string", "maxLength": 240},
+            },
+        },
+        "selected_can_do_ids": {
+            "type": "array",
+            "maxItems": 3,
+            "items": {"type": "string", "minLength": 1, "maxLength": 255},
+        },
+        "error_patterns": {
+            "type": "array",
+            "maxItems": 5,
+            "items": {
+                "type": "object",
+                "additionalProperties": False,
+                "required": ["tag", "description", "recommended_drill"],
+                "properties": {
+                    "tag": {
+                        "type": "string",
+                        "enum": [
+                            "main_structure_missed",
+                            "clause_boundary_confusion",
+                            "predicate_misidentified",
+                            "modifier_scope_confusion",
+                            "phrase_function_confusion",
+                            "evidence_link_missing",
+                            "analysis_incomplete",
+                            "no_attempt",
+                        ],
+                    },
+                    "description": {"type": "string", "minLength": 1, "maxLength": 240},
+                    "recommended_drill": {"type": "string", "minLength": 1, "maxLength": 200},
+                },
+            },
+        },
+    },
+}
+
+READING_SENTENCE_NO_ATTEMPT_SCHEMA: dict[str, Any] = {
+    "type": "object",
+    "additionalProperties": False,
+    "required": [
+        "confidence",
+        "feedback",
+        "correct_analysis",
+        "teaching",
+        "selected_can_do_ids",
+    ],
+    "properties": {
+        "confidence": READING_SENTENCE_ANALYSIS_SCHEMA["properties"]["confidence"],
+        "feedback": READING_SENTENCE_ANALYSIS_SCHEMA["properties"]["feedback"],
+        "correct_analysis": READING_SENTENCE_ANALYSIS_SCHEMA["properties"]["correct_analysis"],
+        "teaching": READING_SENTENCE_ANALYSIS_SCHEMA["properties"]["teaching"],
+        "selected_can_do_ids": READING_SENTENCE_ANALYSIS_SCHEMA["properties"]
+        ["selected_can_do_ids"],
+    },
+}
+
 CLASSROOM_UI_SCHEMA: dict[str, Any] = {
     "type": "object",
     "properties": {
@@ -615,6 +733,8 @@ SCHEMA_REGISTRY: dict[str, dict[str, Any]] = {
     "ExploreCapabilityRerankOutput": EXPLORE_CAPABILITY_RERANK_SCHEMA,
     "ReadingMaterialGenerationOutput": READING_MATERIAL_GENERATION_SCHEMA,
     "ReadingSelectionTranslationOutput": READING_SELECTION_TRANSLATION_SCHEMA,
+    "ReadingSentenceAnalysisOutput": READING_SENTENCE_ANALYSIS_SCHEMA,
+    "ReadingSentenceNoAttemptOutput": READING_SENTENCE_NO_ATTEMPT_SCHEMA,
     "ClassroomUiOutput": CLASSROOM_UI_SCHEMA,
     "ClassroomTextbookCoachOutput": CLASSROOM_TEXTBOOK_COACH_SCHEMA,
     "BaseDictionaryTranslationOutput": BASE_DICTIONARY_TRANSLATION_SCHEMA,

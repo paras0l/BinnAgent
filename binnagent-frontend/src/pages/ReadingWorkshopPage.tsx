@@ -28,7 +28,6 @@ import {
 import { FeatureHero } from '@/components/layout/FeatureHero'
 import { PageShell } from '@/components/layout/PageShell'
 import type { WorkspaceTab } from '@/components/layout/WorkspaceTabs'
-import { ExerciseBlock } from '@/components/exercise/ExerciseBlock'
 import { Button } from '@/components/ui/Button'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { FormField } from '@/components/ui/FormField'
@@ -39,7 +38,6 @@ import { useFocusTrap } from '@/hooks/useFocusTrap'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
 import {
   READING_GOAL_LABELS,
-  READING_GRAMMAR_OPTIONS,
   READING_LEVEL_LABELS,
   buildReadingCompletionPayload,
   buildReadingCompletionState,
@@ -48,20 +46,21 @@ import {
   countEnglishWords,
   estimateReadingMinutes,
   fingerprintReadingCompletionPayload,
+  sentenceAnalysisFailureFromResponse,
   splitReadingSentences,
-  suggestGrammarOptionIds,
   uniqueList,
-  type ReadingGrammarOption,
   type ReadingKeywordCandidate,
   type ReadingLevel,
   type ReadingMaterial,
   type ReadingMaterialCompleteResponse,
   type ReadingMaterialHistoryItem,
   type ReadingSentence,
+  type ReadingSentenceAnalysisResponse,
   type ReadingSentenceHint,
   type ReadingTitleSuggestionResponse,
   type ReadingTrainingGoal,
   type ReadingWorkspace,
+  type SentenceAnalysisFailure,
 } from '@/data/readingWorkshop'
 import {
   READING_DRAFT_VERSION,
@@ -77,8 +76,6 @@ import {
   type ReadingWorkshopDraftV1,
 } from '@/data/readingWorkshopSession'
 import type { Learner, LearnerProfile } from '@/types'
-import type { ExerciseTarget } from '@/types/exercises'
-import { GrammarPage } from '@/pages/GrammarPage'
 import { buildReadingCoachContext } from '@/utils/readingCoachContext'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
@@ -163,16 +160,6 @@ const WORKSPACE_TABS: WorkspaceTab<ReadingWorkspace>[] = [
   { id: 'review', label: '沉淀复盘', description: '本次记录', icon: <ClipboardList className="h-4 w-4" /> },
 ]
 
-const READING_GRAMMAR_EXERCISE_TARGET_IDS: Record<string, string> = {
-  主将从现: 'present-for-future',
-  'because 与 because of': 'because-because-of',
-  '定语从句中 which/that 的选择': 'which-that-relative',
-}
-
-const READING_GRAMMAR_EXERCISE_TARGETS: Record<string, ExerciseTarget> = Object.fromEntries(
-  READING_GRAMMAR_OPTIONS.map((option) => [option.id, getGrammarExerciseTargetFromReadingOption(option)])
-)
-
 export function ReadingWorkshopPage({
   learner,
   onBack,
@@ -216,6 +203,11 @@ export function ReadingWorkshopPage({
   const [intensiveNotesBySentenceId, setIntensiveNotesBySentenceId] = useState<IntensiveNotesBySentenceId>(
     recoveredDraft?.intensiveNotesBySentenceId ?? {}
   )
+  const [sentenceAnalysisBySentenceId, setSentenceAnalysisBySentenceId] = useState<Record<string, ReadingSentenceAnalysisResponse>>(
+    recoveredDraft?.sentenceAnalysisBySentenceId ?? {}
+  )
+  const [sentenceAnalysisStatus, setSentenceAnalysisStatus] = useState<'idle' | 'submitting' | 'error'>('idle')
+  const [sentenceAnalysisFailure, setSentenceAnalysisFailure] = useState<SentenceAnalysisFailure | null>(null)
   const [titleMode, setTitleMode] = useState<TitleMode>(
     recoveredDraft?.titleMode ?? (hasInitialMaterial && initialMaterial?.title ? 'auto' : 'empty')
   )
@@ -242,11 +234,6 @@ export function ReadingWorkshopPage({
     recoveredDraft?.completionResult ?? null
   )
   const [selectedSentenceId, setSelectedSentenceId] = useState<string | null>(recoveredDraft?.selectedSentenceId ?? null)
-  const [selectedGrammarOptionIds, setSelectedGrammarOptionIds] = useState<string[]>(
-    recoveredDraft?.selectedGrammarOptionIds ?? []
-  )
-  const [openedGrammarTopics, setOpenedGrammarTopics] = useState<string[]>(recoveredDraft?.openedGrammarTopics ?? [])
-  const [grammarTopic, setGrammarTopic] = useState<string | null>(null)
   const [generationTopic, setGenerationTopic] = useState(learnerProfile?.interest_topics?.[0] ?? '')
   const [generationStatus, setGenerationStatus] = useState<'idle' | 'generating' | 'error'>('idle')
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
@@ -277,6 +264,12 @@ export function ReadingWorkshopPage({
   const saveAbortControllerRef = useRef<AbortController | null>(null)
   const completionAbortControllerRef = useRef<AbortController | null>(null)
   const generationAbortControllerRef = useRef<AbortController | null>(null)
+  const sentenceAnalysisAttemptIdsRef = useRef<Record<string, string>>({})
+  const sentenceAnalysisRequestRef = useRef<{
+    controller: AbortController
+    materialRevision: number
+    sentenceId: string
+  } | null>(null)
   const coachRequestRef = useRef<PendingCoachRequest | null>(null)
   const pendingMaterialSwitchRef = useRef(pendingMaterialSwitch)
   const skipPersistOnUnmountRef = useRef(false)
@@ -297,20 +290,15 @@ export function ReadingWorkshopPage({
     [intensiveNotesBySentenceId, selectedSentence]
   )
   const analyzedSentences = useMemo(
-    () => sentences.filter((sentence) => isSentenceAnalysisComplete(intensiveNotesBySentenceId[sentence.id])),
-    [intensiveNotesBySentenceId, sentences]
+    () => sentences.filter((sentence) => Boolean(sentenceAnalysisBySentenceId[sentence.id])),
+    [sentenceAnalysisBySentenceId, sentences]
   )
+  const selectedSentenceAnalysis = selectedSentence
+    ? sentenceAnalysisBySentenceId[selectedSentence.id] ?? null
+    : null
   const selectedSentenceHints = useMemo(
     () => buildSentenceFocusHints(selectedSentence?.text ?? ''),
     [selectedSentence]
-  )
-  const suggestedGrammarOptionIds = useMemo(
-    () => suggestGrammarOptionIds(selectedSentence?.text ?? ''),
-    [selectedSentence]
-  )
-  const selectedGrammarOptions = useMemo(
-    () => READING_GRAMMAR_OPTIONS.filter((option) => selectedGrammarOptionIds.includes(option.id)),
-    [selectedGrammarOptionIds]
   )
   const canUseMaterial = material.text.trim().length > 0
   const hasExtensiveEvidence = Boolean(extensiveNotes.gist.trim() && extensiveNotes.centralSentence.trim())
@@ -320,8 +308,7 @@ export function ReadingWorkshopPage({
     || extensiveNotes.paragraphFunction.trim()
     || extensiveNotes.centralSentence.trim()
     || Object.values(intensiveNotesBySentenceId).some(hasAnyIntensiveNote)
-    || selectedGrammarOptionIds.length
-    || openedGrammarTopics.length
+    || Object.keys(sentenceAnalysisBySentenceId).length > 0
     || coachMessages.length
   )
   const hasUnsavedMaterial = Boolean(
@@ -334,6 +321,7 @@ export function ReadingWorkshopPage({
     || saveStatus === 'saving'
     || completeStatus === 'saving'
     || generationStatus === 'generating'
+    || sentenceAnalysisStatus === 'submitting'
   )
   const activeSourceLabel = useMemo(() => deriveReadingSourceLabel({
     record: activeMaterialRecord,
@@ -402,6 +390,10 @@ export function ReadingWorkshopPage({
     saveRequestSequenceRef.current += 1
     saveAbortControllerRef.current?.abort()
     saveAbortControllerRef.current = null
+    sentenceAnalysisRequestRef.current?.controller.abort()
+    sentenceAnalysisRequestRef.current = null
+    setSentenceAnalysisStatus('idle')
+    setSentenceAnalysisFailure(null)
     invalidateCompletion()
     invalidateCoachRequest(preserveCoachQuestion)
     if (attemptSubmitted) {
@@ -419,10 +411,11 @@ export function ReadingWorkshopPage({
     setWorkspace('input')
     setExtensiveNotes(EMPTY_EXTENSIVE_NOTES)
     setIntensiveNotesBySentenceId({})
+    setSentenceAnalysisBySentenceId({})
+    setSentenceAnalysisStatus('idle')
+    setSentenceAnalysisFailure(null)
+    sentenceAnalysisAttemptIdsRef.current = {}
     setSelectedSentenceId(null)
-    setSelectedGrammarOptionIds([])
-    setOpenedGrammarTopics([])
-    setGrammarTopic(null)
     setCompleteStatus('idle')
     setCompletionResult(null)
     setCoachThreadId(null)
@@ -438,6 +431,17 @@ export function ReadingWorkshopPage({
   const updateIntensiveNote = useCallback((key: keyof IntensiveNotes, value: string) => {
     if (!selectedSentence) return
     markEvidenceMutation()
+    sentenceAnalysisRequestRef.current?.controller.abort()
+    sentenceAnalysisRequestRef.current = null
+    delete sentenceAnalysisAttemptIdsRef.current[selectedSentence.id]
+    setSentenceAnalysisBySentenceId((current) => {
+      if (!current[selectedSentence.id]) return current
+      const next = { ...current }
+      delete next[selectedSentence.id]
+      return next
+    })
+    setSentenceAnalysisStatus('idle')
+    setSentenceAnalysisFailure(null)
     setIntensiveNotesBySentenceId((current) => ({
       ...current,
       [selectedSentence.id]: {
@@ -497,7 +501,10 @@ export function ReadingWorkshopPage({
             selectedText: activeTextSelection,
             extensiveNotes,
             intensiveNotes,
-            grammarTopics: selectedGrammarOptions.map((option) => option.label),
+            grammarTopics: uniqueList(
+              Object.values(sentenceAnalysisBySentenceId)
+                .flatMap((result) => result.can_do_points.map((point) => point.statement))
+            ),
           }),
         }),
         signal: controller.signal,
@@ -532,7 +539,7 @@ export function ReadingWorkshopPage({
     intensiveNotes,
     learner.id,
     material,
-    selectedGrammarOptions,
+    sentenceAnalysisBySentenceId,
     selectedSentence,
     workspace,
   ])
@@ -541,6 +548,7 @@ export function ReadingWorkshopPage({
     saveAbortControllerRef.current?.abort()
     completionAbortControllerRef.current?.abort()
     generationAbortControllerRef.current?.abort()
+    sentenceAnalysisRequestRef.current?.controller.abort()
     coachRequestRef.current?.controller.abort()
   }, [])
 
@@ -576,9 +584,10 @@ export function ReadingWorkshopPage({
     material,
     extensiveNotes,
     intensiveNotesBySentenceId,
+    sentenceAnalysisBySentenceId,
     selectedSentenceId,
-    selectedGrammarOptionIds,
-    openedGrammarTopics,
+    selectedGrammarOptionIds: [],
+    openedGrammarTopics: [],
     coachThreadId,
     coachMessages: coachMessages.slice(-50),
     coachDraft,
@@ -606,13 +615,12 @@ export function ReadingWorkshopPage({
     draftScopeId,
     extensiveNotes,
     intensiveNotesBySentenceId,
+    sentenceAnalysisBySentenceId,
     learner.id,
     lastSubmittedEvidenceFingerprint,
     material,
-    openedGrammarTopics,
     recoveredDraft?.savedAt,
     saveStatus,
-    selectedGrammarOptionIds,
     selectedSentenceId,
     titleMode,
     titleSuggestionStatus,
@@ -749,6 +757,103 @@ export function ReadingWorkshopPage({
       }
     }
   }, [activeMaterialRecord, learner.id, material.goal, material.level, material.material_type, material.text, material.title, moveDraftScope])
+
+  const submitSentenceAnalysis = useCallback(async (unableToAnalyze: boolean) => {
+    if (!selectedSentence || sentenceAnalysisStatus === 'submitting') return
+    const controller = new AbortController()
+    const requestMaterialRevision = materialRevisionRef.current
+    sentenceAnalysisRequestRef.current?.controller.abort()
+    sentenceAnalysisRequestRef.current = {
+      controller,
+      materialRevision: requestMaterialRevision,
+      sentenceId: selectedSentence.id,
+    }
+    const isCurrentRequest = () => (
+      sentenceAnalysisRequestRef.current?.controller === controller
+      && sentenceAnalysisRequestRef.current.materialRevision === materialRevisionRef.current
+      && sentenceAnalysisRequestRef.current.sentenceId === selectedSentence.id
+      && !controller.signal.aborted
+    )
+    setSentenceAnalysisStatus('submitting')
+    setSentenceAnalysisFailure(null)
+    let materialId = activeMaterialId
+    if (!materialId || saveStatus !== 'saved') {
+      const saved = await saveCurrentMaterial()
+      if (!isCurrentRequest()) return
+      if (!saved) {
+        setSentenceAnalysisStatus('error')
+        setSentenceAnalysisFailure({
+          title: '材料保存失败',
+          message: '句子分析前需要先保存当前材料。你的作答仍保留在本地，可以直接重试。',
+        })
+        return
+      }
+      materialId = saved.id
+    }
+    const attemptId = sentenceAnalysisAttemptIdsRef.current[selectedSentence.id]
+      ?? createClientAttemptId()
+    sentenceAnalysisAttemptIdsRef.current[selectedSentence.id] = attemptId
+    try {
+      const response = await fetch(
+        `/api/learners/${learner.id}/reading-workshop/materials/${materialId}/sentence-analysis`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sentence_id: selectedSentence.id,
+            client_attempt_id: attemptId,
+            unable_to_analyze: unableToAnalyze,
+            analysis: {
+              main_structure: intensiveNotes.mainStructure,
+              phrase_notes: intensiveNotes.phraseNotes,
+              evidence_note: intensiveNotes.evidenceNote,
+            },
+          }),
+          signal: controller.signal,
+        }
+      )
+      if (!response.ok) {
+        const failure = await sentenceAnalysisFailureFromResponse(response)
+        throw Object.assign(new Error(failure.message), { failure })
+      }
+      const result = (await response.json()) as ReadingSentenceAnalysisResponse
+      if (!isCurrentRequest()) return
+      setSentenceAnalysisBySentenceId((current) => ({
+        ...current,
+        [selectedSentence.id]: result,
+      }))
+      setSentenceAnalysisStatus('idle')
+      setSentenceAnalysisFailure(null)
+      setWorkspace('review')
+    } catch (error) {
+      if (!isCurrentRequest()) return
+      console.error('Reading sentence analysis error:', error)
+      setSentenceAnalysisStatus('error')
+      const failure = (
+        typeof error === 'object'
+        && error !== null
+        && 'failure' in error
+      ) ? (error as { failure: SentenceAnalysisFailure }).failure : {
+        title: '无法连接句子分析服务',
+        message: '请检查网络或后端服务后直接重试，你的作答仍保留在本地。',
+      }
+      setSentenceAnalysisFailure(failure)
+    } finally {
+      if (sentenceAnalysisRequestRef.current?.controller === controller) {
+        sentenceAnalysisRequestRef.current = null
+      }
+    }
+  }, [
+    activeMaterialId,
+    intensiveNotes.evidenceNote,
+    intensiveNotes.mainStructure,
+    intensiveNotes.phraseNotes,
+    learner.id,
+    saveCurrentMaterial,
+    saveStatus,
+    selectedSentence,
+    sentenceAnalysisStatus,
+  ])
 
   useEffect(() => {
     const text = material.text.trim()
@@ -895,9 +1000,8 @@ export function ReadingWorkshopPage({
       setWorkspace(scopedDraft.workspace)
       setExtensiveNotes(scopedDraft.extensiveNotes)
       setIntensiveNotesBySentenceId(scopedDraft.intensiveNotesBySentenceId)
+      setSentenceAnalysisBySentenceId(scopedDraft.sentenceAnalysisBySentenceId)
       setSelectedSentenceId(scopedDraft.selectedSentenceId)
-      setSelectedGrammarOptionIds(scopedDraft.selectedGrammarOptionIds)
-      setOpenedGrammarTopics(scopedDraft.openedGrammarTopics)
       setCoachThreadId(scopedDraft.coachThreadId)
       setCoachMessages(scopedDraft.coachMessages)
       setCoachDraft(scopedDraft.coachDraft)
@@ -987,22 +1091,6 @@ export function ReadingWorkshopPage({
     setActiveTextSelection(null)
   }
 
-  const toggleGrammarOption = (optionId: string) => {
-    markEvidenceMutation()
-    setSelectedGrammarOptionIds((current) => (
-      current.includes(optionId)
-        ? current.filter((id) => id !== optionId)
-        : uniqueList([...current, optionId])
-    ))
-  }
-
-  const openGrammarOption = (option: ReadingGrammarOption) => {
-    markEvidenceMutation()
-    setSelectedGrammarOptionIds((current) => uniqueList([...current, option.id]))
-    setOpenedGrammarTopics((current) => uniqueList([...current, option.grammarTopicTitle]))
-    setGrammarTopic(option.grammarTopicTitle)
-  }
-
   const completeReadingMaterial = useCallback(async () => {
     if (!completionState.canComplete) return
     completionAbortControllerRef.current?.abort()
@@ -1031,13 +1119,26 @@ export function ReadingWorkshopPage({
       }
       const intensiveSummary = analyzedSentences.flatMap((sentence) => {
         const notes = intensiveNotesBySentenceId[sentence.id] ?? EMPTY_INTENSIVE_NOTES
+        const analysis = sentenceAnalysisBySentenceId[sentence.id]
         return [
           `Sentence ${sentence.order}: ${sentence.text}`,
           notes.mainStructure ? `主干：${notes.mainStructure}` : '',
           notes.phraseNotes ? `词组：${notes.phraseNotes}` : '',
           notes.evidenceNote ? `证据：${notes.evidenceNote}` : '',
+          analysis ? `评估：${analysis.outcome} / ${Math.round(analysis.score * 100)}；${analysis.feedback}` : '',
+          analysis ? `正确主干：${analysis.correct_analysis.main_structure}` : '',
         ].filter(Boolean)
       })
+      const dynamicCanDoIds = uniqueList(
+        analyzedSentences.flatMap((sentence) => (
+          sentenceAnalysisBySentenceId[sentence.id]?.can_do_points.map((point) => point.can_do_id) ?? []
+        ))
+      )
+      const dynamicBlindSpots = uniqueList(
+        analyzedSentences.flatMap((sentence) => (
+          sentenceAnalysisBySentenceId[sentence.id]?.error_patterns.map((pattern) => pattern.description) ?? []
+        ))
+      )
       const completionNotes = [
         extensiveNotes.gist ? `主旨：${extensiveNotes.gist}` : '',
         extensiveNotes.attitude ? `态度：${extensiveNotes.attitude}` : '',
@@ -1052,8 +1153,8 @@ export function ReadingWorkshopPage({
           gist: extensiveNotes.gist,
           centralSentence: extensiveNotes.centralSentence,
         },
-        grammarTopicCount: selectedGrammarOptionIds.length,
-        grammarBlindSpots: selectedGrammarOptions.map((option) => option.label),
+        grammarTopicCount: dynamicCanDoIds.length,
+        grammarBlindSpots: dynamicBlindSpots,
         notes: completionNotes || null,
       }
       let requestAttemptId = clientAttemptId
@@ -1127,28 +1228,13 @@ export function ReadingWorkshopPage({
     completionState.canComplete,
     extensiveNotes,
     intensiveNotesBySentenceId,
+    sentenceAnalysisBySentenceId,
     learner.id,
     lastSubmittedEvidenceFingerprint,
     material.goal,
     saveCurrentMaterial,
     saveStatus,
-    selectedGrammarOptionIds.length,
-    selectedGrammarOptions,
   ])
-
-  if (grammarTopic) {
-    return (
-      <GrammarPage
-        learner={learner}
-        initialTopic={grammarTopic}
-        onBack={() => {
-          setGrammarTopic(null)
-          setWorkspace('intensive')
-        }}
-        backLabel="返回精读与泛读"
-      />
-    )
-  }
 
   const clearCurrentDraftForExit = () => {
     skipPersistOnUnmountRef.current = true
@@ -1324,16 +1410,16 @@ export function ReadingWorkshopPage({
           learnerId={learner.id}
           learnerLevel={learnerProfile?.current_level ?? null}
           notes={intensiveNotes}
-          selectedGrammarOptionIds={selectedGrammarOptionIds}
+          analysisResult={selectedSentenceAnalysis}
+          analysisFailure={sentenceAnalysisFailure}
+          analysisStatus={sentenceAnalysisStatus}
           selectedSentence={selectedSentence}
           selectedSentenceId={selectedSentence?.id ?? null}
           sentences={sentences}
-          suggestedGrammarOptionIds={suggestedGrammarOptionIds}
           onNotesChange={updateIntensiveNote}
-          onOpenGrammar={openGrammarOption}
+          onSubmitAnalysis={(unableToAnalyze) => void submitSentenceAnalysis(unableToAnalyze)}
           onOpenWorkspace={openWorkspace}
           onSelectSentence={selectSentence}
-          onToggleGrammarOption={toggleGrammarOption}
           onReadingSelectionChange={setActiveTextSelection}
         />
           )}
@@ -1342,10 +1428,9 @@ export function ReadingWorkshopPage({
         <ReviewWorkspace
           extensiveNotes={extensiveNotes}
           intensiveNotesBySentenceId={intensiveNotesBySentenceId}
+          sentenceAnalysisBySentenceId={sentenceAnalysisBySentenceId}
           keywordCandidates={keywordCandidates}
           material={material}
-          openedGrammarTopics={openedGrammarTopics}
-          selectedGrammarOptions={selectedGrammarOptions}
           selectedSentences={analyzedSentences}
           sentences={sentences}
           wordCount={wordCount}
@@ -1355,7 +1440,6 @@ export function ReadingWorkshopPage({
           missingLabels={completionState.missingLabels}
           sourceLabel={activeSourceLabel}
           onCompleteReading={() => void completeReadingMaterial()}
-          onOpenGrammar={openGrammarOption}
           onOpenWorkspace={openWorkspace}
         />
           )}
@@ -2000,16 +2084,16 @@ function IntensiveWorkspace({
   learnerId,
   learnerLevel,
   notes,
-  selectedGrammarOptionIds,
+  analysisResult,
+  analysisFailure,
+  analysisStatus,
   selectedSentence,
   selectedSentenceId,
   sentences,
-  suggestedGrammarOptionIds,
   onNotesChange,
-  onOpenGrammar,
   onOpenWorkspace,
   onSelectSentence,
-  onToggleGrammarOption,
+  onSubmitAnalysis,
   onReadingSelectionChange,
 }: {
   canUseMaterial: boolean
@@ -2017,16 +2101,16 @@ function IntensiveWorkspace({
   learnerId: string
   learnerLevel: string | null
   notes: IntensiveNotes
-  selectedGrammarOptionIds: string[]
+  analysisResult: ReadingSentenceAnalysisResponse | null
+  analysisFailure: SentenceAnalysisFailure | null
+  analysisStatus: 'idle' | 'submitting' | 'error'
   selectedSentence: ReadingSentence | null
   selectedSentenceId: string | null
   sentences: ReadingSentence[]
-  suggestedGrammarOptionIds: string[]
   onNotesChange: (key: keyof IntensiveNotes, value: string) => void
-  onOpenGrammar: (option: ReadingGrammarOption) => void
   onOpenWorkspace: (workspace: ReadingWorkspace) => void
   onSelectSentence: (sentence: ReadingSentence) => void
-  onToggleGrammarOption: (optionId: string) => void
+  onSubmitAnalysis: (unableToAnalyze: boolean) => void
   onReadingSelectionChange: (text: string | null) => void
 }) {
   const [mode, setMode] = useState<'sentence_list' | 'full_text'>('sentence_list')
@@ -2058,10 +2142,7 @@ function IntensiveWorkspace({
     return <EmptyMaterialCard onOpenInput={() => onOpenWorkspace('input')} />
   }
 
-  const selectedGrammarOptions = READING_GRAMMAR_OPTIONS.filter((option) =>
-    selectedGrammarOptionIds.includes(option.id)
-  )
-  const isCurrentSentenceAnalyzed = isSentenceAnalysisComplete(notes)
+  const hasAnalysisAttempt = hasAnyIntensiveNote(notes)
 
   const clearTextSelection = () => {
     selectionIdentityRef.current = null
@@ -2357,20 +2438,34 @@ function IntensiveWorkspace({
                 />
               </div>
               <div className="mt-4 flex flex-col gap-3 rounded-xl border border-indigo-100 bg-indigo-50/60 p-4 sm:flex-row sm:items-center sm:justify-between">
-                <p className="text-sm leading-6 text-indigo-950">
-                  {isCurrentSentenceAnalyzed
-                    ? '本句分析已记入复盘，可以继续下一句或查看沉淀结果。'
-                    : '填写主干，并补充词组或细节证据，即可完成本句。'}
-                </p>
-                <Button
-                  className="shrink-0"
-                  disabled={!isCurrentSentenceAnalyzed}
-                  onClick={() => onOpenWorkspace('review')}
-                >
-                  <ClipboardList className="h-4 w-4" />
-                  完成本句，进入复盘
-                </Button>
+                <div>
+                  <p className="text-sm font-black text-indigo-950">先交你的分析，再看系统拆解</p>
+                  <p className="mt-1 text-sm leading-6 text-indigo-800">提交后才会评估掌握度、记录错误模式并动态映射 Can-Do。</p>
+                </div>
+                <div className="flex shrink-0 flex-wrap gap-2">
+                  <Button
+                    variant="secondary"
+                    disabled={analysisStatus === 'submitting'}
+                    onClick={() => onSubmitAnalysis(true)}
+                  >
+                    我分析不出来
+                  </Button>
+                  <Button
+                    disabled={!hasAnalysisAttempt || analysisStatus === 'submitting'}
+                    onClick={() => onSubmitAnalysis(false)}
+                  >
+                    {analysisStatus === 'submitting' ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <SearchCheck className="h-4 w-4" />}
+                    {analysisStatus === 'submitting' ? '正在评估' : '提交分析'}
+                  </Button>
+                </div>
               </div>
+              {analysisStatus === 'error' ? (
+                <div className="mt-3">
+                  <StatusBanner tone="warning" title={analysisFailure?.title ?? '句子分析暂时失败'}>
+                    {analysisFailure?.message ?? '你的作答仍保留在本地，可以直接重试。'}
+                  </StatusBanner>
+                </div>
+              ) : null}
             </>
           ) : (
             <p className="mt-4 text-sm text-muted-foreground">材料中还没有可选择的句子。</p>
@@ -2381,40 +2476,29 @@ function IntensiveWorkspace({
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-2">
               <ExternalLink className="h-5 w-5 text-success" />
-              <h2 className="text-lg font-black text-slate-950">发现语法点</h2>
+              <h2 className="text-lg font-black text-slate-950">动态发现 Can-Do</h2>
             </div>
-            <p className="text-xs text-muted-foreground">先标记卡点，再跳转到语法微知识点。</p>
+            <p className="text-xs text-muted-foreground">来自当前句子与真实作答，不使用固定知识点列表。</p>
           </div>
-          <div className="mt-4 grid gap-3 md:grid-cols-2">
-            {READING_GRAMMAR_OPTIONS.map((option) => (
-              <GrammarOptionCard
-                key={option.id}
-                option={option}
-                isSelected={selectedGrammarOptionIds.includes(option.id)}
-                isSuggested={suggestedGrammarOptionIds.includes(option.id)}
-                onOpen={() => onOpenGrammar(option)}
-                onToggle={() => onToggleGrammarOption(option.id)}
-              />
-            ))}
-          </div>
+          {analysisResult ? (
+            <div className="mt-4 grid gap-3">
+              {analysisResult.can_do_points.length > 0 ? analysisResult.can_do_points.map((point) => (
+                <div key={point.can_do_id} className="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="rounded-full bg-white px-2 py-1 text-xs font-black text-emerald-800">{point.cefr_level}</span>
+                    <span className="text-xs font-bold text-emerald-700">{point.category} · {point.subcategory}</span>
+                  </div>
+                  <p className="mt-2 text-sm font-black leading-6 text-slate-950">{point.statement}</p>
+                </div>
+              )) : <p className="text-sm leading-6 text-slate-500">当前句子没有可靠匹配到 Can-Do，系统没有据此更新掌握度。</p>}
+              <Button variant="secondary" onClick={() => onOpenWorkspace('review')}>
+                <ClipboardList className="h-4 w-4" />查看本句复盘
+              </Button>
+            </div>
+          ) : (
+            <p className="mt-4 text-sm leading-6 text-slate-500">提交自主拆解后，系统会从 Can-Do 目录召回候选，并只保留与本句和本次作答有证据关联的知识点。</p>
+          )}
         </SurfaceCard>
-
-        {selectedGrammarOptions.length > 0 ? (
-          <div className="grid gap-3">
-            <div className="flex items-center gap-2 px-1">
-              <BookOpenCheck className="h-5 w-5 text-primary" />
-              <h2 className="text-lg font-black text-slate-950">做 3 道相关小练习</h2>
-            </div>
-            {selectedGrammarOptions.map((option) => (
-              <ExerciseBlock
-                key={option.id}
-                learnerId={learnerId}
-                target={READING_GRAMMAR_EXERCISE_TARGETS[option.id]}
-                limit={3}
-              />
-            ))}
-          </div>
-        ) : null}
       </div>
       </section>
     </div>
@@ -2427,17 +2511,15 @@ function ReviewWorkspace({
   completionResult,
   extensiveNotes,
   intensiveNotesBySentenceId,
+  sentenceAnalysisBySentenceId,
   keywordCandidates,
   material,
   missingLabels,
-  openedGrammarTopics,
-  selectedGrammarOptions,
   selectedSentences,
   sentences,
   sourceLabel,
   wordCount,
   onCompleteReading,
-  onOpenGrammar,
   onOpenWorkspace,
 }: {
   canComplete: boolean
@@ -2445,109 +2527,262 @@ function ReviewWorkspace({
   completionResult: ReadingMaterialCompleteResponse | null
   extensiveNotes: ExtensiveNotes
   intensiveNotesBySentenceId: IntensiveNotesBySentenceId
+  sentenceAnalysisBySentenceId: Record<string, ReadingSentenceAnalysisResponse>
   keywordCandidates: ReadingKeywordCandidate[]
   material: ReadingMaterial
   missingLabels: string[]
-  openedGrammarTopics: string[]
-  selectedGrammarOptions: ReadingGrammarOption[]
   selectedSentences: ReadingSentence[]
   sentences: ReadingSentence[]
   sourceLabel: string | null
   wordCount: number
   onCompleteReading: () => void
-  onOpenGrammar: (option: ReadingGrammarOption) => void
   onOpenWorkspace: (workspace: ReadingWorkspace) => void
 }) {
+  const analyses = Object.values(sentenceAnalysisBySentenceId)
+  const canDoPoints = Array.from(new Map(
+    analyses
+      .flatMap((result) => result.can_do_points)
+      .map((point) => [point.can_do_id, point] as const)
+  ).values())
+  const errorPatterns = Array.from(new Map(
+    analyses
+      .flatMap((result) => result.error_patterns)
+      .map((pattern) => [pattern.tag, pattern] as const)
+  ).values())
+  const recommendedDrills = uniqueList(
+    analyses
+      .flatMap((result) => result.error_patterns.map((pattern) => pattern.recommended_drill))
+  )
+  const needsSupportCount = analyses.filter((result) => result.outcome !== 'SUCCESS').length
+  const masteryUpdateCount = canDoPoints.filter((point) => point.evidence_status === 'applied').length
+  const primaryError = errorPatterns[0] ?? null
+  const primaryDrill = recommendedDrills[0] ?? null
   return (
-    <section className="grid gap-5 2xl:grid-cols-[minmax(0,1fr)_360px]">
-      <SurfaceCard>
-        <div className="flex items-center gap-2">
-          <ClipboardList className="h-5 w-5 text-primary" />
-          <h2 className="text-lg font-black text-slate-950">本次阅读沉淀</h2>
-        </div>
-        <div className="mt-5 grid gap-3 md:grid-cols-3">
-          <MetricTile label="材料" value={material.title.trim() || '未命名'} />
-          <MetricTile label="词数 / 句子" value={`${wordCount} / ${sentences.length}`} />
-          <MetricTile label="目标" value={READING_GOAL_LABELS[material.goal]} />
-        </div>
+    <section className="grid items-start gap-5 2xl:grid-cols-[minmax(0,1fr)_360px]">
+      <div className="grid gap-5">
+        <SurfaceCard className="overflow-hidden border-indigo-200 bg-gradient-to-br from-white via-white to-indigo-50/80">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.16em] text-primary">Review priority</p>
+              <div className="mt-2 flex items-center gap-2">
+                <ClipboardList className="h-5 w-5 text-primary" />
+                <h2 className="text-xl font-black text-slate-950">本次最重要的收获</h2>
+              </div>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+                {material.title.trim() || '未命名材料'} · {wordCount} 词 · {READING_GOAL_LABELS[material.goal]}
+              </p>
+            </div>
+            <span className="w-fit rounded-full border border-indigo-200 bg-white px-3 py-1.5 text-xs font-black text-indigo-700">
+              已复盘 {analyses.length}/{sentences.length} 句
+            </span>
+          </div>
 
-        <div className="mt-5 grid gap-4 2xl:grid-cols-3">
-          <KeywordFrequencyChart keywords={keywordCandidates.slice(0, 8)} />
-          <SentenceDifficultyHeatmap sentences={sentences} selectedSentences={selectedSentences} />
-          <GrammarTroubleChart
-            openedGrammarTopics={openedGrammarTopics}
-            selectedGrammarOptions={selectedGrammarOptions}
-          />
-        </div>
+          {analyses.length > 0 ? (
+            <div className="mt-5 grid gap-3 lg:grid-cols-3">
+              <ReviewPriorityItem
+                index="01"
+                label="先看结论"
+                value={needsSupportCount > 0
+                  ? `${needsSupportCount} 句需要纠错或教学支持`
+                  : '已分析句子的主干与层级基本正确'}
+                tone={needsSupportCount > 0 ? 'warning' : 'success'}
+              />
+              <ReviewPriorityItem
+                index="02"
+                label="关键卡点"
+                value={primaryError?.description ?? '本次没有形成稳定错误模式'}
+                tone={primaryError ? 'warning' : 'neutral'}
+              />
+              <ReviewPriorityItem
+                index="03"
+                label="下一步"
+                value={primaryDrill ?? (masteryUpdateCount > 0
+                  ? `已有 ${masteryUpdateCount} 个 Can-Do 获得掌握证据`
+                  : '继续选择一个长句完成自主拆解')}
+                tone="primary"
+              />
+            </div>
+          ) : (
+            <div className="mt-5 rounded-xl border border-dashed border-indigo-200 bg-white/80 p-4">
+              <p className="text-sm font-black text-slate-950">还没有可归纳的精读结论</p>
+              <p className="mt-1 text-sm leading-6 text-slate-600">先完成至少一个句子的自主分析或教学拆解，这里会提炼关键卡点与下一步。</p>
+            </div>
+          )}
+        </SurfaceCard>
 
-        <div className="mt-5 grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
-          <ReadingFlowProgress
-            extensiveNotes={extensiveNotes}
-            intensiveNotesBySentenceId={intensiveNotesBySentenceId}
-            goal={material.goal}
-            isRecorded={completeStatus === 'completed'}
-            selectedSentences={selectedSentences}
-            sentences={sentences}
-          />
-          <ReadingCoveragePanel selectedSentences={selectedSentences} sentences={sentences} />
-        </div>
-
-        <div className="mt-5 grid gap-4 lg:grid-cols-2">
-          {material.goal !== 'intensive' ? (
-            <ReviewBlock
-              title="泛读记录"
-              items={[
-                ['主旨', extensiveNotes.gist],
-                ['态度', extensiveNotes.attitude],
-                ['段落功能', extensiveNotes.paragraphFunction],
-                ['中心句', extensiveNotes.centralSentence],
-              ]}
-            />
-          ) : null}
-          {material.goal !== 'extensive' ? (
-            <div className="grid gap-3">
+        {material.goal !== 'extensive' ? (
+          <SurfaceCard>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="text-xs font-black uppercase tracking-[0.14em] text-primary">Sentence review</p>
+                <h2 className="mt-1 text-lg font-black text-slate-950">逐句精读复盘</h2>
+                <p className="mt-1 text-sm leading-6 text-slate-600">每句先看结论和关键纠错，需要时再展开完整拆解与原作答。</p>
+              </div>
+              <span className="text-xs font-bold text-slate-500">按句子顺序排列</span>
+            </div>
+            <div className="mt-5 grid gap-4">
               {selectedSentences.length > 0 ? selectedSentences.map((sentence) => (
                 <SentenceReviewBlock
                   key={sentence.id}
                   sentence={sentence}
                   notes={intensiveNotesBySentenceId[sentence.id] ?? EMPTY_INTENSIVE_NOTES}
+                  analysis={sentenceAnalysisBySentenceId[sentence.id]}
                 />
               )) : (
-                <div className="rounded-lg border border-dashed border-slate-200 p-4 text-sm text-muted-foreground">
-                  还没有完成可沉淀的精读句。
+                <div className="rounded-xl border border-dashed border-slate-200 p-5 text-sm leading-6 text-muted-foreground">
+                  还没有完成可沉淀的精读句。回到精读模式，先提交自己的拆解或选择“我分析不出来”。
                 </div>
               )}
             </div>
-          ) : null}
-        </div>
-      </SurfaceCard>
+          </SurfaceCard>
+        ) : null}
 
-      <div className="grid gap-5">
+        {material.goal !== 'intensive' ? (
+          <SurfaceCard>
+            <div className="flex items-center gap-2">
+              <Gauge className="h-5 w-5 text-primary" />
+              <h2 className="text-lg font-black text-slate-950">泛读理解</h2>
+            </div>
+            <div className="mt-4">
+              <ReviewBlock
+                title="本次泛读记录"
+                items={[
+                  ['主旨', extensiveNotes.gist],
+                  ['作者态度', extensiveNotes.attitude],
+                  ['段落功能', extensiveNotes.paragraphFunction],
+                  ['中心句', extensiveNotes.centralSentence],
+                ]}
+              />
+            </div>
+          </SurfaceCard>
+        ) : null}
+
+        <SurfaceCard>
+          <details className="group">
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-4 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30">
+              <div>
+                <p className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Supporting data</p>
+                <h2 className="mt-1 text-lg font-black text-slate-950">学习过程数据</h2>
+                <p className="mt-1 text-sm leading-6 text-slate-600">关键词、句子难度、流程进度与正文覆盖属于辅助证据，按需展开查看。</p>
+              </div>
+              <span className="shrink-0 rounded-full bg-slate-100 px-3 py-1.5 text-xs font-black text-slate-600 group-open:bg-primary/10 group-open:text-primary">
+                展开数据
+              </span>
+            </summary>
+            <div className="mt-5 border-t border-slate-100 pt-5">
+              <div className="grid gap-3 md:grid-cols-3">
+                <MetricTile label="材料" value={material.title.trim() || '未命名'} />
+                <MetricTile label="词数 / 句子" value={`${wordCount} / ${sentences.length}`} />
+                <MetricTile label="目标" value={READING_GOAL_LABELS[material.goal]} />
+              </div>
+              <div className="mt-4 grid gap-4 2xl:grid-cols-3">
+                <KeywordFrequencyChart keywords={keywordCandidates.slice(0, 8)} />
+                <SentenceDifficultyHeatmap sentences={sentences} selectedSentences={selectedSentences} />
+                <SentenceAnalysisOutcomeChart analyses={sentenceAnalysisBySentenceId} />
+              </div>
+              <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
+                <ReadingFlowProgress
+                  extensiveNotes={extensiveNotes}
+                  goal={material.goal}
+                  isRecorded={completeStatus === 'completed'}
+                  selectedSentences={selectedSentences}
+                  sentences={sentences}
+                />
+                <ReadingCoveragePanel selectedSentences={selectedSentences} sentences={sentences} />
+              </div>
+            </div>
+          </details>
+        </SurfaceCard>
+      </div>
+
+      <div className="grid gap-5 2xl:sticky 2xl:top-6">
+        <SurfaceCard className="border-indigo-200 bg-indigo-50/50">
+          <div className="flex items-center gap-2">
+            <ListChecks className="h-5 w-5 text-primary" />
+            <h2 className="text-lg font-black text-slate-950">下一步练什么</h2>
+          </div>
+          <div className="mt-4 grid gap-3">
+            {recommendedDrills.length > 0 ? (
+              recommendedDrills.map((drill, index) => (
+                <div key={drill} className="flex gap-3 rounded-xl border border-indigo-100 bg-white p-3">
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-black text-primary-foreground">
+                    {index + 1}
+                  </span>
+                  <p className="text-sm font-bold leading-6 text-slate-800">{drill}</p>
+                </div>
+              ))
+            ) : (
+              <div className="rounded-xl border border-emerald-100 bg-white p-3">
+                <p className="text-sm font-black text-emerald-800">本次没有新增错误模式</p>
+                <p className="mt-1 text-xs leading-5 text-slate-500">可以继续精读下一句，积累更多真实作答证据。</p>
+              </div>
+            )}
+          </div>
+          <div className="mt-4 grid gap-2">
+            <Button onClick={() => onOpenWorkspace('intensive')}>
+              <Highlighter className="h-4 w-4" />继续精读句子
+            </Button>
+            {material.goal !== 'intensive' ? (
+              <Button variant="secondary" onClick={() => onOpenWorkspace('extensive')}>
+                <Gauge className="h-4 w-4" />回到泛读任务
+              </Button>
+            ) : null}
+          </div>
+        </SurfaceCard>
+
+        <SurfaceCard>
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="h-5 w-5 text-success" />
+            <h2 className="text-lg font-black text-slate-950">Can-Do 与掌握证据</h2>
+          </div>
+          <div className="mt-4 space-y-3">
+            {canDoPoints.length > 0 ? (
+              canDoPoints.map((point) => {
+                const before = Math.round((point.mastery_before ?? 0) * 100)
+                const after = Math.round((point.mastery_after ?? 0) * 100)
+                return (
+                  <div key={point.can_do_id} className="rounded-xl border border-slate-200 p-3">
+                    <p className="text-xs font-black text-primary">{point.cefr_level} · {point.category}</p>
+                    <p className="mt-1 text-sm font-black leading-6 text-slate-950">{point.statement}</p>
+                    {point.evidence_status === 'applied' ? (
+                      <div className="mt-3">
+                        <div className="flex items-center justify-between text-xs font-bold text-slate-500">
+                          <span>掌握度变化</span>
+                          <span>{before}% → {after}%</span>
+                        </div>
+                        <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100">
+                          <div className="h-full rounded-full bg-success" style={{ width: `${after}%` }} />
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="mt-2 text-xs leading-5 text-slate-500">本次仅作为教学线索，没有更新掌握度。</p>
+                    )}
+                  </div>
+                )
+              })
+            ) : (
+              <p className="text-sm leading-6 text-muted-foreground">暂无可靠 Can-Do 映射；系统不会用不确定匹配更新掌握度。</p>
+            )}
+          </div>
+        </SurfaceCard>
+
         <SurfaceCard>
           <div className="flex items-center gap-2">
             <BookOpenCheck className="h-5 w-5 text-primary" />
-            <h2 className="text-lg font-black text-slate-950">完成阅读</h2>
+            <h2 className="text-lg font-black text-slate-950">保存本次阅读证据</h2>
           </div>
           <p className="mt-3 text-sm leading-6 text-slate-600">
-            {sourceLabel ? `${sourceLabel} · ` : ''}完成后会保存阅读练习证据；投入值按材料长度与精读覆盖估算，不代表正确率或能力分。
+            {sourceLabel ? `${sourceLabel} · ` : ''}投入值只反映材料长度与精读覆盖，不代表正确率或能力分。
           </p>
           <div className="mt-4">
             {completionResult ? (
-              <StatusBanner tone="success" title="阅读练习证据已保存">
-                本次阅读投入值 +{completionResult.reading_value}，用于呈现练习投入，不代表答题正确率。
-              </StatusBanner>
+              <StatusBanner tone="success" title="阅读练习证据已保存">本次阅读投入值 +{completionResult.reading_value}。</StatusBanner>
             ) : completeStatus === 'error' ? (
-              <StatusBanner tone="warning" title="记录保存失败">
-                请检查网络后重试；当前笔记仍保留在页面中。
-              </StatusBanner>
+              <StatusBanner tone="warning" title="记录保存失败">请检查网络后重试；当前笔记仍保留在页面中。</StatusBanner>
             ) : !canComplete ? (
-              <StatusBanner tone="warning" title="还差一点才能沉淀">
-                请先{missingLabels.join('、')}。
-              </StatusBanner>
+              <StatusBanner tone="warning" title="还差一点才能沉淀">请先{missingLabels.join('、')}。</StatusBanner>
             ) : (
-              <StatusBanner title="已达到沉淀条件">
-                确认后会写入本次阅读证据。
-              </StatusBanner>
+              <StatusBanner title="已达到沉淀条件">确认后会写入本次阅读证据。</StatusBanner>
             )}
           </div>
           <Button
@@ -2559,102 +2794,35 @@ function ReviewWorkspace({
             {completeStatus === 'saving' ? '正在记录' : completeStatus === 'completed' ? '已完成阅读' : '完成阅读'}
           </Button>
         </SurfaceCard>
-
-        <SurfaceCard>
-          <div className="flex items-center gap-2">
-            <CheckCircle2 className="h-5 w-5 text-success" />
-            <h2 className="text-lg font-black text-slate-950">语法点去向</h2>
-          </div>
-          <div className="mt-4 space-y-3">
-            {selectedGrammarOptions.length > 0 ? (
-              selectedGrammarOptions.map((option) => (
-                <div key={option.id} className="rounded-lg border border-slate-200 p-3">
-                  <p className="text-sm font-black text-slate-950">{option.label}</p>
-                  <p className="mt-1 text-sm leading-6 text-slate-500">{option.description}</p>
-                  <Button className="mt-3 w-full" variant="secondary" onClick={() => onOpenGrammar(option)}>
-                    <ExternalLink className="h-4 w-4" />
-                    去学这个语法点
-                  </Button>
-                </div>
-              ))
-            ) : (
-              <p className="text-sm leading-6 text-muted-foreground">
-                精读时标记语法卡点后，这里会显示可继续学习的微知识点。
-              </p>
-            )}
-          </div>
-        </SurfaceCard>
-
-        <SurfaceCard>
-          <h2 className="text-lg font-black text-slate-950">已跳转记录</h2>
-          <div className="mt-3 flex flex-wrap gap-2">
-            {openedGrammarTopics.length > 0 ? (
-              openedGrammarTopics.map((topic) => (
-                <span key={topic} className="rounded-md bg-primary/10 px-2.5 py-1 text-xs font-bold text-primary">
-                  {topic}
-                </span>
-              ))
-            ) : (
-              <p className="text-sm text-muted-foreground">还没有从精读句子跳转到语法微知识点。</p>
-            )}
-          </div>
-          <div className="mt-5 flex flex-col gap-3">
-            <Button variant="secondary" onClick={() => onOpenWorkspace('extensive')}>
-              <Gauge className="h-4 w-4" />
-              回到泛读任务
-            </Button>
-            <Button onClick={() => onOpenWorkspace('intensive')}>
-              <Highlighter className="h-4 w-4" />
-              继续精读句子
-            </Button>
-          </div>
-        </SurfaceCard>
       </div>
     </section>
   )
 }
 
-function GrammarOptionCard({
-  option,
-  isSelected,
-  isSuggested,
-  onOpen,
-  onToggle,
+function ReviewPriorityItem({
+  index,
+  label,
+  tone,
+  value,
 }: {
-  option: ReadingGrammarOption
-  isSelected: boolean
-  isSuggested: boolean
-  onOpen: () => void
-  onToggle: () => void
+  index: string
+  label: string
+  tone: 'neutral' | 'primary' | 'success' | 'warning'
+  value: string
 }) {
+  const toneClass = {
+    neutral: 'border-slate-200 bg-white text-slate-700',
+    primary: 'border-indigo-200 bg-indigo-50 text-indigo-900',
+    success: 'border-emerald-200 bg-emerald-50 text-emerald-900',
+    warning: 'border-amber-200 bg-amber-50 text-amber-950',
+  }[tone]
   return (
-    <div className={`rounded-lg border p-4 ${isSelected ? 'border-primary bg-primary/5' : 'border-slate-200 bg-white'}`}>
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <div className="flex flex-wrap items-center gap-2">
-            <h3 className="text-sm font-black text-slate-950">{option.label}</h3>
-            {isSuggested && (
-              <span className="rounded-md bg-success/10 px-2 py-0.5 text-xs font-bold text-success">句中可能出现</span>
-            )}
-          </div>
-          <p className="mt-2 text-sm leading-6 text-slate-500">{option.description}</p>
-        </div>
-        <button
-          type="button"
-          className={`rounded-lg border px-2 py-1 text-xs font-bold transition ${
-            isSelected
-              ? 'border-primary bg-primary text-primary-foreground'
-              : 'border-slate-200 text-slate-500 hover:border-primary/30 hover:text-primary'
-          } focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary`}
-          onClick={onToggle}
-        >
-          {isSelected ? '已标记' : '标记'}
-        </button>
+    <div className={`rounded-xl border p-4 ${toneClass}`}>
+      <div className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.12em] opacity-70">
+        <span>{index}</span>
+        <span>{label}</span>
       </div>
-      <Button className="mt-3 w-full" variant="secondary" onClick={onOpen}>
-        <ExternalLink className="h-4 w-4" />
-        去学{option.label}
-      </Button>
+      <p className="mt-2 text-sm font-black leading-6">{value}</p>
     </div>
   )
 }
@@ -2662,14 +2830,12 @@ function GrammarOptionCard({
 function ReadingFlowProgress({
   extensiveNotes,
   goal,
-  intensiveNotesBySentenceId,
   isRecorded,
   selectedSentences,
   sentences,
 }: {
   extensiveNotes: ExtensiveNotes
   goal: ReadingTrainingGoal
-  intensiveNotesBySentenceId: IntensiveNotesBySentenceId
   isRecorded: boolean
   selectedSentences: ReadingSentence[]
   sentences: ReadingSentence[]
@@ -2682,7 +2848,7 @@ function ReadingFlowProgress({
     }] : []),
     ...(goal !== 'extensive' ? [{
       label: '精读句',
-      done: selectedSentences.some((sentence) => isSentenceAnalysisComplete(intensiveNotesBySentenceId[sentence.id])),
+      done: selectedSentences.length > 0,
     }] : []),
     { label: '沉淀记录', done: isRecorded },
   ]
@@ -2770,29 +2936,6 @@ function ReadingCoveragePanel({
       </div>
     </div>
   )
-}
-
-function getGrammarExerciseTargetFromReadingOption(option: ReadingGrammarOption): ExerciseTarget {
-  return {
-    type: 'grammar_topic',
-    id: mapReadingGrammarOptionToExerciseTargetId(option),
-    label: option.grammarTopicTitle,
-  }
-}
-
-function mapReadingGrammarOptionToExerciseTargetId(option: ReadingGrammarOption) {
-  return READING_GRAMMAR_EXERCISE_TARGET_IDS[option.grammarTopicTitle] ?? normalizeReadingExerciseTargetId(option.id)
-}
-
-function normalizeReadingExerciseTargetId(value: string) {
-  const normalized = value
-    .trim()
-    .toLocaleLowerCase()
-    .replace(/['’]/g, '')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-
-  return normalized || 'unknown-reading-grammar'
 }
 
 function EmptyMaterialCard({ onOpenInput }: { onOpenInput: () => void }) {
@@ -2890,21 +3033,24 @@ function SentenceDifficultyHeatmap({
   )
 }
 
-function GrammarTroubleChart({
-  openedGrammarTopics,
-  selectedGrammarOptions,
+function SentenceAnalysisOutcomeChart({
+  analyses,
 }: {
-  openedGrammarTopics: string[]
-  selectedGrammarOptions: ReadingGrammarOption[]
+  analyses: Record<string, ReadingSentenceAnalysisResponse>
 }) {
-  const rows = getGrammarTroubleRows(selectedGrammarOptions, openedGrammarTopics)
+  const values = Object.values(analyses)
+  const rows = [
+    { label: '自主分析正确', value: values.filter((item) => item.outcome === 'SUCCESS').length, tone: 'bg-success' },
+    { label: '分析后纠错', value: values.filter((item) => item.outcome === 'UNSUCCESSFUL').length, tone: 'bg-amber-500' },
+    { label: '教学拆解', value: values.filter((item) => item.outcome === 'NO_ATTEMPT').length, tone: 'bg-primary' },
+  ].filter((row) => row.value > 0)
   const maxValue = Math.max(...rows.map((row) => row.value), 1)
 
   return (
     <div className="rounded-lg border border-slate-200 p-4">
       <div className="flex items-center justify-between gap-3">
-        <h3 className="text-sm font-black text-slate-950">语法卡点分布</h3>
-        <span className="text-xs font-bold text-slate-500">标记 + 跳转</span>
+        <h3 className="text-sm font-black text-slate-950">句子分析结果</h3>
+        <span className="text-xs font-bold text-slate-500">真实提交</span>
       </div>
       <div className="mt-3 space-y-2">
         {rows.length > 0 ? (
@@ -2916,42 +3062,18 @@ function GrammarTroubleChart({
               </div>
               <div className="mt-1 h-2 overflow-hidden rounded-full bg-slate-100">
                 <div
-                  className="h-full rounded-full bg-success transition-[width] duration-500"
+                  className={`h-full rounded-full transition-[width] duration-500 ${row.tone}`}
                   style={{ width: `${(row.value / maxValue) * 100}%` }}
                 />
               </div>
-              <p className="mt-1 text-xs font-semibold text-slate-500">{row.meta}</p>
             </div>
           ))
         ) : (
-          <p className="text-sm leading-6 text-slate-500">精读时标记语法卡点后，这里会显示分布。</p>
+          <p className="text-sm leading-6 text-slate-500">提交精读句子分析后，这里会显示评估分布。</p>
         )}
       </div>
     </div>
   )
-}
-
-function getGrammarTroubleRows(
-  selectedGrammarOptions: ReadingGrammarOption[],
-  openedGrammarTopics: string[]
-) {
-  const selectedByTopic = new Map<string, number>()
-  selectedGrammarOptions.forEach((option) => {
-    selectedByTopic.set(option.grammarTopicTitle, (selectedByTopic.get(option.grammarTopicTitle) ?? 0) + 1)
-  })
-  const openedByTopic = new Map<string, number>()
-  openedGrammarTopics.forEach((topic) => {
-    openedByTopic.set(topic, (openedByTopic.get(topic) ?? 0) + 1)
-  })
-  return uniqueList([...selectedByTopic.keys(), ...openedByTopic.keys()]).map((topic) => {
-    const selected = selectedByTopic.get(topic) ?? 0
-    const opened = openedByTopic.get(topic) ?? 0
-    return {
-      label: topic,
-      value: selected + opened,
-      meta: `标记 ${selected} · 跳转 ${opened}`,
-    }
-  })
 }
 
 function HistoryItem({ item, onRestore }: { item: ReadingMaterialHistoryItem; onRestore: () => void }) {
@@ -3009,41 +3131,154 @@ function formatHistoryTime(value: string) {
 }
 
 function SentenceReviewBlock({
+  analysis,
   notes,
   sentence,
 }: {
+  analysis: ReadingSentenceAnalysisResponse
   notes: IntensiveNotes
   sentence: ReadingSentence
 }) {
+  const isSuccess = analysis.outcome === 'SUCCESS'
+  const isNoAttempt = analysis.outcome === 'NO_ATTEMPT'
+  const primaryError = analysis.error_patterns[0] ?? null
+  const outcomeLabel = isSuccess ? '基本掌握' : isNoAttempt ? '教学复盘' : '需要纠错'
   return (
-    <div className="rounded-lg border border-slate-200 p-4">
-      <p className="text-xs font-black uppercase tracking-[0.14em] text-primary">Sentence {sentence.order}</p>
-      <p lang="en" className="mt-2 text-sm font-bold leading-6 text-slate-800">{sentence.text}</p>
-      <div className="mt-4 grid gap-3">
-        {[
-          ['主干', notes.mainStructure],
-          ['词组搭配', notes.phraseNotes],
-          ['细节证据', notes.evidenceNote],
-        ].map(([label, value]) => (
-          <div key={label}>
-            <p className="text-xs font-bold text-slate-500">{label}</p>
-            <p className="mt-1 min-h-6 whitespace-pre-wrap text-sm leading-6 text-slate-700">{value.trim() || '未填写'}</p>
+    <article className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+      <div className="border-b border-slate-100 px-4 py-4 sm:px-5">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-950 text-xs font-black text-white">{sentence.order}</span>
+            <p className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">Sentence review</p>
           </div>
-        ))}
+          <div className="flex items-center gap-2">
+            {!isNoAttempt ? (
+              <span className="text-xs font-bold text-slate-500">{Math.round(analysis.score * 100)} 分</span>
+            ) : null}
+            <span className={`rounded-full px-2.5 py-1 text-xs font-black ${
+              isSuccess
+                ? 'bg-emerald-100 text-emerald-800'
+                : isNoAttempt
+                  ? 'bg-indigo-100 text-indigo-800'
+                  : 'bg-amber-100 text-amber-900'
+            }`}>
+              {outcomeLabel}
+            </span>
+          </div>
+        </div>
+        <p lang="en" className="mt-3 text-base font-bold leading-7 text-slate-900">{sentence.text}</p>
       </div>
-    </div>
+
+      <div className="grid gap-4 p-4 sm:p-5">
+        <div className={`rounded-xl border p-4 ${
+          isSuccess ? 'border-emerald-200 bg-emerald-50' : 'border-amber-200 bg-amber-50'
+        }`}>
+          <p className="text-xs font-black uppercase tracking-[0.12em] text-slate-500">本句结论</p>
+          <p className="mt-2 text-sm font-black leading-6 text-slate-950">{analysis.feedback}</p>
+        </div>
+
+        {primaryError ? (
+          <div className="rounded-xl border border-rose-200 bg-rose-50 p-4">
+            <p className="text-xs font-black uppercase tracking-[0.12em] text-rose-700">最需要纠正</p>
+            <p className="mt-2 text-sm font-black leading-6 text-rose-950">{primaryError.description}</p>
+            <p className="mt-2 text-sm leading-6 text-rose-800">针对练习：{primaryError.recommended_drill}</p>
+          </div>
+        ) : null}
+
+        <div className="grid gap-3 lg:grid-cols-2">
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <p className="text-xs font-black uppercase tracking-[0.12em] text-slate-500">正确主干</p>
+            <p className="mt-2 text-sm font-black leading-6 text-slate-950">{analysis.correct_analysis.main_structure}</p>
+          </div>
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <p className="text-xs font-black uppercase tracking-[0.12em] text-slate-500">整句含义</p>
+            <p className="mt-2 text-sm leading-6 text-slate-800">{analysis.correct_analysis.sentence_meaning}</p>
+          </div>
+        </div>
+
+        {analysis.teaching.required ? (
+          <div className="rounded-xl border border-indigo-200 bg-indigo-50/70 p-4">
+            <p className="text-sm font-black text-indigo-950">下次按这个顺序拆</p>
+            {analysis.teaching.explanation ? (
+              <p className="mt-1 text-sm leading-6 text-indigo-800">{analysis.teaching.explanation}</p>
+            ) : null}
+            <ol className="mt-3 grid gap-2">
+              {analysis.teaching.steps.map((step, index) => (
+                <li key={step} className="flex gap-3 rounded-lg bg-white/80 p-2.5 text-sm leading-6 text-slate-800">
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-xs font-black text-white">{index + 1}</span>
+                  <span>{step}</span>
+                </li>
+              ))}
+            </ol>
+            <p className="mt-3 rounded-lg border border-indigo-200 bg-white px-3 py-2 text-sm font-bold text-indigo-800">
+              自检：{analysis.teaching.checkpoint}
+            </p>
+          </div>
+        ) : null}
+
+        <details className="group rounded-xl border border-slate-200">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm font-black text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30">
+            <span>查看完整拆解与我的作答</span>
+            <span className="text-xs text-slate-400 group-open:text-primary">展开</span>
+          </summary>
+          <div className="grid gap-4 border-t border-slate-100 p-4 lg:grid-cols-2">
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.12em] text-slate-500">我的作答</p>
+              <div className="mt-3 grid gap-3">
+                {[
+                  ['主干', notes.mainStructure],
+                  ['词组搭配', notes.phraseNotes],
+                  ['细节证据', notes.evidenceNote],
+                ].map(([label, value]) => (
+                  <div key={label}>
+                    <p className="text-xs font-bold text-slate-500">{label}</p>
+                    <p className="mt-1 whitespace-pre-wrap text-sm leading-6 text-slate-700">{value.trim() || '未填写'}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.12em] text-slate-500">完整结构</p>
+              <div className="mt-3 grid gap-3">
+                <div>
+                  <p className="text-xs font-bold text-slate-500">从句层级</p>
+                  {analysis.correct_analysis.clause_layers.length > 0 ? (
+                    <ul className="mt-1 space-y-1 text-sm leading-6 text-slate-700">
+                      {analysis.correct_analysis.clause_layers.map((layer) => <li key={layer}>• {layer}</li>)}
+                    </ul>
+                  ) : <p className="mt-1 text-sm text-slate-500">本句没有需要单独标出的从句层级。</p>}
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-slate-500">重点短语</p>
+                  {analysis.correct_analysis.phrases.length > 0 ? (
+                    <div className="mt-2 grid gap-2">
+                      {analysis.correct_analysis.phrases.map((phrase) => (
+                        <div key={`${phrase.text}-${phrase.role}`} className="rounded-lg bg-slate-50 p-2.5">
+                          <p className="text-sm font-black text-slate-900">{phrase.text}</p>
+                          <p className="mt-1 text-xs leading-5 text-slate-500">{phrase.role} · {phrase.meaning}</p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : <p className="mt-1 text-sm text-slate-500">本句没有额外标出的重点短语。</p>}
+                </div>
+              </div>
+            </div>
+          </div>
+        </details>
+      </div>
+    </article>
   )
 }
 
 function ReviewBlock({ title, items }: { title: string; items: Array<[string, string]> }) {
   return (
-    <div className="rounded-lg border border-slate-200 p-4">
+    <div className="rounded-xl border border-slate-200 p-4">
       <h3 className="text-sm font-black text-slate-950">{title}</h3>
-      <div className="mt-3 space-y-3">
+      <div className="mt-3 grid gap-3 sm:grid-cols-2">
         {items.map(([label, value]) => (
-          <div key={label}>
+          <div key={label} className="rounded-lg bg-slate-50 p-3">
             <p className="text-xs font-bold text-slate-500">{label}</p>
-            <p className="mt-1 min-h-6 text-sm leading-6 text-slate-700">{value.trim() || '未填写'}</p>
+            <p className="mt-1 min-h-6 text-sm font-semibold leading-6 text-slate-700">{value.trim() || '未填写'}</p>
           </div>
         ))}
       </div>
@@ -3059,13 +3294,6 @@ function isReadingMaterialHistoryItem(
 
 function hasAnyIntensiveNote(notes: IntensiveNotes): boolean {
   return Boolean(notes.mainStructure.trim() || notes.phraseNotes.trim() || notes.evidenceNote.trim())
-}
-
-function isSentenceAnalysisComplete(notes: IntensiveNotes | undefined): boolean {
-  return Boolean(
-    notes?.mainStructure.trim()
-    && (notes.phraseNotes.trim() || notes.evidenceNote.trim())
-  )
 }
 
 function getPendingMaterialDialogCopy(pending: PendingMaterialSwitch | null): {

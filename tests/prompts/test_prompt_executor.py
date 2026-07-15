@@ -34,6 +34,17 @@ class FakeRouter:
         yield ChatStreamChunk(content="world", finish_reason="stop")
 
 
+class RepairedFakeRouter(FakeRouter):
+    async def chat(self, request):
+        self.requests.append(request)
+        return ChatResponse(
+            provider="test",
+            model="fake",
+            content=self.content,
+            usage={"retry_count": 1, "repair_reason": "missing required field"},
+        )
+
+
 @pytest.mark.asyncio
 async def test_prompt_executor_success_writes_prompt_execution_record() -> None:
     db = FakeDb()
@@ -63,6 +74,26 @@ async def test_prompt_executor_success_writes_prompt_execution_record() -> None:
     assert record.prompt_hash == result.prompt_hash
     assert not hasattr(record, "raw_prompt")
     assert not hasattr(record, "raw_output")
+
+
+@pytest.mark.asyncio
+async def test_prompt_executor_records_provider_level_schema_repair() -> None:
+    db = FakeDb()
+    router = RepairedFakeRouter(
+        '{"candidates": [{"text": "What matters most is that...", "quality_score": 0.9}]}'
+    )
+
+    result = await PromptExecutor(db=db, model_router=router).execute(
+        prompt_id="writing_phrase.import",
+        version="v1",
+        variables={"topic": "online learning", "task_type": "extract_phrases"},
+        context=PromptExecutionContext(source_module="tests.prompt_executor"),
+    )
+
+    assert result.repair_used is True
+    assert result.schema_validation_status == "repaired"
+    assert result.parse_mode == "provider_repair"
+    assert db.records[0].repair_used is True
 
 
 @pytest.mark.asyncio
@@ -160,6 +191,41 @@ async def test_prompt_executor_maps_default_model_to_cloud_provider() -> None:
 
     assert router.requests[0].preferred_provider == "deepseek"
     assert router.requests[0].preferred_model == "deepseek-v4-flash"
+
+
+@pytest.mark.asyncio
+async def test_prompt_executor_applies_prompt_thinking_policy() -> None:
+    db = FakeDb()
+    router = FakeRouter(
+        "{"
+        '"confidence":0.9,'
+        '"feedback":"先找主干。",'
+        '"correct_analysis":{'
+        '"main_structure":"Readers slow down",'
+        '"clause_layers":[],'
+        '"phrases":[],'
+        '"sentence_meaning":"读者会放慢速度。"},'
+        '"teaching":{'
+        '"required":true,'
+        '"explanation":"先找主语和谓语。",'
+        '"steps":["找主语","找谓语"],'
+        '"checkpoint":"谁做了什么？"},'
+        '"selected_can_do_ids":[]'
+        "}"
+    )
+    router.default_provider = "longcat"
+
+    await PromptExecutor(db=db, model_router=router).execute(
+        prompt_id="reading.sentence_analysis_no_attempt",
+        variables={
+            "sentence": "Readers slow down.",
+            "learner_level": "A2",
+            "can_do_candidates": [],
+        },
+        context=PromptExecutionContext(source_module="tests.prompt_executor"),
+    )
+
+    assert router.requests[0].metadata["thinking"] == "disabled"
 
 
 @pytest.mark.asyncio
